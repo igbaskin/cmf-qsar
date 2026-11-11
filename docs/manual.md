@@ -132,6 +132,7 @@ a double sum over atom pairs:
 $$
 K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,\mathrm{d}\mathbf{r} = \sum_{l \in A}\ \sum_{m \in B} w_{lf}w_{mf}\left(\dfrac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\dfrac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
+<!-- #eq:overlap -->
 
 When every atom shares one width, $b_{lf} = b_{mf} = \alpha$, this collapses to the form the
 papers quote,
@@ -267,6 +268,163 @@ illustration of it, and the division by the molecule's own field norm is the onl
 normalisation adds to the picture. It also explains what co-fields cannot survive: a nonlinear
 kernel layer, which is not an integral of a product, and the autocorrelation kernel source, which
 has no frame to draw in.
+
+## Why a kernel is enough: the feature space and the kernel trick
+
+The chain above never builds a table of descriptors. This section explains why it does not need
+one. The argument is the standard one of kernel methods [28]. What is special to CMF is that
+every object in the argument is a function of space and can be drawn.
+
+**The feature space.** A linear model needs a *feature vector* for every molecule: a list of
+numbers that describes it. In CoMFA [9] the feature vector is the list of the field values at
+the nodes of a grid. In CMF the feature vector of a molecule is the field itself. The rule that
+gives the feature vector is called the *feature map* and is written $\Phi$:
+
+$$
+\Phi(x) \;=\; X_x(\mathbf{r})
+$$
+<!-- #eq:feature-map -->
+
+A field has a value at every point of space, so this vector has infinitely many components, one
+for each point. The set of all such vectors is the *feature space*. The feature space has an
+inner product, which is the integral of the product of two fields. For two molecules it is the
+overlap integral of Eq. (#eq:overlap):
+
+$$
+\langle \Phi(A),\, \Phi(B) \rangle \;=\; \int X_A(\mathbf{r})\, X_B(\mathbf{r})\, \mathrm{d}\mathbf{r} \;=\; K(A,B)
+$$
+<!-- #eq:inner-product -->
+
+A *kernel* is, by definition, a function of two objects that is equal to the inner product of
+their feature vectors.
+
+**A linear model in the feature space.** A linear model has a *weight vector* $w$, which is an
+element of the feature space, and a bias $b$. Its prediction is the inner product of the weight
+vector with the feature vector of the molecule, plus the bias:
+
+$$
+\hat{y}(x) \;=\; \langle w,\, \Phi(x) \rangle + b
+$$
+<!-- #eq:linear-model -->
+
+Kernel ridge regression chooses $w$ and $b$ so that the sum of the squared errors on the
+training set plus a penalty on the length of the weight vector is as small as possible:
+
+$$
+\min_{w,\,b}\;\; \sum_i\, \left( y_i - \hat{y}(x_i) \right)^2 \;+\; \lambda\, \|w\|^2
+$$
+<!-- #eq:ridge-objective -->
+
+**The kernel trick.** The weight vector that minimises Eq. (#eq:ridge-objective) is always a
+weighted sum of the feature vectors of the training molecules. This statement is the
+representer theorem [29]:
+
+$$
+w \;=\; \sum_j\, a_j\, \Phi(x_j)
+$$
+<!-- #eq:representer -->
+
+Two things follow. With Eq. (#eq:representer) inside Eq. (#eq:linear-model), the prediction is
+the sum of $a_j$ times the inner product of training molecule *j* with the new molecule, plus
+the bias. This is Eq. (#eq:prediction). With Eq. (#eq:representer) inside
+Eq. (#eq:ridge-objective), the minimisation becomes the linear system of Eq. (#eq:ridge). In
+both results the feature vectors occur only inside inner products, and every inner product is a
+kernel value.
+
+So the program never needs a feature vector. It needs the kernel values, and the kernel has a
+closed form. A problem in a space of infinitely many dimensions becomes a linear system with
+one unknown per training molecule. This replacement of feature vectors by kernel values is
+called the *kernel trick*. The coefficients $a_j$ are called *dual* coefficients, because they
+belong to the training molecules and not to the features. The weight vector $w$ is the *primal*
+form of the same model.
+
+**What is special to CMF.** For most kernels the feature space is abstract. A Gaussian kernel
+on a table of descriptors has a feature space that cannot be looked at, and its weight vector
+is known only through the coefficients $a_j$. In CMF the feature space consists of functions on
+ordinary three-dimensional space. The weight vector of Eq. (#eq:representer) is then such a
+function too, and it is the co-field of Eq. (#eq:cofield). The co-field is therefore not a
+picture that is added to a fitted model. It is the weight vector of a linear model, as the
+coefficient map of a CoMFA model is, but it is exact and it needs no grid.
+
+![The feature space of the overlap kernel, on the training steroids with a kernel ridge model at α = 1. Top left: a point of the feature space is the field of a molecule. The map is the electrostatic field of the most active steroid in the mean plane of the series; its other four fields are the rest of the same point. Bottom left: a direction in the feature space is a field too. The map is the electrostatic co-field, which is the weight vector of the model. Right: a plane through the feature space, with every training molecule as a point coloured by its observed activity. The horizontal axis is the projection of the molecule on the direction of the co-field, and the upper axis converts it to the prediction. The vertical axis is the direction across it in which the training molecules spread most. The circled point is the molecule of the left panels, and the dashed line is its projection. All coordinates of the right panel are computed from the kernel matrix alone, without a feature vector. Drawn by `docs/make_figures.py`.](docs/figures/featurespace.png)
+
+**Several fields, normalisation and scaling.** The joint kernel of Eq. (#eq:joint) is an inner
+product too. Its feature vector is the list of the $F$ fields of the molecule, each divided by
+its own length and multiplied by the square root of its mixing coefficient and of its scale:
+
+$$
+\Phi(x) \;=\; \left( \sqrt{h_f c_f}\;\dfrac{X_{fx}(\mathbf{r})}{\sqrt{K_f(x,x)}} \right)_{f\,=\,1,\ldots,F}
+$$
+<!-- #eq:joint-feature -->
+
+Cosine normalisation gives every molecule the same length in each field, so a normalised kernel
+value is the cosine of the angle between two feature vectors. The part of the weight vector
+that belongs to field *f* is the co-field $C_f$ times the same square root, and the squared
+length of the weight vector is
+
+$$
+\|w\|^2 \;=\; \sum_f\, h_f c_f \int\, C_f(\mathbf{r})^2\, \mathrm{d}\mathbf{r} \;=\; \mathbf{a}^{\mathrm{T}} \mathbf{K}\, \mathbf{a}
+$$
+<!-- #eq:weight-length -->
+
+This gives the ridge parameter a direct meaning. The penalty of Eq. (#eq:ridge-objective) is
+$\lambda$ times the integral of the squared co-fields, so a larger $\lambda$ gives co-fields of
+smaller amplitude.
+
+**What a function must satisfy to be a kernel.** Not every measure of similarity is an inner
+product. A function of two molecules is a kernel exactly when it is symmetric and *positive
+semidefinite*: for any set of molecules and any real numbers $c_i$,
+
+$$
+\sum_i\, \sum_j\, c_i\, c_j\, K(x_i, x_j) \;=\; \|u\|^2 \;\geq\; 0, \qquad u \;=\; \sum_i\, c_i\, \Phi(x_i)
+$$
+<!-- #eq:positive-semidefinite -->
+
+The sum is the squared length of a vector of the feature space, and a squared length cannot be
+negative. For the overlap kernel it is the integral of a squared field. The
+property has practical consequences. It makes the system of Eq. (#eq:ridge) have exactly one
+solution for every $\lambda > 0$, and it makes the quadratic programs of the support-vector
+learners convex, so that they have one optimum. The property is kept by every operation of
+this chapter: the division by the lengths, the multiplication by a positive constant, and the
+sum with weights that are not negative. A negative mixing coefficient would break it. The
+Gaussian and the arc-cosine layer of *Nonlinear kernel layers and multiple kernel learning*
+keep the property as well. But the feature space of a kernel with such a layer is no longer a
+space of functions on three-dimensional space, and this is why a model with a layer has no
+single co-field.
+
+**Distances.** The feature space has distances as well as angles, and they also need only
+kernel values:
+
+$$
+d^2(A,B) \;=\; \| \Phi(A) - \Phi(B) \|^2 \;=\; K(A,A) - 2K(A,B) + K(B,B)
+$$
+<!-- #eq:feature-distance -->
+
+Later chapters work in this space directly. The applicability domain of *Where does the model
+apply?* uses the cosine of the angle between a molecule and its nearest training molecules. The Gaussian
+layer is a function of the distance of Eq. (#eq:feature-distance). The maps of *Chemical space
+maps* project the space on a plane, and the decoder of pseudo-atoms minimises a distance in it.
+Those chapters call the space the *field Hilbert space*. The literature has a second name for
+the same structure, seen from the side of the predictions. The functions of a molecule that
+have the form of Eq. (#eq:prediction) without the bias, with the squared norm of
+Eq. (#eq:weight-length), form the *reproducing kernel Hilbert space* (RKHS) of the kernel [30].
+Every such function belongs to one weight vector and has the same length as it.
+
+**The readings of the other kernels.** The same argument holds for every kernel of this
+program. What changes is the feature vector, and with it the form in which the weight vector
+can be read:
+
+| kernel | feature vector of a sample | weight vector of the model |
+|---|---|---|
+| overlap kernel of fields | the fields, functions of space | the co-fields, *Reading the model* |
+| invariant kernels: autocorrelation, surface, periodic, reciprocal | a finite list of channels | the co-pattern, *The co-pattern as a chart* |
+| spectrum kernel | the broadened spectrum, a function on a line | the co-spectrum, *A spectrum as a one-dimensional field* |
+| any of these under a Gaussian or arc-cosine layer | not available in closed form | none for the whole model; a local co-field per molecule |
+
+When the feature vector is a finite list, the model can also be solved in the primal form, for
+the weight vector directly. The cost then grows with the number of features and not with the
+square of the number of samples. The local kernels of *Working without an alignment* offer this
+as the option `--primal`.
 
 ## A worked example
 
@@ -13800,6 +13958,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **ECFP4** | a circular fingerprint of the atoms' environments out to two bonds: the standard 2D similarity measure, and the baseline the field similarity of this program is compared against on screening tasks, where it does about as well. *Decoys and the figures that matter* |
 | **ETKDG** | RDKit's distance-geometry conformer generator, which builds the 3D structure whenever the input is 2D and supplies the starting conformations for the conformer ensembles, the flexible alignment and the topomer rebuilds. Its poses are arbitrary until they are aligned. *What the program reads*; *Conformations: the fourth dimension* |
 | **external cross-validation**, $q^2_{ex}$ | the whole model-building procedure, hyper-parameter search included, repeated inside each outer fold; the only figure that is not optimistic about the search. *Validation* |
+| **feature map**, $\Phi$, **feature vector** and **feature space** | the rule that turns a sample into the vector a linear model works on, that vector, and the space of all such vectors. For the overlap kernel the feature vector of a molecule is its field, for the invariant kernels a finite list of channels, for the spectrum kernel the broadened spectrum. *Why a kernel is enough* |
 | **field**, $X_f(\mathbf{r})$ | a continuous function of space: one Gaussian per atom, weighted by that atom's charge, bulk, lipophilicity, H-bond strength, indicator value or file-borne property. The object CMF models. *The fields* |
 | **field scaling**, $c_f$ | the factor that puts a normalised field kernel's mean diagonal at 1 over the training set, so the fields enter the mixture on equal terms. Fixed on the training set and stored. *Normalisation and scaling* |
 | **field set** | the list of field types a model uses, with their attenuations, charge model and parameterisation. It must match exactly between fitting and predicting. *What has to match between fitting and predicting* |
@@ -13812,6 +13971,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **joint kernel**, $K(A,B)$ | the sum of the normalised, scaled field kernels with their mixing coefficients: the single similarity the learner sees. *Mixing the fields* |
 | **Kabsch superposition** | the least-squares rotation and translation that best superimposes two sets of matched points. It is the second half of an MCS alignment -- the substructure search finds the correspondence, this places the molecule -- and the pose benchmark measures how far the result lands from the crystal pose. *Alignment*; *Judging an alignment, and aligning flexibly* |
 | **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no single co-field, because the prediction is no longer linear in the fields; a local co-field per molecule remains. *Nonlinear kernel layers and multiple kernel learning* |
+| **kernel trick** | replacing every inner product of two feature vectors by a kernel value, so that a linear model in the feature space is fitted and applied without building a feature vector. *Why a kernel is enough* |
 | **local co-field** | the derivative of a layered model's prediction with respect to the normalised field, taken at one molecule: the co-field of the linear model tangent to it there. For the linear kernel it is the ordinary co-field for every molecule. *The co-field of a nonlinear model: one per molecule* |
 | **non-linearity index** | the share of the mean squared norm of the local co-fields of the training molecules that their spread around the mean makes up: 0 for a linear model, 1 when they have nothing in common. *The co-field of a nonlinear model: one per molecule* |
 | **pair-interaction field** | the second derivative of a prediction with respect to the amplitudes of two probe atoms, one fixed on an atom of the molecule and the other scanned over space: how much adding field at a point changes what the fixed atom does. Zero everywhere for a linear model without normalisation. *Second derivatives: the pair-interaction field and the interaction modes* |
@@ -13824,14 +13984,17 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **overlap integral**, $K_f(A,B)$ | the integral over all space of the product of two molecules' fields, which for Gaussians is a closed-form double sum over atom pairs. The kernel CMF is built on. *The overlap integral* |
 | **periodic kernel** | the autocorrelation descriptor for a crystal: the pair histogram of one cell with its periodic images, per atom, with the uniform background removed and the cutoff tapered. *Crystals: the periodic autocorrelation kernel* |
 | **pharmacophore** | a set of typed spheres extracted from the lobes of a co-field, which is the model's own statement of what a molecule should carry and where. *A pharmacophore out of the co-field* |
+| **positive semidefinite** | the property that makes a function of two samples a kernel: every sum of its values weighted by $c_i c_j$ is zero or positive. It guarantees one solution of the ridge system and one optimum of a support-vector fit. *Why a kernel is enough* |
 | **probe field** | a GRID-like interaction energy with a chosen probe, expanded in Gaussians so that it keeps the closed-form kernel and the co-field. *GRID-like probe fields* |
 | **`prop:` field** | a field whose per-atom weights are read from the file or computed by ORCA rather than from a parameter table. *Charges and per-atom properties* |
 | **$q^2$, $R^2_{pred}$, RMSE** | the cross-validated, test-set and fit figures of merit. $q^2$ is not a test: it is what the search optimises, and a model can be chosen for it. *Validation*; *Statistics reported* |
+| **reproducing kernel Hilbert space (RKHS)**, or **field Hilbert space** | the feature space with its inner product, in which a molecule is a point, the model is a direction, and angles and distances come from kernel values alone. *Why a kernel is enough* |
 | **selectivity co-field** | the difference of two endpoints' co-fields in a multi-task model, which draws where a molecule should differ to be selective rather than merely potent. *Several endpoints at once* |
 | **Shapley value** | the share of a prediction attributed to each field or atom by averaging over all subsets, with the pairwise interaction indices beside it. *Shapley values* |
 | **solvent exposure weighting** | multiplying each atomic weight by its relative solvent accessibility. Measured here and found not to help: ligands of this size have no interior. *Weighting the fields by solvent exposure* |
 | **surface kernel** | the in-plane invariant kernel for molecules on a surface: distances in the plane, resolved by the heights of both atoms, invariant to lateral position and rotation about the normal and to nothing else. *Molecules on a surface* |
 | **topomer field** | a field built from substituents rebuilt in a pose that is a deterministic function of their topology, so the same R-group always lands in the same place and no alignment is needed. *Topomer fields* |
+| **weight vector**, $w$ | the model in the feature space, the primal form of the dual coefficients: the co-fields for the overlap kernel, the co-pattern for the invariant kernels, the co-spectrum for the spectrum kernel. *Why a kernel is enough* |
 | **y-randomisation** | refitting the whole procedure on shuffled activities many times; if the shuffled models score as well as the real one, the real one is chance. *Is it chance? y-randomisation* |
 
 # Appendix D — Bibliography
@@ -13950,3 +14113,12 @@ and partial least squares compared with multiple regression in conventional QSAR
 [27] Ng, A. Y.; Jordan, M. I.; Weiss, Y. On spectral clustering: analysis and an algorithm. In
 *Advances in Neural Information Processing Systems 14*; Dietterich, T. G., Becker, S.,
 Ghahramani, Z., Eds.; MIT Press: Cambridge, MA, 2002; pp 849–856.
+
+[28] Schölkopf, B.; Smola, A. J. *Learning with Kernels: Support Vector Machines,
+Regularization, Optimization, and Beyond*; MIT Press: Cambridge, MA, 2002.
+
+[29] Kimeldorf, G.; Wahba, G. Some results on Tchebycheffian spline functions. *J. Math. Anal.
+Appl.* **1971**, *33*, 82–95.
+
+[30] Aronszajn, N. Theory of reproducing kernels. *Trans. Am. Math. Soc.* **1950**, *68*,
+337–404. doi:10.1090/S0002-9947-1950-0051437-7
