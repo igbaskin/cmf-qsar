@@ -1,6 +1,6 @@
 {
- "commit": "671382c4c153b933f4561c189d2dbb7ef5b8712c",
- "created": "2026-11-11T16:51:17",
+ "commit": "c58250ba797a8482134678da46497d4657e86ce3",
+ "created": "2026-11-11T19:46:02",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2191,8 +2191,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 12555,
-   "sha256": "cc1623871e01b7cd38ae392ace92435f8cd62717816dea59624b7421c5231ed3"
+   "bytes": 12766,
+   "sha256": "551c9b1e5c89160dd3cbe3d8dec5119a4f76e2be38fea6e3841906ae0bb6961b"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -3539,6 +3539,8 @@
   "benchmarks/results/spectra/table.md": "29d6f04770e78b255512d343b40920542349da14e509f256f83294bdd28cb6b3",
   "benchmarks/results/spectra_bridge/bridge.json": "243f1020fed2877f54667fe08f8a4a8eddbdd723d9297a6ca079f77197679274",
   "benchmarks/results/spectra_bridge/table.md": "cef8f4988708045c9a5907db86d7d9fc3353a177ced4f9cb339a2cfb3ad7cfd4",
+  "benchmarks/results/spectra_computed/computed.json": "86857b3af7bb52612ab24fab173de88bb4bb0e03108f8d9547007088dda2c581",
+  "benchmarks/results/spectra_computed/table.md": "acb67a1f626f8fe5d54d83d6f5e23ffe878aa5c6c429c59059fa0db5ca491101",
   "benchmarks/results/spectra_ir/cospectrum.png": "2dcf0c25033b729bb12420c283f179c7626e27aa3cd339f034580ba77421ef3a",
   "benchmarks/results/spectra_ir/ir.json": "c2fb81258436cf9aae40fd346b975e51643001d7f75e060b24e1262c7a653239",
   "benchmarks/results/spectra_ir/table.md": "1c5a680d209227632710511e481cc839922c592207756b9724aecece69eb13f2",
