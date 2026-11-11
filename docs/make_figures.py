@@ -1396,6 +1396,108 @@ def fig_vectorcofield(path):
     save(fig, path)
 
 
+def fig_copattern(path):
+    """Chapter 4: the concept of the co-pattern.  A channel is one pair of field types at one
+    distance; a molecule has a pattern over the channels, the model has a weight for each, and the
+    prediction is the bias plus the sum of weight times channel."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar.copattern import copattern, pair_labels
+    from cmfqsar.fields import AtomTable
+    from cmfqsar.invariant import field_pairs
+    from cmfqsar.periodic import channel_weights
+    s = steroids()
+    fs, mf, idx, y = s["fs"], s["mf"], s["train_idx"], s["y"]
+    train = AtomTable.from_molecules([mf[i] for i in idx])
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                     params={"lam": 1e-2})
+    model.fit(train, y, cv_folds=0)
+    w = np.asarray(channel_weights(model), float)
+    Z = np.asarray(model.ac_train_, float) * np.asarray(model.ac_column_scale, float)
+    Z = Z / np.sqrt(np.sum(Z * Z, axis=1, keepdims=True))          # the pattern of every molecule
+    predicted = model.predict(train)
+    residual = float(np.abs(model.bias + Z @ w - predicted).max())
+    # the pair of field types the chart of the window opens on: the largest summed weight x spread
+    pairs = pair_labels(model, fs)
+    curves = [copattern(model, fs, k, "weight x spread") for k in range(len(pairs))]
+    k = int(np.argmax([np.abs(c.moved).sum() for c in curves]))
+    cp = curves[k]
+    d, nb = cp.x, len(cp.x)
+    block = slice(k * nb, (k + 1) * nb)
+    f, g = field_pairs(len(fs.names))[k]
+    hi, lo = int(np.argmax(y)), int(np.argmin(y))
+    shown = ((hi, "C3"), (lo, "C0"))
+    peak = int(np.argmax(np.abs(cp.weight)))
+    step = float(d[1] - d[0])
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.5))
+    # (a) one channel on one molecule: the atom pairs about that far apart
+    ax = axes[0, 0]
+    mol = mf[idx[hi]]
+    frame = plane_of([mol])
+    xy = project(frame, mol.coords)
+    dist = np.linalg.norm(mol.coords[:, None, :] - mol.coords[None, :, :], axis=-1)
+    W = np.asarray(mol.weights, float)
+    term = (np.exp(-((dist - d[peak]) ** 2) / (2.0 * step ** 2))
+            * (W[:, f][:, None] * W[:, g][None, :] + W[:, g][:, None] * W[:, f][None, :]))
+    # drawn: the heavy-atom pairs within half a step of the channel's distance, largest first
+    heavy = np.array([sym != "H" for sym in mol.symbols])
+    near = (np.abs(dist - d[peak]) <= 0.5 * step) & heavy[:, None] & heavy[None, :]
+    term = np.triu(np.where(near, term, 0.0), 1)
+    order = [q for q in np.argsort(np.abs(term).ravel())[::-1][:14] if term.ravel()[q] != 0.0]
+    draw_skeleton(ax, mol, frame, colour="0.55")
+    for flat in order:
+        a, b = divmod(int(flat), term.shape[0])
+        ax.plot([xy[a, 0], xy[b, 0]], [xy[a, 1], xy[b, 1]], lw=1.0, zorder=5,
+                color="#b2182b" if term[a, b] > 0 else "#2166ac")
+    ax.set_aspect("equal")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(f"a channel: one pair of field types at one distance\n"
+                 f"{cp.pair.replace(' x ', ' × ')}, {d[peak]:.2f} Å, on {mol.name}", fontsize=7.5)
+    # (b) the pattern of a molecule: its channels against distance
+    ax = axes[0, 1]
+    for i, colour in shown:
+        ax.plot(d, Z[i, block], "o-", ms=3, lw=1.1, color=colour, label=mf[idx[i]].name)
+    ax.set_title("the pattern of a molecule: its channels", fontsize=7.5)
+    ax.set_ylabel("channel value")
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.38 * (high - low))
+    ax.legend(frameon=False, fontsize=7, loc="upper right")
+    # (c) the co-pattern of the model: one weight per channel
+    ax = axes[1, 0]
+    ax.bar(d, cp.weight, width=0.55 * step, color="0.45")
+    ax.set_title("the co-pattern of the model: a weight per channel", fontsize=7.5)
+    ax.set_ylabel("channel weight")
+    # (d) weight times channel, which sums to the prediction
+    ax = axes[1, 1]
+    for j, (i, colour) in enumerate(shown):
+        part = w[block] * Z[i, block]
+        ax.bar(d + (j - 0.5) * 0.3 * step, part, width=0.3 * step, color=colour,
+               label=f"{mf[idx[i]].name}: this pair adds {part.sum():+.2f}")
+    ax.set_title("weight × channel: one term of the prediction each", fontsize=7.5)
+    ax.set_ylabel("contribution to the prediction")
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.42 * (high - low))
+    ax.legend(frameon=False, fontsize=6.5, loc="upper right")
+    for ax in (axes[0, 1], axes[1, 0], axes[1, 1]):
+        ax.axhline(0, color="0.6", lw=0.5)
+        ax.axvline(d[peak], color="0.6", lw=0.5, ls=":")
+        ax.set_xlabel("distance between two atoms / Å")
+        ax.tick_params(length=2)
+    def total(i):
+        rest = predicted[i] - model.bias
+        return (f"{mf[idx[i]].name}: {model.bias:.2f} {'+' if rest >= 0 else '−'} {abs(rest):.2f} "
+                f"= {predicted[i]:.2f} (observed {y[i]:.2f})")
+
+    fig.suptitle("prediction = bias + sum over all channels of (channel weight × channel value)\n"
+                 f"{total(hi)};  {total(lo)}", fontsize=8, y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 1.03))
+    print(f"  co-pattern: {len(w)} channels in {len(pairs)} pairs; the weights reproduce the "
+          f"prediction to {residual:.1e}; shown pair {cp.pair}, peak at {d[peak]:.2f} A")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -1909,6 +2011,7 @@ FIGURES = {
     "chemspace.png": fig_chemspace,
     "gradient.png": fig_gradient,
     "vectorcofield.png": fig_vectorcofield,
+    "copattern.svg": fig_copattern,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
