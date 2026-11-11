@@ -1498,6 +1498,114 @@ def fig_copattern(path):
     save(fig, path)
 
 
+def fig_cospectrum(path):
+    """Chapter 11: the concept of the co-spectrum.  A spectrum is a field on a line, the model
+    has a weight over the same line, and the prediction is the bias plus the sum of weight
+    times intensity along the axis.  The model is the one of ``benchmarks/run_spectra_ir.py``:
+    the infrared spectra of the benzoic acids against the Hammett constant."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem, RDLogger
+    from cmfqsar import spectrum as SP
+    from cmfqsar.model import krr_fit
+    RDLogger.DisableLog("rdApp.*")
+    with open(os.path.join(RESULTS, "spectra_ir", "ir.json"), encoding="utf-8") as fh:
+        rec = json.load(fh)
+    width, power = float(rec["cospectrum"]["width"]), float(rec["cospectrum"]["power"])
+    lam, (lo, hi) = float(rec["cospectrum"]["lam"]), rec["range"]
+    window = (1560.0, 1800.0)            # the carbonyl stretch and the ring stretch below it
+    folder = os.path.join(ROOT, "examples", "spectra")
+    names, y = [], []
+    for mol in Chem.SDMolSupplier(os.path.join(folder, "benzoic_acids_co.sdf"), removeHs=False):
+        names.append(mol.GetProp("_Name"))
+        y.append(float(mol.GetProp("sigma")))
+    y = np.array(y, float)
+    with open(os.path.join(folder, "benzoic_acids_ir.json"), encoding="utf-8") as fh:
+        rows = {r["name"]: r for r in json.load(fh)["acids"]}
+    spectra = [SP.Spectrum(rows[n]["wavenumbers"], rows[n]["intensities"], "sticks",
+                           "wavenumber", n) for n in names]
+    grid = SP.Grid.for_width(lo, hi, width)
+    F = SP.feature_matrix(spectra, grid, width, power)
+    dual, bias = krr_fit(SP.spectrum_kernel(F), y, lam)
+    w = SP.co_spectrum(F, dual)                                  # the co-spectrum
+    Z = F / np.sqrt(np.einsum("ij,ij->i", F, F))[:, None]        # the normalised spectra
+    predicted = bias + Z @ w
+    x = grid.x
+    top, bottom = int(np.argmax(y)), int(np.argmin(y))
+    shown = ((top, "C3"), (bottom, "C0"))
+    zoom = (x >= window[0]) & (x <= window[1])
+
+    def signed(value):
+        return f"{value:+.2f}".replace("-", "−")
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.5))
+    # (a) a spectrum is a field on a line: sticks, each broadened to a Gaussian
+    ax = axes[0, 0]
+    for i, colour in shown:
+        sp = spectra[i]
+        pos, height = np.asarray(sp.x, float), np.asarray(sp.y, float)
+        inside = (pos >= window[0]) & (pos <= window[1])
+        scale = Z[i, zoom].max() / max(height[inside].max(), 1e-12)
+        ax.vlines(pos[inside], 0.0, height[inside] * scale, color=colour, lw=1.6)
+        ax.plot(x[zoom], Z[i, zoom], color=colour, lw=0.9, label=names[i])
+        ax.fill_between(x[zoom], 0.0, Z[i, zoom], color=colour, alpha=0.15, lw=0)
+    ax.set_title("a spectrum is a field on a line: every stick\n"
+                 f"becomes a Gaussian of width {width:g} cm$^{{-1}}$", fontsize=7.5)
+    ax.set_ylabel("normalised intensity")
+    ax.set_ylim(0.0, 1.45 * ax.get_ylim()[1])
+    ax.legend(frameon=False, fontsize=6.5, loc="upper left")
+    # (b) the co-spectrum: the weight of the model over the same line
+    ax = axes[0, 1]
+    ax.fill_between(x[zoom], 0.0, w[zoom], where=w[zoom] >= 0, color="0.3", lw=0)
+    ax.fill_between(x[zoom], 0.0, w[zoom], where=w[zoom] <= 0, color="0.7", lw=0)
+    ax.set_title("the co-spectrum: the weight of the model\nover the same line", fontsize=7.5)
+    ax.set_ylabel("weight")
+    # (c) weight times intensity, place by place
+    ax = axes[1, 0]
+    for i, colour in shown:
+        part = w * Z[i]
+        ax.plot(x[zoom], part[zoom], color=colour, lw=0.9,
+                label=f"{names[i]}: this region adds {signed(part[zoom].sum())}")
+        ax.fill_between(x[zoom], 0.0, part[zoom], color=colour, alpha=0.25, lw=0)
+    ax.set_title("weight × intensity: what each place adds", fontsize=7.5)
+    ax.set_ylabel("contribution to the prediction")
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.45 * (high - low))
+    ax.legend(frameon=False, fontsize=6.5, loc="upper left")
+    for ax in (axes[0, 0], axes[0, 1], axes[1, 0]):
+        ax.set_xlim(window[1], window[0])              # the convention of infrared spectra
+    # (d) the running sum along the whole axis, which ends at the prediction
+    ax = axes[1, 1]
+    ax.axvspan(window[0], window[1], color="0.9", lw=0)
+    for i, colour in shown:
+        running = bias + np.cumsum((w * Z[i])[::-1])[::-1]        # summed from the high end
+        ax.plot(x, running, color=colour, lw=1.0)
+        ax.annotate(signed(predicted[i]), (x[0], running[0]), xytext=(4, 0),
+                    textcoords="offset points", va="center", fontsize=7, color=colour,
+                    annotation_clip=False)
+    ax.axhline(bias, color="0.5", lw=0.6, ls="--")
+    ax.set_xlim(hi, lo)
+    ax.set_title("the running sum along the whole axis starts\n"
+                 "at the bias and ends at the prediction", fontsize=7.5)
+    ax.set_ylabel("bias + sum so far")
+    for ax in axes.ravel():
+        ax.axhline(0, color="0.6", lw=0.5)
+        ax.set_xlabel("wavenumber / cm$^{-1}$")
+        ax.tick_params(length=2)
+
+    def total(i):
+        rest = predicted[i] - bias
+        return (f"{names[i]}: {bias:.2f} {'+' if rest >= 0 else '−'} {abs(rest):.2f} = "
+                f"{signed(predicted[i])} (tabulated {signed(y[i])})")
+
+    fig.suptitle("prediction = bias + sum along the axis of (weight × normalised intensity)\n"
+                 f"{total(top)};  {total(bottom)}", fontsize=8, y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 1.03))
+    print(f"  co-spectrum: {len(spectra)} spectra, {len(x)} grid points, width {width:g}, ridge "
+          f"{lam:g}; bias {bias:.4f}; {names[top]} {predicted[top]:+.3f} ({y[top]:+.2f}), "
+          f"{names[bottom]} {predicted[bottom]:+.3f} ({y[bottom]:+.2f})")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -2012,6 +2120,7 @@ FIGURES = {
     "gradient.png": fig_gradient,
     "vectorcofield.png": fig_vectorcofield,
     "copattern.svg": fig_copattern,
+    "cospectrum.svg": fig_cospectrum,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
