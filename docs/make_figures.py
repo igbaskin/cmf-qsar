@@ -1606,6 +1606,77 @@ def fig_cospectrum(path):
     save(fig, path)
 
 
+def fig_featurespace(path):
+    """Chapter 2: the feature space of the overlap kernel.  A molecule is a point of it, and the
+    point is the molecule's field; the model is a direction in it, and the direction is the
+    co-field; a prediction is the bias plus the projection of the point on the direction."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.fields import AtomTable
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame, xs, ys = c["fs"], c["mf"], c["model"], c["frame"], c["xs"], c["ys"]
+    idx, y = s["train_idx"], np.asarray(s["y"], float)
+    train = AtomTable.from_molecules([mf[i] for i in idx])
+    K = np.asarray(model.training_kernel(train), float)
+    a, bias = np.asarray(model.coef, float), float(model.bias)
+    along = K @ a                                   # the inner product of every molecule with w
+    length = float(np.sqrt(a @ K @ a))              # the length of the weight vector w
+    residual = float(np.abs(along + bias - model.predict(train)).max())
+    # the plane through the feature space that holds the direction of w and, across it, the
+    # direction in which the training molecules spread most
+    n = len(y)
+    J = np.eye(n) - np.ones((n, n)) / n
+    t = along / length
+    u = t - t.mean()
+    across = J @ K @ J - np.outer(u, u)
+    values, vectors = np.linalg.eigh(across)
+    v = vectors[:, -1] * np.sqrt(max(values[-1], 0.0))
+    if v[int(np.argmax(y))] < 0:
+        v = -v                                       # a reproducible orientation
+    k = int(np.argmax(y))
+    mol = mf[idx[k]]
+    f = fs.names.index("electrostatic")
+    pts, shape = plane_points(frame, xs, ys)
+
+    fig = plt.figure(figsize=(WIDTH, 3.5))
+    grid = fig.add_gridspec(2, 2, width_ratios=(1.0, 1.35), left=0.02, right=0.98, bottom=0.13,
+                            top=0.9, wspace=0.22, hspace=0.32)
+    ax = fig.add_subplot(grid[0, 0])
+    signed_map(ax, field_slice(mol, fs.specs[f], f, pts).reshape(shape), xs, ys)
+    draw_skeleton(ax, mol, frame)
+    ax.set_title(f"a point of the feature space:\nthe field of {mol.name}", fontsize=7.5)
+    ax2 = fig.add_subplot(grid[1, 0])
+    signed_map(ax2, cofield_slice(model, f, pts).reshape(shape), xs, ys)
+    draw_skeleton(ax2, mol, frame)
+    ax2.set_title("a direction in it: the co-field,\nthe weight vector of the model", fontsize=7.5)
+    for m in (ax, ax2):
+        m.set_xticks([])
+        m.set_yticks([])
+
+    ax = fig.add_subplot(grid[:, 1])
+    sc = ax.scatter(t, v, c=y, cmap="viridis", s=26, edgecolor="black", linewidth=0.4, zorder=4)
+    ax.scatter([t[k]], [v[k]], s=110, facecolor="none", edgecolor="C3", linewidth=1.1, zorder=5)
+    low = v.min() - 0.18 * (v.max() - v.min())
+    ax.plot([t[k], t[k]], [v[k], low], color="C3", lw=0.8, ls="--", zorder=3)
+    ax.annotate("", xy=(t.max(), low), xytext=(t.min(), low),
+                arrowprops=dict(arrowstyle="-|>", color="black", lw=1.0))
+    ax.text(0.5 * (t.min() + t.max()), low, "direction of the co-field", ha="center",
+            va="bottom", fontsize=7)
+    ax.set_xlabel("projection on the direction of the co-field")
+    ax.set_ylabel("the direction of largest spread across it")
+    ax.tick_params(length=2)
+    top = ax.secondary_xaxis("top", functions=(lambda p: bias + length * p,
+                                               lambda q: (q - bias) / length))
+    top.set_xlabel("prediction = bias + length of the weight vector × projection", fontsize=7.5)
+    top.tick_params(length=2, labelsize=7.5)
+    bar = fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.03)
+    bar.set_label("observed activity", fontsize=7.5)
+    bar.ax.tick_params(labelsize=7)
+    print(f"  feature space: {n} molecules; |w| = {length:.4f}, bias {bias:.4f}; the projection "
+          f"reproduces the prediction to {residual:.1e}; share of the spread across w in the "
+          f"drawn direction {values[-1] / max(values.sum(), 1e-30):.2f}")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -2107,6 +2178,7 @@ FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
+    "featurespace.png": fig_featurespace,
     "parent.svg": fig_parent,
     "hop.png": fig_hop,
     "hopcofield.png": fig_hopcofield,
