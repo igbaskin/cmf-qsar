@@ -185,3 +185,7 @@ any source, and `cmfqsar.spectrum.absorbance` turns a transmittance into an abso
 `benchmarks/prepare_chemotion_xtb.py` computes a GFN2-xTB spectrum for the compounds of that
 set, also into the cache, and `benchmarks/run_spectra_computed.py` ranks the computed
 spectra for every measured one.
+
+`benchmarks/run_mixtures.py` (plan item SP6) makes mixtures from the spectra of
+`benzoic_acids_ir.json` and finds the amounts of the components again. The manual section
+*Mixtures and quantification* has the results.

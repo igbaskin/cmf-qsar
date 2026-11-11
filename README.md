@@ -3040,6 +3040,38 @@ python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 m
 python benchmarks/run_spectra_computed.py              # 17 minutes
 ```
 
+### Mixtures and quantification
+
+The first half of plan item SP6 ([run_mixtures.py](benchmarks/run_mixtures.py)); no new data
+and no quantum calculation. By the Beer-Lambert law the spectrum of a mixture is the sum of
+the spectra of its components times their amounts, and the kernel is linear in each spectrum.
+So the kernel of two mixtures is the weighted sum of the kernels of their components:
+`spectrum.mix` makes the spectrum of a mixture and `spectrum.mixture_kernel` this product
+(the two agree to rounding error).
+
+Mixtures of four components are synthesised with a varying total amount, a baseline and
+noise, from the computed spectra of the benzoic acids and from the measured Chemotion IR
+spectra. The reference is partial least squares regression (PLS) on the same rows, and the
+floor is a least-squares fit with the known pure spectra.
+
+- *Amounts.* Kernel ridge on the linear kernel finds the amounts with an error 9 to 11 %
+  above the floor and equals PLS. The gate of this half is met; no gain over PLS was expected
+  in a linear problem.
+- *Fractions.* The cosine form of the kernel removes the total amount, but a fraction is
+  then a ratio and not a linear function: the error is 7 to 19 times the floor. The predicted
+  amounts divided by their sum give 1.07 to 1.10 times the floor.
+- *A baseline that the fit never saw.* The plain rows fail (80 times the floor), for the
+  kernel and for PLS. The slopes of the spectra lose almost nothing (1.25 times the floor).
+- *A bent calibration curve (stray light).* The models that learn from mixtures stay at
+  0.0040 where the fit with the pure spectra is at 0.054. The Gaussian layer adds nothing
+  clear to the linear kernel here.
+- *Reading.* The co-spectrum of the model for an amount is the net signal of that component,
+  the part of its spectrum that the other components cannot make (cosine 0.99 and 0.97).
+
+```bash
+python benchmarks/run_mixtures.py     # 11 minutes
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

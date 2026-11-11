@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1215 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1217 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -17164,6 +17164,17 @@ A kernel ridge model on the cosine kernel is linear in the normalised broadened 
 (`co_spectrum`), the one-dimensional analogue of the co-field: a curve over the axis that
 is positive where intensity raises the predicted property and negative where it lowers it.
 
+Mixtures
+--------
+By the Beer-Lambert law the absorbance spectrum of a mixture is the sum of the spectra of its
+components, each times its amount.  The kernel is linear in each of its two spectra, so the
+kernel of two mixtures is the same weighted sum over the kernels of their components
+(plan item SP6): with the amounts as the rows of `W` and the kernel `K` of the
+components, the kernel of the mixtures is `W K W^T`.  `mix` makes the spectrum of a
+mixture and `mixture_kernel` this product.  The identity holds for the kernel that is
+not normalised.  The cosine form divides the total amount out: it is the form for a question
+about fractions, and the form that is not normalised is the one for a question about amounts.
+
 Readers
 -------
 `read_sticks` and `read_measured` read two-column text (the reader of
@@ -17371,6 +17382,29 @@ The weighted mean of the cosine kernels of several widths.
 A narrow width tells two spectra apart by the exact places of their lines, and a wide one
 by the regions that hold intensity.  The mean keeps both.  The weights default to equal
 ones and are scaled to sum to one, so the diagonal stays at one.
+
+### `mix(spectra: Sequence[Spectrum], weights: Sequence[float], name: str='') -> Spectrum`
+
+The spectrum of a mixture: the sum of the spectra of its components, each times its
+amount (the Beer-Lambert law for absorbance).
+
+The amounts are used as they are and are not scaled to a sum of one: twice the amount of
+everything gives twice the spectrum.  Stick spectra give a stick spectrum with the sticks
+of all components.  Measured curves have to be on one grid and give a curve on that grid.
+Sticks and curves cannot be mixed here; broaden both onto one grid first
+(`feature_matrix`) and mix the rows.
+
+### `mixture_kernel(K: np.ndarray, amounts: np.ndarray, others: Optional[np.ndarray]=None, normalize: bool=False) -> np.ndarray`
+
+The kernel of mixtures from the kernel of their components: `W' K W^T`.
+
+`K` is the kernel of the components, not normalised (`spectrum_kernel(F,
+normalize=False)` or `exact_kernel` with `normalize=False`).  `amounts` holds
+one row per mixture with the amount of every component; the columns of the result are
+these mixtures.  The rows are the mixtures of `others`, or the same mixtures.  With
+`normalize` the result is put into the cosine form afterwards, which removes the total
+amount of each mixture; the cosine kernel of the components must not be given as `K`,
+because the norm of a mixture is not the sum of the norms of its components.
 
 ### `co_spectrum(F: np.ndarray, alpha: np.ndarray, normalize: bool=True) -> np.ndarray`
 

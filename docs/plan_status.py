@@ -61,6 +61,8 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "SP1": ("partly", "half (a), a calculated spectrum as the sample, built and measured "
                       "10 November 2026; of half (b), measured spectra find each other "
                       "(11 November 2026), and a measured property is missing"),
+    "SP6": ("partly", "half (a), synthesised mixtures, built and measured 11 November 2026; "
+                      "half (b), measured mixtures, waits for a data set"),
 }
 
 #: the section every item prefix belongs to, in the order the table lists them

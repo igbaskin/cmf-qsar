@@ -6929,6 +6929,26 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   beats it by more than the interval where the calibration curve is nonlinear, which is the only
   place the item claims a gain. If no public set shows a nonlinear calibration, the item records that
   the method matches PLS and adds the co-spectrum, and stops.
+  **Half (a) built and measured 11 November 2026** (`spectrum.mix`,
+  `spectrum.mixture_kernel`, `benchmarks/run_mixtures.py`,
+  `benchmarks/results/mixtures/`). The identity holds to rounding error. Mixtures of four
+  components with a varying total amount, a baseline and noise were synthesised from the
+  computed spectra of the benzoic acids and from the measured Chemotion IR spectra, 20 repeats.
+  *The gate of (a) is met:* kernel ridge on the linear kernel finds the amounts with an error
+  9 to 11 % above the floor (a least-squares fit with the known pure spectra) and equals PLS.
+  *The point of care of this entry was half right.* The cosine form removes the total amount,
+  but a fraction is then a ratio of two linear functions, and the error is 7 to 19 times the
+  floor; the predicted amounts of the kernel that is not normalised, divided by their sum,
+  give 1.07 to 1.10 times the floor. With a baseline that the mixtures to fit did not have,
+  the plain rows fail (80 times the floor) and the slopes of the spectra hold (1.25 times).
+  With stray light (a bent calibration curve) the models that learn from mixtures stay at
+  0.0040 where the fit with the pure spectra is at 0.054, and the Gaussian layer adds nothing
+  clear to the linear kernel, so the gain that this entry allows the nonlinear layer is not
+  shown. The co-spectrum of the model for an amount is the net analyte signal of the
+  component (cosine 0.99 for computed and 0.97 for measured components).
+  *Open:* half (b), measured mixtures with known composition, for which no set was looked
+  for yet; band shifts with the composition; a case in which every band of a component is
+  saturated.
 
 **Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
 and the finding that the field predicts the band from the structure as well as a linear
@@ -7641,11 +7661,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 |
+| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**165 items: 115 finished, 5 partly, 45 open.**
+**171 items: 116 finished, 6 partly, 49 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

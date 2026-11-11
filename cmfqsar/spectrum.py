@@ -57,6 +57,17 @@ A kernel ridge model on the cosine kernel is linear in the normalised broadened 
 (:func:`co_spectrum`), the one-dimensional analogue of the co-field: a curve over the axis that
 is positive where intensity raises the predicted property and negative where it lowers it.
 
+Mixtures
+--------
+By the Beer-Lambert law the absorbance spectrum of a mixture is the sum of the spectra of its
+components, each times its amount.  The kernel is linear in each of its two spectra, so the
+kernel of two mixtures is the same weighted sum over the kernels of their components
+(plan item SP6): with the amounts as the rows of ``W`` and the kernel ``K`` of the
+components, the kernel of the mixtures is ``W K W^T``.  :func:`mix` makes the spectrum of a
+mixture and :func:`mixture_kernel` this product.  The identity holds for the kernel that is
+not normalised.  The cosine form divides the total amount out: it is the form for a question
+about fractions, and the form that is not normalised is the one for a question about amounts.
+
 Readers
 -------
 :func:`read_sticks` and :func:`read_measured` read two-column text (the reader of
@@ -660,6 +671,73 @@ def multi_width_kernel(spectra: Sequence[Spectrum], x_min: float, x_max: float,
     for wk, s in zip(w, sigmas):
         K = kernel(spectra, x_min, x_max, s, others, power, True, points_per_sigma)
         out = wk * K if out is None else out + wk * K
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Mixtures
+# --------------------------------------------------------------------------- #
+def _amounts(weights, n: int) -> np.ndarray:
+    w = np.atleast_1d(np.asarray(weights, float))
+    if w.ndim != 1 or len(w) != n:
+        raise ValueError(f"{n} components need {n} amounts; got an array of shape {w.shape}")
+    if not np.all(np.isfinite(w)) or np.any(w < 0):
+        raise ValueError("the amounts have to be numbers that are not negative")
+    return w
+
+
+def mix(spectra: Sequence[Spectrum], weights: Sequence[float], name: str = "") -> Spectrum:
+    """The spectrum of a mixture: the sum of the spectra of its components, each times its
+    amount (the Beer-Lambert law for absorbance).
+
+    The amounts are used as they are and are not scaled to a sum of one: twice the amount of
+    everything gives twice the spectrum.  Stick spectra give a stick spectrum with the sticks
+    of all components.  Measured curves have to be on one grid and give a curve on that grid.
+    Sticks and curves cannot be mixed here; broaden both onto one grid first
+    (:func:`feature_matrix`) and mix the rows.
+    """
+    if len(spectra) == 0:
+        raise ValueError("a mixture needs at least one component")
+    w = _amounts(weights, len(spectra))
+    kinds = {s.kind for s in spectra}
+    if len(kinds) > 1:
+        raise ValueError("sticks and curves cannot be mixed; put both on one grid first")
+    first = spectra[0]
+    if first.kind == "sticks":
+        x = np.concatenate([s.x for s in spectra])
+        y = np.concatenate([wi * s.y for wi, s in zip(w, spectra)])
+        return Spectrum(x, y, "sticks", first.axis, name)
+    for s in spectra[1:]:
+        if len(s) != len(first) or not np.allclose(s.x, first.x):
+            raise ValueError("measured curves have to be on one grid to be mixed")
+    y = np.sum([wi * s.y for wi, s in zip(w, spectra)], axis=0)
+    return Spectrum(first.x, y, "curve", first.axis, name, dict(first.meta))
+
+
+def mixture_kernel(K: np.ndarray, amounts: np.ndarray, others: Optional[np.ndarray] = None,
+                   normalize: bool = False) -> np.ndarray:
+    """The kernel of mixtures from the kernel of their components: ``W' K W^T``.
+
+    `K` is the kernel of the components, not normalised (``spectrum_kernel(F,
+    normalize=False)`` or :func:`exact_kernel` with ``normalize=False``).  `amounts` holds
+    one row per mixture with the amount of every component; the columns of the result are
+    these mixtures.  The rows are the mixtures of `others`, or the same mixtures.  With
+    `normalize` the result is put into the cosine form afterwards, which removes the total
+    amount of each mixture; the cosine kernel of the components must not be given as `K`,
+    because the norm of a mixture is not the sum of the norms of its components.
+    """
+    K = np.asarray(K, float)
+    W = np.atleast_2d(np.asarray(amounts, float))
+    V = W if others is None else np.atleast_2d(np.asarray(others, float))
+    if K.ndim != 2 or K.shape[0] != K.shape[1]:
+        raise ValueError("the kernel of the components has to be a square matrix")
+    if W.shape[1] != len(K) or V.shape[1] != len(K):
+        raise ValueError(f"{len(K)} components need {len(K)} amounts in every row")
+    out = V @ K @ W.T
+    if normalize:
+        nw = np.einsum("ij,jk,ik->i", W, K, W)
+        nv = np.einsum("ij,jk,ik->i", V, K, V)
+        out = out / np.sqrt(np.maximum(nv[:, None] * nw[None, :], 1e-300))
     return out
 
 

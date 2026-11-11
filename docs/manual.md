@@ -11686,6 +11686,141 @@ conformer search is made, and no spectrum is averaged over conformers. The 280 c
 without a computed spectrum are not candidates, so the library is smaller than the set. A
 measured spectrum of a salt or of a metal complex has no computed partner at all.
 
+## Mixtures and quantification: the spectrum of a mixture as a sum of fields
+
+This section is the first half of plan item SP6 (`benchmarks/run_mixtures.py`,
+`benchmarks/results/mixtures/table.md`). It uses no new data and no quantum calculation.
+
+**The identity.** By the Beer-Lambert law the absorbance spectrum of a mixture is the sum of
+the spectra of its components, each times its amount. The kernel of equation
+(#eq:spectrum-kernel) is linear in each of its two spectra. So the kernel of two mixtures $M$
+and $M'$ with the amounts $w_a$ and $w'_b$ of the components $A_a$ is the same weighted sum
+over the kernels of the components:
+
+$$
+k(M, M') \;=\; \sum_a \sum_b w_a\, w'_b\; k(A_a, A_b)
+$$
+<!-- #eq:mixture-kernel -->
+
+`spectrum.mix` makes the spectrum of a mixture, and `spectrum.mixture_kernel` computes this
+product from the kernel of the components. A test checks that the two ways agree; in the
+benchmark they differ by $6\times10^{-16}$ of the largest element. This is the identity that
+`fields.combine_members` uses for an ensemble of conformers, with one difference: the weights
+of an ensemble are scaled to a sum of one, and the amounts of a mixture are not. The identity
+holds for the kernel that is not normalised. The cosine kernel of the components must not be
+put into it, because the length of a mixture is not the sum of the lengths of its components.
+
+**What is made.** Mixtures are synthesised. Every repeat draws four components and makes 120
+mixtures to fit and 120 to test. The fractions are drawn evenly from all compositions, and the
+total amount is between 0.5 and 2. Every mixture has a baseline of its own (an offset up to 0.2
+and a straight rise or fall up to 0.1 over the axis) and noise of standard deviation 0.005,
+all in units of the strongest band of a pure component. Two kinds of components are used.
+The computed spectra of the 189 benzoic acids of section *A vibrational band as the local
+target* are close relatives, whose spectra overlap strongly. The measured Chemotion IR spectra
+(2,060 of them) carry real band shapes and real baselines; this part is left out when the set
+was not fetched. There are 20 repeats of each case.
+
+**What is asked, and of which model.** The amount of every component, and the fraction of
+every component, which does not depend on the total amount. The model is kernel ridge
+regression on the linear kernel of the rows of a description. The rows are the broadened
+curves as they are (*plain*) or their slopes, and they are either not normalised or divided
+by their length (the cosine form). The width of the broadening and the ridge are chosen by
+cross-validation inside the mixtures to fit. A second model puts a Gaussian layer on the
+distance of the linear kernel. Two references are given:
+
+- *Partial least squares regression* (PLS) on the same rows, with the number of components
+  chosen in the same way. This is how quantification is done in practice.
+- *The floor*: a least-squares fit of every test mixture with the known spectra of the pure
+  components and a baseline. With a linear response and white noise no estimate is better,
+  and a model that has to learn from mixtures cannot pass it.
+
+The numbers are root-mean-square errors on the test mixtures, means over the 20 repeats.
+
+| question | rows of the description | computed components: linear kernel | PLS | linear kernel over the floor | measured components: linear kernel | PLS | linear kernel over the floor |
+|---|---|---|---|---|---|---|---|
+| amount | the floor | 0.0022 | | 1 | 0.0013 | | 1 |
+| amount | plain, not normalised | 0.0024 | 0.0024 | 1.09 | 0.0014 | 0.0014 | 1.11 |
+| amount | slopes, not normalised | 0.0027 | 0.0027 | 1.19 | 0.0020 | 0.0020 | 1.57 |
+| amount | slopes, cosine | 0.135 | 0.136 | 65 | 0.137 | 0.139 | 112 |
+| fraction | the floor | 0.0022 | | 1 | 0.0012 | | 1 |
+| fraction | plain, not normalised: the predicted amounts divided by their sum | 0.0024 | 0.0023 | 1.07 | 0.0014 | 0.0013 | 1.10 |
+| fraction | slopes, cosine | 0.0140 | 0.0139 | 7.3 | 0.0227 | 0.0227 | 18.9 |
+| fraction | slopes, cosine, with the Gaussian layer | 0.0049 | | 2.2 | 0.0048 | | 4.0 |
+
+**The gate of this half is met.** The model finds the amounts with an error 9 % above the
+floor for the computed components and 11 % above it for the measured ones. So the weights are
+recovered to within the noise. The model equals PLS: the two errors differ by less than
+0.0001 in every row of the linear cases. The plan expected this. In a linear problem the
+field adds no accuracy over PLS, and what it adds is the reading that follows.
+
+**A fraction is not what the cosine form gives.** The plan named the cosine form for
+fractions, because it divides the total amount out. That is half of the answer, and the half
+that is missing costs a factor of 7 to 19 in the error. The cosine form divides the spectrum by
+its length, and the length of a mixture is not proportional to its total amount: it depends on
+which components are in it. The amount of a component over the length of the spectrum is a
+linear function of the normalised spectrum, but the fraction is the ratio of two such
+functions. The Gaussian layer learns a part of this ratio (2.2 and 4.0 times the floor). The
+direct way is better and needs nothing new: predict the amounts with the kernel that is not
+normalised and divide them by their sum, which gives 1.07 and 1.10 times the floor. The rule
+for the use of the two forms is therefore: the form that is not normalised for amounts and for
+fractions, and the cosine form only when nothing else than the shape of the spectrum is known,
+as in the identification of the sections above.
+
+**The slope costs when the baseline is in the fit, and saves the model when it is not.** With
+slopes in place of plain rows the error of the amounts rises from 1.09 to 1.19 times the floor
+for the computed components and from 1.11 to 1.57 for the measured ones. A derivative makes
+noise larger, and the plain rows do not need it here: the mixtures to fit show the baseline,
+and the model learns to ignore it. A fourth case takes the baseline out of the mixtures to fit
+and leaves it in the test mixtures, which is what a new instrument or a new sample holder
+does:
+
+| rows of the description | error of the amounts, linear kernel | PLS | linear kernel over the floor |
+|---|---|---|---|
+| plain, not normalised | 0.179 | 0.182 | 80 |
+| slopes, not normalised | 0.0029 | 0.0029 | 1.25 |
+
+The plain rows fail, for the kernel and for PLS alike, and the slopes lose almost nothing.
+The offset has no slope. The straight rise has a constant slope, and it does no harm for
+another reason: every row of the fit is the slope of a spectrum whose bands return to the
+baseline, so it sums to nearly zero over the axis; the weight of the model is a combination of
+these rows and sums to nearly zero too, and a constant added to a row then changes no
+prediction.
+
+**A bent calibration curve.** A third case adds stray light: 2 % of the light reaches the
+detector without passing the sample, and the strongest band of a pure component is 1.5, so
+the measured absorbance stops rising at about 1.7. The least-squares fit with the pure spectra
+takes the response as linear, and its error for the amounts is 0.054. The models that learn
+from mixtures reach 0.0040, because they learn to read the bands that are not saturated. The
+Gaussian layer adds nothing clear to the linear kernel for the amounts (difference 0.0000,
+95 % bootstrap interval over the repeats $-0.0002$ to $+0.0002$), and 0.0003 for the fractions
+that are made from them (0.0032 against 0.0035, interval $-0.0004$ to $-0.0002$). The linear
+kernel is 0.0008 better than PLS on the plain rows ($-0.0017$ to $-0.0002$). So this case
+does not show the gain that the plan allows the nonlinear layer where the calibration is not
+linear. A case in which every band of a component is saturated was not made.
+
+**The co-spectrum is the net signal of the component.** Chemometrics calls the part of the
+spectrum of a component that no combination of the other components and of the baseline can
+make its *net analyte signal*; it is the only part from which the amount of that component can
+be read. The co-spectrum of the model for an amount, which is the weight of the model over the
+axis, has a cosine of 0.99 with the net signal for the computed components and of 0.97 for
+the measured ones. So the co-spectrum of a quantification model can be read as a spectrum: it
+shows the bands of the component that the others do not cover, with a negative weight where
+another component has to be taken off. PLS gives a regression vector of the same kind; the
+kernel model gives it in the form that the other sections use.
+
+The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 repeats) and
+16 cm$^{-1}$ for the measured ones (15 of 20). The run takes 11 minutes.
+
+```
+python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
+```
+
+**What is not done.** No measured mixture is used: that is the second half of the item, and no
+public set of mixtures with known composition was looked for yet. The mixtures are ideal:
+the bands of a component do not move or widen with the composition, which they do in real
+solutions, and that is the other place where the plan expects the nonlinear layer to matter.
+Four components are few, and all of them are known to be present.
+
 ## A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

@@ -854,6 +854,18 @@ def registry() -> List[Benchmark]:
                   minutes="17",
                   report=lambda: _mod("run_spectra_computed").report(),
                   tables=["spectra_computed/table.md"]),
+        Benchmark("mixtures",
+                  "mixtures and quantification: mixtures of four components synthesised from "
+                  "the computed spectra of the benzoic acids and from the measured Chemotion "
+                  "IR spectra, with a varying total amount, a baseline and noise; the "
+                  "amounts and the fractions from kernel ridge on the linear kernel, against "
+                  "PLS on the same rows and a least-squares fit with the pure spectra; a "
+                  "bent calibration curve and a baseline that the fit never saw (the "
+                  "measured part needs prepare_chemotion_ir.py)",
+                  "run_mixtures.py", "mixtures", compute=[[]],
+                  minutes="11",
+                  report=lambda: _mod("run_mixtures").report(),
+                  tables=["mixtures/table.md"]),
         Benchmark("mutants",
                   "a point mutant of a protein as a difference field in the frame of the "
                   "mutated residue: the change of folding free energy of single substitutions "
