@@ -6622,6 +6622,29 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   position (the C=O length from the spectrum: q2 +0.858 against +0.973); the spectrum is
   computed by a quantum program on its own optimised geometry, so its gain over the five
   fields is what a quantum calculation knows, and no measured spectrum is used.
+  *The search for measured spectra, 11 November 2026* (`docs/public_3dqsar_datasets.md`, the
+  survey of that date). One open set of measured infrared spectra with structures was found:
+  Chemotion IR, 4,183 JCAMP-DX files with SMILES, CC BY-SA 4.0. The gas-phase spectra of NIST
+  are copyrighted and cannot be copied. The Raman Open Database (CC0) and RRUFF hold measured
+  spectra and powder patterns of minerals. No open set has measured spectra and a measured
+  property of the same compounds. The survey suggests two tests before any property model: a
+  measured spectrum against other measured spectra of the same compounds, and a measured
+  spectrum against a computed library.
+  *The first test on measured spectra, 11 November 2026*
+  (`benchmarks/prepare_chemotion_ir.py`, `benchmarks/run_spectra_measured.py`,
+  `benchmarks/results/spectra_measured/`). `spectrum.read_jcamp` reads JCAMP-DX files with
+  their compressed forms, and `spectrum.absorbance` converts a transmittance. Chemotion IR is
+  fetched into the cache and is not copied into the repository: 2,114 infrared spectra of
+  1,925 compounds. 19 curves are copies of another curve of the same compound and 8 files are
+  attached to two different compounds; these are left out. 138 compounds have spectra of two
+  or more samples. A measured spectrum finds the other sample of its compound among 1,912
+  compounds in 87.6 % of the queries (among the first ten: 95.4 %), with the kernel of the
+  slopes of the spectra (`spectrum.slope`, closed form `spectrum.slope_overlap`) at a width of
+  4 cm⁻¹, chosen on half of the compounds. The plain kernel finds 59.9 % (difference
+  +27.9 points, 95 % interval +21.8 to +34.4), because a measured curve has a baseline. The
+  region from 700 to 1800 cm⁻¹ alone gives 87.9 %. A wrong answer is a relative of the right
+  compound (Tanimoto similarity 0.59 against 0.10 at random). This is the ceiling for a
+  measured query against a computed library, which is the next test.
   *Open:* half (b), a set of measured spectra with a measured property, which has to be a pair
   in which the experiment shows what decides the property, and which the second measurement
   now justifies; a kernel that reads the position of a line as exactly as a regression does
@@ -6818,10 +6841,11 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   10 to 20 cm⁻¹. *With a second density functional the gate is met among the whole series.*
   The 42 % was a limit of GFN2-xTB and not of the kernel. Control: GFN2-xTB started from the
   geometries of the library gives 43.3 %, so the start geometry is not the reason.
-  *Open:* a measured spectrum, which differs from a computed one in more than the places of the
-  lines (hydrogen-bonded pairs of the acid in a solid or a solution, bands that are not
-  harmonic); a library larger than the series; the co-field of a structural direction in
-  space.
+  *Open:* a measured spectrum as the query against a computed library. Measured spectra
+  against each other are done (see SP1: 87.6 % among 1,912 compounds, which is the ceiling).
+  A measured spectrum differs from a computed one in more than the places of the lines
+  (hydrogen-bonded pairs of the acid in a solid or a solution, bands that are not harmonic);
+  a library larger than the series; the co-field of a structural direction in space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two

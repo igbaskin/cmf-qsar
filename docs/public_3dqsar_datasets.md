@@ -450,3 +450,98 @@ as log K rather than pK; reverse the sign.
 - cheminformatics.org dataset archive (old mirror of the Sutherland sets): site offline, Wayback not reachable from here.
 - Open3DQSAR / Open3DALIGN: no bundled example data sets found on the project pages.
 - No Zenodo or figshare deposit of the Sutherland sets was found; papers that reuse them cite the ACS SI or "the archive of Zhokhova and Baskin".
+
+## Measured spectra with structures (survey of 11 November 2026)
+
+Plan items SP1 and SP3 used computed spectra only. This survey looks for measured spectra that
+can be used with them. A set is useful when it has three things together: the measured spectra
+in a file format, the structure of every compound, and terms of use that allow the data to be
+fetched for research. Nothing was downloaded during the survey. Status column: "verified" = the
+page of the record or of the licence was opened and read; "reported" = taken from a paper, an
+index page or a search result, and not opened.
+
+### 1. Measured infrared spectra of organic compounds
+
+| Location | Content | Terms | Status |
+|---|---|---|---|
+| Chemotion IR, RADAR4Chem, https://doi.org/10.22000/OGoEQGlsZGElrgst (Jung, Tremouilhac, Punjabi et al., Karlsruhe Institute of Technology, published 22 March 2024) | 4,183 measured FT-IR spectra as JCAMP-DX files (`*.jdx`) and one `meta_data.json` (3.3 MB) with `sample_id`, `cano_smiles`, `kind`, `analysis_id`, `authors`, `affiliations`, `content`, `datasets`, `filename`, `identifier` and `instrument` for every file; one archive of 47.5 MB. The compounds were synthesised in research laboratories, mostly at the Karlsruhe Institute of Technology; the record gives 2022-2023 as the years of production. A compound can have several samples and so several spectra. | CC BY-SA 4.0 | verified (record page; the files were read on 11 November 2026) |
+| The paper that prepared it: Punjabi, Huang, Holzhauer et al., J. Cheminform. 17, 24 (2025), https://doi.org/10.1186/s13321-025-00960-2; code at https://github.com/ComPlat/ir_analysis | Of 4,175 samples with an infrared spectrum the authors removed 441 by eye for a high baseline or high noise, and their cleaned set has 1,763 samples. The target of the paper is the presence of 17 functional groups. | CC BY 4.0 (the article) | verified |
+| NIST Chemistry WebBook (SRD 69), https://webbook.nist.gov/chemistry/ | Infrared spectra of more than 16,000 compounds: about 6,000 in the gas phase and about 10,000 in a condensed phase. Every compound page offers its spectrum as a JCAMP-DX file. | Standard Reference Data: copyright of the U.S. Secretary of Commerce, all rights reserved (https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications). No statement that allows the collection to be downloaded as a whole or to be passed on was found. | the licence page verified; the size reported |
+| NIST/EPA Gas-Phase Infrared Database (SRD 35), https://www.nist.gov/srd/nist-standard-reference-database-35 | 5,228 gas-phase spectra in JCAMP-DX format with structures as MOL files: 3,108 from the EPA vapour-phase library and 2,120 from NIST | a product that is ordered from NIST | reported (from the paper above) |
+
+Notes
+- Chemotion IR is the only open set of measured infrared spectra with structures that the
+  survey found. Its licence is share-alike: a copy or a derived file that is passed on has to
+  carry the same licence and name the authors. Under the rule of this document the set is
+  therefore fetched by a script into `benchmarks/cache/` and not copied into the repository,
+  unless a derived file is added with that licence stated beside it.
+- What the files hold (downloaded and read on 11 November 2026 by
+  `benchmarks/prepare_chemotion_ir.py`). The download is a tar archive of 47.5 MB with
+  `meta_data.json` and the spectra as `IR_data.tar.xz`. The metadata describe 2,116
+  measurements of 1,926 compounds; a measurement has up to three files (the spectrum as the
+  instrument wrote it, and copies with the peaks that a chemist marked), which gives the
+  4,183 files. A spectrum has about 2,560 points from 4000 to 374 cm^-1 as transmittance.
+  The metadata name ATR, a measurement on the neat solid or liquid, for 2,085 of the 2,114
+  infrared spectra that can be read, and most instruments are of one type (Bruker Alpha).
+  154 compounds have spectra of two or more samples. 19 files are attached to two samples of
+  one compound, and 8 files are attached to the samples of two different compounds, so at
+  least one structure of each of these 8 pairs is not the one that was measured
+  (`benchmarks/results/spectra_measured/measured.json` lists the sample numbers).
+- The computed spectra of this repository are harmonic
+  spectra of one molecule in the gas phase. A carboxylic acid, an alcohol or an amide forms
+  hydrogen bonds in a condensed sample, which moves and broadens its bands. A comparison of a
+  measured with a computed spectrum will show this difference, and that is a part of what the
+  test is for.
+- The gas-phase spectra of NIST would be the fairest first test for a computed library, and
+  they are the ones that cannot be copied. They can be read one compound at a time on the
+  site. A scripted download of many compounds needs a decision of the user and a reading of
+  the terms of the site.
+
+### 2. Measured spectra of other kinds
+
+| Location | Content | Terms | Status |
+|---|---|---|---|
+| Raman Open Database, https://solsa.crystallography.net/rod/ (El Mendili et al., J. Appl. Cryst. 52, 618 (2019)) | 1,133 entries with measured Raman spectra of minerals and inorganic phases in CIF-like files, each linked to its crystal structure in the Crystallography Open Database | CC0 | reported |
+| RRUFF, https://www.rruff.net (moved from rruff.info) | minerals: 5,852 oriented and 7,764 unoriented Raman spectra, 937 infrared spectra, measured powder diffraction patterns and the chemistry of every sample; zip files of all data | not read: the site asks every visitor to confirm that they are human, and an automated reader must not do that | reported; the page could not be opened |
+| MassBank, https://github.com/MassBank/MassBank-data (releases at https://doi.org/10.5281/zenodo.3378723) | measured mass spectra as text records with the structure of the compound; several records of one compound from different instruments | one licence per record, named in the record | the repository page verified; the licence of the records reported |
+
+Notes
+- A measured powder pattern of RRUFF against powder patterns calculated from candidate crystal
+  structures is the measured form of the first measurement of SP1, and a calculated pattern
+  costs a fraction of a second. It needs the terms of RRUFF, which a person has to read on the
+  site.
+- A mass spectrum is a measured stick spectrum, and the kernel of `cmfqsar/spectrum.py` on two
+  mass spectra is close to the cosine score that the field already uses. The repository has no
+  way to compute a mass spectrum from a structure, so MassBank would allow a comparison of
+  measured with measured spectra only.
+
+### 3. Computed spectra, for a larger library
+
+| Location | Content | Terms | Status |
+|---|---|---|---|
+| USPTO-Spectra, Sci. Data (2025), https://www.nature.com/articles/s41597-025-05729-8 | infrared spectra from molecular dynamics (not harmonic) and NMR data for about 177,000 molecules taken from patents | CC BY 4.0 | reported |
+| SQuIRL, a spectral library on the molecules of QM9 | computed harmonic infrared spectra of about 134,000 small molecules | CC BY 4.0 | reported |
+
+### 4. What the survey suggests
+
+1. *A measured spectrum against other measured spectra of the same compounds.* Chemotion IR
+   holds several spectra for some compounds. One spectrum is the query, and the spectra of the
+   other samples are the library. This needs no calculation, uses the reader for measured
+   curves on real files, and says how well the kernel finds a compound when the only
+   difference is the sample and the instrument. It is the ceiling for everything else.
+   *Done on 11 November 2026* (`benchmarks/run_spectra_measured.py`): the compound is
+   found first in 87.6 % of the queries among 1,912 compounds and among the first ten in
+   95.4 %, with the kernel of the slopes of the spectra; the plain kernel finds 59.9 %.
+2. *A measured spectrum against a computed library.* The identification test of SP3 with a
+   measured query. GFN2-xTB spectra of all compounds cost seconds each; density-functional
+   spectra are affordable for a subset of a few hundred small compounds (the 189 benzoic acids
+   took 4.6 hours at B97-3c).
+3. A property model on measured spectra, which is the second half of SP1 as the plan words it,
+   comes after these two. The set has no measured property; the functional groups of the paper
+   above are the only labels, and they follow from the structure.
+
+### 5. Not found
+
+- No open set of measured gas-phase infrared spectra with structures.
+- No open set that has measured spectra and a measured property of the same compounds.
+- SDBS (AIST, Japan) and the commercial spectral libraries were not opened in this survey.

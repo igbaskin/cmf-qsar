@@ -947,6 +947,19 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_spectra_bridge").report(),
                   tables=["spectra_bridge/table.md"]),
+        Benchmark("spectra_measured",
+                  "a measured infrared spectrum against other measured spectra of the same "
+                  "compounds: 2,079 spectra of the Chemotion IR set, the compound of a query "
+                  "ranked among 1,912 compounds by the plain kernel, by the kernel of the "
+                  "spectra with their mean taken off and by the kernel of the slopes, form "
+                  "and width chosen on half of the compounds (the set is CC BY-SA 4.0 and is "
+                  "not in the repository: prepare_chemotion_ir.py downloads 47.5 MB into "
+                  "benchmarks/cache)",
+                  "run_spectra_measured.py", "spectra_measured", compute=[[]],
+                  prepare=["prepare_chemotion_ir.py"],
+                  minutes="1",
+                  report=lambda: _mod("run_spectra_measured").report(),
+                  tables=["spectra_measured/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

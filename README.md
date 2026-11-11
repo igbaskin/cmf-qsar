@@ -2973,6 +2973,43 @@ python examples/make_band_examples.py --orca-ir --jobs 16  # the B97-3c spectra,
 python benchmarks/run_spectra_bridge.py                    # all parts, 15 minutes
 ```
 
+### A measured spectrum against other measured spectra
+
+The first test on measured spectra
+([run_spectra_measured.py](benchmarks/run_spectra_measured.py)). The set is Chemotion IR
+(https://doi.org/10.22000/OGoEQGlsZGElrgst, CC BY-SA 4.0): infrared spectra that chemists
+measured of their own research compounds, with the SMILES of every compound. Its licence is
+share-alike, so no file of it is in this repository:
+[prepare_chemotion_ir.py](benchmarks/prepare_chemotion_ir.py) downloads it (47.5 MB) into the
+cache. `spectrum.read_jcamp` reads the JCAMP-DX files with their compressed forms, and
+`spectrum.absorbance` turns a transmittance into an absorbance.
+
+Some compounds were measured on two or more samples. One spectrum is the query, and the
+library holds one spectrum of every compound: another sample for the compound of the query.
+Nothing is computed from a structure, so the result is the ceiling for a measured query
+against a computed library.
+
+- 27 curves of the set are copies: 19 files are attached to two samples of one compound, and
+  8 files to the samples of two different compounds. They are left out. 2,079 spectra of 1,912
+  compounds stay, and 138 compounds have two or more.
+- A measured spectrum finds the other sample of its compound among 1,912 compounds in 87.6 %
+  of the queries, and puts it among the first ten in 95.4 %. The form of the kernel and the
+  width are chosen on half of the compounds and scored on the other half.
+- The form matters most. A measured curve stands on a baseline, and the plain kernel counts it
+  as intensity: it finds 59.9 %. The kernel of the slopes of the spectra (`spectrum.slope`,
+  with the closed form `spectrum.slope_overlap`) does not see a constant baseline and finds
+  27.9 points more (95 % interval +21.8 to +34.4). The width chosen is 4 cm⁻¹.
+- The region from 700 to 1800 cm⁻¹ alone gives the same result (87.9 %), so the region of the
+  O-H and N-H stretch bands, where a gas-phase calculation differs most from a measurement on
+  a solid, can be left out at no cost.
+- A wrong answer is a relative of the right compound: Tanimoto similarity 0.59 on average,
+  against 0.10 for a compound drawn at random.
+
+```bash
+python benchmarks/prepare_chemotion_ir.py     # once: downloads 47.5 MB into benchmarks/cache
+python benchmarks/run_spectra_measured.py     # 10 seconds
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

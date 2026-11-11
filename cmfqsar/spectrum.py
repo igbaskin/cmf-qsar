@@ -37,6 +37,19 @@ The width says how far two peaks may be apart and still count as the same peak. 
 hyper-parameter, chosen by cross-validation, and :func:`multi_width_kernel` sums the kernels of
 several widths.
 
+The slope of a spectrum
+-----------------------
+A measured curve stands on a baseline: an offset or a slow drift that comes from the
+instrument and from the contact with the sample, and not from the compound.  The kernel above
+counts a baseline as intensity.  :func:`slope` takes the derivative of every broadened
+spectrum along the axis.  A constant baseline has no slope, and a slow drift has a small one.
+The kernel of the slopes is the kernel above with one more factor (:func:`slope_overlap`), ::
+
+    k'(A, B) = SUM_ij a_i b_j (1 - d^2 / (2 sigma^2)) exp( -d^2 / (4 sigma^2) ) / (2 sigma^2)
+
+with ``d = x_i - y_j``.  Two sticks at the same place count as before, two sticks 1.41 widths
+apart count as nothing, and two sticks further apart count against each other.
+
 The co-spectrum
 ---------------
 A kernel ridge model on the cosine kernel is linear in the normalised broadened spectrum
@@ -47,13 +60,18 @@ is positive where intensity raises the predicted property and negative where it 
 Readers
 -------
 :func:`read_sticks` and :func:`read_measured` read two-column text (the reader of
-``scattering.py`` with the axis left to the caller).  :func:`orca_sticks` takes the infrared
-spectrum from an ORCA frequency job.  :func:`powder_sticks` computes the powder diffraction
-pattern of a crystal with pymatgen, for X-rays or for neutrons.
+``scattering.py`` with the axis left to the caller).  :func:`read_jcamp` reads a JCAMP-DX file,
+the format in which instruments and repositories store a measured spectrum, with its
+compressed forms; :func:`absorbance` turns a transmittance spectrum into an absorbance
+spectrum.  :func:`orca_sticks` takes the infrared spectrum from an ORCA frequency job.
+:func:`powder_sticks` computes the powder diffraction pattern of a crystal with pymatgen, for
+X-rays or for neutrons.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
+import re
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -89,6 +107,9 @@ class Spectrum:
     kind: str = "sticks"
     axis: str = "wavenumber"
     name: str = ""
+    #: what the file said about the spectrum, for example the unit of the intensities
+    #: (``yunits``); empty for a spectrum that was not read from a file
+    meta: Dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         x = np.atleast_1d(np.asarray(self.x, float))
@@ -128,7 +149,8 @@ class Spectrum:
     def within(self, x_min: float, x_max: float) -> "Spectrum":
         """The part of the spectrum between two positions of the axis."""
         keep = (self.x >= x_min) & (self.x <= x_max)
-        return Spectrum(self.x[keep], self.y[keep], self.kind, self.axis, self.name)
+        return Spectrum(self.x[keep], self.y[keep], self.kind, self.axis, self.name,
+                        dict(self.meta))
 
 
 # --------------------------------------------------------------------------- #
@@ -152,6 +174,199 @@ def read_measured(path: str, axis: str = "wavenumber") -> Spectrum:
 
     rec = read_curve(path)
     return Spectrum(rec["x"], rec["y"], "curve", axis, rec["name"])
+
+
+# JCAMP-DX compresses a list of ordinates with letters in place of the sign and the first
+# digit of a number (the ASDF forms): a squeezed value, a difference from the last value, and
+# a repeat count.
+_SQUEEZED = {**{c: i for i, c in enumerate("@ABCDEFGHI")},
+             **{c: -(i + 1) for i, c in enumerate("abcdefghi")}}
+_DIFFERENCE = {**{c: i for i, c in enumerate("%JKLMNOPQR")},
+               **{c: -(i + 1) for i, c in enumerate("jklmnopqr")}}
+_REPEAT = {c: i + 1 for i, c in enumerate("STUVWXYZs")}
+#: a value of a compressed table (no exponent: E and e are squeezed digits there), a value of
+#: a table of plain numbers, and the letters that only a compressed table holds
+_TOKEN = re.compile(r"[@A-Ia-i%J-Rj-rS-Zs+\-]?[0-9]*\.?[0-9]*")
+_PLAIN = re.compile(r"[+\-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[Ee][+\-]?[0-9]+)?")
+_ONLY_COMPRESSED = re.compile(r"[@A-DF-Ia-df-i%J-Rj-rS-Zs]")
+_AXES_OF_UNITS = {"1/CM": "wavenumber", "CM-1": "wavenumber", "CM^-1": "wavenumber",
+                  "PPM": "shift", "EV": "binding_energy", "DEGREES": "two_theta"}
+
+
+def _label(text: str) -> str:
+    """A JCAMP-DX label in the form in which labels are compared: upper case, without
+    spaces, dashes, slashes and underscores."""
+    return re.sub(r"[\s\-/_]", "", text).upper()
+
+
+def _tokens(line: str, compressed: bool = True) -> List[Tuple[str, float]]:
+    """The values of one line of ordinates as (form, number): the form is "value",
+    "difference" or "repeat".  A line of plain numbers may use exponents; a compressed line
+    may not, because the letters E and e stand for digits there."""
+    out: List[Tuple[str, float]] = []
+    if not compressed:
+        return [("value", float(m.group(0))) for m in _PLAIN.finditer(line)]
+    for m in _TOKEN.finditer(line.replace(",", " ")):
+        word = m.group(0)
+        if not word:
+            continue
+        head = word[0]
+        if head in _SQUEEZED:
+            digits = word[1:]
+            value = float(str(abs(_SQUEEZED[head])) + digits)
+            out.append(("value", -value if _SQUEEZED[head] < 0 else value))
+        elif head in _DIFFERENCE:
+            digits = word[1:]
+            value = float(str(abs(_DIFFERENCE[head])) + digits)
+            out.append(("difference", -value if _DIFFERENCE[head] < 0 else value))
+        elif head in _REPEAT:
+            out.append(("repeat", float(str(_REPEAT[head]) + word[1:])))
+        elif word not in ("+", "-", "."):
+            out.append(("value", float(word)))
+    return out
+
+
+def decode_ordinates(lines: Sequence[str]) -> np.ndarray:
+    """The ordinates of an ``(X++(Y..Y))`` table of a JCAMP-DX file.
+
+    Every line starts with an abscissa, which is only a check and is dropped.  The ordinates
+    that follow are plain numbers or one of the compressed forms: a squeezed value, a
+    difference from the value before, or a count that repeats the last value or the last
+    difference.  When a line ends with a difference, the next line starts with the value that
+    the differences have reached, again as a check, and that value is not a new ordinate.
+    """
+    y: List[float] = []
+    ended_with_difference = False
+    compressed = any(_ONLY_COMPRESSED.search(line) for line in lines)
+    for line in lines:
+        tokens = _tokens(line, compressed)
+        if len(tokens) < 2:
+            continue
+        tokens = tokens[1:]                              # the abscissa of the line
+        last = None                                      # the last form on this line
+        first = True
+        for form, number in tokens:
+            if form == "value":
+                if first and ended_with_difference and y:
+                    last = ("value", number)             # the check value: already in y
+                else:
+                    y.append(number)
+                    last = ("value", number)
+            elif form == "difference":
+                y.append((y[-1] if y else 0.0) + number)
+                last = ("difference", number)
+            elif form == "repeat" and last is not None:
+                for _ in range(int(number) - 1):
+                    y.append(y[-1] + last[1] if last[0] == "difference" else y[-1])
+            first = False
+        ended_with_difference = last is not None and last[0] == "difference"
+    return np.array(y, float)
+
+
+def parse_jcamp(text: str) -> List[dict]:
+    """The blocks of a JCAMP-DX text that hold data.
+
+    A file can hold several blocks, each from ``##TITLE=`` to ``##END=``: a spectrum, a table
+    of the peaks that somebody picked, and blocks that only link the others.  Every block with
+    an ``XYDATA`` table or a ``PEAKTABLE`` (or ``XYPOINTS``) is returned as a dictionary with
+    ``labels`` (the labelled entries of the block, by the label in upper case without spaces,
+    dashes, slashes and underscores), ``kind`` ("curve" for ``XYDATA``, "sticks" for a table
+    of points) and the arrays ``x`` and ``y``.  The factors ``XFACTOR`` and ``YFACTOR`` are
+    applied.  For ``(X++(Y..Y))`` the abscissas run evenly from ``FIRSTX`` to ``LASTX``.
+    """
+    blocks: List[dict] = []
+    labels: Dict[str, str] = {}
+    table: Optional[str] = None
+    form = ""
+    rows: List[str] = []
+
+    def close():
+        nonlocal table, rows, form
+        if table is None:
+            return
+        try:
+            if "X++(Y..Y)" in form.replace(" ", "").upper():
+                y = decode_ordinates(rows) * float(labels.get("YFACTOR", 1.0) or 1.0)
+                if len(y) >= 2 and "FIRSTX" in labels and "LASTX" in labels:
+                    x = np.linspace(float(labels["FIRSTX"]), float(labels["LASTX"]), len(y))
+                    blocks.append({"labels": dict(labels), "kind": "curve", "x": x, "y": y})
+            else:
+                numbers = [float(w) for row in rows
+                           for w in re.split(r"[\s,;()]+", row) if w]
+                pairs = np.array(numbers[:len(numbers) // 2 * 2], float).reshape(-1, 2)
+                if len(pairs):
+                    kind = "curve" if table == "XYDATA" else "sticks"
+                    blocks.append({"labels": dict(labels), "kind": kind,
+                                   "x": pairs[:, 0] * float(labels.get("XFACTOR", 1.0) or 1.0),
+                                   "y": pairs[:, 1] * float(labels.get("YFACTOR", 1.0) or 1.0)})
+        except ValueError:
+            pass                                          # a table that is not numbers
+        table, rows, form = None, [], ""
+
+    for raw in text.splitlines():
+        line = raw.split("$$")[0].rstrip()
+        if not line.strip():
+            continue
+        if line.lstrip().startswith("##"):
+            close()
+            name, _, value = line.lstrip()[2:].partition("=")
+            key = _label(name)
+            if key == "TITLE":
+                labels = {}
+            if key in ("XYDATA", "PEAKTABLE", "XYPOINTS"):
+                table, form = key, value
+            elif key != "END":
+                labels[key] = value.strip()
+        elif table is not None:
+            rows.append(line)
+    close()
+    return blocks
+
+
+def read_jcamp(path: str, name: str = "") -> Spectrum:
+    """A spectrum from a JCAMP-DX file: its first block with a table of data.
+
+    A block with ``XYDATA`` gives a measured curve, and a block with a table of points gives
+    a stick spectrum; a curve is taken first when the file has both.  The axis is named from
+    ``XUNITS`` (``1/CM`` is the wavenumber).  ``meta`` holds ``yunits``, ``xunits``,
+    ``title`` and ``datatype`` as the file gives them; see :func:`absorbance`.
+    """
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        blocks = parse_jcamp(fh.read())
+    if not blocks:
+        raise ValueError(f"{path}: no table of data was found in this JCAMP-DX file")
+    block = next((b for b in blocks if b["kind"] == "curve"), blocks[0])
+    lab = block["labels"]
+    units = lab.get("XUNITS", "").upper().replace(" ", "")
+    meta = {"yunits": lab.get("YUNITS", ""), "xunits": lab.get("XUNITS", ""),
+            "title": lab.get("TITLE", ""), "datatype": lab.get("DATATYPE", "")}
+    return Spectrum(block["x"], block["y"], block["kind"],
+                    _AXES_OF_UNITS.get(units, units.lower() or "wavenumber"),
+                    name or lab.get("TITLE", ""), meta)
+
+
+def absorbance(spectrum: Spectrum) -> Spectrum:
+    """The same spectrum with absorbance as its intensity.
+
+    The unit is read from ``meta["yunits"]``.  A transmittance ``T`` becomes ``-log10(T)``; a
+    transmittance in per cent (the unit says so, or the values go above 1.5) is divided by
+    100 first, and values at or below zero are set to a small positive number.  An absorbance
+    spectrum is returned as it is.  Another unit is an error, because the kernel compares
+    intensities and must not mix two kinds of them.
+    """
+    units = spectrum.meta.get("yunits", "").upper()
+    if "ABSORB" in units:
+        return spectrum
+    if "TRANSMI" not in units:
+        raise ValueError(f"the spectrum '{spectrum.name}' has the intensity unit "
+                         f"'{spectrum.meta.get('yunits', '')}', which is neither a "
+                         f"transmittance nor an absorbance")
+    t = np.asarray(spectrum.y, float)
+    if "%" in units or "PERCENT" in units or (len(t) and float(np.max(t)) > 1.5):
+        t = t / 100.0
+    y = -np.log10(np.clip(t, 1e-6, None))
+    return Spectrum(spectrum.x, y, spectrum.kind, spectrum.axis, spectrum.name,
+                    dict(spectrum.meta, yunits="ABSORBANCE"))
 
 
 def orca_sticks(source, scale: float = 1.0, name: str = "") -> Spectrum:
@@ -239,6 +454,27 @@ def stick_overlap(a: Spectrum, b: Spectrum, sigma: float, power: float = 1.0) ->
     return float(wa @ np.exp(-d * d / (4.0 * sigma * sigma)) @ wb)
 
 
+def slope_overlap(a: Spectrum, b: Spectrum, sigma: float, power: float = 1.0) -> float:
+    """The overlap of the slopes of two broadened spectra, in closed form: ::
+
+        SUM_ij a_i b_j (1 - d^2 / (2 sigma^2)) exp(-d^2 / (4 sigma^2)) / (2 sigma^2)
+
+    with ``d = x_i - y_j``.  It is ``2 sigma sqrt(pi)`` times the integral of the product of
+    the derivatives of the two broadened spectra, as :func:`stick_overlap` is that multiple
+    of the integral of the product of the broadened spectra themselves.  A constant added to
+    a measured curve changes this sum only through the two ends of the curve.
+    """
+    if sigma <= 0:
+        raise ValueError("the width sigma must be positive")
+    xa, wa = a.lines()
+    xb, wb = b.lines()
+    if len(xa) == 0 or len(xb) == 0:
+        return 0.0
+    wa, wb = _powered(wa, power), _powered(wb, power)
+    u = (xa[:, None] - xb[None, :]) ** 2 / (sigma * sigma)
+    return float(wa @ ((1.0 - 0.5 * u) * np.exp(-0.25 * u)) @ wb) / (2.0 * sigma * sigma)
+
+
 def exact_kernel(spectra: Sequence[Spectrum], sigma: float,
                  others: Optional[Sequence[Spectrum]] = None, power: float = 1.0,
                  normalize: bool = True) -> np.ndarray:
@@ -315,6 +551,10 @@ def broaden(spectrum: Spectrum, grid: Grid, sigma: float, power: float = 1.0) ->
         raise ValueError("the width sigma must not be negative")
     x, w = spectrum.lines()
     w = _powered(w, power)
+    if spectrum.kind == "curve" and len(x) > 2:
+        steps = np.diff(x)
+        if np.allclose(steps, steps[0], rtol=1e-3, atol=0.0) and sigma >= 2.0 * steps[0]:
+            return _broaden_even_curve(x, w, float(np.mean(steps)), gx, sigma)
     reach = CUT * sigma
     norm = 1.0 / (sigma * np.sqrt(2.0 * np.pi))
     lo = np.searchsorted(gx, x - reach, side="left")
@@ -326,12 +566,48 @@ def broaden(spectrum: Spectrum, grid: Grid, sigma: float, power: float = 1.0) ->
     return out
 
 
+def _broaden_even_curve(x: np.ndarray, w: np.ndarray, step: float, gx: np.ndarray,
+                        sigma: float) -> np.ndarray:
+    """The sum of the Gaussians of the points of a curve on an even grid, as one convolution.
+
+    A measured curve has thousands of points, and a loop over them is slow.  On an even grid
+    the sum at the points of the curve is a convolution of the weights with the Gaussian,
+    which is exact there; between two points of the curve the value is interpolated.  The
+    caller uses this only when the width is at least two steps of the curve, where the
+    interpolation changes the result by less than one per cent of its largest value.
+    """
+    half = int(math.ceil(CUT * sigma / step))
+    offsets = step * np.arange(-half, half + 1)
+    kernel = np.exp(-0.5 * offsets * offsets / (sigma * sigma)) / (sigma * np.sqrt(2.0 * np.pi))
+    full = np.convolve(w, kernel, mode="full")
+    positions = x[0] + step * (np.arange(len(full)) - half)
+    return np.interp(gx, positions, full, left=0.0, right=0.0)
+
+
 def feature_matrix(spectra: Sequence[Spectrum], grid: Grid, sigma: float,
                    power: float = 1.0) -> np.ndarray:
     """The broadened spectra of a set on one grid, one row each."""
     if len(spectra) == 0:
         return np.zeros((0, len(grid.x)))
     return np.vstack([broaden(s, grid, sigma, power) for s in spectra])
+
+
+def slope(F: np.ndarray, grid: Grid) -> np.ndarray:
+    """The derivative along the axis of every row of a :func:`feature_matrix`.
+
+    The cosine kernel of these rows (:func:`spectrum_kernel`) is the kernel of the slopes of
+    the spectra, which does not see a constant baseline (:func:`slope_overlap` is its closed
+    form).  The derivative is a central difference on the grid, which makes the dot product
+    of two rows too small by about ``step^2 / (2 sigma^2)`` of its value: two per cent with
+    five grid points in one width.  The cosine form divides most of this out.  A broadened
+    measured curve falls to
+    zero within a few widths of its two ends, and this fall is a slope that the compound did
+    not cause: let the grid end a few widths inside the range of the measured curves.
+    """
+    F = np.asarray(F, float)
+    if F.ndim != 2 or F.shape[1] < 2:
+        raise ValueError("the slope needs rows with at least two grid points")
+    return np.gradient(F, grid.step, axis=1)
 
 
 def spectrum_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
