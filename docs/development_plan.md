@@ -6781,6 +6781,36 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   spectrum computed at a second level of theory (or measured, where SP1(b) finds one) ranks its own
   molecule first among the series in most cases, where a composition descriptor cannot tell the
   isomers of the series apart at all.
+  **Built and measured 11 November 2026** (`benchmarks/run_spectra_bridge.py`,
+  `benchmarks/results/spectra_bridge/`). The second level is GFN2-xTB: `xtb.run_vibrations`
+  (an optimisation with frequencies in one call) and stage `--xtb-ir` of the builder give
+  `examples/spectra/benzoic_acids_ir_xtb.json` in less than a minute. Its carbonyl band is
+  29 cm⁻¹ above the ORCA one and its O-H stretch 182 cm⁻¹ below.
+  *Part (b), the gate.* The ORCA spectra are the library and a GFN2-xTB spectrum is the query.
+  The width, a map of the axis and the centring are fitted on the acids of half of the
+  substituents and used on the other half, ten times; the map is chosen inside the calibration
+  acids. The query ranks its own acid first in 42.3 % of the cases (sd 3.2) and among the first
+  three in 66.9 %; chance gives 0.5 %, the carbonyl band alone 2.7 %. *Among the whole series
+  the gate is not met.* Among the candidates with the composition of the query (99 % of the
+  acids share a formula with another acid) the spectrum is first in 70.6 %, against 45.0 % for
+  the composition alone, and it puts the right isomer above the other in 74.9 %: *for the
+  isomers, which the gate names, it is met.* Centring the spectra by the mean spectrum of each
+  level is what matters (27.0 % without it). A map of the axis does not help, two factors are
+  worse than none (36.0 %), and the width chosen is 50 to 100 cm⁻¹: the two levels agree on
+  regions and not line by line. A measured-like curve (4 cm⁻¹ resolution, 2 % noise) gives
+  37.8 % and 78.1 % among the isomers.
+  *Part (a).* A kernel CCA of a structural kernel and the spectrum kernel, on held-out
+  substituents against 100 shuffled pairings. With the five fields four pairs are above the
+  shuffled pairing. Pair 1 (held-out correlation +0.822) is the Hammett constant (r -0.79 and
+  -0.83 for the two variates) and is carried by the O-H and the C=O stretch. Pair 2 (+0.804) is
+  para against meta (r +0.86) and is carried by the bending modes below 1550 cm⁻¹. No target
+  was given. The expectation of the item holds on the spectral side with the O-H stretch as an
+  equal partner of the carbonyl band. On the structural side it holds with quantum charges
+  (the first pair is strongest at an envelope of 1 A, +0.893) and not with Gasteiger charges
+  (+0.105 at 1 A, +0.822 at 10 A), which is the finding of SP2 again.
+  *Open:* a second density functional as the second level, which would say whether 42 % is a
+  limit of the kernel or of GFN2-xTB; a measured spectrum; a library larger than the series;
+  the co-field of a structural direction in space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
@@ -6863,8 +6893,11 @@ next, since it needs no fetch~~ **done 10 November 2026**: the kernel, the co-sp
 and the readers, and the finding that a calculated powder pattern predicts the phonon
 frequency little better than the mean does; on 11 November 2026 the infrared spectra of the
 acids of SP2 predicted the Hammett constant as well as the best structural description; SP1(b)
-when a set is found; SP3 after SP1, because it needs the spectral kernel of the one and the series
-SP2 now holds. The structural side of SP3 and SP6 uses the start geometries of that series, for
+when a set is found; ~~SP3 after SP1, because it needs the spectral kernel of the one and the series
+SP2 now holds~~ **done 11 November 2026**: a spectrum of a second level finds its acid among the
+189 in 42 % of the cases and among its isomers in 71 %, and a kernel CCA finds the Hammett
+constant and the position of the substituent as its first two pairs. The structural side of
+SP3 and SP6 uses the start geometries of that series, for
 the reason SP2 found: an optimised geometry carries the bond length that decides the band.
 SP4 to SP6 after SP1, whose reader and
 kernel they extend: SP6(a) can run as soon as SP2's spectra exist, SP5 needs only the two public
@@ -7384,10 +7417,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 1 | SP1 (partly), SP3, SP4, SP5, SP6 |
+| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**165 items: 114 finished, 5 partly, 46 open.**
+**165 items: 115 finished, 5 partly, 45 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

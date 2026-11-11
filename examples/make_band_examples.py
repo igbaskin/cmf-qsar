@@ -10,7 +10,7 @@ group, which gives 189 acids (X = H is the same acid in both series and is kept 
 is the stretch of the carbonyl bond, the strongest band of an acid and the one whose shift with
 the substituent is textbook chemistry: an electron donor lowers it, an acceptor raises it.
 
-Four stages, all from this script.
+Five stages, all from this script.
 
 1. **The structures**, from SMILES: each acid is embedded with ETKDG, optimised with MMFF94, and
    the lowest-energy conformer with the carboxyl in its usual *syn* arrangement (the hydroxyl
@@ -43,6 +43,15 @@ Four stages, all from this script.
    the scaling factor of the level, and the intensities in km/mol.  Nothing is computed.
    `benchmarks/run_spectra_ir.py` reads this file.
 
+5. **The infrared spectrum of every acid at a second level of theory** (``--xtb-ir``): every
+   acid is optimised with GFN2-xTB from the structure of stage 1 and its harmonic frequencies
+   and infrared intensities are computed (``xtb --ohess``, `cmfqsar.xtb.run_vibrations`).
+   Written to `examples/spectra/benzoic_acids_ir_xtb.json` in the layout of stage 4, with the
+   wavenumbers as xtb gives them (not scaled).  The lines of the two levels are at different
+   places, as the lines of a measured and of a computed spectrum are.
+   `benchmarks/run_spectra_bridge.py` (plan item SP3) asks whether the spectrum of one level
+   finds its own acid among the spectra of the other.
+
 Usage
 -----
     python examples/make_band_examples.py                 # stage 1
@@ -50,6 +59,7 @@ Usage
     python examples/make_band_examples.py --orca --limit 4   # a quick look at the first four
     python examples/make_band_examples.py --xtb --jobs 8     # stage 3, 13 seconds in all
     python examples/make_band_examples.py --ir               # stage 4, a few seconds
+    python examples/make_band_examples.py --xtb-ir --jobs 8  # stage 5, less than a minute
 
 On the serial ORCA build of this machine (one core per job) benzoic acid alone takes 5 minutes.
 With ten to twenty acids running at the same time one acid takes 16 to 69 minutes and about
@@ -85,6 +95,8 @@ STRUCTURES = os.path.join(OUT_DIR, "benzoic_acids.sdf")
 BANDS = os.path.join(OUT_DIR, "benzoic_acids_co.sdf")
 QUANTUM = os.path.join(OUT_DIR, "benzoic_acids_xtb.sdf")
 INFRARED = os.path.join(OUT_DIR, "benzoic_acids_ir.json")
+INFRARED_XTB = os.path.join(OUT_DIR, "benzoic_acids_ir_xtb.json")
+XTB_IR_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_ir_work")
 WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "orca_work")
 XTB_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_work")
 
@@ -355,8 +367,6 @@ def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKD
     in cm^-1 (harmonic, times the scaling factor of the level) and their infrared intensities
     in km/mol.  The modes of translation and rotation and imaginary modes are left out.
     """
-    import json
-
     from cmfqsar import spectrum
 
     rows, missing, scales, levels = [], [], set(), set()
@@ -378,6 +388,17 @@ def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKD
                     "benzoic_acids_co.sdf, from the ORCA frequency jobs of plan item SP2",
             "axis": "wavenumber", "unit": "cm^-1", "intensity_unit": "km/mol",
             "frequency_scale": sorted(scales), "qm_level": sorted(levels)}
+    write_spectra(out, head, rows)
+    log(f"wrote the spectra of {len(rows)} acids to {os.path.relpath(out, ROOT)}"
+        + (f"; {len(missing)} acids have none" if missing else ""))
+    return len(missing)
+
+
+def write_spectra(out: str, head: dict, rows: Sequence[dict]) -> None:
+    """A file of stick spectra as JSON: the entries of `head`, then ``acids`` with one acid
+    on a line."""
+    import json
+
     with open(out, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("{\n")
         for key, value in head.items():
@@ -385,9 +406,45 @@ def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKD
         fh.write(' "acids": [\n')
         fh.write(",\n".join("  " + json.dumps(row) for row in rows))
         fh.write("\n ]\n}\n")
+
+
+def write_infrared_xtb(structures: str = STRUCTURES, out: str = INFRARED_XTB,
+                       workdir: str = XTB_IR_WORKDIR, jobs: int = 8, limit: int = 0,
+                       log=print) -> int:
+    """Stage 5: every acid optimised with GFN2-xTB, with its harmonic frequencies and infrared
+    intensities; returns the number of acids without a spectrum.
+
+    The file has the layout of stage 4.  The wavenumbers are the ones xtb gives (the scaling
+    factor is 1), and every acid also carries ``n_imaginary``, the number of imaginary modes
+    that are left after one more optimisation from the geometry moved along such a mode.
+    """
+    from cmfqsar import xtb
+
+    mols = read_sdf(structures)
+    if limit:
+        mols = mols[:limit]
+    names = [m.GetProp("_Name") for m in mols]
+    cfg = xtb.Config(xtb=xtb.find_xtb(None), fukui=False, workdir=workdir)
+    results = xtb.process_vibrations(mols, names, cfg, jobs=max(1, jobs), log=log)
+    rows, failed = [], []
+    for v in results:
+        if v.error:
+            failed.append(v.name)
+            continue
+        rows.append({"name": v.name,
+                     "wavenumbers": [round(float(x), 2) for x in v.wavenumbers],
+                     "intensities": [round(float(x), 5) for x in v.intensities],
+                     "n_imaginary": int(v.n_imaginary)})
+    head = {"what": "infrared stick spectra of the substituted benzoic acids of "
+                    "benzoic_acids.sdf, each optimised with GFN2-xTB (plan item SP3)",
+            "axis": "wavenumber", "unit": "cm^-1", "intensity_unit": "km/mol",
+            "frequency_scale": [1.0], "qm_level": [xtb.vibration_level(cfg)]}
+    write_spectra(out, head, rows)
+    saddle = sum(1 for r in rows if r["n_imaginary"])
     log(f"wrote the spectra of {len(rows)} acids to {os.path.relpath(out, ROOT)}"
-        + (f"; {len(missing)} acids have none" if missing else ""))
-    return len(missing)
+        + (f"; {saddle} keep an imaginary mode" if saddle else "")
+        + (f"; {len(failed)} failed: {', '.join(failed[:5])}" if failed else ""))
+    return len(failed)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -399,6 +456,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--ir", action="store_true",
                     help="stage 4: write the infrared stick spectra from the ORCA outputs of "
                          "stage 2")
+    ap.add_argument("--xtb-ir", action="store_true",
+                    help="stage 5: optimise every acid with GFN2-xTB and write its infrared "
+                         "stick spectrum")
     ap.add_argument("--jobs", type=int, default=10,
                     help="molecules at a time in stage 2 or stage 3")
     ap.add_argument("--limit", type=int, default=0,
@@ -412,6 +472,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     a = ap.parse_args(argv)
     structures = os.path.join(a.out_dir, os.path.basename(STRUCTURES))
     bands = os.path.join(a.out_dir, os.path.basename(BANDS))
+    if a.xtb_ir:
+        if not os.path.exists(structures):
+            raise SystemExit(f"{structures} is missing: run the script without options first")
+        out = os.path.join(a.out_dir, os.path.basename(INFRARED_XTB))
+        return 1 if write_infrared_xtb(structures, out, jobs=a.jobs, limit=a.limit) else 0
     if a.ir:
         if not os.path.exists(bands):
             raise SystemExit(f"{bands} is missing: run the script with --orca first")

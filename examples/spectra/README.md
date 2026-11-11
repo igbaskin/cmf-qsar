@@ -112,6 +112,24 @@ of `benzoic_acids_co.sdf` is one of the lines of its acid.
 `benchmarks/run_spectra_ir.py` (plan item SP1) uses the spectra as samples: it predicts the
 Hammett constant of the substituent from the spectrum.
 
+## `benzoic_acids_ir_xtb.json` — the infrared spectrum at a second level of theory
+
+Stage 5 of the same script (`--xtb-ir`). Every acid is optimised with GFN2-xTB, a
+semi-empirical quantum method, from the geometry of `benzoic_acids.sdf`, and its harmonic
+frequencies and infrared intensities are computed (`cmfqsar.xtb.run_vibrations`, xtb 6.7.1).
+The series takes less than a minute. The jobs are cached under
+`benchmarks/results/band/xtb_ir_work/`, which is not tracked.
+
+The layout is the one of `benzoic_acids_ir.json`. The wavenumbers are the ones xtb gives (the
+scaling factor is 1), and every acid also has `n_imaginary`. When an optimisation ends on a
+saddle point, the job is run once more from the geometry moved along the imaginary mode; ten
+acids keep one imaginary mode after that and have one line fewer.
+
+The two levels put the lines at different places: the carbonyl band of this file is 29 cm⁻¹
+above the one of `benzoic_acids_ir.json`, and the O-H stretch is 182 cm⁻¹ below.
+`benchmarks/run_spectra_bridge.py` (plan item SP3) uses the difference: a spectrum of one
+level has to find its own acid among the spectra of the other.
+
 ## What the set is for
 
 `benchmarks/run_band.py` (plan item SP2) predicts the band from the field around the carbonyl
@@ -131,3 +149,8 @@ results.
 `benchmarks/run_spectra_ir.py` (plan item SP1) turns the question round. The sample is the
 infrared spectrum of `benzoic_acids_ir.json`, and the target is the Hammett constant, which is
 measured. The manual section *A spectrum as a one-dimensional field* has the results.
+
+`benchmarks/run_spectra_bridge.py` (plan item SP3) ranks the acids by the kernel between a
+spectrum of `benzoic_acids_ir_xtb.json` and the spectra of `benzoic_acids_ir.json`, and
+analyses which part of the structure moves which part of the spectrum. The manual section
+*The spectrum as the bridge* has the results.
