@@ -182,3 +182,6 @@ a copy is passed on under the same licence. They are therefore not in the reposi
 `benchmarks/prepare_chemotion_ir.py` downloads them (47.5 MB) into
 `benchmarks/cache/chemotion_ir`. `cmfqsar.spectrum.read_jcamp` reads one JCAMP-DX file of
 any source, and `cmfqsar.spectrum.absorbance` turns a transmittance into an absorbance.
+`benchmarks/prepare_chemotion_xtb.py` computes a GFN2-xTB spectrum for the compounds of that
+set, also into the cache, and `benchmarks/run_spectra_computed.py` ranks the computed
+spectra for every measured one.

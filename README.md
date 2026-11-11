@@ -2999,15 +2999,45 @@ against a computed library.
   as intensity: it finds 59.9 %. The kernel of the slopes of the spectra (`spectrum.slope`,
   with the closed form `spectrum.slope_overlap`) does not see a constant baseline and finds
   27.9 points more (95 % interval +21.8 to +34.4). The width chosen is 4 cm⁻¹.
-- The region from 700 to 1800 cm⁻¹ alone gives the same result (87.9 %), so the region of the
-  O-H and N-H stretch bands, where a gas-phase calculation differs most from a measurement on
-  a solid, can be left out at no cost.
+- The region from 700 to 1800 cm⁻¹ alone gives the same result (87.9 %): between two measured
+  spectra the region of the O-H and N-H stretch bands can be left out at no cost.
 - A wrong answer is a relative of the right compound: Tanimoto similarity 0.59 on average,
   against 0.10 for a compound drawn at random.
 
 ```bash
 python benchmarks/prepare_chemotion_ir.py     # once: downloads 47.5 MB into benchmarks/cache
 python benchmarks/run_spectra_measured.py     # 10 seconds
+```
+
+### A measured spectrum against a library of computed spectra
+
+The question of plan item SP3 with a measured query
+([run_spectra_computed.py](benchmarks/run_spectra_computed.py)). The queries are the measured
+Chemotion IR spectra. The library holds one GFN2-xTB spectrum for every candidate, computed
+from the SMILES alone ([prepare_chemotion_xtb.py](benchmarks/prepare_chemotion_xtb.py)): of
+up to ten RDKit conformers the one of lowest force-field energy, optimised by xtb, one
+molecule in the gas phase. 1,645 of the 1,925 compounds get a spectrum (no salts, no metal
+complexes, at most 100 atoms); the jobs took 81 minutes and none failed.
+
+- With the form of the kernel, the width, a factor on the wavenumbers, the region and three
+  more options chosen on half of the compounds, the measured spectrum finds its compound
+  first in 5.6 % of the queries of the other half and among the first ten in 24.5 %. Chance
+  gives 0.06 %, and a measured library spectrum gives 87.6 %.
+- The right compound is in the best one per cent of the library for 31 % of the queries, and
+  its median rank is 56 of 1,645. A GFN2-xTB library is a coarse filter and not an
+  identification. The gate of SP3 is not met for a measured query at this level of theory.
+- The width that is chosen is 64 cm⁻¹, against 4 cm⁻¹ between two measured samples: the two
+  spectra agree on the regions that hold intensity and not line by line.
+- The region from 700 to 1800 cm⁻¹ alone finds 2.8 %. The expectation that the region of the
+  O-H and N-H stretch bands can be left out was wrong for a computed library.
+- Flexible and rigid compounds are found equally often (6.3 % and 7.0 %), and compounds with a
+  hydrogen-bond donor a little less often (4.8 % against 7.6 %). So the level of theory is
+  the probable limit, and not the one conformer or the gas phase. A density-functional
+  library for a part of the compounds is the test of that.
+
+```bash
+python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 minutes
+python benchmarks/run_spectra_computed.py              # 17 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop

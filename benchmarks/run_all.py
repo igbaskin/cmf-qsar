@@ -843,6 +843,17 @@ def registry() -> List[Benchmark]:
                   minutes="1",
                   report=lambda: _mod("run_spectra_measured").report(),
                   tables=["spectra_measured/table.md"]),
+        Benchmark("spectra_computed",
+                  "a measured infrared spectrum against a library of computed spectra: the "
+                  "measured Chemotion IR spectra as queries, one GFN2-xTB spectrum for each "
+                  "of 1,645 candidate compounds as the library, 1,680 settings of the kernel "
+                  "chosen on half of the compounds (needs xtb for the library: "
+                  "prepare_chemotion_xtb.py, 81 minutes, kept in benchmarks/cache)",
+                  "run_spectra_computed.py", "spectra_computed", compute=[[]],
+                  prepare=["prepare_chemotion_ir.py", "prepare_chemotion_xtb.py --jobs 14"],
+                  minutes="17",
+                  report=lambda: _mod("run_spectra_computed").report(),
+                  tables=["spectra_computed/table.md"]),
         Benchmark("mutants",
                   "a point mutant of a protein as a difference field in the frame of the "
                   "mutated residue: the change of folding free energy of single substitutions "

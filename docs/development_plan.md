@@ -6840,11 +6840,24 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   10 to 20 cm⁻¹. *With a second density functional the gate is met among the whole series.*
   The 42 % was a limit of GFN2-xTB and not of the kernel. Control: GFN2-xTB started from the
   geometries of the library gives 43.3 %, so the start geometry is not the reason.
-  *Open:* a measured spectrum as the query against a computed library. Measured spectra
-  against each other are done (see SP1: 87.6 % among 1,912 compounds, which is the ceiling).
-  A measured spectrum differs from a computed one in more than the places of the lines
-  (hydrogen-bonded pairs of the acid in a solid or a solution, bands that are not harmonic);
-  a library larger than the series; the co-field of a structural direction in space.
+  *A measured query against a GFN2-xTB library, 11 November 2026*
+  (`benchmarks/prepare_chemotion_xtb.py`, `benchmarks/run_spectra_computed.py`,
+  `benchmarks/results/spectra_computed/`). The queries are the measured Chemotion IR spectra
+  (see SP1: measured against measured gives 87.6 % among 1,912 compounds, the ceiling). The
+  library is one GFN2-xTB spectrum for each of 1,645 compounds, from the SMILES alone: one
+  conformer, one molecule in the gas phase (81 minutes, none failed). With the form of the
+  kernel, the width, a factor on the wavenumbers, the region, the power, the centring and
+  the division of the computed intensities by the wavenumber chosen on half of the compounds,
+  the compound is first in 5.6 % of the queries (sd 0.6) and among the first ten in 24.5 %;
+  chance gives 0.06 %. The right compound is in the best one per cent of the library for
+  31 % of the queries (median rank 56 of 1,645). *The gate is not met for a measured query
+  with a GFN2-xTB library*: it is a coarse filter. The width chosen is 64 cm⁻¹ (4 cm⁻¹
+  between two measured samples). The region 700 to 1800 cm⁻¹ alone gives 2.8 %, against the
+  expectation. Rigid and flexible compounds are found equally often, so the level of theory
+  is the probable limit and not the conformer.
+  *Open:* a density-functional library for a part of the compounds, compared with the
+  GFN2-xTB library on the same part, which tests that reading; a conformer search; a
+  library larger than the set; the co-field of a structural direction in space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
