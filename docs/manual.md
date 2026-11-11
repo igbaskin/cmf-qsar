@@ -13295,6 +13295,59 @@ on a pose -- does this molecule fit, does it clash -- and not as an affinity.
 optimisation. It is a convenience for getting a pose into the right frame, not a scoring function;
 the program's purpose is what happens after the poses exist.
 
+## A variant of the protein as the sample
+
+Everything above treats the protein as the receptor and the molecules as the samples. A protein
+can also be the sample itself, and there is one case where that is well posed: **variants of one
+protein**. Every point mutant keeps the backbone of the wild type, so the superposition problem
+does not arise, and the backbone of a residue gives a frame by rule -- the origin at the alpha
+carbon, the first axis along the bond to the nitrogen, the plane through the carbonyl carbon -- in
+which a change at one position is comparable with a change at another. `cmfqsar/mutants.py` holds
+this, and `cmf_cli.py` does not: it is a library module and a benchmark, not yet a part of the
+application.
+
+Three objects come out of it, all of them ordinary fields that every kernel and every
+decomposition in this program already takes:
+
+* `side_chain_field` is the side chain of one residue in that frame. The alpha hydrogens count as
+  part of it, so that glycine, which has no side chain, still has a field, and a substitution to
+  or from glycine is an ordinary sample.
+* `site_difference` is the change: the side chain of the mutant minus the side chain of the wild
+  type, as one signed field. It is the signed combination of `cmfqsar/localenv.py`, which plan
+  item LP2 built for an acid and its anion.
+* `site_context` is the surroundings of the site without the side chain that is replaced, under a
+  Gaussian envelope. It is the same for every substitution at one position, so on its own it can
+  only say how tolerant the position is.
+
+A variant's structure is built, not stored. `build_mutant` replaces the residue with PDBFixer,
+starts the new side chain from six turns of its first torsion, and relaxes the mutated residue and
+the side chains of its neighbours within 6 Å with the Amber ff14SB force field through OpenMM,
+every other atom fixed, keeping the lowest-energy result that is a sound structure. OpenMM and
+PDBFixer are optional dependencies, in the way that ORCA and xtb are external programs.
+
+One check in that chain is worth naming, because it is a trap rather than a detail. The Amber
+hydrogens bound to nitrogen and oxygen carry no repulsion radius, so a hydrogen and an acceptor of
+the opposite charge attract each other with nothing to stop them: the pair falls together and the
+energy runs away towards minus infinity. A rule that keeps the lowest energy keeps exactly that
+result, which is why `closest_approach` throws away any structure with two atoms closer than
+0.7 Å.
+
+What this is worth is measured in `benchmarks/results/mutants/`, on the change of folding free
+energy of single substitutions in four small domains, and the answer is a warning rather than a
+recommendation. The field of the change predicts as well as a linear regression on the change of
+residue volume, hydropathy and formal charge, and not better. Joining it with the field of the
+site's surroundings does better than that -- and then stops being interesting, because a count of
+how many atoms surround the site, added to the same three columns, does just as well: the field
+description beats it by +0.011 with single positions held out and by +0.028 with whole stretches of
+the chain, both inside the interval that says nothing. So what the surroundings contribute here is
+burial, and burial is one number.
+
+Two lessons from that measurement are general and worth carrying to any model whose sample is a
+site rather than a molecule. **Put a count in the references before you believe a field.** And
+**holding out one position does not hold out its surroundings**, because the surroundings of
+neighbouring residues share most of their atoms; hold out a stretch of the chain, or a whole
+protein.
+
 # Three series, worked through
 
 Everything above is a tool. This part uses them, on three series taken from the free-energy

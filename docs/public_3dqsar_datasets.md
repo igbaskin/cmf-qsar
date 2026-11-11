@@ -332,6 +332,32 @@ conductors of the **Crystallography Open Database** with their partial occupanci
 M2); COD is public domain (CC0), and `examples/hops/README.md` lists the entries and what is
 disordered in each.
 
+### The point-mutant stability set
+
+Plan item PP1 makes a variant of one protein the sample, and `examples/mutants/` carries its
+labels. For each of four small natural domains the folder holds the AlphaFold model of the wild
+type as it was deposited, a table of every single substitution that was measured in it, and the
+wild-type sequence and stability. The tables hold 1356, 1353, 1236 and 1301 substitutions at 72,
+72, 67 and 69 positions.
+
+The source is the mega-scale study of **Tsuboyama and co-workers** (Nature 620, 434-444, 2023),
+whose data are on Zenodo as record 7992926 under **CC BY 4.0**, so a derived copy is free to
+redistribute with attribution and a statement of the changes; both are in
+`examples/mutants/README.md`. Two files of that record are used: the processed table of folding
+free energies inferred from a proteolysis assay, and the archive of wild-type models. The target
+kept here is `ddG_ML`, the unfolding free energy of the variant minus that of the wild type, in
+kcal/mol, so a negative value is a destabilising substitution. What is filtered: insertions,
+deletions and multiple substitutions are left out, and a variant whose inferred stability lies
+outside the range the assay resolves, -1 to 5 kcal/mol, is left out with it. The four domains
+were chosen as natural proteins of different fold clusters whose wild-type stability is above
+3 kcal/mol, so that a substitution costing a few kcal/mol still falls inside that range, and
+among those the ones with the most variants that pass.
+
+The structures of the variants are **not** in the repository: they are built from the wild-type
+model by `examples/make_mutant_examples.py --build` into `benchmarks/cache/megascale/built/`,
+which git ignores, at about twenty seconds each. `examples/mutants/README.md` records the
+settings, and `cmfqsar/mutants.py` explains why each was chosen.
+
 ## What is not in the repository
 
 * The MOL2 originals and activity tables of the Sutherland sets, and the original CMF R scripts

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 237 classes with 789 public methods, and 1198 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1215 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -99,6 +99,7 @@ for.
 | [cmfqsar.model](#cmfqsarmodel) | CMF regression models: kernel ridge regression (KRR, the method of the 2013 paper), kernel partial least squares (KPLS, the kernel form of the PLS that CoMFA uses), support vector regression and a Gaussian-process view of KRR that provides predictive variances. |
 | [cmfqsar.multiobjective](#cmfqsarmultiobjective) | A design loop with more than one objective (plan item MC11). |
 | [cmfqsar.multitask](#cmfqsarmultitask) | Two endpoints at once, so that selectivity is a co-field rather than a ratio. |
+| [cmfqsar.mutants](#cmfqsarmutants) | Point mutants of one protein, as fields in the frame of the mutated residue (plan item PP1). |
 | [cmfqsar.neldermead](#cmfqsarneldermead) | Nelder-Mead simplex minimiser, a direct port of R's `nmmin` (`optim(method = "Nelder-Mead")`, R 2.x-4.x), which the original CMF R scripts use to optimise the attenuation factor alpha and the regularisation parameter gamma simultaneously (`cmf_krr_train_mem` with `alpha_grid_search = FALSE`). |
 | [cmfqsar.nonlinearity](#cmfqsarnonlinearity) | The co-field of a model with a nonlinear kernel layer: one per molecule, and how far they differ. |
 | [cmfqsar.oneclass](#cmfqsaroneclass) | One-class scores on a precomputed kernel: four geometries besides the 1-SVM's ball. |
@@ -11197,6 +11198,191 @@ The one-correlation covariance, chosen by the evidence instead of by cross-valid
 
 This is the reference for the free-form and descriptor covariances: the same objective and the
 same ridge grid, with one parameter.
+
+## cmfqsar.mutants
+
+Source: `cmfqsar/mutants.py`
+
+Point mutants of one protein, as fields in the frame of the mutated residue (plan item PP1).
+
+A series of point mutants is the one protein series in which the alignment problem of 3D-QSAR
+does not arise: every variant keeps the backbone of the wild type, so all of them are already in
+one frame.  Two things follow for a field model of a mutational effect (a change of folding or
+binding free energy):
+
+1. **The sample is a change, and the change is local.**  A mutant differs from the wild type in
+   one side chain.  The field of the whole protein is dominated by the shared backbone, so the
+   kernel between two whole mutants is nearly one whatever was changed.  The sample has to be
+   the *difference* of the two fields (`cmfqsar.localenv.difference_field`), which is the
+   two side chains with opposite signs, or the local environment of the site.
+2. **A new position needs a frame of its own.**  In the frame of the protein the difference
+   fields of two mutants at different positions do not overlap, so a model would predict a
+   held-out position from nothing.  The backbone of every residue gives a frame by rule: the
+   origin at the alpha carbon, one axis along the bond to the nitrogen, the plane through the
+   carbonyl carbon.  In this frame the side chains of all residues are superimposed on their
+   backbone, the change at one position is comparable with the change at another, and the
+   co-field is a map around a generic residue: where added bulk, charge or a hydrogen bond
+   raises or lowers the stability.
+
+What one mutant costs.  The side chain is placed by PDBFixer from its template, its hydrogens
+are added, and it is relaxed with the Amber ff14SB force field through OpenMM with every other
+atom held fixed, so that the mutant and the wild type differ in exactly the atoms of the
+mutated residue.  The partial charges of the force field are the electrostatic field
+(`charge_model="file"`), which keeps the charges of a protein physical where a Gasteiger
+scheme on a thousand atoms would not be.  OpenMM and PDBFixer are optional dependencies, like
+ORCA and xtb, and are imported only when a structure is built.
+
+The RDKit molecule of a protein is read from the PDB text with proximity bonding, which
+reproduces the bond list of the OpenMM topology exactly, and the bond orders of the standard
+residues come from RDKit's templates.  Two repairs are needed on top of that: the template
+puts the double bond of a histidine ring on the delta nitrogen whatever its protonation, and
+the formal charges of lysine, arginine, carboxylates and termini have to be set from the
+valence, because a PDB file carries none.
+
+### `class Mutation  (dataclass)`
+
+One substitution: the wild-type residue, its number in the file, the new residue.
+
+Attributes:
+
+- `wild: str`
+- `position: int`
+- `new: str`
+
+#### `Mutation.parse(label: str) -> 'Mutation'`  (class method)
+
+#### `Mutation.label` -> str  (property)
+
+#### `Mutation.fixer_name` -> str  (property)
+
+The form PDBFixer takes: VAL-1-GLN.
+
+### `class Structure  (dataclass)`
+
+A protein with hydrogens and force-field charges, as PDB text plus arrays.
+
+Attributes:
+
+- `name: str`
+- `pdb_block: str`
+- `charges: np.ndarray`
+- `energy_before: float` = `float('nan')`
+- `energy_after: float` = `float('nan')`
+- `collapsed: int` = `0`
+
+#### `Structure.save(path: str) -> str`
+
+#### `Structure.load(path: str) -> 'Structure'`  (class method)
+
+### `first_chain(pdb_path: str) -> str`
+
+The identifier of the first chain of a PDB file.
+
+### `prepare_wild_type(pdb_in: str, pdb_out: str, ph: float=7.0) -> Structure`
+
+Complete the heavy atoms of a structure, add the hydrogens it lacks, remove everything
+that is not protein, and write it.  Every mutant is then built from this file, so that the
+hydrogens the wild type already has are kept and the mutant differs from it only in the
+mutated residue.
+
+### `build_mutant(wt_pdb: str, mutation: Mutation, chain: Optional[str]=None, ph: float=7.0, steps: int=1000, tolerance: float=1.0, platform: str='CPU', shell: float=6.0, rotamers: int=6, threads: int=1) -> Structure`
+
+One point mutant of the prepared wild type, relaxed in place.
+
+PDBFixer replaces the residue, builds the new side chain from its template and adds its
+hydrogens.  That placement is rough and sometimes leaves the new side chain inside a
+neighbour, which a local minimisation cannot always undo, so the side chain is started from
+`rotamers` evenly spaced turns of its first torsion and the lowest-energy result is kept.
+Each start is relaxed with the force field: the mutated residue and the side chains of its
+neighbours within `shell` angstrom may move (`_free_atoms`), every other atom is
+fixed, for at most `steps` iterations or until the largest force falls below `tolerance`
+kJ/mol/nm.  `shell=0` frees the mutated residue alone, `rotamers<=1` keeps PDBFixer's
+placement.
+
+### `closest_approach(coords: np.ndarray) -> float`
+
+The distance between the two closest atoms, in angstrom.
+
+This is the check that says whether a minimised structure is a structure at all.  In the
+Amber force fields the hydrogen atoms bound to nitrogen and oxygen carry no repulsion
+radius, so a hydrogen and an acceptor of the opposite charge attract each other with
+nothing to stop them: the pair falls together, the Coulomb energy runs away towards minus
+infinity, and a rule that keeps the lowest energy keeps exactly that result.  A structure
+with two atoms closer than `MIN_SEPARATION` is thrown away for this reason.
+
+### `side_chain_geometry(pdb_block: str, position: int) -> Dict[str, float]`
+
+The bond length CA-CB and the angle N-CA-CB of one residue, which say whether the side
+chain was placed properly: about 1.53 angstrom and 110 degrees in a sound structure.
+
+### `protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]]=None) -> Chem.Mol`
+
+An RDKit molecule of a protein with explicit hydrogens, formal charges from the valence
+and, when given, the partial charges in the per-atom property `partial_charge` that
+`charge_model="file"` reads.
+
+### `protein_of(structure: Structure) -> Chem.Mol`
+
+### `residue_atoms(mol: Chem.Mol, position: int, chain: Optional[str]=None) -> Dict[str, int]`
+
+Atom name -> index for one residue, by its number in the file.
+
+### `side_chain_atoms(mol: Chem.Mol, position: int, chain: Optional[str]=None) -> np.ndarray`
+
+The atoms of one residue beyond its main chain, the alpha hydrogens among them
+(`MAIN_CHAIN` says which names are left out and why).
+
+### `residue_name(mol: Chem.Mol, position: int) -> str`
+
+### `backbone_frame(coords: np.ndarray, atoms: Dict[str, int]) -> Tuple[np.ndarray, np.ndarray]`
+
+(origin, rotation) of the frame of one residue: the origin at CA, the first axis along
+CA->N, the second in the plane of N, CA and C towards C, the third their cross product.
+Coordinates are taken into the frame as `(x - origin) @ R.T`.
+
+### `in_residue_frame(fields: MoleculeFields, mol: Chem.Mol, position: int, rho: float=0.0, keep: Optional[Sequence[int]]=None, name: str='', chain: Optional[str]=None) -> MoleculeFields`
+
+The fields of a protein seen from one residue: translated to its alpha carbon, rotated
+into its backbone frame and, with `rho` > 0, under the Gaussian envelope of
+`cmfqsar.localenv.environment`.  `keep` restricts the atoms, as there.
+
+### `side_chain_field(fields: MoleculeFields, mol: Chem.Mol, position: int, rho: float=0.0, name: str='', chain: Optional[str]=None) -> MoleculeFields`
+
+The side chain of one residue alone, in the frame of its backbone.  With `rho` > 0 its
+atoms carry the envelope factors of the environment they are part of, so that a context
+and a side chain under the same `rho` add up to the environment of the site.
+
+### `site_context(fields: MoleculeFields, mol: Chem.Mol, position: int, rho: float, name: str='', chain: Optional[str]=None) -> MoleculeFields`
+
+The surroundings of one residue without its own side chain: the environment of the
+alpha carbon under the envelope `rho`, with the side-chain atoms of the residue left out.
+It is the same for every mutant at the position, which is what makes it cheap.
+
+### `site_difference(mutant: MoleculeFields, mutant_mol: Chem.Mol, wild: MoleculeFields, wild_mol: Chem.Mol, position: int, rho: float=0.0, name: str='', chain: Optional[str]=None) -> MoleculeFields`
+
+The change at the site: the side chain of the mutant minus the side chain of the wild
+type, both in the frame of the residue's backbone.  Everything else cancels exactly when
+the mutant was built by `build_mutant`; `frame_shift` checks that.
+
+### `frame_shift(mutant_mol: Chem.Mol, wild_mol: Chem.Mol, position: int, chain: Optional[str]=None, backbone_only: bool=True) -> float`
+
+The largest displacement, in angstrom, of an atom outside the mutated residue between
+the wild type and the mutant, matched by residue number and atom name.
+
+With `backbone_only`, which is the default, only backbone atoms are compared, and the
+answer is zero for a structure built by `build_mutant`: every backbone outside the
+mutated residue is held fixed, which is what keeps the fold and the frame of the site the
+same in all variants.  Without it, the side chains of the neighbours count as well, and
+the answer says how far they moved to make room, which the build allows on purpose.
+
+Not a number comes back when the two structures do not hold the same atoms outside the
+mutated residue, since then there is nothing to compare.
+
+### `substitution_features(mutations: Sequence[Mutation]) -> Tuple[np.ndarray, List[str]]`
+
+Columns a linear regression on the substitution alone can use: the change of residue
+volume, of hydropathy and of formal charge, then the one-hot codes of the wild-type and of
+the new residue (20 + 20 columns).
 
 ## cmfqsar.neldermead
 

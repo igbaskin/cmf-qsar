@@ -843,6 +843,20 @@ def registry() -> List[Benchmark]:
                   minutes="1",
                   report=lambda: _mod("run_spectra_measured").report(),
                   tables=["spectra_measured/table.md"]),
+        Benchmark("mutants",
+                  "a point mutant of a protein as a difference field in the frame of the "
+                  "mutated residue: the change of folding free energy of single substitutions "
+                  "in four small domains of the mega-scale set of Tsuboyama et al. (2023), "
+                  "against the change of residue volume, hydropathy and charge, with whole "
+                  "positions and then whole domains held out (the structures are not in the "
+                  "repository: make_mutant_examples.py --build writes them with PDBFixer and "
+                  "OpenMM into benchmarks/cache, at about twenty seconds each)",
+                  "run_mutants.py", "mutants", compute=[[]],
+                  prepare=["../examples/make_mutant_examples.py --build",
+                           "run_mutants.py --prepare"],
+                  minutes="40",
+                  report=lambda: _mod("run_mutants").report(),
+                  tables=["mutants/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",
@@ -1296,9 +1310,10 @@ def list_benchmarks():
         have = all(os.path.exists(_r(t)) for t in b.tables)
         print(f"{b.name:16s} {n:8d} {'yes' if have else 'no':>6s}  {b.needs or '-':10s} "
               f"{b.minutes:>7s}  {b.what}")
-        if b.prepare:
-            print(f"{'':16s} {'':8s} {'':6s}  input prepared by: python benchmarks/"
-                  + " ".join(b.prepare) + " (not run by --compute)")
+        for k, step in enumerate(b.prepare):
+            head = "input prepared by:" if k == 0 else " " * 18
+            tail = " (not run by --compute)" if k == len(b.prepare) - 1 else ""
+            print(f"{'':16s} {'':8s} {'':6s}  {head} python benchmarks/{step}{tail}")
         for r in b.readme:
             print(f"{'':16s} {'':8s} {'':6s}  README: {r}")
     print("\nresult tables: " + ", ".join(f"results/{t}" for b in registry() for t in b.tables))

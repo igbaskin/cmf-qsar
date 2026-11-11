@@ -1,0 +1,465 @@
+{
+ "domains": [
+  "1O6X",
+  "1UFM",
+  "2K5N",
+  "3ZGK"
+ ],
+ "n": 657,
+ "n_positions": 174,
+ "repeats": 3,
+ "max_per_position": 4,
+ "sd_y": 1.2331,
+ "atoms_per_difference": 23.7,
+ "per_domain": {
+  "1O6X": 288,
+  "1UFM": 178,
+  "2K5N": 95,
+  "3ZGK": 96
+ },
+ "alignment": {
+  "difference": {
+   "alpha 0.3": 0.10345089905010445,
+   "alpha 1.0": 0.09090151648644984,
+   "alpha 3.0": 0.07196136809239485
+  },
+  "new": {
+   "alpha 0.3": 0.030153182644579477,
+   "alpha 1.0": 0.03363508455536831,
+   "alpha 3.0": 0.03391213056899699
+  },
+  "context": {
+   "rho 0.2": 0.025437408946727292,
+   "rho 0.1": 0.03152656397722877
+  }
+ },
+ "agreement": {
+  "difference": {
+   "same substitution, other position": 0.32867346821646676,
+   "same new residue": 0.10576315016230452,
+   "same wild-type residue": 0.18055906922017026,
+   "every pair": 0.005483304872511161,
+   "pairs with the same substitution": 637
+  },
+  "new": {
+   "same substitution, other position": 0.39789919241534993,
+   "same new residue": 0.3782114505266364,
+   "same wild-type residue": 0.22866619737865787,
+   "every pair": 0.23299943973223472,
+   "pairs with the same substitution": 637
+  }
+ },
+ "holdout": {
+  "position": {
+   "rows": {
+    "difference": {
+     "q2": 0.156,
+     "sd": 0.0121,
+     "rmse": 1.1329,
+     "mae": 0.8805,
+     "chosen": {
+      "alpha 1.0": 27,
+      "alpha 3.0": 2,
+      "alpha 0.3": 1
+     }
+    },
+    "new": {
+     "q2": 0.0652,
+     "sd": 0.0222,
+     "rmse": 1.1923,
+     "mae": 0.9397,
+     "chosen": {
+      "alpha 1.0": 13,
+      "alpha 0.3": 11,
+      "alpha 3.0": 6
+     }
+    },
+    "context": {
+     "q2": 0.19,
+     "sd": 0.0432,
+     "rmse": 1.1098,
+     "mae": 0.8693,
+     "chosen": {
+      "rho 0.1": 30
+     }
+    },
+    "difference+context": {
+     "q2": 0.3112,
+     "sd": 0.0084,
+     "rmse": 1.0234,
+     "mae": 0.8048,
+     "chosen": {
+      "alpha 1.0 + rho 0.1 at 0.5": 30
+     }
+    },
+    "three columns": {
+     "q2": 0.1808,
+     "sd": 0.0068,
+     "rmse": 1.1161,
+     "mae": 0.8725,
+     "chosen": {}
+    },
+    "substitution": {
+     "q2": 0.1268,
+     "sd": 0.0127,
+     "rmse": 1.1523,
+     "mae": 0.8697,
+     "chosen": {}
+    },
+    "counts": {
+     "q2": 0.0489,
+     "sd": 0.036,
+     "rmse": 1.2026,
+     "mae": 0.9246,
+     "chosen": {}
+    },
+    "burial": {
+     "q2": 0.2999,
+     "sd": 0.0089,
+     "rmse": 1.0318,
+     "mae": 0.8137,
+     "chosen": {}
+    },
+    "mean": {
+     "q2": -0.0098,
+     "sd": 0.0019,
+     "rmse": 1.2392,
+     "mae": 0.9825,
+     "chosen": {}
+    }
+   },
+   "differences": {
+    "difference - three columns": [
+     -0.0248,
+     -0.0717,
+     0.0252
+    ],
+    "difference - substitution": [
+     0.0291,
+     -0.0577,
+     0.1402
+    ],
+    "difference - counts": [
+     0.107,
+     -0.0856,
+     0.3658
+    ],
+    "difference - mean": [
+     0.1658,
+     0.0814,
+     0.2398
+    ],
+    "difference+context - difference": [
+     0.1552,
+     0.0831,
+     0.2321
+    ],
+    "difference+context - three columns": [
+     0.1304,
+     0.0353,
+     0.2373
+    ],
+    "difference+context - burial": [
+     0.0113,
+     -0.0857,
+     0.1113
+    ],
+    "context - burial": [
+     -0.1099,
+     -0.2411,
+     0.0166
+    ],
+    "burial - three columns": [
+     0.1191,
+     0.0354,
+     0.1989
+    ],
+    "new - difference": [
+     -0.0908,
+     -0.1692,
+     -0.008
+    ],
+    "context - mean": [
+     0.1998,
+     0.0868,
+     0.3007
+    ]
+   },
+   "n_groups": 174,
+   "folds": 10
+  },
+  "segment": {
+   "rows": {
+    "difference": {
+     "q2": 0.1479,
+     "sd": 0.019,
+     "rmse": 1.1383,
+     "mae": 0.8882,
+     "chosen": {
+      "alpha 1.0": 30
+     }
+    },
+    "new": {
+     "q2": 0.069,
+     "sd": 0.0111,
+     "rmse": 1.1899,
+     "mae": 0.9383,
+     "chosen": {
+      "alpha 1.0": 19,
+      "alpha 3.0": 4,
+      "alpha 0.3": 7
+     }
+    },
+    "context": {
+     "q2": 0.1481,
+     "sd": 0.0235,
+     "rmse": 1.1382,
+     "mae": 0.8891,
+     "chosen": {
+      "rho 0.1": 30
+     }
+    },
+    "difference+context": {
+     "q2": 0.2906,
+     "sd": 0.0084,
+     "rmse": 1.0386,
+     "mae": 0.817,
+     "chosen": {
+      "alpha 1.0 + rho 0.1 at 0.5": 30
+     }
+    },
+    "three columns": {
+     "q2": 0.1744,
+     "sd": 0.0034,
+     "rmse": 1.1204,
+     "mae": 0.8792,
+     "chosen": {}
+    },
+    "substitution": {
+     "q2": 0.1325,
+     "sd": 0.0108,
+     "rmse": 1.1486,
+     "mae": 0.8676,
+     "chosen": {}
+    },
+    "counts": {
+     "q2": 0.0266,
+     "sd": 0.0287,
+     "rmse": 1.2167,
+     "mae": 0.9523,
+     "chosen": {}
+    },
+    "burial": {
+     "q2": 0.2624,
+     "sd": 0.0037,
+     "rmse": 1.0591,
+     "mae": 0.8324,
+     "chosen": {}
+    },
+    "mean": {
+     "q2": -0.0149,
+     "sd": 0.0058,
+     "rmse": 1.2423,
+     "mae": 0.9843,
+     "chosen": {}
+    }
+   },
+   "differences": {
+    "difference - three columns": [
+     -0.0266,
+     -0.0616,
+     0.0063
+    ],
+    "difference - substitution": [
+     0.0154,
+     -0.0753,
+     0.1314
+    ],
+    "difference - counts": [
+     0.1213,
+     -0.1118,
+     0.4397
+    ],
+    "difference - mean": [
+     0.1628,
+     0.0909,
+     0.2283
+    ],
+    "difference+context - difference": [
+     0.1427,
+     0.088,
+     0.1993
+    ],
+    "difference+context - three columns": [
+     0.1162,
+     0.0443,
+     0.1981
+    ],
+    "difference+context - burial": [
+     0.0282,
+     -0.0511,
+     0.1142
+    ],
+    "context - burial": [
+     -0.1143,
+     -0.2443,
+     0.0144
+    ],
+    "burial - three columns": [
+     0.0879,
+     -0.014,
+     0.1778
+    ],
+    "new - difference": [
+     -0.0789,
+     -0.1328,
+     -0.0221
+    ],
+    "context - mean": [
+     0.163,
+     0.0593,
+     0.2494
+    ]
+   },
+   "n_groups": 23,
+   "folds": 10
+  },
+  "domain": {
+   "rows": {
+    "difference": {
+     "q2": 0.1393,
+     "sd": 0.0,
+     "rmse": 1.144,
+     "mae": 0.9111,
+     "chosen": {
+      "alpha 1.0": 9,
+      "alpha 0.3": 3
+     }
+    },
+    "new": {
+     "q2": 0.0554,
+     "sd": 0.0,
+     "rmse": 1.1985,
+     "mae": 0.9578,
+     "chosen": {
+      "alpha 3.0": 9,
+      "alpha 0.3": 3
+     }
+    },
+    "context": {
+     "q2": 0.051,
+     "sd": 0.0,
+     "rmse": 1.2013,
+     "mae": 0.9194,
+     "chosen": {
+      "rho 0.1": 12
+     }
+    },
+    "difference+context": {
+     "q2": 0.141,
+     "sd": 0.0,
+     "rmse": 1.1429,
+     "mae": 0.9025,
+     "chosen": {
+      "alpha 1.0 + rho 0.1 at 0.5": 12
+     }
+    },
+    "three columns": {
+     "q2": 0.1584,
+     "sd": 0.0,
+     "rmse": 1.1313,
+     "mae": 0.897,
+     "chosen": {}
+    },
+    "substitution": {
+     "q2": 0.0862,
+     "sd": 0.0,
+     "rmse": 1.1788,
+     "mae": 0.8953,
+     "chosen": {}
+    },
+    "counts": {
+     "q2": -0.1905,
+     "sd": 0.0,
+     "rmse": 1.3455,
+     "mae": 1.0344,
+     "chosen": {}
+    },
+    "burial": {
+     "q2": 0.1561,
+     "sd": 0.0,
+     "rmse": 1.1328,
+     "mae": 0.8809,
+     "chosen": {}
+    },
+    "mean": {
+     "q2": -0.0257,
+     "sd": 0.0,
+     "rmse": 1.2489,
+     "mae": 0.9962,
+     "chosen": {}
+    }
+   },
+   "differences": {
+    "difference - three columns": [
+     -0.0191,
+     -0.0707,
+     0.0358
+    ],
+    "difference - substitution": [
+     0.0531,
+     0.0067,
+     0.1057
+    ],
+    "difference - counts": [
+     0.3298,
+     -0.2319,
+     0.6236
+    ],
+    "difference - mean": [
+     0.165,
+     0.0548,
+     0.2294
+    ],
+    "difference+context - difference": [
+     0.0017,
+     -0.1515,
+     0.1796
+    ],
+    "difference+context - three columns": [
+     -0.0174,
+     -0.1893,
+     0.1899
+    ],
+    "difference+context - burial": [
+     -0.015,
+     -0.1133,
+     0.0572
+    ],
+    "context - burial": [
+     -0.1051,
+     -0.2502,
+     0.0667
+    ],
+    "burial - three columns": [
+     -0.0023,
+     -0.1787,
+     0.1415
+    ],
+    "new - difference": [
+     -0.0839,
+     -0.1366,
+     -0.0281
+    ],
+    "context - mean": [
+     0.0767,
+     -0.0728,
+     0.2466
+    ]
+   },
+   "n_groups": 4,
+   "folds": 4
+  }
+ },
+ "seconds": 141.2
+}
