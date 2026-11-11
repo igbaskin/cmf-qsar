@@ -1,6 +1,6 @@
 {
- "commit": "7aca5a1d643b494c5f7956bac1ef645d6b61a83f",
- "created": "2026-11-11T14:56:00",
+ "commit": "651d40b3672d307de47741e1ead33698cb8e6f77",
+ "created": "2026-11-11T16:11:33",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 11979,
-   "sha256": "44a7fb82c7390f3308255572e14ba245791e4ef06e992b03b680b154f54bae42"
+   "bytes": 12555,
+   "sha256": "cc1623871e01b7cd38ae392ace92435f8cd62717816dea59624b7421c5231ed3"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -3483,6 +3483,8 @@
   "benchmarks/results/spectra_ir/cospectrum.png": "2dcf0c25033b729bb12420c283f179c7626e27aa3cd339f034580ba77421ef3a",
   "benchmarks/results/spectra_ir/ir.json": "c2fb81258436cf9aae40fd346b975e51643001d7f75e060b24e1262c7a653239",
   "benchmarks/results/spectra_ir/table.md": "1c5a680d209227632710511e481cc839922c592207756b9724aecece69eb13f2",
+  "benchmarks/results/spectra_measured/measured.json": "75b30b0568b8539bca2a106a4ae92f226a5b4229ebc70f0e67908faa200ebb14",
+  "benchmarks/results/spectra_measured/table.md": "6c2aedbf5e03bea408b3e17327f98340b3c4097e99967505d25c568249f235f5",
   "benchmarks/results/speed/cutoff.json": "41740d5ba4ab40095fc5533522abf76b4bd1447f60c2c992ed033322c2e0bc51",
   "benchmarks/results/speed/engine.json": "ea538c75f7ee0f678fff900aa6db9564bc454725e9f2d933c255b275268ed4de",
   "benchmarks/results/speed/grid.json": "8e383cc21c803709fa35d4b599283497b77f7823d33c572ce17ba77ed1306988",
