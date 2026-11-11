@@ -26,6 +26,7 @@ Thumbs.db
 
 # ORCA scratch (inputs, outputs, wavefunctions) written by the quantum-property runs
 orca_work/
+orca_work_*/
 xtb_work/
 xtb_ir_work/
 benchmarks/results/corrosion_qm/*/orca/

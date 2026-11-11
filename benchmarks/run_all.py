@@ -821,12 +821,13 @@ def registry() -> List[Benchmark]:
                   tables=["spectra_ir/table.md"]),
         Benchmark("spectra_bridge",
                   "the spectrum as the bridge: an infrared spectrum of a second level of "
-                  "theory (GFN2-xTB) has to find its own acid among the ORCA spectra of the "
-                  "189 benzoic acids, with the settings fitted on half of the substituents, "
-                  "and a kernel canonical correlation analysis of a structural kernel and "
-                  "the spectrum kernel on held-out substituents",
+                  "theory (GFN2-xTB, and a second density functional) has to find its own "
+                  "acid among the ORCA spectra of the 189 benzoic acids, with the settings "
+                  "fitted on half of the substituents; a control for the start geometry "
+                  "(needs xtb); and a kernel canonical correlation analysis of a structural "
+                  "kernel and the spectrum kernel on held-out substituents",
                   "run_spectra_bridge.py", "spectra_bridge", compute=[[]],
-                  minutes="5",
+                  minutes="15",
                   report=lambda: _mod("run_spectra_bridge").report(),
                   tables=["spectra_bridge/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "

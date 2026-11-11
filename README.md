@@ -2934,17 +2934,28 @@ the lines at different places, as a measured and a computed spectrum do: the car
 differs by 29 cm⁻¹ and the O-H stretch by 182 cm⁻¹.
 
 **Which acid fits a spectrum.** The ORCA spectra are a library with one spectrum per candidate
-acid, and a GFN2-xTB spectrum is the query. The candidates are ranked by the spectrum kernel.
-The width, a map of the axis and the centring of the spectra are fitted on the acids of half of
-the substituents and used on the other half, ten times. The query ranks its own acid first in
-42.3 % of the cases and among the first three in 66.9 %; chance gives 0.5 % and the position
-of the carbonyl band alone 2.7 %. The gate of the item asks for most cases among the whole
-series, and that is not met. It is met for the question that the composition cannot answer:
-among the candidates with the formula of the query, which are mostly the meta and the para
-acid of one substituent, the spectrum is right in 70.6 % of the cases, against 45.0 % for the
-composition alone. Centring the spectra by the mean spectrum of each level matters most (27.0 %
-without it). A map of the axis does not help, and the calibration chooses a width of 50 to
-100 cm⁻¹: the two levels agree on regions of the spectrum and not line by line.
+acid, and a spectrum of a second level is the query. The candidates are ranked by the spectrum
+kernel. The width, a map of the axis and the centring of the spectra are fitted on the acids
+of half of the substituents and used on the other half, ten times. The gate of the item asks
+that the query ranks its own acid first in most cases.
+
+*With a second density functional the gate is met.* Every acid was optimised again at B97-3c
+(stage `--orca-ir` of the builder, 4.6 hours;
+[benzoic_acids_ir_b97-3c.json](examples/spectra/benzoic_acids_ir_b97-3c.json)); its lines are
+5 cm⁻¹ from those of the library at the median. A B97-3c spectrum ranks its own acid first in
+99.6 % of the cases, and as a measured-like curve (4 cm⁻¹ resolution, 2 % noise) in 96.3 %.
+The position of the carbonyl band alone gives 6.4 %.
+
+*With GFN2-xTB it is not met for the whole series.* A GFN2-xTB spectrum ranks its own acid
+first in 42.3 % of the cases and among the first three in 66.9 %; chance gives 0.5 % and the
+carbonyl band alone 2.7 %. A control with GFN2-xTB started from the ORCA geometries gives
+43.3 %, so the method and not the start geometry is the reason. GFN2-xTB is enough for the
+question that the composition cannot answer: among the candidates with the formula of the
+query, which are mostly the meta and the para acid of one substituent, the spectrum is right
+in 70.6 % of the cases, against 45.0 % for the composition alone. Centring the spectra by the
+mean spectrum of each level matters most (27.0 % without it). A map of the axis does not help,
+and the calibration chooses a width of 50 to 100 cm⁻¹: the two levels agree on regions of the
+spectrum and not line by line.
 
 **What moves which part of the spectrum.** A kernel canonical correlation analysis of a
 structural kernel and the spectrum kernel, judged on held-out substituents against a shuffled
@@ -2957,8 +2968,9 @@ strongest with an envelope of 1 A around the carbonyl carbon (+0.893); with Gast
 it vanishes there (+0.105) and needs 10 A.
 
 ```bash
-python examples/make_band_examples.py --xtb-ir --jobs 8   # the GFN2-xTB spectra, under a minute
-python benchmarks/run_spectra_bridge.py                   # both parts, 5 minutes
+python examples/make_band_examples.py --xtb-ir --jobs 8    # the GFN2-xTB spectra, under a minute
+python examples/make_band_examples.py --orca-ir --jobs 16  # the B97-3c spectra, hours, cached
+python benchmarks/run_spectra_bridge.py                    # all parts, 15 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop

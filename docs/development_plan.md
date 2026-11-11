@@ -6807,9 +6807,20 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   equal partner of the carbonyl band. On the structural side it holds with quantum charges
   (the first pair is strongest at an envelope of 1 A, +0.893) and not with Gasteiger charges
   (+0.105 at 1 A, +0.822 at 10 A), which is the finding of SP2 again.
-  *Open:* a second density functional as the second level, which would say whether 42 % is a
-  limit of the kernel or of GFN2-xTB; a measured spectrum; a library larger than the series;
-  the co-field of a structural direction in space.
+  *A second density functional as the second level, 11 November 2026.* Every acid was
+  optimised again with ORCA at B97-3c from the geometry of the library (stage `--orca-ir`,
+  4.6 hours with 16 jobs, none failed; `examples/spectra/benzoic_acids_ir_b97-3c.json`). Its
+  lines are 5.0 cm⁻¹ from those of the library at the median, and its carbonyl band 4.8 cm⁻¹
+  below. In the same protocol a B97-3c spectrum ranks its own acid first in 99.6 % of the
+  cases (sd 0.5), and as a measured-like curve in 96.3 %; the carbonyl band alone gives 6.4 %.
+  No map of the axis and no centring is needed (98.6 % without both), and the width chosen is
+  10 to 20 cm⁻¹. *With a second density functional the gate is met among the whole series.*
+  The 42 % was a limit of GFN2-xTB and not of the kernel. Control: GFN2-xTB started from the
+  geometries of the library gives 43.3 %, so the start geometry is not the reason.
+  *Open:* a measured spectrum, which differs from a computed one in more than the places of the
+  lines (hydrogen-bonded pairs of the acid in a solid or a solution, bands that are not
+  harmonic); a library larger than the series; the co-field of a structural direction in
+  space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
@@ -6894,7 +6905,8 @@ frequency little better than the mean does; on 11 November 2026 the infrared spe
 acids of SP2 predicted the Hammett constant as well as the best structural description; SP1(b)
 when a set is found; ~~SP3 after SP1, because it needs the spectral kernel of the one and the series
 SP2 now holds~~ **done 11 November 2026**: a spectrum of a second level finds its acid among the
-189 in 42 % of the cases and among its isomers in 71 %, and a kernel CCA finds the Hammett
+189 in 99.6 % of the cases when that level is a second density functional (42 % with
+GFN2-xTB, 71 % among the isomers), and a kernel CCA finds the Hammett
 constant and the position of the substituent as its first two pairs. The structural side of
 SP3 and SP6 uses the start geometries of that series, for
 the reason SP2 found: an optimised geometry carries the bond length that decides the band.
