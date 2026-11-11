@@ -1,6 +1,6 @@
 {
- "commit": "e23d70de5981870ad75896a344d9ae0e70813eab",
- "created": "2026-11-11T01:11:16",
+ "commit": "46a9a6e8d34a678bd9531277cda29ef9de57299b",
+ "created": "2026-11-11T07:18:33",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1079,8 +1079,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 22508,
-   "sha256": "dc4ef8f994b4851e9f335a354d0b621786ead07c6cdfa6579396cbd38346df00"
+   "bytes": 26162,
+   "sha256": "056a5dc3372d2b58108ae221d14d5807687668e515d2ed1ee6547d57f704fa4f"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 9354,
-   "sha256": "b464bc2f08b86e5ff5f0d4ed57b6a995ba862594b8e30b36857fc70ece79d182"
+   "bytes": 10826,
+   "sha256": "00a0f6aa723a17da07ece04036b62470cd3da351bbf2d86027e45cbf6293655f"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2149,6 +2149,10 @@
   "examples/spectra/benzoic_acids_ir.json": {
    "bytes": 181155,
    "sha256": "ea5c6d212d73f491de0203a9d3477c8c3ef7220d03289915d160d000762f1724"
+  },
+  "examples/spectra/benzoic_acids_ir_xtb.json": {
+   "bytes": 206354,
+   "sha256": "0d989c74ee6d3a2817f37f10a12cea903fd0c0bf46f35d37886d3f38cdd812b0"
   },
   "examples/spectra/benzoic_acids_xtb.sdf": {
    "bytes": 986204,
@@ -2207,7 +2211,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3470,6 +3474,8 @@
   "benchmarks/results/spectra/cospectrum.png": "de714fa2cb0b40ca54c28e804d2b1a85ce844c8a3eca5dc77b006e09a78fd51a",
   "benchmarks/results/spectra/fit.json": "b49b7d16d0b059fda6fe7420c888d9204e6b0627bc385bcc01479e9f46aa7431",
   "benchmarks/results/spectra/table.md": "29d6f04770e78b255512d343b40920542349da14e509f256f83294bdd28cb6b3",
+  "benchmarks/results/spectra_bridge/bridge.json": "3e2d814ab31e935e8b52a4a814a8e9997a4ed09a4be6c593b9e6b985bf7eba6b",
+  "benchmarks/results/spectra_bridge/table.md": "9ff28cd350a1ce259b651e323d9dc7974b7f763136e1555b6b3db45ad466cd08",
   "benchmarks/results/spectra_ir/cospectrum.png": "2dcf0c25033b729bb12420c283f179c7626e27aa3cd339f034580ba77421ef3a",
   "benchmarks/results/spectra_ir/ir.json": "c2fb81258436cf9aae40fd346b975e51643001d7f75e060b24e1262c7a653239",
   "benchmarks/results/spectra_ir/table.md": "1c5a680d209227632710511e481cc839922c592207756b9724aecece69eb13f2",
