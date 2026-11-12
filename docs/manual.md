@@ -11902,6 +11902,226 @@ the bands of a component do not move or widen with the composition, which they d
 solutions, and that is the other place where the plan expects the nonlinear layer to matter.
 Four components are few, and all of them are known to be present.
 
+## Two instruments: a model fitted on one instrument reads the spectra of another
+
+This section is plan item SP5 (`benchmarks/run_calibration_transfer.py`,
+`benchmarks/results/calibration_transfer/table.md`). A model that predicts a property from a
+spectrum is fitted on the spectra of one instrument, the *source*. Later the same model has
+to read spectra from a second instrument, the *target*. The standard remedy uses *transfer
+standards*: a few samples that are measured on both instruments, from which a map between
+the two instruments is fitted. The question of the item is how far the spectrum kernel comes
+without such standards.
+
+**The idea of the item.** A spectrometer broadens every line by its resolution. Two Gaussian
+broadenings add as the squares of their widths. If instrument $k$ has already put the width
+$r_k$ on its spectra, and the kernel broadens the spectra of that instrument by
+
+$$
+s_k \;=\; \sqrt{\sigma^2 + r_{\max}^2 - r_k^2}\,,
+$$
+<!-- #eq:matched-widths -->
+
+then the spectra of all instruments end at the one width $\sqrt{\sigma^2 + r_{\max}^2}$, and a
+model fitted on the rows of one instrument reads the rows of another
+(`spectrum.matched_widths`). The instrument with the coarsest resolution gets the width
+$\sigma$ of the kernel, and a sharper one gets more. `spectrum.fit_width` finds the
+difference $r_{\max}^2 - r_k^2$ from the mean spectra of two instruments, and
+`spectrum.fit_shift` finds a shift of the axis between them. Both compare the slopes of the
+two mean spectra, and neither needs a sample that was measured on both instruments.
+
+**The data.** The plan names the two sets on which the methods of calibration transfer are
+compared in the literature. Both are near-infrared sets from the data archive of Eigenvector
+Research. The archive states no licence, so the files are fetched into the cache and are not
+in the repository (`benchmarks/prepare_calibration_transfer.py`, 6.5 MB).
+
+- *Corn.* 80 samples of corn on three spectrometers, named `m5`, `mp5` and `mp6`, from 1100 to
+  2498 nm in steps of 2 nm, with the moisture, oil, protein and starch of every sample.
+- *Tablets.* 655 pharmaceutical tablets on two spectrometers, from 600 to 1898 nm in steps of
+  2 nm, with the content of the active ingredient. Above 1600 nm the absorbance passes 5 and
+  the two instruments differ by noise, so the benchmark uses 600 to 1600 nm.
+
+```
+python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
+python benchmarks/run_calibration_transfer.py       # 33 minutes
+```
+
+**Part 1: what differs between the instruments.** Before any model, the two spectra of the
+same sample are compared. The difference is taken apart step by step. Every number is a root
+mean square of absorbance over the samples and the axis.
+
+| pair of instruments | spread of the samples on the first | difference between the instruments | after the mean difference is taken off | after an offset, a gain and a sloping baseline per sample | fitted shift, nm | fitted difference in resolution, nm |
+|---|---|---|---|---|---|---|
+| corn, `m5` and `mp5` | 0.0357 | 0.0450 | 0.0077 | 0.0010 | 0.50 | 0 |
+| corn, `m5` and `mp6` | 0.0357 | 0.0565 | 0.0076 | 0.0011 | 0.80 | 0 |
+| corn, `mp5` and `mp6` | 0.0337 | 0.0122 | 0.0026 | 0.0003 | 0.40 | 0 |
+| tablets, 1 and 2 | 0.1852 | 0.0618 | 0.0266 | 0.0085 | 0.10 | 0 |
+
+Three things follow. First, the instruments do not differ in resolution: for no pair does a
+broadening of one mean spectrum make it more like the other. The plan expected a difference
+in resolution and named this case as possible. Second, the difference is large and nearly
+all of it is the same for every sample. Between `m5` and `mp5` the two spectra of one sample
+differ by more than two samples differ on one instrument (0.045 against 0.036), and 97 % of
+the squared difference is the mean difference. Third, the shift of the wavelength axis is
+0.1 to 0.8 nm, less than half a step of the grid, and removing it changes the fourth column
+by less than 0.0001.
+
+**How the models are compared.** Two models get the same rows. The reference is partial
+least squares regression (PLS) with up to 30 components. The other is kernel ridge
+regression on the linear spectrum kernel. The rows are the spectra as measured ("plain") or
+their slopes along the axis, both after a broadening whose width (0, 4, 8 or 16 nm) is
+chosen with the number of components, or with the ridge, by cross-validation inside the
+samples of the fit, on the source alone. A split has 60 corn samples to fit and 20 to test,
+or 155 tablets to fit and 500 to test, and there are 20 random splits. An error below is a
+root-mean-square error divided by the standard deviation of the property, and for corn the
+mean over the four properties; a model that predicts the mean has about 1.
+
+A first run limited PLS to 15 components. On instrument `m5`, whose spectra carry very
+little noise, PLS chooses 19 to 27 components when it may, and the limit made its error for
+oil twice as large (0.058 against 0.028). The limit is 30 now, and a limit of 45 gives the
+same numbers.
+
+**Within one instrument.**
+
+| instrument | PLS, plain spectra | PLS, slopes | kernel ridge, plain spectra | kernel ridge, slopes |
+|---|---|---|---|---|
+| corn, `m5` | 0.120 | 0.105 | 0.115 | 0.100 |
+| corn, `mp5` | 0.440 | 0.426 | 0.425 | 0.425 |
+| corn, `mp6` | 0.454 | 0.415 | 0.431 | 0.398 |
+| tablets, 1 | 0.245 | 0.241 | 0.239 | 0.236 |
+| tablets, 2 | 0.246 | 0.245 | 0.242 | 0.240 |
+
+The two models are close. Of the 14 pairs of an instrument and a property, kernel ridge on
+the slopes is below PLS on the slopes in 6, above it in 1 and within the interval over the
+splits in 7; the largest difference is 7 % of the error. Instrument `m5` is four times as
+precise as the other two. These are the first models of the sections on spectra that predict a
+measured property from measured spectra.
+
+**The crossing.** A model fitted on the source reads the spectra of the test samples from
+the target. What is done to the target spectra first:
+
+- nothing ("as measured");
+- *each instrument centred*: the mean spectrum of the target spectra is taken off, and the
+  mean spectrum of the source spectra of the fit is put in its place. This uses the target
+  spectra of the test samples and not their measured properties, and no standard;
+- *shift fitted*: the shift between the two mean spectra is fitted and removed; also
+  together with the centring;
+- with standards, as the reference. The standards are 8 samples of the fit, chosen by the
+  Kennard-Stone rule (the two spectra furthest apart, then again and again the spectrum
+  furthest from those chosen). *Mean difference of the standards* adds the mean difference
+  of their two spectra to the target spectra. *Piecewise direct standardisation* (PDS)
+  fits, for every point of the axis, a regression that gives the source value of the
+  standards from a window of their target spectra; the window and the number of principal
+  components are chosen by leave-one-out over the standards. PDS is also run with 16
+  standards.
+
+The table is for kernel ridge on the slopes. The tables for PLS and for the plain spectra
+are in the result file.
+
+| source to target | within the source | target as measured | each instrument centred | shift fitted | shift fitted, each instrument centred | mean difference of 8 standards | PDS, 8 standards | PDS, 16 standards | model fitted on the target |
+|---|---|---|---|---|---|---|---|---|---|
+| corn, `m5` to `mp5` | 0.100 | 2.747 | 0.510 | 2.171 | 0.503 | 0.499 | 0.540 | 0.507 | 0.425 |
+| corn, `m5` to `mp6` | 0.100 | 2.682 | 0.523 | 1.720 | 0.528 | 0.522 | 0.560 | 0.526 | 0.398 |
+| corn, `mp5` to `m5` | 0.425 | 2.412 | 0.513 | 1.644 | 0.513 | 0.489 | 0.468 | 0.457 | 0.100 |
+| corn, `mp5` to `mp6` | 0.425 | 0.988 | 0.492 | 0.600 | 0.493 | 0.453 | 0.446 | 0.446 | 0.398 |
+| corn, `mp6` to `m5` | 0.398 | 2.636 | 0.518 | 1.355 | 0.522 | 0.502 | 0.456 | 0.441 | 0.100 |
+| corn, `mp6` to `mp5` | 0.398 | 0.870 | 0.497 | 1.025 | 0.505 | 0.469 | 0.464 | 0.454 | 0.425 |
+| tablets, 1 to 2 | 0.236 | 1.382 | 0.373 | 1.405 | 0.375 | 0.407 | 0.341 | 0.320 | 0.240 |
+| tablets, 2 to 1 | 0.240 | 2.369 | 0.328 | 2.252 | 0.328 | 0.336 | 0.310 | 0.286 | 0.236 |
+
+**What the table says.** Read as measured, the target spectra give an error of 0.9 to 2.7,
+which is worse than predicting the mean in six of the eight crossings. The slopes do not
+protect the model: the mean difference between two instruments is not a flat baseline.
+Centring each instrument brings the error to 0.49 to 0.52 for corn and to 0.33 and 0.37 for
+the tablets, without a standard. The fitted shift adds nothing, alone or with the centring.
+PDS with 8 standards gives 0.45 to 0.56 for corn and 0.31 and 0.34 for the tablets, and the
+plain mean difference of the same 8 standards is on average as good as PDS for corn. No treatment
+reaches the model that was fitted on the target itself when the target is the precise
+instrument `m5`: the model was fitted on spectra with four times the noise.
+
+**Centring has a cost of its own.** The centring assumes that the test samples have the
+mean spectrum of the samples of the fit. They do not have it exactly, and the difference of
+the two means is read as a difference in the property. This cost can be measured without
+any second instrument: within one instrument, centring the test spectra raises the error of
+`m5` from 0.100 to 0.221, of `mp5` from 0.425 to 0.471 and of tablet instrument 1 from 0.236
+to 0.261. The cost falls with the number of samples on both sides (20 test samples for
+corn, 500 for the tablets), and standards do not pay it. So most of what the centred
+crossing loses against a model fitted on the target is this cost and not a remaining
+difference between the instruments: `m5` to `mp5` gives 0.503, and `mp5` alone with its
+test spectra centred gives 0.471.
+
+**The gate of the plan item.** The item compares the kernel without standards (kernel ridge
+on the slopes, the shift fitted, each instrument centred) with PLS on the plain spectra as
+measured, and with PLS with PDS. A case is one crossing and one property: 24 for corn and 2
+for the tablets. An interval is a 95 % bootstrap interval over the 20 splits; the splits
+share the samples, so it says how much a result depends on the split.
+
+| set | cases | below PLS as measured | within the interval of PLS with PDS, 8 standards | below it | above it | above PLS with PDS, 16 standards |
+|---|---|---|---|---|---|---|
+| corn | 24 | 24 | 5 | 7 | 12 | 13 |
+| tablets | 2 | 2 | 2 | 0 | 0 | 1 |
+
+The first half of the gate is met in all 26 cases, and it says little, because PLS on
+spectra as measured is no serious reference. The second half is met for the tablets and for
+half of the corn cases. On average over the cases the error without standards is 6 % above
+PLS with PDS and 8 standards for corn and 1 % for the tablets, and 9 % and 11 % above PDS
+with 16 standards. For corn the result depends on the property: for oil the error without
+standards is below or equal to PDS in all six crossings, and for protein it is above in all
+six.
+
+**It is the treatment of the spectra, and not the model.** PLS on the same rows with the
+same treatment gives the same errors as kernel ridge: the ratio is 0.98 for corn and 0.96
+for the tablets on average, and 16 of the 26 cases are within the interval. What helps is
+the centring. The two things that the item named, the widths and the shift, have nothing to
+repair on these two sets.
+
+**Part 3: a difference in resolution, simulated.** Since no pair of instruments differs in
+resolution, the claim of equation (#eq:matched-widths) is tested on a simulated coarser
+instrument: the target spectra are broadened by a Gaussian of 8, 16 or 32 nm. In the first
+block the target is the source instrument itself, so the resolution is the only difference.
+In the second block it is another instrument; there the shift is removed and each
+instrument is centred in every column. The model is kernel ridge on the slopes.
+
+| set and target | target broadened by, nm | read as measured | each instrument centred, widths not matched | widths matched, difference known | widths matched, difference fitted |
+|---|---|---|---|---|---|
+| corn, the source itself | 8 | 1.394 | 0.475 | 0.312 | 0.312 |
+| corn, the source itself | 16 | 2.963 | 0.712 | 0.332 | 0.332 |
+| corn, the source itself | 32 | 5.193 | 0.978 | 0.357 | 0.357 |
+| tablets, the source itself | 8 | 1.444 | 0.392 | 0.236 | 0.236 |
+| tablets, the source itself | 16 | 3.565 | 0.694 | 0.236 | 0.236 |
+| tablets, the source itself | 32 | 5.569 | 1.017 | 0.241 | 0.241 |
+| corn, another instrument | 8 | | 0.559 | 0.512 | 0.512 |
+| corn, another instrument | 16 | | 0.764 | 0.527 | 0.527 |
+| corn, another instrument | 32 | | 1.009 | 0.549 | 0.549 |
+| tablets, another instrument | 8 | | 0.449 | 0.358 | 0.358 |
+| tablets, another instrument | 16 | | 0.720 | 0.364 | 0.364 |
+| tablets, another instrument | 32 | | 1.029 | 0.427 | 0.427 |
+
+A loss of resolution that is not handled ruins the model: with a broadening of only 8 nm,
+four steps of the grid, the error is 1.4 times the spread of the property. Centring removes
+the part that is the same for all samples and leaves 0.39 to 1.02. Matching the widths
+removes the rest. The error returns to that of the instrument itself (0.308 for corn on
+average over the three instruments, 0.238 for the tablets) at 8 nm, and is 16 % above it for
+corn at 32 nm, where the coarser spectra hold less. The difference in resolution is fitted
+from the two mean spectra, which come from different samples, and the fit gives the true
+value among nine candidates from 2 to 48 nm in every split and for every pair. PLS on the
+same rows behaves in the same way (0.325, 0.344 and 0.376 for corn).
+
+**Reading.** On the two sets that the literature uses, the instruments differ by a spectrum
+that is the same for all samples, and not by resolution or by a shift. Centring each
+instrument on its own mean removes that difference without a standard, at a cost that is
+set by the number of samples and can be measured on one instrument. With 8 standards PDS is
+6 % better for corn and equal for the tablets; with 16 standards it is about 10 % better for
+both. Where a difference in resolution exists, matched widths repair it in full and need no
+standard to find it; this is shown on simulated instruments only. The same rows serve PLS
+as well as the kernel.
+
+**What is not done.** No pair of real instruments that differ in resolution was tested; the
+plan names Raman spectra at two gratings or powder patterns from two diffractometers. The
+glass standards that the corn file holds for every instrument are not used. The published
+division of the tablets into three parts is not used; the splits are random. The centring
+was tried with one number of test samples per set, so its cost is measured at 20 and at 500
+samples only. A nonlinear layer on the kernel was not tried on the tablets.
+
 ## A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

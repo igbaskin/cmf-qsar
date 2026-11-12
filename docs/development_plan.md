@@ -6924,6 +6924,35 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   the item reports that and its gate moves to a pair of instruments that differ in resolution
   (Raman at two gratings, or powder diffraction on two diffractometers, where RRUFF holds several
   spectra of one mineral).
+  **Built and measured on the two sets 12 November 2026** (`spectrum.matched_widths`,
+  `spectrum.fit_shift`, `spectrum.fit_width`, `benchmarks/prepare_calibration_transfer.py`,
+  `benchmarks/run_calibration_transfer.py`, `benchmarks/results/calibration_transfer/`). Both
+  sets are in the data archive of Eigenvector Research without a stated licence and are
+  fetched into the cache; the tablet file holds 655 tablets. *The case that this entry
+  foresaw is the one found: the instruments of both sets do not differ in resolution.* The
+  fitted difference in resolution is zero for all four pairs, the shift is 0.1 to 0.8 nm on
+  a grid of 2 nm, and 97 % of the squared difference between two corn instruments is one
+  spectrum that is the same for all samples. A model read on another instrument without
+  treatment has an error of 0.9 to 2.7 times the spread of the property (kernel ridge on the
+  slopes; PLS alike). Centring each instrument on its own mean spectrum, which needs no
+  standard, gives 0.49 to 0.52 for corn and 0.33 and 0.37 for the tablets; PDS with 8
+  standards gives 0.45 to 0.56 and 0.31 and 0.34; a model fitted on the target itself 0.10
+  to 0.43 and 0.24. *The gate:* the first half is met in all 26 cases (a crossing and a
+  property), and says little. The second half is met for both tablet crossings and in 12 of
+  the 24 corn cases (5 within the interval of PLS with PDS, 7 below, 12 above); on average
+  the error without standards is 6 % and 1 % above PDS with 8 standards and about 10 % above
+  PDS with 16. Centring has a cost of its own, because the test samples do not have exactly
+  the mean of the samples of the fit: within the most precise corn instrument it raises the
+  error from 0.10 to 0.22. PLS on the same rows equals kernel ridge within 2 to 4 %, so the
+  gain is in the treatment of the spectra and not in the model, and neither the widths nor
+  the shift had anything to repair. A limit of 15 PLS components was unfair to the reference
+  on one instrument and was raised to 30. *The claim about resolution, on a simulated
+  coarser target:* a broadening of 8 nm that is not handled gives an error of 1.4 times the
+  spread; matched widths return the error to that of the instrument itself (0.31 for corn,
+  0.24 for the tablets), and the difference is found from the two mean spectra without a
+  standard in every split.
+  *Open:* the gate on a pair of real instruments that differ in resolution; the cost of the
+  centring against the number of test samples; the glass standards of the corn file.
 * **SP6. Mixtures and quantification.** Beer–Lambert linearity says that the spectrum of a mixture
   is the sum of the component spectra weighted by their concentrations, so the field of a mixture is
   the weighted sum of the component fields and the identity MS5 rests on applies exactly: the kernel
@@ -6962,8 +6991,12 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   clear to the linear kernel, so the gain that this entry allows the nonlinear layer is not
   shown. The co-spectrum of the model for an amount is the net analyte signal of the
   component (cosine 0.99 for computed and 0.97 for measured components).
-  *Open:* half (b), measured mixtures with known composition, for which no set was looked
-  for yet; band shifts with the composition; a case in which every band of a component is
+  *A first reading of half (b), 12 November 2026.* The tablets of SP5 are measured mixtures
+  with a known amount of one component. Within one instrument kernel ridge on the linear
+  kernel has an error 2 % below PLS on the same rows (4.04 and 4.10 against 4.13 and 4.20 mg,
+  the interval over the splits below zero), which is the expected outcome of the linear
+  case. A nonlinear calibration was not looked for.
+  *Open:* the rest of half (b): a set of measured mixtures with every composition known; band shifts with the composition; a case in which every band of a component is
   saturated.
 
 **Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
@@ -7677,11 +7710,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 (partly) |
+| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**171 items: 116 finished, 6 partly, 49 open.**
+**171 items: 116 finished, 7 partly, 48 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

@@ -578,3 +578,41 @@ Notes
 - No open set of measured gas-phase infrared spectra with structures.
 - No open set that has measured spectra and a measured property of the same compounds.
 - SDBS (AIST, Japan) and the commercial spectral libraries were not opened in this survey.
+
+## The same samples on two or more instruments (survey of 12 November 2026)
+
+Plan item SP5 needs spectra of the same samples measured on more than one instrument, with a
+measured property. The plan names two sets, which the literature on calibration transfer
+uses. Both were looked up before anything was downloaded, and then fetched and read by
+`benchmarks/prepare_calibration_transfer.py` on the same day. Status column as in the survey
+above: "verified" = the page was opened and read; "reported" = taken from a paper or a search
+result.
+
+| Location | Content | Terms | Status |
+|---|---|---|---|
+| Corn, Eigenvector Research data archive, https://eigenvector.com/resources/data-sets/ (file `corn.mat_.zip`, 1.09 MB, dated 25 June 2019) | Near-infrared spectra of 80 corn samples on three spectrometers (`m5`, `mp5`, `mp6`), 1100 to 2498 nm in steps of 2 nm (700 points), with the moisture, oil, protein and starch of every sample, and three or four glass standards on every instrument. Measured at Cargill. A MATLAB file of "DataSet" objects. | No licence is stated. The page says that the sets "are available to download" and thanks the owner "for letting us distribute it". | verified (page, size and file) |
+| Tablets of the 2002 "shoot-out", the same archive (file `nir_shootout_2002.mat_.zip`, 5.41 MB, dated 25 June 2019) | Near-infrared spectra of pharmaceutical tablets on two spectrometers, 600 to 1898 nm in steps of 2 nm (650 points), divided into a calibration part (155 tablets), a validation part (40) and a test part (460), with the weight, the hardness and the content of the active ingredient. The page of the archive says 654 tablets; the file holds 655, which is the number of the plan. Published by the International Diffuse Reflectance Conference in 2002. A MATLAB file of "DataSet" objects. | No licence is stated. The page of the conference that the archive names for the original information (`idrc-chambersburg.org/shootout_2002.htm`) no longer exists; it leads to the front page of the conference. | verified (page, size and file) |
+
+Notes
+- No licence is stated for either set. Under the rule of this document they are fetched by a
+  script into `benchmarks/cache/` and are not copied into the repository. Only numbers and
+  scripts are kept.
+- A "DataSet" object is a class of the PLS_Toolbox of Eigenvector Research. `scipy.io.loadmat`
+  reads such a file as nested records, without MATLAB: the table is the field `data`, the
+  wavelengths are `axisscale{2,1}` and the names of the columns are `label{2,1}`.
+- The tablet spectra are absorbances between 2.3 and 7.4. Above 1600 nm the absorbance
+  passes 5 and the two instruments differ by noise, so the benchmark uses 600 to 1600 nm.
+- The two spectrometers of the tablet set, and the three of the corn set, record the same
+  wavelengths with the same step. *Measured on 12 November 2026*
+  (`benchmarks/run_calibration_transfer.py`): they do not differ in resolution. The shift of
+  the wavelength axis is 0.1 to 0.8 nm, and nearly all of the difference between two
+  instruments is one spectrum that is the same for all samples. Plan item SP5 foresaw this
+  case; its gate about resolution needs another pair of instruments.
+- Published numbers for orientation (reported, not checked): for the moisture of the corn set
+  with a model fitted on `m5` and used on `mp5`, one paper gives a root-mean-square error of
+  0.86 without any transfer and 0.176 with piecewise direct standardisation (arXiv
+  2006.00089 and the papers it compares with). The direction of the transfer and the split
+  differ between papers, so these numbers are not a reference under rule 1. The reference is
+  PLS on the same samples and folds, computed here.
+- The tablet set is also the first candidate for half (b) of plan item SP6: a tablet is a
+  measured mixture with a known amount of one component.

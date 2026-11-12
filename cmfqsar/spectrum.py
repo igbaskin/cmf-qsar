@@ -68,6 +68,19 @@ mixture and :func:`mixture_kernel` this product.  The identity holds for the ker
 not normalised.  The cosine form divides the total amount out: it is the form for a question
 about fractions, and the form that is not normalised is the one for a question about amounts.
 
+Two instruments
+---------------
+Two instruments give two spectra of one sample (plan item SP5).  Three functions describe
+what an instrument does to the axis.  Two Gaussian broadenings add as squares of their
+widths, so :func:`matched_widths` gives every instrument the width that brings all of them
+to one resolution: a model fitted on the rows of one instrument then reads the rows of
+another.  :func:`fit_width` finds the difference in resolution, and :func:`fit_shift` a shift
+of the axis, from two curves such as the mean spectra of the two instruments; no sample has
+to be measured on both.  :func:`smoothed` and :func:`shifted` apply a width and a shift to
+curves that are rows of one grid.  A difference between two instruments that is the same
+for all samples is not a matter of the axis: it is removed by taking the mean spectrum of
+each instrument off its own spectra, which the benchmark of the item does.
+
 Readers
 -------
 :func:`read_sticks` and :func:`read_measured` read two-column text (the reader of
@@ -739,6 +752,118 @@ def mixture_kernel(K: np.ndarray, amounts: np.ndarray, others: Optional[np.ndarr
         nv = np.einsum("ij,jk,ik->i", V, K, V)
         out = out / np.sqrt(np.maximum(nv[:, None] * nw[None, :], 1e-300))
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Two instruments
+# --------------------------------------------------------------------------- #
+def matched_widths(sigma: float, resolutions: Sequence[float]) -> np.ndarray:
+    """The width for the spectra of every instrument, so that all end at one width.
+
+    `resolutions` holds, for every instrument, the width that the instrument has already put
+    on its spectra (the standard deviation of a Gaussian, in the units of the axis).  The
+    widths of two Gaussian broadenings add as squares, so the instrument with the coarsest
+    resolution gets `sigma` and every other instrument gets
+    ``sqrt(sigma^2 + r_max^2 - r_k^2)``.  After that every spectrum has the width
+    ``sqrt(sigma^2 + r_max^2)``, and a model fitted on one instrument reads the rows of
+    another (plan item SP5).
+    """
+    r = np.asarray(resolutions, float)
+    if r.ndim != 1 or len(r) == 0 or np.any(r < 0) or sigma < 0:
+        raise ValueError("one resolution per instrument is needed, and no width below zero")
+    return np.sqrt(float(sigma) ** 2 + float(r.max()) ** 2 - r ** 2)
+
+
+def smoothed(rows: np.ndarray, step: float, sigma: float) -> np.ndarray:
+    """Curves on one even grid of step `step`, each broadened by a Gaussian of width `sigma`.
+
+    This is :func:`broaden` for curves that are already rows of one grid.  The first and the
+    last value of a row are continued beyond its ends, so a curve that stands on a baseline
+    does not fall to zero there.  ``sigma = 0`` returns the rows.
+    """
+    from scipy.ndimage import gaussian_filter1d
+
+    rows = np.asarray(rows, float)
+    if sigma < 0 or not step > 0:
+        raise ValueError("the width must not be negative and the step has to be positive")
+    if sigma == 0:
+        return rows
+    return gaussian_filter1d(rows, float(sigma) / float(step), axis=-1, mode="nearest",
+                             truncate=CUT)
+
+
+def shifted(rows: np.ndarray, x: np.ndarray, shift: float) -> np.ndarray:
+    """Curves on the grid `x`, moved by `shift` along the axis: the result at ``x`` is the
+    curve at ``x - shift`` (cubic interpolation).  Beyond the two ends the first and the last
+    value are used."""
+    from scipy.interpolate import CubicSpline
+
+    rows = np.asarray(rows, float)
+    x = np.asarray(x, float)
+    if shift == 0:
+        return rows
+    at = np.clip(x - float(shift), x[0], x[-1])
+    return CubicSpline(x, rows, axis=-1)(at)
+
+
+def _slope_correlation(a: np.ndarray, b: np.ndarray, x: np.ndarray, margin: int) -> float:
+    da = np.gradient(a, x)[margin:len(x) - margin]
+    db = np.gradient(b, x)[margin:len(x) - margin]
+    da, db = da - da.mean(), db - db.mean()
+    return float(da @ db / np.sqrt(max((da @ da) * (db @ db), 1e-300)))
+
+
+def fit_shift(a: np.ndarray, b: np.ndarray, x: np.ndarray, max_shift: float,
+              points: int = 20) -> float:
+    """The shift of the axis between two curves on one grid: the ``d`` for which ``a`` moved
+    by ``d`` (:func:`shifted`) has the slopes of ``b``.
+
+    The curves are, for example, the mean spectra of two instruments; they do not have to
+    come from the same samples.  The slopes are compared, so an offset between the curves
+    does not count.  Shifts from ``-max_shift`` to ``max_shift`` are tried in steps of one
+    grid step divided by `points`, and the part of the axis within `max_shift` of an end is
+    left out.  ``shifted(rows_of_b, x, -d)`` puts the spectra of the second instrument on the
+    axis of the first.
+    """
+    a, b, x = (np.asarray(v, float) for v in (a, b, x))
+    step = float(x[1] - x[0])
+    if not max_shift > 0:
+        raise ValueError("max_shift has to be positive")
+    margin = int(math.ceil(max_shift / step)) + 1
+    if len(x) <= 2 * margin + 3:
+        raise ValueError("the curves are too short for this max_shift")
+    n = int(round(max_shift / (step / points)))
+    tried = (step / points) * np.arange(-n, n + 1)
+    score = [_slope_correlation(shifted(a, x, d), b, x, margin) for d in tried]
+    return float(tried[int(np.argmax(score))])
+
+
+def fit_width(a: np.ndarray, b: np.ndarray, x: np.ndarray,
+              widths: Sequence[float]) -> Tuple[float, float]:
+    """The difference in resolution between two curves on one grid.
+
+    Every width ``w`` of `widths` is tried in both directions: ``a`` broadened by ``w``
+    against ``b``, and ``b`` broadened by ``w`` against ``a``.  The direction and the width
+    with the highest correlation of the slopes win.  Returns the width with a sign and that
+    correlation: a positive width says that ``b`` is the coarser curve and ``a`` has to be
+    broadened by it; a negative one says the opposite; zero says that no broadening makes
+    the curves more alike.  The curves are, for example, the mean spectra of two instruments
+    (:func:`fit_shift`); remove a shift between them first.
+    """
+    a, b, x = (np.asarray(v, float) for v in (a, b, x))
+    step = float(x[1] - x[0])
+    margin = int(math.ceil(3.0 * max([0.0] + [float(w) for w in widths]) / step)) + 1
+    if len(x) <= 2 * margin + 3:
+        raise ValueError("the curves are too short for the largest width")
+    best = (_slope_correlation(a, b, x, margin), 0.0)
+    for w in widths:
+        if w <= 0:
+            continue
+        for sign, (p, q) in ((1.0, (smoothed(a, step, w), b)), (-1.0, (a, smoothed(b, step, w)))):
+            score = _slope_correlation(p, q, x, margin)
+            if score > best[0]:
+                best = (score, sign * float(w))
+    return best[1], best[0]
 
 
 # --------------------------------------------------------------------------- #
