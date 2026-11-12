@@ -11528,8 +11528,9 @@ that a width would have to bridge. Between two levels of theory the chosen width
 The region from 700 to 1800 cm$^{-1}$ alone gives the same result as the whole spectrum
 (87.9 %), and the region above it gives 58.6 %. This matters for the next test. The O-H and
 N-H stretch bands lie above 1800 cm$^{-1}$, and they are where a spectrum computed for one
-molecule in the gas phase differs most from a measurement on a solid. That region can be left
-out at no cost.
+molecule in the gas phase differs most from a measurement on a solid. Between two measured
+spectra that region can be left out at no cost. The next section shows that this does not
+carry over to a GFN2-xTB library.
 
 **The wrong answers.** In 76 of the 430 pairs the kernel names another compound. That compound
 is a relative of the right one. Its Tanimoto similarity to the right compound (Morgan
@@ -11551,13 +11552,356 @@ The molecular formula alone would name the compound in 82.1 % of the queries, be
 compounds of this library share a formula. A spectrum does not give the formula, so this is a
 statement about the library and not a rival of the kernel.
 
-**What is not done.** No computed spectrum is compared with a measured one: that is the next
-test, and its ceiling is now known. No property is predicted; the set has no measured
+**What is not done.** No computed spectrum is compared with a measured one here: that is the
+next section, and its ceiling is now known. No property is predicted; the set has no measured
 property. Nearly all spectra come from instruments of one type and from one way of measuring,
 so the test does not say what a change of the instrument costs. The library holds one spectrum
 of every compound, and 1,912 compounds are few against a commercial library. A correction of
 the ATR intensities, which depend on the wavelength, was not applied; it is the same for both
 spectra of a pair here, and it will not be for a computed library.
+
+## A measured spectrum against a library of computed spectra
+
+This section asks the question of plan item SP3 with a measured query
+(`benchmarks/run_spectra_computed.py`, `benchmarks/results/spectra_computed/table.md`). The
+queries are the measured spectra of the section above. The library holds one computed
+spectrum for every candidate compound, made from the structure alone. The candidates are
+ranked by the kernel between the measured curve and their computed stick spectra. The section
+above gives the ceiling: 87.6 % when the library spectrum is a measurement of another sample.
+
+**The computed library.** `benchmarks/prepare_chemotion_xtb.py` computes a GFN2-xTB spectrum
+for every compound whose SMILES is one neutral molecule without unpaired electrons, of the
+elements H, B, C, N, O, F, Si, P, S, Cl, Br, I and Se, with at most 100 atoms. Of the 1,925
+compounds of the prepared set 1,645 pass. Left out are 133 salts, solvates and complexes
+(more than one molecule in the SMILES), 92 molecules with more than 100 atoms, 49 compounds
+with another element, which is a metal in most cases, 4 radicals, one ion and one SMILES
+that is not read. For every compound that passes:
+
+1. RDKit makes up to ten conformers from the SMILES and relaxes each with the MMFF94 force
+   field. The conformer of lowest force-field energy is kept. This is a cheap choice of one
+   conformer and not a search.
+2. xtb optimises that geometry with GFN2-xTB and computes the harmonic wavenumbers and the
+   infrared intensities of one molecule in the gas phase (`xtb.run_vibrations`).
+
+The 1,645 jobs took 81 minutes with 14 jobs at a time, and none failed. 227 compounds keep an
+imaginary mode after the one repeated optimisation that the driver makes. The file of the
+library stays in the cache, because its structures come from a set with a share-alike
+licence.
+
+One fault was met on the way. The set holds many [2.2]paracyclophanes, in which two benzene
+rings are bent towards each other. The standard embedding of RDKit, which knows that a
+benzene ring is flat, tried for more than two minutes on each of them and then gave no
+geometry. The script now limits the number of attempts and then uses plain distance geometry
+without that knowledge; the force field and xtb relax the result.
+
+```
+python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 minutes
+python benchmarks/run_spectra_computed.py              # 17 minutes
+```
+
+**What is chosen.** A computed and a measured spectrum differ in more ways than two measured
+spectra do, so more is chosen than in the section above: the form of the kernel (plain, the
+mean of every spectrum taken off, or the slopes); the width (4 to 64 cm$^{-1}$); one factor on
+the computed wavenumbers (0.95 to 1.01), because a harmonic calculation puts the lines too
+high; the region (the whole range, or 700 to 1800 cm$^{-1}$ alone); the power of the
+intensities; whether the spectra are centred as in section *The spectrum as the bridge*; and
+whether the computed intensities are divided by the wavenumber. The last option belongs to
+the way these spectra were measured. In attenuated total reflectance the depth that the beam
+reaches in the sample grows with the wavelength, so a band at a low wavenumber is stronger
+than the same band in a transmission spectrum. These are 1,680 settings. They are chosen on
+half of the compounds, for which the right answer is used, and scored on the queries of the
+other half, in 20 random splits. The library always holds all 1,645 candidates, and a
+compound with several measured spectra counts once.
+
+| what is open to the choice | compound is first, % of the queries | among the first three, % | among the first ten, % |
+|---|---|---|---|
+| chance, one of 1,645 compounds | 0.06 | 0.18 | 0.6 |
+| all settings | 5.6 (0.6) | 11.9 (0.8) | 24.5 (1.3) |
+| only the kernel of the slopes | 5.7 (0.7) | 11.9 (0.8) | 24.6 (1.4) |
+| only the spectra with their mean taken off | 6.0 (0.7) | 12.6 (1.1) | 24.3 (1.1) |
+| only the plain kernel | 4.3 (0.5) | 10.2 (1.0) | 21.6 (1.2) |
+| only the region 700 to 1800 cm$^{-1}$ | 2.8 (0.6) | 7.0 (0.6) | 16.7 (1.1) |
+| for comparison: a measured spectrum of another sample in the library (section above, 1,912 compounds) | 87.6 | | 95.4 |
+
+**What the table says.** With a GFN2-xTB library the measured spectrum finds its compound
+first in 5.6 % of the queries and among the first ten in 24.5 %. Chance gives 0.06 %, so the
+computed spectrum carries information about the measured one: at the setting chosen most
+often, the right compound is in the best one per cent of the library (16 compounds of 1,645)
+for 31.4 % of the queries, and its median rank is 56. But this is a coarse filter and not an
+identification. The gate of plan item SP3, a query that ranks its own structure first in most
+cases, is not met for a measured query with a GFN2-xTB library. The distance to the ceiling
+is 82 points.
+
+**The settings say what kind of agreement there is.** The width that is chosen is 64 cm$^{-1}$
+for the slopes (in 15 of the 20 splits) and 32 cm$^{-1}$ for the spectra with their mean
+taken off. Between two measured samples the width was 4 cm$^{-1}$, and between two density
+functionals 10 to 20 cm$^{-1}$. A GFN2-xTB spectrum against a density-functional library
+needed 50 to 100 cm$^{-1}$. So a GFN2-xTB spectrum and a measured one agree on the regions
+that hold intensity and not line by line, as the two computed levels of section *The spectrum
+as the bridge* did. The factor on the wavenumbers is 0.97. Dividing the computed intensities
+by the wavenumber is chosen in every split (the best setting with it finds 6.5 % on all
+compounds, the best without it 5.2 %), and so is centring (6.5 % against 5.3 %).
+
+The form of the kernel matters less than between two measured spectra. The slopes and the
+spectra with their mean taken off are equal within the intervals, and the plain kernel loses
+1.5 points (95 % bootstrap interval over the compounds +0.7 to +2.4). At a width of
+64 cm$^{-1}$ little of a baseline is left to remove.
+
+**The region: an expectation that was wrong.** The section above found that the region from
+700 to 1800 cm$^{-1}$ alone identifies a compound as well as the whole spectrum, and expected
+the same here. It is not so. With that region alone the compound is first in 2.8 % of the
+queries, 3.0 points fewer than with the whole range (+2.2 to +3.7). At this width the lines of
+the lower region have merged, and what is compared is where the intensity lies. The region of
+the O-H, N-H and C-H stretch bands adds whether such bands are there at all. On all compounds
+the lower region alone gives 3.0 %, the upper region alone 1.0 %, and the two together 6.5 %.
+
+**What does not explain the distance.** One conformer was computed, and one molecule in the
+gas phase. Neither shows as the main limit. Compounds with at most two rotatable bonds are
+found first in 7.0 % of the cases, those with three to five in 6.1 % and those with six or
+more in 6.3 %. Compounds without a hydrogen-bond donor are found in 7.6 % and those with one
+in 4.8 %, so hydrogen bonds cost something, but a compound that cannot form them is found no
+better than one in thirteen. The 226 compounds whose computed geometry keeps an imaginary
+mode are found in 3.5 %.
+
+**The wrong answers are not relatives.** When the kernel names another compound, its Tanimoto
+similarity to the right one is 0.18 on average, against 0.11 for a compound drawn at random.
+Between two measured spectra it was 0.59. At a width of 64 cm$^{-1}$ the kernel compares
+coarse shapes, and two compounds with the same coarse shape need not be related.
+
+**What was tried on all compounds and gave nothing more.** Widths of 96 and 128 cm$^{-1}$
+(5.6 % and 4.3 % against 6.5 % at 64 cm$^{-1}$); a second factor for the lines above
+2500 cm$^{-1}$ (0.97 is the best there too); another width for the query than for the
+library; and the sum of the kernels of two widths. These numbers are a look at all compounds
+without a split, and they are not part of the result file.
+
+**Reading.** The limit is most probably the level of theory, and not the conformer or the gas
+phase. Three things point there: the wide width that is chosen, which is the signature that
+GFN2-xTB showed against a density functional in section *The spectrum as the bridge*, where
+it found 42 % of the acids against 99.6 % for a second density functional; the absence of any
+loss with the number of rotatable bonds; and the modest loss with hydrogen-bond donors. This
+is a reading and not a measurement. The measurement follows.
+
+**The measurement: two levels of theory on the same small compounds.**
+`benchmarks/prepare_chemotion_dft.py` takes the 231 compounds of the library that have at most
+25 atoms. ORCA optimises each of them at B97-3c, the density functional of section *The
+spectrum as the bridge*, and computes the harmonic wavenumbers and the infrared intensities
+of one molecule in the gas phase. Every job starts from the geometry that xtb found, so both
+levels describe the same conformer. 230 compounds have a spectrum. The jobs took 13.5 hours
+with 14 jobs at a time, which is 164 hours of one processor core or 43 minutes for a compound
+on average; GFN2-xTB needed 81 minutes for all 1,645 compounds. One compound, a diyne (two
+triple bonds in a row), had no converged geometry after 190 steps of the optimisation and
+was stopped by hand. Two compounds keep an imaginary mode, against 13 of the same 230
+compounds with GFN2-xTB.
+
+`run_spectra_computed.py --subset` then makes the test of this section twice, once with the
+GFN2-xTB spectra and once with the B97-3c spectra. The candidates are the same 230 compounds,
+the queries are the same 255 measured spectra of 228 of them, and the 20 splits are the same.
+All settings are chosen again for each level.
+
+```
+python benchmarks/prepare_chemotion_dft.py --jobs 14   # once: 231 compounds at B97-3c, 13.5 hours
+python benchmarks/run_spectra_computed.py --subset     # less than a minute
+```
+
+| library of the 230 small compounds | compound is first, % of the queries | among the first three, % | among the first ten, % | median rank of the right compound |
+|---|---|---|---|---|
+| chance, one of 230 compounds | 0.4 | 1.3 | 4.3 | 115.5 |
+| GFN2-xTB | 11.3 (2.4) | 22.3 (3.7) | 37.2 (3.4) | 20 |
+| B97-3c | 32.3 (3.4) | 51.4 (3.5) | 71.9 (4.2) | 3 |
+
+Only the rows of this table can be compared with each other. The table above has 1,645
+candidates, and a shorter list is easier: GFN2-xTB finds 11.3 % here and 5.6 % there.
+
+**What the comparison says.** With the B97-3c library the measured spectrum finds its
+compound first in 32.3 % of the queries, and with the GFN2-xTB library in 11.3 %. The
+difference is 21.2 points (95 % bootstrap interval over the compounds +16.5 to +26.2). The
+median rank of the right compound falls from 20 to 3, and the compound is among the first ten
+in 72 % of the queries against 37 %. So the level of theory is a large part of the distance,
+as the reading above said. It is not the whole distance. Also with B97-3c the compound is
+first in one query of three and not in most, so the gate of plan item SP3 is not met for a
+measured query at this level either. What a B97-3c library gives is a short list: the right
+compound is among ten of 230 in nearly three queries of four.
+
+At the setting chosen most often for each level, 87 of the 228 compounds have a first place
+with B97-3c and 35 with GFN2-xTB. 23 compounds have it at both levels, 64 only with B97-3c
+and 12 only with GFN2-xTB.
+
+**The settings change with the level.** With B97-3c the best share of first places on all
+compounds is nearly the same for every width from 4 to 32 cm$^{-1}$ (36.5, 36.4, 36.2 and
+37.4 %) and lower at 64 cm$^{-1}$ (34.8 %). With GFN2-xTB it grows with the width, from 8.6 %
+at 4 cm$^{-1}$ to 14.8 % at 64 cm$^{-1}$. The lines of B97-3c are close enough to the measured
+bands to be compared at the width of a band, and the lines of GFN2-xTB are not. The region
+from 700 to 1800 cm$^{-1}$ alone is chosen in 15 of the 20 splits with B97-3c and gives as
+much as the whole range (37.4 % against 36.4 %). The expectation that was wrong for GFN2-xTB
+holds for the density functional. The factor on the wavenumbers is 0.97 for both levels. It
+matters more for B97-3c: without a factor the best setting finds 15.1 % in place of 37.4 %
+(GFN2-xTB: 8.9 % in place of 14.8 %). Dividing the computed intensities by the wavenumber
+does not help B97-3c (36.4 % with it, 37.4 % without).
+
+**What still limits the density functional.** The groups are read for each level at the
+setting chosen most often, on all compounds.
+
+| compounds | number | first with GFN2-xTB, % | first with B97-3c, % | among the first ten with GFN2-xTB, % | among the first ten with B97-3c, % |
+|---|---|---|---|---|---|
+| no hydrogen-bond donor | 112 | 18.0 | 46.1 | 43.8 | 75.9 |
+| one or more hydrogen-bond donors | 116 | 11.6 | 28.9 | 33.2 | 63.8 |
+| at most 2 rotatable bonds | 188 | 13.1 | 35.7 | 36.4 | 67.0 |
+| 3 to 5 rotatable bonds | 40 | 22.5 | 45.0 | 47.5 | 82.5 |
+
+A compound without a hydrogen-bond donor is found first in 46 % of the cases and a compound
+with a donor in 29 %. The computed molecule is alone in the gas phase and has no hydrogen
+bond to another molecule; most samples of the set are solids or liquids. With GFN2-xTB the
+two groups differ by 6 points and with B97-3c by 17: when the lines are at the right places,
+the missing hydrogen bond is what shows. The flexible compounds are not found less often
+than the rigid ones (there are only 40 of them), so the one conformer is not the limit for
+molecules of this size. For the compounds without a donor more than half of the first places
+are still missing. The harmonic approximation with one factor, the computed intensities and
+the state of the sample can all take part in that, and this benchmark does not separate
+them.
+
+**What is not done.** A density-functional spectrum is computed only for the 230 small
+compounds, so nothing is measured for a molecule with more than 25 atoms, and the cost grows
+quickly with the size (the longest job, a molecule of 24 atoms, took 4.8 hours). No model of
+the hydrogen bonds was tried: a pair of molecules, a cluster or a periodic calculation. No
+correction of the harmonic approximation was tried other than one factor. No
+conformer search is made, and no spectrum is averaged over conformers. The 280 compounds
+without a computed spectrum are not candidates, so the library is smaller than the set. A
+measured spectrum of a salt or of a metal complex has no computed partner at all.
+
+## Mixtures and quantification: the spectrum of a mixture as a sum of fields
+
+This section is the first half of plan item SP6 (`benchmarks/run_mixtures.py`,
+`benchmarks/results/mixtures/table.md`). It uses no new data and no quantum calculation.
+
+**The identity.** By the Beer-Lambert law the absorbance spectrum of a mixture is the sum of
+the spectra of its components, each times its amount. The kernel of equation
+(#eq:spectrum-kernel) is linear in each of its two spectra. So the kernel of two mixtures $M$
+and $M'$ with the amounts $w_a$ and $w'_b$ of the components $A_a$ is the same weighted sum
+over the kernels of the components:
+
+$$
+k(M, M') \;=\; \sum_a \sum_b w_a\, w'_b\; k(A_a, A_b)
+$$
+<!-- #eq:mixture-kernel -->
+
+`spectrum.mix` makes the spectrum of a mixture, and `spectrum.mixture_kernel` computes this
+product from the kernel of the components. A test checks that the two ways agree; in the
+benchmark they differ by $6\times10^{-16}$ of the largest element. This is the identity that
+`fields.combine_members` uses for an ensemble of conformers, with one difference: the weights
+of an ensemble are scaled to a sum of one, and the amounts of a mixture are not. The identity
+holds for the kernel that is not normalised. The cosine kernel of the components must not be
+put into it, because the length of a mixture is not the sum of the lengths of its components.
+
+**What is made.** Mixtures are synthesised. Every repeat draws four components and makes 120
+mixtures to fit and 120 to test. The fractions are drawn evenly from all compositions, and the
+total amount is between 0.5 and 2. Every mixture has a baseline of its own (an offset up to 0.2
+and a straight rise or fall up to 0.1 over the axis) and noise of standard deviation 0.005,
+all in units of the strongest band of a pure component. Two kinds of components are used.
+The computed spectra of the 189 benzoic acids of section *A vibrational band as the local
+target* are close relatives, whose spectra overlap strongly. The measured Chemotion IR spectra
+(2,060 of them) carry real band shapes and real baselines; this part is left out when the set
+was not fetched. There are 20 repeats of each case.
+
+**What is asked, and of which model.** The amount of every component, and the fraction of
+every component, which does not depend on the total amount. The model is kernel ridge
+regression on the linear kernel of the rows of a description. The rows are the broadened
+curves as they are (*plain*) or their slopes, and they are either not normalised or divided
+by their length (the cosine form). The width of the broadening and the ridge are chosen by
+cross-validation inside the mixtures to fit. A second model puts a Gaussian layer on the
+distance of the linear kernel. Two references are given:
+
+- *Partial least squares regression* (PLS) on the same rows, with the number of components
+  chosen in the same way. This is how quantification is done in practice.
+- *The floor*: a least-squares fit of every test mixture with the known spectra of the pure
+  components and a baseline. With a linear response and white noise no estimate is better,
+  and a model that has to learn from mixtures cannot pass it.
+
+The numbers are root-mean-square errors on the test mixtures, means over the 20 repeats.
+
+| question | rows of the description | computed components: linear kernel | PLS | linear kernel over the floor | measured components: linear kernel | PLS | linear kernel over the floor |
+|---|---|---|---|---|---|---|---|
+| amount | the floor | 0.0022 | | 1 | 0.0013 | | 1 |
+| amount | plain, not normalised | 0.0024 | 0.0024 | 1.09 | 0.0014 | 0.0014 | 1.11 |
+| amount | slopes, not normalised | 0.0027 | 0.0027 | 1.19 | 0.0020 | 0.0020 | 1.57 |
+| amount | slopes, cosine | 0.135 | 0.136 | 65 | 0.137 | 0.139 | 112 |
+| fraction | the floor | 0.0022 | | 1 | 0.0012 | | 1 |
+| fraction | plain, not normalised: the predicted amounts divided by their sum | 0.0024 | 0.0023 | 1.07 | 0.0014 | 0.0013 | 1.10 |
+| fraction | slopes, cosine | 0.0140 | 0.0139 | 7.3 | 0.0227 | 0.0227 | 18.9 |
+| fraction | slopes, cosine, with the Gaussian layer | 0.0049 | | 2.2 | 0.0048 | | 4.0 |
+
+**The gate of this half is met.** The model finds the amounts with an error 9 % above the
+floor for the computed components and 11 % above it for the measured ones. So the weights are
+recovered to within the noise. The model equals PLS: the two errors differ by less than
+0.0001 in every row of the linear cases. The plan expected this. In a linear problem the
+field adds no accuracy over PLS, and what it adds is the reading that follows.
+
+**A fraction is not what the cosine form gives.** The plan named the cosine form for
+fractions, because it divides the total amount out. That is half of the answer, and the half
+that is missing costs a factor of 7 to 19 in the error. The cosine form divides the spectrum by
+its length, and the length of a mixture is not proportional to its total amount: it depends on
+which components are in it. The amount of a component over the length of the spectrum is a
+linear function of the normalised spectrum, but the fraction is the ratio of two such
+functions. The Gaussian layer learns a part of this ratio (2.2 and 4.0 times the floor). The
+direct way is better and needs nothing new: predict the amounts with the kernel that is not
+normalised and divide them by their sum, which gives 1.07 and 1.10 times the floor. The rule
+for the use of the two forms is therefore: the form that is not normalised for amounts and for
+fractions, and the cosine form only when nothing else than the shape of the spectrum is known,
+as in the identification of the sections above.
+
+**The slope costs when the baseline is in the fit, and saves the model when it is not.** With
+slopes in place of plain rows the error of the amounts rises from 1.09 to 1.19 times the floor
+for the computed components and from 1.11 to 1.57 for the measured ones. A derivative makes
+noise larger, and the plain rows do not need it here: the mixtures to fit show the baseline,
+and the model learns to ignore it. A fourth case takes the baseline out of the mixtures to fit
+and leaves it in the test mixtures, which is what a new instrument or a new sample holder
+does:
+
+| rows of the description | error of the amounts, linear kernel | PLS | linear kernel over the floor |
+|---|---|---|---|
+| plain, not normalised | 0.179 | 0.182 | 80 |
+| slopes, not normalised | 0.0029 | 0.0029 | 1.25 |
+
+The plain rows fail, for the kernel and for PLS alike, and the slopes lose almost nothing.
+The offset has no slope. The straight rise has a constant slope, and it does no harm for
+another reason: every row of the fit is the slope of a spectrum whose bands return to the
+baseline, so it sums to nearly zero over the axis; the weight of the model is a combination of
+these rows and sums to nearly zero too, and a constant added to a row then changes no
+prediction.
+
+**A bent calibration curve.** A third case adds stray light: 2 % of the light reaches the
+detector without passing the sample, and the strongest band of a pure component is 1.5, so
+the measured absorbance stops rising at about 1.7. The least-squares fit with the pure spectra
+takes the response as linear, and its error for the amounts is 0.054. The models that learn
+from mixtures reach 0.0040, because they learn to read the bands that are not saturated. The
+Gaussian layer adds nothing clear to the linear kernel for the amounts (difference 0.0000,
+95 % bootstrap interval over the repeats $-0.0002$ to $+0.0002$), and 0.0003 for the fractions
+that are made from them (0.0032 against 0.0035, interval $-0.0004$ to $-0.0002$). The linear
+kernel is 0.0008 better than PLS on the plain rows ($-0.0017$ to $-0.0002$). So this case
+does not show the gain that the plan allows the nonlinear layer where the calibration is not
+linear. A case in which every band of a component is saturated was not made.
+
+**The co-spectrum is the net signal of the component.** Chemometrics calls the part of the
+spectrum of a component that no combination of the other components and of the baseline can
+make its *net analyte signal*; it is the only part from which the amount of that component can
+be read. The co-spectrum of the model for an amount, which is the weight of the model over the
+axis, has a cosine of 0.99 with the net signal for the computed components and of 0.97 for
+the measured ones. So the co-spectrum of a quantification model can be read as a spectrum: it
+shows the bands of the component that the others do not cover, with a negative weight where
+another component has to be taken off. PLS gives a regression vector of the same kind; the
+kernel model gives it in the form that the other sections use.
+
+The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 repeats) and
+16 cm$^{-1}$ for the measured ones (15 of 20). The run takes 11 minutes.
+
+```
+python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
+```
+
+**What is not done.** No measured mixture is used: that is the second half of the item, and no
+public set of mixtures with known composition was looked for yet. The mixtures are ideal:
+the bands of a component do not move or widen with the composition, which they do in real
+solutions, and that is the other place where the plan expects the nonlinear layer to matter.
+Four components are few, and all of them are known to be present.
 
 ## A migration path as the sample: the barrier of a Li hop
 

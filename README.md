@@ -2999,15 +2999,91 @@ against a computed library.
   as intensity: it finds 59.9 %. The kernel of the slopes of the spectra (`spectrum.slope`,
   with the closed form `spectrum.slope_overlap`) does not see a constant baseline and finds
   27.9 points more (95 % interval +21.8 to +34.4). The width chosen is 4 cm⁻¹.
-- The region from 700 to 1800 cm⁻¹ alone gives the same result (87.9 %), so the region of the
-  O-H and N-H stretch bands, where a gas-phase calculation differs most from a measurement on
-  a solid, can be left out at no cost.
+- The region from 700 to 1800 cm⁻¹ alone gives the same result (87.9 %): between two measured
+  spectra the region of the O-H and N-H stretch bands can be left out at no cost.
 - A wrong answer is a relative of the right compound: Tanimoto similarity 0.59 on average,
   against 0.10 for a compound drawn at random.
 
 ```bash
 python benchmarks/prepare_chemotion_ir.py     # once: downloads 47.5 MB into benchmarks/cache
 python benchmarks/run_spectra_measured.py     # 10 seconds
+```
+
+### A measured spectrum against a library of computed spectra
+
+The question of plan item SP3 with a measured query
+([run_spectra_computed.py](benchmarks/run_spectra_computed.py)). The queries are the measured
+Chemotion IR spectra. The library holds one GFN2-xTB spectrum for every candidate, computed
+from the SMILES alone ([prepare_chemotion_xtb.py](benchmarks/prepare_chemotion_xtb.py)): of
+up to ten RDKit conformers the one of lowest force-field energy, optimised by xtb, one
+molecule in the gas phase. 1,645 of the 1,925 compounds get a spectrum (no salts, no metal
+complexes, at most 100 atoms); the jobs took 81 minutes and none failed.
+
+- With the form of the kernel, the width, a factor on the wavenumbers, the region and three
+  more options chosen on half of the compounds, the measured spectrum finds its compound
+  first in 5.6 % of the queries of the other half and among the first ten in 24.5 %. Chance
+  gives 0.06 %, and a measured library spectrum gives 87.6 %.
+- The right compound is in the best one per cent of the library for 31 % of the queries, and
+  its median rank is 56 of 1,645. A GFN2-xTB library is a coarse filter and not an
+  identification. The gate of SP3 is not met for a measured query at this level of theory.
+- The width that is chosen is 64 cm⁻¹, against 4 cm⁻¹ between two measured samples: the two
+  spectra agree on the regions that hold intensity and not line by line.
+- The region from 700 to 1800 cm⁻¹ alone finds 2.8 %. The expectation that the region of the
+  O-H and N-H stretch bands can be left out was wrong for a computed library.
+- Flexible and rigid compounds are found equally often (6.3 % and 7.0 %), and compounds with a
+  hydrogen-bond donor a little less often (4.8 % against 7.6 %). So the level of theory is
+  the probable limit, and not the one conformer or the gas phase.
+- *The test of that reading: two levels of theory on the same compounds.* The 231 compounds
+  with at most 25 atoms were computed again with ORCA at the density functional B97-3c, from
+  the geometry of xtb ([prepare_chemotion_dft.py](benchmarks/prepare_chemotion_dft.py);
+  13.5 hours with 14 jobs, 230 spectra). With these 230 compounds as the candidates, the
+  same queries and the same splits, the measured spectrum finds its compound first in 32.3 %
+  of the queries with the B97-3c library and in 11.3 % with the GFN2-xTB library. The
+  difference is 21.2 points (95 % interval 16.5 to 26.2). The compound is among the first
+  ten in 71.9 % against 37.2 %, and its median rank is 3 against 20.
+- So the level of theory is a large part of the limit, and not the whole of it: the gate of
+  SP3 is not met with B97-3c either. With B97-3c the width that is chosen is the width of a
+  band (4 to 32 cm⁻¹ give the same result), and the region from 700 to 1800 cm⁻¹ alone is
+  enough. A compound without a hydrogen-bond donor is found first in 46 % of the cases and
+  one with a donor in 29 %: the molecule alone in the gas phase is the next limit.
+
+```bash
+python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 minutes
+python benchmarks/run_spectra_computed.py              # 17 minutes
+python benchmarks/prepare_chemotion_dft.py --jobs 14   # once: 231 compounds at B97-3c, 13.5 hours
+python benchmarks/run_spectra_computed.py --subset     # the two levels on those compounds
+```
+
+### Mixtures and quantification
+
+The first half of plan item SP6 ([run_mixtures.py](benchmarks/run_mixtures.py)); no new data
+and no quantum calculation. By the Beer-Lambert law the spectrum of a mixture is the sum of
+the spectra of its components times their amounts, and the kernel is linear in each spectrum.
+So the kernel of two mixtures is the weighted sum of the kernels of their components:
+`spectrum.mix` makes the spectrum of a mixture and `spectrum.mixture_kernel` this product
+(the two agree to rounding error).
+
+Mixtures of four components are synthesised with a varying total amount, a baseline and
+noise, from the computed spectra of the benzoic acids and from the measured Chemotion IR
+spectra. The reference is partial least squares regression (PLS) on the same rows, and the
+floor is a least-squares fit with the known pure spectra.
+
+- *Amounts.* Kernel ridge on the linear kernel finds the amounts with an error 9 to 11 %
+  above the floor and equals PLS. The gate of this half is met; no gain over PLS was expected
+  in a linear problem.
+- *Fractions.* The cosine form of the kernel removes the total amount, but a fraction is
+  then a ratio and not a linear function: the error is 7 to 19 times the floor. The predicted
+  amounts divided by their sum give 1.07 to 1.10 times the floor.
+- *A baseline that the fit never saw.* The plain rows fail (80 times the floor), for the
+  kernel and for PLS. The slopes of the spectra lose almost nothing (1.25 times the floor).
+- *A bent calibration curve (stray light).* The models that learn from mixtures stay at
+  0.0040 where the fit with the pure spectra is at 0.054. The Gaussian layer adds nothing
+  clear to the linear kernel here.
+- *Reading.* The co-spectrum of the model for an amount is the net signal of that component,
+  the part of its spectrum that the other components cannot make (cosine 0.99 and 0.97).
+
+```bash
+python benchmarks/run_mixtures.py     # 11 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop

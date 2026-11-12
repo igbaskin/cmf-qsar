@@ -960,6 +960,33 @@ def registry() -> List[Benchmark]:
                   minutes="1",
                   report=lambda: _mod("run_spectra_measured").report(),
                   tables=["spectra_measured/table.md"]),
+        Benchmark("spectra_computed",
+                  "a measured infrared spectrum against a library of computed spectra: the "
+                  "measured Chemotion IR spectra as queries, one GFN2-xTB spectrum for each "
+                  "of 1,645 candidate compounds as the library, 1,680 settings of the kernel "
+                  "chosen on half of the compounds (needs xtb for the library: "
+                  "prepare_chemotion_xtb.py, 81 minutes, kept in benchmarks/cache); then "
+                  "the GFN2-xTB library against a B97-3c library on the 230 compounds with "
+                  "at most 25 atoms (needs ORCA for that library: prepare_chemotion_dft.py, "
+                  "13.5 hours with 14 jobs, kept in benchmarks/cache)",
+                  "run_spectra_computed.py", "spectra_computed", compute=[[], ["--subset"]],
+                  prepare=["prepare_chemotion_ir.py", "prepare_chemotion_xtb.py --jobs 14",
+                           "prepare_chemotion_dft.py --jobs 14"],
+                  minutes="17",
+                  report=lambda: _mod("run_spectra_computed").report(),
+                  tables=["spectra_computed/table.md"]),
+        Benchmark("mixtures",
+                  "mixtures and quantification: mixtures of four components synthesised from "
+                  "the computed spectra of the benzoic acids and from the measured Chemotion "
+                  "IR spectra, with a varying total amount, a baseline and noise; the "
+                  "amounts and the fractions from kernel ridge on the linear kernel, against "
+                  "PLS on the same rows and a least-squares fit with the pure spectra; a "
+                  "bent calibration curve and a baseline that the fit never saw (the "
+                  "measured part needs prepare_chemotion_ir.py)",
+                  "run_mixtures.py", "mixtures", compute=[[]],
+                  minutes="11",
+                  report=lambda: _mod("run_mixtures").report(),
+                  tables=["mixtures/table.md"]),
         Benchmark("mutants",
                   "a point mutant of a protein as a difference field in the frame of the "
                   "mutated residue: the change of folding free energy of single substitutions "

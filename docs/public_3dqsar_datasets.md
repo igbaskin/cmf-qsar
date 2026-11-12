@@ -562,6 +562,13 @@ Notes
    measured query. GFN2-xTB spectra of all compounds cost seconds each; density-functional
    spectra are affordable for a subset of a few hundred small compounds (the 189 benzoic acids
    took 4.6 hours at B97-3c).
+   *Done with GFN2-xTB on 11 November 2026* (`benchmarks/run_spectra_computed.py`): the
+   compound is first in 5.6 % of the queries among 1,645 candidates and among the first
+   ten in 24.5 %; a coarse filter.
+   *Done at B97-3c for the 230 compounds with at most 25 atoms on 12 November 2026*
+   (`benchmarks/prepare_chemotion_dft.py`, 13.5 hours; `run_spectra_computed.py --subset`):
+   among these 230 candidates the compound is first in 32.3 % of the queries with the B97-3c
+   library, against 11.3 % with the GFN2-xTB library on the same candidates.
 3. A property model on measured spectra, which is the second half of SP1 as the plan words it,
    comes after these two. The set has no measured property; the functional groups of the paper
    above are the only labels, and they follow from the structure.

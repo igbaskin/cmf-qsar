@@ -6841,11 +6841,40 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   10 to 20 cm⁻¹. *With a second density functional the gate is met among the whole series.*
   The 42 % was a limit of GFN2-xTB and not of the kernel. Control: GFN2-xTB started from the
   geometries of the library gives 43.3 %, so the start geometry is not the reason.
-  *Open:* a measured spectrum as the query against a computed library. Measured spectra
-  against each other are done (see SP1: 87.6 % among 1,912 compounds, which is the ceiling).
-  A measured spectrum differs from a computed one in more than the places of the lines
-  (hydrogen-bonded pairs of the acid in a solid or a solution, bands that are not harmonic);
-  a library larger than the series; the co-field of a structural direction in space.
+  *A measured query against a GFN2-xTB library, 11 November 2026*
+  (`benchmarks/prepare_chemotion_xtb.py`, `benchmarks/run_spectra_computed.py`,
+  `benchmarks/results/spectra_computed/`). The queries are the measured Chemotion IR spectra
+  (see SP1: measured against measured gives 87.6 % among 1,912 compounds, the ceiling). The
+  library is one GFN2-xTB spectrum for each of 1,645 compounds, from the SMILES alone: one
+  conformer, one molecule in the gas phase (81 minutes, none failed). With the form of the
+  kernel, the width, a factor on the wavenumbers, the region, the power, the centring and
+  the division of the computed intensities by the wavenumber chosen on half of the compounds,
+  the compound is first in 5.6 % of the queries (sd 0.6) and among the first ten in 24.5 %;
+  chance gives 0.06 %. The right compound is in the best one per cent of the library for
+  31 % of the queries (median rank 56 of 1,645). *The gate is not met for a measured query
+  with a GFN2-xTB library*: it is a coarse filter. The width chosen is 64 cm⁻¹ (4 cm⁻¹
+  between two measured samples). The region 700 to 1800 cm⁻¹ alone gives 2.8 %, against the
+  expectation. Rigid and flexible compounds are found equally often, so the level of theory
+  is the probable limit and not the conformer.
+  *The two levels on the same small compounds, 12 November 2026*
+  (`benchmarks/prepare_chemotion_dft.py`, `run_spectra_computed.py --subset`). The 231
+  compounds of the library with at most 25 atoms were optimised again with ORCA at B97-3c
+  from the geometry of xtb, so both levels have the same conformer: 13.5 hours with 14 jobs
+  (164 hours of one core), 230 spectra; one diyne did not converge and was stopped by hand.
+  With these 230 compounds as the candidates, the same 255 measured queries and the same
+  20 splits, the compound is first in 32.3 % of the queries (sd 3.4) with the B97-3c library
+  and in 11.3 % (sd 2.4) with the GFN2-xTB library: +21.2 points (95 % interval +16.5 to
+  +26.2). Among the first ten: 71.9 % against 37.2 %; median rank 3 against 20. *The reading
+  is confirmed: the level of theory is a large part of the limit. It is not the whole of it,
+  and the gate is not met for a measured query with a B97-3c library either.* With B97-3c
+  the widths from 4 to 32 cm⁻¹ give the same result, and the region 700 to 1800 cm⁻¹ alone is
+  enough, as between two measured spectra. A compound without a hydrogen-bond donor is found
+  first in 46 % of the cases and one with a donor in 29 % (GFN2-xTB: 18 % and 12 %), so the
+  molecule alone in the gas phase is the next limit; the one conformer is not (45 % for
+  3 to 5 rotatable bonds, 36 % for fewer).
+  *Open:* a model of the hydrogen bonds for the compounds with a donor (a pair of molecules
+  or a cluster); a density-functional library for larger compounds; a conformer search; a
+  library larger than the set; the co-field of a structural direction in space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
@@ -6917,6 +6946,26 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   beats it by more than the interval where the calibration curve is nonlinear, which is the only
   place the item claims a gain. If no public set shows a nonlinear calibration, the item records that
   the method matches PLS and adds the co-spectrum, and stops.
+  **Half (a) built and measured 11 November 2026** (`spectrum.mix`,
+  `spectrum.mixture_kernel`, `benchmarks/run_mixtures.py`,
+  `benchmarks/results/mixtures/`). The identity holds to rounding error. Mixtures of four
+  components with a varying total amount, a baseline and noise were synthesised from the
+  computed spectra of the benzoic acids and from the measured Chemotion IR spectra, 20 repeats.
+  *The gate of (a) is met:* kernel ridge on the linear kernel finds the amounts with an error
+  9 to 11 % above the floor (a least-squares fit with the known pure spectra) and equals PLS.
+  *The point of care of this entry was half right.* The cosine form removes the total amount,
+  but a fraction is then a ratio of two linear functions, and the error is 7 to 19 times the
+  floor; the predicted amounts of the kernel that is not normalised, divided by their sum,
+  give 1.07 to 1.10 times the floor. With a baseline that the mixtures to fit did not have,
+  the plain rows fail (80 times the floor) and the slopes of the spectra hold (1.25 times).
+  With stray light (a bent calibration curve) the models that learn from mixtures stay at
+  0.0040 where the fit with the pure spectra is at 0.054, and the Gaussian layer adds nothing
+  clear to the linear kernel, so the gain that this entry allows the nonlinear layer is not
+  shown. The co-spectrum of the model for an amount is the net analyte signal of the
+  component (cosine 0.99 for computed and 0.97 for measured components).
+  *Open:* half (b), measured mixtures with known composition, for which no set was looked
+  for yet; band shifts with the composition; a case in which every band of a component is
+  saturated.
 
 **Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
 and the finding that the field predicts the band from the structure as well as a linear
@@ -7629,11 +7678,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 |
+| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**165 items: 115 finished, 5 partly, 45 open.**
+**171 items: 116 finished, 6 partly, 49 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
