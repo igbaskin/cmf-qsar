@@ -1,6 +1,6 @@
 {
- "commit": "ca24a9919c38821863a797890d2b2d2e95bcf315",
- "created": "2026-11-12T21:06:55",
+ "commit": "5c7691374e9c022942cc912966ccbdd312e62db9",
+ "created": "2026-11-12T21:46:45",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2271,7 +2271,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3044,6 +3044,8 @@
   "benchmarks/results/mutants/mutants_seed1.json": "8b627276fe260bbaba4fcf65d5f2ccd8698d25e3702edd649c4dfa3a63833688",
   "benchmarks/results/mutants/table.md": "cb20a008bc0cda12b1e5a40c75e6a4a3e67fd41225c0c1738312e9cbc5fe6cbc",
   "benchmarks/results/nebdft/prepared.json": "1892d728e0df455b8c421340a7aca91135414d6ad541015c26cb856855233306",
+  "benchmarks/results/nebdft/rule.json": "019e5d98adeaefb0ee082235f693a95d86cabf2b05e396b8a8fb41b283c04685",
+  "benchmarks/results/nebdft/rule.md": "8093224e645ceba02c52f8b7b40757e5c24e0511d888d16b3cd8bd75d961709b",
   "benchmarks/results/nebdft/run.json": "38651b3ef78a3b5e1047e9e76bb18c84eaf3e3893cd3b3c55b3b7729753f079f",
   "benchmarks/results/nebdft/table.md": "82c50c0f8998cb08aba2e7d77dd3a224b52eddb9fbfdba6fed825a791abb001d",
   "benchmarks/results/nonlinearity/maps.png": "6222162e4be4dbcca85183d001549fe94ba868e30f44c4e11c08dc2e03e54d4e",
