@@ -3299,6 +3299,31 @@ cmf hops examples/hops/phosphate.extxyz examples/hops/borophosphate.extxyz examp
 cmf hops calcs/phosphate/pristine --charges file --list      # a VASP run directory
 ```
 
+**On barriers from density functional theory** ([run_nebdft.py](benchmarks/run_nebdft.py)).
+The `nebDFT2k` part of the same collection holds 1,681 hops whose barrier comes from a path
+relaxed with DFT; 1,652 of them pass a check against their trajectory files
+([prepare_nebdft.py](benchmarks/prepare_nebdft.py)). This is the first fit of the hop models
+on barriers from a quantum calculation. On the test part of the published split (216 hops):
+
+- the invariant field about the midpoint, fitted with a random forest, has a mean absolute
+  error of 0.212 eV (95 % interval 0.175 to 0.259) without the bond-valence barrier. The best
+  models of the paper have 0.27 eV without it and 0.25 eV with it;
+- the kernel model of this section has 0.294 eV, and 0.225 eV with the bond-valence barrier
+  as a second kernel;
+- kernel ridge on the bond-valence barrier alone has 0.300 eV: that one number matches the
+  field kernel. The forest on the fields is 0.074 eV below it on ten folds;
+- on the same rows the forest is 0.061 eV below the kernel (0.047 to 0.075), so the gap is
+  again in the fitting method;
+- machine-learned potentials that run the elastic band themselves reach 0.07 to 0.11 eV. At
+  room temperature an error of 0.23 eV in a barrier is a factor of about 7,000 in a hop
+  rate, so a model on the rigid structure ranks candidates and does not replace the
+  calculation.
+
+```bash
+python benchmarks/prepare_nebdft.py --fetch    # once: downloads 69 MB
+python benchmarks/run_nebdft.py                # 37 minutes
+```
+
 ### A single-atom site as the sample: two reactions on one metal
 
 A metal atom held by four atoms of a graphene divacancy is the active site of the

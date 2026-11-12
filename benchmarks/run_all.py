@@ -463,6 +463,21 @@ def registry() -> List[Benchmark]:
                   minutes="125",
                   report=lambda: _mod("run_litraj").write_table(_r("litraj")),
                   tables=["litraj/table.md"]),
+        Benchmark("nebdft",
+                  "the hop models on barriers from density functional theory: the 1,652 "
+                  "usable hops of the nebDFT2k part of the LiTraj collection, five "
+                  "descriptions of a hop with kernel ridge and a random forest, each with "
+                  "and without the bond-valence barrier as one more input, on the published "
+                  "test part and on ten folds that hold out whole structures, beside the "
+                  "numbers of the paper",
+                  "run_nebdft.py", "nebdft",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  # measured: 14 minutes for the overlap kernel and 14 for the fits, the rest
+                  # for the environments and the forests
+                  minutes="37",
+                  report=lambda: _mod("run_nebdft").report(),
+                  tables=["nebdft/table.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",
