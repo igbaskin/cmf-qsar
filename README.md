@@ -3127,6 +3127,43 @@ python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
 python benchmarks/run_calibration_transfer.py       # 33 minutes
 ```
 
+### Spectra with two axes: fluorescence maps and peak lists
+
+Plan item SP4 ([spectrum2d.py](cmfqsar/spectrum2d.py),
+[run_fluorescence.py](benchmarks/run_fluorescence.py)). A fluorescence map, an HSQC spectrum
+and an LC-MS run give an intensity over two variables. The kernel of two peak lists has a
+closed form with one width for each axis, and no grid or bin enters; a measured map is
+broadened on its grid, with the scattered excitation light taken out. Two sets of
+fluorescence maps are fetched into the cache
+([prepare_fluorescence.py](benchmarks/prepare_fluorescence.py)): 110 honeys in four
+botanical origins with six false honeys, and 720 maps of 24 olive oils during ageing with a
+measured absorbance. The reference is PLS on the map in one row (PLS-DA for a class).
+
+- *The kernel correlation first.* The kernels of the broadened maps correlate at 0.96 to
+  1.00 with the kernel of the map as measured. That predicts no gain on these maps.
+- *Honey, four origins.* The kernel Fisher discriminant finds the class of 87.9 % of the
+  honeys, PLS-DA on the map as measured of 87.0 %; the difference is +0.6 points (interval
+  -0.7 to +2.0). The largest class alone would give 45.2 %.
+- *Honey, real or false.* A description of the real honeys alone puts a false honey behind
+  a real one in 98 % of the pairs (distance to the fifth nearest honey). There are only six
+  false honeys.
+- *Olive oil, whole oils held out.* The absorbance at 268 nm is read with an error of 0.032
+  (the mean: 0.076; PLS on the map as measured: 0.041). The absorbance at 232 nm is not
+  read: no model is more than 12 % below the mean. With random folds the two errors look
+  59 % and 35 % smaller, because the model recognises the oil.
+- *Three maps of one sample as an ensemble* lower the error at 268 nm from 0.032 to 0.028.
+- *Simulated peak lists whose peaks move.* Without jitter all routes find 92 %. With a
+  jitter of 1 the kernel of the peak lists finds 86.7 % and PLS-DA on bins, with the best
+  bin size chosen inside the fit, 80.4 % (+6.3 points, interval +3.9 to +8.4). The model
+  does not matter; the description does.
+- *Open:* a measured set of peak lists (HSQC or LC-MS) with a class for every sample, and
+  the comparison of the co-map with the markers that the honey paper names.
+
+```bash
+python benchmarks/prepare_fluorescence.py   # once: downloads 77 MB
+python benchmarks/run_fluorescence.py       # 33 minutes
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

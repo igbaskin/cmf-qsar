@@ -616,3 +616,51 @@ Notes
   PLS on the same samples and folds, computed here.
 - The tablet set is also the first candidate for half (b) of plan item SP6: a tablet is a
   measured mixture with a known amount of one component.
+
+## Spectra with two axes (survey of 12 November 2026)
+
+Plan item SP4 needs spectra with two axes, a class label or a measured property for every
+sample, and terms of use that allow the data to be fetched. The plan names two kinds: a
+metabolomics study with nuclear magnetic resonance or LC-MS data, and fluorescence
+excitation-emission matrices. Nothing was downloaded during the survey; the two sets that
+were verified were then fetched and read by `benchmarks/prepare_fluorescence.py` on the same
+day. Status column as in the surveys above.
+
+| Location | Content | Terms | Status |
+|---|---|---|---|
+| Olive oils during ageing, Mendeley Data, https://doi.org/10.17632/g6y69g8gwm.1 (Venturini, Fluri and Baumgartner, Data 8, 81 (2023), https://doi.org/10.3390/data8050081) | 720 fluorescence excitation-emission matrices: 24 commercial extra virgin olive oils, 10 steps of ageing at 60 degrees C up to 53 days, three samples of every oil at every step. 35 excitation wavelengths (300 to 640 nm, step 10) and 251 emission wavelengths (300 to 800 nm, step 2). With them 240 measurements of the ultraviolet absorption at 232, 264, 268 and 272 nm, the quantities by which the European Union regulation grades an olive oil (one of the three samples each). Raw CSV files of the instrument, four samples in one file; the scattered excitation light (emission wavelength equal to the excitation wavelength) is not removed. One archive of 48.4 MB. | CC BY 4.0 | verified (paper, record and files) |
+| Honey, data page of the chemometrics group of the University of Copenhagen, https://ucphchemometrics.com/honey/ (Lenhardt et al., Applied Spectroscopy 68, 557 (2014)) | Fluorescence spectra of 109 honeys of the harvest of 2009 in Serbia in five classes: 47 acacia, 30 meadow mix, 14 sunflower, 12 linden and 6 "fake" honeys from bees that were fed a sucrose solution. A MATLAB file of "DataSet" objects in `HoneyEEM.zip`, 28.5 MB. | The page of the group says that all material on its data pages "is available for public use", provided "as is", and asks that the paper is cited. No named licence. | verified (pages, size and file) |
+| The same data page, other entries | Gas chromatography with mass spectrometry of camel cheese and of apple wine (CDF files), and fluorescence matrices of organic micropollutants in water | as above | reported (the list of the page; the entries were not opened) |
+| 2DNMRGym, arXiv 2505.18181 | More than 22,000 HSQC spectra with the molecular graph of each compound | not checked | reported; not a fit: one spectrum per compound and no class of samples |
+| MetaboLights, EMBL-EBI, https://www.ebi.ac.uk/metabolights/ | Studies with LC-MS feature tables (a mass, a retention time and an intensity per sample) and sample groups exist | not checked for a single study | reported; no study was opened |
+
+Notes
+- Both sets that were verified are fluorescence matrices: smooth maps with a few broad
+  bands. For such data the plan expects what it expected for near-infrared spectra: the
+  kernel should match PLS on the unfolded grid and not beat it. The case where a kernel over
+  peak lists has an advantage, sharp peaks at places that move from sample to sample (HSQC,
+  LC-MS), has no verified set here.
+- What each set can test. Honey: a classifier for the botanical origin, and the
+  authentication case (the six fake honeys against the real ones) with the one-class scores.
+  Olive oil: a regression of the absorption values on the map, a class from the limits of
+  the regulation, the three samples of one oil as an ensemble, and whole oils held out,
+  because the 30 samples of one oil are not independent.
+- The olive-oil set has the licence CC BY 4.0, so a derived file could be added to the
+  repository with the authors named. The honey set has no named licence. Under the rule of
+  this document both are fetched by a script into `benchmarks/cache/`.
+- What the files hold (read on 12 November 2026). *Olive oil:* the archive holds one more
+  archive with 222 CSV files. One file is a measurement of a white wine and is left out.
+  Four samples of one ageing step were measured twice; the later measurement is kept. The
+  emission wavelengths of the instrument are not exactly even (302.03, 304.06, ...), so the
+  curves are interpolated onto the grid of 2 nm. The absorbance at 232 nm runs from 1.24 to
+  2.93 and that at 268 nm from 0.04 to 0.40; 168 of the 240 samples are within the three
+  limits of the regulation for extra virgin oil. *Honey:* the file holds 110 honeys and not
+  109, with 52 excitation wavelengths (240 to 495 nm, step 5) and 741 emission wavelengths
+  (270 to 640 nm, step 0.5), in eight classes: 47 acacia, 30 meadow, 15 sunflower, 12
+  linden, and six false honeys under four names. 32 honeys have one or more excitation
+  wavelengths without values. The scattered excitation light is in the data and is the
+  largest signal of a map, a band of about 40 nm around the excitation wavelength and again
+  at twice that wavelength. It has to be taken out before a model is fitted.
+- No set of HSQC spectra with a class for every sample was found. A LC-MS study of
+  MetaboLights with a feature table is the next thing to look for if the item goes on to
+  peak lists.

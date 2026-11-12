@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1222 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 122 modules, 240 classes with 794 public methods, and 1232 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -134,6 +134,7 @@ for.
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
 | [cmfqsar.spectrum](#cmfqsarspectrum) | A spectrum as a one-dimensional field: the kernel and the co-spectrum (plan item SP1). |
+| [cmfqsar.spectrum2d](#cmfqsarspectrum2d) | A spectrum with two axes as a field on a plane: the kernel and the co-map (plan item SP4). |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
 | [cmfqsar.surrogate](#cmfqsarsurrogate) | The model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration on the folds, and the rule that sends a structure back to the fine level (plan item MS1). |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
@@ -17496,6 +17497,143 @@ apart, each with its position, its value and the index of its grid point.
 
 The spacing of the lattice planes in angstrom that reflects at the angle 2-theta (in
 degrees) for the given wavelength in angstrom: Bragg's law, `d = lambda / (2 sin theta)`.
+
+## cmfqsar.spectrum2d
+
+Source: `cmfqsar/spectrum2d.py`
+
+A spectrum with two axes as a field on a plane: the kernel and the co-map (plan item SP4).
+
+Some measurements give an intensity over two variables.  A fluorescence excitation-emission
+matrix is an intensity over the excitation and the emission wavelength.  A 1H-13C HSQC
+spectrum is a list of cross-peaks, each at a proton shift and a carbon shift.  An LC-MS run is
+a list of ions, each at a retention time and a mass.  This module treats such a spectrum as
+`cmfqsar/spectrum.py` treats a spectrum with one axis: as a field, here on a plane, with a
+kernel between two fields and a weight over the plane that a fitted model gives back.
+
+Two forms
+---------
+A **peak list** holds positions `(x_i, y_i)` and intensities `a_i` (`PeakList`).  A
+**map** is an array of intensities on a grid of the two axes, `map[i, j]` at `x[i]` and
+`y[j]`; a set of maps is an array with the samples first.
+
+The kernel
+----------
+Every peak is replaced by a Gaussian with the width `sigma_x` along the first axis and
+`sigma_y` along the second.  The two axes have different units, so each has its own width.
+The overlap of two broadened peak lists has a closed form,
+
+    k(A, B) = SUM_ij a_i b_j exp( -(x_i - x_j)^2 / (4 sigma_x^2) - (y_i - y_j)^2 / (4 sigma_y^2) ),
+
+which is the kernel of `cmfqsar/spectrum.py` with one more factor (`peak_overlap`).  Its
+cost is the number of peaks of the one list times that of the other, and no grid enters.  The
+usual treatment of such data puts the intensities into bins: two peaks on the two sides of a
+bin border then count as different, and two peaks in one bin as the same.  The width does what
+the bin size does without a border.
+
+A map enters as the same sum over its grid points.  For a set of maps it is cheaper to broaden
+every map on its grid (`smoothed`) and to take dot products of the flattened maps
+(`rows`, `map_kernel`); `rasterise` puts a peak list on a grid in the same
+way, so that peak lists and maps can be compared.  With a grid step well below the width the
+two routes agree, because the integral of the product of two normalised Gaussians of width
+`s` at a distance `d` is `exp(-d^2 / (4 s^2)) / (2 s sqrt(pi))` along each axis.
+
+Missing values
+--------------
+A measured map has places that carry no information about the sample.  In a fluorescence map
+the excitation light itself is scattered into the detector where the emission wavelength
+equals the excitation wavelength, and again at twice that wavelength (`scatter_mask`).
+Such values are set to NaN.  `smoothed` broadens a map with missing values by a
+normalised convolution: every value is the weighted mean of the measured values around it,
+and a place with no measured value within reach is zero.
+
+The co-map
+----------
+A kernel ridge model on the kernel of the flattened maps is linear in the broadened map, so
+its weight is a map over the two axes (`co_map`): positive where intensity raises the
+predicted property, or the score of a class, and negative where it lowers it.
+`strongest_places` lists the places where a map is largest in size.
+
+### `class PeakList  (dataclass)`
+
+Peaks on a plane: positions along the two axes and one intensity for each peak.
+
+Attributes:
+
+- `x: np.ndarray`
+- `y: np.ndarray`
+- `w: np.ndarray`
+- `name: str` = `''`
+
+### `peak_overlap(a: PeakList, b: PeakList, sigma_x: float, sigma_y: float) -> float`
+
+The kernel of two peak lists, not normalised: the closed form of the module text.
+
+### `peak_kernel(lists: Sequence[PeakList], sigma_x: float, sigma_y: float, others: Optional[Sequence[PeakList]]=None, normalize: bool=True) -> np.ndarray`
+
+The kernel of a set of peak lists, in the cosine form by default.
+
+Rows are `others` (or `lists` when `others` is not given) and columns are `lists`.  A
+list without intensity has the kernel zero with every list.
+
+### `rasterise(peaks: PeakList, x: np.ndarray, y: np.ndarray, sigma_x: float, sigma_y: float) -> np.ndarray`
+
+A peak list on the grid `x` by `y`, every peak a normalised Gaussian.
+
+The dot product of two such maps, times the two grid steps, is `peak_overlap`
+divided by `4 pi sigma_x sigma_y` when the grid steps are well below the widths and
+the grid reaches a few widths beyond the peaks.
+
+### `scatter_mask(excitation: np.ndarray, emission: np.ndarray, width: float, orders: Sequence[int]=(1, 2), below: bool=True) -> np.ndarray`
+
+The places of a fluorescence map that hold scattered excitation light, as True.
+
+The map has the excitation wavelengths along its first axis and the emission wavelengths
+along its second.  Scattered light is found where the emission wavelength is within
+`width` of the excitation wavelength, and of twice that wavelength for the second order
+(`orders`).  With `below`, the places with an emission wavelength below the excitation
+wavelength are marked too: a molecule does not emit light of a shorter wavelength than
+it absorbed.
+
+### `smoothed(maps: np.ndarray, step_x: float, step_y: float, sigma_x: float, sigma_y: float) -> np.ndarray`
+
+Maps on one even grid, each broadened by a Gaussian with one width for each axis.
+
+`maps` is one map or a set with the samples first.  A width of zero leaves that axis as
+it is.  A NaN is a missing value: the result is the weighted mean of the measured values
+around a place (a normalised convolution), and zero where no measured value is within
+reach.  The first and the last value along an axis are continued beyond its ends.
+
+### `binned(maps: np.ndarray, bins_x: int, bins_y: int) -> np.ndarray`
+
+Maps with `bins_x` neighbouring points of the first axis and `bins_y` of the second
+put into one bin: the mean of the measured values of the bin, and zero for a bin without
+one.  Points that do not fill a last bin are left out.  This is the grid on which the
+reference methods work.
+
+### `rows(maps: np.ndarray) -> np.ndarray`
+
+A set of maps as the rows of a description: one flattened map per sample, with a
+missing value as zero.
+
+### `map_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
+
+The linear kernel of sets of maps (samples first, or already `rows`), in the
+cosine form by default.  Rows are `test` (or `train`) and columns are `train`.
+
+### `co_map(maps: np.ndarray, alpha: np.ndarray, normalize: bool=True) -> np.ndarray`
+
+The weight over the two axes of a kernel model fitted on a set of maps.
+
+`alpha` holds the dual coefficients of the training maps.  With the cosine kernel the
+model predicts `b + SUM w * z` for a new map with the normalised values `z`; this
+function returns `w` in the shape of one map (see `cmfqsar.spectrum.co_spectrum`).
+
+### `strongest_places(x: np.ndarray, y: np.ndarray, M: np.ndarray, n: int=6, separation: Tuple[float, float]=(0.0, 0.0)) -> List[dict]`
+
+The `n` places where a map is largest in size, each with its two positions and its
+value.  A place is left out when it is within `separation` of a place already chosen
+along both axes.
 
 ## cmfqsar.stereo
 

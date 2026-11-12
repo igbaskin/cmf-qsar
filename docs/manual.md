@@ -12123,6 +12123,192 @@ division of the tablets into three parts is not used; the splits are random. The
 was tried with one number of test samples per set, so its cost is measured at 20 and at 500
 samples only. A nonlinear layer on the kernel was not tried on the tablets.
 
+## Spectra with two axes: fluorescence maps and peak lists
+
+This section is plan item SP4 (`cmfqsar/spectrum2d.py`, `benchmarks/run_fluorescence.py`,
+`benchmarks/results/fluorescence/table.md`). Some measurements give an intensity over two
+variables. A fluorescence *excitation-emission matrix* is a map of the emitted intensity
+over the excitation wavelength and the emission wavelength. A 1H-13C HSQC spectrum is a list
+of cross-peaks, each at a proton shift and a carbon shift. An LC-MS run is a list of ions,
+each at a retention time and a mass. The usual treatment puts such data into bins and gives
+the bins to PLS. The item treats the spectrum as a field on a plane.
+
+**The kernel.** A peak list holds the places $(x_i, y_i)$ and the intensities $a_i$ of its
+peaks. Every peak is replaced by a Gaussian with the width $\sigma_x$ along the first axis
+and $\sigma_y$ along the second. The two axes have different units, so each has its own
+width. The overlap of two broadened lists has a closed form,
+
+$$
+k(A, B) \;=\; \sum_i \sum_j a_i\, b_j\,
+\exp\left(-\frac{(x_i - x_j)^2}{4\sigma_x^2} - \frac{(y_i - y_j)^2}{4\sigma_y^2}\right),
+$$
+<!-- #eq:peak-kernel -->
+
+which is the spectrum kernel of equation (#eq:spectrum-kernel) with one more factor
+(`spectrum2d.peak_overlap`, `spectrum2d.peak_kernel`). Its cost is the number of peaks of the
+one list times that of the other, and no grid enters. With bins, two peaks on the two sides
+of a bin border count as different and two peaks in one bin as the same; the width does what
+the bin size does, without a border. A measured map enters as the same sum over its grid
+points. For a set of maps it is cheaper to broaden every map on its grid
+(`spectrum2d.smoothed`) and to take dot products of the maps (`spectrum2d.map_kernel`); the
+two routes agree to rounding error when the grid step is well below the width. The weight of
+a fitted model is a map over the two axes, the *co-map* (`spectrum2d.co_map`).
+
+A measured map has places without information about the sample. In a fluorescence map the
+excitation light itself is scattered into the detector where the emission wavelength equals
+the excitation wavelength, and again at twice that wavelength. `spectrum2d.scatter_mask`
+marks these places, and `smoothed` broadens a map with missing values by taking, at every
+place, the weighted mean of the measured values around it.
+
+**The data.** A survey (`docs/public_3dqsar_datasets.md`) found two sets of fluorescence
+maps that can be fetched, and no set of HSQC or LC-MS peak lists with a class for every
+sample. `benchmarks/prepare_fluorescence.py` downloads both into the cache (77 MB); nothing
+of them is in the repository.
+
+- *Honey* (Lenhardt et al., Applied Spectroscopy 68, 557 (2014); data page of the
+  chemometrics group of the University of Copenhagen, "available for public use"): 110
+  honeys, of which 104 have one of four botanical origins (47 acacia, 30 meadow, 15
+  sunflower, 12 linden) and six are "false" honeys from bees that were fed a sucrose
+  solution. The scattered light is the largest signal of every map and is taken out.
+- *Olive oil* (Venturini, Fluri and Baumgartner, Data 8, 81 (2023), CC BY 4.0): 24
+  commercial extra virgin olive oils kept at 60 degrees C, three samples of every oil at each of 10
+  steps of ageing, 720 maps. For one of the three samples the absorbance of the diluted oil
+  at 232 and at 268 nm was measured. The regulation of the European Union grades an olive
+  oil by these values; 168 of the 240 measured samples are within its limits for extra
+  virgin oil.
+
+```
+python benchmarks/prepare_fluorescence.py   # once: downloads 77 MB
+python benchmarks/run_fluorescence.py       # 33 minutes
+```
+
+**How the models are compared.** The reference is PLS on the map with its values in one row:
+PLS regression for a measured value, and PLS discriminant analysis (PLS-DA) for a class,
+with one model for each class against the others. The kernel models are kernel ridge
+regression and the kernel Fisher discriminant of section *A classifier with a co-field*, one
+for each class against the others. Both get the same descriptions: the map broadened by 0, 10 or
+20 nm along the excitation axis and by 0, 4, 8 or 16 nm along the emission axis, as it is or
+divided by its own length (the cosine form). The description and the setting of the model
+are chosen by cross-validation inside the samples of the fit. "PLS on the map as measured"
+has none of these choices but the number of components, and is what the literature reports.
+The benchmark records how often a chosen setting is at the edge of its grid; it is 5 % of
+the fits or less for both models.
+
+**The kernel correlation, which the gate of the item asks for first.** The kernel of every
+broadened description is compared with the kernel of the map as measured, over all pairs of
+different samples. The correlation is 0.958 to 1.000 for the honeys and 0.993 to 1.000 for
+the olive oils. A description whose kernel correlates this closely with the old one cannot
+change a model much. So the prediction is that broadening gains nothing on these maps.
+
+**Honey: the botanical origin.** Five folds with the classes in proportion, 20 repeats.
+
+| model | right class, % | mean over the four classes of the share found, % |
+|---|---|---|
+| always the largest class | 45.2 | 25.0 |
+| PLS-DA on the map as measured | 87.0 (3.1) | 86.3 (3.2) |
+| PLS-DA, description chosen inside the fit | 86.3 (1.9) | 84.7 (2.4) |
+| kernel Fisher discriminant, description chosen inside the fit | 87.9 (2.1) | 86.9 (2.0) |
+
+The kernel Fisher discriminant finds the class of 87.9 % of the honeys. Against PLS-DA on
+the map as measured the difference is +0.6 points (95 % bootstrap interval over the repeats
+-0.7 to +2.0): the two are equal, as the kernel correlation said. Against PLS-DA with the
+same choices it is +2.2 points (+0.7 to +3.6); the choices cost PLS-DA a little and do not
+cost the discriminant. The description chosen most often is a broadening of 20 nm along the
+excitation axis and none along the emission axis, in the cosine form. The honeys that are
+put into a wrong class are mostly acacia and meadow honeys taken for each other, and linden
+and sunflower honeys taken for meadow honeys; a meadow honey comes from many plants.
+
+**Honey: real or false.** A description of one class is fitted on the real honeys of the
+fit alone (`cmfqsar/oneclass.py`). The six false honeys are then scored against the real
+honeys that the description has not seen. The number is the share of pairs of a real and a
+false honey that are put in the right order.
+
+| description of the class | maps as measured, cosine form | maps broadened by 20 and 16 nm |
+|---|---|---|
+| distance to the mean map | 0.909 | 0.884 |
+| distance to the fifth nearest honey | 0.982 | 0.982 |
+| distance from the main subspace (5 components) | 0.926 | 0.966 |
+| Gaussian process on a constant | 0.965 | 0.848 |
+
+A false honey is further from its fifth nearest real honey than a real honey in 98 % of the
+pairs. There are six false honeys, so these numbers are a first reading and not a rate of
+detection.
+
+**Olive oil: the absorbance from the map.** The 30 samples of one oil are not independent,
+so whole oils are held out: six folds of four oils, 10 repeats. The same with random folds is
+given beside it. Root-mean-square errors in absorbance; the standard deviation of the
+absorbance is 0.284 at 232 nm and 0.075 at 268 nm.
+
+| model and input | 232 nm, whole oils held out | 232 nm, random folds | 268 nm, whole oils held out | 268 nm, random folds |
+|---|---|---|---|---|
+| the mean of the fit | 0.292 | 0.285 | 0.0756 | 0.0754 |
+| linear regression on the sum of the intensities | 0.293 | 0.286 | 0.0733 | 0.0724 |
+| PLS on the map as measured | 0.256 | 0.118 | 0.0409 | 0.0217 |
+| PLS, description chosen inside the fit | 0.271 | 0.115 | 0.0376 | 0.0216 |
+| kernel ridge, description chosen inside the fit | 0.269 | 0.111 | 0.0320 | 0.0207 |
+| PLS, the mean of the three maps of a sample | 0.276 | | 0.0307 | |
+| kernel ridge, the mean of the three maps | 0.261 | | 0.0279 | |
+
+- *The absorbance at 268 nm can be read from the map of an oil that the model has not
+  seen.* Kernel ridge has an error of 0.032, less than half of the error of the mean. It is
+  22 % below PLS on the map as measured (difference -0.0089, interval -0.0168 to -0.0011)
+  and within the interval of PLS with the same choices (-0.0056, -0.0132 to +0.0009).
+- *The absorbance at 232 nm cannot.* With whole oils held out no model is more than 12 %
+  below the mean of the fit. The oils differ in this value from the start, by more than
+  ageing changes it, and the map does not show that difference.
+- *Random folds overstate both.* With random folds the errors are 0.11 and 0.021, which is
+  59 % and 35 % below the errors with whole oils held out. A model that has seen other
+  samples of the same oil recognises the oil. A use of the set as its authors propose, to
+  predict a chemical value from the map, has to hold out whole oils.
+- *The sum of all intensities says nothing.* A linear regression on that one number is
+  equal to the mean. What the map carries is in its shape.
+- *The three maps of a sample as an ensemble.* The kernel of two ensembles is the mean of
+  the kernels of their members, which for this kernel is the kernel of the mean maps. With
+  the mean of the three maps the error at 268 nm falls from 0.0320 to 0.0279 (difference
+  -0.0041, interval -0.0085 to -0.0001), and at 232 nm by 3 %.
+
+The class "within the limits of the regulation" is found for 86.0 % of the samples by the
+kernel Fisher discriminant with whole oils held out (mean over the two classes), for 85.5 %
+by PLS-DA on the map as measured and for 84.7 % by PLS-DA with the same choices.
+
+**Simulated peak lists: the case that the two sets do not hold.** The two measured sets are
+smooth maps. The case that the item is about is a list of sharp peaks whose places move a
+little from sample to sample. It is simulated: two classes of 50 lists with 40 peaks on a
+square of side 100, six more peaks at random places in every list, and in one class four
+peaks stronger by 60 %. The *jitter* is the standard deviation of the place of a peak along
+each axis. The kernel of the peak lists (the width chosen inside the fit) is compared with
+bins (the bin size chosen inside the fit), each with both models; 10 repeats.
+
+| jitter | kernel of the peak lists, kernel Fisher discriminant | kernel of the peak lists, PLS-DA | bins, kernel Fisher discriminant | bins, PLS-DA | PLS-DA, bins of 1 | PLS-DA, bins of 16 | kernel correlation, peak lists against bins of 8 |
+|---|---|---|---|---|---|---|---|
+| 0 | 91.7 | 90.4 | 91.6 | 91.6 | 91.7 | 84.3 | 0.91 |
+| 0.5 | 90.2 | 89.4 | 85.1 | 86.2 | 63.5 | 81.1 | 0.42 |
+| 1 | 86.7 | 86.2 | 81.0 | 80.4 | 53.3 | 79.4 | 0.37 |
+| 2 | 80.4 | 78.7 | 71.1 | 71.1 | 51.5 | 73.1 | 0.44 |
+| 4 | 75.4 | 76.1 | 67.1 | 66.2 | 53.5 | 66.2 | 0.53 |
+
+Without jitter every route finds 92 % of the classes. When the peaks move, the kernel of
+the peak lists loses less than the bins do, although the best bin size is chosen inside the
+fit: the difference to PLS-DA on bins is +4.0 points at a jitter of 0.5 (interval +0.5 to
++7.1), +6.3 at 1 (+3.9 to +8.4), and +9.3 and +9.2 at 2 and 4. Bins of the size of a peak
+fall to chance at a jitter of 1. The model does not matter: PLS-DA on the kernel of the peak
+lists equals the kernel Fisher discriminant on it, and the two models are equal on bins. The
+kernel correlation between the two descriptions is 0.91 without jitter and 0.37 to 0.53 with
+it, so here the test says that the descriptions differ, and they do.
+
+**The gate of the plan item.** It has three parts. The kernel correlation is reported, and
+it predicted both outcomes. The classifier on the kernel matches PLS-DA on the measured
+maps, and beats PLS-DA on bins for simulated peak lists whose peaks move; on measured peak
+lists it is not tested. The third part, that the co-map names the places that the paper of
+the study names as its markers, is not checked: the result table lists the places of the
+co-map of every honey class, and the paper has not been read against them.
+
+**What is not done.** No measured peak list (HSQC, LC-MS) was fitted, because no set with a
+class for every sample was verified. A third axis, as in a GC×GC-MS run, is not in the
+module. The difference of two co-maps, which says what separates two classes and not one
+class from the rest, was not computed. The inner filter effect of an undiluted oil, which
+bends the relation between a concentration and the intensity, was not corrected.
+
 ## A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

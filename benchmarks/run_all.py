@@ -1001,6 +1001,20 @@ def registry() -> List[Benchmark]:
                   minutes="33",
                   report=lambda: _mod("run_calibration_transfer").report(),
                   tables=["calibration_transfer/table.md"]),
+        Benchmark("fluorescence",
+                  "spectra with two axes: fluorescence maps of 110 honeys (four botanical "
+                  "origins, and six false honeys against the real ones) and of 24 olive "
+                  "oils during ageing (the absorbance and the class of the regulation, "
+                  "whole oils held out), the kernel of the broadened maps against PLS on "
+                  "the map in one row; simulated peak lists whose peaks move, the "
+                  "closed-form kernel against PLS-DA on bins (the two sets are not in the "
+                  "repository: prepare_fluorescence.py downloads 77 MB into "
+                  "benchmarks/cache)",
+                  "run_fluorescence.py", "fluorescence", compute=[[]],
+                  prepare=["prepare_fluorescence.py"],
+                  minutes="33",
+                  report=lambda: _mod("run_fluorescence").report(),
+                  tables=["fluorescence/table.md"]),
         Benchmark("mutants",
                   "a point mutant of a protein as a difference field in the frame of the "
                   "mutated residue: the change of folding free energy of single substitutions "
