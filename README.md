@@ -3086,6 +3086,47 @@ floor is a least-squares fit with the known pure spectra.
 python benchmarks/run_mixtures.py     # 11 minutes
 ```
 
+### Two instruments: a model fitted on one reads the spectra of another
+
+Plan item SP5 ([run_calibration_transfer.py](benchmarks/run_calibration_transfer.py)). A model
+is fitted on the spectra of one instrument and then reads the spectra of another. The data
+are the two near-infrared sets that the literature on calibration transfer uses: 80 corn
+samples on three spectrometers with four properties, and 655 tablets on two spectrometers
+with the content of the active ingredient. The archive states no licence, so the files are
+fetched into the cache ([prepare_calibration_transfer.py](benchmarks/prepare_calibration_transfer.py)).
+The reference is PLS with piecewise direct standardisation (PDS), which needs samples
+measured on both instruments (transfer standards). Errors are relative to the spread of the
+property; 20 random splits.
+
+- *What differs between the instruments.* Not the resolution, which the plan expected, and
+  not a shift (0.1 to 0.8 nm on a grid of 2 nm). Nearly all of the difference is one
+  spectrum that is the same for all samples: 97 % of the squared difference between two corn
+  instruments.
+- *Without treatment a model is useless on another instrument*: the error is 0.9 to 2.7
+  times the spread of the property, also on the slopes of the spectra.
+- *Centring each instrument on its own mean spectrum* needs no standard and gives 0.49 to
+  0.52 for corn and 0.33 and 0.37 for the tablets. PDS with 8 standards gives 0.45 to 0.56
+  and 0.31 and 0.34; a model fitted on the target itself 0.10 to 0.43 and 0.24.
+- *The gate.* Without standards the error is below PLS on the spectra as measured in all 26
+  cases, within the interval of PLS with PDS for both tablet crossings, and within or below
+  it in 12 of the 24 corn cases. On average it is 6 % (corn) and 1 % (tablets) above PDS
+  with 8 standards, and about 10 % above PDS with 16.
+- *Centring has a cost*: the test samples do not have exactly the mean of the samples of the
+  fit. Within one instrument it raises the error of the most precise corn instrument from
+  0.10 to 0.22, and of the tablets from 0.24 to 0.26.
+- *It is the treatment and not the model*: PLS on the same rows equals kernel ridge within
+  2 to 4 %.
+- *A difference in resolution, simulated.* A target broadened by 8 nm gives an error of 1.4
+  times the spread. `spectrum.matched_widths` broadens the sharper instrument so that both
+  end at one width, and the error returns to that of the instrument itself.
+  `spectrum.fit_width` finds the difference from the two mean spectra without a standard,
+  correctly in every split. A real pair of instruments that differ in resolution is open.
+
+```bash
+python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
+python benchmarks/run_calibration_transfer.py       # 33 minutes
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1217 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 121 modules, 239 classes with 794 public methods, and 1222 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -17175,6 +17175,19 @@ mixture and `mixture_kernel` this product.  The identity holds for the kernel th
 not normalised.  The cosine form divides the total amount out: it is the form for a question
 about fractions, and the form that is not normalised is the one for a question about amounts.
 
+Two instruments
+---------------
+Two instruments give two spectra of one sample (plan item SP5).  Three functions describe
+what an instrument does to the axis.  Two Gaussian broadenings add as squares of their
+widths, so `matched_widths` gives every instrument the width that brings all of them
+to one resolution: a model fitted on the rows of one instrument then reads the rows of
+another.  `fit_width` finds the difference in resolution, and `fit_shift` a shift
+of the axis, from two curves such as the mean spectra of the two instruments; no sample has
+to be measured on both.  `smoothed` and `shifted` apply a width and a shift to
+curves that are rows of one grid.  A difference between two instruments that is the same
+for all samples is not a matter of the axis: it is removed by taking the mean spectrum of
+each instrument off its own spectra, which the benchmark of the item does.
+
 Readers
 -------
 `read_sticks` and `read_measured` read two-column text (the reader of
@@ -17405,6 +17418,56 @@ these mixtures.  The rows are the mixtures of `others`, or the same mixtures.  W
 `normalize` the result is put into the cosine form afterwards, which removes the total
 amount of each mixture; the cosine kernel of the components must not be given as `K`,
 because the norm of a mixture is not the sum of the norms of its components.
+
+### `matched_widths(sigma: float, resolutions: Sequence[float]) -> np.ndarray`
+
+The width for the spectra of every instrument, so that all end at one width.
+
+`resolutions` holds, for every instrument, the width that the instrument has already put
+on its spectra (the standard deviation of a Gaussian, in the units of the axis).  The
+widths of two Gaussian broadenings add as squares, so the instrument with the coarsest
+resolution gets `sigma` and every other instrument gets
+`sqrt(sigma^2 + r_max^2 - r_k^2)`.  After that every spectrum has the width
+`sqrt(sigma^2 + r_max^2)`, and a model fitted on one instrument reads the rows of
+another (plan item SP5).
+
+### `smoothed(rows: np.ndarray, step: float, sigma: float) -> np.ndarray`
+
+Curves on one even grid of step `step`, each broadened by a Gaussian of width `sigma`.
+
+This is `broaden` for curves that are already rows of one grid.  The first and the
+last value of a row are continued beyond its ends, so a curve that stands on a baseline
+does not fall to zero there.  `sigma = 0` returns the rows.
+
+### `shifted(rows: np.ndarray, x: np.ndarray, shift: float) -> np.ndarray`
+
+Curves on the grid `x`, moved by `shift` along the axis: the result at `x` is the
+curve at `x - shift` (cubic interpolation).  Beyond the two ends the first and the last
+value are used.
+
+### `fit_shift(a: np.ndarray, b: np.ndarray, x: np.ndarray, max_shift: float, points: int=20) -> float`
+
+The shift of the axis between two curves on one grid: the `d` for which `a` moved
+by `d` (`shifted`) has the slopes of `b`.
+
+The curves are, for example, the mean spectra of two instruments; they do not have to
+come from the same samples.  The slopes are compared, so an offset between the curves
+does not count.  Shifts from `-max_shift` to `max_shift` are tried in steps of one
+grid step divided by `points`, and the part of the axis within `max_shift` of an end is
+left out.  `shifted(rows_of_b, x, -d)` puts the spectra of the second instrument on the
+axis of the first.
+
+### `fit_width(a: np.ndarray, b: np.ndarray, x: np.ndarray, widths: Sequence[float]) -> Tuple[float, float]`
+
+The difference in resolution between two curves on one grid.
+
+Every width `w` of `widths` is tried in both directions: `a` broadened by `w`
+against `b`, and `b` broadened by `w` against `a`.  The direction and the width
+with the highest correlation of the slopes win.  Returns the width with a sign and that
+correlation: a positive width says that `b` is the coarser curve and `a` has to be
+broadened by it; a negative one says the opposite; zero says that no broadening makes
+the curves more alike.  The curves are, for example, the mean spectra of two instruments
+(`fit_shift`); remove a shift between them first.
 
 ### `co_spectrum(F: np.ndarray, alpha: np.ndarray, normalize: bool=True) -> np.ndarray`
 

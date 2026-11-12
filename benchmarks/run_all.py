@@ -987,6 +987,20 @@ def registry() -> List[Benchmark]:
                   minutes="11",
                   report=lambda: _mod("run_mixtures").report(),
                   tables=["mixtures/table.md"]),
+        Benchmark("calibration_transfer",
+                  "a model fitted on one instrument reads the spectra of another: 80 corn "
+                  "samples on three near-infrared spectrometers and 655 tablets on two; what "
+                  "differs between the instruments; PLS and kernel ridge on the same rows, "
+                  "the target read as measured, with each instrument centred, with the shift "
+                  "fitted, and with transfer standards (piecewise direct standardisation); "
+                  "a simulated difference in resolution and the matched widths (the two "
+                  "sets are not in the repository: prepare_calibration_transfer.py downloads "
+                  "6.5 MB into benchmarks/cache)",
+                  "run_calibration_transfer.py", "calibration_transfer", compute=[[]],
+                  prepare=["prepare_calibration_transfer.py"],
+                  minutes="33",
+                  report=lambda: _mod("run_calibration_transfer").report(),
+                  tables=["calibration_transfer/table.md"]),
         Benchmark("mutants",
                   "a point mutant of a protein as a difference field in the frame of the "
                   "mutated residue: the change of folding free energy of single substitutions "

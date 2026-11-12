@@ -60,7 +60,11 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "PBH2": ("done", "the title records it: replaced by a geometric field and calibrated"),
     "SP1": ("partly", "half (a), a calculated spectrum as the sample, built and measured "
                       "10 November 2026; of half (b), measured spectra find each other "
-                      "(11 November 2026), and a measured property is missing"),
+                      "(11 November 2026); a measured property came with SP5, and a "
+                      "set with a structure or a composition beside it is missing"),
+    "SP5": ("partly", "built and measured 12 November 2026 on the two sets, whose "
+                      "instruments do not differ in resolution; the claim about resolution "
+                      "holds on a simulated target, and a real pair is left"),
     "SP6": ("partly", "half (a), synthesised mixtures, built and measured 11 November 2026; "
                       "half (b), measured mixtures, waits for a data set"),
 }
