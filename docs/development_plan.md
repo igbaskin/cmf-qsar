@@ -5136,13 +5136,26 @@ values and a computed oxidation potential is a descriptor, not a target.
   on the three-distance rows are 66 and the overlap kernel 30.
   Nothing here changes a default: the field kernels are what the co-field is read from, and the
   co-field is the reason the frame model exists.
-  **Not done:** no model fitted on DFT barriers. When this item was written the barriers it names
-  were scattered over papers and not in one table; the collection above now supplies one,
-  `nebDFT2k`, with 1681 nudged-elastic-band barriers of 876 structures under the same licence,
-  which nothing here has read yet. Measuring on it is the next step for this item, and the first
-  chance to fit the program on real migration barriers rather than on an empirical landscape; the
-  published reference there is a mean absolute error of 0.25 eV for the best structure-to-property
-  model and 0.07 to 0.11 eV for a machine-learned potential that runs the elastic band itself.
+  **Fitted on DFT barriers, 12 November 2026** (`benchmarks/prepare_nebdft.py`,
+  `benchmarks/run_nebdft.py`, `benchmarks/results/nebdft/`). The `nebDFT2k` part of the
+  collection holds 1,681 hops with a barrier from a path relaxed with DFT, and the
+  bond-valence barrier of each; 1,652 hops in 852 structures pass a check of the index
+  against the trajectory files. On the test part of the published split (216 hops) the
+  invariant field about the midpoint, fitted with a random forest, has a mean absolute error
+  of 0.212 eV (95 % interval 0.175 to 0.259; RMSE 0.310 eV, R2 0.86) without the bond-valence
+  barrier, where the best models of the paper have 0.27 eV without it and 0.25 eV with it;
+  on ten folds that hold out whole structures it has 0.228 eV. The kernel model of this item
+  has 0.294 eV, and 0.225 eV with the bond-valence barrier as a second kernel (on the folds
+  -0.052 eV, interval -0.066 to -0.039). *Three findings carry over from the bond-valence
+  barriers:* the forest is 0.061 eV below the kernel on the same rows (0.047 to 0.075), so
+  the gap is in the fitting method; one number, the bond-valence barrier, matches the field
+  kernel (0.302 against 0.288 eV, difference within the interval), while the forest on the
+  fields is 0.074 eV below it; and the frame of the hop adds nothing over the invariant
+  description (-0.001 eV, -0.016 to +0.013). Machine-learned potentials that run the elastic
+  band themselves remain at 0.07 to 0.11 eV. At room temperature an error of 0.23 eV in a
+  barrier is a factor of about 7,000 in a hop rate, which is what MS8 has to carry through.
+  **Not done:** the rule of MS1 with the bond-valence barrier as the coarse level and the
+  DFT barrier as the fine level; a description from the relaxed path or with the vacancy.
   Also no polarisability field, no argyrodite among the thirteen disordered conductors, no
   relaxed path (the bottleneck is on the straight line), and no panel in the application.
 

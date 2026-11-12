@@ -12901,6 +12901,98 @@ graph network reaches 0.21 eV, on fifty-four times as many
 hops, and it carries three-body terms of its own -- which is the same ingredient that moved this
 model furthest.
 
+### On barriers from density functional theory
+
+Everything above is fitted on barriers from the bond-valence site-energy method, which is an
+empirical energy landscape. The same collection holds a part with barriers from a quantum
+calculation, `nebDFT2k`: 1,681 hops of a lithium ion into a vacancy in 867 structures, each
+with the barrier of a path that was relaxed by the nudged elastic band method with density
+functional theory (DFT, the PBE functional). Its index also gives the bond-valence barrier of
+every hop. This subsection is the first fit of the hop models on DFT barriers
+(`benchmarks/prepare_nebdft.py`, `benchmarks/run_nebdft.py`,
+`benchmarks/results/nebdft/table.md`).
+
+```
+python benchmarks/prepare_nebdft.py --fetch    # once: downloads 69 MB
+python benchmarks/run_nebdft.py                # 37 minutes
+```
+
+**The set as it is used.** A hop of the index is named by two atom indices in the structure
+of the Materials Project. That reading is checked for every hop against the trajectory file
+of the hop: the distance that the moving ion covers in the trajectory has to be the length
+of the hop in the structure, within 0.5 A. Eight hops fail the check. 21 more hops belong to
+12 structures that cannot be used: 8 that the interface of the Materials Project does not
+return as an ordered cell, and 4 for which no oxidation states are found. 1,652 hops in
+852 structures remain. The descriptions are built from the rigid structure, without a
+vacancy and without any relaxation, as everywhere in this section.
+
+**The two barriers.** The DFT barriers have a mean of 0.81 eV and a standard deviation of
+0.79 eV. The bond-valence barriers of the same hops have a mean of 1.26 eV and a standard
+deviation of 1.59 eV. The two correlate with r = 0.815. Taken as a prediction, the
+bond-valence barrier is worse than the mean (a mean absolute error of 0.61 eV against
+0.56 eV), because it is too high and too widely spread. As an input of a model it is useful,
+and the best models of the paper use it so.
+
+**The protocols.** The models are scored on the test part of the published split, where the
+numbers of the paper are, after a fit on the training and the validation part (1,436 hops;
+216 of the 220 test hops are among the hops that remain). And they are scored on ten folds
+that hold out whole structures, over all hops, for the intervals. Every kernel model chooses
+between the linear kernel and a Gaussian kernel on top of it, and its ridge, inside the
+training part. An interval is a 95 % interval from a bootstrap that draws whole structures.
+
+| model | published test part: mean absolute error, eV | RMSE, eV | R2 | ten folds: mean absolute error, eV |
+|---|---|---|---|---|
+| the mean of the fit | 0.546 | 0.824 | -0.01 | 0.557 |
+| kernel ridge, the two end sites | 0.508 | 0.769 | 0.12 | 0.493 |
+| kernel ridge, counts about the midpoint | 0.396 | 0.564 | 0.53 | 0.395 |
+| kernel ridge, hop length and bottleneck | 0.352 | 0.557 | 0.54 | 0.362 |
+| kernel ridge, invariant field about the midpoint | 0.326 | 0.486 | 0.65 | 0.289 |
+| kernel ridge, fields in the frame of the hop (the model of this section) | 0.294 | 0.460 | 0.69 | 0.288 |
+| kernel ridge on the bond-valence barrier alone | 0.300 | 0.435 | 0.72 | 0.302 |
+| kernel ridge, fields in the frame of the hop, with the bond-valence barrier | 0.225 [0.187, 0.273] | 0.335 | 0.83 | 0.236 [0.220, 0.251] |
+| random forest, invariant field about the midpoint | 0.212 [0.175, 0.259] | 0.310 | 0.86 | 0.228 [0.213, 0.245] |
+| random forest, invariant field about the midpoint, with the bond-valence barrier | 0.203 [0.163, 0.253] | 0.313 | 0.85 | 0.222 [0.207, 0.237] |
+| *the paper, best model without the bond-valence barrier (kernel ridge)* | 0.27 | 0.41 | 0.76 | |
+| *the paper, random forest without it* | 0.29 | 0.48 | 0.68 | |
+| *the paper, graph network without it* | 0.40 | 0.64 | 0.43 | |
+| *the paper, best models with the bond-valence barrier* | 0.25 | 0.38 | 0.80 | |
+
+- *The program's description of a hop, fitted with a random forest, is at or below every
+  model of the paper that predicts a barrier from a structure.* On the test part its mean
+  absolute error is 0.212 eV. The best number of the paper without the bond-valence
+  barrier, 0.27 eV, is above the interval of this error; the best number with it, 0.25 eV,
+  is inside. The forest does not need the bond-valence barrier: with it the error changes
+  by -0.006 eV (-0.012 to -0.001) on the folds.
+- *The kernel model of this section needs it.* Without the bond-valence barrier it has
+  0.294 eV, near the forest of the paper. With the bond-valence barrier as a second kernel
+  it has 0.225 eV; on the folds the gain is 0.052 eV (0.039 to 0.066).
+- *The fitting method is again what separates the two.* On the same rows the kernel is
+  0.061 eV above the forest (0.047 to 0.075). This is the finding of the subsection above,
+  now on DFT barriers.
+- *One number matches the field kernel.* Kernel ridge on the bond-valence barrier alone has
+  0.302 eV on the folds, and the kernel on the fields in the frame of the hop has 0.288 eV;
+  the difference is -0.014 eV (-0.033 to +0.006). The forest on the invariant rows is
+  0.074 eV below the bond-valence barrier alone (0.057 to 0.090), so the fields hold more
+  than that number, and the linear kernel does not bring it out.
+- *The frame of the hop adds nothing here.* The overlap kernel and the invariant kernel
+  differ by -0.001 eV (-0.016 to +0.013).
+- *The two end sites say little* (0.49 eV against 0.56 eV for the mean): a barrier is
+  decided between the sites and not at them.
+
+**What the comparison can and cannot say.** The test part has 216 hops, so an error on it is
+known to about 0.04 eV, and four of its hops are missing here. The models here are fitted on
+the training and the validation part together, and the models of the paper on the training
+part with the validation part for their settings. The numbers on the ten folds do not depend
+on either choice. A random forest gives no co-field; the model that gives one is the kernel
+with the bond-valence barrier, at 0.225 eV.
+
+**What the number means.** A machine-learned potential that runs the elastic band itself
+reaches 0.07 to 0.11 eV on this set, as the paper reports, and that remains another kind of
+accuracy. At room temperature an error of 0.23 eV in a barrier is a factor of about 7,000
+in the rate of a hop. A model that reads a barrier from the rigid structure is therefore a
+tool to rank many candidates before a calculation, and not a replacement for the
+calculation.
+
 ## Reading the model from another program
 
 Everything above reads a model from inside this program: the window, the command line, the library.
