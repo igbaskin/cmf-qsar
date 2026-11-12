@@ -12993,6 +12993,64 @@ in the rate of a hop. A model that reads a barrier from the rigid structure is t
 tool to rank many candidates before a calculation, and not a replacement for the
 calculation.
 
+**Which hops need the calculation.** A model with this error does not have to answer
+every hop. In a hierarchy of methods it has to say which hops it may answer and which have to
+go to the DFT calculation; this is the tolerance rule of section *The model as the fast level
+of a hierarchy*, here with a DFT barrier as the fine level
+(`benchmarks/run_nebdft_rule.py`, `benchmarks/results/nebdft/rule.md`; 18 minutes after the
+kernels are built). Every prediction gets a standard deviation in eV. For kernel ridge it is
+that of the Gaussian process which matches the ridge fit. For the random forest it is the
+spread of the predictions of its trees. A factor that is measured inside the training part
+puts each on the right scale. Ten folds hold out whole structures.
+
+| model | mean absolute error, eV | root mean square of error / standard deviation | inside two standard deviations | rank correlation of the standard deviation and the absolute error |
+|---|---|---|---|---|
+| kernel ridge on the bond-valence barrier alone | 0.301 | 1.01 | 94 % | +0.03 |
+| kernel ridge, fields in the frame of the hop | 0.289 | 1.01 | 94 % | +0.16 |
+| kernel ridge, fields in the frame of the hop, with the bond-valence barrier | 0.234 | 0.99 | 94 % | +0.11 |
+| random forest, invariant field, with the bond-valence barrier | 0.222 | 0.99 | 97 % | +0.45 |
+
+All four standard deviations have the right size: the errors divided by them have a root
+mean square of one, and 94 to 97 % of the barriers are inside two standard deviations. The
+size is not what a rule needs, though. A rule needs the standard deviation to be large where
+the error is large, and only the spread of the trees is: its rank correlation with the
+absolute error is +0.45, against +0.03 to +0.16 for the kernel models.
+
+The table below sends the hops with the largest standard deviation to the calculation and
+gives the mean absolute error of the hops that are left.
+
+| model | none sent | 10 % sent | 20 % sent | 30 % sent | 50 % sent |
+|---|---|---|---|---|---|
+| kernel ridge, fields in the frame of the hop, with the bond-valence barrier | 0.234 | 0.219 | 0.213 | 0.206 | 0.205 |
+| random forest, invariant field, with the bond-valence barrier | 0.222 | 0.185 | 0.168 | 0.160 | 0.138 |
+| the forest, the hops ordered by the predicted barrier | 0.222 | | 0.182 | | 0.154 |
+| the kernel model, the hops ordered by the predicted barrier | 0.234 | | 0.192 | | 0.159 |
+| the forest, the hops ordered by their true error (the best that any signal could do) | 0.222 | | 0.122 | | 0.064 |
+
+- *With the forest the rule works.* One hop in five sent to the calculation lowers the
+  error of the others from 0.222 to 0.168 eV, and one in two to 0.138 eV. With the
+  tolerance at the error that the forest shows inside its training part (0.36 eV), it
+  answers 68 % of the hops with a mean absolute error of 0.157 eV; the hops that it sends
+  away would have had a root-mean-square error of 0.51 eV, against 0.24 eV for those it
+  answers.
+- *With the kernel models it does not.* Their standard deviation says how far a hop is
+  from the hops of the fit, and it is the same for a low and for a high barrier. The errors
+  grow with the barrier. So one number that costs nothing, the predicted barrier itself,
+  orders the hops better than the standard deviation of the kernel model (0.192 against
+  0.213 eV at one hop in five). For the forest the spread of the trees is better than that
+  number (0.168 against 0.182 eV).
+- *The disagreement between two cheap models is a weak signal.* Ordering the hops by the
+  difference between the model and the model on the bond-valence barrier alone gives 0.195
+  to 0.207 eV at one hop in five.
+- *No signal halves the error at a useful price.* To halve the error of the forest, 76 %
+  of the hops have to go to the calculation with its own standard deviation; an order by
+  the true error would need 25 %.
+
+So on DFT barriers the hierarchy saves a part of the calculations and not most of them, and
+the model that makes it work is the forest. The calibrated Gaussian-process deviation, which
+did its work on the bond-valence barriers of many chemistries, does not order hops whose
+errors depend on the size of the barrier.
+
 ## Reading the model from another program
 
 Everything above reads a model from inside this program: the window, the command line, the library.

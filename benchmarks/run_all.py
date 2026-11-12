@@ -364,6 +364,19 @@ def registry() -> List[Benchmark]:
                   minutes="37",
                   report=lambda: _mod("run_nebdft").report(),
                   tables=["nebdft/table.md"]),
+        Benchmark("nebdft_rule",
+                  "which hops need the DFT calculation: the tolerance rule of item MS1 on "
+                  "the nebDFT2k barriers, with a standard deviation in eV for three kernel "
+                  "models and for a random forest (the spread of its trees), its "
+                  "calibration, and the error of the hops that are answered when a share of "
+                  "the hops goes to the calculation (reads the kernels that run_nebdft.py "
+                  "leaves in benchmarks/cache, or builds them)",
+                  "run_nebdft_rule.py", "nebdft",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="18",
+                  report=lambda: _mod("run_nebdft_rule").report(),
+                  tables=["nebdft/rule.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",

@@ -3317,11 +3317,19 @@ on barriers from a quantum calculation. On the test part of the published split 
 - machine-learned potentials that run the elastic band themselves reach 0.07 to 0.11 eV. At
   room temperature an error of 0.23 eV in a barrier is a factor of about 7,000 in a hop
   rate, so a model on the rigid structure ranks candidates and does not replace the
-  calculation.
+  calculation;
+- *which hops need the calculation* ([run_nebdft_rule.py](benchmarks/run_nebdft_rule.py)):
+  every prediction gets a standard deviation in eV, and the hops with the largest one go to
+  DFT. All standard deviations have the right size (94 to 97 % of the barriers inside two of
+  them). Only the spread of the trees of the forest is large where the error is large: one
+  hop in five sent to the calculation lowers the error of the others from 0.222 to
+  0.168 eV, one in two to 0.138 eV. The standard deviation of the kernel models orders the
+  hops worse than the predicted barrier itself (0.213 against 0.192 eV).
 
 ```bash
 python benchmarks/prepare_nebdft.py --fetch    # once: downloads 69 MB
 python benchmarks/run_nebdft.py                # 37 minutes
+python benchmarks/run_nebdft_rule.py           # 18 minutes more
 ```
 
 ### A single-atom site as the sample: two reactions on one metal
