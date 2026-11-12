@@ -109,6 +109,10 @@ def peak_kernel(lists: Sequence[PeakList], sigma_x: float, sigma_y: float,
     """
     rows_ = lists if others is None else others
     K = np.array([[peak_overlap(r, c, sigma_x, sigma_y) for c in lists] for r in rows_])
+    if others is None:
+        # k(A, B) and k(B, A) are summed in another order and can differ in the last digit;
+        # the kernel of one set is made symmetric to the digit
+        K = 0.5 * (K + K.T)
     if not normalize:
         return K
     dc = np.array([peak_overlap(c, c, sigma_x, sigma_y) for c in lists])
