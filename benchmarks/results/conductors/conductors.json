@@ -1,0 +1,484 @@
+{
+ "training": {
+  "hops": 1652,
+  "structures": 852,
+  "columns": 4301,
+  "shortest_hop": 2.0492573345159997,
+  "mae": 0.22796206354695384,
+  "rmse": 0.35850454677017185,
+  "mean_sd": 0.3315124526470829,
+  "factor": 1.068086265967032,
+  "shared": 0.4592894817616868,
+  "inside_2sd": 0.9642857142857143,
+  "bond_valence_correlation": 0.844710150910514
+ },
+ "conductors": {
+  "structures": 13,
+  "hops": 6408,
+  "distinct": 298,
+  "elements_without_a_field": [
+   "Ge",
+   "La",
+   "N",
+   "Zr"
+  ],
+  "mean_predicted": 1.2102437107671133,
+  "mean_sd": 0.5028249936376714,
+  "bond_valence_correlation": 0.09437084324379943
+ },
+ "draws": 400,
+ "structures": [
+  {
+   "structure": "cod_1545083",
+   "compound": "LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)",
+   "disorder": "Li sites 0.38/0.62, Zr/Ta shared",
+   "hops": 1728,
+   "distinct": 18,
+   "measured": {
+    "low": 0.41,
+    "high": 0.47,
+    "sample": "single crystals of Ta-doped cubic garnet",
+    "source": "a search summary of single-crystal studies of Li6.5La3Zr1.5Ta0.5O12; pellets of the same compound: 0.41 eV",
+    "checked": "search result"
+   },
+   "mean_predicted": 1.3518288598222177,
+   "mean_sd": 0.6042442482592651,
+   "shorter_than_training": 0.1111111111111111,
+   "forest": {
+    "point": [
+     0.9912962968333296,
+     0.9912962968333296
+    ],
+    "one": [
+     0.0,
+     0.6266201806636686,
+     1.4292228878202033
+    ],
+    "three": [
+     0.0,
+     0.6266201806636686,
+     1.4292228878202033
+    ]
+   },
+   "bond_valence": {
+    "one": 0.3968999999999999,
+    "three": 0.3968999999999999
+   }
+  },
+  {
+   "structure": "cod_1552152",
+   "compound": "LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)",
+   "disorder": "Li sites 0.28/0.96, Zr/Ta shared",
+   "hops": 1824,
+   "distinct": 19,
+   "measured": {
+    "low": 0.41,
+    "high": 0.47,
+    "sample": "the same family, another Ta content",
+    "source": "as for cod_1545083; not measured on this composition",
+    "checked": "search result"
+   },
+   "mean_predicted": 1.76227538567368,
+   "mean_sd": 0.6925572664661759,
+   "shorter_than_training": 0.10526315789473684,
+   "forest": {
+    "point": [
+     0.8083590644999924,
+     0.8083590644999924
+    ],
+    "one": [
+     0.0,
+     0.6632487293134453,
+     1.324599070535002
+    ],
+    "three": [
+     0.0,
+     0.6632487293134453,
+     1.324599070535002
+    ]
+   },
+   "bond_valence": {
+    "one": 0.39470000000000005,
+    "three": 0.39470000000000005
+   }
+  },
+  {
+   "structure": "cod_1545085",
+   "compound": "LLZO:Ta tetragonal",
+   "disorder": "ordered",
+   "hops": 416,
+   "distinct": 13,
+   "measured": null,
+   "mean_predicted": 1.5986214092717919,
+   "mean_sd": 0.6349230746440873,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.7639992070666648,
+     1.0283217918666638
+    ],
+    "one": [
+     0.0,
+     0.5148118115784516,
+     1.3222140848918251
+    ],
+    "three": [
+     0.0,
+     0.7953120635275516,
+     1.7071979577191696
+    ]
+   },
+   "bond_valence": {
+    "one": 1.4533,
+    "three": 2.9266
+   }
+  },
+  {
+   "structure": "cod_1525568",
+   "compound": "LLTO rhombohedral (La0.5Li0.5TiO3)",
+   "disorder": "Li sites 0.16",
+   "hops": 252,
+   "distinct": 7,
+   "measured": null,
+   "mean_predicted": 2.638895623752379,
+   "mean_sd": 0.79952686680011,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     2.5248784176999988,
+     2.529508963999999
+    ],
+    "one": [
+     0.6633786502302329,
+     1.841120337086235,
+     3.203461991634911
+    ],
+    "three": [
+     1.049557774894542,
+     2.2039788454676037,
+     3.445705330912646
+    ]
+   },
+   "bond_valence": {
+    "one": 1.7581999999999995,
+    "three": 1.8925
+   }
+  },
+  {
+   "structure": "cod_1000437",
+   "compound": "LLTO tetragonal (La0.56Li0.33TiO3)",
+   "disorder": "La/Li shared sites",
+   "hops": 12,
+   "distinct": 4,
+   "measured": {
+    "low": 0.4,
+    "high": 0.4,
+    "sample": "bulk part of a polycrystal, impedance",
+    "source": "S. Stramare, V. Thangadurai and W. Weppner, Chem. Mater. 15, 3974 (2003), on Li0.34La0.51TiO2.94 (Y. Inaguma et al., Solid State Commun. 86, 689 (1993))",
+    "checked": "search result"
+   },
+   "mean_predicted": 0.8032476736166663,
+   "mean_sd": 0.45893810053824086,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.7049274879333349,
+     0.8171439351333339
+    ],
+    "one": [
+     0.0,
+     0.4898353333062955,
+     1.2413705177634329
+    ],
+    "three": [
+     0.026714677029365252,
+     0.7915631682588884,
+     1.524911979537429
+    ]
+   },
+   "bond_valence": {
+    "one": 0.817,
+    "three": 15.1695
+   }
+  },
+  {
+   "structure": "cod_7215190",
+   "compound": "LGPS (Li10GeP2S12)",
+   "disorder": "Li sites 0.47 to 0.89, Ge/P shared",
+   "hops": 416,
+   "distinct": 26,
+   "measured": {
+    "low": 0.22,
+    "high": 0.28,
+    "sample": "polycrystals, impedance",
+    "source": "R. Iwasaki et al., ISSP Activity Report 2018, on the earlier measurements (N. Kamaya et al., Nat. Mater. 10, 682 (2011) and later)",
+    "checked": "page read"
+   },
+   "mean_predicted": 0.5661383936807698,
+   "mean_sd": 0.38032696842622965,
+   "shorter_than_training": 0.038461538461538464,
+   "forest": {
+    "point": [
+     0.24785025163333244,
+     0.3198975784000048
+    ],
+    "one": [
+     0.0,
+     0.10858409317223623,
+     0.4141498253464884
+    ],
+    "three": [
+     0.0,
+     0.20741851965145858,
+     0.6137561310127447
+    ]
+   },
+   "bond_valence": {
+    "one": 0.5284,
+    "three": 0.5880999999999998
+   }
+  },
+  {
+   "structure": "cod_7222155",
+   "compound": "LiTi2(PO4)3 NASICON",
+   "disorder": "ordered",
+   "hops": 0,
+   "distinct": 0,
+   "measured": null
+  },
+  {
+   "structure": "cod_7222156",
+   "compound": "Li3.18Ti2(PO4)3 NASICON",
+   "disorder": "Li sites 0.34/0.72",
+   "hops": 216,
+   "distinct": 12,
+   "measured": null,
+   "mean_predicted": 0.8163348354444442,
+   "mean_sd": 0.40885515425357793,
+   "shorter_than_training": 0.16666666666666666,
+   "forest": {
+    "point": [
+     0.656482536399998,
+     0.656482536399998
+    ],
+    "one": [
+     0.0,
+     0.5224528270560682,
+     1.1686474626458916
+    ],
+    "three": [
+     0.036692823117043555,
+     0.5621765618567811,
+     1.1950560684881095
+    ]
+   },
+   "bond_valence": {
+    "one": 0.4696,
+    "three": 0.47140000000000004
+   }
+  },
+  {
+   "structure": "cod_4002499",
+   "compound": "Li2.92N",
+   "disorder": "Li site 0.96",
+   "hops": 72,
+   "distinct": 9,
+   "measured": {
+    "low": 0.25,
+    "high": 0.25,
+    "sample": "single crystal, in the Li2N planes",
+    "source": "U. v. Alpen, A. Rabenau and G. H. Talat, Appl. Phys. Lett. 30, 621 (1977)",
+    "checked": "search result"
+   },
+   "mean_predicted": 1.129873735211101,
+   "mean_sd": 0.4717668667946015,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.38744370999999284,
+     0.9960914181999921
+    ],
+    "one": [
+     0.0,
+     0.3152225834547493,
+     1.2280942864119653
+    ],
+    "three": [
+     0.0,
+     0.727540454539688,
+     1.5547931325030118
+    ]
+   },
+   "bond_valence": {
+    "one": 0.15850000000000009,
+    "three": 0.16749999999999998
+   }
+  },
+  {
+   "structure": "cod_1524557",
+   "compound": "LISICON (Li13.7Zn1.2Ge4O16)",
+   "disorder": "Li sites 0.16 to 0.98, Li/Zn shared",
+   "hops": 416,
+   "distinct": 55,
+   "measured": null,
+   "mean_predicted": 1.3800111849575762,
+   "mean_sd": 0.5333981018610496,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.6037545820999998,
+     0.7554224848333456
+    ],
+    "one": [
+     0.0,
+     0.31624185314403874,
+     0.8244892307158187
+    ],
+    "three": [
+     0.0,
+     0.5011760493590594,
+     1.1193829258907086
+    ]
+   },
+   "bond_valence": {
+    "one": 0.4458,
+    "three": 0.4935999999999998
+   }
+  },
+  {
+   "structure": "cod_9011044",
+   "compound": "Li3PO4 (Pmnb)",
+   "disorder": "ordered",
+   "hops": 144,
+   "distinct": 18,
+   "measured": null,
+   "mean_predicted": 0.7099502186148097,
+   "mean_sd": 0.2857535150031739,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.5116524424666524,
+     0.5134939401333325
+    ],
+    "one": [
+     0.0,
+     0.33342470160012605,
+     0.6617520703445139
+    ],
+    "three": [
+     0.14415241681821123,
+     0.4865269636463573,
+     0.7736495140375416
+    ]
+   },
+   "bond_valence": {
+    "one": 0.3104999999999998,
+    "three": 0.6292
+   }
+  },
+  {
+   "structure": "cod_1570310",
+   "compound": "beta-Li3PS4",
+   "disorder": "Li sites 0.3/0.7",
+   "hops": 152,
+   "distinct": 19,
+   "measured": {
+    "low": 0.356,
+    "high": 0.356,
+    "sample": "recrystallised pellets, impedance",
+    "source": "US patent 8,597,838 of the group of Z. Liu et al. (J. Am. Chem. Soc. 135, 975 (2013))",
+    "checked": "search result"
+   },
+   "mean_predicted": 0.6328696844403502,
+   "mean_sd": 0.4529678947653928,
+   "shorter_than_training": 0.0,
+   "forest": {
+    "point": [
+     0.28340583330000224,
+     0.3660429507999951
+    ],
+    "one": [
+     0.0,
+     0.06811361620971447,
+     0.5233092879226222
+    ],
+    "three": [
+     0.0,
+     0.32514633026105866,
+     0.7683932334228822
+    ]
+   },
+   "bond_valence": {
+    "one": 0.25009999999999977,
+    "three": 0.4008999999999996
+   }
+  },
+  {
+   "structure": "cod_1529523",
+   "compound": "Li3.16Zn0.24GeO4",
+   "disorder": "Li sites 0.06 to 0.92, Li/Zn shared",
+   "hops": 760,
+   "distinct": 98,
+   "measured": null,
+   "mean_predicted": 1.2753103329867361,
+   "mean_sd": 0.4897235655932799,
+   "shorter_than_training": 0.08163265306122448,
+   "forest": {
+    "point": [
+     0.5959937817333326,
+     0.67489879980001
+    ],
+    "one": [
+     0.0,
+     0.2830294950983291,
+     0.73376139337357
+    ],
+    "three": [
+     0.0,
+     0.43664941250439515,
+     0.9143317016567596
+    ]
+   },
+   "bond_valence": {
+    "one": 0.4038999999999999,
+    "three": 0.4554
+   }
+  }
+ ],
+ "comparison": {
+  "n": 6,
+  "mean_of_the_measured": 0.07066666666666667,
+  "predicted_one_direction": 0.23946174572221915,
+  "predicted_three_directions": 0.36047187397777475,
+  "forest_one_direction": 0.16570485289270134,
+  "forest_three_directions": 0.22540128047719551,
+  "interval_meets_measured": 6,
+  "mean_interval_width": 1.0267909792999523,
+  "bond_valence_n": 6,
+  "bond_valence_one_direction": 0.16353333333333334,
+  "bond_valence_three_directions": 2.5538999999999996
+ },
+ "sensitivity": [
+  {
+   "scale": 1.0,
+   "barrier_sd": 0.5028249936376714,
+   "interval_width": 1.117641121598001
+  },
+  {
+   "scale": 0.5,
+   "barrier_sd": 0.2514124968188357,
+   "interval_width": 0.6572288857738556
+  },
+  {
+   "scale": 0.25,
+   "barrier_sd": 0.12570624840941785,
+   "interval_width": 0.35545406568271903
+  },
+  {
+   "scale": 0.1,
+   "barrier_sd": 0.05028249936376714,
+   "interval_width": 0.14530540780810283
+  }
+ ],
+ "seconds": 593.7
+}

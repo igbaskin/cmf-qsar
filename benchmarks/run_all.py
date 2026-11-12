@@ -478,6 +478,33 @@ def registry() -> List[Benchmark]:
                   minutes="37",
                   report=lambda: _mod("run_nebdft").report(),
                   tables=["nebdft/table.md"]),
+        Benchmark("nebdft_rule",
+                  "which hops need the DFT calculation: the tolerance rule of item MS1 on "
+                  "the nebDFT2k barriers, with a standard deviation in eV for three kernel "
+                  "models and for a random forest (the spread of its trees), its "
+                  "calibration, and the error of the hops that are answered when a share of "
+                  "the hops goes to the calculation (reads the kernels that run_nebdft.py "
+                  "leaves in benchmarks/cache, or builds them)",
+                  "run_nebdft_rule.py", "nebdft",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="18",
+                  report=lambda: _mod("run_nebdft_rule").report(),
+                  tables=["nebdft/rule.md"]),
+        Benchmark("conductors",
+                  "from DFT barriers to the activation energy of a conductor, with the error "
+                  "carried through: the forest fitted on nebDFT2k predicts the hops of the "
+                  "thirteen disordered conductors with a standard deviation each, the "
+                  "percolation barrier of the hop network with its interval from 400 draws, "
+                  "against measured activation energies of six structures and against the "
+                  "bond-valence network (reads the rows that run_nebdft.py leaves in "
+                  "benchmarks/cache, or builds them)",
+                  "run_conductors.py", "conductors",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="10",
+                  report=lambda: _mod("run_conductors").report(),
+                  tables=["conductors/table.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",

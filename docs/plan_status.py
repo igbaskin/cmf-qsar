@@ -62,6 +62,9 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "10 November 2026; of half (b), measured spectra find each other "
                       "(11 November 2026); a measured property came with SP5, and a "
                       "set with a structure or a composition beside it is missing"),
+    "MS8": ("partly", "the chain to the activation energy built and measured 12 November "
+                      "2026, with the error carried through; a conductivity and a hop "
+                      "simulation are left"),
     "SP4": ("partly", "built 12 November 2026 and measured on fluorescence maps and on "
                       "simulated peak lists; a measured set of peak lists and the markers "
                       "of the paper against the co-map are left"),

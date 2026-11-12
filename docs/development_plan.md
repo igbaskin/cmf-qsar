@@ -5155,8 +5155,19 @@ values and a computed oxidation potential is a descriptor, not a target.
   description (-0.001 eV, -0.016 to +0.013). Machine-learned potentials that run the elastic
   band themselves remain at 0.07 to 0.11 eV. At room temperature an error of 0.23 eV in a
   barrier is a factor of about 7,000 in a hop rate, which is what MS8 has to carry through.
-  **Not done:** the rule of MS1 with the bond-valence barrier as the coarse level and the
-  DFT barrier as the fine level; a description from the relaxed path or with the vacancy.
+  *The rule of MS1 on these barriers, 12 November 2026* (`benchmarks/run_nebdft_rule.py`,
+  `benchmarks/results/nebdft/rule.md`): every prediction with a standard deviation in eV,
+  the bond-valence barrier as the coarse level, the DFT barrier as the fine level. All
+  standard deviations are calibrated (root mean square of error over deviation 0.99 to
+  1.01, 94 to 97 % inside two deviations). Only the spread of the trees of the forest
+  orders the hops (rank correlation with the absolute error +0.45, against +0.03 to +0.16
+  for the kernel models): one hop in five sent to the calculation lowers the error of the
+  others from 0.222 to 0.168 eV, one in two to 0.138 eV; at the tolerance of the forest's
+  own error it answers 68 % of the hops at 0.157 eV. The Gaussian-process deviation of the
+  kernel models orders the hops worse than the predicted barrier itself (0.213 against
+  0.192 eV), because the errors grow with the barrier and that deviation does not. To halve
+  the error, 76 % of the hops have to go to the calculation.
+  **Not done:** a description from the relaxed path or with the vacancy.
   Also no polarisability field, no argyrodite among the thirteen disordered conductors, no
   relaxed path (the bottleneck is on the straight line), and no panel in the application.
 
@@ -6268,9 +6279,13 @@ would discard the typed fields and the global kernel that are the method's own.
   and the Gaussian kernel (z rms 1.05 and 0.99, 95 % and 96 % inside two standard deviations),
   and the rule separates by 1.8 rather than 1.1 — the Gaussian kernel answers 82 % of the hops at
   1.00 eV and returns 18 % whose error would have been 1.75 eV — because a held-out structure is
-  often the only one of its chemical system, which is the situation a hierarchy is in. *Open:* a
-  set whose fine level is a DFT barrier rather than a bond-valence one (the nebDFT2k opening of
-  BT7's external check); a series where the kernel misses a part of the chemistry, which is where
+  often the only one of its chemical system, which is the situation a hierarchy is in. *On a
+  set whose fine level is a DFT barrier* (nebDFT2k, 12 November 2026, see BT7) the deviation
+  is calibrated again and orders the hops poorly (rank correlation with the absolute error
+  +0.11 to +0.16), where the spread of the trees of a random forest reaches +0.45: the
+  errors there grow with the barrier, and the deviation of a Gaussian process with one
+  noise level cannot say that. *Open:* a deviation that depends on the predicted value; a
+  series where the kernel misses a part of the chemistry, which is where
   the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
   `cmfqsar/lowrank.py` without the scale -- closed by MS6 on 9 November 2026.
 
@@ -6474,6 +6489,28 @@ would discard the typed fields and the global kernel that are the method's own.
   MS1 moves the final number. The hop model of BT7 is two thirds of this chain. *Gate:* the
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
+  **The chain to the activation energy, built and measured 12 November 2026**
+  (`benchmarks/run_conductors.py`, `benchmarks/results/conductors/`). The forest on the
+  invariant field, fitted on the 1,652 DFT barriers of nebDFT2k (BT7), predicts the 6,408
+  hops of the thirteen conductors with a standard deviation each (the spread of its trees,
+  calibrated on folds; 46 % of the squared error is common to the hops of a structure, and
+  the draws keep that). The percolation barrier of the hop network is set beside measured
+  activation energies of six structures. *The error carried through:* the 95 % interval is
+  about 1 eV wide, where the measured values lie between 0.25 and 0.44 eV; it is two to
+  three times as wide as the standard deviation of one barrier (0.50 eV gives 1.12 eV,
+  0.05 eV gives 0.15 eV), so a useful interval needs barriers at the accuracy of the DFT
+  calculation. *Without the interval:* the mean absolute difference to the measured values
+  is 0.24 eV, against 0.16 eV for the bond-valence network and 0.07 eV for one number for
+  all six. *The model does not carry over:* its predictions correlate with the bond-valence
+  barriers with r = +0.84 inside the training set and +0.09 for the conductors, which have
+  partly occupied sites and four elements without a field of their own (Ge, La, N, Zr); the
+  sulfides are within 0.08 eV and the garnets too high by a factor of two. The gate asks
+  for a conductivity; an activation energy is what the program can give without an attempt
+  frequency and a number of carriers. Five of the six measured values come from search
+  summaries and are marked so.
+  *Open:* DFT barriers of a few hops of the conductors, which would measure the transfer; a
+  training set with partly occupied sites; the prefactor of a conductivity; a hop
+  simulation in place of the percolation barrier.
 
 * **MS9. A parameter set for a cell model, with its deviations.** A cell-level continuum model
   (the Doyle–Fuller–Newman model and its single-particle reductions, as PyBaMM implements them)
@@ -7752,12 +7789,12 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
+| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8 (partly), MS9 |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**171 items: 116 finished, 8 partly, 47 open.**
+**171 items: 116 finished, 9 partly, 46 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
