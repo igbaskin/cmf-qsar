@@ -13051,6 +13051,94 @@ the model that makes it work is the forest. The calibrated Gaussian-process devi
 did its work on the bond-valence barriers of many chemistries, does not order hops whose
 errors depend on the size of the barrier.
 
+### From DFT barriers to the activation energy of a conductor
+
+This subsection is the first half of plan item MS8 (`benchmarks/run_conductors.py`,
+`benchmarks/results/conductors/table.md`; 10 minutes after the rows of the hops are built).
+The item asks for one chain from DFT barriers to a measured quantity of a conductor, with
+the error of the model carried through to the end. The chain stops at the activation energy.
+A conductivity would also need the attempt frequency and the number of carriers, which this
+program does not have.
+
+**The chain.**
+
+1. The model is the random forest on the invariant field about the midpoint of a hop,
+   fitted on the 1,652 DFT barriers of the subsection above. On folds that hold out whole
+   structures its mean absolute error is 0.228 eV. The spread of its trees, times 1.07, is
+   the standard deviation of a prediction (96 % of the barriers are inside two standard
+   deviations).
+2. The model predicts the barrier of every hop of the thirteen disordered conductors of
+   section *Partial occupancy* (`examples/hops/disordered`): 6,408 hops, 298 of them distinct
+   by symmetry.
+3. The hops of a structure form a network. Its *percolation barrier* is the lowest level
+   that a lithium ion has to reach to cross the cell: the hops are opened in the order of
+   their barriers until a path wraps around the cell. It is given for a path in one
+   direction and for paths in all three directions.
+4. The errors are carried through by drawing the barriers 400 times and taking the
+   percolation barrier of each draw. The errors of the hops of one structure are not
+   independent: on the folds 46 % of the squared error is common to the hops of a
+   structure. A draw therefore gives every structure one common shift and every distinct
+   hop its own shift, in these proportions.
+5. The result is set beside measured activation energies of lithium conduction.
+
+**Does the model carry over to the conductors?** No DFT barrier of a conductor is known,
+so this cannot be measured directly. One check costs nothing. Inside the training set the
+predictions for structures that the fit has not seen correlate with the bond-valence
+barriers of the same hops with r = +0.84. For the conductors that correlation is +0.09.
+The model was fitted on hops into a vacancy of an ordered structure. A conductor has partly
+occupied sites, and four elements of these conductors (Ge, La, N, Zr) have no field of their
+own in the training set. The standard deviation of a prediction says so in part: it is
+0.50 eV on average for the conductors, against 0.35 eV inside the training set.
+
+**The result for the six structures with a measured value.** All values in eV. An interval
+is the 95 % interval over the draws, and the number before it is the median.
+
+| structure | percolation barrier from the predicted barriers as they are, one / three directions | with the errors drawn, one direction | from bond-valence barriers, one / three directions | measured activation energy |
+|---|---|---|---|---|
+| Li10GeP2S12 | 0.25 / 0.32 | 0.11 [0.00, 0.41] | 0.53 / 0.59 | 0.22 to 0.28 |
+| beta-Li3PS4 | 0.28 / 0.37 | 0.07 [0.00, 0.52] | 0.25 / 0.40 | 0.36 |
+| Li2.92N | 0.39 / 1.00 | 0.32 [0.00, 1.23] | 0.16 / 0.17 | 0.25 |
+| La0.56Li0.33TiO3 | 0.70 / 0.82 | 0.49 [0.00, 1.24] | 0.82 / 15.17 | 0.40 |
+| Li6.2La3Zr1.2Ta0.8O12, cubic garnet | 0.81 / 0.81 | 0.66 [0.00, 1.32] | 0.39 / 0.39 | 0.41 to 0.47 |
+| Li6.5La3Zr1.5Ta0.5O12, cubic garnet | 0.99 / 0.99 | 0.63 [0.00, 1.43] | 0.40 / 0.40 | 0.41 to 0.47 |
+
+- *The interval is about 1 eV wide.* The measured values of the six structures lie between
+  0.25 and 0.44 eV. Every interval holds its measured value, and that says nothing.
+- *Without the interval the values are no better than one number for all.* The mean
+  absolute difference to the measured value is 0.24 eV for the forest (one direction) and
+  0.16 eV for the bond-valence network. Giving every conductor the mean of the six measured
+  values would be wrong by 0.07 eV.
+- *The values divide by chemistry.* For the two sulfides the forest is within 0.08 eV. For
+  the garnets it is too high by a factor of two, where the bond-valence network is right
+  within 0.05 eV. The garnets hold two of the elements without a field of their own.
+- *The median of the draws is below the value without draws.* The lowest of several
+  uncertain barriers is on average lower than the lowest of their means, so a network of
+  uncertain barriers looks easier to cross than it is.
+
+**How the error of one barrier moves the result.** This is what the plan item asks for by
+name. The standard deviations of the barriers are made smaller, and the width of the
+interval of the percolation barrier (one direction, the mean over the twelve structures
+with hops) is taken again:
+
+| standard deviation of a barrier, eV | width of the 95 % interval of the percolation barrier, eV |
+|---|---|
+| 0.50 (the model) | 1.12 |
+| 0.25 | 0.66 |
+| 0.13 | 0.36 |
+| 0.05 | 0.15 |
+
+The interval is two to three times as wide as the standard deviation of one barrier. For an
+interval of 0.15 eV a barrier has to be known to 0.05 eV, which is the accuracy of the DFT
+calculation itself. A model that reads a barrier from the rigid structure does not reach
+it, here or in the paper of the set.
+
+**What this subsection does not show.** Only the value for Li10GeP2S12 was read on the page
+of its source; the other five measured values come from the summaries of a search and are
+marked so in the result table. A percolation barrier is compared with an activation energy
+from impedance, which also holds the energy to form a carrier where carriers have to be
+formed. The intervals come from errors that were measured inside the training set, so they
+are a lower bound.
+
 ## Reading the model from another program
 
 Everything above reads a model from inside this program: the window, the command line, the library.

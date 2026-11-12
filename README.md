@@ -3332,6 +3332,28 @@ python benchmarks/run_nebdft.py                # 37 minutes
 python benchmarks/run_nebdft_rule.py           # 18 minutes more
 ```
 
+**From DFT barriers to the activation energy of a conductor**
+([run_conductors.py](benchmarks/run_conductors.py)), the first half of plan item MS8. The
+forest fitted on the DFT barriers predicts the barrier of every hop of the thirteen
+disordered conductors, each with a standard deviation. The hop network of a structure gives
+its percolation barrier, and the errors are carried through by drawing the barriers 400
+times.
+
+- The 95 % interval of the percolation barrier is about 1 eV wide. The measured activation
+  energies of the six conductors with a measured value lie between 0.25 and 0.44 eV.
+- Without the interval, the values differ from the measured ones by 0.24 eV on average; the
+  bond-valence network by 0.16 eV; one number for all six by 0.07 eV.
+- The model does not carry over: its predictions correlate with the bond-valence barriers
+  with r = +0.84 inside the training set and with +0.09 for the conductors. The sulfides
+  are within 0.08 eV; the garnets, with two elements that the training set does not
+  describe, are too high by a factor of two.
+- The interval is two to three times as wide as the standard deviation of one barrier. For
+  an interval of 0.15 eV a barrier has to be known to 0.05 eV.
+
+```bash
+python benchmarks/run_conductors.py            # 10 minutes after run_nebdft.py
+```
+
 ### A single-atom site as the sample: two reactions on one metal
 
 A metal atom held by four atoms of a graphene divacancy is the active site of the

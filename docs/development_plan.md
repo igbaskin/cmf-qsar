@@ -6488,6 +6488,28 @@ would discard the typed fields and the global kernel that are the method's own.
   MS1 moves the final number. The hop model of BT7 is two thirds of this chain. *Gate:* the
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
+  **The chain to the activation energy, built and measured 12 November 2026**
+  (`benchmarks/run_conductors.py`, `benchmarks/results/conductors/`). The forest on the
+  invariant field, fitted on the 1,652 DFT barriers of nebDFT2k (BT7), predicts the 6,408
+  hops of the thirteen conductors with a standard deviation each (the spread of its trees,
+  calibrated on folds; 46 % of the squared error is common to the hops of a structure, and
+  the draws keep that). The percolation barrier of the hop network is set beside measured
+  activation energies of six structures. *The error carried through:* the 95 % interval is
+  about 1 eV wide, where the measured values lie between 0.25 and 0.44 eV; it is two to
+  three times as wide as the standard deviation of one barrier (0.50 eV gives 1.12 eV,
+  0.05 eV gives 0.15 eV), so a useful interval needs barriers at the accuracy of the DFT
+  calculation. *Without the interval:* the mean absolute difference to the measured values
+  is 0.24 eV, against 0.16 eV for the bond-valence network and 0.07 eV for one number for
+  all six. *The model does not carry over:* its predictions correlate with the bond-valence
+  barriers with r = +0.84 inside the training set and +0.09 for the conductors, which have
+  partly occupied sites and four elements without a field of their own (Ge, La, N, Zr); the
+  sulfides are within 0.08 eV and the garnets too high by a factor of two. The gate asks
+  for a conductivity; an activation energy is what the program can give without an attempt
+  frequency and a number of carriers. Five of the six measured values come from search
+  summaries and are marked so.
+  *Open:* DFT barriers of a few hops of the conductors, which would measure the transfer; a
+  training set with partly occupied sites; the prefactor of a conductivity; a hop
+  simulation in place of the percolation barrier.
 
 * **MS9. A parameter set for a cell model, with its deviations.** A cell-level continuum model
   (the Doyle–Fuller–Newman model and its single-particle reductions, as PyBaMM implements them)
@@ -7766,12 +7788,12 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
+| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8 (partly), MS9 |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**171 items: 116 finished, 8 partly, 47 open.**
+**171 items: 116 finished, 9 partly, 46 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
