@@ -6898,6 +6898,35 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   the same folds. *Gate:* the kernel correlation first; then the classifier on the peak-list kernel
   matches or beats the binned PLS-DA within the interval (rule 4) at a cost independent of the bin
   size, and the co-map names the cross-peaks the study's own paper names as its markers.
+  **Built, and measured on fluorescence maps and on simulated peak lists, 12 November 2026**
+  (`cmfqsar/spectrum2d.py`, `benchmarks/prepare_fluorescence.py`,
+  `benchmarks/run_fluorescence.py`, `benchmarks/results/fluorescence/`). The module holds
+  the closed-form kernel of two peak lists with one width for each axis, the broadening of a
+  map with missing values, the mask for scattered light and the co-map. The survey found
+  two sets of fluorescence maps that can be fetched (110 honeys in four botanical origins
+  with six false honeys; 720 maps of 24 olive oils during ageing with a measured
+  absorbance, CC BY 4.0) and no HSQC or LC-MS set with a class for every sample.
+  *The kernel correlation, first:* the kernels of the broadened maps correlate at 0.96 to
+  1.00 with the kernel of the map as measured, which predicts no gain on smooth maps.
+  *Honey:* the kernel Fisher discriminant finds the class of 87.9 % of the honeys (sd 2.1)
+  and PLS-DA on the map as measured of 87.0 %: +0.6 points [-0.7, +2.0]. A description of
+  the real honeys alone puts a false honey behind a real one in 98 % of the pairs (six
+  false honeys). *Olive oil, whole oils held out:* the absorbance at 268 nm is read with an
+  error of 0.032 by kernel ridge, 22 % below PLS on the map as measured and within the
+  interval of PLS with the same choices; the absorbance at 232 nm is not read by any model
+  (at most 12 % below the mean); random folds make the two errors look 59 % and 35 %
+  smaller; the mean of the three maps of a sample, the ensemble, lowers the error at 268 nm
+  from 0.032 to 0.028. *Simulated peak lists* (two classes, 40 peaks, four of them
+  stronger in one class): without jitter of the places all routes find 92 %; with a jitter
+  of 1 the kernel of the peak lists finds 86.7 % and PLS-DA on bins with the bin size
+  chosen inside the fit 80.4 % (+6.3 points [+3.9, +8.4]), and the kernel correlation of the
+  two descriptions falls from 0.91 to 0.4. The model does not matter there, the
+  description does. *The gate:* the correlation is reported and predicted both outcomes;
+  the classifier matches PLS-DA on measured maps and beats it on simulated lists whose
+  peaks move; the co-map is listed and not yet compared with the markers of the paper.
+  *Open:* a measured set of peak lists with a class for every sample (a LC-MS study of
+  MetaboLights is the next place to look); the markers of the honey paper against the
+  co-map; a third axis; the difference of two co-maps.
 * **SP5. Resolution mismatch and calibration transfer.** Two Gaussians of widths σ_1 and σ_2
   overlap in closed form with the combined width σ_1² + σ_2², so a spectrum from one instrument and
   a spectrum from another compare with each carrying its own width, and a model fitted on one
@@ -7710,11 +7739,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5 (partly), SP6 (partly) |
+| H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**171 items: 116 finished, 7 partly, 48 open.**
+**171 items: 116 finished, 8 partly, 47 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
