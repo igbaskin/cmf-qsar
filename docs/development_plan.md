@@ -6855,8 +6855,24 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   between two measured samples). The region 700 to 1800 cm⁻¹ alone gives 2.8 %, against the
   expectation. Rigid and flexible compounds are found equally often, so the level of theory
   is the probable limit and not the conformer.
-  *Open:* a density-functional library for a part of the compounds, compared with the
-  GFN2-xTB library on the same part, which tests that reading; a conformer search; a
+  *The two levels on the same small compounds, 12 November 2026*
+  (`benchmarks/prepare_chemotion_dft.py`, `run_spectra_computed.py --subset`). The 231
+  compounds of the library with at most 25 atoms were optimised again with ORCA at B97-3c
+  from the geometry of xtb, so both levels have the same conformer: 13.5 hours with 14 jobs
+  (164 hours of one core), 230 spectra; one diyne did not converge and was stopped by hand.
+  With these 230 compounds as the candidates, the same 255 measured queries and the same
+  20 splits, the compound is first in 32.3 % of the queries (sd 3.4) with the B97-3c library
+  and in 11.3 % (sd 2.4) with the GFN2-xTB library: +21.2 points (95 % interval +16.5 to
+  +26.2). Among the first ten: 71.9 % against 37.2 %; median rank 3 against 20. *The reading
+  is confirmed: the level of theory is a large part of the limit. It is not the whole of it,
+  and the gate is not met for a measured query with a B97-3c library either.* With B97-3c
+  the widths from 4 to 32 cm⁻¹ give the same result, and the region 700 to 1800 cm⁻¹ alone is
+  enough, as between two measured spectra. A compound without a hydrogen-bond donor is found
+  first in 46 % of the cases and one with a donor in 29 % (GFN2-xTB: 18 % and 12 %), so the
+  molecule alone in the gas phase is the next limit; the one conformer is not (45 % for
+  3 to 5 rotatable bonds, 36 % for fewer).
+  *Open:* a model of the hydrogen bonds for the compounds with a donor (a pair of molecules
+  or a cluster); a density-functional library for larger compounds; a conformer search; a
   library larger than the set; the co-field of a structural direction in space.
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an

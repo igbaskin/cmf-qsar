@@ -10,6 +10,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
 
+import prepare_chemotion_dft as DFT  # noqa: E402
 import prepare_chemotion_xtb as XTB  # noqa: E402
 import run_spectra_computed as C  # noqa: E402
 from cmfqsar import spectrum as SP  # noqa: E402
@@ -267,3 +268,89 @@ def test_a_library_spectrum_without_a_query_stays_a_candidate(tmp_path, monkeypa
                 forms=("slope",))
     assert out["library"] == 20 and out["compounds_with_a_query"] == 19
     assert out["queries"] == 26                         # the two spectra of "CO" are no query
+
+
+# --------------------------------------------------------------------------- #
+# Two levels of theory on the same compounds
+# --------------------------------------------------------------------------- #
+def test_two_levels_are_scored_on_the_same_candidates_and_halves(tmp_path, monkeypatch):
+    x, A, table, head, good = _made_up(n=40, seed=6)
+    rng = np.random.default_rng(1)
+    rough = {}
+    for s, r in good.items():                           # a level that misplaces every line
+        moved = np.sort(np.array(r["wavenumbers"]) + rng.normal(0.0, 60.0, 16))
+        rough[s] = dict(r, wavenumbers=moved.tolist())
+    small = {s: r for k, (s, r) in enumerate(good.items()) if k % 2 == 0}   # 20 compounds
+    low_head = dict(head, qm_level="rough level")
+    high_head = dict(head, qm_level="good level", compounds=21, failed=[{"index": 5}],
+                     seconds=100.0, job_seconds=900.0, max_atoms=25)
+    monkeypatch.setattr(C.PREP, "load", lambda: (x, A, table))
+    monkeypatch.setattr(C.XTB, "load", lambda: (dict(low_head), dict(rough)))
+    monkeypatch.setattr(C.DFT, "load", lambda: (dict(high_head), dict(small)))
+    grid = dict(widths=(8.0, 32.0), factors=(0.97,), powers=(1.0,), forms=("slope",))
+    out = C.run_subset(str(tmp_path), repeats=6, **grid)
+    assert out["levels"] == ["rough level", "good level"] and out["candidates"] == 20
+    assert out["compounds_asked"] == 21 and out["failed_at_the_higher_level"] == 1
+    low, high = out["results"]["rough level"], out["results"]["good level"]
+    assert low["library"] == high["library"] == 20 and low["queries"] == high["queries"]
+    assert high["nested"]["first"] > 0.9 > low["nested"]["first"]
+    assert out["higher_minus_lower_first"]["low"] > 0
+    assert C.setting_values(high["setting"])["width"] == 8.0      # lines at the right places
+    assert "per_compound_first" not in high["nested"] and "per_compound" not in high
+    found = out["found"]["first"]                       # the four cases cover every compound
+    assert sum(found.values()) == high["compounds_with_a_query"] == 20
+    assert found["higher_only"] > found["lower_only"]
+    assert found["both"] + found["higher_only"] >= 18
+    assert set(high["groups"]) == set(low["groups"]) and high["groups"]
+    assert sum(g["compounds"] for name, g in high["groups"].items() if "donor" in name) == 20
+    assert not any("atoms" in name for name in high["groups"])
+    with open(tmp_path / "computed.json", "w") as fh:             # the report needs the main file
+        fh.write("{}")
+    lines = C._report_subset(str(tmp_path))
+    text = "\n".join(lines)
+    assert lines[0] == "## Two levels of theory on the small compounds"
+    assert "| rough level |" in text and "| good level |" in text and "8 cm^-1 |" in text
+    assert "good level minus rough level" in text
+    assert "| First, rough level | First, good level |" in text
+    assert "Of the 20 compounds," in text and "only at good level" in text
+    assert C._report_subset(str(tmp_path / "nothing")) == []
+    x2, A2, names = C.measured()
+    assert len(names) == len(A2) == len(table) and np.array_equal(x2, x)
+
+
+def test_the_density_functional_job_starts_from_the_geometry_of_xtb(tmp_path):
+    from rdkit import Chem
+
+    work = str(tmp_path / "xtb_work")
+    assert XTB.make_start((3, "CO", work)) == (3, "")
+    start = Chem.MolFromMolFile(XTB.start_path(3, work), removeHs=False)
+    job = tmp_path / "xtb_work" / "00003_c00003"
+    (job / "retry").mkdir(parents=True)
+    xyz = start.GetConformer().GetPositions()
+    symbols = [a.GetSymbol() for a in start.GetAtoms()]
+
+    def write(path, shift):
+        with open(path, "w") as fh:
+            fh.write(f"{len(symbols)}\n comment\n")
+            for s, (a, b, c) in zip(symbols, xyz + shift):
+                fh.write(f"{s} {a:.6f} {b:.6f} {c:.6f}\n")
+
+    write(job / "xtbopt.xyz", 1.0)
+    write(job / "retry" / "xtbopt.xyz", 2.0)
+    with open(job / "status.json", "w") as fh:
+        fh.write('{"status": "done", "retried": false}')
+    mol = DFT.xtb_geometry(3, work)
+    assert mol.GetNumBonds() == start.GetNumBonds()
+    assert np.allclose(mol.GetConformer().GetPositions(), xyz + 1.0, atol=1e-5)
+    with open(job / "status.json", "w") as fh:
+        fh.write('{"status": "done", "retried": true}')
+    assert np.allclose(DFT.xtb_geometry(3, work).GetConformer().GetPositions(), xyz + 2.0,
+                       atol=1e-5)
+    symbols[0] = "N"                                    # not the atoms of the compound
+    write(job / "retry" / "xtbopt.xyz", 2.0)
+    with pytest.raises(RuntimeError, match="different atoms"):
+        DFT.xtb_geometry(3, work)
+    row = DFT.one_spectrum(3, "CO", None, work)         # the error is reported, not raised
+    assert "different atoms" in row["error"] and "wavenumbers" not in row
+    with pytest.raises(SystemExit, match="prepare_chemotion_dft.py"):
+        DFT.load(str(tmp_path / "nothing.json"))

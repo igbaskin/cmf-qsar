@@ -11678,10 +11678,91 @@ phase. Three things point there: the wide width that is chosen, which is the sig
 GFN2-xTB showed against a density functional in section *The spectrum as the bridge*, where
 it found 42 % of the acids against 99.6 % for a second density functional; the absence of any
 loss with the number of rotatable bonds; and the modest loss with hydrogen-bond donors. This
-is a reading and not a measurement. The measurement is a density-functional library for a
-part of the compounds, compared with the GFN2-xTB library on the same part.
+is a reading and not a measurement. The measurement follows.
 
-**What is not done.** No density-functional spectrum of these compounds is computed. No
+**The measurement: two levels of theory on the same small compounds.**
+`benchmarks/prepare_chemotion_dft.py` takes the 231 compounds of the library that have at most
+25 atoms. ORCA optimises each of them at B97-3c, the density functional of section *The
+spectrum as the bridge*, and computes the harmonic wavenumbers and the infrared intensities
+of one molecule in the gas phase. Every job starts from the geometry that xtb found, so both
+levels describe the same conformer. 230 compounds have a spectrum. The jobs took 13.5 hours
+with 14 jobs at a time, which is 164 hours of one processor core or 43 minutes for a compound
+on average; GFN2-xTB needed 81 minutes for all 1,645 compounds. One compound, a diyne (two
+triple bonds in a row), had no converged geometry after 190 steps of the optimisation and
+was stopped by hand. Two compounds keep an imaginary mode, against 13 of the same 230
+compounds with GFN2-xTB.
+
+`run_spectra_computed.py --subset` then makes the test of this section twice, once with the
+GFN2-xTB spectra and once with the B97-3c spectra. The candidates are the same 230 compounds,
+the queries are the same 255 measured spectra of 228 of them, and the 20 splits are the same.
+All settings are chosen again for each level.
+
+```
+python benchmarks/prepare_chemotion_dft.py --jobs 14   # once: 231 compounds at B97-3c, 13.5 hours
+python benchmarks/run_spectra_computed.py --subset     # less than a minute
+```
+
+| library of the 230 small compounds | compound is first, % of the queries | among the first three, % | among the first ten, % | median rank of the right compound |
+|---|---|---|---|---|
+| chance, one of 230 compounds | 0.4 | 1.3 | 4.3 | 115.5 |
+| GFN2-xTB | 11.3 (2.4) | 22.3 (3.7) | 37.2 (3.4) | 20 |
+| B97-3c | 32.3 (3.4) | 51.4 (3.5) | 71.9 (4.2) | 3 |
+
+Only the rows of this table can be compared with each other. The table above has 1,645
+candidates, and a shorter list is easier: GFN2-xTB finds 11.3 % here and 5.6 % there.
+
+**What the comparison says.** With the B97-3c library the measured spectrum finds its
+compound first in 32.3 % of the queries, and with the GFN2-xTB library in 11.3 %. The
+difference is 21.2 points (95 % bootstrap interval over the compounds +16.5 to +26.2). The
+median rank of the right compound falls from 20 to 3, and the compound is among the first ten
+in 72 % of the queries against 37 %. So the level of theory is a large part of the distance,
+as the reading above said. It is not the whole distance. Also with B97-3c the compound is
+first in one query of three and not in most, so the gate of plan item SP3 is not met for a
+measured query at this level either. What a B97-3c library gives is a short list: the right
+compound is among ten of 230 in nearly three queries of four.
+
+At the setting chosen most often for each level, 87 of the 228 compounds have a first place
+with B97-3c and 35 with GFN2-xTB. 23 compounds have it at both levels, 64 only with B97-3c
+and 12 only with GFN2-xTB.
+
+**The settings change with the level.** With B97-3c the best share of first places on all
+compounds is nearly the same for every width from 4 to 32 cm$^{-1}$ (36.5, 36.4, 36.2 and
+37.4 %) and lower at 64 cm$^{-1}$ (34.8 %). With GFN2-xTB it grows with the width, from 8.6 %
+at 4 cm$^{-1}$ to 14.8 % at 64 cm$^{-1}$. The lines of B97-3c are close enough to the measured
+bands to be compared at the width of a band, and the lines of GFN2-xTB are not. The region
+from 700 to 1800 cm$^{-1}$ alone is chosen in 15 of the 20 splits with B97-3c and gives as
+much as the whole range (37.4 % against 36.4 %). The expectation that was wrong for GFN2-xTB
+holds for the density functional. The factor on the wavenumbers is 0.97 for both levels. It
+matters more for B97-3c: without a factor the best setting finds 15.1 % in place of 37.4 %
+(GFN2-xTB: 8.9 % in place of 14.8 %). Dividing the computed intensities by the wavenumber
+does not help B97-3c (36.4 % with it, 37.4 % without).
+
+**What still limits the density functional.** The groups are read for each level at the
+setting chosen most often, on all compounds.
+
+| compounds | number | first with GFN2-xTB, % | first with B97-3c, % | among the first ten with GFN2-xTB, % | among the first ten with B97-3c, % |
+|---|---|---|---|---|---|
+| no hydrogen-bond donor | 112 | 18.0 | 46.1 | 43.8 | 75.9 |
+| one or more hydrogen-bond donors | 116 | 11.6 | 28.9 | 33.2 | 63.8 |
+| at most 2 rotatable bonds | 188 | 13.1 | 35.7 | 36.4 | 67.0 |
+| 3 to 5 rotatable bonds | 40 | 22.5 | 45.0 | 47.5 | 82.5 |
+
+A compound without a hydrogen-bond donor is found first in 46 % of the cases and a compound
+with a donor in 29 %. The computed molecule is alone in the gas phase and has no hydrogen
+bond to another molecule; most samples of the set are solids or liquids. With GFN2-xTB the
+two groups differ by 6 points and with B97-3c by 17: when the lines are at the right places,
+the missing hydrogen bond is what shows. The flexible compounds are not found less often
+than the rigid ones (there are only 40 of them), so the one conformer is not the limit for
+molecules of this size. For the compounds without a donor more than half of the first places
+are still missing. The harmonic approximation with one factor, the computed intensities and
+the state of the sample can all take part in that, and this benchmark does not separate
+them.
+
+**What is not done.** A density-functional spectrum is computed only for the 230 small
+compounds, so nothing is measured for a molecule with more than 25 atoms, and the cost grows
+quickly with the size (the longest job, a molecule of 24 atoms, took 4.8 hours). No model of
+the hydrogen bonds was tried: a pair of molecules, a cluster or a periodic calculation. No
+correction of the harmonic approximation was tried other than one factor. No
 conformer search is made, and no spectrum is averaged over conformers. The 280 compounds
 without a computed spectrum are not candidates, so the library is smaller than the set. A
 measured spectrum of a salt or of a metal complex has no computed partner at all.

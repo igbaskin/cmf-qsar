@@ -76,3 +76,29 @@ The best share of first places over all settings that have the value.
 
 When the kernel names another compound (1666 queries), the Tanimoto similarity of that compound to the right one is 0.18 on average (median 0.12), against 0.11 for a compound drawn at random. In 7.3 % of these queries the similarity is 0.5 or more, and in 0.9 % the named compound has the same formula (an isomer).
 
+## Two levels of theory on the small compounds
+
+The 230 compounds with at most 25 atoms that have a spectrum at both levels are the candidates; 255 measured spectra of 228 of them are the queries. Both levels start from the same conformer. The settings are chosen for each level on half of the compounds and scored on the other half, the same 20 splits for both.
+
+| Library | Compound is first | In the first three | In the first ten | Median rank of the right compound | Width chosen most often |
+|---|---|---|---|---|---|
+| chance (one of 230 compounds) | 0.4 % | 1.3 % | 4.3 % | 115.5 | |
+| GFN2-xTB acc=1 ohess | 11.3 % +/- 2.4 | 22.3 % +/- 3.7 | 37.2 % +/- 3.4 | 20 | 64 cm^-1 |
+| B97-3c TightSCF | 32.3 % +/- 3.4 | 51.4 % +/- 3.5 | 71.9 % +/- 4.2 | 3 | 32 cm^-1 |
+
+Difference in the share of first places, B97-3c TightSCF minus GFN2-xTB acc=1 ohess, per compound: +21.2 [+16.5, +26.2] points (95 % bootstrap interval over the compounds).
+
+- GFN2-xTB acc=1 ohess: chosen most often: slope, width 64 cm^-1, wavenumbers times 0.97, the whole range, square root of the intensities, computed intensities over the wavenumber, centred. Best share of first places by width, all compounds: 4 cm^-1 8.6 %, 8 cm^-1 11.5 %, 16 cm^-1 12.7 %, 32 cm^-1 12.9 %, 64 cm^-1 14.8 %.
+- B97-3c TightSCF: chosen most often: slope, width 32 cm^-1, wavenumbers times 0.97, 700 to 1800 cm^-1, square root of the intensities, centred. Best share of first places by width, all compounds: 4 cm^-1 36.5 %, 8 cm^-1 36.4 %, 16 cm^-1 36.2 %, 32 cm^-1 37.4 %, 64 cm^-1 34.8 %.
+
+Groups of compounds, each level at the setting chosen most often (all compounds):
+
+| Compounds | Number | First, GFN2-xTB acc=1 ohess | First, B97-3c TightSCF | In the first ten, GFN2-xTB acc=1 ohess | In the first ten, B97-3c TightSCF |
+|---|---|---|---|---|---|
+| no hydrogen-bond donor | 112 | 18.0 % | 46.1 % | 43.8 % | 75.9 % |
+| one or more hydrogen-bond donors | 116 | 11.6 % | 28.9 % | 33.2 % | 63.8 % |
+| at most 2 rotatable bonds | 188 | 13.1 % | 35.7 % | 36.4 % | 67.0 % |
+| 3 to 5 rotatable bonds | 40 | 22.5 % | 45.0 % | 47.5 % | 82.5 % |
+
+Of the 228 compounds, 23 have a first place at both levels, 64 only at B97-3c TightSCF, 12 only at GFN2-xTB acc=1 ohess and 129 at neither. For a place among the first ten the four numbers are 73, 87, 15 and 53. A compound with several measured spectra is counted when one of them is found.
+

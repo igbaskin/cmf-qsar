@@ -34,11 +34,23 @@ All of this is chosen on half of the compounds, for which the right answer is us
 on the queries of the other half.  The split is repeated.  The library always holds every
 candidate.
 
+Two levels of theory
+--------------------
+`prepare_chemotion_dft.py` computes the compounds with at most 25 atoms again with a density
+functional (B97-3c), from the geometry of xtb.  The option ``--subset`` makes the test above
+twice on the compounds that have both spectra: the same candidates, the same queries and the
+same splits, once with each library.  The difference between the two results is then the
+effect of the level of theory alone.  The result is ``subset.json``, and the table gains a
+section.
+
 Usage
 -----
     python benchmarks/prepare_chemotion_ir.py       # once: downloads 47.5 MB
     python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 minutes
     python benchmarks/run_spectra_computed.py       # the benchmark (17 minutes), then the table
+    python benchmarks/prepare_chemotion_dft.py --jobs 14   # once: the small compounds at
+                                                           # B97-3c, 13.5 hours
+    python benchmarks/run_spectra_computed.py --subset     # the two levels on those compounds
     python benchmarks/run_spectra_computed.py --report
 """
 from __future__ import annotations
@@ -59,6 +71,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
 import prepare_chemotion_ir as PREP  # noqa: E402
+import prepare_chemotion_dft as DFT  # noqa: E402
 import prepare_chemotion_xtb as XTB  # noqa: E402
 import run_spectra_measured as M  # noqa: E402
 
@@ -297,10 +310,14 @@ GROUPS = (("no hydrogen-bond donor", "donors", 0, 0),
           ("71 or more atoms", "atoms", 71, 10 ** 6))
 
 
-def by_group(first: np.ndarray, top10: np.ndarray, desc: Dict[str, np.ndarray]) -> dict:
-    """The share of first places and of places among the first ten in groups of compounds."""
+def by_group(first: np.ndarray, top10: np.ndarray, desc: Dict[str, np.ndarray],
+             keys: Sequence[str] = ()) -> dict:
+    """The share of first places and of places among the first ten in groups of compounds;
+    `keys` keeps the groups of these descriptors only."""
     out = {}
     for name, key, lo, hi in GROUPS:
+        if keys and key not in keys:
+            continue
         m = (desc[key] >= lo) & (desc[key] <= hi)
         if m.any():
             out[name] = {"compounds": int(m.sum()), "first": float(first[m].mean()),
@@ -406,6 +423,159 @@ def run(results: str = RESULTS, repeats: int = REPEATS, **grid) -> dict:
     with open(os.path.join(results, "computed.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=1)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Two levels of theory on the same compounds
+# --------------------------------------------------------------------------- #
+def measured() -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    """The measured spectra without the copies: the axis, the curves and their compounds."""
+    x, A, table = PREP.load()
+    smiles = [r["smiles"] for r in table]
+    keep, _ = M.without_copies(A, smiles)
+    return x, A[keep], [s for s, k in zip(smiles, keep) if k]
+
+
+def level_on(x: np.ndarray, A: np.ndarray, smiles: Sequence[str], computed: Dict[str, dict],
+             candidates: Sequence[str], repeats: int = REPEATS, **grid) -> dict:
+    """The test of :func:`run` for one library on a given list of candidates: the settings
+    are chosen on half of the compounds and scored on the other half.  The splits depend only
+    on the number of compounds and on the seed, so two libraries with the same candidates are
+    scored on the same halves."""
+    library = sorted(candidates)
+    row_of = {s: j for j, s in enumerate(library)}
+    queries = np.array([i for i, s in enumerate(smiles) if s in row_of])
+    owner = np.array([row_of[smiles[i]] for i in queries])
+    sticks = [(np.array(computed[s]["wavenumbers"]), np.array(computed[s]["intensities"]))
+              for s in library]
+    rank_of, _ = all_ranks(A[queries], x, sticks, owner, **grid)
+    per = {k: per_compound_scores(r, owner, len(library)) for k, r in rank_of.items()}
+    on_all = {k: {name: float(np.mean(v)) for name, v in s.items()} for k, s in per.items()}
+    fit = M.nested(per, list(per), repeats, SEED)
+    best = next(iter(fit["chosen"]))
+    desc = descriptors([library[j] for j in np.unique(owner)])
+    return {"per_compound": {"first": per[best]["first"], "top10": per[best]["top10"]},
+            "groups": by_group(per[best]["first"], per[best]["top10"], desc,
+                               keys=("donors", "rotatable_bonds")),
+            "library": len(library), "queries": int(len(queries)),
+            "compounds_with_a_query": int(len(np.unique(owner))),
+            "nested": fit, "setting": best, "on_all_compounds_at_that_setting": on_all[best],
+            "median_rank": float(np.median(
+                M.per_compound(rank_of[best].astype(float), owner)[1])),
+            "best_of_option": best_of_option(on_all),
+            "with_an_imaginary_mode": int(sum(1 for s in library
+                                              if computed[s]["n_imaginary"]))}
+
+
+def run_subset(results: str = RESULTS, repeats: int = REPEATS, **grid) -> dict:
+    """The GFN2-xTB library and the density-functional library on the compounds that have
+    both: the same candidates, the same queries, the same halves."""
+    t0 = time.time()
+    x, A, smiles = measured()
+    xhead, xtb = XTB.load()
+    dhead, dft = DFT.load()
+    candidates = sorted(set(xtb) & set(dft))
+    levels = {}
+    for name, computed in ((xhead["qm_level"], xtb), (dhead["qm_level"], dft)):
+        levels[name] = level_on(x, A, smiles, computed, candidates, repeats, **grid)
+        log(f"  {name}: first {levels[name]['nested']['first']:.3f}, among the first ten "
+            f"{levels[name]['nested']['top10']:.3f}")
+    low, high = (levels[xhead["qm_level"]], levels[dhead["qm_level"]])
+    out = {"source": PREP.DOI, "licence": PREP.LICENCE,
+           "levels": [xhead["qm_level"], dhead["qm_level"]],
+           "max_atoms": dhead["max_atoms"], "compounds_asked": dhead["compounds"],
+           "failed_at_the_higher_level": len(dhead["failed"]),
+           "seconds_of_the_higher_level": dhead["seconds"],
+           "job_seconds_of_the_higher_level": dhead.get("job_seconds"),
+           "candidates": len(candidates), "chance": 1.0 / len(candidates),
+           "repeats": repeats,
+           "higher_minus_lower_first": M.mean_difference(
+               high["nested"]["per_compound_first"], low["nested"]["per_compound_first"]),
+           "seconds": round(time.time() - t0, 1)}
+    out["found"] = {}                       # each level at the setting chosen most often
+    for score in ("first", "top10"):
+        a = high["per_compound"][score] > 0
+        b = low["per_compound"][score] > 0
+        out["found"][score] = {"both": int((a & b).sum()), "higher_only": int((a & ~b).sum()),
+                               "lower_only": int((~a & b).sum()),
+                               "neither": int((~a & ~b).sum())}
+    for level in levels.values():
+        level["nested"].pop("per_compound_first")
+        level["nested"].pop("scored")
+        level.pop("per_compound")
+    out["results"] = levels
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, "subset.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+def _report_subset(results: str) -> List[str]:
+    """The lines of the comparison of two levels, or nothing when it was not run."""
+    path = os.path.join(results, "subset.json")
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        d = json.load(fh)
+    first = d["results"][d["levels"][0]]
+    lines = ["## Two levels of theory on the small compounds",
+             "",
+             f"The {d['candidates']} compounds with at most {d['max_atoms']} atoms that have "
+             f"a spectrum at both levels are the candidates; {first['queries']} measured "
+             f"spectra of {first['compounds_with_a_query']} of them are the queries. Both "
+             "levels start from the same conformer. The settings are chosen for each level "
+             f"on half of the compounds and scored on the other half, the same "
+             f"{d['repeats']} splits for both.",
+             "",
+             "| Library | Compound is first | In the first three | In the first ten | "
+             "Median rank of the right compound | Width chosen most often |",
+             "|---|---|---|---|---|---|",
+             f"| chance (one of {d['candidates']} compounds) | {_pct(d['chance'])} | "
+             f"{_pct(3 * d['chance'])} | {_pct(10 * d['chance'])} | "
+             f"{(d['candidates'] + 1) / 2:g} | |"]
+    for name in d["levels"]:
+        r = d["results"][name]
+        f = r["nested"]
+        width = setting_values(r["setting"])["width"]
+        lines.append(f"| {name} | {_pct(f['first'])} +/- {100 * f['first_sd']:.1f} | "
+                     f"{_pct(f['top3'])} +/- {100 * f['top3_sd']:.1f} | "
+                     f"{_pct(f['top10'])} +/- {100 * f['top10_sd']:.1f} | "
+                     f"{r['median_rank']:g} | {width:g} cm^-1 |")
+    df = d["higher_minus_lower_first"]
+    lines += ["",
+              f"Difference in the share of first places, {d['levels'][1]} minus "
+              f"{d['levels'][0]}, per compound: {100 * df['mean']:+.1f} "
+              f"[{100 * df['low']:+.1f}, {100 * df['high']:+.1f}] points (95 % bootstrap "
+              "interval over the compounds).",
+              ""]
+    for name in d["levels"]:
+        r = d["results"][name]
+        lines.append(f"- {name}: chosen most often: {shown(r['setting'])}. Best share of "
+                     "first places by width, all compounds: "
+                     + ", ".join(f"{float(w):g} cm^-1 {_pct(v)}"
+                                 for w, v in r["best_of_option"]["width"].items()) + ".")
+    low, high = (d["results"][name] for name in d["levels"])
+    lines += ["",
+              "Groups of compounds, each level at the setting chosen most often (all "
+              "compounds):",
+              "",
+              f"| Compounds | Number | First, {d['levels'][0]} | First, {d['levels'][1]} | "
+              f"In the first ten, {d['levels'][0]} | In the first ten, {d['levels'][1]} |",
+              "|---|---|---|---|---|---|"]
+    for name, g in high["groups"].items():
+        g0 = low["groups"][name]
+        lines.append(f"| {name} | {g['compounds']} | {_pct(g0['first'])} | {_pct(g['first'])} "
+                     f"| {_pct(g0['top10'])} | {_pct(g['top10'])} |")
+    f, t = d["found"]["first"], d["found"]["top10"]
+    lines += ["",
+              f"Of the {sum(f.values())} compounds, {f['both']} have a first place at both "
+              f"levels, {f['higher_only']} only at {d['levels'][1]}, {f['lower_only']} only at "
+              f"{d['levels'][0]} and {f['neither']} at neither. For a place among the first "
+              f"ten the four numbers are {t['both']}, {t['higher_only']}, {t['lower_only']} "
+              f"and {t['neither']}. A compound with several measured spectra is counted when "
+              "one of them is found.",
+              ""]
+    return lines
 
 
 # --------------------------------------------------------------------------- #
@@ -525,6 +695,7 @@ def report(results: str = RESULTS) -> str:
             f"and in {_pct(w['share_same_formula'])} the named compound has the same "
             "formula (an isomer)."]
     lines.append("")
+    lines += _report_subset(results)
     text = "\n".join(lines)
     os.makedirs(results, exist_ok=True)
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
@@ -536,9 +707,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--report", action="store_true", help="only rebuild the table")
+    ap.add_argument("--subset", action="store_true",
+                    help="only the comparison of the two levels on the small compounds "
+                         "(needs prepare_chemotion_dft.py)")
     ap.add_argument("--repeats", type=int, default=REPEATS)
     a = ap.parse_args(argv)
-    if not a.report:
+    if a.subset:
+        run_subset(repeats=a.repeats)
+    elif not a.report:
         run(repeats=a.repeats)
     print(report())
     return 0

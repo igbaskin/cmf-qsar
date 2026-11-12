@@ -3032,12 +3032,26 @@ complexes, at most 100 atoms); the jobs took 81 minutes and none failed.
   O-H and N-H stretch bands can be left out was wrong for a computed library.
 - Flexible and rigid compounds are found equally often (6.3 % and 7.0 %), and compounds with a
   hydrogen-bond donor a little less often (4.8 % against 7.6 %). So the level of theory is
-  the probable limit, and not the one conformer or the gas phase. A density-functional
-  library for a part of the compounds is the test of that.
+  the probable limit, and not the one conformer or the gas phase.
+- *The test of that reading: two levels of theory on the same compounds.* The 231 compounds
+  with at most 25 atoms were computed again with ORCA at the density functional B97-3c, from
+  the geometry of xtb ([prepare_chemotion_dft.py](benchmarks/prepare_chemotion_dft.py);
+  13.5 hours with 14 jobs, 230 spectra). With these 230 compounds as the candidates, the
+  same queries and the same splits, the measured spectrum finds its compound first in 32.3 %
+  of the queries with the B97-3c library and in 11.3 % with the GFN2-xTB library. The
+  difference is 21.2 points (95 % interval 16.5 to 26.2). The compound is among the first
+  ten in 71.9 % against 37.2 %, and its median rank is 3 against 20.
+- So the level of theory is a large part of the limit, and not the whole of it: the gate of
+  SP3 is not met with B97-3c either. With B97-3c the width that is chosen is the width of a
+  band (4 to 32 cm⁻¹ give the same result), and the region from 700 to 1800 cm⁻¹ alone is
+  enough. A compound without a hydrogen-bond donor is found first in 46 % of the cases and
+  one with a donor in 29 %: the molecule alone in the gas phase is the next limit.
 
 ```bash
 python benchmarks/prepare_chemotion_xtb.py --jobs 14   # once: the library, 81 minutes
 python benchmarks/run_spectra_computed.py              # 17 minutes
+python benchmarks/prepare_chemotion_dft.py --jobs 14   # once: 231 compounds at B97-3c, 13.5 hours
+python benchmarks/run_spectra_computed.py --subset     # the two levels on those compounds
 ```
 
 ### Mixtures and quantification

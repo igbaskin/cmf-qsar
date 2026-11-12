@@ -184,7 +184,9 @@ a copy is passed on under the same licence. They are therefore not in the reposi
 any source, and `cmfqsar.spectrum.absorbance` turns a transmittance into an absorbance.
 `benchmarks/prepare_chemotion_xtb.py` computes a GFN2-xTB spectrum for the compounds of that
 set, also into the cache, and `benchmarks/run_spectra_computed.py` ranks the computed
-spectra for every measured one.
+spectra for every measured one. `benchmarks/prepare_chemotion_dft.py` computes a B97-3c
+spectrum for the 231 compounds of the set with at most 25 atoms (13.5 hours with ORCA), into
+the cache as well, and the option `--subset` of the benchmark compares the two levels.
 
 `benchmarks/run_mixtures.py` (plan item SP6) makes mixtures from the spectra of
 `benzoic_acids_ir.json` and finds the amounts of the components again. The manual section

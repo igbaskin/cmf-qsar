@@ -848,9 +848,13 @@ def registry() -> List[Benchmark]:
                   "measured Chemotion IR spectra as queries, one GFN2-xTB spectrum for each "
                   "of 1,645 candidate compounds as the library, 1,680 settings of the kernel "
                   "chosen on half of the compounds (needs xtb for the library: "
-                  "prepare_chemotion_xtb.py, 81 minutes, kept in benchmarks/cache)",
-                  "run_spectra_computed.py", "spectra_computed", compute=[[]],
-                  prepare=["prepare_chemotion_ir.py", "prepare_chemotion_xtb.py --jobs 14"],
+                  "prepare_chemotion_xtb.py, 81 minutes, kept in benchmarks/cache); then "
+                  "the GFN2-xTB library against a B97-3c library on the 230 compounds with "
+                  "at most 25 atoms (needs ORCA for that library: prepare_chemotion_dft.py, "
+                  "13.5 hours with 14 jobs, kept in benchmarks/cache)",
+                  "run_spectra_computed.py", "spectra_computed", compute=[[], ["--subset"]],
+                  prepare=["prepare_chemotion_ir.py", "prepare_chemotion_xtb.py --jobs 14",
+                           "prepare_chemotion_dft.py --jobs 14"],
                   minutes="17",
                   report=lambda: _mod("run_spectra_computed").report(),
                   tables=["spectra_computed/table.md"]),
