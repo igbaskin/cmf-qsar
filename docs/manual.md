@@ -8301,6 +8301,7 @@ with $\alpha$ and $\lambda$ chosen in a 10-fold inner cross-validation, 5 outer 
 | overlap fields, poses registered in the plane by their common substructure | 0.517 | 36.9 |
 | overlap fields, poses shuffled in the plane | 0.480 | 38.3 |
 | rotation-invariant autocorrelation, which discards the height | 0.109 | 50.2 |
+| the number of heavy atoms less than 3 Å above the top layer, in a linear regression with one coefficient | 0.657 | 31.1 |
 
 Three things follow. The **invariance is demonstrated rather than asserted**: turning every pose
 by a random angle about the normal and sliding it up to 6 Å in the plane changes the model by
@@ -8309,6 +8310,42 @@ produces the score** — the fully invariant kernel differs from this one only i
 it falls from 0.655 to 0.109. And **the frame the overlap kernel wants is not worth building**:
 registering the poses laterally on the common substructure moves it from 0.505 to 0.517, a
 negligible difference, while the kernel that was never given a frame is 0.14 above the better of them.
+
+**One number does as well as the kernel, and it is the reference to use.** The last row of the
+table needs no kernel and no field. It counts the heavy atoms of a pose that lie less than 3 Å
+above the top layer of iron, and it puts that count into a linear regression with one
+coefficient. The regression is scored on the same outer folds; with one coefficient there is
+nothing to choose inside a fold. It reaches a q² of 0.657, and the surface kernel reaches
+0.655. On the predictions averaged over the ten repeats the surface kernel is ahead of the
+count by 0.025, and the 95 % interval of that difference, from a bootstrap that draws the
+molecules, runs from −0.084 to +0.152. The limit of 3 Å was not tuned: with 2 Å the count
+reaches 0.691 and with 4 Å 0.630.
+
+The quinoline node of the same study, 63 molecules relaxed in the same way, repeats the test
+with the limit fixed in advance. There the count is ahead of every kernel:
+
+| model, quinoline node | $q^2$ | RMSE (kJ/mol) |
+|---|---:|---:|
+| the number of heavy atoms less than 3 Å above the top layer, linear regression | 0.659 | 43.2 |
+| surface kernel, the channels of the table above | 0.517 | 51.4 |
+| surface kernel, channels half as wide | 0.575 | 48.2 |
+| overlap fields, poses as written | 0.560 | 49.0 |
+| rotation-invariant autocorrelation | 0.020 | 73.2 |
+
+The surface kernel with the channels of the first table is behind the count by 0.107, with
+an interval from −0.265 to +0.021.
+
+So the three statements above stand, and they are statements about kernels. The second one
+can now be said exactly. The height is what produces the score, and on these two sets the
+height enters as one quantity: how much of the molecule lies on the metal. The surface kernel
+finds that quantity without being told. It does not find more than the count on the first
+set, and it is behind the count on the second, although the interval of that difference still
+holds zero. The global descriptors that the corrosion literature uses reach a q² of 0.39 at most on
+the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
+molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
+to be given credit for what it adds to the count, and on these adsorption energies nothing in
+this program adds to it yet. The sixth tutorial, `docs/tutorials/06_on_a_surface.ipynb`, makes
+the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
 integral of a product of fields, so the prediction cannot be turned back into a function of
@@ -8319,7 +8356,8 @@ carry the signal, which `top_channels` ranks against the labels of
 distance, one pair of field types at a time, in the *Co-pattern* tab of the Results panel; the
 section *The co-pattern as a chart* is about that chart and about what it may and may not be
 read for. The measurements above come from `surface_kernel_eads.py`, in
-`examples/corrosion_fe110`, which writes its table next to the script.
+`examples/corrosion_fe110`, which writes its tables next to the script: one of the scores, and
+one of the differences between the surface kernel and the count.
 
 ![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)
 

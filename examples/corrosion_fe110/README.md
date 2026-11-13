@@ -470,7 +470,15 @@ now carries every setting, with a regression test).
 | surface kernel (s 1.0, z 1-7 step 1.5) | none | 0.66 +- 0.03 | 31.2 |
 | surface kernel | poses shuffled in the plane | 0.66 +- 0.03 (identical predictions) | 31.2 |
 | 3D autocorrelation (height removed) | none | 0.11 +- 0.08 | 50.2 |
+| count of heavy atoms less than 3 A above the top layer, linear regression | none | 0.66 +- 0.01 | 31.1 |
 
+- **One number does as well as the surface kernel** (added 13 November 2026).  The count of
+  heavy atoms less than 3 A above the top iron layer, in a linear regression with one
+  coefficient on the same outer folds, reaches 0.657 against 0.655.  The surface kernel minus
+  the count is +0.025 [-0.084, +0.152] (`surface_kernel_eads_paired.csv`, a bootstrap over the
+  molecules on the predictions averaged over the repeats).  The limit is not tuned: 0.691
+  with 2 A, 0.630 with 4 A.  The statements below are about kernels and stay true; what they
+  do not show is that the kernels read more than how much of the molecule lies on the metal.
 - With no alignment step at all the surface kernel outperforms the registered overlap model, 0.66
   against 0.52, and its numbers do not change when every pose is turned and shifted at random
   in the plane.  The grids hardly matter (0.65-0.66 over three settings).
@@ -682,7 +690,12 @@ nothing to hold them with.  Then `surface_kernel_eads.py --csv ... --sdf ... --t
 | surface kernel | poses shuffled in the plane | 0.52, identical predictions | 51.4 |
 | surface kernel, y scrambled (5 runs) | | max 0.07 | |
 | 3D autocorrelation (height thrown away) | none | 0.02 +- 0.08 | 73.2 |
+| count of heavy atoms less than 3 A above the top layer, linear regression | none | 0.66 +- 0.01 | 43.2 |
 
+- **The count is ahead of every kernel on this node** (added 13 November 2026).  With the
+  limit fixed at 3 A before this node was looked at, the count reaches 0.659; the surface
+  kernel minus the count is -0.107 [-0.265, +0.021], and with a limit of 2 A the interval
+  excludes zero (-0.134 [-0.312, -0.019], `surface_kernel_eads_paired_quinoline.csv`).
 - **The surface kernel equals the best overlap model without any alignment, and that is
   all.**  On this node the benzimidazole margin (0.66 against 0.52) does not repeat: 0.52-0.58
   against 0.56.  What repeats is everything structural: the predictions do not change when

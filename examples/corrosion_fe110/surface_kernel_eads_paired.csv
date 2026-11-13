@@ -1,0 +1,4 @@
+comparison,q2_difference,low,high,runs
+surface kernel minus the count with a limit of 3 A,0.025,-0.084,0.152,2000
+surface kernel minus the count with a limit of 2 A,-0.009,-0.1,0.094,2000
+surface kernel minus the count with a limit of 4 A,0.052,-0.047,0.174,2000
