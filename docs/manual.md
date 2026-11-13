@@ -199,6 +199,8 @@ normalised field kernel has unit diagonal, the joint self-kernel of any molecule
 c_f$ — five, for the five default fields with unit coefficients, which is the 5 on the diagonal of
 the matrix in the worked example below.
 
+![The joint kernel as a sum of blocks, for the 21 training steroids in the order of their activity. Each of the first five panels is the normalised kernel of one field type over all pairs of molecules, times its mixing coefficient and its scale, on one colour scale. The last panel is their sum, the kernel the learner is given, on a scale of its own. The steric kernel is close to one everywhere, because the molecules of a congeneric series have nearly the same shape. Other blocks join the sum in the same way: a block of descriptors, or a block of water fields. Drawn by `docs/make_figures.py`.](docs/figures/blocks.png)
+
 ## Fitting: what is learned from the training set
 
 Kernel ridge regression with a bias term solves one linear system:
@@ -626,6 +628,8 @@ Nothing in that sequence is specific to the example: it is the working cycle of 
 # The application window
 
 ![The HIF-2α series of the Merck free-energy benchmark, 38 ligands: a kernel ridge model with q² = 0.62, its electrostatic co-field drawn as ± isosurfaces, and the binding site of the reference crystal structure, which the data set brings with it and which needs no superposition.](docs/screenshot.png)
+
+![The parts of the main window, marked on the screenshot above. The sections of this chapter describe them in turn: the Data set panel (2), the Model panel (6), the 3D view (4) with its controls (3), the Results panel (5) and the menus (1). The status line (7) says what the last action did. Drawn by `docs/make_figures.py`.](docs/figures/window.png)
 
 The window is a 3D view with three dockable panels around it. The **3D view** and its control strip
 occupy the centre and are always there; the **Data set** panel docks on the left, the **Model**
@@ -1366,6 +1370,8 @@ poses as the ceiling and the scrambled poses as the floor.
 That last detail is what makes the protocol work. Superposing before measuring would report 0.00 Å for a
 molecule placed in the wrong site: on a ligand displaced by 1 Å, `CalcRMS` returns 1.0 and
 `GetBestRMS` returns 0.0.
+
+![How an alignment method is judged. Above: the test. Below: its result for the sixteen free-energy sets when the conformation of every held-out ligand is generated again, which is the table of the next subsection: the median distance to the crystal pose, one point for each set. The grey points are the two references, the scrambled poses and the crystal poses. Drawn by `docs/make_figures.py` from the stored results.](docs/figures/posetest.svg)
 
 ### What the methods are worth
 
@@ -4875,6 +4881,8 @@ structure whose standard deviation exceeds the tolerance is marked as one to pas
 (a DFT calculation, a measurement) instead of using the model's answer. The share the fine level
 can afford goes the other way, to the tolerance that sends it that many.
 
+![The tolerance rule on the test molecules of the ACE set. Left: the error of every prediction, with the molecules in the order of their standard deviation and the band of two standard deviations. At the tolerance that passes three tenths of the molecules to the fine level, the model answers the blue ones and passes the red ones on. Right: the error of the molecules that the model answers, as the share that is passed on grows; the dashed line is the error when the molecules to pass on are drawn at random. On a congeneric series the gain is modest, as the measurements below say. Drawn by `docs/make_figures.py`.](docs/figures/tolerance.svg)
+
 ```bash
 python cmf_cli.py build data.sdf --charges file --test-fraction 0.3 --calibration --save model.cmf
 python cmf_cli.py predict model.cmf new.sdf --sd --tolerance 0.7 --out predictions.csv
@@ -6412,6 +6420,8 @@ space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
 module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
 of molecules, so the features of the whole set are never held at once.
 
+![The landmark construction on the DHFR set of the Sutherland collection. Left: the exact joint kernel of the 361 molecules, with similar molecules next to each other. Second: the features that thirty landmark molecules give, one row for each molecule; each of the five fields gives up to thirty columns. Third: the kernel that these features stand for, their matrix times its transpose. Right: the relative difference between that kernel and the exact one, against the number of landmark molecules; the circle is the case of the panels. The model is fitted on the columns of the second panel and never holds the first. Drawn by `docs/make_figures.py`.](docs/figures/landmarks.png)
+
 **Three kinds of landmark.** `gaussian_centres` puts a cubic grid of one-atom landmarks over
 the frame: the rank such a basis needs depends on the frame and the width of the field, not on
 how many molecules there are, which is what makes the method worth having. `landmark_molecules`
@@ -6872,6 +6882,8 @@ Plan item MC11 is what goes between that model and a chemist's list, and it is
 weighted sum needs weights, and nobody knows them before the compounds are made; a front does
 not. `pareto_layers` gives the front and the fronts behind it, so a list can be as long as the
 chemist wants.
+
+![Pareto fronts, on the 78 compounds of `examples/antitarget` and their two measured activities. The affinity for the target should be high and the activity on the anti-target low, so a compound is better towards the lower right. No compound of the Pareto front is beaten on both activities by another compound. Front 2 is the front of what is left when the first is taken away, and so on. In the loop the fronts are taken on predicted values. Drawn by `docs/make_figures.py`.](docs/figures/pareto.svg)
 
 **The acquisition** is the expected improvement of each objective against the best already
 made, added with weights. Each term is already in the units of its own objective's improvement,
@@ -9927,6 +9939,8 @@ module prefers a large score, so `maximise=False` negates the target inside the 
 `ucb` reads as the lower confidence bound of the section on which molecule to make next -- a
 candidate is proposed only when the model is both optimistic and sure.
 
+![Designing a crystal. Top left: a prototype, the cubic ABO3 cell with its three site classes, and the size of the space it spans. Top right: the loop. Below: the loop measured on 4,000 perovskite cells with the three-body kernel, as the gate below reports it: the lowest formation energy that each rule found within its budget, one point for each start set. The rule that takes the best prediction reaches the best cell of the pool in most runs. Drawn by `docs/make_figures.py` from the stored results.](docs/figures/crystaldesign.svg)
+
 **How large a design space is, and how much of it is already computed.** The five-atom cubic ABO3
 prototype with the 52 A elements and 52 B elements of `matbench_perovskites` allows 2,704
 candidates, and that set already holds a computed formation energy for 2,661 of them: 98.4 % of the
@@ -11410,6 +11424,8 @@ spectrum (standard deviation 4.4), and its highest line, the O-H stretch in most
 below (3.0) and 26.6 cm$^{-1}$ below (1.5), and the lines of the two functionals, taken in
 order, are 5.0 cm$^{-1}$ apart at the median.
 
+![Which acid fits a spectrum. Top left: benzoic acid at three levels of theory, the level of the library and the two levels of the queries. Top right and bottom left: the kernel of every query with every library spectrum, for the queries of the second density functional and of GFN2-xTB; the right acid is on the diagonal. Bottom right: the share of the queries whose acid stands among the first places of the ranking. The figure uses one width of 20 cm$^{-1}$ and the axis as it is, and it takes the mean spectrum of each level off before the comparison. Part (b) below chooses the width, the power of the intensity and a map of the axis on calibration acids, and its numbers are the ones to quote. Drawn by `docs/make_figures.py`.](docs/figures/bridge.png)
+
 ### Part (b): which acid fits a spectrum
 
 The spectra of the first functional (ORCA, r2SCAN-3c) are the library: one spectrum for every
@@ -11935,6 +11951,8 @@ target* are close relatives, whose spectra overlap strongly. The measured Chemot
 (2,060 of them) carry real band shapes and real baselines; this part is left out when the set
 was not fetched. There are 20 repeats of each case.
 
+![The spectrum of a mixture as a sum of fields. Top left: four components, the computed spectra of four benzoic acids, each scaled to its strongest band. Top right: one mixture, made by the recipe of the benchmark: the components times their amounts, summed, with a baseline of its own and noise. Bottom left: a ridge model on the linear kernel of the spectra, fitted on 120 mixtures of known composition, gives the amounts of 120 new mixtures; there is one colour for each component. Bottom right: the fractions, as the predicted amounts divided by their sum. The model is not told the spectra of the pure components. Drawn by `docs/make_figures.py`.](docs/figures/mixture.svg)
+
 **What is asked, and of which model.** The amount of every component, and the fraction of
 every component, which does not depend on the total amount. The model is kernel ridge
 regression on the linear kernel of the rows of a description. The rows are the broadened
@@ -12172,6 +12190,8 @@ plain mean difference of the same 8 standards is on average as good as PDS for c
 reaches the model that was fitted on the target itself when the target is the precise
 instrument `m5`: the model was fitted on spectra with four times the noise.
 
+![Two instruments, simulated. The two sets of this section are fetched and are not in the repository, so the picture is made from the computed spectra of the 189 benzoic acids: the second instrument has a coarser resolution, an offset and a slope of its own. Left: one acid on both instruments. Middle: the same two spectra after the mean spectrum of each instrument is taken off; they now agree. Right: a ridge model fitted on the first instrument with two thirds of the acids predicts the Hammett constant of the other third from the second instrument, as measured and with each instrument centred. No acid is measured on both instruments. The centring assumes that the two sets of samples have the same mean, and the next paragraph says what that costs. Drawn by `docs/make_figures.py`.](docs/figures/instruments.svg)
+
 **Centring has a cost of its own.** The centring assumes that the test samples have the
 mean spectrum of the samples of the fit. They do not have it exactly, and the difference of
 the two means is read as a difference in the property. This cost can be measured without
@@ -12286,6 +12306,8 @@ points. For a set of maps it is cheaper to broaden every map on its grid
 (`spectrum2d.smoothed`) and to take dot products of the maps (`spectrum2d.map_kernel`); the
 two routes agree to rounding error when the grid step is well below the width. The weight of
 a fitted model is a map over the two axes, the *co-map* (`spectrum2d.co_map`).
+
+![A spectrum with two axes as a field on a plane, on simulated peak lists. Left: a list of fourteen peaks, and the same sample measured again with every peak moved by half a width. The area of a mark grows with the intensity, and the grey lines are the borders of a table of bins two widths wide. Middle: the first list as a field, one Gaussian on every peak. Right: the similarity of the list with a copy whose peaks have moved, against the size of the move: the cosine form of the kernel of Eq. (#eq:peak-kernel), and the same from the table of bins. The lines are means over forty copies, and the band is one standard deviation of the bins. The kernel falls smoothly; the bins fall faster and depend on where their borders are. Drawn by `docs/make_figures.py`.](docs/figures/peaklist.png)
 
 A measured map has places without information about the sample. In a fluorescence map the
 excitation light itself is scattered into the detector where the emission wavelength equals

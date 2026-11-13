@@ -2961,6 +2961,767 @@ def fig_complex(path):
     save(fig, path)
 
 
+def acid_curves():
+    """The computed infrared spectra of the 189 benzoic acids as curves on one axis, every curve
+    scaled so that its strongest band is 1, with the names and the Hammett constants."""
+    if "acid_curves" not in _CACHE:
+        from rdkit import Chem, RDLogger
+        from cmfqsar import spectrum as SP
+        RDLogger.DisableLog("rdApp.*")
+        folder = os.path.join(ROOT, "examples", "spectra")
+        with open(os.path.join(folder, "benzoic_acids_ir.json"), encoding="utf-8") as fh:
+            acids = json.load(fh)["acids"]
+        sigma = {m.GetProp("_Name"): float(m.GetProp("sigma")) for m in
+                 Chem.SDMolSupplier(os.path.join(folder, "benzoic_acids_co.sdf"), removeHs=False)}
+        axis = np.arange(400.0, 4000.0 + 1e-9, 2.0)
+        grid = SP.Grid(float(axis[0]), float(axis[-1]), 2.0)
+        sticks = [SP.Spectrum(a["wavenumbers"], a["intensities"]) for a in acids]
+        F = SP.feature_matrix(sticks, grid, 6.0)
+        _CACHE["acid_curves"] = dict(axis=np.asarray(grid.x, float), curves=F / F.max(axis=1, keepdims=True),
+                                     names=[a["name"] for a in acids],
+                                     sigma=np.array([sigma[a["name"]] for a in acids]))
+    return _CACHE["acid_curves"]
+
+
+def linear_ridge(train, y, test, ridge=1e-3):
+    """Kernel ridge regression with a constant on the linear kernel of the rows; the ridge is a
+    multiple of the mean diagonal of the centred kernel.  Returns the predictions for `test`."""
+    mean, ybar = train.mean(axis=0), y.mean(axis=0)
+    A, B = train - mean, test - mean
+    K = A @ A.T
+    lam = ridge * float(np.trace(K)) / len(K)
+    return B @ (A.T @ np.linalg.solve(K + lam * np.eye(len(K)), y - ybar)) + ybar
+
+
+def fig_mixture(path):
+    """Chapter 11: the spectrum of a mixture as a sum of fields.  Four computed spectra of the
+    benzoic acids are the components, mixtures are made as ``benchmarks/run_mixtures.py`` makes
+    them (amounts, a baseline, noise), and a ridge model on the linear kernel of the spectra
+    gives the amounts back."""
+    import matplotlib.pyplot as plt
+    c = acid_curves()
+    axis, names = c["axis"], c["names"]
+    rng = np.random.default_rng(20261113)
+    pick = np.sort(rng.choice(len(names), 4, replace=False))
+    S = c["curves"][pick]
+
+    def mixtures(n):                              # the recipe of the benchmark
+        fractions = rng.dirichlet(np.ones(len(S)), size=n)
+        amounts = fractions * rng.uniform(0.5, 2.0, size=(n, 1))
+        ramp = np.linspace(-0.5, 0.5, S.shape[1])
+        base = rng.uniform(0.0, 0.2, size=(n, 1)) + rng.uniform(-0.1, 0.1, size=(n, 1)) * ramp
+        return amounts @ S + base + 0.005 * rng.normal(size=(n, S.shape[1])), amounts, base
+
+    X_fit, Y_fit, _b = mixtures(120)
+    X_test, Y_test, base = mixtures(120)
+    P = linear_ridge(X_fit, Y_fit, X_test, ridge=1e-6)
+    error = float(np.sqrt(np.mean((P - Y_test) ** 2)))
+    colours = ("C0", "C1", "C2", "C3")
+    window = (1900.0, 600.0)
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.3))
+    ax = axes[0, 0]
+    for k, colour in enumerate(colours):
+        ax.plot(axis, S[k] + 1.05 * (3 - k), color=colour, lw=0.8)
+        ax.text(window[0] - 20, 1.05 * (3 - k) + 0.55, names[pick[k]], fontsize=6.5, color=colour)
+    ax.set_title("four components: the spectra of four acids", fontsize=7.5)
+    ax.set_yticks([])
+    ax = axes[0, 1]
+    j = int(np.argmax(Y_test.min(axis=1)))        # the test mixture with the most even amounts
+    for k, colour in enumerate(colours):
+        ax.plot(axis, Y_test[j, k] * S[k], color=colour, lw=0.7,
+                label=f"{Y_test[j, k]:.2f} × {names[pick[k]]}")
+    ax.plot(axis, base[j], color="0.5", lw=0.7, ls="--", label="its baseline")
+    ax.plot(axis, X_test[j], color="black", lw=0.9, label="the mixture")
+    ax.set_title("a mixture: the components times their\namounts, summed, with a baseline and noise",
+                 fontsize=7.5)
+    ax.legend(frameon=False, fontsize=5.8, loc="upper left", ncol=2)
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.45 * (high - low))
+    for ax in axes[0]:
+        ax.set_xlim(*window)
+        ax.set_xlabel("wavenumber / cm$^{-1}$", fontsize=7.5)
+        ax.tick_params(length=2, labelsize=7)
+    ax = axes[1, 0]
+    for k, colour in enumerate(colours):
+        ax.scatter(Y_test[:, k], P[:, k], s=7, color=colour, linewidth=0)
+    top = float(max(Y_test.max(), P.max())) * 1.05
+    ax.plot([0, top], [0, top], color="0.5", lw=0.6)
+    ax.set_xlabel("amount put in", fontsize=7.5)
+    ax.set_ylabel("amount predicted", fontsize=7.5)
+    ax.set_title(f"the amounts of 120 new mixtures\n(root-mean-square error {error:.3f})", fontsize=7.5)
+    ax = axes[1, 1]
+    F_true = Y_test / Y_test.sum(axis=1, keepdims=True)
+    F_pred = P / P.sum(axis=1, keepdims=True)
+    for k, colour in enumerate(colours):
+        ax.scatter(F_true[:, k], F_pred[:, k], s=7, color=colour, linewidth=0)
+    ax.plot([0, 1], [0, 1], color="0.5", lw=0.6)
+    ax.set_xlabel("fraction put in", fontsize=7.5)
+    ax.set_ylabel("predicted amount over the sum", fontsize=7.5)
+    ax.set_title("the fractions: the predicted amounts\ndivided by their sum", fontsize=7.5)
+    for ax in axes[1]:
+        ax.set_aspect("equal")
+        ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout(h_pad=1.2, w_pad=1.2)
+    print(f"  mixture: components {[names[i] for i in pick]}; rmse of the amounts {error:.4f}, of "
+          f"the fractions {np.sqrt(np.mean((F_pred - F_true) ** 2)):.4f}")
+    save(fig, path)
+
+
+def fig_instruments(path):
+    """Chapter 11: a model fitted on one instrument reads the spectra of another.  The two sets
+    of the section are fetched and are not in the repository, so the two instruments here are
+    simulated from the computed spectra of the benzoic acids: the second one has a coarser
+    resolution, an offset and a slope of its own.  The model is fitted on the first instrument
+    with two thirds of the acids and reads the other third on the second instrument, as
+    measured and with each instrument centred on its own mean spectrum."""
+    import matplotlib.pyplot as plt
+    from scipy.ndimage import gaussian_filter1d
+    c = acid_curves()
+    axis, curves, y, names = c["axis"], c["curves"], c["sigma"], c["names"]
+    rng = np.random.default_rng(5)
+    step = float(axis[1] - axis[0])
+    ramp = np.linspace(-0.5, 0.5, len(axis))
+    first = curves + 0.003 * rng.normal(size=curves.shape)
+    second = (gaussian_filter1d(curves, 3.0 / step, axis=1) + 0.08 + 0.10 * ramp
+              + 0.003 * rng.normal(size=curves.shape))
+    order = rng.permutation(len(y))
+    test, fit = np.sort(order[: len(y) // 3]), np.sort(order[len(y) // 3:])
+    # the rows of the model: both instruments broadened by the width of the kernel, 10 cm^-1
+    A = gaussian_filter1d(first, 10.0 / step, axis=1)
+    B = gaussian_filter1d(second, 10.0 / step, axis=1)
+    folds = np.array_split(rng.permutation(len(fit)), 5)      # the ridge, on the first instrument
+    errors = {}
+    for ridge in (1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1):
+        errors[ridge] = sum(float(np.sum((linear_ridge(
+            A[fit][np.setdiff1d(np.arange(len(fit)), f)], y[fit][np.setdiff1d(np.arange(len(fit)), f)],
+            A[fit][f], ridge) - y[fit][f]) ** 2)) for f in folds)
+    ridge = min(errors, key=errors.get)
+    within = linear_ridge(A[fit], y[fit], A[test], ridge)
+    as_measured = linear_ridge(A[fit], y[fit], B[test], ridge)
+    centred = linear_ridge(A[fit] - A[fit].mean(axis=0), y[fit],
+                           B[test] - B[test].mean(axis=0), ridge)
+
+    def rmse(p):
+        return float(np.sqrt(np.mean((p - y[test]) ** 2)))
+
+    k = int(test[np.argmax(y[test])])
+    zoom = (axis >= 1560) & (axis <= 1860)
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.45))
+    ax = axes[0]
+    ax.plot(axis[zoom], first[k, zoom], color="C0", lw=0.9, label="first instrument")
+    ax.plot(axis[zoom], second[k, zoom], color="C3", lw=0.9, label="second instrument")
+    ax.set_title(f"one sample on two instruments\n({names[k]})", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.3, loc="upper left")
+    ax = axes[1]
+    ax.plot(axis[zoom], (first[k] - first[fit].mean(axis=0))[zoom], color="C0", lw=0.9)
+    ax.plot(axis[zoom], (second[k] - second[test].mean(axis=0))[zoom], color="C3", lw=0.9)
+    ax.axhline(0, color="0.6", lw=0.5)
+    ax.set_title("the same, each instrument with its\nown mean spectrum taken off", fontsize=7.5)
+    for ax in axes[:2]:
+        ax.set_xlim(1860, 1560)
+        ax.set_xlabel("wavenumber / cm$^{-1}$", fontsize=7.5)
+        ax.tick_params(length=2, labelsize=7)
+    ax = axes[2]
+    ax.scatter(y[test], as_measured, s=9, color="0.6", linewidth=0,
+               label=f"as measured ({rmse(as_measured):.2f})")
+    ax.scatter(y[test], centred, s=9, color="C3", linewidth=0,
+               label=f"each centred ({rmse(centred):.2f})")
+    lo = float(min(y[test].min(), as_measured.min(), centred.min())) - 0.1
+    hi = float(max(y[test].max(), as_measured.max(), centred.max())) + 0.1
+    ax.plot([lo, hi], [lo, hi], color="0.5", lw=0.6)
+    ax.set_xlabel("Hammett constant", fontsize=7.5)
+    ax.set_ylabel("predicted from the second instrument", fontsize=7)
+    ax.set_title(f"a model of the first instrument reads the\nsecond (errors; {rmse(within):.2f} "
+                 "on the first itself)", fontsize=7.2)
+    ax.legend(frameon=False, fontsize=6.0, loc="upper left")
+    ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout(w_pad=1.0)
+    print(f"  instruments: {len(fit)} acids to fit, {len(test)} to test; rmse within the first "
+          f"instrument {rmse(within):.3f}, second as measured {rmse(as_measured):.3f}, each "
+          f"instrument centred {rmse(centred):.3f}")
+    save(fig, path)
+
+
+def fig_peaklist(path):
+    """Chapter 11: a spectrum with two axes as a field on a plane.  A list of peaks, the same
+    list measured again with every peak moved a little, the field the list becomes, and what
+    the kernel and a table of bins say about the two lists as the peaks move further."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.spectrum2d import PeakList, peak_kernel, rasterise
+    rng = np.random.default_rng(3)
+    n, sigma, bin_size = 14, 1.0, 2.0
+    px, py = rng.uniform(2.0, 18.0, n), rng.uniform(2.0, 18.0, n)
+    weight = rng.uniform(0.3, 1.0, n)
+    one = PeakList(px, py, weight)
+
+    def moved(jitter):
+        return PeakList(px + rng.normal(0, jitter, n), py + rng.normal(0, jitter, n), weight)
+
+    def binned(peaks):
+        H, _x, _y = np.histogram2d(peaks.x, peaks.y, bins=np.arange(0.0, 20.01, bin_size),
+                                   weights=peaks.w)
+        return H.ravel()
+
+    def bin_cosine(a, b):
+        u, v = binned(a), binned(b)
+        return float(u @ v / np.sqrt((u @ u) * (v @ v)))
+
+    again = moved(0.5)
+    grid = np.arange(0.0, 20.01, 0.1)
+    field = rasterise(one, grid, grid, sigma, sigma)
+    jitters = np.arange(0.0, 2.01, 0.1)
+    kernel_curve, bin_curve, bin_spread = [], [], []
+    for j in jitters:
+        ks, bs = [], []
+        for _ in range(40):
+            other = moved(j)
+            ks.append(float(peak_kernel([one], sigma, sigma, others=[other])[0, 0]))
+            bs.append(bin_cosine(one, other))
+        kernel_curve.append(np.mean(ks))
+        bin_curve.append(np.mean(bs))
+        bin_spread.append(np.std(bs))
+    kernel_curve, bin_curve, bin_spread = map(np.array, (kernel_curve, bin_curve, bin_spread))
+
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.4))
+    ax = axes[0]
+    for edge in np.arange(0.0, 20.01, bin_size):
+        ax.axvline(edge, color="0.88", lw=0.4, zorder=1)
+        ax.axhline(edge, color="0.88", lw=0.4, zorder=1)
+    ax.scatter(one.x, one.y, s=55 * one.w, facecolor="none", edgecolor="C0", linewidth=1.0,
+               zorder=3, label="a list of peaks")
+    ax.scatter(again.x, again.y, s=55 * again.w, marker="x", color="C3", linewidth=1.0, zorder=3,
+               label="the same sample again")
+    ax.set_title("two peak lists of one sample\n(grey: the borders of a table of bins)",
+                 fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.0, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=1)
+    ax = axes[1]
+    ax.imshow(field.T, origin="lower", extent=(0, 20, 0, 20), cmap="Blues", interpolation="bilinear")
+    ax.scatter(one.x, one.y, s=5, color="black", linewidth=0)
+    ax.set_title("the first list as a field:\na Gaussian on every peak", fontsize=7.5)
+    for ax in axes[:2]:
+        ax.set_xlim(0, 20)
+        ax.set_ylim(0, 20)
+        ax.set_aspect("equal")
+        ax.set_xlabel("first axis", fontsize=7.5)
+        ax.tick_params(length=2, labelsize=7)
+    axes[0].set_ylabel("second axis", fontsize=7.5)
+    ax = axes[2]
+    ax.plot(jitters, kernel_curve, color="C0", lw=1.1, label="the kernel of the two fields")
+    ax.plot(jitters, bin_curve, color="C1", lw=1.1, label="the same with bins")
+    ax.fill_between(jitters, bin_curve - bin_spread, bin_curve + bin_spread, color="C1", alpha=0.2,
+                    lw=0)
+    ax.set_ylim(0.0, 1.03)
+    ax.set_xlabel("how far every peak moves\n(in widths of the Gaussian)", fontsize=7.5)
+    ax.set_ylabel("similarity of the two lists", fontsize=7.5)
+    ax.set_title("the same sample, measured again", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.3, loc="lower left")
+    ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout(w_pad=1.0)
+    print(f"  peak list: {n} peaks, width {sigma:g}, bins of {bin_size:g}; at a move of one width "
+          f"the kernel is {kernel_curve[10]:.3f} and the bins give {bin_curve[10]:.3f} "
+          f"(spread {bin_spread[10]:.3f})")
+    save(fig, path)
+
+
+def fig_bridge(path):
+    """Chapter 11: which acid fits a spectrum.  The library holds one computed spectrum of
+    every benzoic acid.  A spectrum of the same acid from a second level of theory is the
+    query, and the candidates are ranked by the kernel between the query and their library
+    spectra.  One width for all, the axis as it is, each level centred on its own mean."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import spectrum as SP
+    folder = os.path.join(ROOT, "examples", "spectra")
+
+    def read(name):
+        with open(os.path.join(folder, name), encoding="utf-8") as fh:
+            return {a["name"]: SP.Spectrum(a["wavenumbers"], a["intensities"])
+                    for a in json.load(fh)["acids"]}
+
+    library, near, rough = (read("benzoic_acids_ir.json"), read("benzoic_acids_ir_b97-3c.json"),
+                            read("benzoic_acids_ir_xtb.json"))
+    names = [n for n in library if n in near and n in rough]
+    width = 20.0
+    grid = SP.Grid.for_width(400.0, 4000.0, width)
+
+    def rows(spectra):
+        F = SP.feature_matrix([spectra[n] for n in names], grid, width)
+        F = F / np.sqrt(np.einsum("ij,ij->i", F, F))[:, None]
+        F = F - F.mean(axis=0)
+        return F / np.sqrt(np.einsum("ij,ij->i", F, F))[:, None]
+
+    L = rows(library)
+    levels = (("B97-3c, a second density functional", near, "C0"),
+              ("GFN2-xTB, a rougher method", rough, "C1"))
+    sims, ranks = [], []
+    for _label, spectra, _colour in levels:
+        S = rows(spectra) @ L.T
+        own = np.diag(S)[:, None]
+        sims.append(S)
+        ranks.append(1.0 + (S > own).sum(axis=1) + 0.5 * ((S == own).sum(axis=1) - 1))
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 4.6))
+    ax = axes[0, 0]
+    show = names[0]
+    shown = "benzoic acid" if show == "H" else show
+    fine = SP.Grid(600.0, 1900.0, 1.0)
+    for k, (label, spectra, colour) in enumerate((("the library, r2SCAN-3c", library, "black"),)
+                                                 + tuple((l.split(",")[0], s, c) for l, s, c in levels)):
+        curve = SP.feature_matrix([spectra[show]], fine, 6.0)[0]
+        ax.plot(fine.x, curve / curve.max() + 1.1 * (2 - k), color=colour, lw=0.8)
+        ax.text(1880, 1.1 * (2 - k) + 0.6, label, fontsize=6.3, color=colour)
+    ax.set_xlim(1900, 600)
+    ax.set_yticks([])
+    ax.set_xlabel("wavenumber / cm$^{-1}$", fontsize=7.5)
+    ax.set_title(f"{shown} at three levels of theory:\nno two put the lines at the same places",
+                 fontsize=7.5)
+    for ax, S, (label, _s, _c) in zip((axes[0, 1], axes[1, 0]), sims, levels):
+        im = ax.imshow(S, cmap="viridis", vmin=-0.2, vmax=1.0, interpolation="nearest")
+        ax.set_xlabel("library spectrum of acid", fontsize=7.5)
+        ax.set_ylabel("query spectrum of acid", fontsize=7.5)
+        ax.set_title(f"the kernel of every query with every\nlibrary spectrum: {label.split(',')[0]}",
+                     fontsize=7.5)
+        fig.colorbar(im, ax=ax, shrink=0.8, pad=0.03).ax.tick_params(labelsize=6.5)
+    ax = axes[1, 1]
+    ks = np.arange(1, len(names) + 1)
+    for r, (label, _s, colour) in zip(ranks, levels):
+        ax.plot(ks, [(r <= k).mean() for k in ks], color=colour, lw=1.1, label=label.split(",")[0])
+    ax.plot(ks, ks / len(names), color="0.5", lw=0.7, ls="--", label="at random")
+    ax.set_xscale("log")
+    ax.set_xlabel("places looked at, from the best", fontsize=7.5)
+    ax.set_ylabel("share of queries whose acid is found", fontsize=7.5)
+    ax.set_title("where the right acid stands in the ranking", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.3, loc="lower right")
+    for ax in axes.ravel():
+        ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout(h_pad=1.2, w_pad=1.0)
+    print(f"  bridge: {len(names)} acids, width {width:g}; first place "
+          + ", ".join(f"{l.split(',')[0]} {(r == 1).mean():.3f}" for r, (l, _s, _c) in zip(ranks, levels)))
+    save(fig, path)
+
+
+def flow_boxes(ax, steps, y=0.16, h=0.66, gap=0.03, x0=0.006, size=6.4):
+    """A row of boxes joined by arrows, in an axes that spans 0 to 1 both ways."""
+    from matplotlib.patches import FancyBboxPatch, Polygon
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+    w = (1.0 - 2 * x0 - gap * (len(steps) - 1)) / len(steps)
+    for k, (colour, label) in enumerate(steps):
+        x = x0 + k * (w + gap)
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.004,rounding_size=0.02",
+                                    facecolor=colour, edgecolor="0.35", linewidth=0.7))
+        ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=size,
+                linespacing=1.25)
+        if k:
+            ym = y + h / 2
+            ax.plot([x - gap + 0.004, x - 0.011], [ym, ym], color="0.25", lw=0.9)
+            ax.add_patch(Polygon([(x - 0.012, ym - 0.045), (x - 0.012, ym + 0.045), (x - 0.002, ym)],
+                                 closed=True, facecolor="0.25", edgecolor="0.25", linewidth=0.5))
+
+
+def fig_posetest(path):
+    """Chapter 5: how an alignment method is judged.  Above, the test as a scheme.  Below, what
+    ``benchmarks/run_poses.py`` stored for the sixteen free-energy sets with the conformations
+    of the held-out ligands generated again: the median distance to the crystal pose, one point
+    for every set."""
+    import matplotlib.pyplot as plt
+    folder = os.path.join(RESULTS, "poses")
+    rows = (("scrambled", "flex", "scrambled\n(the floor)"),
+            ("mcs", "flex", "substructure"),
+            ("mcs+variance", "flex", "substructure,\nthen rigid\nconfidence"),
+            ("mcs+flex", "flex", "substructure,\nthen flexible\nconfidence"),
+            ("mcs+flex", "flex_c5", "the same, from\nfive generated\nconformations"),
+            ("crystal", "flex", "crystal poses\n(the ceiling)"))
+    values = []
+    for method, variant, _label in rows:
+        got = []
+        for name in sorted(glob.glob(os.path.join(folder, f"*_{variant}.json"))):
+            with open(name, encoding="utf-8") as fh:
+                rec = json.load(fh)
+            if method in rec.get("methods", {}):
+                got.append(float(rec["methods"][method]["median_rmsd"]))
+        values.append(np.array(got))
+    sand, green, grey, blue = "#f6ead2", "#dcefdc", "#e9e9e9", "#dbe7f3"
+    fig = plt.figure(figsize=(WIDTH, 4.3))
+    flow_boxes(fig.add_axes((0.0, 0.74, 1.0, 0.26)), (
+        (grey, "ligands of one target\nin their crystal poses:\nthe right pose is known"),
+        (green, "a model is fitted on\nthe training ligands\nin those poses"),
+        (sand, "the pose of every\nheld-out ligand is\ndestroyed"),
+        (sand, "a method places it\nagain, and never\nsees its activity"),
+        (blue, "the distance to the\ncrystal pose is taken,\nwithout superposition")))
+    ax = fig.add_axes((0.10, 0.20, 0.88, 0.47))
+    rng = np.random.default_rng(0)
+    for k, v in enumerate(values):
+        colour = "0.55" if rows[k][0] in ("scrambled", "crystal") else "C0"
+        ax.scatter(k + rng.uniform(-0.16, 0.16, len(v)), v, s=11, color=colour, linewidth=0,
+                   alpha=0.8, zorder=3)
+        ax.plot([k - 0.28, k + 0.28], [v.mean(), v.mean()], color="black", lw=1.2, zorder=4)
+        ax.text(k + 0.31, v.mean(), f"{v.mean():.2f}", va="center", fontsize=6.5)
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels([r[2] for r in rows], fontsize=6.5)
+    ax.set_xlim(-0.6, len(rows) - 0.3)
+    ax.set_ylabel("median distance to the\ncrystal pose / Å", fontsize=7.5)
+    ax.tick_params(length=2, labelsize=7)
+    ax.set_title(f"measured: one point for each of {len(values[0])} sets, the bar and the number "
+                 "are their mean", fontsize=7.5)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    print("  pose test: " + "; ".join(f"{r[0]}/{r[1]} {v.mean():.2f} ({len(v)})"
+                                      for r, v in zip(rows, values)))
+    save(fig, path)
+
+
+def fig_tolerance(path):
+    """Chapter 7: the model as the fast level of a hierarchy.  The test molecules of the ACE set
+    with the standard deviation of each prediction in the units of the activity: which of them
+    the model answers and which it passes to the fine level at a tolerance, and what the error
+    of the answered ones is as the share that is passed grows."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    from cmfqsar.surrogate import defer, tolerance_for_budget
+    ds = load_dataset(os.path.join(ROOT, "examples", "sutherland", "ACE.sdf"))
+    y = np.asarray(ds.activity, float)
+    fs = FieldSet.create(alpha=0.5, charge_model="file")
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    tr = list(ds.train_indices)
+    te = [i for i in range(len(y)) if i not in set(tr)]
+    train = AtomTable.from_molecules([mf[i] for i in tr])
+    test = AtomTable.from_molecules([mf[i] for i in te])
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(train))
+    lam = max((1e-3, 1e-2, 0.1, 1.0, 10.0), key=lambda v: log_evidence(K, y[tr], float(v), fit_bias=True))
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": lam})
+    model.fit(train, y[tr], cv_folds=0)
+    mu, sd = model.predict_with_sd(test)
+    mu, sd = np.asarray(mu, float), np.asarray(sd, float)
+    error = mu - y[te]
+    share = 0.3
+    tolerance = tolerance_for_budget(sd, share)
+    passed = defer(sd, tolerance)
+    order = np.argsort(sd)
+
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.8), gridspec_kw=dict(width_ratios=(1.25, 1)))
+    ax = axes[0]
+    x = np.arange(len(order))
+    ax.fill_between(x, -2 * sd[order], 2 * sd[order], color="0.88", lw=0, zorder=1,
+                    label="± two standard deviations")
+    for flag, colour, label in ((False, "C0", "the model answers"),
+                                (True, "C3", "passed to the fine level")):
+        sel = passed[order] == flag
+        ax.scatter(x[sel], error[order][sel], s=13, color=colour, linewidth=0, zorder=3, label=label)
+    n_answered = int((~passed).sum())
+    ax.axvline(n_answered - 0.5, color="0.3", lw=0.7, ls="--")
+    ax.axhline(0, color="0.5", lw=0.5)
+    ax.set_xlabel("test molecules, in the order of their standard deviation", fontsize=7.5)
+    ax.set_ylabel("prediction minus measurement", fontsize=7.5)
+    ax.set_title(f"a tolerance of {tolerance:.2f} passes {100 * passed.mean():.0f} % of the\n"
+                 "molecules to the fine level", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.3, loc="upper left")
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.35 * (high - low))
+    ax = axes[1]
+    shares = np.linspace(0.0, 0.8, 33)
+    kept = []
+    for s in shares:
+        keep = ~defer(sd, tolerance_for_budget(sd, float(s)))
+        kept.append(float(np.sqrt(np.mean(error[keep] ** 2))))
+    whole = float(np.sqrt(np.mean(error ** 2)))
+    ax.plot(100 * shares, kept, color="C0", lw=1.2, label="passed by the standard deviation")
+    ax.axhline(whole, color="0.5", lw=0.8, ls="--", label="passed at random")
+    ax.scatter([100 * passed.mean()], [float(np.sqrt(np.mean(error[~passed] ** 2)))], s=22,
+               color="C0", zorder=4)
+    ax.set_xlabel("share passed to the fine level / %", fontsize=7.5)
+    ax.set_ylabel("error of what the model answers", fontsize=7.5)
+    ax.set_title("the error of the answered molecules\nas more are passed on", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.3, loc="lower left")
+    ax.set_ylim(0.0, 1.15 * max(max(kept), whole))
+    for ax in axes:
+        ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout(w_pad=1.2)
+    z = error / sd
+    print(f"  tolerance: ACE, {len(tr)} to fit and {len(te)} to test, lambda {lam:g}; rmse "
+          f"{whole:.3f}; z rms {np.sqrt(np.mean(z ** 2)):.2f}; tolerance {tolerance:.3f} passes "
+          f"{passed.sum()} and leaves {np.sqrt(np.mean(error[~passed] ** 2)):.3f} for the answered")
+    save(fig, path)
+
+
+def fig_landmarks(path):
+    """Chapter 9: fitting in the space of the landmarks.  The DHFR set of the Sutherland
+    collection: the exact joint kernel of all molecules, the features that thirty landmark
+    molecules give, the kernel those features stand for, and how far it is from the exact one
+    as the number of landmarks grows."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar import lowrank as LR
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    ds = load_dataset(os.path.join(ROOT, "examples", "sutherland", "DHFR.sdf"))
+    fs = FieldSet.create(alpha=0.5, charge_model="file")
+    table = AtomTable.from_molecules([build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)])
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = np.asarray(probe.joint_kernel(probe.prepare_training_kernels(table)), float)
+    n = len(K)
+    order = np.argsort(np.linalg.eigh(K)[1][:, -1])        # like molecules next to each other
+    K = K[np.ix_(order, order)]
+
+    def features(m):
+        landmarks, _rows = LR.landmark_molecules(table, m, seed=0)
+        return LR.build(landmarks, fs).transform(table)[order]
+
+    def gap(Phi):
+        return float(np.linalg.norm(K - Phi @ Phi.T) / np.linalg.norm(K))
+
+    shown = 30
+    Phi = features(shown)
+    counts = [5, 10, 20, 30, 50, 80, 120, 200]
+    gaps = [gap(features(m)) for m in counts]
+    vmin, vmax = float(K.min()), float(K.max())
+
+    fig, axes = plt.subplots(1, 4, figsize=(WIDTH, 2.25), gridspec_kw=dict(width_ratios=(1, 0.42, 1, 1.05)))
+    axes[0].imshow(K, cmap="viridis", vmin=vmin, vmax=vmax, interpolation="nearest")
+    axes[0].set_title(f"the exact kernel:\n{n} × {n}", fontsize=7.5)
+    lim = float(np.abs(Phi).max())
+    axes[1].imshow(Phi, cmap="RdBu_r", vmin=-lim, vmax=lim, aspect="auto", interpolation="nearest")
+    axes[1].set_title(f"features from\n{shown} landmarks:\n{n} × {Phi.shape[1]}", fontsize=7.5)
+    axes[2].imshow(Phi @ Phi.T, cmap="viridis", vmin=vmin, vmax=vmax, interpolation="nearest")
+    axes[2].set_title("the kernel the features\nstand for", fontsize=7.5)
+    for ax in axes[:3]:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    ax = axes[3]
+    ax.plot(counts, gaps, "o-", color="C0", ms=3, lw=1.1)
+    ax.scatter([shown], [gap(Phi)], s=40, facecolor="none", edgecolor="C3", linewidth=1.1, zorder=5)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("landmark molecules", fontsize=7.5)
+    ax.set_ylabel("relative difference\nfrom the exact kernel", fontsize=7.2)
+    ax.set_title("more landmarks,\na closer kernel", fontsize=7.5)
+    ax.tick_params(length=2, labelsize=6.5)
+    fig.tight_layout(w_pad=0.8)
+    print(f"  landmarks: DHFR, {n} molecules; {shown} landmarks give {Phi.shape[1]} columns and a "
+          f"relative difference of {gap(Phi):.4f}; over {counts}: "
+          + " ".join(f"{g:.4f}" for g in gaps))
+    save(fig, path)
+
+
+def fig_pareto(path):
+    """Chapter 9: more than one objective.  The 78 compounds of ``examples/antitarget`` by their
+    two measured activities, the affinity for the target, which should be high, and the activity
+    on the anti-target, which should be low, with the fronts of ``multiobjective.pareto_layers``."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from cmfqsar.multiobjective import MAXIMISE, Objective, pareto_layers
+    source = os.path.join(ROOT, "examples", "antitarget", "h3_herg.sdf")
+    values = np.array([[float(m.GetProp("pKi_H3")), float(m.GetProp("pIC50_hERG"))]
+                       for m in Chem.SDMolSupplier(source) if m is not None])
+    objectives = [Objective("H3 affinity", MAXIMISE), Objective("hERG activity", -MAXIMISE)]
+    layer = pareto_layers(values, objectives)
+
+    fig, ax = plt.subplots(figsize=(0.62 * WIDTH, 3.1))
+    rest = layer > 3
+    ax.scatter(values[rest, 0], values[rest, 1], s=12, color="0.7", linewidth=0, zorder=2,
+               label="behind the third front")
+    for k, colour in ((3, "C2"), (2, "C1"), (1, "C3")):
+        rows = np.where(layer == k)[0]
+        rows = rows[np.argsort(values[rows, 0])]
+        ax.plot(values[rows, 0], values[rows, 1], color=colour, lw=0.9, zorder=3)
+        ax.scatter(values[rows, 0], values[rows, 1], s=24, color=colour, edgecolor="black",
+                   linewidth=0.4, zorder=4,
+                   label=("the Pareto front" if k == 1 else f"front {k}") + f" ({len(rows)})")
+    ax.annotate("better", xy=(values[:, 0].max(), values[:, 1].min()),
+                xytext=(values[:, 0].max() - 0.9, values[:, 1].min() + 0.75),
+                arrowprops=dict(arrowstyle="-|>", color="0.2", lw=0.9), fontsize=7, ha="center")
+    ax.set_xlabel("affinity for the target, pKi (higher is better)", fontsize=7.5)
+    ax.set_ylabel("activity on the anti-target, pIC50\n(lower is better)", fontsize=7.5)
+    ax.legend(frameon=False, fontsize=6.5, loc="upper left")
+    ax.tick_params(length=2, labelsize=7)
+    fig.tight_layout()
+    print(f"  pareto: {len(values)} compounds, fronts of "
+          + ", ".join(str(int((layer == k).sum())) for k in (1, 2, 3)) + f"; {layer.max()} fronts in all")
+    save(fig, path)
+
+
+def fig_blocks(path):
+    """Chapter 2: the joint kernel as a sum of blocks.  The normalised kernel of each of the five
+    fields over the steroid training set, and their sum, which is the kernel the learner gets."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar.fields import AtomTable
+    s, c = steroids(), cofield_model()
+    fs, mf = c["fs"], c["mf"]
+    train = AtomTable.from_molecules([mf[i] for i in s["train_idx"]])
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    raw = np.asarray(probe.prepare_training_kernels(train), float)
+    joint = np.asarray(probe.joint_kernel(raw), float)
+    weight = np.asarray(fs.mixing_vector(), float)[:len(raw)] * np.asarray(probe.scale, float)[:len(raw)]
+    blocks = raw * weight[:, None, None]
+    order = np.argsort(s["y"])                                   # the molecules by their activity
+    gap = float(np.abs(blocks.sum(axis=0) - joint).max())
+    labels = [spec.label for spec in fs.specs if spec.enabled]
+
+    fig, axes = plt.subplots(1, len(blocks) + 1, figsize=(WIDTH, 1.55))
+    for ax, K, label in zip(axes, blocks, labels):
+        ax.imshow(K[np.ix_(order, order)], cmap="viridis", vmin=float(blocks.min()),
+                  vmax=float(blocks.max()), interpolation="nearest")
+        ax.set_title(label.replace(" (", "\n(").replace("H-bond ", "H-bond\n"), fontsize=6.8)
+    im = axes[-1].imshow(joint[np.ix_(order, order)], cmap="magma", interpolation="nearest")
+    axes[-1].set_title("the joint kernel:\ntheir sum", fontsize=6.8)
+    for ax in axes:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=1.7)
+    for k in range(len(blocks)):
+        left, right = axes[k].get_position(), axes[k + 1].get_position()
+        fig.text(0.5 * (left.x1 + right.x0), 0.5 * (left.y0 + left.y1),
+                 "=" if k == len(blocks) - 1 else "+", ha="center", va="center", fontsize=10)
+    print(f"  blocks: {len(blocks)} field kernels of {len(joint)} molecules, weights "
+          f"{np.round(weight, 3).tolist()}; their sum and the joint "
+          f"kernel differ by {gap:.1e}; block values from {blocks.min():.2f} to {blocks.max():.2f}, "
+          f"joint from {joint.min():.2f} to {joint.max():.2f}")
+    save(fig, path)
+
+
+def fig_crystaldesign(path):
+    """Chapter 11: designing a crystal.  A prototype with its site classes, the loop, and what
+    ``benchmarks/run_prototypes.py`` stored for the loop on 4,000 perovskite cells: the lowest
+    formation energy each rule found within its budget, in ten runs."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
+    with open(os.path.join(RESULTS, "prototypes", "space.json"), encoding="utf-8") as fh:
+        space = json.load(fh)["perovskites"]
+    with open(os.path.join(RESULTS, "prototypes", "loop.json"), encoding="utf-8") as fh:
+        loop = json.load(fh)["perovskites | three-body | 4000 | start 100"]
+    sand, green, grey, blue = "#f6ead2", "#dcefdc", "#e9e9e9", "#dbe7f3"
+    fig = plt.figure(figsize=(WIDTH, 4.9))
+
+    # the prototype: the cubic ABO3 cell, A at the corners, B in the middle, O on the faces
+    ax = fig.add_axes((0.0, 0.47, 0.36, 0.50), projection="3d")
+    corners = np.array([[x, y, z] for x in (0, 1) for y in (0, 1) for z in (0, 1)], float)
+    for a in range(8):
+        for b in range(a + 1, 8):
+            if np.abs(corners[a] - corners[b]).sum() == 1:
+                ax.plot(*np.column_stack([corners[a], corners[b]]), color="0.55", lw=0.7)
+    faces = np.array([[0.5, 0.5, 0], [0.5, 0.5, 1], [0.5, 0, 0.5], [0.5, 1, 0.5], [0, 0.5, 0.5],
+                      [1, 0.5, 0.5]])
+    ax.scatter(*corners.T, s=120, color="#5b8fc7", edgecolor="black", linewidth=0.5, depthshade=False)
+    ax.scatter(*faces.T, s=45, color="#c0392b", edgecolor="black", linewidth=0.4, depthshade=False)
+    ax.scatter([0.5], [0.5], [0.5], s=150, color="#e0a030", edgecolor="black", linewidth=0.5,
+               depthshade=False)
+    ax.set_box_aspect((1, 1, 1), zoom=1.25)
+    ax.view_init(elev=18, azim=-58)
+    ax.set_axis_off()
+    fig.text(0.18, 0.975, "a prototype: one cell with site classes", ha="center", va="top",
+             fontsize=7.5)
+    for ypos, colour, label in (
+            (0.47, "#5b8fc7", f"A site: one of {space['a_elements']} elements"),
+            (0.44, "#e0a030", f"B site: one of {space['b_elements']} elements"),
+            (0.41, "#c0392b", "O sites: kept")):
+        fig.text(0.05, ypos, "●", color=colour, fontsize=9, va="center")
+        fig.text(0.075, ypos, label, fontsize=6.8, va="center")
+    fig.text(0.05, 0.375, f"{space['candidates']:,} candidates; {space['distinct_pairs']:,} of them "
+             "already computed", fontsize=6.8, va="center")
+
+    # the loop
+    ax = fig.add_axes((0.40, 0.40, 0.60, 0.58))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+
+    def box(x, y, w, h, label, colour):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.004,rounding_size=0.02",
+                                    facecolor=colour, edgecolor="0.35", linewidth=0.7))
+        ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=6.6, linespacing=1.25)
+
+    def arrow(p, q, bend=0.0):
+        ax.add_patch(FancyArrowPatch(p, q, arrowstyle="-|>", mutation_scale=9, linewidth=0.9,
+                                     color="0.25", connectionstyle=f"arc3,rad={bend}"))
+
+    ax.text(0.5, 0.985, "the loop", ha="center", va="top", fontsize=7.5)
+    box(0.02, 0.70, 0.30, 0.17, "a pool of candidates\nand a start set with\nknown values", grey)
+    box(0.37, 0.70, 0.28, 0.17, "fit the model on what\nthe oracle has\nanswered so far", green)
+    box(0.70, 0.70, 0.28, 0.17, "score every\ncandidate that\nis left", sand)
+    box(0.70, 0.32, 0.28, 0.17, "ask the oracle about\nthe best one: one\ncall of the budget", blue)
+    box(0.37, 0.32, 0.28, 0.17, "its value joins\nthe answers", grey)
+    arrow((0.32, 0.785), (0.37, 0.785))
+    arrow((0.65, 0.785), (0.70, 0.785))
+    arrow((0.84, 0.70), (0.84, 0.49))
+    arrow((0.70, 0.405), (0.65, 0.405))
+    arrow((0.51, 0.49), (0.51, 0.70))
+    ax.text(0.53, 0.595, "until the budget\nis spent", fontsize=6.3, va="center", ha="left",
+            color="0.25")
+    ax.text(0.02, 0.56, "The oracle is whatever computes\nthe property: a table, a potential\n"
+            "or a quantum calculation.", fontsize=6.3, va="top", ha="left", color="0.25",
+            linespacing=1.3)
+
+    # what was measured
+    ax = fig.add_axes((0.20, 0.115, 0.76, 0.19))
+    rules = (("greedy", "the prediction"), ("ei", "expected improvement"),
+             ("random", "at random"), ("maxmin", "the largest distance"))
+    rng = np.random.default_rng(0)
+    for k, (key, _label) in enumerate(rules):
+        best = np.array([run["best"] for run in loop[key]["runs"]], float)
+        ax.scatter(best, k + rng.uniform(-0.17, 0.17, len(best)), s=13, color="C0", linewidth=0,
+                   alpha=0.85, zorder=3)
+        ax.plot([best.mean(), best.mean()], [k - 0.3, k + 0.3], color="black", lw=1.2, zorder=4)
+    ax.axvline(float(loop["pool"]["best"]), color="C3", lw=0.8, ls="--")
+    ax.set_yticks(range(len(rules)))
+    ax.set_yticklabels([label for _key, label in rules], fontsize=6.8)
+    ax.set_ylim(len(rules) - 0.5, -0.5)
+    ax.set_xlabel("lowest formation energy found, eV per atom (one point for each of "
+                  f"{loop['seeds']} start sets; bar: their mean;\ndashed: the best cell of the pool)",
+                  fontsize=6.8)
+    ax.tick_params(length=2, labelsize=6.8)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    ax.set_title(f"measured: a pool of {loop['pool']['n']:,} cells, {loop['start']} of them known at "
+                 f"the start, a budget of {loop['budget']} calls; the next cell is chosen by",
+                 fontsize=6.8, loc="left", x=-0.24)
+    print("  crystal design: " + "; ".join(
+        f"{key} mean {np.mean([r['best'] for r in loop[key]['runs']]):+.3f}" for key, _l in rules)
+        + f"; pool best {loop['pool']['best']}")
+    save(fig, path)
+
+
+def fig_window(path):
+    """Chapter 4: the parts of the main window, marked on the screenshot of the first figure of
+    the chapter.  The screenshot itself is made by hand; this figure only draws on it."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+    image = plt.imread(os.path.join(HERE, "screenshot.png"))
+    height, width = image.shape[:2]
+    sx, sy = width / 2000.0, height / 1043.0          # the parts were read off a 2000-wide copy
+    parts = ((1, "the menus", (0, 0, 200, 28), "C1"),
+             (2, "the Data set panel", (0, 30, 330, 992), "C0"),
+             (3, "the controls of the 3D view", (336, 30, 1430, 160), "C2"),
+             (4, "the 3D view", (336, 163, 1430, 760), "C3"),
+             (5, "the Results panel", (336, 765, 1430, 1017), "C4"),
+             (6, "the Model panel", (1436, 30, 1997, 776), "C6"),
+             (7, "the status line", (0, 1020, 420, 1043), "C8"))
+    fig = plt.figure(figsize=(WIDTH, WIDTH * height / width + 0.42))
+    ax = fig.add_axes((0.0, 0.42 / (WIDTH * height / width + 0.42), 1.0,
+                       1.0 - 0.42 / (WIDTH * height / width + 0.42)))
+    ax.imshow(image, interpolation="lanczos")
+    for number, _label, (x0, y0, x1, y1), colour in parts:
+        ax.add_patch(Rectangle((x0 * sx, y0 * sy), (x1 - x0) * sx, (y1 - y0) * sy, fill=False,
+                               edgecolor=colour, linewidth=1.3))
+        bx = min(x1 * sx - 34 * sx, width - 40 * sx) if number != 1 else x1 * sx + 26 * sx
+        by = y0 * sy + 30 * sy if number not in (1, 7) else 0.5 * (y0 + y1) * sy
+        if number == 7:
+            bx = x1 * sx + 26 * sx
+        ax.text(bx, by, str(number), ha="center", va="center", fontsize=8, fontweight="bold",
+                color="white", bbox=dict(boxstyle="circle,pad=0.25", facecolor=colour,
+                                         edgecolor="white", linewidth=0.6))
+    ax.set_axis_off()
+    items = [f"{number}  {label}" for number, label, _box, _c in parts]
+    fig.text(0.5, 0.012, "      ".join(items[:4]) + "\n" + "      ".join(items[4:]), ha="center",
+             va="bottom", fontsize=6.8, linespacing=1.5)
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -3461,7 +4222,9 @@ def fig_rule3(path):
 FIGURES = {
     "idea.png": fig_idea,
     "fields.png": fig_fields,
+    "window.png": fig_window,
     "overlap.svg": fig_overlap,
+    "blocks.png": fig_blocks,
     "search.svg": fig_search,
     "diagnose.svg": fig_diagnose,
     "featurespace.png": fig_featurespace,
@@ -3472,6 +4235,8 @@ FIGURES = {
     "periodic.svg": fig_periodic,
     "topomer.svg": fig_topomer,
     "confidence.svg": fig_confidence,
+    "posetest.svg": fig_posetest,
+    "tolerance.svg": fig_tolerance,
     "laplacian.svg": fig_laplacian,
     "probe.png": fig_probe,
     "chemspace.png": fig_chemspace,
@@ -3480,7 +4245,12 @@ FIGURES = {
     "vectorcofield.png": fig_vectorcofield,
     "copattern.svg": fig_copattern,
     "cospectrum.svg": fig_cospectrum,
+    "mixture.svg": fig_mixture,
+    "instruments.svg": fig_instruments,
+    "peaklist.png": fig_peaklist,
+    "bridge.png": fig_bridge,
     "phasefield.png": fig_phasefield,
+    "crystaldesign.svg": fig_crystaldesign,
     "multiscale.svg": fig_multiscale,
     "shells.png": fig_shells,
     "metabolism.svg": fig_metabolism,
@@ -3495,6 +4265,8 @@ FIGURES = {
     "roc.svg": fig_roc,
     "acquire.svg": fig_acquire,
     "design.svg": fig_design,
+    "landmarks.png": fig_landmarks,
+    "pareto.svg": fig_pareto,
     "water.png": fig_water,
     "mask.png": fig_mask,
     "matchedpair.png": fig_matchedpair,
