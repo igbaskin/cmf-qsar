@@ -13375,6 +13375,149 @@ it works one structure at a time. What it shows is that the number a coarse mode
 interface is the number this program measured, which is the only property a component of somebody
 else's calculation has to have.
 
+## Feeding a cell model: a parameter set with its deviations
+
+A continuum battery model -- the Doyle-Fuller-Newman model and its single-particle reductions,
+as the PyBaMM package implements them -- predicts the capacity of a cell from cycle to cycle. It
+is a set of partial differential equations, with time and transport in them. This program has
+neither, so it cannot be such a model. It can feed one. Several of the cell model's material
+parameters are quantities that benchmarks here predict, and each prediction comes with a
+standard deviation in the parameter's own unit (plan item MS1). Plan item MS9 is the interface
+for that, and a measurement of what it is worth.
+
+### The parameter set and its conversions
+
+`cmfqsar.interfaces.CellParameter` holds one parameter. It carries the cell model's own name for
+the parameter, the value, the standard deviation, and what the number does to the published
+value: it **replaces** it, **multiplies** it or is **added** to it. A conductivity or an
+exchange-current density is a function of concentration or of state of charge in a cell model,
+and one number cannot replace a function, so a prediction for such a parameter is a factor or a
+shift. The record also says where the number comes from, whether the model's deviation is
+calibrated (the root mean square of the standardised residual on held-out data between 0.8 and
+1.25, the rule of MS1), and whether the material lies inside what the model was fitted on.
+`CellParameterSet` writes the set as JSON and CSV, one record per parameter, and reads it back.
+
+Five functions do the conversions:
+
+| Function | What it takes | What the cell model receives |
+| --- | --- | --- |
+| `diffusivity_from_barrier` | a migration barrier, or a set of drawn barriers | a solid diffusion coefficient |
+| `conductivity_scale_from_log10` | a predicted conductivity, as a logarithm | a factor on the published conductivity |
+| `ocp_shift` | a predicted average voltage | a shift of the published open-circuit voltage |
+| `ladder_to_ocp_curve` | an insertion ladder of two-phase steps | a voltage-against-stoichiometry staircase |
+| `bruggeman_from_conductivity_ratio` | the effective conductivity of a porous electrode | a Bruggeman exponent |
+
+The diffusion coefficient is that of a random walk: $D = a^2 \nu \exp(-E/kT) / (2d)$, with $a$ the
+hop length, $\nu$ the attempt frequency (10^13 per second; this program does not predict it), $E$
+the barrier and $d$ the number of directions the ion can move in. The deviation of $\ln D$ is the
+deviation of the barrier divided by $kT$, which is 0.0257 eV at room temperature: a barrier
+known to 0.1 eV gives a diffusion coefficient known only to a factor of 50. When the barriers
+were drawn already, the diffusion coefficients of the draws are carried over one by one, which
+keeps the shape the exponential gives them. The Bruggeman exponent $b$ is defined by
+$\sigma_\mathrm{eff} = \sigma \varepsilon^b$, where $\varepsilon$ is the porosity, so
+$b = \ln(\sigma_\mathrm{eff}/\sigma) / \ln \varepsilon$.
+
+### The sampler and the report
+
+`cmfqsar.cellmodel` runs the cell model; PyBaMM is an optional dependency, as pymatgen is.
+`sample` draws one parameter from its deviation, keeps the others at their published values, and
+runs the cell model once per draw. `band` turns the runs into an interval of the capacity per
+cycle, and says what share of the draws the cell model refused. `variance_shares` gives the share
+of the variance of the last cycle's capacity that each parameter explains when it is drawn alone.
+`local_sensitivity` gives the reading that does not depend on this program: the elasticity, the
+relative change of the capacity for a change of one tenth in the parameter around its published
+value. `tolerance_for_capacity` makes a deviation smaller step by step and reports, for each step,
+whether the interval is **narrow** and whether it still **holds** the capacity the published value
+gives. An interval is worth using only if it is both.
+
+### What it is worth, measured
+
+The cell is the graphite / nickel-manganese-cobalt oxide cell of the Chen 2020 parameter set,
+which PyBaMM ships. The cell model is the single-particle model with electrolyte, with the growth
+of the passivating layer on the negative electrode. One cycle is a discharge at the one-hour rate
+to 2.5 V, a charge to 4.2 V and a hold. At the published values the cell gives 4.992 A.h and loses
+0.023 % of it over ten cycles. Four parameters are predicted, each by a benchmark of this
+repository with its deviation measured on held-out groups, and a fifth carries a stated spread:
+
+| Parameter | Predicted by | Value | 95 % interval | z rms |
+| --- | --- | --- | --- | ---: |
+| Positive particle diffusivity | the forest on 1,652 DFT barriers (BT7), percolation barrier of layered LiNiO2 | 4.8e-22 m²/s (published 4e-15) | 3.8e-30 to 8.2e-14 | 1.07 |
+| Positive electrode open-circuit voltage | the kernel on the composition of 303 insertion pairs (BT3) | shift +0.28 V | -1.64 to +2.20 V | 0.98 |
+| Electrolyte conductivity | the kernel on the composition of 62 measured electrolytes (BT5) | factor 0.987 | 0.76 to 1.28 | 1.01 |
+| Positive electrode Bruggeman exponent | the kernel on 200 generated two-phase structures | 1.91 (published 1.5) | 1.59 to 2.22 | 1.04 |
+| Positive electrode exchange-current density | not predicted: a stated spread | factor 1 | 0.10 to 9.9 | -- |
+
+All four deviations are calibrated: z rms between 0.98 and 1.07, and 95 or 96 % of the held-out
+activities inside two standard deviations. The values are another matter. Each parameter is drawn
+200 times from its own deviation while the others stay published:
+
+| Parameter | Capacity of the last cycle, A.h | Holds the published curve? | Share of the variance | Elasticity |
+| --- | --- | --- | ---: | ---: |
+| Open-circuit voltage | 0.04 to 5.42 | yes | 72.8 % | -2.426 |
+| Positive particle diffusivity | 0.61 to 5.01 | yes | 27.2 % | +0.004 |
+| Exchange-current density | 4.958 to 4.998 | yes | 0.0 % | +0.002 |
+| Bruggeman exponent | 4.983 to 4.990 | **no** | 0.0 % | -0.002 |
+| Electrolyte conductivity | 4.989 to 4.992 | yes | 0.0 % | +0.001 |
+
+**The electrolyte conductivity is the one channel predicted for the cell's own material under its
+own conditions**: lithium hexafluorophosphate in ethylene carbonate and ethyl methyl carbonate, 3
+to 7, with that solvent mixture held out of the fit. It agrees with the published parameter set
+to 1.3 %, and the cell does not care: its whole interval moves the capacity by 0.003 A.h.
+
+**The diffusion coefficient holds the published curve for a reason that is no credit.** Its
+interval spans sixteen orders of magnitude and covers almost every capacity the cell can give,
+from 0.61 A.h (the solid stops taking lithium) to 5.01 A.h (it never limits). The layered oxide's
+hop network percolates in two of three directions, which is the two-dimensional diffusion such an
+oxide is known for, at a median barrier of 0.87 eV. Through the same Arrhenius law and the same
+prefactor, the published diffusion coefficient corresponds to a barrier of 0.46 eV. The
+prediction is 0.41 eV too high, as the garnets of MS8 were. The tolerance rule shows what kind of
+error this is:
+
+| The barrier known to, eV | Interval of the capacity, A.h | Narrow? | Holds the published capacity? |
+| --- | --- | --- | --- |
+| 0.254 (as predicted) | 0.611 to 5.010 | no | yes |
+| 0.127 | 0.611 to 1.186 | no | no |
+| 0.064 | 0.611 to 0.614 | yes | no |
+| 0.025 | 0.611 to 0.611 | yes | no |
+
+No row is both narrow and right. A smaller deviation narrows the interval towards the capacity of
+the median prediction, and that prediction is wrong. The error of this channel is a **bias and
+not a spread**, and no tolerance rule can repair a bias. This parameter needs a better prediction,
+which for this cathode means the barrier from the fine level itself.
+
+**The Bruggeman exponent fails the gate** although its deviation is calibrated. The generated
+structures are more tortuous than the exponent of 1.5 the authors of the cell fitted, and the
+interval misses the published curve by 0.0006 A.h. The record marks the channel as outside
+what its model was fitted on, because the structures are generated and not the cell's own.
+
+**The ranking is not the one the item expected.** The cell-model literature ranks the solid
+diffusion coefficient and the exchange current ahead of the open-circuit voltage. Here the voltage
+comes first under both readings. A tenth of a voltage is 0.38 V, which empties a cell, while a
+tenth of a diffusion coefficient changes almost nothing. And this program's deviation on a voltage
+is about one volt, where a measured open-circuit curve is known to millivolts. The literature's
+ranking is for a cell whose voltage curve has been measured. Between the two transport parameters
+the expected order does come out: the diffusion coefficient is ahead of the exchange current under
+both readings.
+
+**The deviations move the level of the curve and not its slope.** Over 100 cycles the cell loses
+0.18 to 0.20 % of its capacity at either edge of every interval that leaves it running, against
+0.18 % at the published values. The slope is set by the parameters of the passivating layer,
+which no channel touches.
+
+So the gate is not met in either of its parts. What does carry over is the interface: the
+deviation reaches the cell model in its own units, the report says which parameter to measure
+better, and the tolerance rule separates a prediction that is too uncertain from one that is
+wrong. The table is in `benchmarks/results/cellmodel/table.md` and the parameter set, as the cell
+model reads it, in `benchmarks/results/cellmodel/parameters.json`.
+
+```bash
+python benchmarks/run_cellmodel.py      # 25 minutes, after run_nebdft.py
+```
+
+The run is in stages -- `--stage channels`, `reference`, `sample`, `finish` -- and each stage
+writes its own file, so a run that stops is continued and not repeated. One parameter is drawn
+with `--stage sample --parameter NAME`.
+
 ## The voltage of an insertion electrode: the cell against its composition
 
 A cathode is judged by its **average voltage**: the work per electron of taking the working ion
