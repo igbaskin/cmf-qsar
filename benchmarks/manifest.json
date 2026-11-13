@@ -1,6 +1,6 @@
 {
- "commit": "736f3a39a798a6d3a818caabc9e6995da2212661",
- "created": "2026-11-13T18:41:19",
+ "commit": "87b1f672c7c699f7ee589637d9042c3b0c12a31f",
+ "created": "2026-11-13T19:45:53",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2669,7 +2669,16 @@
   "benchmarks/results/cellmodel/stress_298K_2.5C.json": "94c8872a5f34203c711e039a4d40c9dc82993ef7a319f44cb1edf89d22d15d76",
   "benchmarks/results/cellmodel/stress_298K_2C.json": "62e5c3155df9d0fc19ff6ed72a66b685876a7ab03e19b38808acd49ea020e6e3",
   "benchmarks/results/cellmodel/stress_fits.json": "ae194cde9d622585aaa4ca59a25000bd4e76eec6d1c4ad31a6740b2895f461be",
-  "benchmarks/results/cellmodel/table.md": "d5b9b7a6b7a2bb02834f9e6bc6919aec5f16cac3e579702e3212fd8258d0c27e",
+  "benchmarks/results/cellmodel/table.md": "4d3347c731f5a6ced94dda9d905d310f12d869e51a2875ba2ac3c6cfe1c779f6",
+  "benchmarks/results/cellmodel/tolerance_253K_1.5C.json": "2ed6cbb541688310692368b24fe29d5f5eaed1f70d46c94b1d096c4a6c193fd0",
+  "benchmarks/results/cellmodel/tolerance_253K_1C.json": "8194d51bf685838bc803357475c04bb7a6d12b186ebc9078a4f902e33a7ed8a5",
+  "benchmarks/results/cellmodel/tolerance_263K_1.5C.json": "d8c37c774df93fed4f91bdacdd3173570a65404b6f75f24c423e218aa2f5567c",
+  "benchmarks/results/cellmodel/tolerance_263K_1C.json": "14eee35da6bd3dfffbdc1157a646720e396e4d0bfcf0e43c6b1444ec96c8b632",
+  "benchmarks/results/cellmodel/tolerance_298K_1.5C.json": "aea032a424318b14954917eda055e27f8e16649af040be43e6993622365e001b",
+  "benchmarks/results/cellmodel/tolerance_298K_1C.json": "f1989512ac168137ead24f0109feb0cc247b8309e568691c085ceecfd98dcb46",
+  "benchmarks/results/cellmodel/tolerance_298K_2.5C.json": "248bbe8020745625a161e8413592e7b8b21f5e9b81c523cc1f521d276db27928",
+  "benchmarks/results/cellmodel/tolerance_298K_2C.json": "243b1a78153de09d1c63e9c1294cedc28be797f2c2a99e7976d05e4ae3c36b69",
+  "benchmarks/results/cellmodel/tolerance_check.json": "b639db8c5d3f4f0063537c6edc037f5c5aa13e3ac5d8357ad555260eb214eb47",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
