@@ -15512,10 +15512,12 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Five notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Six notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
-that say how far a prediction can be trusted, two endpoints with their selectivity, and screening
-a library against a model of one series. Each runs on the example data of the repository, locally
+that say how far a prediction can be trusted, two endpoints with their selectivity, screening
+a library against a model of one series, and molecules adsorbed on a metal surface, read with
+the surface kernel and compared with a count of the atoms near the metal. Each runs on the
+example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 
