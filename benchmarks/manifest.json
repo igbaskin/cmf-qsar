@@ -1,6 +1,6 @@
 {
- "commit": "fec35047241a364456e13cf3789d26602b739da1",
- "created": "2026-11-13T22:48:43",
+ "commit": "040cc526a53212642c560815859371ad18a55108",
+ "created": "2026-11-14T00:54:54",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1159,28 +1159,28 @@
    "sha256": "b7a6b6f7d3c25bca733a8cfda3c44d42b715ff8a2c8d9946dfcfffb75541680e"
   },
   "examples/hammett/hammett.sdf": {
-   "bytes": 208482,
-   "sha256": "ef6da245e6a8f0d7a12eb3219d7f507493c624044b6dfed5b1ada3a2738ac8cb"
+   "bytes": 208577,
+   "sha256": "386f56a735394d9b5f220d1e70c0269ddf111f05ce2e67b12e8cf86a76850f17"
   },
   "examples/hammett/hammett_ens.sdf": {
-   "bytes": 1078511,
-   "sha256": "46325a8844a17e735d5f6157635fd72779e509711e9b45473f2e245540119066"
+   "bytes": 1128159,
+   "sha256": "13533a556300bd7f25ffd7b0b17d6b19dc5d5731bd9d4ea76fb7d2a0080acb79"
   },
   "examples/hammett/hammett_ens_qm.sdf": {
-   "bytes": 1985387,
-   "sha256": "a89a0e4cefb72b01b806fe5bd073cc1efa19faffa66e4bc7b763fc9d42a92b93"
+   "bytes": 2035251,
+   "sha256": "e2ea831947f49b1045d79781493bacf335377dac498e8fd5bc7a55bd321138b1"
   },
   "examples/hammett/hammett_qm.sdf": {
-   "bytes": 404371,
-   "sha256": "baaa9a1af25300cb1834ea62c76a8032bd854afa212c48d490217e66d11934d2"
+   "bytes": 404532,
+   "sha256": "abd306dfad5c96fe020bac336c18010cb84e89951e8bd0b7cdc47870e5052af3"
   },
   "examples/hammett/hammett_qm_sym.sdf": {
-   "bytes": 1638447,
-   "sha256": "cebcab85fcebba26df8dc3f3298c9e1da7c39b7a0244377b9b349abc5121e8aa"
+   "bytes": 1639091,
+   "sha256": "3eaeca5708f056e9ebc58fce7287143c734179aa73684cdc831b0f639561e3fd"
   },
   "examples/hammett/hammett_sym.sdf": {
-   "bytes": 849963,
-   "sha256": "26649ede34a48b06f6c72a25735e6dce1b8c56a6bafdcb988dfca2f861519f00"
+   "bytes": 850343,
+   "sha256": "3742e93e3980a9fb05e52f9b25bfa7cdb8ec6ee4aea89873cfdeb5ea59841c49"
   },
   "examples/hops/README.md": {
    "bytes": 5524,
@@ -1307,8 +1307,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 29145,
-   "sha256": "efbe4f98511a8e218c317957bfd6c0c482d3259a28de7dfbacb76469acfd6ae0"
+   "bytes": 26912,
+   "sha256": "f93936b54b36064f6d05d71591b202ca612ce4dcf662c144845e63ecb1b7865f"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -1347,8 +1347,8 @@
    "sha256": "d51cb0483bb38a80807ab93fd94aff4e0c1f4c92ccc32f75c4efb88bb5dac8fd"
   },
   "examples/make_hammett_examples.py": {
-   "bytes": 25494,
-   "sha256": "f4961927f40bd328539633d97424e71d1c4b7364bf8952d5e092b939280e7257"
+   "bytes": 28861,
+   "sha256": "efb3ff764f0faed38fcdc4517f9a5c43c68f1980873e8b0c0073908d505ec2e8"
   },
   "examples/make_host_structures.py": {
    "bytes": 4978,
@@ -2981,31 +2981,31 @@
   "benchmarks/results/guest_atoms/table.md": "872b4c82d814222e0809e8ac496c4f523cbbb9f782f11b031ba8e91979546f1a",
   "benchmarks/results/guest_design/beta.json": "cfaf0fbe7710710bcee4fb80cdbb9fd65f536f9fd2f10225e1cce49138a633c3",
   "benchmarks/results/guest_design/table.md": "19e5ae9af257bc7d336aa3f3f5ac32edd230f6ab4431f034e033f2fb7653267e",
-  "benchmarks/results/hammett/cofields.png": "57db581e8f086118b349e51860d97f30140315df2d7e10f5d61cf76988ee1c04",
-  "benchmarks/results/hammett/cofields_ens.png": "6cc2fde75f5b71baab9f9b8189281d94476415e7c74c92b415a8acc49d34ebc4",
-  "benchmarks/results/hammett/cofields_ens_boltzmann.png": "69f7a995f41e1c73a9f84f2ce2d568cf916ae4382586ab02589a3f5879ec078e",
-  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "b70e9c206ba7c34c86a5f211c6cf6a9134cf0033bb4d55f2061bbc86ef52d29e",
-  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "320e1744ca527e14ac4b928c03c958b17d03168699875f94b5d4ca8f7e4fce19",
-  "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "c72774e3675bc901255a95502c9dc720326767099dcf521e2036883fb6d70871",
-  "benchmarks/results/hammett/cv_scatter.png": "02c0b59d6261fd15e0eaac375bd1930569833396a8221eb0b6ca5ee5b59e4213",
-  "benchmarks/results/hammett/cv_scatter_ens.png": "5ede478dbfab4c32e2294da6a138a691d9059fcec8c7c1b69a36a70e5176a569",
-  "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "234bea6cdc4977e29232fac804d360badd25222685a186b8ada49679ba4d3837",
-  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "89af696e65816b3bd7d7321ec0e5bc7987928b3c4a998745267a58af8b80f35c",
-  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "aa6b0fb2a568dfd19fee08602527a43eba2e08290a8b69b9e46bbd6bf50ba549",
-  "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "0ac96453386fc09ac3b4f4776c2feaa9d9f48127109e5940c58462a2908d2f5b",
-  "benchmarks/results/hammett/run.json": "601b06a58e455ba30f56551175a4a7ecc2aa9ca11cdb4429c136afdca72bc898",
-  "benchmarks/results/hammett/run_ens.json": "5e199c794a4a5a58af986dd95d1a208aea5b1dc7adbb2a8813ebc035571bb502",
-  "benchmarks/results/hammett/run_ens_boltzmann.json": "b9b1084f59bc2f8bb4569dc090a56952bb40dec804b527d7ef5651f72d47dd03",
-  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld.json": "d78fcd442740cc6b7a7aac1c66132e631f35ad683ea8e846b2bd8f554eda9c2e",
-  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld_boltzmann.json": "00b416fc473fc67eeda299ee372ba1b0742065bf2cabc88b165a4f111174d366",
-  "benchmarks/results/hammett/run_qm_sym_q_hirshfeld.json": "afc89df510428a2554fb9bca5db3155c365c50749d47f5385b9755d5ee65d474",
-  "benchmarks/results/hammett/summary.csv": "1a620b88a3eea58986261df14cc4c602bf3a4fb0536195588ad2b47c4b3113d9",
-  "benchmarks/results/hammett/summary_ens.csv": "a441c1904e1cc00ed3bc3960c602a99f90adc7200d1b5eff257914df1f43a80d",
-  "benchmarks/results/hammett/summary_ens_boltzmann.csv": "9493e8913bdd50626ea0d17e79fb2d96eed1a0ea2103705abd4d41469f9988d4",
-  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "3702e24032775ca6d20c2cba78d02caa246833ae3056fea3735fcce65475e814",
-  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "2056148e3798cfeb301a6f8f7257a9596f60e608eaf33c83f3b3ff63bde73eef",
-  "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "57795e52b180575cb9ffc12219cf1a0cbec2596877e86727e98797ea0581853f",
-  "benchmarks/results/hammett/table.md": "fa86f57fa0bf4e12b21459b3e961288423b15aaf4a84c25c0bd12e1f562b8ec7",
+  "benchmarks/results/hammett/cofields.png": "a61b2ec9b4cfa9d8494622d8b6a8ad0ea60210f4b80cf5df71848c6d3be1d1bd",
+  "benchmarks/results/hammett/cofields_ens.png": "efa54b7b43891b988f3fcc627e331d569460c76f69bb1759010d1c5ea9f09547",
+  "benchmarks/results/hammett/cofields_ens_boltzmann.png": "389dd35c12120b38681ee4a0ff4e21723b982d73c4e2388b11da09c5b41e39d4",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "bb60b33b23211496cf636591f9a132c20ff6e05a404c665809c27ab73f28ec5d",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "47121b2fe7aeadcc464d12b1f11909048b3544c94c3c640dfa929cd956f8c784",
+  "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "4413132583fb346a51dd01059ece6d20d8ed7190c60914c28ed6658638f0720d",
+  "benchmarks/results/hammett/cv_scatter.png": "4f54d6b368bb1c8f865e42e90f9da6bd4241e9fe17b2f0cc7ff0a28ce1a758fa",
+  "benchmarks/results/hammett/cv_scatter_ens.png": "fe1c752de5427c6f5fad709328c7e10345520d276a1d8257e4d383075673e398",
+  "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "bb250dad6e2992d4cdaca90da8f780d5bf1cfd2844e238384a47b52279b2e89b",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "f3989ab0cfdd9463ca927e5cfcb13703be4a6630329df745b216e9601a77166d",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "296b05188994b350a2d700c87113bd38ff396663f305c9bfa6a05370fc759486",
+  "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "cc652cb6883a03e94daf7285cc41ca70a8bb44904dbe8daf537a9efeaff61275",
+  "benchmarks/results/hammett/run.json": "35553dbf7f2158178f04935e22ba0d601b34379e532e4eff90682f06a9c02973",
+  "benchmarks/results/hammett/run_ens.json": "b3adacc13e4ae070a97eed6cf768384e5493d82579f810ad75d707d32ce216f6",
+  "benchmarks/results/hammett/run_ens_boltzmann.json": "80f0511d2b87dbbfd1df095b99e379412871c648decbfbd4a83af287ffaa88c7",
+  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld.json": "878e0d70eed2912cee994c5cc1c482a5c17bcaa5ca7efbe7877e8754b5adcd47",
+  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld_boltzmann.json": "e68a51a1d3afac762cdde86ff4c53cfebdda46396ba2d3ed857df14c218d5254",
+  "benchmarks/results/hammett/run_qm_sym_q_hirshfeld.json": "0e32371d67944b1a68450656af38e2a42549c59dfc7c6d63a24c7e97a4562c6f",
+  "benchmarks/results/hammett/summary.csv": "6d99f4a593f0c2608f0f5dfbafbc44ecaf94894f763f4b02c77f7f33dc9ab292",
+  "benchmarks/results/hammett/summary_ens.csv": "c07b1ea33bf4de016fcaea0a542ff1d962664e666865769123a9d4cb02685583",
+  "benchmarks/results/hammett/summary_ens_boltzmann.csv": "88fab5d4e3e00b4027e95404910018fd3b7a0db746d05f5af2c33175631f1220",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "c70aae975c07e6b7c8ffd82a9c48cdee0e91897dce5878797c0acb34b3dca3e8",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "67c4075afa973a2051f38fb669430893cdd28992d8fb91ce6dae582c6520a8c7",
+  "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "e18198306a793aeb765067c52445d4cdeb5cc676abafcfe415af0f892c0eca8a",
+  "benchmarks/results/hammett/table.md": "1ff394fbb71c2bff39075d570668cc9bbbc9b2482462d3091d8c1c0e1037e68f",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
   "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",
