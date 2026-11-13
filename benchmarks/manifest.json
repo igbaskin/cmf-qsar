@@ -1,6 +1,6 @@
 {
- "commit": "f26d6687501ee2320a8c8f8b44c084b569e3011b",
- "created": "2026-11-12T22:27:00",
+ "commit": "864ecd7de630329a02fefdcdd142d6d77de5968d",
+ "created": "2026-11-13T06:20:52",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -918,6 +918,226 @@
    "bytes": 66738,
    "sha256": "04de7a38a2a3b0adf945d9c392055f60aac0ddee488c4bdb2fb5eab0537a1d48"
   },
+  "examples/enantiomers/11-beta-hydroxysteroid_dehydrogenase_1.sdf": {
+   "bytes": 232700,
+   "sha256": "bf2acee5fd35dbe35fbb5cbb467089c4175da50b5cfdf822b94617ac37b93eff"
+  },
+  "examples/enantiomers/PI3-kinase_alpha.sdf": {
+   "bytes": 1544040,
+   "sha256": "3280e382d877d7d90919ce11a331805cbca39893e2f89320b41f397e01a99a0e"
+  },
+  "examples/enantiomers/PIM1_kinase.sdf": {
+   "bytes": 1815502,
+   "sha256": "3ad32f49b47deb8777a77162171395ab856a8ebf5a89a15bd41301e24c102443"
+  },
+  "examples/enantiomers/PPAR_gamma.sdf": {
+   "bytes": 1154972,
+   "sha256": "db22ca7d0fb38773e9891223f243495840a712ad2fd58bab41f2a9eb45bb5616"
+  },
+  "examples/enantiomers/acetylcholinesterase.sdf": {
+   "bytes": 327098,
+   "sha256": "12b6027317a65ab3cdd4391f983f6fb22ded91630fd29c84f3cbed2880ebf2c4"
+  },
+  "examples/enantiomers/alpha-1A_adrenergic_receptor.sdf": {
+   "bytes": 481515,
+   "sha256": "127bb5f3ecbaf064fa998806cd4b37d1619c5e13591c71bfa8f1515e08f1689a"
+  },
+  "examples/enantiomers/alpha-2A_adrenergic_receptor.sdf": {
+   "bytes": 145554,
+   "sha256": "71e7e9a3d3dfa3cac3d97b70f961e3a279b98c4118f5a2a9bdadf1be15b11ccd"
+  },
+  "examples/enantiomers/androgen_receptor.sdf": {
+   "bytes": 378316,
+   "sha256": "ebdcad4a5d12c2ad9996498a7dd71d338738660819b0462418cecc4afc2571f0"
+  },
+  "examples/enantiomers/arachidonate_5-lipoxygenase.sdf": {
+   "bytes": 116105,
+   "sha256": "3c62d4afb0d60ba102964aa89fc423b4d3a9fa207e51e6ddbb8c5f808fcfc93f"
+  },
+  "examples/enantiomers/aromatase.sdf": {
+   "bytes": 94590,
+   "sha256": "344b5dc67a3e70ed76c547c6b352966f5840b093256cdd562266dfd0fea4266a"
+  },
+  "examples/enantiomers/beta-2_adrenergic_receptor.sdf": {
+   "bytes": 384158,
+   "sha256": "3a693f8cf4b924dd0e5d6047974804e94eb8ceea823b2f08cd464d5f89b55049"
+  },
+  "examples/enantiomers/beta-secretase_1.sdf": {
+   "bytes": 1418817,
+   "sha256": "c301fdddb2f34baffab17145f5fa8c90a2d5af5a0bd3a6bfeb01c1a79af439b5"
+  },
+  "examples/enantiomers/butyrylcholinesterase.sdf": {
+   "bytes": 324102,
+   "sha256": "189c82b313fe9fca895bfae45019d8f14e7c7275b9f9765db9df66f83dc1e2db"
+  },
+  "examples/enantiomers/cannabinoid_CB1_receptor.sdf": {
+   "bytes": 604459,
+   "sha256": "7291fb92c4843153bbfd3b36765798059ff0671e0f00ea9b71690bd1f7709845"
+  },
+  "examples/enantiomers/cannabinoid_CB2_receptor.sdf": {
+   "bytes": 674126,
+   "sha256": "b2e5284d47912f83d6f619bb4c03059640b67e963d99d575d0715c684a5c96cc"
+  },
+  "examples/enantiomers/carbonic_anhydrase_2.sdf": {
+   "bytes": 542071,
+   "sha256": "d62eacad5f8384cbaceb11e64c1ed98f4904fb2c86a4896a4b2d7e7f02c40ffd"
+  },
+  "examples/enantiomers/cathepsin_K.sdf": {
+   "bytes": 121278,
+   "sha256": "307fd3484ae60b7c02e7bf9401ae0eacd8f7575943d0985b66e39f71d1300138"
+  },
+  "examples/enantiomers/coagulation_factor_Xa.sdf": {
+   "bytes": 585187,
+   "sha256": "9770cf257f47634db1b0dd6e39cbc77e9b32e3c1372a5627c19484f72a035582"
+  },
+  "examples/enantiomers/cyclin-dependent_kinase_2.sdf": {
+   "bytes": 510552,
+   "sha256": "6bdf3d2452e319ec8ca285c5c76c968c0d6fced391e6421b7bdae39060f7ebf1"
+  },
+  "examples/enantiomers/cyclooxygenase_2.sdf": {
+   "bytes": 420330,
+   "sha256": "054686d2b84797c447ccac078de3b176ead56cbff688b3f83352a77e98aaaef9"
+  },
+  "examples/enantiomers/delta_opioid_receptor.sdf": {
+   "bytes": 346115,
+   "sha256": "cdc718ef1add14db210b38182e4df3babad216ba08575c21ef909f1ae0fea7be"
+  },
+  "examples/enantiomers/dipeptidyl_peptidase_4.sdf": {
+   "bytes": 342270,
+   "sha256": "d1c134b977007f0b41a8ed1803a31f3444605719c25b871d97658eeaad82aab6"
+  },
+  "examples/enantiomers/dopamine_D2_receptor.sdf": {
+   "bytes": 2579885,
+   "sha256": "bbdc35ec2305bd3fdab3c92daf0e88dccbf8cc0f11fe2dfbffbfcdc326beebb2"
+  },
+  "examples/enantiomers/dopamine_D3_receptor.sdf": {
+   "bytes": 1777699,
+   "sha256": "dfcb896b98a7c7453d04afebaf22f477093a8f639f2c0e48cba45f7d21c22297"
+  },
+  "examples/enantiomers/dopamine_D4_receptor.sdf": {
+   "bytes": 653234,
+   "sha256": "6525ace739878ef8d26211b6b24b9bb7597e7e75d53628ca9844e56809d68fbe"
+  },
+  "examples/enantiomers/dopamine_transporter.sdf": {
+   "bytes": 1254752,
+   "sha256": "ce8377b3b18c900a00a7935f234fb7211582000faf59a1c5273128fd1673953d"
+  },
+  "examples/enantiomers/epidermal_growth_factor_receptor.sdf": {
+   "bytes": 1301116,
+   "sha256": "9d009052327d623c6893061b081c729345ee4123ae5f16d8396c5ce2c437e20a"
+  },
+  "examples/enantiomers/fatty_acid_amide_hydrolase.sdf": {
+   "bytes": 514358,
+   "sha256": "270ea1971ad0ffbae878f49dc5b9f29f2ced10bdf3501b473ed364cd2b1ef807"
+  },
+  "examples/enantiomers/glucocorticoid_receptor.sdf": {
+   "bytes": 195839,
+   "sha256": "b29d0942b92cfd3fba8b5e5b21df5ce7c9f3e6f9b24e295ae7166ef1e11c9646"
+  },
+  "examples/enantiomers/hERG_potassium_channel.sdf": {
+   "bytes": 1495894,
+   "sha256": "0cebf6705115f0fe0ad162ce2ff47a9bf586350b0285892a2dcf14a8467e45e9"
+  },
+  "examples/enantiomers/histamine_H1_receptor.sdf": {
+   "bytes": 325780,
+   "sha256": "c0e458ff3173fbeb40051ffde1cc8a49316719c92aab0400aea44e83707b21ad"
+  },
+  "examples/enantiomers/histamine_H3_receptor.sdf": {
+   "bytes": 1079509,
+   "sha256": "384b7de0eef097017e3232fc22cffc855fe4dc3c43d5c0942c176f41a0dcf192"
+  },
+  "examples/enantiomers/kappa_opioid_receptor.sdf": {
+   "bytes": 1164740,
+   "sha256": "26513659f2602d97aeb1c3862cd5a5a5a4f394e7c8e1e41a868699f0c602764b"
+  },
+  "examples/enantiomers/monoamine_oxidase_A.sdf": {
+   "bytes": 255834,
+   "sha256": "54fd476ff7a7c6ea5b12dbf70532fc43ecb2953f7aafd734a131b470eb51c342"
+  },
+  "examples/enantiomers/monoamine_oxidase_B.sdf": {
+   "bytes": 306569,
+   "sha256": "3294af5d41117fec3d786f98282784136da43bbc57e549e6e54ab8b18b2e090c"
+  },
+  "examples/enantiomers/mu_opioid_receptor.sdf": {
+   "bytes": 852739,
+   "sha256": "528873d2b2f15d3d0d4a4b466953b07f27e9d8f5fbbd0b3937dbe500b822171f"
+  },
+  "examples/enantiomers/muscarinic_M1_receptor.sdf": {
+   "bytes": 369540,
+   "sha256": "aaaae98c85e1240b8f0578b3d4005f7caf20c55cbfcd267675e77fa1d0d7cacf"
+  },
+  "examples/enantiomers/muscarinic_M2_receptor.sdf": {
+   "bytes": 424134,
+   "sha256": "00821d9d3d77737754b2f636063e2c7c803a2745e8963c1acb6a10bbab83f15b"
+  },
+  "examples/enantiomers/muscarinic_M3_receptor.sdf": {
+   "bytes": 497873,
+   "sha256": "e66fe64d23ea21b2f7a2156320b7a37477408d0a255ebbdb99ce884b8dae8a76"
+  },
+  "examples/enantiomers/neurokinin_NK1_receptor.sdf": {
+   "bytes": 721206,
+   "sha256": "6fec6f40788739196a37329bb1160754fd101d522ec5f56eff34fccd171cfd91"
+  },
+  "examples/enantiomers/noradrenaline_transporter.sdf": {
+   "bytes": 1664722,
+   "sha256": "0182ef362c6bc8c27a1c715e573c6b135789219ec0df3a86d4b4e5ca7fce30aa"
+  },
+  "examples/enantiomers/oestrogen_receptor_alpha.sdf": {
+   "bytes": 864810,
+   "sha256": "08b9df4501c6f82666d3b98c2dcc8b4feeee91205d74d90e281b968db34151af"
+  },
+  "examples/enantiomers/pairs_per_target.json": {
+   "bytes": 21001,
+   "sha256": "a763fa4b27517b1e64802fb4209bc4c2e1855ba4f1b4ad3de242b1642c7f06ea"
+  },
+  "examples/enantiomers/phosphodiesterase_4D.sdf": {
+   "bytes": 242515,
+   "sha256": "2fbe761efe36e844e2a6e114bd5b1e47bc6556e525674e7f0053c1e2752e9ae8"
+  },
+  "examples/enantiomers/phosphodiesterase_5A.sdf": {
+   "bytes": 605552,
+   "sha256": "c74796b802e4868f45283b30a5ddcaf3674266685f91d1ac5cce016fed44a572"
+  },
+  "examples/enantiomers/protein_kinase_B.sdf": {
+   "bytes": 486481,
+   "sha256": "d4a0c66e290158fc010a245c317513f64e8f2287da3b0fa7650e3c43873a7c42"
+  },
+  "examples/enantiomers/renin.sdf": {
+   "bytes": 293200,
+   "sha256": "f69c534825b67de2f82177fb8ae49d4a1eeecfb20bd96803e37109f697406bb0"
+  },
+  "examples/enantiomers/rho-associated_kinase_1.sdf": {
+   "bytes": 509148,
+   "sha256": "a5a72b13c616c89be6d4acf8cd81a3647f4bb857f65fbebf2ecba6c0ac626c66"
+  },
+  "examples/enantiomers/serotonin_5-HT1A_receptor.sdf": {
+   "bytes": 868721,
+   "sha256": "068baa5126bc71aa23cf0fa8a2a27ca7054b27ea0bed372a57e302f9fb5e5862"
+  },
+  "examples/enantiomers/serotonin_5-HT2A_receptor.sdf": {
+   "bytes": 1185662,
+   "sha256": "3e2357a8790008135bc82707814c2ff8d042280e7ee829674aa3678fb65973fc"
+  },
+  "examples/enantiomers/serotonin_5-HT2C_receptor.sdf": {
+   "bytes": 660656,
+   "sha256": "28d93cd841330b4b58b371cfd73c501f5a612e40198ba73ad2dfd0327e75e648"
+  },
+  "examples/enantiomers/serotonin_5-HT6_receptor.sdf": {
+   "bytes": 859480,
+   "sha256": "d4a4e32a7d2a58c941eed0ed102561ebde75fea87598c31ae5c02b29a487c710"
+  },
+  "examples/enantiomers/serotonin_5-HT7_receptor.sdf": {
+   "bytes": 695286,
+   "sha256": "85db1903fd80222d216f76475960402cf78637a0efb23e8c5d211735f5d787bd"
+  },
+  "examples/enantiomers/serotonin_transporter.sdf": {
+   "bytes": 1770542,
+   "sha256": "e8f48c187552099917adfbe8166f32963d9507fb996b21f76aabd9d150b0067a"
+  },
+  "examples/enantiomers/thrombin.sdf": {
+   "bytes": 255673,
+   "sha256": "0b37ce66ceadb0b264b1fe400c0c71e2233d15c21a74fd69c2d241c17d16e1fc"
+  },
   "examples/ether/README.md": {
    "bytes": 2551,
    "sha256": "3a62b6154b527eef3f7c400a17a57a6fa2e810d46fccbac16f3fff436e2ac983"
@@ -1101,6 +1321,10 @@
   "examples/make_electrolyte_shells.py": {
    "bytes": 25453,
    "sha256": "496326fcad8ead3ce28c48a695e4d25686278b8f248202b992018dddf0793d6a"
+  },
+  "examples/make_enantiomer_examples.py": {
+   "bytes": 25180,
+   "sha256": "f0c1fac135e0616b82244f708975ec7403d1cd9013c34c4df0ca0d1461c1cfe5"
   },
   "examples/make_ether_examples.py": {
    "bytes": 18386,
@@ -2639,6 +2863,8 @@
   "benchmarks/results/efield/hammett.json": "5852d7e02f1a31e9de2c02eb1893c027f7bb5d04ff114927bc54b3e77725f0c4",
   "benchmarks/results/efield/nickel.json": "bef3237e9997a25ca2009a998708d0189b7151ea2399ceb17d9444602b07a0fc",
   "benchmarks/results/efield/table.md": "7f5621d29aab832459fa6a7f95690d833c25684c27c4dd25ee404a2fe1c19254",
+  "benchmarks/results/enantiomers/enantiomers.json": "b789a1d4c6cc78161a1b3e3c26b76a3671ec3d99fcd0b109605f8dfb62ff958e",
+  "benchmarks/results/enantiomers/table.md": "c2bc9ce53151012e9108cea8192751a9cbf9e2c4a2cad3c604c6d6c71920b9c3",
   "benchmarks/results/errorpred/ACE.json": "8f8bed378f2c755499083b93071295110de02aa97493ca9f0188827fa5b5a425",
   "benchmarks/results/errorpred/AChE.json": "b868fb0c20ef82c84a44d76308630f570f0f6ae473f6d34fad7bc12090254ed4",
   "benchmarks/results/errorpred/BZR.json": "2b265ac6a5b1fcccd8747292918a4041ef4ea63c76d9b25b9c9a1e555a4412e3",
