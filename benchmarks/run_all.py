@@ -515,12 +515,14 @@ def registry() -> List[Benchmark]:
                   "single-particle model with electrolyte, with the share of the variance of "
                   "the capacity each one explains and how accurate the barrier would have to be; "
                   "then the electrolyte at faster discharge and in colder cells, with the "
-                  "activation energy BT5 predicts, against two measured electrolytes "
+                  "activation energy BT5 predicts, against two measured electrolytes; and how "
+                  "accurate the three parameters of the electrolyte that are not predicted "
+                  "would have to be, from the response curve of the cell to each "
                   "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
                   "run_cellmodel.py", "cellmodel",
                   compute=[[]], needs="pybamm",
                   prepare=["prepare_nebdft.py --fetch"],
-                  minutes="40",
+                  minutes="50",
                   report=lambda: _mod("run_cellmodel").report(),
                   tables=["cellmodel/table.md"]),
         Benchmark("battery",

@@ -56,12 +56,20 @@ What is measured
   cells, carried there by the activation energy the same model of item BT5 predicts. The
   published electrolyte functions have no temperature dependence, so the curve a prediction is
   judged against is that of the electrolyte as CALiSol-23 measured it.
+* How accurate the three parameters of the electrolyte that are *not* predicted would have to
+  be (``--stage tolerance``; plan items BT9, BT10 and BT11): the salt diffusion coefficient, the
+  cation transference number and the thermodynamic factor. Each is changed over a fixed set of
+  points around its measured function, the full model is run once per point, and the range
+  inside which the capacity stays within 1 and within 5 per cent is read from that curve. The
+  cheapest reference of each item is run as well: the Nernst-Einstein value from the
+  conductivity, and the two constants of the published set.
 
 Usage
 -----
     python benchmarks/run_nebdft.py            # once: the rows of the hops
-    python benchmarks/run_cellmodel.py         # this benchmark, then the table (35 minutes)
+    python benchmarks/run_cellmodel.py         # this benchmark, then the table (50 minutes)
     python benchmarks/run_cellmodel.py --stage stress    # one stage; each writes its own file
+    python benchmarks/run_cellmodel.py --stage tolerance # the three unpredicted parameters
     python benchmarks/run_cellmodel.py --report
 """
 from __future__ import annotations
@@ -135,9 +143,39 @@ STRESS_DRAWS = 100
 #: cell reads their fitted functions outside the range they were fitted on
 LANDESFEIND_COLDEST = 263.15
 ROOM = 298.15
+#: the cell model's names of the four transport parameters of the electrolyte
+CONDUCTIVITY = "Electrolyte conductivity [S.m-1]"
+DIFFUSIVITY = "Electrolyte diffusivity [m2.s-1]"
+TRANSFERENCE = "Cation transference number"
+THERMODYNAMIC = "Thermodynamic factor"
+#: the three of them that this program does not predict (plan items BT9, BT10 and BT11), and
+#: the points of the response curve of each. A "scale" multiplies the measured function by the
+#: value and a "shift" adds the value to it, so 1 and 0 are the measured function unchanged.
+TOLERANCE_PARAMETERS = (
+    {"item": "BT9", "name": DIFFUSIVITY, "label": "salt diffusion coefficient",
+     "kind": "scale",
+     "values": (0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0,
+                3.0, 5.0, 10.0, 20.0)},
+    {"item": "BT10", "name": TRANSFERENCE, "label": "cation transference number",
+     "kind": "shift",
+     "values": (-0.4, -0.3, -0.2, -0.15, -0.1, -0.05, -0.02, 0.0, 0.02, 0.05, 0.1, 0.15, 0.2,
+                0.3, 0.4)},
+    {"item": "BT11", "name": THERMODYNAMIC, "label": "thermodynamic factor", "kind": "scale",
+     "values": (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0, 3.0, 5.0)},
+)
+#: the shares of the capacity a tolerance is stated for: the capacity may move by this much
+TOLERANCE_SHARES = (0.01, 0.05)
+#: the condition at which the reading of the response curve is checked against drawn values
+TOLERANCE_CHECK = (ROOM, 2.5)
+TOLERANCE_CHECK_DRAWS = 100
+#: the concentrations, in mol/m3, between which Landesfeind and Gasteiger measured
+MEASURED_CONCENTRATIONS = (100.0, 3000.0)
+#: below this concentration, in mol/m3, the electrolyte counts as exhausted somewhere in the cell
+EXHAUSTED = 1.0
 #: the stages, in order: fit the models and convert, run the published values, draw one
-#: parameter at a time, the electrolyte under stress, then put the result together
-STAGES = ("channels", "reference", "sample", "stress", "finish")
+#: parameter at a time, the electrolyte under stress, the tolerance of the cell to the three
+#: parameters that are not predicted, then put the result together
+STAGES = ("channels", "reference", "sample", "stress", "tolerance", "finish")
 
 
 def log(msg: str) -> None:
@@ -961,6 +999,493 @@ def read_stress(results: str) -> Optional[dict]:
     return {"fits": fits, "conditions": rows}
 
 
+# --------------------------------------------------------------------------- #
+# The tolerance of the cell to the three parameters that are not predicted
+# --------------------------------------------------------------------------- #
+def electrolyte_value(f, temperature: float, concentration: float = 1000.0) -> float:
+    """A transport parameter of the electrolyte, a number or a function, at one concentration
+    (mol/m3) and one temperature (K)."""
+    if not callable(f):
+        return float(f)
+    import pybamm
+    v = f(pybamm.Scalar(float(concentration)), pybamm.Scalar(float(temperature)))
+    return float(v.evaluate()) if hasattr(v, "evaluate") else float(v)
+
+
+def tolerance_references(p, four) -> List[dict]:
+    """The values each of the three items would use if nothing were predicted.
+
+    `cheapest` marks the one that needs no data beyond what this program already has; rule 1 of
+    the three items says that an item ends if that one is inside the tolerance. The other two
+    for the diffusion coefficient are there to say where its error comes from.
+    """
+    from cmfqsar import cellmodel as CM
+
+    t_pub = float(p[TRANSFERENCE])
+    return [
+        {"item": "BT9", "key": "nernst_einstein", "parameter": DIFFUSIVITY, "cheapest": True,
+         "label": "Nernst-Einstein value from the measured conductivity, ideal solution",
+         "value": CM.nernst_einstein_diffusivity(four[CONDUCTIVITY], t_pub)},
+        {"item": "BT9", "key": "nernst_einstein_factor", "parameter": DIFFUSIVITY,
+         "cheapest": False,
+         "label": "the same, multiplied by the measured thermodynamic factor",
+         "value": CM.nernst_einstein_diffusivity(four[CONDUCTIVITY], t_pub,
+                                                 factor=four[THERMODYNAMIC])},
+        {"item": "BT9", "key": "published_function", "parameter": DIFFUSIVITY,
+         "cheapest": False,
+         "label": "the function of the published set, which has no temperature in it",
+         "value": p[DIFFUSIVITY]},
+        {"item": "BT10", "key": "published_constant", "parameter": TRANSFERENCE,
+         "cheapest": True, "label": f"the constant of the published set, {t_pub:g}",
+         "value": t_pub},
+        {"item": "BT11", "key": "ideal_solution", "parameter": THERMODYNAMIC, "cheapest": True,
+         "label": "the ideal solution, which is the constant 1 of the published set",
+         "value": float(p[THERMODYNAMIC])},
+    ]
+
+
+def tolerance_path(results: str, temperature: float, rate: float) -> str:
+    return os.path.join(results, f"tolerance_{temperature:.0f}K_{rate:g}C.json")
+
+
+def _usable(run) -> bool:
+    """A run whose capacity can be compared: it completed, and its discharge ended at the
+    voltage limit."""
+    return bool(run.ok and run.at_cutoff and np.isfinite(run.final))
+
+
+def _tolerance_condition(temperature: float, rate: float, p, four) -> dict:
+    """One condition: the response curve of each of the three parameters around its measured
+    function, the tolerated ranges read from it, and the cheapest references."""
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import CellParameter
+
+    t0 = time.time()
+    common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=CM.discharge(rate),
+                  temperature=temperature, parameters=p)
+    ref = CM.run_cell(four, details=True, **common)
+    if not _usable(ref):
+        raise SystemExit(f"{temperature:.0f} K, {rate:g}C: the cell with the measured "
+                         f"electrolyte gave no usable discharge ({ref.message or ref.termination})")
+    entry = {"temperature": float(temperature), "rate": float(rate), "model": STRESS_MODEL,
+             "reference": ref.final, "reference_concentration": list(ref.concentration),
+             "at_1000": {name: electrolyte_value(four[name], temperature)
+                         for name in CM.ELECTROLYTE_ENTRIES},
+             "parameters": {}, "references": {}}
+    for spec in TOLERANCE_PARAMETERS:
+        scale = spec["kind"] == "scale"
+        centre = 1.0 if scale else 0.0
+        parameter = CellParameter(name=spec["name"], value=centre, kind=spec["kind"])
+        runs = CM.response(parameter, spec["values"], fixed=four, **common)
+        usable = [_usable(r) for r in runs]
+        capacity = [r.final if u else float("nan") for r, u in zip(runs, usable)]
+        at_centre = capacity[list(spec["values"]).index(centre)]
+        if not np.isclose(at_centre, ref.final, rtol=0, atol=1e-6):
+            raise SystemExit(f"{spec['name']}: the unchanged point gives {at_centre!r} and the "
+                             f"reference run {ref.final!r}; they have to be the same run")
+        ranges = {f"{share:g}": CM.tolerated_range(spec["values"], capacity, centre,
+                                                   share * ref.final, log=scale)
+                  for share in TOLERANCE_SHARES}
+        entry["parameters"][spec["name"]] = {
+            "item": spec["item"], "label": spec["label"], "kind": spec["kind"],
+            "values": [float(v) for v in spec["values"]],
+            "capacity": [float(r.final) for r in runs], "usable": usable,
+            "ended": [r.termination for r in runs],
+            "lowest_concentration": [float(r.concentration[0]) for r in runs],
+            "highest_concentration": [float(r.concentration[1]) for r in runs],
+            "ranges": ranges}
+    for r in tolerance_references(p, four):
+        run = CM.run_cell({**four, r["parameter"]: r["value"]}, details=True, **common)
+        ok = _usable(run)
+        entry["references"][r["key"]] = {
+            "item": r["item"], "parameter": r["parameter"], "label": r["label"],
+            "cheapest": bool(r["cheapest"]), "usable": ok, "ended": run.termination,
+            "capacity": float(run.final) if ok else float("nan"),
+            "difference": float(run.final - ref.final) if ok else float("nan"),
+            "share": float((run.final - ref.final) / ref.final) if ok else float("nan"),
+            "at_1000": electrolyte_value(r["value"], temperature)}
+    entry["seconds"] = round(time.time() - t0, 1)
+    return entry
+
+
+def curve_values(values: Sequence[float], capacities: Sequence[float], at: Sequence[float],
+                 log: bool = False) -> np.ndarray:
+    """The capacity a response curve gives at the values `at`, read by linear interpolation
+    between its points (on the logarithm of a factor). Points without a capacity are left out,
+    and outside the outermost points the curve is read as flat."""
+    x = np.asarray(values, float)
+    q = np.asarray(capacities, float)
+    keep = np.isfinite(q)
+    x, q = x[keep], q[keep]
+    order = np.argsort(x)
+    x, q = x[order], q[order]
+    at = np.asarray(at, float)
+    return np.interp(np.log(at) if log else at, np.log(x) if log else x, q)
+
+
+def _tolerance_check(entry: dict, p, four, draws: int = TOLERANCE_CHECK_DRAWS) -> dict:
+    """Does the response curve say what a run says?
+
+    A tolerance is read from a curve of a few points, with straight lines between them. For
+    each parameter the deviation tolerated at the widest share is taken, values are drawn with
+    it, and the cell is run once per draw. Each run is compared with the capacity the curve
+    gives at the same drawn value: the largest difference is the error of reading between
+    points. The two 95 per cent intervals, of the runs and of the curve at the same draws, are
+    given as well, and so is the share of the draws whose run left the limit. That share
+    should be near 2.5 per cent, since the deviation is set by the nearer end of the range and
+    an error of that size passes that end in one draw of forty.
+    """
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import CellParameter
+
+    temperature, rate = float(entry["temperature"]), float(entry["rate"])
+    common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=CM.discharge(rate),
+                  temperature=temperature)
+    share = f"{max(TOLERANCE_SHARES):g}"
+    reference = float(entry["reference"])
+    out = {"temperature": temperature, "rate": rate, "draws": int(draws), "share": float(share),
+           "reference": reference, "parameters": {}}
+    for spec in TOLERANCE_PARAMETERS:
+        rec = entry["parameters"][spec["name"]]
+        scale = spec["kind"] == "scale"
+        sd = float(rec["ranges"][share]["sd"])
+        width = float(rec["ranges"][share]["width"])
+        if not np.isfinite(sd) or sd <= 0:
+            out["parameters"][spec["name"]] = {"sd": sd, "skipped": True}
+            continue
+        parameter = CellParameter(name=spec["name"], value=1.0 if scale else 0.0, sd=sd,
+                                  kind=spec["kind"],
+                                  distribution="lognormal" if scale else "normal")
+        runs = CM.sample(parameter, draws=draws, seed=SEED, fixed=four, **common)
+        drawn = np.array([r.overrides[spec["name"]] for r in runs], float)
+        got = np.array([r.final if r.ok else float("nan") for r in runs], float)
+        capacity = [c if u else float("nan") for c, u in zip(rec["capacity"], rec["usable"])]
+        read = curve_values(rec["values"], capacity, drawn, log=scale)
+        ok = np.isfinite(got)
+        difference = read[ok] - got[ok]
+        out["parameters"][spec["name"]] = {
+            "sd": sd, "skipped": False, "width": width, "refused": float(np.mean(~ok)),
+            "drawn_low": float(np.percentile(got[ok], 2.5)),
+            "drawn_high": float(np.percentile(got[ok], 97.5)),
+            "curve_low": float(np.percentile(read[ok], 2.5)),
+            "curve_high": float(np.percentile(read[ok], 97.5)),
+            "largest_difference": float(np.max(np.abs(difference))),
+            "mean_difference": float(np.mean(difference)),
+            "outside": float(np.mean(np.abs(got[ok] - reference) > width))}
+    return out
+
+
+def stage_tolerance(results: str, force: bool = False) -> None:
+    """How accurate the three parameters of the electrolyte that are not predicted have to be
+    (rule 1 of plan items BT9, BT10 and BT11).
+
+    The cell holds the electrolyte with all four transport parameters as Landesfeind and
+    Gasteiger (2019) measured them. One parameter at a time is then multiplied by a factor (the
+    diffusion coefficient, the thermodynamic factor) or shifted (the transference number) over
+    a fixed set of points, and the full model is run once per point, under the eight conditions
+    of the stress stage. The range of the parameter inside which the capacity stays within a
+    stated share of the capacity with the measured function is read from that curve. The
+    cheapest reference of each item is run under the same conditions.
+    """
+    from cmfqsar import cellmodel as CM
+
+    p = CM.published_parameters(BASE)
+    four = CM.measured_electrolyte()
+    for temperature, rate in stress_conditions():
+        path = tolerance_path(results, temperature, rate)
+        if os.path.isfile(path) and not force:
+            log(f"{temperature:.0f} K, {rate:g}C: the tolerance is there already")
+            continue
+        entry = _tolerance_condition(temperature, rate, p, four)
+        wide = f"{max(TOLERANCE_SHARES):g}"
+        parts = []
+        for spec in TOLERANCE_PARAMETERS:
+            r = entry["parameters"][spec["name"]]["ranges"][wide]
+            parts.append(f"{spec['label']} {_range(r, spec['kind'])}")
+        log(f"{temperature:.0f} K, {rate:g}C: {entry['reference']:.3f} A.h with the measured "
+            f"electrolyte; inside {100 * float(wide):.0f} %: " + "; ".join(parts)
+            + f" ({entry['seconds']:.0f} s)")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(entry, fh, indent=1)
+    check_path = os.path.join(results, "tolerance_check.json")
+    if force or not os.path.isfile(check_path):
+        with open(tolerance_path(results, *TOLERANCE_CHECK), encoding="utf-8") as fh:
+            entry = json.load(fh)
+        check = _tolerance_check(entry, p, four)
+        for name, c in check["parameters"].items():
+            if not c["skipped"]:
+                log(f"  check, {name}: runs {c['drawn_low']:.3f} to {c['drawn_high']:.3f} "
+                    f"A.h, the curve at the same draws {c['curve_low']:.3f} to "
+                    f"{c['curve_high']:.3f}, largest difference "
+                    f"{c['largest_difference']:.3f}, {100 * c['outside']:.0f} % outside")
+        with open(check_path, "w", encoding="utf-8") as fh:
+            json.dump(check, fh, indent=1)
+
+
+def read_tolerance(results: str) -> Optional[dict]:
+    """What the tolerance stage wrote, or None when it has not been run."""
+    paths = [tolerance_path(results, t, r) for t, r in stress_conditions()]
+    if not any(os.path.isfile(path) for path in paths):
+        return None
+    rows = []
+    for path in paths:
+        if not os.path.isfile(path):
+            raise SystemExit(f"{path} is missing: run this benchmark with --stage tolerance")
+        with open(path, encoding="utf-8") as fh:
+            rows.append(json.load(fh))
+    check = None
+    check_path = os.path.join(results, "tolerance_check.json")
+    if os.path.isfile(check_path):
+        with open(check_path, encoding="utf-8") as fh:
+            check = json.load(fh)
+    return {"conditions": rows, "check": check}
+
+
+def _range(r: dict, kind: str) -> str:
+    """A tolerated range as text. "<" or ">" before an end says that the points ran out there
+    with the capacity still inside, so the range is at least that wide; "*" after an end says
+    that the next point gave no capacity."""
+    sign = kind == "shift"
+
+    def end(v, ends, low):
+        text = _n(v, 2, sign)
+        if ends == "open":
+            return ("< " if low else "> ") + text
+        return text + ("*" if ends == "refused" else "")
+    return f"{end(r['low'], r['low_ends'], True)} to {end(r['high'], r['high_ends'], False)}"
+
+
+def _sd(r: dict) -> str:
+    return (">= " if r["sd_is_a_lower_bound"] else "") + _n(r["sd"], 3)
+
+
+def _where(row: dict) -> str:
+    return f"{row['temperature']:.0f} K and {row['rate']:g}C"
+
+
+def tolerance_lines(tol: dict) -> List[str]:
+    """The section of the table on the three parameters that are not predicted."""
+    rows = tol["conditions"]
+    n = len(rows)
+    out = ["### How accurate the three parameters without a prediction have to be", ""]
+    out.append(
+        "This program does not predict the salt diffusion coefficient, the cation transference "
+        "number or the thermodynamic factor of the electrolyte (plan items BT9, BT10 and BT11). "
+        "Before any of them is simulated, this stage asks how accurate each one has to be. The "
+        "cell holds the electrolyte with all four transport parameters as Landesfeind and "
+        "Gasteiger (2019) measured them. One parameter at a time is then multiplied by a factor "
+        "(the diffusion coefficient and the thermodynamic factor) or shifted by a constant (the "
+        "transference number) over a fixed set of points, and the full model is run once per "
+        "point. Nothing is drawn: the capacity for any spread of the parameter can be read "
+        "from such a curve.")
+    out.append("")
+    out.append(
+        "The *tolerated range* is the connected range around the measured function inside "
+        "which the discharge capacity stays within the stated share of the capacity with the "
+        "measured function. The *tolerated deviation* is the largest standard deviation of an "
+        "error whose 95 % interval stays inside that range: of the natural logarithm for a "
+        "factor, of the number itself for a shift. The nearer end of the range sets it. An end "
+        "written with < or > is the outermost point that was run, so the range is at least "
+        "that wide, and a deviation written with >= is a lower bound for the same reason. An "
+        "end written with * is the last point before one at which the model gave no usable "
+        "discharge.")
+    out.append("")
+    for share in sorted(TOLERANCE_SHARES):
+        key = f"{share:g}"
+        out.append(f"**The capacity may move by {100 * share:g} %.**")
+        out.append("")
+        out.append("| Temperature, K | Rate | Capacity with the measured electrolyte, A.h | "
+                   "Diffusion coefficient: tolerated factor | Tolerated deviation of its "
+                   "logarithm | Transference number: tolerated shift | Tolerated deviation | "
+                   "Thermodynamic factor: tolerated factor | Tolerated deviation of its "
+                   "logarithm |")
+        out.append("|---:|---:|---:|---|---:|---|---:|---|---:|")
+        for row in rows:
+            cells = [f"{row['temperature']:.0f}", f"{row['rate']:g}C", _n(row["reference"], 3)]
+            for spec in TOLERANCE_PARAMETERS:
+                r = row["parameters"][spec["name"]]["ranges"][key]
+                cells += [_range(r, spec["kind"]), _sd(r)]
+            out.append("| " + " | ".join(cells) + " |")
+        out.append("")
+    room = next((r for r in rows if r["temperature"] == ROOM), rows[0])
+    v = room["at_1000"]
+    out.append(
+        f"For scale: at 1 mol/L and {room['temperature']:.0f} K the measured diffusion "
+        f"coefficient is {_n(v[DIFFUSIVITY])} m2/s, the measured transference number "
+        f"{_n(v[TRANSFERENCE], 3)} and the measured thermodynamic factor "
+        f"{_n(v[THERMODYNAMIC], 2)}.")
+    out.append("")
+
+    # the least tolerance of each parameter, over the conditions
+    wide = f"{max(TOLERANCE_SHARES):g}"
+    parts = []
+    for spec in TOLERANCE_PARAMETERS:
+        tight = min(rows, key=lambda r: r["parameters"][spec["name"]]["ranges"][wide]["sd"])
+        r = tight["parameters"][spec["name"]]["ranges"][wide]
+        if spec["kind"] == "scale":
+            meaning = (f"a factor between {_n(np.exp(-1.96 * r['sd']), 2)} and "
+                       f"{_n(np.exp(1.96 * r['sd']), 2)}")
+        else:
+            meaning = f"an error within {_n(1.96 * r['sd'], 3)} either way"
+        parts.append(f"the {spec['label']} at {_where(tight)}, where the tolerated deviation "
+                     f"is {_sd(r)} ({meaning})")
+    out.append(f"**Where each parameter has to be most accurate, at "
+               f"{100 * float(wide):g} % of the capacity:** " + "; ".join(parts) + ".")
+    out.append("")
+
+    warm = [r for r in rows if r["temperature"] == ROOM]
+    ranges = [r["parameters"][DIFFUSIVITY]["ranges"][wide] for r in warm]
+    if warm and all(r["high_ends"] == "open" for r in ranges):
+        out.append(
+            "**At room temperature only a diffusion coefficient that is too small is "
+            f"punished.** A larger one costs less than {100 * float(wide):g} % of the capacity "
+            f"at every factor that was tried, up to {_n(max(r['high'] for r in ranges), 0)}. "
+            "The lower end of the tolerated factor rises with the rate: "
+            + ", ".join(f"{_n(r['low'], 2)} at {row['rate']:g}C"
+                        for row, r in zip(warm, ranges))
+            + ". A prediction of this parameter should therefore err on the high side.")
+        out.append("")
+
+    out.append("### What the cheapest reference of each item costs")
+    out.append("")
+    out.append(
+        "Each of the three items names a value that needs no new data. For the diffusion "
+        "coefficient it is the Nernst-Einstein value, D = 2 t (1 - t) k R T / (F^2 c), from the "
+        "measured conductivity k and the transference number t of the published set: the "
+        "coefficient of an ideal solution of fully dissociated ions. For the other two it is "
+        "the constant of the published set. Each is put in place of the measured function, "
+        "with the other three as measured, and the difference of the capacity is given in A.h "
+        "and as a share of the capacity with the measured electrolyte. Two more values of the "
+        "diffusion coefficient are run to say where the error of the first comes from.")
+    out.append("")
+    keys = list(rows[0]["references"])
+    head = {"nernst_einstein": "Diffusion coefficient: Nernst-Einstein, ideal solution",
+            "nernst_einstein_factor": "Diffusion coefficient: Nernst-Einstein times the "
+                                      "measured thermodynamic factor",
+            "published_function": "Diffusion coefficient: function of the published set",
+            "published_constant": "Transference number: constant of the published set",
+            "ideal_solution": "Thermodynamic factor: 1"}
+    out.append("| Temperature, K | Rate | " + " | ".join(head.get(k, k) for k in keys) + " |")
+    out.append("|---:|---:|" + "---:|" * len(keys))
+    for row in rows:
+        cells = [f"{row['temperature']:.0f}", f"{row['rate']:g}C"]
+        for k in keys:
+            r = row["references"][k]
+            cells.append(f"{_n(r['difference'], 3, True)} ({_n(100 * r['share'], 1, True)} %)"
+                         if r["usable"] else "no usable discharge")
+        out.append("| " + " | ".join(cells) + " |")
+    out.append("")
+    ne = room["references"]["nernst_einstein"]["at_1000"]
+    nef = room["references"]["nernst_einstein_factor"]["at_1000"]
+    out.append(
+        f"At 1 mol/L and {room['temperature']:.0f} K the Nernst-Einstein value is {_n(ne)} "
+        f"m2/s, {_n(v[DIFFUSIVITY] / ne, 1)} times below the measured {_n(v[DIFFUSIVITY])}. "
+        f"Multiplied by the measured thermodynamic factor it is {_n(nef)}, "
+        f"{_n(v[DIFFUSIVITY] / nef, 1)} times below. The function of the published set gives "
+        f"{_n(room['references']['published_function']['at_1000'])} at every temperature.")
+    out.append("")
+
+    def verdict(key: str, name: str) -> str:
+        inside = {s: sum(1 for r in rows if r["references"][key]["usable"]
+                         and abs(r["references"][key]["share"]) <= s)
+                  for s in TOLERANCE_SHARES}
+        usable = [r for r in rows if r["references"][key]["usable"]]
+        unusable = [r for r in rows if not r["references"][key]["usable"]]
+        ends = all(v == n for v in inside.values())
+        text = (f"**{rows[0]['references'][key]['item']}, the {name}.** The reference is inside "
+                + " and inside ".join(f"{100 * s:g} % of the capacity under {inside[s]} of {n} "
+                                      f"conditions" for s in sorted(TOLERANCE_SHARES)) + ". ")
+        if usable:
+            worst = max(usable, key=lambda r: abs(r["references"][key]["share"]))
+            w = worst["references"][key]
+            text += (f"Its largest difference is {_n(w['difference'], 3, True)} A.h "
+                     f"({_n(100 * w['share'], 1, True)} %) at {_where(worst)}. ")
+        if unusable:
+            text += (f"At {', '.join(_where(r) for r in unusable)} the cell model gave no "
+                     "usable discharge with this reference: the discharge did not end at the "
+                     "voltage limit, so there is no capacity to compare, and the condition is "
+                     "counted as outside. ")
+        if ends:
+            return text + ("The reference is inside the tolerance under every condition, so by "
+                           "rule 1 the item ends here.")
+        if inside[max(TOLERANCE_SHARES)] == 0:
+            return text + ("The reference is outside the tolerance under every condition, so "
+                           "the item does not end here.")
+        return text + ("The reference is not inside the tolerance under every condition, so "
+                       "the item does not end here; the conditions where it is inside are the "
+                       "ones where this parameter does not need a prediction.")
+    out.append(verdict("nernst_einstein", "salt diffusion coefficient"))
+    out.append("")
+    out.append(verdict("published_constant", "cation transference number"))
+    out.append("")
+    out.append(verdict("ideal_solution", "thermodynamic factor"))
+    out.append("")
+
+    # where the measured functions are read outside what was measured
+    lo, hi = MEASURED_CONCENTRATIONS
+    outside = [r for r in rows if r["reference_concentration"][0] < lo
+               or r["reference_concentration"][1] > hi]
+    exhausted = [r for r in rows if r["reference_concentration"][0] < EXHAUSTED]
+    if outside:
+        far = max(outside, key=lambda r: r["reference_concentration"][1])
+        out.append(
+            f"**The reference itself leaves the measured range under {len(outside)} of {n} "
+            f"conditions.** The study measured between {lo:g} and {hi:g} mol/m3. With the "
+            f"measured electrolyte in place, the concentration somewhere in the cell goes "
+            f"outside that range at " + ", ".join(_where(r) for r in outside)
+            + f"; the highest is {_n(far['reference_concentration'][1], 0)} mol/m3 at "
+            f"{_where(far)}. "
+            + (f"Under {len(exhausted)} of these the electrolyte is exhausted somewhere in the "
+               f"cell (below {EXHAUSTED:g} mol/m3), which is what ends the discharge early. "
+               if exhausted else "")
+            + "There the fitted functions are read outside the measurements they were fitted "
+              "to, so the capacity called measured is the capacity of an extrapolation.")
+        out.append("")
+    cold = [r for r in rows if r["temperature"] < 293.15]
+    if cold:
+        out.append(
+            "In the colder cells the transference number and the thermodynamic factor called "
+            "measured are the values at 293 K, as in the second reference, because the study "
+            "calls its colder values of these two less precise. A tolerance of these two in "
+            "the cold is therefore a tolerance around an assumed value.")
+        out.append("")
+    check = tol.get("check")
+    if check:
+        done = {k: c for k, c in check["parameters"].items() if not c.get("skipped")}
+        if done:
+            labels = {spec["name"]: spec["label"] for spec in TOLERANCE_PARAMETERS}
+            out.append(
+                f"**The reading of the curve, checked by drawing.** A tolerance is read from a "
+                f"curve of a few points with straight lines between them. At "
+                f"{check['temperature']:.0f} K and {check['rate']:g}C each parameter was drawn "
+                f"{check['draws']} times with the deviation tolerated at "
+                f"{100 * check['share']:g} %, and the cell was run once per draw. Each run is "
+                f"compared with the capacity the curve gives at the same drawn value.")
+            out.append("")
+            out.append("| Parameter | Deviation drawn with | Largest difference between curve "
+                       "and run, A.h | 95 % interval of the runs, A.h | 95 % interval of the "
+                       "curve at the same draws, A.h | Draws whose run left the limit |")
+            out.append("|---|---:|---:|---|---|---:|")
+            for k, c in done.items():
+                out.append(f"| {labels[k][0].upper()}{labels[k][1:]} | {_n(c['sd'], 3)} | "
+                           f"{_n(c['largest_difference'], 3)} | {_n(c['drawn_low'], 3)} to "
+                           f"{_n(c['drawn_high'], 3)} | {_n(c['curve_low'], 3)} to "
+                           f"{_n(c['curve_high'], 3)} | {_n(100 * c['outside'], 0)} % |")
+            out.append("")
+            worst = max(done.values(), key=lambda c: c["largest_difference"])
+            limit = check["share"] * check["reference"]
+            out.append(
+                f"The capacity with the measured electrolyte is {_n(check['reference'], 3)} "
+                f"A.h, so the limit of {100 * check['share']:g} % is {_n(limit, 3)} A.h. The "
+                f"largest error of reading between points is "
+                f"{_n(worst['largest_difference'], 3)} A.h, which is "
+                f"{_n(100 * worst['largest_difference'] / limit, 0)} % of that limit. About "
+                f"2.5 % of the draws are expected to leave the limit, because the deviation "
+                f"is set by the nearer end of the range.")
+            out.append("")
+    return out
+
+
 def read_samples(results: str, pset) -> Dict[str, dict]:
     """What the sampling stages wrote, one parameter at a time."""
     out = {}
@@ -1014,6 +1539,8 @@ def run(results: str = RESULTS, draws: int = DRAWS, cycles: int = CYCLES,
             stage_sample(results, p.name, draws, cycles)
     if "stress" in stages:
         stage_stress(results, force=force)
+    if "tolerance" in stages:
+        stage_tolerance(results, force=force)
     if "finish" not in stages:
         return None
 
@@ -1352,6 +1879,9 @@ def report(results: str = RESULTS) -> str:
     stress = res.get("stress")
     if stress:
         lines.extend(stress_lines(stress, params))
+    tolerance = read_tolerance(results)
+    if tolerance:
+        lines.extend(tolerance_lines(tolerance))
     w("## What the gate asked, and what came out")
     w("")
     failed = [n for n, p in params.items()

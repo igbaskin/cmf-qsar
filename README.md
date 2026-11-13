@@ -3428,9 +3428,20 @@ cell:
   electrolyte gives 4.61 A.h against the published 3.68, and with it the Bruggeman exponent
   misses by 0.035 A.h instead of 0.53: most of that miss came from the published
   electrolyte. In the cold, the three parameters that are not predicted decide the capacity.
+- How accurate those three would have to be is measured before any of them is predicted
+  (`--stage tolerance`, plan items BT9 to BT11). Each is changed over a fixed set of points
+  around its measured function and the full model is run once per point. For a capacity that
+  may move by 5 %, the salt diffusion coefficient may be as low as 0.32 of the measured value
+  at the one-hour rate and 0.83 at 2.5 times that rate, and any larger value that was tried
+  costs less than 5 %. In cold cells it has to be within 4 to 10 %, which is narrower than
+  the agreement of the two measurements of this electrolyte (a factor of 1.6). The
+  Nernst-Einstein value from the conductivity, which needs no new data, is 3.1 times too low
+  and fails under every condition. The published constants of the transference number and
+  of the thermodynamic factor cost at most 0.8 % and 2.2 % at room temperature, so these two
+  need a prediction only for cold cells.
 
 ```bash
-python benchmarks/run_cellmodel.py             # 40 minutes after run_nebdft.py; needs pybamm
+python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py; needs pybamm
 ```
 
 ### A single-atom site as the sample: two reactions on one metal

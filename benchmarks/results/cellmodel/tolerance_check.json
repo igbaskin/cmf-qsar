@@ -1,0 +1,48 @@
+{
+ "temperature": 298.15,
+ "rate": 2.5,
+ "draws": 100,
+ "share": 0.05,
+ "reference": 4.6090935646681395,
+ "parameters": {
+  "Electrolyte diffusivity [m2.s-1]": {
+   "sd": 0.09794019182581147,
+   "skipped": false,
+   "width": 0.23045467823340698,
+   "refused": 0.0,
+   "drawn_low": 4.501986132574743,
+   "drawn_high": 4.667852112985095,
+   "curve_low": 4.483927644404353,
+   "curve_high": 4.666192523081081,
+   "largest_difference": 0.01940596636724301,
+   "mean_difference": -0.004283453700811313,
+   "outside": 0.02
+  },
+  "Cation transference number": {
+   "sd": 0.06446451766175582,
+   "skipped": false,
+   "width": 0.23045467823340698,
+   "refused": 0.0,
+   "drawn_low": 4.477930957506815,
+   "drawn_high": 4.684577791777518,
+   "curve_low": 4.474927216604057,
+   "curve_high": 4.683811756567307,
+   "largest_difference": 0.004484535378113108,
+   "mean_difference": -0.0011322595871178542,
+   "outside": 0.02
+  },
+  "Thermodynamic factor": {
+   "sd": 0.23342022729615394,
+   "skipped": false,
+   "width": 0.23045467823340698,
+   "refused": 0.0,
+   "drawn_low": 4.413897354980915,
+   "drawn_high": 4.66632437075697,
+   "curve_low": 4.410168812332837,
+   "curve_high": 4.665918236155672,
+   "largest_difference": 0.011431524645777458,
+   "mean_difference": -0.0013673485850167744,
+   "outside": 0.0
+  }
+ }
+}

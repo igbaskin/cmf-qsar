@@ -25,6 +25,13 @@ parameters and their deviations. Three things happen here.
   far the capacity moves when one parameter is changed by a fixed fraction of itself. The first
   reading says what this program contributes; the second is a property of the cell model alone,
   and it is the one the cell-model literature states.
+* :func:`response` runs the cell model once per chosen value of one parameter, which is its
+  response curve, and :func:`tolerated_range` reads from that curve how far the parameter may be
+  from its measured value before the capacity leaves a stated distance. This is the question to
+  ask *before* a parameter is predicted: how accurate does a prediction have to be? (Plan items
+  BT9 to BT11, the three parameters of the electrolyte this program does not predict.)
+  :func:`nernst_einstein_diffusivity` is the reference such a prediction has to beat for the
+  diffusion coefficient: the value an ideal solution would have, from the conductivity alone.
 
 PyBaMM is an optional dependency, as pymatgen is. Nothing in :mod:`cmfqsar.interfaces` needs it,
 and every function here imports it when it is called, so the module can be imported without it.
@@ -37,7 +44,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from .interfaces import CellParameter, CellParameterSet
+from .interfaces import GAS_CONSTANT, CellParameter, CellParameterSet
+
+#: the Faraday constant, in coulomb per mole
+FARADAY = 96485.33212
 
 #: the published parameter set used when none is named: a graphite / nickel-manganese-cobalt
 #: oxide cell measured and fitted by Chen and co-workers (2020), which PyBaMM ships
@@ -147,6 +157,19 @@ class CellRun:
     ok: bool = True
     message: str = ""
     overrides: Dict[str, float] = field(default_factory=dict)
+    #: why the discharge of the last cycle ended, in the cell model's own words; filled only
+    #: when the run was asked for details
+    termination: str = ""
+    #: the lowest and the highest concentration of the electrolyte, in mol/m3, anywhere in the
+    #: cell during the discharge of the last cycle; filled only when the run was asked for details
+    concentration: Tuple[float, float] = (float("nan"), float("nan"))
+
+    @property
+    def at_cutoff(self) -> bool:
+        """Did the last discharge end at the lower voltage limit, as a discharge should?  A
+        discharge that ended for another reason has no discharge capacity to compare."""
+        t = self.termination.lower()
+        return "voltage <" in t or "minimum voltage" in t
 
     @property
     def final(self) -> float:
@@ -165,7 +188,8 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
              base: str = DEFAULT_BASE, kind: str = "SPMe",
              options: Optional[Dict[str, object]] = None,
              cycle: Sequence[str] = DEFAULT_CYCLE, initial_soc: float = 1.0,
-             parameters=None, temperature: Optional[float] = None) -> CellRun:
+             parameters=None, temperature: Optional[float] = None,
+             details: bool = False) -> CellRun:
     """One run of the cell model, with the entries in `overrides` put in place of the published
     ones. Returns the discharge capacity of every cycle.
 
@@ -174,6 +198,10 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
     that has the published set already, so that reading it is not repeated per run.
     `temperature` sets the temperature of the cell and of its surroundings, in kelvin; how much
     that changes depends on which parameters of the published set depend on temperature at all.
+    `details` also records why the discharge of the last cycle ended and the lowest and highest
+    concentration of the electrolyte during it, which say whether the capacity is that of an
+    ordinary discharge and whether the electrolyte's functions were read inside the range they
+    were measured in.
     """
     pybamm = _pybamm()
     p = (published_parameters(base) if parameters is None else parameters).copy()
@@ -205,9 +233,30 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
         except Exception:                                # pragma: no cover - a cycle with no step
             continue
     done = len(values) == int(cycles)
+    termination, concentration = _discharge_details(solution) if details else ("", _NO_RANGE)
     return CellRun(capacity=np.array(values, float), cycles=int(cycles), ok=done,
                    message="" if done else f"reached {len(values)} of {cycles} cycles",
-                   overrides=numbers)
+                   overrides=numbers, termination=termination, concentration=concentration)
+
+
+_NO_RANGE = (float("nan"), float("nan"))
+
+
+def _discharge_details(solution) -> Tuple[str, Tuple[float, float]]:
+    """Why the discharge of the last cycle ended, and the range of the electrolyte's
+    concentration during it."""
+    last = None
+    for one in getattr(solution, "cycles", []) or []:
+        if one is not None and getattr(one, "steps", None):
+            last = one.steps[0]
+    if last is None:
+        return "", _NO_RANGE
+    termination = str(getattr(last, "termination", "") or "")
+    try:
+        c = np.asarray(last["Electrolyte concentration [mol.m-3]"].entries, float)
+        return termination, (float(np.nanmin(c)), float(np.nanmax(c)))
+    except Exception:                                    # a model without that variable
+        return termination, _NO_RANGE
 
 
 def sample(parameter: CellParameter, draws: int = 200, cycles: int = 10,
@@ -366,6 +415,151 @@ def local_sensitivity(parameter: CellParameter, step: float = 0.1, cycles: int =
             "refused": float(sum(not r.ok for r in runs.values()))}
 
 
+def response(parameter: CellParameter, values: Sequence[float], cycles: int = 1,
+             base: str = DEFAULT_BASE, kind: str = "SPMe",
+             options: Optional[Dict[str, object]] = None, cycle: Sequence[str] = DEFAULT_CYCLE,
+             temperature: Optional[float] = None, fixed: Optional[Dict[str, object]] = None,
+             parameters=None) -> List[CellRun]:
+    """The response curve of the cell to one parameter: one run per value in `values`.
+
+    Nothing is drawn. A drawn sample answers what one stated deviation does to the capacity; a
+    response curve answers it for every deviation at once, because the interval of the capacity
+    for any spread of the parameter can be read from the curve. That is what a tolerance needs,
+    and it is why this is the tool for a parameter that has no prediction yet.
+
+    `fixed` holds replacements that stay the same in every run, as in :func:`sample`, and the
+    values act on the fixed entry: a factor of 1 or a shift of 0 is then the cell with the fixed
+    entries and nothing else changed. Every run carries its details (:func:`run_cell`).
+    """
+    p = published_parameters(base) if parameters is None else parameters
+    if parameter.name not in p:
+        raise KeyError(f"the parameter set {base} holds no entry called {parameter.name!r}")
+    fixed = dict(fixed or {})
+    start = fixed.get(parameter.name, p[parameter.name])
+    out = []
+    for v in values:
+        run = run_cell({**fixed, parameter.name: parameter.apply(start, float(v))},
+                       cycles=cycles, base=base, kind=kind, options=options, cycle=cycle,
+                       parameters=p, temperature=temperature, details=True)
+        run.overrides = {parameter.name: float(v)}
+        out.append(run)
+    return out
+
+
+def tolerated_range(values: Sequence[float], capacities: Sequence[float], centre: float,
+                    width: float, log: bool = False, level: float = 95.0) -> Dict[str, object]:
+    """How far a parameter may be from `centre` before the capacity leaves `width` of the
+    capacity there.
+
+    `values` are the points a response curve was run at and `capacities` what the cell gave at
+    them; `centre` is the unchanged value and has to be one of the points. The answer is the
+    connected range around the centre inside which the capacity stays within `width`
+    ampere-hours of the capacity at the centre. Its two ends are found by linear interpolation
+    between neighbouring points, in the logarithm of the value when `log` is true, which is the
+    right axis for a factor.
+
+    Three things can end the range on a side, and the record says which. The capacity left the
+    limit between two points (``"crossed"``). The next point gave no capacity, because the cell
+    model refused it or the discharge did not end at the voltage limit (``"refused"``; the end is
+    then the last point that did give one). Or the points ran out with the capacity still inside
+    (``"open"``; the end is then the outermost point, and the true end is at least that far). A
+    tolerance stated from an open end has to say so.
+
+    `sd` is the largest standard deviation of an error whose central interval at `level` per
+    cent stays inside the range: of the natural logarithm of the parameter for a factor, of the
+    parameter itself otherwise. The nearer end sets it, because a cell responds differently to
+    too little and to too much. `sd_is_a_lower_bound` is true when that nearer end is open.
+    """
+    from statistics import NormalDist
+
+    x = np.asarray(values, float).ravel()
+    q = np.asarray(capacities, float).ravel()
+    if len(x) != len(q):
+        raise ValueError(f"{len(x)} values and {len(q)} capacities")
+    if log and np.any(x <= 0):
+        raise ValueError("a factor is read on a logarithmic axis, so every value has to be "
+                         "above zero")
+    order = np.argsort(x)
+    x, q = x[order], q[order]
+    at = np.flatnonzero(np.isclose(x, float(centre), rtol=1e-12, atol=1e-12))
+    if len(at) != 1:
+        raise ValueError(f"the centre {centre!r} has to be exactly one of the values")
+    k = int(at[0])
+    q0 = float(q[k])
+    if not np.isfinite(q0):
+        raise ValueError("the run at the centre gave no capacity, so there is nothing to "
+                         "measure a distance from")
+    width = float(width)
+    if width <= 0:
+        raise ValueError(f"the width has to be above zero, not {width!r}")
+    axis = np.log(x) if log else x
+
+    def walk(step: int) -> Tuple[float, str]:
+        i = k
+        while True:
+            j = i + step
+            if j < 0 or j >= len(x):
+                return float(x[i]), "open"
+            if not np.isfinite(q[j]):
+                return float(x[i]), "refused"
+            d = float(q[j]) - q0
+            if abs(d) > width:
+                d0 = float(q[i]) - q0
+                limit = width if d > 0 else -width
+                a = axis[i] + (limit - d0) / (d - d0) * (axis[j] - axis[i])
+                return float(np.exp(a) if log else a), "crossed"
+            i = j
+
+    low, low_ends = walk(-1)
+    high, high_ends = walk(+1)
+    z = NormalDist().inv_cdf(0.5 + float(level) / 200.0)
+    c = float(centre)
+    below = (np.log(c / low) if log else c - low)
+    above = (np.log(high / c) if log else high - c)
+    nearer = low_ends if below <= above else high_ends
+    return {"centre": c, "capacity": q0, "width": width, "low": low, "high": high,
+            "low_ends": low_ends, "high_ends": high_ends,
+            "sd": float(min(below, above) / z), "sd_is_a_lower_bound": nearer == "open"}
+
+
+def nernst_einstein_diffusivity(conductivity, transference, factor=1.0, floor: float = 1.0):
+    """The salt diffusion coefficient that a conductivity implies for an ideal solution of
+    fully dissociated ions, as a function of concentration and temperature.
+
+    For a salt of two singly charged ions the Nernst-Einstein relation ties the conductivity to
+    the sum of the two self-diffusion coefficients, ``kappa = F^2 c (D+ + D-) / (R T)``, and the
+    transference number divides that sum between the ions, ``t = D+ / (D+ + D-)``. The salt
+    diffusion coefficient of a dilute solution is ``2 D+ D- / (D+ + D-)``, so
+
+        D = 2 t (1 - t) kappa R T / (F^2 c)
+
+    with the concentration in mol/m3 and the conductivity in S/m. It needs nothing but the
+    conductivity, which is why it is the reference a predicted diffusion coefficient has to
+    beat (plan item BT9).
+
+    `conductivity` is a function of the concentration and the temperature; `transference` and
+    `factor` are numbers or functions of the same two. `factor` multiplies the result: for a
+    concentrated solution the thermodynamic factor belongs there, and 1 is the ideal solution.
+    The concentration is read no lower than `floor`, because the relation divides by it.
+    """
+    def read(x, c, T):
+        return x(c, T) if callable(x) else float(x)
+
+    def diffusivity(c_e, T):
+        c = _at_least(c_e, float(floor))
+        t = read(transference, c, T)
+        return (2.0 * t * (1.0 - t) * conductivity(c, T) * GAS_CONSTANT * T
+                / (FARADAY ** 2 * c)) * read(factor, c, T)
+    return diffusivity
+
+
+def _at_least(x, low: float):
+    """`x` no lower than `low`, for a number or for a symbol of the cell model."""
+    if isinstance(x, (int, float, np.integer, np.floating)):
+        return max(float(x), float(low))
+    return _pybamm().maximum(x, float(low))
+
+
 def tolerance_for_capacity(parameter: CellParameter, width: float, scales: Sequence[float],
                            published: Optional[float] = None, draws: int = 100, cycles: int = 3,
                            base: str = DEFAULT_BASE, kind: str = "SPMe",
@@ -419,6 +613,8 @@ def _shrink_sample(values: Sequence[float], scale: float) -> np.ndarray:
     return float(np.median(v)) + float(scale) * (v - float(np.median(v)))
 
 
-__all__ = ["CellRun", "DEFAULT_BASE", "DEFAULT_CYCLE", "DEFAULT_OPTIONS", "MODELS", "band",
-           "build_model", "contains", "discharge", "local_sensitivity", "published_parameters",
-           "run_cell", "sample", "tolerance_for_capacity", "variance_shares"]
+__all__ = ["CellRun", "DEFAULT_BASE", "DEFAULT_CYCLE", "DEFAULT_OPTIONS", "FARADAY", "MODELS",
+           "band", "build_model", "contains", "discharge", "local_sensitivity",
+           "measured_electrolyte", "nernst_einstein_diffusivity", "published_parameters",
+           "response", "run_cell", "sample", "tolerance_for_capacity", "tolerated_range",
+           "variance_shares"]
