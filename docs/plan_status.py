@@ -65,6 +65,10 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "MS8": ("partly", "the chain to the activation energy built and measured 12 November "
                       "2026, with the error carried through; a conductivity and a hop "
                       "simulation are left"),
+    "MC3": ("partly", "the series built from ChEMBL and measured 13 November 2026: the "
+                      "handedness channels name the better enantiomer more often than chance "
+                      "and read it at the stereocentre, but they do not improve the potency "
+                      "itself"),
     "SP4": ("partly", "built 12 November 2026 and measured on fluorescence maps and on "
                       "simulated peak lists; a measured set of peak lists and the markers "
                       "of the paper against the co-map are left"),

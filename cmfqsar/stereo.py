@@ -39,7 +39,8 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
-__all__ = ["StereoSpec", "channel_labels", "stereo_centres", "stereo_channels", "stereo_matrix"]
+__all__ = ["StereoSpec", "centre_channels", "channel_labels", "stereo_centres",
+           "stereo_channels", "stereo_matrix"]
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,37 @@ def _ordered_volume(coords: np.ndarray, centre: int, neighbours: np.ndarray,
     return float(np.linalg.det(u))
 
 
+def centre_channels(mol, spec: StereoSpec = StereoSpec(),
+                    n_fields: Optional[int] = None) -> List[Tuple[int, np.ndarray]]:
+    """(atom, what that atom alone adds to the channels) for every centre that adds anything.
+
+    The channels of a molecule are a sum over its centres, so they split exactly into one
+    contribution per centre.  That is what plan item MC3 needs in order to ask *where* a model's
+    handedness comes from: a model that reads the configuration of the stereocentre should take
+    its answer from that atom and not from the rest of the molecule.  The contributions sum to
+    :func:`stereo_channels`, which is built from this function so that the two cannot drift
+    apart.
+    """
+    W = np.asarray(mol.weights, float)
+    F = int(n_fields if n_fields is not None else W.shape[1])
+    centres = stereo_centres(mol, spec)
+    if not centres:
+        return []
+    coords = np.asarray(mol.coords, float)
+    volumes = np.zeros((len(centres), F))
+    for f in range(F):
+        priority = W[:, f]
+        for k, (i, neighbours) in enumerate(centres):
+            volumes[k, f] = _ordered_volume(coords, i, neighbours, priority,
+                                            spec.min_separation)
+    out = []
+    for k, (i, _neighbours) in enumerate(centres):
+        if not np.any(volumes[k]):
+            continue
+        out.append((int(i), np.outer(volumes[k], W[i, :F]).reshape(-1)))
+    return out
+
+
 def stereo_channels(mol, spec: StereoSpec = StereoSpec(),
                     n_fields: Optional[int] = None) -> np.ndarray:
     """One number per (priority field, weighting field): the molecule's signed centres.
@@ -118,18 +150,10 @@ def stereo_channels(mol, spec: StereoSpec = StereoSpec(),
     """
     W = np.asarray(mol.weights, float)
     F = int(n_fields if n_fields is not None else W.shape[1])
-    out = np.zeros((F, F))
-    centres = stereo_centres(mol, spec)
-    if not centres:
-        return out.reshape(-1)
-    coords = np.asarray(mol.coords, float)
-    for f in range(F):
-        priority = W[:, f]
-        for i, neighbours in centres:
-            v = _ordered_volume(coords, i, neighbours, priority, spec.min_separation)
-            if v:
-                out[f] += v * W[i, :F]
-    return out.reshape(-1)
+    out = np.zeros(F * F)
+    for _atom, part in centre_channels(mol, spec, n_fields=F):
+        out += part
+    return out
 
 
 def channel_labels(fieldset, spec: StereoSpec = StereoSpec()) -> List[str]:

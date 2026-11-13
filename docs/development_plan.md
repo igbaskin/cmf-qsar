@@ -7413,6 +7413,50 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   `cmfqsar/stereo.py` gain on this set, where they gained nothing on five sets that hold no
   enantiomeric pair; and the model puts the eutomer above the distomer in more pairs than chance,
   with the chiral part of the co-field near the stereocentre and nowhere else.
+  **Built and measured 13 November 2026** (`examples/make_enantiomer_examples.py`,
+  `benchmarks/run_enantiomers.py`, `benchmarks/results/enantiomers/`). The series is from ChEMBL:
+  314,192 binding measurements of 60 human targets, fixed by UniProt accession before any count
+  was seen, hold 3,937 pairs of mirror images whose two potencies come from one assay; 3,849 pass
+  the checks and 3,834 are written as 54 files. A pair is found by inverting every tetrahedral
+  centre and comparing structures, never from a name or a CIP letter, so diastereomers are
+  refused; the configuration of each built structure is read back from its coordinates and checked
+  against the record (85 pairs refused); the two members are one conformation and its reflection;
+  and pairs are never selected by how much their potencies differ.
+  *The null is exact.* The two members of a pair have identical two-point rows (the largest
+  difference over 3,834 pairs is zero), so a model without the handedness channels must give them
+  the same number and names the better enantiomer in exactly 50.0 % of pairs. Every share below is
+  measured against that.
+  **The second part of the gate is met.** With whole scaffolds held out and each of the 51 targets
+  with at least fifteen pairs fitted on its own, the channels read at the stereocentres name the
+  better enantiomer in 59.1 % of the 1,144 pairs whose potencies differ by at least one log unit
+  (interval 56.3 to 61.9, binomial p = 8 x 10^-10) and in 53.8 % of all 3,667 pairs
+  (p = 5 x 10^-6). Holding out pairs instead of scaffolds gives 60.5 % and 55.2 %, about one point
+  more, so the ranking is not read off a near neighbour.
+  **And the localisation it asks for is met, sharply.** Built from the stereocentres alone the
+  channels are the best variant; built from every other centre of the same molecules they are at
+  chance (49.7 %, interval 48.1 to 51.3). Reading more centres adds noise, not information.
+  **The first part of the gate is not met.** Adding the 25 handedness columns to the two-point
+  kernel does not improve the potency itself: the median q2 over the 51 targets moves from -0.018
+  to -0.023, it improves on 16 of 51 targets, and the mean change is -0.043. The channels carry
+  the difference inside a pair, which is a small part of the variance of a potency across a
+  series, and they dilute the kernel for the larger task.
+  *The size of it:* predicted and measured differences correlate at 0.199, a predicted difference
+  is wrong by 0.78 log units against a spread of 1.04, and the share is above 50 % on 31 of 51
+  targets with the interval clear of 50 % on 7 and clear below on 2. Best: beta-2 adrenergic
+  93.6 % of 39 pairs, alpha-1A adrenergic 79.1 % of 44, fatty acid amide hydrolase 75.0 % of 54.
+  *A trap worth recording.* When a stereocentre is a ring atom it survives into the Bemis-Murcko
+  scaffold, so the two members of a pair fall into different scaffold groups and the pair is split
+  between training and test -- and a split pair is ranked backwards, because the model has seen
+  one member and predicts the other as that one's measured value, which carries the opposite sign
+  once the pair's mean is removed. 260 of 3,834 pairs were split at first, and the exact null
+  exposed it: the blind description scored 47.9 % where it has to score 50.0 %. The configuration
+  is now removed before the scaffold is read, and `check_groups` refuses a run in which any pair
+  would be split.
+  *Open:* the difference inside a pair is predicted as an ordering and not as a quantity, so a
+  eudismic ratio is not yet a number this program predicts; the structures are single
+  conformations, and a receptor may select different conformations of the two enantiomers, which a
+  reflection cannot represent; and 130 pairs with equal potencies are a reminder that a reported
+  difference can be below the error of its assay.
 * **MC4. An anti-target panel and the selectivity co-field.** The two-task model gives the
   selectivity of two endpoints as a difference of co-fields, measured on the Am/Eu extractants, and
   E1 extends it to several tasks. Medicinal chemistry asks the same question of hERG, of a
@@ -7792,9 +7836,9 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8 (partly), MS9 |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
-| I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
+| I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**171 items: 116 finished, 9 partly, 46 open.**
+**171 items: 116 finished, 10 partly, 45 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
