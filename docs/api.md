@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 812 public methods, and 1254 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 245 classes with 813 public methods, and 1272 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -144,6 +144,7 @@ for.
 | [cmfqsar.trajectory](#cmfqsartrajectory) | A molecular-dynamics trajectory as a conformational ensemble (plan item D7). |
 | [cmfqsar.transfer](#cmfqsartransfer) | Comparing two models by their co-fields (plan item F3). |
 | [cmfqsar.transformfield](#cmfqsartransformfield) | A matched pair as a field placed in space (plan item MC6). |
+| [cmfqsar.transport](#cmfqsartransport) | Transport coefficients of a simulated electrolyte, for plan item BT9. |
 | [cmfqsar.triangles](#cmfqsartriangles) | The three-distance autocorrelation of an environment: the angle at the centre (plan item C5). |
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
@@ -19244,6 +19245,237 @@ in it at all.
 ### `increment_predict(table: Dict[Tuple[str, str], float], items: Sequence[Transformation]) -> Tuple[np.ndarray, np.ndarray]`
 
 (the predicted change, whether the transformation was seen) for every pair.
+
+## cmfqsar.transport
+
+Source: `cmfqsar/transport.py`
+
+Transport coefficients of a simulated electrolyte, for plan item BT9.
+
+A cell model reads the salt diffusion coefficient of its electrolyte, and this program has no
+prediction of it. Measured values exist for a few solvent mixtures only, so the labels a model
+could be fitted on have to come from simulation, and a simulated label has to be tested against
+a measurement before anything is fitted on it (rule 2 of items BT9 to BT11). This module makes
+the label and the quantities it is tested by.
+
+`cmfqsar.electrolyte` already runs a box of a named formulation, for the solvation shells of
+item BT5. That run is right for the shape of a shell and wrong for a transport coefficient in
+three ways, and `run_transport` changes each of them.
+
+* **The volume is fixed during production.** A barostat rescales the positions, which adds a
+  displacement that is not diffusion. The box is equilibrated at constant pressure, set to its
+  mean volume, and then run at constant volume.
+* **The thermostat conserves momentum.** A Langevin thermostat adds a friction to every atom and
+  slows diffusion by an amount that depends on the friction chosen. The production run uses a
+  Nose-Hoover chain, which changes the kinetic energy without a drag on single atoms.
+* **Unwrapped centres are stored, often.** A displacement needs positions that are not folded
+  back into the box. The centre of mass of every molecule is stored every picosecond, unwrapped,
+  which is small (tens of megabytes for ten nanoseconds) and is all that every quantity here
+  needs. No atom trajectory is written.
+
+What is computed from the centres, with the convention each one uses.
+
+* **A self-diffusion coefficient** (`diffusion`) is the slope of the mean squared
+  displacement of one species against time, divided by six. The slope is fitted in a window of
+  lag times that starts late enough for the motion to be diffusive, and the exponent of the mean
+  squared displacement in that window is reported next to it: a value near one says the window
+  is in the diffusive regime, and a value below it says the run is too short.
+* **The error of a coefficient** is the standard error over blocks of time origins. The run is
+  cut into contiguous blocks, the mean squared displacement is computed from the origins of
+  each block at the same lags, and each block gives a slope. The error therefore belongs to the
+  estimate it stands next to: the same lags, the same window. (Fitting each block in a shorter
+  window of its own gives a different and more precise estimator, and its scatter understates
+  the error of the reported one by a factor of three on a random walk.) It is the error of the
+  mean over the time that was run and says nothing about a bias of the force field.
+* **The finite box** (`size_factor`, `extrapolate_size`). A diffusion coefficient
+  from a periodic box is too small by `xi k T / (6 pi eta L)` with `xi` = 2.837 (Yeh and
+  Hummer, J. Phys. Chem. B 108 (2004) 15873), `eta` the viscosity and `L` the side of the
+  box. The viscosity is not measured here. Boxes of several sizes give the limit of an infinite
+  box and, from the slope against `1 / L`, the viscosity; together these give a hydrodynamic
+  radius, and with that radius the correction of a box of any size is a factor.
+* **The salt diffusion coefficient** (`salt_diffusivity`) of a dilute, ideal solution is
+  `2 D+ D- / (D+ + D-)`. For a concentrated solution it is multiplied by the thermodynamic
+  factor, which is item BT11's and is passed in.
+* **The conductivity** two ways. `nernst_einstein_conductivity` is what the two
+  self-diffusion coefficients would give if every ion moved on its own. `conductivity`
+  is the Einstein relation for the displacement of the total charge, which includes the motion
+  of ions together: a cation and an anion that move as a pair carry no current. The second is
+  the one to compare with a measurement, and its ratio to the first says how far the ions are
+  from moving on their own. Both use the formal charges of the ions, also when the force field
+  scales them.
+
+**Scaled ion charges.** A force field with fixed charges has no polarisation and binds a small
+cation too strongly, which slows it. Multiplying the charges of the ions by a factor near 0.8 is
+the usual repair in the literature. Here it is a setting (`ion_charge_scale`) to be tested against
+the measured conductivity, never a default.
+
+### `class TransportError  — bases: RuntimeError`
+
+A transport coefficient cannot be computed from what was given.
+
+### `class TransportSettings  (dataclass)`
+
+What one transport run does.
+
+Attributes:
+
+- `temperature: float` = `298.15`
+- `pressure: float` = `1.0`
+- `timestep_fs: float` = `2.0`
+- `cutoff_nm: float` = `1.0`
+- `n_solvent: int` = `250`
+- `min_ions: int` = `4`
+- `equilibration_ps: float` = `500.0`
+- `settle_ps: float` = `50.0`
+- `production_ps: float` = `4000.0`
+- `sample_ps: float` = `1.0`
+- `seed: int` = `1`
+- `platform: str` = `'CUDA'`
+- `charge_model: str` = `'openff-gnn-am1bcc-0.1.0-rc.3.pt'`
+- `small_molecule_forcefield: str` = `'gaff-2.11'`
+- `ion_forcefield: str` = `'amber14/tip3p.xml'`
+- `ion_charge_scale: float` = `1.0`
+- `thermostat: str` = `'nose-hoover'`
+- `coupling_per_ps: float` = `1.0`
+
+#### `TransportSettings.steps(picoseconds: float) -> int`
+
+### `msd(positions, max_lag: Optional[int]=None, batch: int=64) -> np.ndarray`
+
+The mean squared displacement of a set of particles at every lag, in the square of the
+unit of the positions.
+
+`positions` has the shape (frames, particles, 3) and must be unwrapped. The mean is over the
+particles and over every time origin, computed with the Fourier-transform form of the sum, so
+a run of ten thousand frames costs seconds and not hours. Entry `m` is the lag of `m` frames.
+
+### `remove_drift(centres: np.ndarray, masses: Sequence[float]) -> np.ndarray`
+
+The centres with the motion of the whole box taken out, frame by frame.
+
+`centres` holds every molecule of the box. A drift of the centre of mass of the box is not
+diffusion; the simulation removes it, and this removes what is left of it.
+
+### `default_window(total: float) -> Tuple[float, float]`
+
+The lag times a slope is fitted between, for a run of the length `total`: from a
+fortieth of the run, and no earlier than 50, to a tenth of it.
+
+The start leaves out the short times at which a molecule is still inside its cage. The end
+is early on purpose: few independent stretches of the run contribute to a long lag, and on
+a random walk a window that ends at a tenth of the run gives a coefficient about twice as
+precise as one that ends at a quarter. A run too short for a start at 50 is fitted between
+a twentieth and a quarter of its length instead.
+
+### `fit_slope(times, values, window: Tuple[float, float]) -> Dict[str, float]`
+
+The slope of `values` against `times` inside `window`, by least squares, and the exponent
+of `values` there (the slope of its logarithm against the logarithm of the time).
+
+### `diffusion(positions, dt_ps: float, window: Optional[Tuple[float, float]]=None, blocks: int=5, points: int=16) -> Dict[str, object]`
+
+The self-diffusion coefficient of one species, in m2/s, with its error over blocks.
+
+`positions` are unwrapped centres in angstrom, shape (frames, particles, 3), `dt_ps` the
+time between frames. `window` is the range of lag times, in picoseconds, the slope is fitted
+in; without one, `default_window` of the length of the run. The mean squared
+displacement is computed at `points` lags spread evenly over the window, from every time
+origin, and the coefficient is the slope of a straight line through them, divided by six.
+
+The error is the standard error of the same slope over `blocks` blocks of time origins, so
+it is the error of this estimate and of no other. With one block there is no error.
+
+### `salt_diffusivity(d_cation: float, d_anion: float, factor: float=1.0) -> float`
+
+The diffusion coefficient of the salt: `2 D+ D- / (D+ + D-)` for a dilute, ideal
+solution of two singly charged ions, times `factor`, the thermodynamic factor.
+
+### `transport_number(d_cation: float, d_anion: float) -> float`
+
+The share of the current the cation would carry if every ion moved on its own,
+`D+ / (D+ + D-)`. It ignores the motion of ions together, so it is not the transference
+number a cell model reads (plan item BT10); it is that item's first reference.
+
+### `molarity(pairs: int, volume_a3: float) -> float`
+
+Moles of salt per litre, from the number of ion pairs and the volume of the box in
+cubic angstrom.
+
+### `nernst_einstein_conductivity(d_cation: float, d_anion: float, pairs: int, volume_a3: float, temperature: float, charge: float=1.0) -> float`
+
+The conductivity, in S/m, that the two self-diffusion coefficients would give if every
+ion moved on its own: `q^2 e^2 N (D+ + D-) / (V k T)`.
+
+### `conductivity(cations, anions, dt_ps: float, volume_a3: float, temperature: float, charge: float=1.0, window: Optional[Tuple[float, float]]=None, blocks: int=5) -> Dict[str, object]`
+
+The conductivity, in S/m, from the displacement of the total charge (the Einstein
+relation), with its error over blocks.
+
+The charge that has crossed the box is `q e (sum of the cation displacements - sum of the
+anion displacements)`, and its mean squared displacement grows as `6 V k T sigma t`.
+Unlike a self-diffusion coefficient this is one quantity per box and not one per ion, so it
+converges much more slowly, and its block error is the number to look at first.
+
+### `yeh_hummer_correction(side_a: float, viscosity: float, temperature: float) -> float`
+
+What a periodic cubic box of the side `side_a` (angstrom) takes off a diffusion
+coefficient, in m2/s, at the viscosity `viscosity` (Pa s).
+
+### `extrapolate_size(d: Sequence[float], sides_a: Sequence[float], temperature: float, se: Optional[Sequence[float]]=None) -> Dict[str, float]`
+
+The diffusion coefficient of an infinite box, from boxes of several sizes.
+
+A straight line is fitted to the coefficients against one over the side of the box,
+weighted by their errors when `se` is given. Its value at zero is the coefficient of an
+infinite box, and its slope gives the viscosity, because the correction of Yeh and Hummer
+is `xi k T / (6 pi eta L)`. With two boxes the line passes through both and has no error;
+three or more are needed for the scatter to say anything.
+
+### `hydrodynamic_radius(d_infinite: float, viscosity: float, temperature: float) -> float`
+
+The radius, in angstrom, of the sphere that would diffuse as fast in a liquid of that
+viscosity (Stokes and Einstein, with stick boundary conditions).
+
+### `size_factor(radius_a: float, side_a: float) -> float`
+
+The factor that turns the diffusion coefficient of a periodic box into that of an
+infinite one, for a species of the hydrodynamic radius `radius_a` in a box of the side
+`side_a`: `1 / (1 - xi R / L)`.
+
+This is the correction of Yeh and Hummer with the viscosity written through the
+coefficient itself, which is what makes it a factor. It lets one size study correct boxes
+of other formulations, on the assumption that the radius of a species changes less from one
+formulation to another than the viscosity does.
+
+### `scale_ion_charges(system, atoms: Sequence[int], scale: float) -> None`
+
+Multiply the partial charges of the atoms in `atoms` by `scale`, in place.
+
+The pair interactions the force field lists one by one (the scaled interactions between
+atoms three bonds apart) carry the product of two charges, and they are scaled as well: by
+`scale` for each of their two atoms that is in `atoms`.
+
+### `run_transport(form: E.Formulation, workdir: str, settings: Optional[TransportSettings]=None, progress=None) -> Dict[str, object]`
+
+Pack, equilibrate and run one formulation for transport; returns what was done.
+
+The centres of all molecules, unwrapped, go to `centres.npz` in `workdir` (angstrom, one
+frame per `sample_ps`), with the name, the mass and the net charge of every molecule, and
+`run.json` holds the record. A `workdir` that already holds a `run.json` is not run
+again, so one directory is one setting.
+
+### `read_centres(path: str) -> Dict[str, object]`
+
+The stored centres of a run: `centres` (frames, molecules, 3) in angstrom, with the name,
+mass and net charge of every molecule, the time between frames and the side of the box.
+
+### `analyse(run: Dict[str, object], first_ps: float=0.0, last_ps: Optional[float]=None, blocks: int=5) -> Dict[str, object]`
+
+Everything this module computes for one run, from its stored centres.
+
+`first_ps` and `last_ps` cut the run, which is how the dependence on its length is read
+from one run instead of from several. The diffusion coefficients are those of the periodic
+box; the correction for its size is applied by the caller, who knows the radius to use.
 
 ## cmfqsar.triangles
 
