@@ -6404,21 +6404,44 @@ much a field-based screening figure depends on how its decoys were placed.
 
 ## Fitting in the space of the landmarks
 
-The exact model holds one n by n matrix per field and factorises the n by n joint kernel. On a
+The exact model holds one $n \times n$ matrix per field and factorises the $n \times n$ joint
+kernel, where $n$ is the number of training molecules. On a
 32 GB machine that stops at ten to twenty thousand molecules: five field kernels of 10 000
 molecules are 4 GB. Memory is the limit and not time. Plan item B6 assessed the ways out, found
 that one of them fits this kernel, and `cmfqsar/lowrank.py` is that one.
 
-**The construction.** Choose m landmarks Z and replace every field kernel by
+**The construction.** Choose $m$ landmarks $Z$ and replace every field kernel by its Nyström
+approximation,
 
-    K(X, X) ~ K(X, Z) K(Z, Z)^+ K(Z, X),
+$$
+\mathbf{K}(X, X) \;\approx\; \mathbf{K}(X, Z)\,\mathbf{K}(Z, Z)^{+}\,\mathbf{K}(Z, X).
+$$
+<!-- #eq:nystrom -->
 
-the Nystrom approximation. That is the Gram matrix of the features `Phi = K(X, Z) W` with
-`W W^T = K(Z, Z)^+`, so the model can be fitted in the space of the m columns instead of the
-space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
-`(K + lam I) a = y`, in m by m memory. Nothing new is computed -- `K(X, Z)` is what the kernel
-module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
-of molecules, so the features of the whole set are never held at once.
+Here $X$ stands for the $n$ training molecules, $\mathbf{K}(X, Z)$ is the $n \times m$ matrix of
+the kernel values between the molecules and the landmarks, $\mathbf{K}(Z, X)$ is its transpose,
+and the superscript $+$ is the pseudo-inverse. The right-hand side is the Gram matrix
+$\Phi\Phi^{\mathrm{T}}$ of the features
+
+$$
+\Phi = \mathbf{K}(X, Z)\,\mathbf{W}, \qquad \mathbf{W}\mathbf{W}^{\mathrm{T}} = \mathbf{K}(Z, Z)^{+},
+$$
+<!-- #eq:landmark-features -->
+
+so the model can be fitted in the space of the $m$ columns of $\Phi$ instead of the space of
+the $n$ molecules. The ridge system in that space is
+
+$$
+\left(\Phi^{\mathrm{T}}\Phi + \lambda\mathbf{I}\right)\mathbf{w} = \Phi^{\mathrm{T}}\mathbf{y},
+$$
+<!-- #eq:landmark-ridge -->
+
+with one weight in $\mathbf{w}$ for every feature. It is the same ridge regression as the dual
+system $(\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} = \mathbf{y}$ with the kernel
+$\mathbf{K} = \Phi\Phi^{\mathrm{T}}$, and it needs $m \times m$ memory. Nothing new is computed:
+$\mathbf{K}(X, Z)$ is what the kernel module already produces. `lowrank.gram` accumulates
+$\Phi^{\mathrm{T}}\Phi$ and $\Phi^{\mathrm{T}}\mathbf{y}$ over blocks of molecules, so the features
+of the whole set are never held at once.
 
 ![The landmark construction on the DHFR set of the Sutherland collection. Left: the exact joint kernel of the 361 molecules, with similar molecules next to each other. Second: the features that thirty landmark molecules give, one row for each molecule; each of the five fields gives up to thirty columns. Third: the kernel that these features stand for, their matrix times its transpose. Right: the relative difference between that kernel and the exact one, against the number of landmark molecules; the circle is the case of the panels. The model is fitted on the columns of the second panel and never holds the first. Drawn by `docs/make_figures.py`.](docs/figures/landmarks.png)
 
@@ -6433,13 +6456,19 @@ field, which is only ever large near an atom.
 
 **What stays exact.** A molecule's self-kernel is its own integral and costs nothing, so it is
 never approximated. That matters twice. The cosine normalisation divides by the exact diagonal;
-and the posterior variance keeps the exact k(x, x):
+and the posterior variance of a molecule $x$ keeps the exact self-kernel $K(x, x)$:
 
-    var(x) = k(x,x) - phi^T phi + lam phi^T (Phi^T Phi + lam I)^-1 phi,
+$$
+\sigma^2(x) = K(x, x) - \boldsymbol{\phi}^{\mathrm{T}}\boldsymbol{\phi}
++ \lambda\,\boldsymbol{\phi}^{\mathrm{T}}\left(\Phi^{\mathrm{T}}\Phi + \lambda\mathbf{I}\right)^{-1}\boldsymbol{\phi}.
+$$
+<!-- #eq:landmark-variance -->
 
-which is the exact Gaussian-process variance with K replaced by its approximation. Without that
-first pair of terms -- the plain subset-of-regressors form -- the variance falls towards zero
-far from the landmarks, which is the opposite of what a lower confidence bound needs.
+Here $\boldsymbol{\phi}$ is the feature vector of the molecule $x$, computed as a row of $\Phi$
+is. Eq. (#eq:landmark-variance) is the exact Gaussian-process variance with $\mathbf{K}$ replaced
+by its approximation. Without its first two terms, which is the plain subset-of-regressors form,
+the variance falls towards zero far from the landmarks. That is the opposite of what a lower
+confidence bound needs.
 
 **The interpretation survives.** A fit in the feature space is a dual fit whose coefficients sit
 on the landmarks, so `lowrank.cofield_gaussians` returns the same three arrays
@@ -6451,19 +6480,19 @@ decomposed exactly as before.
 
 * **It is the exact model when nothing is approximated.** With every molecule its own landmark,
   the kernel, the predictions, the log evidence, the posterior variance and the co-field on a
-  grid all agree with the exact path to 2e-11 or better.
+  grid all agree with the exact path to $2 \times 10^{-11}$ or better.
 * **The approximation costs little on a broad field.** At an attenuation of 0.5, a grid of
-  Gaussian centres 2 A apart is within 0.004 of the exact q2 on every set, and 20 to 80
+  Gaussian centres 2 Å apart is within 0.004 of the exact $q^2$ on every set, and 20 to 80
   landmark molecules within 0.076. The attenuation decides this, not the number of molecules.
 * **At a narrow field the landmarks have to follow the atoms.** At an attenuation of 2 and
-  above a grid 2 A apart reproduces the kernel only to 5e-01, where the atoms of the same
-  molecules thinned to 0.5 to 0.75 A reach 2e-02 with a landmark count of the same order -- on
-  GPB at an attenuation of 5, 6.5e-01 against 1.8e-02 for 259 landmark atoms. The q2 follows:
+  above a grid 2 Å apart reproduces the kernel only to 0.5, where the atoms of the same
+  molecules thinned to 0.5 to 0.75 Å reach 0.02 with a landmark count of the same order -- on
+  GPB at an attenuation of 5, 0.65 against 0.018 for 259 landmark atoms. The $q^2$ follows:
   +0.548 for the grid against +0.593 for the atoms, where the exact model gives +0.594. That is
   the case the assessment of this item named and left open.
 * **What it saves is memory, and only beyond the crossing point.** At 361 molecules -- the
   largest aligned set here -- the exact kernels are 6 MB and the low-rank fit is 13 MB, because
-  the rank of a 2 A grid over that frame is 1275. The low-rank memory does not grow with the
+  the rank of a 2 Å grid over that frame is 1275. The low-rank memory does not grow with the
   molecules at all, so the two cross at about 1275 molecules and everything beyond that is
   saving. It is also eight times faster at that size, which was not the point: a kernel entry
   against a one-atom centre costs a thirtieth of one against a whole molecule.
@@ -6498,14 +6527,14 @@ cmf build series.sdf --activity pKi --low-rank atoms:0.75 --alphas 2 \
 
 What this branch refuses is `--conformal-normalise`. A normalised interval divides each error
 by the distance of its molecule from every other training molecule, and that distance is read
-off the n by n kernel, which is the one matrix a low-rank model is fitted to avoid. The plain
+off the $n \times n$ kernel, which is the one matrix a low-rank model is fitted to avoid. The plain
 interval is the one to use here, and on the sets measured in `benchmarks/run_conformal.py`
 normalising gains no sharpness anyway.
 
 What the file keeps is the landmarks, the whitening and one weight per feature instead of one
 coefficient per training molecule. The training table travels with it as before, because it is
 linear in the number of molecules and the provenance and the contract are read off it; what is
-never built, at any point, is the n by n kernel. `cmf lowrank` remains as the short path that
+never built, at any point, is the $n \times n$ kernel. `cmf lowrank` remains as the short path that
 fits and reports without saving anything.
 
 **What is not done.** The low-rank branch of `build` does not take a second endpoint or write
@@ -8301,6 +8330,7 @@ with $\alpha$ and $\lambda$ chosen in a 10-fold inner cross-validation, 5 outer 
 | overlap fields, poses registered in the plane by their common substructure | 0.517 | 36.9 |
 | overlap fields, poses shuffled in the plane | 0.480 | 38.3 |
 | rotation-invariant autocorrelation, which discards the height | 0.109 | 50.2 |
+| the number of heavy atoms less than 3 Å above the top layer, in a linear regression with one coefficient | 0.657 | 31.1 |
 
 Three things follow. The **invariance is demonstrated rather than asserted**: turning every pose
 by a random angle about the normal and sliding it up to 6 Å in the plane changes the model by
@@ -8309,6 +8339,42 @@ produces the score** — the fully invariant kernel differs from this one only i
 it falls from 0.655 to 0.109. And **the frame the overlap kernel wants is not worth building**:
 registering the poses laterally on the common substructure moves it from 0.505 to 0.517, a
 negligible difference, while the kernel that was never given a frame is 0.14 above the better of them.
+
+**One number does as well as the kernel, and it is the reference to use.** The last row of the
+table needs no kernel and no field. It counts the heavy atoms of a pose that lie less than 3 Å
+above the top layer of iron, and it puts that count into a linear regression with one
+coefficient. The regression is scored on the same outer folds; with one coefficient there is
+nothing to choose inside a fold. It reaches a q² of 0.657, and the surface kernel reaches
+0.655. On the predictions averaged over the ten repeats the surface kernel is ahead of the
+count by 0.025, and the 95 % interval of that difference, from a bootstrap that draws the
+molecules, runs from −0.084 to +0.152. The limit of 3 Å was not tuned: with 2 Å the count
+reaches 0.691 and with 4 Å 0.630.
+
+The quinoline node of the same study, 63 molecules relaxed in the same way, repeats the test
+with the limit fixed in advance. There the count is ahead of every kernel:
+
+| model, quinoline node | $q^2$ | RMSE (kJ/mol) |
+|---|---:|---:|
+| the number of heavy atoms less than 3 Å above the top layer, linear regression | 0.659 | 43.2 |
+| surface kernel, the channels of the table above | 0.517 | 51.4 |
+| surface kernel, channels half as wide | 0.575 | 48.2 |
+| overlap fields, poses as written | 0.560 | 49.0 |
+| rotation-invariant autocorrelation | 0.020 | 73.2 |
+
+The surface kernel with the channels of the first table is behind the count by 0.107, with
+an interval from −0.265 to +0.021.
+
+So the three statements above stand, and they are statements about kernels. The second one
+can now be said exactly. The height is what produces the score, and on these two sets the
+height enters as one quantity: how much of the molecule lies on the metal. The surface kernel
+finds that quantity without being told. It does not find more than the count on the first
+set, and it is behind the count on the second, although the interval of that difference still
+holds zero. The global descriptors that the corrosion literature uses reach a q² of 0.39 at most on
+the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
+molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
+to be given credit for what it adds to the count, and on these adsorption energies nothing in
+this program adds to it yet. The sixth tutorial, `docs/tutorials/06_on_a_surface.ipynb`, makes
+the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
 integral of a product of fields, so the prediction cannot be turned back into a function of
@@ -8319,7 +8385,8 @@ carry the signal, which `top_channels` ranks against the labels of
 distance, one pair of field types at a time, in the *Co-pattern* tab of the Results panel; the
 section *The co-pattern as a chart* is about that chart and about what it may and may not be
 read for. The measurements above come from `surface_kernel_eads.py`, in
-`examples/corrosion_fe110`, which writes its table next to the script.
+`examples/corrosion_fe110`, which writes its tables next to the script: one of the scores, and
+one of the differences between the surface kernel and the count.
 
 ![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)
 
@@ -15512,11 +15579,13 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Six notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Seven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
-a library against a model of one series, and molecules adsorbed on a metal surface, read with
-the surface kernel and compared with a count of the atoms near the metal. Each runs on the
+a library against a model of one series, molecules adsorbed on a metal surface, read with
+the surface kernel and compared with a count of the atoms near the metal, and the Hammett
+constants of substituted benzenes, read from co-fields in the plane of the ring and compared
+with the charge of one ring carbon. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
