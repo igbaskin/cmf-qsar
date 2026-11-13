@@ -5178,6 +5178,130 @@ values and a computed oxidation potential is a descriptor, not a target.
   benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium).
   Script code under rule 6, not a module.
 
+**Medium and large: the three electrolyte parameters a cell model reads and this program does not predict (opened 13 November 2026)**
+
+MS9 left this open. A cell model of the Doyle–Fuller–Newman type reads four properties of the
+electrolyte, each as a function of the salt concentration and the temperature: the ionic
+conductivity; the salt diffusion coefficient; the cation transference number, which is the share
+of the current the lithium ion carries, counted against the motion of the solvent; and the
+thermodynamic factor, which is one plus the derivative of the logarithm of the mean activity
+coefficient with respect to the logarithm of the concentration. BT5 predicts the first, with its
+activation energy. The other three have a measured reference for one solvent mixture and no
+prediction. The reference is the set of functions of Landesfeind and Gasteiger (2019) for LiPF₆
+in EC:EMC 3:7, which PyBaMM ships in its `ORegan2022` parameter set. The study reports further
+solvent mixtures whose functions PyBaMM does not ship; they have to be read from the paper, and
+whether they are usable is to be confirmed at the source. The published cell (`Chen2020`) holds
+the transference number at 0.2594 and the thermodynamic factor at 1. MS9's second reference
+showed that the three are not small: at 2.5 times the one-hour rate the cell gives 4.609 A.h
+with all four parameters as measured, against 3.675 A.h with the published set, and in the cold
+they decide the capacity.
+
+Four rules hold for all three items. Each comes from a result already recorded in this plan.
+They are numbered on their own here; "plan rule 4" below is the rule on intervals at the head
+of this plan.
+
+1. *The tolerance first.* Before anything is simulated, the stress stage of MS9 is run with the
+   parameter drawn around its measured function at several spreads (`tolerance_for_capacity` and
+   `local_sensitivity` in `cmfqsar/cellmodel.py`). The result is the deviation of that parameter
+   which the capacity tolerates at each rate and temperature. If the cheapest reference of an
+   item is already inside that tolerance, the item ends there and its entry says so.
+2. *A simulated label is checked against a measurement before a model is fitted on it.* Measured
+   values of these three properties exist for a few solvent mixtures only. That is too few to
+   train on, so the labels for the 62 formulations of BT5 have to come from simulation. MS9 found
+   that a bias is not repaired by a narrower deviation, so the simulation is tested first, on
+   data already in the repository: the same trajectories must reproduce the measured
+   conductivities of CALiSol-23 for the 62 formulations, in rank and in level, and the measured
+   functions for EC:EMC 3:7. The known weakness is recorded in BT5: the force field puts 6.95
+   donor atoms at the ion against 4.24 on DFT geometries, and an ion that binds too strongly
+   moves too slowly. Scaling the charges of the ions is the usual repair in the literature. Here
+   it is a setting to be tested against the conductivities, not an assumption.
+3. *The box is sized for the property.* The boxes of BT5 hold 250 solvent molecules and as few
+   as four ion pairs, and run for one nanosecond. That is enough for the shape of a solvation
+   shell and not enough for a transport coefficient. Each item first determines, on one
+   formulation, how the block error of its label falls with the number of ion pairs and with the
+   length of the run, and states the cost of all 62 formulations before running them.
+4. *The references include the one-number versions.* Every model is compared with the constant
+   of the published parameter set, with a linear regression on the salt concentration, with the
+   composition model of BT5 (a Gaussian kernel on the solvent fractions and the concentration),
+   and with the reference named in the item. The folds hold out solvent compositions, as in BT5,
+   and are repeated. A second reading holds out every formulation that contains one solvent.
+   The second reading is where the fields have a reason to add something: a composition
+   descriptor has no column for a solvent it has not seen, and the field of a molecule does not
+   need one. Four battery items in a row did not beat the composition on an average over a
+   liquid, so on the first reading the expected result is that the composition model is enough.
+
+All three items write their result through the writer of MS9, as a function of concentration
+and temperature in the form PyBaMM reads, in moles per litre. The density of the simulated box
+gives the conversion from the molality that CALiSol-23 uses. The same density closes the open
+point of MS9 that its conductivity was a molality compared with a molarity.
+
+* **BT9. The salt diffusion coefficient of the electrolyte.** This is the parameter the cell
+  responds to most among the three: MS9's second reference attributes most of the difference
+  between the two capacities at fast discharge to it. *Reference of its own:* the diffusion
+  coefficient that the predicted conductivity implies, D = 2 t (1 − t) κRT / (F²c), where κ is
+  the conductivity, c the concentration and t the transference number of the published set. It
+  follows from the Nernst–Einstein relation for an ideal solution of fully dissociated ions. It
+  needs no new data, so it is compared with the measured function before anything else. If it
+  is inside the tolerance of rule 1, the conductivity model of BT5 already gives this parameter
+  and the item ends. *Labels:* the self-diffusion coefficients of the cation and the anion from
+  their mean squared displacements, with the correction of Yeh and Hummer for the finite box,
+  which needs the viscosity of the same box. The salt diffusion coefficient is 2D₊D₋ / (D₊ + D₋)
+  multiplied by the thermodynamic factor: the factor of BT11 once that exists, the one of the
+  measured reference until then. The activation energy comes from runs at three temperatures.
+  MS9 found that one activation energy does not describe the conductivity below about 263 K, so
+  the coldest of the three is placed there. *Models:* the references of rule 4, and the ensemble
+  of sampled shells of BT5 as the field description. A static shell holds no dynamics, so the
+  fields are not expected to beat the composition on the first reading of rule 4. *Gate:* (a) the
+  simulated coefficient agrees with the measured function for EC:EMC 3:7 at 298 K, over the
+  concentration range of the study and inside the uncertainty the study states; (b) a model
+  predicts the held-out compositions with a calibrated deviation (z rms near 1) and is ahead of
+  the Nernst–Einstein reference by more than the interval of plan rule 4; (c) in the stress stage
+  of MS9 the predicted interval holds the capacity of the measured electrolyte under the eight
+  conditions. Size: medium, and most of it is simulation time.
+
+* **BT10. The cation transference number.** Two different quantities carry this name. The cell
+  model reads the one counted against the motion of the solvent, which includes the correlated
+  motion of the ions: a cation and an anion that move together carry no current. The ratio of
+  the self-diffusion coefficients, D₊ / (D₊ + D₋), ignores that correlation. It comes from the
+  trajectories of BT9 at no further cost and is the first *reference of its own*. The second is
+  the fraction of the sampled shells that hold the anion, which `composition_table` in
+  `cmfqsar/shells.py` already counts. That fraction is the one-number version of what a field of
+  the shell could be measuring. It is also the reason to expect that the shell ensemble holds
+  information on this property: pairing of the ions lowers the transference number, and pairing
+  is visible in a static shell. *Labels:* the Onsager transport coefficients, from the
+  correlations of the collective displacements of the cations and the anions. They give the
+  conductivity and the transference number together, so the conductivity from the same
+  calculation is tested against CALiSol-23 under rule 2. These correlations converge much more
+  slowly than a self-diffusion coefficient, because a box gives one sample of a collective
+  displacement and one sample per ion of a single-ion displacement. Rule 3 therefore decides
+  whether the item can be afforded on this machine. The measured reference is itself uncertain:
+  the study calls its values less precise below 20 degrees Celsius, and its fitted function is
+  negative from 0 degrees down. *Gate:* (a) the tolerance of rule 1 is narrower than the
+  difference between the published constant and the measured function; if it is not, the
+  constant is enough and the item ends; (b) the simulated number agrees with the measured
+  function at 298 K inside the uncertainty the study states; (c) a model is ahead of the
+  constant, of the self-diffusion ratio and of the ion-pair fraction on held-out compositions,
+  by more than the interval of plan rule 4. Size: large.
+
+* **BT11. The thermodynamic factor.** This is an equilibrium property and not a transport
+  coefficient: it says how far the salt is from an ideal solution at each concentration. It
+  enters the cell model twice, in the diffusion coefficient of BT9 and in the potential of the
+  electrolyte. *Reference of its own:* the constant 1 of an ideal solution, which is what the
+  published cell uses, and the limiting law of Debye and Hückel, which needs only the
+  permittivity of the solvent mixture and holds at low concentration. *Labels:* the
+  Kirkwood–Buff integrals of the radial distribution functions of the simulated boxes, with the
+  correction for the finite box. These integrals are known to converge slowly and need boxes
+  several times the size of those of BT5, so rule 3 applies here most of all. What the program
+  already has on the same physics is the binding and desolvation energies of BT4 and the
+  ion-pair fraction of BT10: they describe the ion–solvent and ion–ion interactions that set
+  the activity coefficient. Whether they predict it is the question of this item and not an
+  assumption, and both enter as descriptors beside the fields. *Gate:* (a) the tolerance of
+  rule 1 is narrower than the difference between the constant 1 and the measured function; if
+  it is not, the constant is enough and the item ends; (b) the simulated factor agrees with the
+  measured function at 298 K inside the uncertainty the study states; (c) a model is ahead of
+  the constant, of the limiting law and of the linear regression on the concentration on
+  held-out compositions, by more than the interval of plan rule 4. Size: large.
+
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
 same day**, and it does not pay: the difference of the two cells is
@@ -5195,7 +5319,12 @@ single optimised complex on the activation energy, by 0.32 to 0.55 kJ/mol after 
 correction, clear of zero in three readings of four, and do not beat it on
 the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one
 complex, so the co-field and the accuracy pull against each other), BT8
-whenever EC6 is ready for it.
+whenever EC6 is ready for it. BT9 to BT11 were opened on 13 November 2026 from the open
+point of MS9. The tolerance stage of their rule 1 comes first for all three: it costs minutes
+of cell-model runs and decides which of them are simulated at all. BT9 is next, since MS9
+attributes most of the difference at fast discharge to the diffusion coefficient and its labels
+are the cheapest. BT10 follows on the same trajectories in larger boxes. BT11 is last unless the
+tolerance stage says otherwise.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -6600,7 +6729,8 @@ would discard the typed fields and the global kernel that are the method's own.
   electrolyte side:* the diffusivity, the transference number and the thermodynamic factor
   now have a measured reference but no prediction, and in the cold they decide the
   capacity; the conductivity prediction is one condition, a molality compared with a
-  molarity.
+  molarity. The three are items BT9, BT10 and BT11 of the battery section, and the
+  conversion to a molarity is part of them.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
@@ -7881,7 +8011,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 15 | 12 | M7, M8, M9 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
-| H. Battery science | 8 | 7 | BT8 |
+| H. Battery science | 11 | 7 | BT8, BT9, BT10, BT11 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
@@ -7891,7 +8021,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**171 items: 117 finished, 10 partly, 44 open.**
+**174 items: 117 finished, 10 partly, 47 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -7917,7 +8047,10 @@ equally blocked.
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
-  versions, and the whole deep-learning part ND1 to ND14, which has not been started.
+  versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
+  the three electrolyte parameters of a cell model that MS9 found without a prediction, were
+  opened on 13 November 2026; their first stage costs minutes and decides which of them are
+  simulated.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and
