@@ -13385,6 +13385,17 @@ parameters are quantities that benchmarks here predict, and each prediction come
 standard deviation in the parameter's own unit (plan item MS1). Plan item MS9 is the interface
 for that, and a measurement of what it is worth.
 
+**The scheme.** A multiscale model of a cell joins descriptions on different length scales, from
+one ion that hops between two sites of a crystal to the whole cell. No single method covers all
+of them, so each level passes a few numbers to the level above it. The fine level is an
+electronic-structure calculation or a measurement, and it gives labels for a few hundred
+structures. A model of this program learns the labels and answers for any other structure, with
+a standard deviation. A conversion turns the answer into a material parameter of the cell
+model, and the cell model gives the capacity. The figure shows the four channels that were
+built, and under them what was measured.
+
+![Multiscale modelling of a battery cell and the place of this program in it. Each row is one channel on its own length scale: the data of the fine level (grey), the model of this program that learns them and returns a value with its standard deviation (green), and the parameter of the cell model that the value becomes (yellow). The exchange-current density is not predicted and enters with a stated spread. The continuum cell model (blue) is run once for every draw of a parameter from its deviation, so the deviation reaches the capacity. Below: the measurement of `benchmarks/run_cellmodel.py` on the cell of the Chen 2020 parameter set. A bar is the 95 % interval of the capacity when one parameter is drawn and the others keep their published values. Red marks the interval that misses the capacity of the published parameters. The numbers beside the bars are the shares of the variance of the capacity. Two parameters decide the capacity, and the subsections below say why neither interval is narrow enough to use. Drawn by `docs/make_figures.py` from the stored results.](docs/figures/multiscale.svg)
+
 ### The parameter set and its conversions
 
 `cmfqsar.interfaces.CellParameter` holds one parameter. It carries the cell model's own name for

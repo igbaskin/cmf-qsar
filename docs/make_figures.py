@@ -1791,6 +1791,138 @@ def fig_phasefield(path):
     save(fig, path)
 
 
+def fig_multiscale(path):
+    """Chapter 11: the multiscale model of a battery cell and the place of this program in it.
+    Above, the scheme: a fine level labels structures, a model of this program answers with a
+    value and a standard deviation, a conversion turns the answer into a parameter of a
+    continuum cell model, and the cell model gives the capacity.  Below, what
+    ``benchmarks/run_cellmodel.py`` measured: the interval of the capacity when each parameter
+    is drawn from its deviation."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon
+    with open(os.path.join(RESULTS, "cellmodel", "cellmodel.json"), encoding="utf-8") as fh:
+        rec = json.load(fh)
+    ch, per, shares = rec["channels"], rec["per_parameter"], rec["variance_shares"]
+    keys = {"diffusivity": "Positive particle diffusivity [m2.s-1]",
+            "voltage": "Positive electrode OCP [V]",
+            "conductivity": "Electrolyte conductivity [S.m-1]",
+            "bruggeman": "Positive electrode Bruggeman coefficient (electrolyte)",
+            "exchange": "Positive electrode exchange-current density [A.m-2]"}
+    # one row per channel: the scale, the fine level, the model of this program, the parameter
+    rows = [
+        ("diffusivity", "an ion hop\nin a crystal\n0.3 nm",
+         f"migration barriers\nfrom DFT\n{ch[keys['diffusivity']]['training']['hops']:,} hops",
+         "model on the field\naround the hop path\nbarrier ± deviation",
+         "solid diffusion\ncoefficient"),
+        ("voltage", "a crystal\nand its ions\n1 nm",
+         f"formation energies\nfrom DFT\n{ch[keys['voltage']]['n']} insertion pairs",
+         "kernel on the\ncomposition\nvoltage ± deviation",
+         "shift of the open-\ncircuit voltage"),
+        ("conductivity", "a liquid\nelectrolyte\nmolecules",
+         f"measured\nconductivities\n{ch[keys['conductivity']]['n']} electrolytes",
+         "kernel on the\ncomposition\nconductivity ± deviation",
+         "factor on the\nconductivity"),
+        ("bruggeman", "a porous\nelectrode\n1 to 10 µm",
+         f"solved two-phase\nstructures\n{ch[keys['bruggeman']]['n_train']} cells",
+         "kernel on the two-\npoint statistics\nconductivity ± deviation",
+         "Bruggeman\nexponent"),
+    ]
+    blue, green, sand, grey = "#dbe7f3", "#dcefdc", "#f6ead2", "#e9e9e9"
+
+    fig = plt.figure(figsize=(WIDTH, 6.3))
+    ax = fig.add_axes((0.0, 0.40, 1.0, 0.60))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+
+    def box(x, y, w, h, label, colour, size=6.3, style="solid", weight="normal"):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.004,rounding_size=0.012",
+                                    facecolor=colour, edgecolor="0.35", linewidth=0.7,
+                                    linestyle=style))
+        ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=size,
+                linespacing=1.25, fontweight=weight)
+
+    def arrow(x0, y0, x1, y1):
+        ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>", mutation_scale=7,
+                                     linewidth=0.8, color="0.25", shrinkA=0, shrinkB=0))
+
+    x_scale, x_fine, x_fast, x_par, x_cell = 0.005, 0.135, 0.36, 0.60, 0.815
+    w_scale, w_fine, w_fast, w_par, w_cell = 0.11, 0.185, 0.20, 0.17, 0.18
+    top, height, gap = 0.80, 0.135, 0.028
+    heads = ((x_scale, w_scale, "scale"),
+             (x_fine, w_fine, "fine level:\nlabels for a few\nhundred structures"),
+             (x_fast, w_fast, "fast level: a model of\nthis program, with a\nstandard deviation"),
+             (x_par, w_par, "conversion to a\nparameter of the\ncell model"),
+             (x_cell, w_cell, "coarse level:\nthe cell\n0.1 mm and more"))
+    for x, w, label in heads:
+        ax.text(x + w / 2, 0.985, label, ha="center", va="top", fontsize=6.6, fontweight="bold",
+                linespacing=1.2)
+    for k, (_key, scale, fine, fast, par) in enumerate(rows):
+        y = top - (k + 1) * height - k * gap
+        mid = y + height / 2
+        ax.text(x_scale + w_scale / 2, mid, scale, ha="center", va="center", fontsize=6.3,
+                style="italic", linespacing=1.25)
+        box(x_fine, y, w_fine, height, fine, grey)
+        box(x_fast, y, w_fast, height, fast, green)
+        box(x_par, y, w_par, height, par, sand)
+        arrow(x_fine + w_fine, mid, x_fast, mid)
+        arrow(x_fast + w_fast, mid, x_par, mid)
+        arrow(x_par + w_par, mid, x_cell, mid)
+    # the parameter that no model of this program predicts
+    y = top - 5 * height - 4 * gap + 0.03
+    box(x_fine, y, x_par + w_par - x_fine, height - 0.045,
+        "exchange-current density: not predicted, it enters with a stated spread", "white",
+        style="dashed")
+    arrow(x_par + w_par, y + (height - 0.045) / 2, x_cell, y + (height - 0.045) / 2)
+    low = y
+    box(x_cell, low, w_cell, top - low,
+        "continuum cell model\n(Doyle-Fuller-Newman)\n\nequations of transport\nin space and time\n\n"
+        "each parameter is\ndrawn from its\ndeviation; one run\nper draw", blue)
+    xm = x_cell + w_cell / 2                         # the arrow down, as a line and a triangle
+    ax.plot([xm, xm], [low - 0.008, low - 0.055], color="0.25", lw=0.9, solid_capstyle="butt",
+            clip_on=False)                           # it reaches below the axes
+    ax.add_patch(Polygon([(xm - 0.006, low - 0.052), (xm + 0.006, low - 0.052),
+                          (xm, low - 0.075)], closed=True, facecolor="0.25", edgecolor="0.25",
+                         linewidth=0.5, clip_on=False))
+    ax.text(x_cell + w_cell / 2, low - 0.09, "capacity per cycle,\nwith an interval",
+            ha="center", va="top", fontsize=6.6, fontweight="bold", linespacing=1.2)
+
+    # what was measured: the interval of the capacity when one parameter is drawn at a time
+    ax2 = fig.add_axes((0.30, 0.07, 0.45, 0.215))
+    published = float(rec["published"]["final"])
+    order = ["diffusivity", "voltage", "conductivity", "bruggeman", "exchange"]
+    names = ["solid diffusion coefficient", "open-circuit voltage", "electrolyte conductivity",
+             "Bruggeman exponent", "exchange-current density"]
+    for k, key in enumerate(order):
+        lo_c, hi_c = per[keys[key]]["interval_of_the_last_cycle"]
+        holds = bool(per[keys[key]]["holds_the_published_curve"]["all_inside"])
+        colour = "C0" if holds else "C3"
+        ax2.plot([lo_c, hi_c], [k, k], color=colour, lw=4.5, solid_capstyle="butt")
+        if hi_c - lo_c < 0.1:                         # an interval too narrow to see as a line
+            ax2.plot([0.5 * (lo_c + hi_c)], [k], marker="|", ms=9, mew=2.2, color=colour)
+        share = 100.0 * float(shares[keys[key]]["share"])
+        ax2.text(1.03, k, f"{share:.1f} % of the variance; "
+                 + ("holds" if holds else "misses") + " the published capacity",
+                 transform=ax2.get_yaxis_transform(), va="center", fontsize=6.3)
+    ax2.axvline(published, color="0.3", lw=0.7, ls="--")
+    ax2.set_yticks(range(len(order)))
+    ax2.set_yticklabels(names, fontsize=6.6)
+    ax2.set_ylim(len(order) - 0.5, -0.5)
+    ax2.set_xlim(0.0, 5.8)
+    ax2.set_xlabel(f"capacity after {rec['cycles']} cycles / A·h (dashed: with the published "
+                   "parameters)", fontsize=6.6)
+    ax2.tick_params(length=2, labelsize=6.6)
+    for side in ("top", "right"):
+        ax2.spines[side].set_visible(False)
+    ax2.set_title(f"measured: the 95 % interval of the capacity when one parameter is drawn\n"
+                  f"{rec['draws']} times from its deviation and the others keep their published "
+                  "values", fontsize=6.8, loc="left", x=-0.62, linespacing=1.25)
+    print("  multiscale: " + "; ".join(
+        f"{key} {per[keys[key]]['interval_of_the_last_cycle'][0]:.3f}-"
+        f"{per[keys[key]]['interval_of_the_last_cycle'][1]:.3f}" for key in order))
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -2308,6 +2440,7 @@ FIGURES = {
     "copattern.svg": fig_copattern,
     "cospectrum.svg": fig_cospectrum,
     "phasefield.png": fig_phasefield,
+    "multiscale.svg": fig_multiscale,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
