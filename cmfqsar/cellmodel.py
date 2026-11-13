@@ -53,6 +53,18 @@ DEFAULT_OPTIONS = {"SEI": "solvent-diffusion limited"}
 MODELS = ("SPM", "SPMe", "DFN")
 
 
+def discharge(rate: float, cutoff: float = 2.5) -> Tuple[str]:
+    """One discharge at `rate` times the one-hour rate down to `cutoff` volt, as a cycle.
+
+    At several times the one-hour rate the transport in the electrolyte starts to limit the
+    cell, so this is the cycle that asks whether the electrolyte's parameters matter. Use the
+    full Doyle-Fuller-Newman model there: the single-particle model with electrolyte
+    approximates the electrolyte and is not meant for high rates.
+    """
+    rate = float(rate)
+    return (f"Discharge at {rate:g}C until {float(cutoff):g} V",)
+
+
 def _pybamm():
     """PyBaMM, imported late so that this module can be imported without it."""
     try:
@@ -109,16 +121,21 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
              base: str = DEFAULT_BASE, kind: str = "SPMe",
              options: Optional[Dict[str, object]] = None,
              cycle: Sequence[str] = DEFAULT_CYCLE, initial_soc: float = 1.0,
-             parameters=None) -> CellRun:
+             parameters=None, temperature: Optional[float] = None) -> CellRun:
     """One run of the cell model, with the entries in `overrides` put in place of the published
     ones. Returns the discharge capacity of every cycle.
 
     `overrides` maps a parameter name to the value or the function that replaces it, which is
     what :meth:`cmfqsar.interfaces.CellParameter.apply` produces. `parameters` is for a caller
     that has the published set already, so that reading it is not repeated per run.
+    `temperature` sets the temperature of the cell and of its surroundings, in kelvin; how much
+    that changes depends on which parameters of the published set depend on temperature at all.
     """
     pybamm = _pybamm()
     p = (published_parameters(base) if parameters is None else parameters).copy()
+    if temperature is not None:
+        p.update({"Ambient temperature [K]": float(temperature),
+                  "Initial temperature [K]": float(temperature)})
     for name, value in dict(overrides or {}).items():
         if name not in p:
             raise KeyError(f"the parameter set {base} holds no entry called {name!r}")
@@ -152,7 +169,7 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
 def sample(parameter: CellParameter, draws: int = 200, cycles: int = 10,
            base: str = DEFAULT_BASE, kind: str = "SPMe",
            options: Optional[Dict[str, object]] = None, cycle: Sequence[str] = DEFAULT_CYCLE,
-           seed: int = 0, progress=None) -> List[CellRun]:
+           seed: int = 0, progress=None, temperature: Optional[float] = None) -> List[CellRun]:
     """Run the cell model once per drawn value of one parameter, the others left published.
 
     This is the one-at-a-time sampling the report reads: it says what this parameter's deviation
@@ -167,7 +184,7 @@ def sample(parameter: CellParameter, draws: int = 200, cycles: int = 10,
     for i, v in enumerate(values):
         out.append(run_cell({parameter.name: parameter.apply(p[parameter.name], v)},
                             cycles=cycles, base=base, kind=kind, options=options, cycle=cycle,
-                            parameters=p))
+                            parameters=p, temperature=temperature))
         out[-1].overrides = {parameter.name: float(v)}
         if progress is not None:
             progress(i + 1, len(values))
@@ -353,5 +370,5 @@ def _shrink_sample(values: Sequence[float], scale: float) -> np.ndarray:
 
 
 __all__ = ["CellRun", "DEFAULT_BASE", "DEFAULT_CYCLE", "DEFAULT_OPTIONS", "MODELS", "band",
-           "build_model", "contains", "local_sensitivity", "published_parameters", "run_cell",
-           "sample", "tolerance_for_capacity", "variance_shares"]
+           "build_model", "contains", "discharge", "local_sensitivity", "published_parameters",
+           "run_cell", "sample", "tolerance_for_capacity", "variance_shares"]

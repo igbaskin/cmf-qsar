@@ -6574,6 +6574,19 @@ would discard the typed fields and the global kernel that are the method's own.
   for a cathode with partly occupied sites, and a measured electrode microstructure in place of
   generated ones; the product kernel over materials and cell design stays a later item, since
   MS9 did not show the materials kernel adding anything.
+  **The electrolyte under stress, measured 13 November 2026** (`--stage stress`). At the
+  one-hour rate the cell does not respond to its electrolyte, so the conductivity and the
+  Bruggeman exponent were drawn again with the full Doyle-Fuller-Newman model at 1 to 2.5
+  times that rate, and the conductivity at 263 and 253 K, carried there by the activation
+  energy BT5's composition model also predicts (13.56 +/- 0.91 kJ/mol against 13.68
+  measured, z rms 1.13). The published electrolyte functions have no temperature dependence,
+  so the reference is the electrolyte as CALiSol-23 measured it. The predicted interval holds
+  the measured electrolyte's capacity under all eight conditions and, in the cold, excludes
+  the published curve (up to 0.055 A.h too high). The Bruggeman exponent takes over at fast
+  discharge: at 2.5C it explains 99.7 % of the variance and misses the published curve by
+  0.53 A.h (0.0015 A.h at 1C). *Open on the electrolyte side:* the diffusivity, the cation
+  transference number and the thermodynamic factor have no source here; the prediction is
+  one condition, a molality compared with a molarity.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.

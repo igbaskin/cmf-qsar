@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1248 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1250 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1585,6 +1585,15 @@ The capacity of the last cycle, or not-a-number when there is none.
 
 How much of the first cycle's capacity is left at the last one.
 
+### `discharge(rate: float, cutoff: float=2.5) -> Tuple[str]`
+
+One discharge at `rate` times the one-hour rate down to `cutoff` volt, as a cycle.
+
+At several times the one-hour rate the transport in the electrolyte starts to limit the
+cell, so this is the cycle that asks whether the electrolyte's parameters matter. Use the
+full Doyle-Fuller-Newman model there: the single-particle model with electrolyte
+approximates the electrolyte and is not meant for high rates.
+
 ### `published_parameters(base: str=DEFAULT_BASE)`
 
 The published parameter set the cell model starts from.
@@ -1593,7 +1602,7 @@ The published parameter set the cell model starts from.
 
 The cell model itself.
 
-### `run_cell(overrides: Optional[Dict[str, object]]=None, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, initial_soc: float=1.0, parameters=None) -> CellRun`
+### `run_cell(overrides: Optional[Dict[str, object]]=None, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, initial_soc: float=1.0, parameters=None, temperature: Optional[float]=None) -> CellRun`
 
 One run of the cell model, with the entries in `overrides` put in place of the published
 ones. Returns the discharge capacity of every cycle.
@@ -1601,8 +1610,10 @@ ones. Returns the discharge capacity of every cycle.
 `overrides` maps a parameter name to the value or the function that replaces it, which is
 what `cmfqsar.interfaces.CellParameter.apply` produces. `parameters` is for a caller
 that has the published set already, so that reading it is not repeated per run.
+`temperature` sets the temperature of the cell and of its surroundings, in kelvin; how much
+that changes depends on which parameters of the published set depend on temperature at all.
 
-### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None) -> List[CellRun]`
+### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None, temperature: Optional[float]=None) -> List[CellRun]`
 
 Run the cell model once per drawn value of one parameter, the others left published.
 
@@ -7251,7 +7262,9 @@ this program can give it is a value for one of its parameters, with a standard d
 unit the cell model reads. The functions in that section do the conversions: a migration barrier to
 a solid diffusion coefficient through an Arrhenius law, carrying the deviation through the
 exponential (`diffusivity_from_barrier`); a predicted conductivity to a factor on the
-published one (`conductivity_scale_from_log10`); a predicted average voltage to a shift of
+published one (`conductivity_scale_from_log10`), and to another temperature with a
+predicted activation energy (`conductivity_scale_at_temperature`); a predicted average
+voltage to a shift of
 the published open-circuit voltage (`ocp_shift`); an insertion ladder to a
 voltage-against-stoichiometry curve (`ladder_to_ocp_curve`); and an effective conductivity of
 a porous electrode to a Bruggeman exponent (`bruggeman_from_conductivity_ratio`). The sampler
@@ -7539,6 +7552,22 @@ far above or below the published function its own value lies, and that is a fact
 `predicted` and `reference` are both logarithms to base ten of a conductivity in the same
 unit, so only their difference matters. `sd` is the deviation of the prediction on that same
 logarithmic scale.
+
+### `conductivity_scale_at_temperature(predicted: float, sd: float, activation: float, sd_activation: float, reference: float, temperature: float, name: str, prediction_temperature: float=298.15, draws: int=2000, seed: int=0, published: Optional[float]=None, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='') -> CellParameter`
+
+A factor on the published conductivity at another temperature, from a predicted
+conductivity and a predicted activation energy.
+
+The conductivity predicted at `prediction_temperature` is carried to `temperature` by an
+Arrhenius law, `log10 k(T) = log10 k(T0) - E / (R ln 10) (1/T - 1/T0)`, with `activation`
+the activation energy in kJ/mol. `reference` is the base-ten logarithm of the cell model's
+own conductivity *at* `temperature`, in the same unit as `predicted`, so the factor relates
+the prediction to what the cell model would use there. A published function with no
+temperature dependence simply has the same reference at every temperature.
+
+The two predictions come from two models, so their errors are drawn independently: `draws`
+pairs, each giving one factor. The record carries the drawn factors, which keeps the shape
+the exponential gives them.
 
 ### `ocp_shift(predicted: float, published: float, name: str, sd: float=0.0, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='') -> CellParameter`
 

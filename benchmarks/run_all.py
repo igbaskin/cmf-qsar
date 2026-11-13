@@ -398,12 +398,14 @@ def registry() -> List[Benchmark]:
                   "factor on the conductivity of the electrolyte, and a two-phase field as a "
                   "Bruggeman exponent, each drawn from its deviation and run through PyBaMM's "
                   "single-particle model with electrolyte, with the share of the variance of "
-                  "the capacity each one explains and how accurate the barrier would have to be "
+                  "the capacity each one explains and how accurate the barrier would have to be; "
+                  "then the electrolyte at faster discharge and in colder cells, with the "
+                  "activation energy BT5 predicts "
                   "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
                   "run_cellmodel.py", "cellmodel",
                   compute=[[]],
                   prepare=["prepare_nebdft.py --fetch"],
-                  minutes="25",
+                  minutes="35",
                   report=lambda: _mod("run_cellmodel").report(),
                   tables=["cellmodel/table.md"]),
         Benchmark("battery",

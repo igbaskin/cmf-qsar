@@ -1,0 +1,39 @@
+{
+ "temperature": 298.15,
+ "rate": 2.5,
+ "model": "DFN",
+ "draws": 100,
+ "published": 3.6750452151094164,
+ "published_ok": true,
+ "measured": 3.66217065815687,
+ "measured_ok": true,
+ "measured_factor": 0.9304029943304073,
+ "predicted_factor": 0.9866162084320501,
+ "factor_interval": [
+  0.7627439276429497,
+  1.2781285170250751
+ ],
+ "parameters": {
+  "Electrolyte conductivity [S.m-1]": {
+   "low": 3.639579233770087,
+   "high": 3.7151797521725425,
+   "median": 3.674383554597058,
+   "refused": 0.0,
+   "holds_published": true,
+   "holds_measured": true,
+   "share": 0.0026756436451609994,
+   "sd": 0.023006796020052712
+  },
+  "Positive electrode Bruggeman coefficient (electrolyte)": {
+   "low": 1.6920075076923924,
+   "high": 3.143759276954622,
+   "median": 2.479251758458674,
+   "refused": 0.0,
+   "holds_published": false,
+   "holds_measured": null,
+   "share": 0.997324356354839,
+   "sd": 0.44418124691567595
+  }
+ },
+ "seconds": 96.1
+}
