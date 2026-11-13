@@ -201,6 +201,49 @@ def test_the_errors_weight_the_line():
         T.extrapolate_size([1e-10], [30.0], 298.15)
 
 
+def test_species_of_one_liquid_share_the_slope_against_the_size():
+    temperature, viscosity = 298.15, 2.0e-3
+    sides = [27.0, 34.0, 43.0]
+    limits = {"cation": 1.0e-10, "anion": 1.6e-10, "EMC": 3.0e-10}
+    d = {k: [v - T.yeh_hummer_correction(L, viscosity, temperature) for L in sides]
+         for k, v in limits.items()}
+    fit = T.joint_size_fit(d, sides, temperature)
+    assert fit["viscosity"] == pytest.approx(viscosity, rel=1e-8)
+    for k, v in limits.items():
+        assert fit["species"][k]["d_infinite"] == pytest.approx(v, rel=1e-8)
+        assert fit["species"][k]["radius"] == pytest.approx(
+            T.hydrodynamic_radius(v, viscosity, temperature), rel=1e-7)
+    assert fit["correction"] == pytest.approx(
+        [T.yeh_hummer_correction(L, viscosity, temperature) for L in sides])
+    assert fit["chi"] < 1e-6
+
+
+def test_the_species_known_best_fixes_the_slope_for_the_others():
+    """The ions are few and their coefficients scatter; the solvent is exact. With the errors
+    given, the common slope is the solvent's, and the ions get the right limit on average."""
+    temperature, viscosity = 298.15, 2.0e-3
+    sides = [27.0, 34.0, 43.0]
+    exact = [3.0e-10 - T.yeh_hummer_correction(L, viscosity, temperature) for L in sides]
+    noisy = [1.0e-10 - T.yeh_hummer_correction(L, viscosity, temperature) + e
+             for L, e in zip(sides, (1.5e-11, -2.0e-11, 1.0e-11))]
+    fit = T.joint_size_fit({"cation": noisy, "EMC": exact}, sides, temperature,
+                           se={"cation": [2e-11] * 3, "EMC": [1e-13] * 3})
+    assert fit["viscosity"] == pytest.approx(viscosity, rel=0.01)
+    alone = T.extrapolate_size(noisy, sides, temperature)
+    assert abs(fit["species"]["cation"]["d_infinite"] - 1.0e-10) \
+        < abs(alone["d_infinite"] - 1.0e-10)
+
+
+def test_what_the_joint_fit_refuses():
+    with pytest.raises(T.TransportError, match="at least two boxes"):
+        T.joint_size_fit({"cation": [1e-10]}, [30.0], 298.15)
+    with pytest.raises(T.TransportError, match="coefficients for"):
+        T.joint_size_fit({"cation": [1e-10]}, [30.0, 40.0], 298.15)
+    # coefficients that fall as the box grows give no viscosity
+    fit = T.joint_size_fit({"cation": [2e-10, 1e-10]}, [30.0, 60.0], 298.15)
+    assert np.isnan(fit["viscosity"]) and np.isnan(fit["species"]["cation"]["radius"])
+
+
 def test_a_box_too_small_for_its_species_is_refused():
     assert T.size_factor(0.0, 30.0) == 1.0
     assert T.size_factor(3.0, 30.0) == pytest.approx(1.0 / (1.0 - T.YEH_HUMMER * 0.1))

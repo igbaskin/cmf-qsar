@@ -324,6 +324,65 @@ def extrapolate_size(d: Sequence[float], sides_a: Sequence[float], temperature: 
             "residual": float(np.sqrt(np.mean((np.polyval([slope, intercept], x) - y) ** 2)))}
 
 
+def joint_size_fit(d: Dict[str, Sequence[float]], sides_a: Sequence[float], temperature: float,
+                   se: Optional[Dict[str, Sequence[float]]] = None) -> Dict[str, object]:
+    """The coefficients of an infinite box for several species at once, from the same boxes.
+
+    The correction of Yeh and Hummer is the same amount for every species of one liquid,
+    because it depends only on the viscosity and on the side of the box. So the species share
+    one slope against one over the side, and each has its own value at zero. Fitting them
+    together uses the species with many molecules, whose coefficients are known best, to fix
+    the slope for the ions, which are few. `d` maps a species to its coefficients in the boxes
+    of the sides `sides_a`, and `se` to their errors, which weight the fit when given.
+
+    Returns the viscosity, the coefficient of an infinite box and the hydrodynamic radius per
+    species, the amount the correction adds in each box, and the root-mean-square residual in
+    units of the errors (near one when a common slope describes the data).
+    """
+    names = list(d)
+    x = 1.0 / (np.asarray(sides_a, float) * 1.0e-10)
+    if len(x) < 2 or not names:
+        raise TransportError("the fit needs at least two boxes of different size and a species")
+    rows, values, weights = [], [], []
+    for k, name in enumerate(names):
+        y = np.asarray(d[name], float)
+        if len(y) != len(x):
+            raise TransportError(f"{name} has {len(y)} coefficients for {len(x)} boxes")
+        e = None if se is None else np.asarray(se[name], float)
+        usable = e is not None and np.all(np.isfinite(e)) and np.all(e > 0)
+        for j in range(len(x)):
+            row = np.zeros(len(names) + 1)
+            row[k] = 1.0
+            row[-1] = -x[j]
+            rows.append(row)
+            values.append(y[j])
+            weights.append(1.0 / e[j] if usable else 1.0 / max(abs(float(np.mean(y))), 1e-30))
+    A, b, w = np.array(rows), np.array(values), np.array(weights)
+    # the two kinds of column differ by eighteen orders of magnitude in SI units, so the
+    # system is solved with the side in angstrom and the coefficients in units of their mean
+    unit = float(np.mean(np.abs(b))) or 1.0
+    scaled = A.copy()
+    scaled[:, -1] *= 1.0e-10
+    solution, *_ = np.linalg.lstsq(scaled * w[:, None], b / unit * w, rcond=None)
+    solution = solution * unit
+    solution[-1] *= 1.0e-10
+    k_slope = float(solution[-1])                    # the correction is k_slope / L
+    viscosity = (YEH_HUMMER * BOLTZMANN * float(temperature) / (6.0 * np.pi * k_slope)
+                 if k_slope > 0 else float("nan"))
+    residual = (A @ solution - b) * w
+    freedom = max(1, len(b) - len(solution))
+    out = {"viscosity": float(viscosity), "slope": k_slope,
+           "correction": [float(k_slope * v) for v in x],
+           "chi": float(np.sqrt((residual ** 2).sum() / freedom)), "species": {}}
+    for k, name in enumerate(names):
+        d_inf = float(solution[k])
+        out["species"][name] = {
+            "d_infinite": d_inf,
+            "radius": (hydrodynamic_radius(d_inf, viscosity, temperature)
+                       if np.isfinite(viscosity) and d_inf > 0 else float("nan"))}
+    return out
+
+
 def hydrodynamic_radius(d_infinite: float, viscosity: float, temperature: float) -> float:
     """The radius, in angstrom, of the sphere that would diffuse as fast in a liquid of that
     viscosity (Stokes and Einstein, with stick boundary conditions)."""
@@ -647,7 +706,7 @@ def analyse(run: Dict[str, object], first_ps: float = 0.0, last_ps: Optional[flo
 
 __all__ = ["A2_PER_PS", "AVOGADRO", "BOLTZMANN", "ELEMENTARY_CHARGE", "TransportError",
            "TransportSettings", "YEH_HUMMER", "analyse", "conductivity", "default_window",
-           "diffusion", "extrapolate_size", "fit_slope", "hydrodynamic_radius", "molarity",
+           "diffusion", "extrapolate_size", "fit_slope", "hydrodynamic_radius", "joint_size_fit", "molarity",
            "msd", "nernst_einstein_conductivity", "read_centres", "remove_drift",
            "run_transport", "salt_diffusivity", "scale_ion_charges", "size_factor",
            "transport_number", "yeh_hummer_correction"]

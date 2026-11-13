@@ -31,6 +31,17 @@ differ in one setting each, and :data:`RUNS` lists them.
 * ``full``: the force field as it is, with whole charges on the ions.
 * ``scaled``: the charges of the ions multiplied by 0.8, the usual repair for a force field
   without polarisation, which binds a small cation too strongly.
+* ``scaled_07``: the charges of the ions multiplied by 0.7. The conductivity rises steeply as
+  the charges are scaled down, and a third value of the factor says where the simulated
+  conductivity meets the measured one.
+* ``scaled_small``, ``scaled_large`` and ``scaled_huge``: the same as ``scaled`` with half, twice
+  and four times as many molecules.
+* ``scaled_seed2`` and ``scaled_seed3``: the same as ``scaled``, packed again and started with
+  other velocities. The error over the blocks of one run does not include the difference
+  between two arrangements of the ions that both last longer than the run; these repeats
+  measure it.
+  A periodic box makes every diffusion coefficient too small by an amount that falls with the
+  side of the box, so three sizes give the coefficient of an infinite box and the viscosity.
 
 What is compared
 ----------------
@@ -87,7 +98,25 @@ RUNS: Dict[str, Dict[str, object]] = {
     "full": {"label": "whole charges on the ions", "settings": {}},
     "scaled": {"label": "charges of the ions multiplied by 0.8",
                "settings": {"ion_charge_scale": 0.8}},
+    "scaled_small": {"label": "scaled charges, half as many molecules",
+                     "settings": {"ion_charge_scale": 0.8, "n_solvent": 125}},
+    "scaled_large": {"label": "scaled charges, twice as many molecules",
+                     "settings": {"ion_charge_scale": 0.8, "n_solvent": 500}},
+    "scaled_07": {"label": "charges of the ions multiplied by 0.7",
+                  "settings": {"ion_charge_scale": 0.7}},
+    "scaled_seed2": {"label": "scaled charges, a second start",
+                     "settings": {"ion_charge_scale": 0.8, "seed": 2}},
+    "scaled_seed3": {"label": "scaled charges, a third start",
+                     "settings": {"ion_charge_scale": 0.8, "seed": 3}},
+    "scaled_huge": {"label": "scaled charges, four times as many molecules",
+                    "settings": {"ion_charge_scale": 0.8, "n_solvent": 1000}},
 }
+#: the runs that differ only in the size of the box, from which the correction for a finite box
+#: is read
+SIZE_RUNS = ("scaled_small", "scaled", "scaled_large", "scaled_huge")
+#: the runs that differ only in how the box was packed and in the first velocities: their
+#: scatter is the error that the blocks of one run cannot see
+REPEATS = ("scaled", "scaled_seed2", "scaled_seed3")
 #: the lengths, in picoseconds, at which one run is read to see how its error falls
 LENGTHS = (500.0, 1000.0, 2000.0, 4000.0)
 STAGES = ("simulate", "analyse")
@@ -221,6 +250,111 @@ def stage_analyse(names: Sequence[str], results: str = RESULTS, cache: str = CAC
             f"S/m against {res['measured']['conductivity']:.3f}")
         with open(os.path.join(results, f"run_{name}.json"), "w", encoding="utf-8") as fh:
             json.dump(res, fh, indent=1)
+
+
+def size_study(rows: Sequence[dict]) -> Optional[dict]:
+    """The coefficients of an infinite box, from the runs that differ only in their size.
+
+    Needs at least two of the runs in :data:`SIZE_RUNS` among `rows`; returns None otherwise.
+    The species share one slope against one over the side of the box
+    (:func:`cmfqsar.transport.joint_size_fit`). The salt diffusion coefficient and its ratio to
+    the measured one are then given for the infinite box, with the measured values of the
+    largest box, whose concentration is the best determined.
+    """
+    from cmfqsar import transport as T
+
+    chosen = sorted((r for r in rows if r["run"] in SIZE_RUNS), key=lambda r: r["side"])
+    if len(chosen) < 2:
+        return None
+    species = {"cation": lambda r: r["whole"]["cation"], "anion": lambda r: r["whole"]["anion"]}
+    for name in sorted(chosen[0]["whole"]["solvents"]):
+        species[name] = (lambda r, n=name: r["whole"]["solvents"][n])
+    d = {k: [f(r)["d"] for r in chosen] for k, f in species.items()}
+    se = {k: [f(r)["se"] for r in chosen] for k, f in species.items()}
+    sides = [r["side"] for r in chosen]
+    temperature = float(chosen[0]["temperature"])
+    fit = T.joint_size_fit(d, sides, temperature, se=se)
+    separate = {k: T.extrapolate_size(d[k], sides, temperature, se=se[k]) for k in d}
+    last = chosen[-1]
+    m = last["measured"]
+    dp = fit["species"]["cation"]["d_infinite"]
+    dm = fit["species"]["anion"]["d_infinite"]
+    out = {"runs": [r["run"] for r in chosen], "sides": sides,
+           "pairs": [r["pairs"] for r in chosen], "d": d, "se": se, "fit": fit,
+           "separate": separate, "measured": m}
+    if dp > 0 and dm > 0:
+        salt = T.salt_diffusivity(dp, dm)
+        out.update({"salt_ideal": salt,
+                    "salt_with_factor": salt * m["thermodynamic_factor"],
+                    "ratio_ideal": salt / m["diffusivity"],
+                    "ratio_with_factor": salt * m["thermodynamic_factor"] / m["diffusivity"],
+                    "nernst_einstein": T.nernst_einstein_conductivity(
+                        dp, dm, last["pairs"], last["side"] ** 3, temperature),
+                    "transport_number": T.transport_number(dp, dm)})
+    return out
+
+
+def size_lines(study: dict, limits: Sequence[Dict[str, float]]) -> List[str]:
+    """The section of the table on the size of the box."""
+    out: List[str] = []
+    w = out.append
+    fit = study["fit"]
+    names = list(study["d"])
+    label = {"cation": "Cation", "anion": "Anion"}
+    w("## The size of the box")
+    w("")
+    w("A periodic box makes a diffusion coefficient too small, because a molecule interacts "
+      "with its own images through the liquid. The amount is 2.837 k T / (6 pi eta L) for a "
+      "cubic box of the side L and a liquid of the viscosity eta (Yeh and Hummer, 2004). It is "
+      "the same amount for every species of one liquid. The runs below differ only in the "
+      "number of molecules. One straight line per species is fitted against 1 / L, with one "
+      "slope for all of them, so that the solvents, which have many molecules, fix the slope "
+      "for the ions, which have few. The value of a line at 1 / L = 0 is the coefficient of an "
+      "infinite box.")
+    w("")
+    w("| Run | Ion pairs | Side, A | " + " | ".join(f"{label.get(n, n)}, m2/s" for n in names)
+      + " | What the correction adds, m2/s |")
+    w("|---|---:|---:|" + "---|" * len(names) + "---:|")
+    for j, run in enumerate(study["runs"]):
+        cells = [run, str(study["pairs"][j]), _f(study["sides"][j])]
+        cells += [f"{_e(study['d'][n][j])} +/- {_e(study['se'][n][j], 1)}" for n in names]
+        cells.append(_e(fit["correction"][j]))
+        w("| " + " | ".join(cells) + " |")
+    w("| infinite box | | | "
+      + " | ".join(_e(fit["species"][n]["d_infinite"]) for n in names) + " | 0 |")
+    w("")
+    w(f"The common slope gives a viscosity of {_f(1000.0 * fit['viscosity'], 2)} mPa s. The "
+      f"lines leave a root-mean-square residual of {_f(fit['chi'], 2)} in units of the errors "
+      f"of the coefficients; a value near 1 says that one slope describes all species. "
+      "The hydrodynamic radius of a species is the radius of a sphere that would diffuse as "
+      "fast in a liquid of that viscosity: "
+      + ", ".join(f"{label.get(n, n).lower() if n in label else n} "
+                  f"{_f(fit['species'][n]['radius'], 1)} A" for n in names) + ".")
+    w("")
+    w("Fitted one species at a time, without the common slope, the same boxes give: "
+      + "; ".join(f"{label.get(n, n).lower() if n in label else n} "
+                  f"{_e(study['separate'][n]['d_infinite'])} m2/s with a viscosity of "
+                  f"{_f(1000.0 * study['separate'][n]['viscosity'], 2)} mPa s"
+                  for n in names)
+      + ". The spread of these viscosities says how well the boxes determine the slope.")
+    w("")
+    if "salt_ideal" in study:
+        m = study["measured"]
+        served = served_rates(study["ratio_with_factor"], limits)
+        w("**In an infinite box** the salt diffusion coefficient of an ideal solution is "
+          f"{_e(study['salt_ideal'])} m2/s, {_f(study['ratio_ideal'])} of the measured "
+          f"{_e(m['diffusivity'])}. Multiplied by the measured thermodynamic factor it is "
+          f"{_e(study['salt_with_factor'])} m2/s, {_f(study['ratio_with_factor'])} of the "
+          "measured value"
+          + (f", which the cell tolerates at {', '.join(f'{x:g}C' for x in served)}"
+             if served else (", which the cell tolerates at none of the four rates"
+                             if limits else ""))
+          + f". The Nernst-Einstein conductivity of the infinite box is "
+            f"{_f(study['nernst_einstein'], 3)} S/m against the measured "
+            f"{_f(m['conductivity'], 3)}, and the share of the current on the cation, if the "
+            f"ions moved alone, is {_f(study['transport_number'], 3)}.")
+        w("")
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -396,6 +530,9 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]]) -> Li
               f"{_f(a['exponent'])} | {_e(part['salt'])} | {_f(k['sigma'], 3)} +/- "
               f"{_f(k['se'], 3)} |")
     w("")
+    study = size_study(rows)
+    if study is not None:
+        out.extend(size_lines(study, limits))
     return out
 
 

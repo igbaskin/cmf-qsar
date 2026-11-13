@@ -122,6 +122,37 @@ def test_the_table_names_what_was_compared(tmp_path, fixed_reference):
     assert "the tolerance stage has not been run" in "\n".join(R.report_lines(rows, []))
 
 
+def _sized(run, side, pairs, shift):
+    """A made-up result of one box: every coefficient is its limit less `shift`."""
+    def rec(limit):
+        return {"d": limit - shift, "se": 0.02 * limit, "exponent": 0.9}
+    return {"run": run, "side": side, "pairs": pairs, "temperature": 298.15,
+            "measured": dict(MEASURED),
+            "whole": {"cation": rec(1.0e-10), "anion": rec(1.5e-10),
+                      "solvents": {"EC": rec(3.0e-10), "EMC": rec(2.5e-10)}}}
+
+
+def test_the_size_study_needs_two_boxes_and_gives_the_infinite_one():
+    from cmfqsar import transport as T
+    eta = 2.5e-3
+    rows = [_sized(name, side, pairs, T.yeh_hummer_correction(side, eta, 298.15))
+            for name, side, pairs in (("scaled_small", 27.0, 14), ("scaled", 34.0, 27),
+                                      ("scaled_large", 43.0, 55))]
+    assert R.size_study(rows[:1]) is None
+    assert R.size_study([dict(rows[0], run="full")]) is None
+    study = R.size_study(rows)
+    assert study["runs"] == ["scaled_small", "scaled", "scaled_large"]
+    assert study["fit"]["viscosity"] == pytest.approx(eta, rel=1e-6)
+    assert study["salt_ideal"] == pytest.approx(T.salt_diffusivity(1.0e-10, 1.5e-10), rel=1e-6)
+    assert study["ratio_with_factor"] == pytest.approx(
+        study["salt_ideal"] * 2.4 / 2.7e-10)
+    text = "\n".join(R.size_lines(study, LIMITS))
+    assert "| infinite box | | | 1.00e-10 | 1.50e-10 | 3.00e-10 | 2.50e-10 | 0 |" in text
+    assert "a viscosity of 2.50 mPa s" in text
+    assert "which the cell tolerates at 1C, 1.5C, 2C, 2.5C" in text
+    assert "| scaled_small | 14 | 27.00 |" in text
+
+
 def test_the_report_needs_a_result(tmp_path):
     with pytest.raises(SystemExit, match="--stage analyse"):
         R.report(str(tmp_path))

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1276 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1277 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -19481,6 +19481,21 @@ weighted by their errors when `se` is given. Its value at zero is the coefficien
 infinite box, and its slope gives the viscosity, because the correction of Yeh and Hummer
 is `xi k T / (6 pi eta L)`. With two boxes the line passes through both and has no error;
 three or more are needed for the scatter to say anything.
+
+### `joint_size_fit(d: Dict[str, Sequence[float]], sides_a: Sequence[float], temperature: float, se: Optional[Dict[str, Sequence[float]]]=None) -> Dict[str, object]`
+
+The coefficients of an infinite box for several species at once, from the same boxes.
+
+The correction of Yeh and Hummer is the same amount for every species of one liquid,
+because it depends only on the viscosity and on the side of the box. So the species share
+one slope against one over the side, and each has its own value at zero. Fitting them
+together uses the species with many molecules, whose coefficients are known best, to fix
+the slope for the ions, which are few. `d` maps a species to its coefficients in the boxes
+of the sides `sides_a`, and `se` to their errors, which weight the fit when given.
+
+Returns the viscosity, the coefficient of an infinite box and the hydrodynamic radius per
+species, the amount the correction adds in each box, and the root-mean-square residual in
+units of the errors (near one when a common slope describes the data).
 
 ### `hydrodynamic_radius(d_infinite: float, viscosity: float, temperature: float) -> float`
 
