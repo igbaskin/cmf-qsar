@@ -102,6 +102,7 @@ class Benchmark:
     results: str                                 # folder under benchmarks/results/
     compute: List[List[str]] = field(default_factory=list)   # argument lists, run in order
     needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | "xtb"
+                                                 # | "pybamm" (not in requirements-lock.txt)
                                                  # | None: a file or a program the machine
                                                  # may not have
     minutes: str = "?"                           # what a full run costs on the author's machine
@@ -515,7 +516,7 @@ def registry() -> List[Benchmark]:
                   "the capacity each one explains and how accurate the barrier would have to be "
                   "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
                   "run_cellmodel.py", "cellmodel",
-                  compute=[[]],
+                  compute=[[]], needs="pybamm",
                   prepare=["prepare_nebdft.py --fetch"],
                   minutes="25",
                   report=lambda: _mod("run_cellmodel").report(),
