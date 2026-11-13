@@ -5090,7 +5090,12 @@ positions, should give co-fields that differ in where they sit.
 `examples/make_hammett_examples.py` builds 95 monosubstituted benzenes with σ_m and σ_p (and the
 Hansch π for 69 of them) from the compilation of Hansch, Leo and Taft (Chem. Rev. 91 (1991) 165),
 ETKDG + MMFF94, lowest conformer, ring centroid at the origin, ipso carbon on +x, ring in the xy
-plane; charged substituents are left out. The ring frame has two reflections (y → −y, z → −z) that
+plane; charged substituents are left out. One group is built by a rule and not by a force field:
+RDKit has no force field that holds a pentafluorosulfanyl group, so SF5 is set to a regular
+octahedron with the gas-phase bond lengths of C6H5SF5. Until 14 November 2026 the files held the
+structure the embedding gave, with S-F distances from 1.19 to 2.49 Å, and the quantum charges of
+that record were computed on it; the numbers of this section are from the repaired files, and the
+last paragraph of the section says what the one record had cost. The ring frame has two reflections (y → −y, z → −z) that
 map it onto itself while turning a substituent conformer into an equally valid one, so the file
 `hammett_sym.sdf` carries the four images of every molecule as conformers and the ensemble mode
 averages them, giving every field the symmetry of the problem. Modelling the field of the whole
@@ -5103,24 +5108,27 @@ folds are the reliable measurement). Gasteiger charges, q²:
 
 | constant (sd) | all five | electrostatic | steric | hydrophobic | HBA | HBD |
 |---|---|---|---|---|---|---|
-| σ_m (0.26) | **0.70** (RMSEcv 0.14) | 0.66 | 0.19 | −0.03 | 0.18 | −0.02 |
-| σ_p (0.38) | **0.69** (RMSEcv 0.21) | 0.68 | 0.14 | −0.01 | 0.23 | 0.02 |
-| π (1.09) | **0.71** (RMSEcv 0.59) | 0.38 | 0.30 | 0.72 | 0.27 | 0.28 |
+| σ_m (0.26) | **0.73** (RMSEcv 0.14) | 0.67 | 0.19 | −0.03 | 0.17 | −0.02 |
+| σ_p (0.38) | **0.69** (RMSEcv 0.21) | 0.68 | 0.14 | −0.01 | 0.24 | 0.02 |
+| π (1.09) | **0.74** (RMSEcv 0.56) | 0.32 | 0.31 | 0.77 | 0.28 | 0.28 |
 
 The electrostatic field carries the Hammett constants, as it should, and the hydrophobic field
-carries π; that π is recovered only to q² 0.72 from a field whose weights are the Crippen increments
+carries π; that π is recovered only to q² 0.77 from a field whose weights are the Crippen increments
 that π is nearly the sum of is a reminder that the model sees the increments only through the
 overlap of their Gaussians, not as a sum. The two electrostatic co-fields
-(`benchmarks/results/hammett/cofields.png`) have the same shape: positive weight over the ring on the
-substituted side and negative lobes 3–5 Å out along the substituent, so a group that leaves the ring
-carbons electron-poor and carries negative charge at its periphery (NO2, CF3, SO2R) raises the
-constant and a donor that does the opposite lowers it. This is the learned form of Topsom's
-electrostatic model of the field effect. The para co-field has the larger weight over the ring and
-the deeper lobes at the substituent; it also has the larger errors, and they are the resonance
-cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2 are predicted
-far too high (N(CH3)2: −0.32 for a tabulated −0.83) and the nitroso group far too low (0.34 for
-0.91). For σ_m the worst cases are the extreme acceptors SO2Cl and NO2 (0.61 for 1.20, 1.10 for
-0.71), which the kernel treats as more of the same. The steric field alone sees a little of σ_m (0.19) and nothing of σ_p: it acts as
+(`benchmarks/results/hammett/cofields.png`) have the same reading: positive weight at the ipso
+carbon and on the side of the ring that carries the substituent, and negative lobes 3–5 Å out
+along the substituent. So a group that leaves the ring carbons electron-poor and carries negative
+charge at its periphery (NO2, CF3, SO2R) raises the constant and a donor that does the opposite
+lowers it. This is the learned form of Topsom's electrostatic model of the field effect. The two
+maps differ in sharpness, and that difference is not chemistry: the cross-validation chose an
+attenuation of 3 for σ_m and of 0.5 for σ_p, and the score changes little over the whole range of
+attenuations (the seventh tutorial prints it). The para model has the larger errors, and they are
+the resonance cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2
+are predicted far too high (N(CH3)2: −0.31 for a tabulated −0.83) and the nitroso group far too low
+(0.33 for 0.91). Its largest single error is C(CF3)3 (1.17 for 0.55). For σ_m the worst cases are
+the extreme acceptors SO2Cl and NO2 (0.76 for 1.20, 1.07 for 0.71), which the kernel treats as more
+of the same. The steric field alone sees a little of σ_m (0.19) and nothing of σ_p: it acts as
 a heavy-atom count, not as anything Hammett measured.
 
 ```bash
@@ -5138,20 +5146,35 @@ ten minutes for the set six at a time), q²:
 
 | constant | all five, Hirshfeld | Hirshfeld alone | all five, Gasteiger |
 |---|---|---|---|
-| σ_m | **0.79** (RMSEcv 0.12) | 0.65 | 0.70 |
-| σ_p | **0.78** (RMSEcv 0.18) | 0.71 | 0.69 |
-| π | 0.74 | 0.33 | 0.71 |
+| σ_m | **0.89** (RMSEcv 0.09) | 0.87 | 0.73 |
+| σ_p | **0.90** (RMSEcv 0.12) | 0.92 | 0.69 |
+| π | 0.78 | 0.30 | 0.74 |
 
-Both constants gain about 0.09 in q², and the gain is where it was predicted to be. The donors that
-the Gasteiger model missed are now close (N(CH3)2 −0.62 for −0.83, NH2 −0.69 for −0.66, nitroso 0.60
-for 0.91), and the co-fields (`benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png`) separate:
-the σ_m co-field puts its positive weight on the two meta carbons and a negative lobe on the ipso
-carbon and the first atom of the substituent, the σ_p co-field spreads the positive weight over the
-whole ring with the para carbon included and puts the deeper negative lobes at the periphery of the
-substituent. The selected λ is small (10⁻³ to 10⁻²) and the fitted r² is 0.99, so the
-cross-validated numbers are the ones to trust and the fine structure of the co-fields beyond the ring
-should be read as the kernel's, not the chemistry's. The largest σ_p errors left are the two amides,
-CONH2 (0.61 for 0.36) and N(CH3)COCH3 (0.06 for 0.26).
+σ_m gains 0.16 in q² and σ_p gains 0.21, and the gain is where it was predicted to be. On five sets
+of folds a bootstrap over the substituents puts the two gains at +0.13 [+0.07, +0.22] and
++0.19 [+0.12, +0.29] (the seventh tutorial), so both are resolved. The donors that the Gasteiger
+model missed are closer (N(CH3)2 −0.50 for −0.83, NH2 −0.49 for −0.66, nitroso 0.66 for 0.91).
+
+Two readings of this table are new.
+
+- **The field of the quantum charges alone does as well as all five fields** (0.87 against 0.89,
+  0.92 against 0.90). For a Hammett constant the other four fields add nothing to it.
+- **One number does as well as the field.** A linear regression on the Hirshfeld charge of the meta
+  carbon predicts σ_m with a q² of 0.89, and one on the charge of the para carbon predicts σ_p
+  with 0.86. The five fields minus that one number are −0.00 [−0.04, +0.03] and
+  +0.05 [−0.00, +0.12]. `docs/tutorials/07_a_substituent_constant.ipynb` makes the comparison
+  for every ring carbon. So the field model with quantum charges is to be given credit for finding
+  where to read, and not for predicting better than the charge of one carbon atom.
+
+The co-fields (`benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png`) separate: the σ_m
+co-field puts its positive weight on the ipso, ortho and meta carbons and least on the para
+carbon, and the σ_p co-field puts it on the half of the ring that is far from the substituent,
+with the para carbon in its centre. Both have negative lobes at the periphery of the substituent.
+The two maps are again drawn at different attenuations (2 for σ_m, 0.3 for σ_p), so read their
+positions and not their sharpness. The selected λ is 0.1 and 1 and the fitted r² is 0.97 and 0.94,
+so these models are not fitted much more closely than they predict. The largest σ_p errors left
+are NHCONH2 (0.13 for −0.24), N(CH3)2 (−0.50 for −0.83), CONH2 (0.08 for 0.36) and P(O)(OEt)2
+(0.85 for 0.60).
 
 ```bash
 python examples/orca_atom_properties.py examples/hammett/hammett.sdf --fast --no-fukui --jobs 6 -o examples/hammett/hammett_qm.sdf
@@ -5168,22 +5191,23 @@ field a new conformer and the field the same shape. Each conformer is written wi
 and the full energy list, so the Boltzmann weights of the ensemble mode read it; `--atom-props-from`
 copies the Hirshfeld charges of the lowest conformer onto all of them, which is what the ensemble
 field uses in any case, since it takes its atomic weights from its first member. The set is thin:
-77 of the 95 substituents have one conformer, 14 have two, the largest (n-butyl, diethylamino,
-diethyl phosphonate) have three to five, 1.3 on average, and both amides have exactly one, because
+80 of the 95 substituents have one conformer, 12 have two, the largest (n-butyl, diethylamino,
+diethyl phosphonate) have three to five, 1.2 on average, and both amides have exactly one, because
 the twisted amide and its mirror image are symmetry images in this frame. q²:
 
 | constant | single conformer | ensemble, uniform | ensemble, Boltzmann (kT 0.6) |
 |---|---|---|---|
-| σ_m, Gasteiger | 0.70 | 0.69 | 0.70 |
+| σ_m, Gasteiger | 0.73 | 0.71 | 0.73 |
 | σ_p, Gasteiger | 0.69 | 0.69 | 0.69 |
-| σ_m, Hirshfeld | 0.79 | 0.76 | 0.79 |
-| σ_p, Hirshfeld | 0.78 | 0.80 | 0.79 |
-| π, Gasteiger | 0.72 | 0.71 | 0.71 |
+| σ_m, Hirshfeld | 0.89 | 0.90 | 0.89 |
+| σ_p, Hirshfeld | 0.90 | 0.91 | 0.90 |
+| π, Gasteiger | 0.74 | 0.73 | 0.73 |
 
 Every difference is within the interval of a 95-compound q², the co-fields are the same pictures,
-and the amides move by a few hundredths (CONH2 0.58, N(CH3)COCH3 0.15 under Boltzmann weights). So
-the amide errors are not a conformer problem that MMFF can see; whether they are a charge problem
-(Hirshfeld charges of a conjugated amide on an MMFF geometry) or a tabulation problem is left open.
+and the amides move by a few hundredths (σ_p of CONH2 0.07 and of N(CH3)COCH3 0.11 under Boltzmann
+weights, for 0.36 and 0.26). So the amide errors are not a conformer problem that MMFF can see;
+whether they are a charge problem (Hirshfeld charges of a conjugated amide on an MMFF geometry) or
+a tabulation problem is left open.
 This is the same verdict the fourth dimension received on the binding sets, reached on a series
 where the frame is beyond doubt, which removes the one excuse those sets had.
 
@@ -5202,6 +5226,16 @@ command that produced them, which `benchmarks/results/hammett/table.md` prints a
 Six `run_hammett.py` commands make the six stored summary files: the plain one at the start of this
 section, the Hirshfeld one, and the four ensemble ones here. Those six are what the registry runs,
 so `cmf benchmark --compute hammett` rebuilds exactly what the repository keeps.
+
+**What one faulty record had cost.** Until 14 November 2026 the SF5 record of these files was the
+structure described at the start of this section, which is not the molecule, and its Hirshfeld
+charges were computed on it. With that one record of 95 the five fields with Hirshfeld charges
+reached 0.79 for σ_m and 0.78 for σ_p instead of 0.89 and 0.90, and the Hirshfeld field alone 0.65
+and 0.71 instead of 0.87 and 0.92. The models with Gasteiger charges moved much less (σ_m 0.70 to
+0.73, π 0.72 to 0.74), because those charges depend on the bonds and not on the geometry. No score
+showed the fault. It was found in a plot of σ against the Hirshfeld charge of one ring carbon,
+where the record lay far from the other 94. `tests/test_hammett_example.py` now checks every bond
+length and every close contact of the six files.
 
 ### A kinetic selectivity as the activity: chiral phosphoric acid catalysts
 
@@ -6273,7 +6307,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
 | `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, and what the ranking is worth against 100 presumed inactives |
 | `06_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, the charge of one ring carbon as the reference, and a faulty record found in a plot |
+| `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.

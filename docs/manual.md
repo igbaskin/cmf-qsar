@@ -1794,10 +1794,22 @@ together +0.762.
 
 Where the stage does pay is a property that *is* electronic. On the 95 substituents of the Hammett
 series (`benchmarks/results/hammett/table.md`) Hirshfeld charges in place of the Gasteiger ones
-take q² for sigma-meta from 0.70 to 0.76, and to 0.79 once the charges are symmetrised over the
-equivalent positions. A substituent constant is a statement about resonance, and resonance is what
-a Gasteiger charge does not know. Spend the hours where the activity is electronic; on an
-adsorption potency the five ordinary fields already carry what there is.
+take q² for sigma-meta from 0.73 to 0.89 and for sigma-para from 0.69 to 0.90. A substituent
+constant is a statement about resonance, and resonance is what a Gasteiger charge does not know.
+Spend the hours where the activity is electronic; on an adsorption potency the five ordinary
+fields already carry what there is.
+
+The same series gives two cautions. The first is about what the gain belongs to. The field of the
+Hirshfeld charges alone reaches 0.87 and 0.92, and a linear regression on the Hirshfeld charge of
+one ring carbon, the meta carbon for sigma-meta and the para carbon for sigma-para, reaches 0.89
+and 0.86. So the gain belongs to the charges, and on this series a field is not needed to collect
+it; the seventh tutorial makes the comparison. The second caution is about the structures. Until
+14 November 2026 these two numbers were 0.79 and 0.78, because one record of the 95, the
+pentafluorosulfanyl group, held a structure that is not the molecule: no force field of RDKit
+holds that group, the embedded geometry had S-F distances from 1.19 to 2.49 Å, and the quantum
+charges were computed on it. A quantum calculation does not check its input geometry. Look at the
+bond lengths of every structure before the charges are computed, and at every point that lies
+apart in a plot afterwards.
 
 ## A simulation as a conformational ensemble
 
@@ -10555,7 +10567,7 @@ The signs are the more interesting half, and they are not nothing. The electrost
 
 There is a reason to expect no better from these fields. A nitro group, whose nitrogen is **positively** charged, also raises the ipso carbon, by 20 ppm, and raises the para carbon where methoxy lowers it. No model linear in fragment charges can follow both groups, because what separates them is resonance and fragment charges do not carry it. That is the same wall the Hammett co-fields of this program met for sigma_p, and the remedy there was quantum charges computed on the whole molecule, which carry the polarisation of the ring by the substituent (`examples/orca_atom_properties.py` and the `prop:` fields). The shift set here has no such charges. The other way round the wall is to stop asking the charge and ask the atom type, which is what the next part does and what settles the question.
 
-![The co-fields of the Hammett constants $\sigma_m$ and $\sigma_p$, from the Hammett benchmark: the electrostatic and the steric co-field in the ring plane and 1.7 Å above it, with the ring and the substituent position X marked. Red raises the constant per unit of field. The electrostatic map of $\sigma_p$ has lobes of both signs around the substituent position, a pattern that fragment charges cannot deliver for a nitro group and a methoxy group at once. Drawn by `benchmarks/run_hammett.py`.](benchmarks/results/hammett/cofields.png)
+![The co-fields of the Hammett constants $\sigma_m$ and $\sigma_p$, from the Hammett benchmark: the electrostatic and the steric co-field in the ring plane and 1.7 Å above it, with the ring and the substituent position X marked. Red raises the constant per unit of field. The electrostatic map of $\sigma_p$ has lobes of both signs around the substituent position, a pattern that fragment charges cannot deliver for a nitro group and a methoxy group at once. The two rows are drawn at the attenuations that the cross-validation chose, 3 for $\sigma_m$ and 0.5 for $\sigma_p$, and they share one colour scale in each column; the score changes little with the attenuation, so the difference in sharpness and in strength between the rows is not a difference between the constants. Drawn by `benchmarks/run_hammett.py`.](benchmarks/results/hammett/cofields.png)
 
 ![The electrostatic and the steric co-field of the shift model around the measured carbon, at the origin, in the ring plane, with the ring and its four positions marked. Red raises the shift of that carbon per unit of field. The steric lobe at the ipso position is the feature twelve standard deviations from zero; the electrostatic map alternates in sign around the ring. Drawn by `benchmarks/run_local_cofield.py`.](benchmarks/results/local_cofield/cofield.png)
 

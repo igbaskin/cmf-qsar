@@ -183,3 +183,46 @@ def test_small_model_runs_end_to_end(tmp_path):
     s_dn = rh.cofield_slice(model, 0, -1.0, xs, ys)
     assert np.allclose(s_up, s_dn, atol=1e-8)
     assert np.allclose(s_up[0], s_up[1], atol=1e-8)
+
+
+def test_an_sf5_group_is_built_as_a_regular_octahedron():
+    # no force field of RDKit holds the group; before 14 November 2026 the file had S-F distances
+    # from 1.19 to 2.49 A, and quantum charges computed on that structure
+    mol = mh.build("S(F)(F)(F)(F)F", n_conformers=4)
+    r = np.array(mol.GetConformer().GetPositions(), float)
+    _ring_frame_ok(r)
+    s = next(a for a in mol.GetAtoms() if a.GetSymbol() == "S")
+    fluorines = [n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "F"]
+    carbon = next(n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "C")
+    assert len(fluorines) == 5
+    lengths = [np.linalg.norm(r[f] - r[s.GetIdx()]) for f in fluorines]
+    assert np.allclose(lengths, mh.SF5_BONDS["S-F"], atol=1e-3)
+    assert np.linalg.norm(r[carbon] - r[s.GetIdx()]) == pytest.approx(mh.SF5_BONDS["C-S"], abs=1e-3)
+    unit = [(r[x] - r[s.GetIdx()]) / np.linalg.norm(r[x] - r[s.GetIdx()]) for x in fluorines + [carbon]]
+    cosines = sorted(float(unit[a] @ unit[b]) for a in range(6) for b in range(a + 1, 6))
+    # six neighbours of an octahedron: three pairs opposite, twelve pairs at a right angle
+    assert np.allclose(cosines[:3], -1.0, atol=1e-3) and np.allclose(cosines[3:], 0.0, atol=1e-3)
+    # the sulfur is on the axis of the frame, so the four images of the group are one structure
+    assert abs(r[s.GetIdx()][1]) < 0.05 and abs(r[s.GetIdx()][2]) < 0.05
+
+
+@pytest.mark.parametrize("name", ["hammett.sdf", "hammett_sym.sdf", "hammett_ens.sdf",
+                                  "hammett_qm.sdf", "hammett_qm_sym.sdf", "hammett_ens_qm.sdf"])
+def test_no_record_of_the_example_files_has_an_impossible_bond(name):
+    # the check that would have found the SF5 record: every bond length between 0.7 and 1.3 times
+    # the sum of the covalent radii, and no two atoms without a bond closer than 1.3 A
+    from cmfqsar import orca
+
+    path = os.path.join(HERE, "..", "examples", "hammett", name)
+    faults = []
+    for mol in Chem.SDMolSupplier(path, removeHs=False):
+        r = np.array(mol.GetConformer().GetPositions(), float)
+        if orca.changed_bonds(mol, low=0.7, high=1.3):
+            faults.append((mol.GetProp("_Name"), "bond"))
+        d = np.linalg.norm(r[:, None, :] - r[None, :, :], axis=2)
+        np.fill_diagonal(d, np.inf)
+        for b in mol.GetBonds():
+            d[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] = d[b.GetEndAtomIdx(), b.GetBeginAtomIdx()] = np.inf
+        if d.min() < 1.3:
+            faults.append((mol.GetProp("_Name"), "contact %.2f" % d.min()))
+    assert faults == []
