@@ -322,6 +322,14 @@ def inline_math(expr: str, mono: str) -> str:
                         out.append(f"<b>{m2.group(1)}</b>")
                         i += len(m2.group(0))
                     continue
+                if name == "boldsymbol":
+                    # a bold Greek letter: the group is itself mathematics, unlike that of
+                    # \\mathbf, which holds Latin letters only
+                    m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
+                    if m2:
+                        out.append(f"<b>{emit_group(m2.group(1))}</b>")
+                        i += len(m2.group(0))
+                    continue
                 if name in MATH_ACCENT:
                     m2 = re.match(r"\s*\{([^}]*)\}|\s*(\w)", expr[i:])
                     if m2:

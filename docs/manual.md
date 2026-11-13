@@ -6404,21 +6404,44 @@ much a field-based screening figure depends on how its decoys were placed.
 
 ## Fitting in the space of the landmarks
 
-The exact model holds one n by n matrix per field and factorises the n by n joint kernel. On a
+The exact model holds one $n \times n$ matrix per field and factorises the $n \times n$ joint
+kernel, where $n$ is the number of training molecules. On a
 32 GB machine that stops at ten to twenty thousand molecules: five field kernels of 10 000
 molecules are 4 GB. Memory is the limit and not time. Plan item B6 assessed the ways out, found
 that one of them fits this kernel, and `cmfqsar/lowrank.py` is that one.
 
-**The construction.** Choose m landmarks Z and replace every field kernel by
+**The construction.** Choose $m$ landmarks $Z$ and replace every field kernel by its Nyström
+approximation,
 
-    K(X, X) ~ K(X, Z) K(Z, Z)^+ K(Z, X),
+$$
+\mathbf{K}(X, X) \;\approx\; \mathbf{K}(X, Z)\,\mathbf{K}(Z, Z)^{+}\,\mathbf{K}(Z, X).
+$$
+<!-- #eq:nystrom -->
 
-the Nystrom approximation. That is the Gram matrix of the features `Phi = K(X, Z) W` with
-`W W^T = K(Z, Z)^+`, so the model can be fitted in the space of the m columns instead of the
-space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
-`(K + lam I) a = y`, in m by m memory. Nothing new is computed -- `K(X, Z)` is what the kernel
-module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
-of molecules, so the features of the whole set are never held at once.
+Here $X$ stands for the $n$ training molecules, $\mathbf{K}(X, Z)$ is the $n \times m$ matrix of
+the kernel values between the molecules and the landmarks, $\mathbf{K}(Z, X)$ is its transpose,
+and the superscript $+$ is the pseudo-inverse. The right-hand side is the Gram matrix
+$\Phi\Phi^{\mathrm{T}}$ of the features
+
+$$
+\Phi = \mathbf{K}(X, Z)\,\mathbf{W}, \qquad \mathbf{W}\mathbf{W}^{\mathrm{T}} = \mathbf{K}(Z, Z)^{+},
+$$
+<!-- #eq:landmark-features -->
+
+so the model can be fitted in the space of the $m$ columns of $\Phi$ instead of the space of
+the $n$ molecules. The ridge system in that space is
+
+$$
+\left(\Phi^{\mathrm{T}}\Phi + \lambda\mathbf{I}\right)\mathbf{w} = \Phi^{\mathrm{T}}\mathbf{y},
+$$
+<!-- #eq:landmark-ridge -->
+
+with one weight in $\mathbf{w}$ for every feature. It is the same ridge regression as the dual
+system $(\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} = \mathbf{y}$ with the kernel
+$\mathbf{K} = \Phi\Phi^{\mathrm{T}}$, and it needs $m \times m$ memory. Nothing new is computed:
+$\mathbf{K}(X, Z)$ is what the kernel module already produces. `lowrank.gram` accumulates
+$\Phi^{\mathrm{T}}\Phi$ and $\Phi^{\mathrm{T}}\mathbf{y}$ over blocks of molecules, so the features
+of the whole set are never held at once.
 
 ![The landmark construction on the DHFR set of the Sutherland collection. Left: the exact joint kernel of the 361 molecules, with similar molecules next to each other. Second: the features that thirty landmark molecules give, one row for each molecule; each of the five fields gives up to thirty columns. Third: the kernel that these features stand for, their matrix times its transpose. Right: the relative difference between that kernel and the exact one, against the number of landmark molecules; the circle is the case of the panels. The model is fitted on the columns of the second panel and never holds the first. Drawn by `docs/make_figures.py`.](docs/figures/landmarks.png)
 
@@ -6433,13 +6456,19 @@ field, which is only ever large near an atom.
 
 **What stays exact.** A molecule's self-kernel is its own integral and costs nothing, so it is
 never approximated. That matters twice. The cosine normalisation divides by the exact diagonal;
-and the posterior variance keeps the exact k(x, x):
+and the posterior variance of a molecule $x$ keeps the exact self-kernel $K(x, x)$:
 
-    var(x) = k(x,x) - phi^T phi + lam phi^T (Phi^T Phi + lam I)^-1 phi,
+$$
+\sigma^2(x) = K(x, x) - \boldsymbol{\phi}^{\mathrm{T}}\boldsymbol{\phi}
++ \lambda\,\boldsymbol{\phi}^{\mathrm{T}}\left(\Phi^{\mathrm{T}}\Phi + \lambda\mathbf{I}\right)^{-1}\boldsymbol{\phi}.
+$$
+<!-- #eq:landmark-variance -->
 
-which is the exact Gaussian-process variance with K replaced by its approximation. Without that
-first pair of terms -- the plain subset-of-regressors form -- the variance falls towards zero
-far from the landmarks, which is the opposite of what a lower confidence bound needs.
+Here $\boldsymbol{\phi}$ is the feature vector of the molecule $x$, computed as a row of $\Phi$
+is. Eq. (#eq:landmark-variance) is the exact Gaussian-process variance with $\mathbf{K}$ replaced
+by its approximation. Without its first two terms, which is the plain subset-of-regressors form,
+the variance falls towards zero far from the landmarks. That is the opposite of what a lower
+confidence bound needs.
 
 **The interpretation survives.** A fit in the feature space is a dual fit whose coefficients sit
 on the landmarks, so `lowrank.cofield_gaussians` returns the same three arrays
@@ -6451,19 +6480,19 @@ decomposed exactly as before.
 
 * **It is the exact model when nothing is approximated.** With every molecule its own landmark,
   the kernel, the predictions, the log evidence, the posterior variance and the co-field on a
-  grid all agree with the exact path to 2e-11 or better.
+  grid all agree with the exact path to $2 \times 10^{-11}$ or better.
 * **The approximation costs little on a broad field.** At an attenuation of 0.5, a grid of
-  Gaussian centres 2 A apart is within 0.004 of the exact q2 on every set, and 20 to 80
+  Gaussian centres 2 Å apart is within 0.004 of the exact $q^2$ on every set, and 20 to 80
   landmark molecules within 0.076. The attenuation decides this, not the number of molecules.
 * **At a narrow field the landmarks have to follow the atoms.** At an attenuation of 2 and
-  above a grid 2 A apart reproduces the kernel only to 5e-01, where the atoms of the same
-  molecules thinned to 0.5 to 0.75 A reach 2e-02 with a landmark count of the same order -- on
-  GPB at an attenuation of 5, 6.5e-01 against 1.8e-02 for 259 landmark atoms. The q2 follows:
+  above a grid 2 Å apart reproduces the kernel only to 0.5, where the atoms of the same
+  molecules thinned to 0.5 to 0.75 Å reach 0.02 with a landmark count of the same order -- on
+  GPB at an attenuation of 5, 0.65 against 0.018 for 259 landmark atoms. The $q^2$ follows:
   +0.548 for the grid against +0.593 for the atoms, where the exact model gives +0.594. That is
   the case the assessment of this item named and left open.
 * **What it saves is memory, and only beyond the crossing point.** At 361 molecules -- the
   largest aligned set here -- the exact kernels are 6 MB and the low-rank fit is 13 MB, because
-  the rank of a 2 A grid over that frame is 1275. The low-rank memory does not grow with the
+  the rank of a 2 Å grid over that frame is 1275. The low-rank memory does not grow with the
   molecules at all, so the two cross at about 1275 molecules and everything beyond that is
   saving. It is also eight times faster at that size, which was not the point: a kernel entry
   against a one-atom centre costs a thirtieth of one against a whole molecule.
@@ -6498,14 +6527,14 @@ cmf build series.sdf --activity pKi --low-rank atoms:0.75 --alphas 2 \
 
 What this branch refuses is `--conformal-normalise`. A normalised interval divides each error
 by the distance of its molecule from every other training molecule, and that distance is read
-off the n by n kernel, which is the one matrix a low-rank model is fitted to avoid. The plain
+off the $n \times n$ kernel, which is the one matrix a low-rank model is fitted to avoid. The plain
 interval is the one to use here, and on the sets measured in `benchmarks/run_conformal.py`
 normalising gains no sharpness anyway.
 
 What the file keeps is the landmarks, the whitening and one weight per feature instead of one
 coefficient per training molecule. The training table travels with it as before, because it is
 linear in the number of molecules and the provenance and the contract are read off it; what is
-never built, at any point, is the n by n kernel. `cmf lowrank` remains as the short path that
+never built, at any point, is the $n \times n$ kernel. `cmf lowrank` remains as the short path that
 fits and reports without saving anything.
 
 **What is not done.** The low-rank branch of `build` does not take a second endpoint or write
