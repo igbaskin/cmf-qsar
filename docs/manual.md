@@ -47,6 +47,8 @@ Three consequences follow, and they are what distinguishes the approach from CoM
   split without approximation into contributions of training molecules, of field types, of regions
   of space, or of individual atoms.
 
+![The method in six steps, each computed from the steroid model of the chapter *Reading the model*. (1) The training molecules in one frame, one of them in red. (2) A field of that molecule, the electrostatic one, in the mean plane of the series: a Gaussian on every atom, red where the field is positive and blue where it is negative. (3) The kernel matrix: the overlap of the fields of every pair of training molecules, with the five field types mixed. (4) The fit gives one coefficient for every training molecule. (5) The co-field: the fields of all training molecules, each multiplied by its coefficient, summed. (6) The prediction of a molecule is the overlap of its field with the co-field, plus a constant; the points are the molecules that were held out of the fit. Drawn by `docs/make_figures.py`.](docs/figures/idea.png)
+
 ## What you can do with it
 
 | Task | How |
@@ -3211,6 +3213,8 @@ A fifth route, the topomer rule, is scored where the molecules can be cut at the
 covers only those molecules, so the aligned model is refitted on the same ones for the comparison:
 a subset against the whole set is not a comparison, and it favours whichever route happens to
 drop the hard compounds.
+
+![The decisions of `cmf diagnose`, in the order in which the command takes them. The five routes are scored first. A question that is answered with yes ends the chain, and the recommendation is the box on its right; with no, the next question is asked. The questions in italics are those of the text above. "Within 0.05" means that the aligned model is not ahead of the other route by that much in q². The last question of the text, whether the model was specified sensibly, changes no route: it is reported as a warning. Drawn by `docs/make_figures.py`.](docs/figures/diagnose.svg)
 
 ## Two things the command protects you from
 
@@ -6590,6 +6594,8 @@ those, and a molecule chosen on that basis is wasted. A molecule *made* to answe
 different: being wrong about it costs little, and being wrong is informative. Optimism is right for one and
 wrong for the other.
 
+![The selection rules on the ACE set of the Sutherland collection, started as the benchmark below starts it: twenty molecules drawn at random that hold no hit are the molecules already made, and the other 94 are the candidates. Left: every candidate by its prediction and its posterior standard deviation. Each coloured line joins the points that have the same score as the candidate the rule takes, which is marked: a rule takes the candidate that its line reaches first when the line comes from the side of high scores. `greedy` reads the prediction alone and `variance` the deviation alone. `ucb` and `ei` give up some prediction for some deviation, and here they take the same candidate. Right: a batch of ten under `ucb`, on a map of the candidates made of the two leading directions of their kernel. The squares are the ten best scores taken in order. The crosses are the ten of the covariance rule of the section *Choosing ten compounds at once*, which lowers the deviation of a candidate that resembles a pick already made. Drawn by `docs/make_figures.py`.](docs/figures/acquire.svg)
+
 ### What it gains, measured
 
 Eight Sutherland sets, ten runs each, starting from twenty molecules drawn at random that hold no
@@ -6662,6 +6668,8 @@ The command does the whole thing: it finds the scaffold, builds a **topomer mode
 chooses α and λ by the evidence, reports the q² that the suggestions rest on, enumerates, scores
 and ranks. There is no model file to pass, because the model has to be a topomer model and the
 core and the attachment points come from the series anyway.
+
+![The design loop. Above: its steps. Below: the loop as `cmf design` runs it with its default settings on the benzamide series of `examples/benzamides_synthetic.sdf`. Left: the parent the command chooses, which is the most active molecule that the topomer rule can pose, with the group at the position that varies most in the series in the circle. Right: the ten fragments that the command ranks first, each with the prediction and the standard deviation of the molecule that carries it; a fragment is written as SMILES, starting at its attachment point. Expected improvement ranks a fragment unlike anything in the series, which has a wide deviation, ahead of a fragment that the series already uses and predicts well. Drawn by `docs/make_figures.py`.](docs/figures/design.svg)
 
 **Why a topomer model and not an aligned one.** A substituent nobody has made has no crystal
 structure and no alignment, and superimposing it on anything would be a guess. The topomer rule
@@ -7001,6 +7009,8 @@ first pick has already removed scores low by itself, with no threshold and no re
 score is the conditional standard deviation, so the rule is the greedy maximisation of the
 determinant of the batch's own covariance block -- the classical D-optimal design -- and a test
 checks the greedy batch against the exhaustive best on a small matrix.
+The right panel of the figure in *Which molecule to make next* shows a batch chosen
+by each of the two rules.
 
 `model.predict_with_covariance` returns the whole posterior covariance of a block of candidates,
 which is what the rule needs and what `predict_with_variance` only gives the diagonal of.
@@ -7456,6 +7466,8 @@ conformations. The model stays linear
 in that mean field, so **co-fields, the decomposition rules, Shapley values and the complementarity
 scores all keep working**; contributions arrive per atom per conformation and fold back onto the
 atoms by summation.
+
+![A conformational ensemble as one field, for corticosterone of the steroid set. Top left: eight conformations from the conformer generator, superimposed on the ring system; the pose of the series is the black one. The side chain turns and the rings do not. Top right: the electrostatic field of the pose of the series alone, in the mean plane of the series. Bottom left: the mean field of the eight conformations with equal weights, which is the field the ensemble mode gives to the kernel. Where the conformations agree it is the field of the panel above, and where they differ it is spread out and weaker. Bottom right: the variance of the field across the conformations, which is the flexibility map of the next section. It is close to zero over the rings and large around the side chain. Drawn by `docs/make_figures.py`.](docs/figures/ensemble.png)
 
 *Tools → Generate conformations…* builds the ensembles with ETKDG and MMFF94s, keeping the pose a
 molecule already has as its first conformation, so an earlier alignment survives. A multi-conformer
@@ -14141,6 +14153,8 @@ it came from. Nothing new has to be defined, and three statements follow at once
 `combine_members` in `cmfqsar/fields.py`, written for plan item D4, needed no change for this.
 It already accepted members that carry their own atoms, and that is what shells are: two shells of
 the same electrolyte need not even hold the same molecules.
+
+![A distribution of solvation shells as one field, for lithium hexafluorophosphate in ethylene carbonate and ethyl methyl carbonate, 3 to 7 by weight, at 1.11 mol/kg. Every shell is drawn in the frame of its lithium ion, which is the star, and seen along the third axis of that frame. The dashed circle has a radius of 2 Å, about the distance of an oxygen that coordinates the ion. Top left: the representative shell with the largest weight; oxygen is red, fluorine green and phosphorus orange, and hydrogens are not drawn. Top right: all sixteen representative shells of this electrolyte, each drawn the darker the larger its weight, with the oxygen and fluorine atoms within 2.6 Å of the ion. The frame puts the anion on the same side in most shells. Bottom left: the electrostatic field of the one shell, summed along the direction of view, red positive and blue negative. Bottom right: the mean field of the sixteen shells with their weights, which is the sample the kernel is given. What the shells have in common stays sharp, and what differs from shell to shell is spread out. Drawn by `docs/make_figures.py`.](docs/figures/shells.png)
 
 The per-atom reading needs one decision, because a per-atom contribution has to point at *an*
 atom. `atom_maps` sends the ion to the ion, and every solvent atom to the matching atom of the

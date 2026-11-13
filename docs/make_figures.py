@@ -1923,6 +1923,581 @@ def fig_multiscale(path):
     save(fig, path)
 
 
+def fig_idea(path):
+    """Chapter 1: the method in six steps, each computed from the steroid model of chapter 8.
+    Molecules in one frame, their fields, the kernel of every pair, the fitted coefficients, the
+    co-field, and the prediction of the molecules that were held out."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyArrowPatch
+    from cmfqsar.fields import AtomTable
+    s, c = steroids(), cofield_model()
+    ds, fs, mf, model, frame, xs, ys = s["ds"], c["fs"], c["mf"], c["model"], c["frame"], c["xs"], c["ys"]
+    idx, y = s["train_idx"], np.asarray(s["y"], float)
+    train = AtomTable.from_molecules([mf[i] for i in idx])
+    K = np.asarray(model.training_kernel(train), float)
+    a = np.asarray(model.coef, float)
+    k = int(np.argmax(y))
+    mol = mf[idx[k]]
+    f = fs.names.index("electrostatic")
+    pts, shape = plane_points(frame, xs, ys)
+    test_idx = [i for i in range(len(mf)) if i not in set(idx)]
+    y_test = np.asarray(ds.activity, float)[test_idx]
+    p_test = model.predict(AtomTable.from_molecules([mf[i] for i in test_idx]))
+
+    fig, axes = plt.subplots(2, 3, figsize=(WIDTH, 4.1))
+    ax = axes[0, 0]
+    for i in idx:
+        draw_skeleton(ax, mf[i], frame, colour="0.72")
+    draw_skeleton(ax, mol, frame, colour="C3")
+    ax.set_xlim(xs[0], xs[-1])
+    ax.set_ylim(ys[0], ys[-1])
+    ax.set_aspect("equal")
+    ax.set_title(f"1. the molecules in one frame\n({len(idx)} steroids; one in red)", fontsize=7.5)
+    ax = axes[0, 1]
+    signed_map(ax, field_slice(mol, fs.specs[f], f, pts).reshape(shape), xs, ys)
+    draw_skeleton(ax, mol, frame)
+    ax.set_title("2. a field: a Gaussian on\nevery atom of the red one", fontsize=7.5)
+    ax = axes[0, 2]
+    im = ax.imshow(K, cmap="viridis", interpolation="nearest")
+    ax.set_title("3. the kernel: the overlap of\nthe fields of every pair", fontsize=7.5)
+    ax.set_xlabel("molecule", fontsize=7)
+    ax.set_ylabel("molecule", fontsize=7)
+    ax.tick_params(length=2, labelsize=6.5)
+    fig.colorbar(im, ax=ax, shrink=0.8, pad=0.03).ax.tick_params(labelsize=6.5)
+    ax = axes[1, 0]
+    ax.bar(np.arange(len(a)), a, color=["#b2182b" if v > 0 else "#2166ac" for v in a], width=0.8)
+    ax.axhline(0, color="0.5", lw=0.5)
+    ax.set_title("4. the fit: one coefficient\nfor every training molecule", fontsize=7.5)
+    ax.set_xlabel("molecule", fontsize=7)
+    ax.set_ylabel("coefficient", fontsize=7)
+    ax.tick_params(length=2, labelsize=6.5)
+    ax = axes[1, 1]
+    signed_map(ax, cofield_slice(model, f, pts).reshape(shape), xs, ys)
+    draw_skeleton(ax, mol, frame)
+    ax.set_title("5. the co-field: the fields\ntimes the coefficients, summed", fontsize=7.5)
+    ax = axes[1, 2]
+    lo, hi = min(y_test.min(), p_test.min()) - 0.3, max(y_test.max(), p_test.max()) + 0.3
+    ax.plot([lo, hi], [lo, hi], color="0.6", lw=0.7)
+    ax.scatter(y_test, p_test, s=16, color="C0", edgecolor="black", linewidth=0.4, zorder=3)
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_aspect("equal")
+    ax.set_xlabel("observed activity", fontsize=7)
+    ax.set_ylabel("predicted activity", fontsize=7)
+    ax.tick_params(length=2, labelsize=6.5)
+    ax.set_title("6. a prediction: the overlap of\na new field with the co-field", fontsize=7.5)
+    for ax in (axes[0, 0], axes[0, 1], axes[1, 1]):
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=3.0, h_pad=1.4)
+    # arrows from each step to the next one in its row
+    for row in (0, 1):
+        for col in (0, 1):
+            left = axes[row, col].get_position()
+            right = axes[row, col + 1].get_position()
+            ymid = 0.5 * (left.y0 + left.y1)
+            fig.patches.append(FancyArrowPatch(
+                (left.x1 + 0.008, ymid), (right.x0 - (0.07 if col == 1 else 0.012), ymid),
+                transform=fig.transFigure,
+                arrowstyle="-|>", mutation_scale=9, linewidth=0.9, color="0.3"))
+    print(f"  idea: {len(idx)} training and {len(test_idx)} test molecules; drawn molecule {mol.name}")
+    save(fig, path)
+
+
+def fig_diagnose(path):
+    """Chapter 6: the decisions of ``cmf diagnose`` as a scheme.  The order of the questions and
+    the margin are those of ``cmfqsar.diagnose._diagnose`` and ``_recommend``."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyBboxPatch, Polygon
+    from cmfqsar.diagnose import MEANINGFUL
+    sand, green, grey, blue = "#f6ead2", "#dcefdc", "#e9e9e9", "#dbe7f3"
+
+    fig = plt.figure(figsize=(WIDTH, 5.9))
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+
+    def box(x, y, w, h, label, colour, size=6.6, weight="normal"):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.003,rounding_size=0.012",
+                                    facecolor=colour, edgecolor="0.35", linewidth=0.7))
+        ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=size,
+                linespacing=1.25, fontweight=weight)
+
+    def arrow(x0, y0, x1, y1, label=None):
+        ax.plot([x0, x1], [y0, y1], color="0.25", lw=0.9, solid_capstyle="butt")
+        dx, dy = x1 - x0, y1 - y0
+        if abs(dx) > abs(dy):                       # a head pointing right
+            head = [(x1, y1 - 0.007), (x1, y1 + 0.007), (x1 + 0.012, y1)]
+        else:                                       # a head pointing down
+            head = [(x1 - 0.0065, y1), (x1 + 0.0065, y1), (x1, y1 - 0.013)]
+        ax.add_patch(Polygon(head, closed=True, facecolor="0.25", edgecolor="0.25", linewidth=0.5))
+        if label:
+            if abs(dx) > abs(dy):
+                ax.text(0.5 * (x0 + x1), y1 + 0.008, label, ha="center", va="bottom", fontsize=6.3)
+            else:
+                ax.text(x1 + 0.01, 0.5 * (y0 + y1), label, ha="left", va="center", fontsize=6.3)
+
+    # the five routes that are scored first
+    x_q, w_q, x_out, w_out = 0.205, 0.40, 0.675, 0.32
+    ax.text(x_q + w_q / 2, 0.985, "five routes are scored by cross-validation, each with its "
+            "settings chosen inside the folds", ha="center", va="top", fontsize=6.6)
+    routes = ("aligned\nfields", "topomer\nrule", "invariant\nkernel", "atom-type\ncounts",
+              "descriptors\nalone")
+    for k, label in enumerate(routes):
+        box(0.115 + k * 0.125, 0.885, 0.115, 0.06, label, blue, size=6.3)
+    arrow(x_q + w_q / 2, 0.885, x_q + w_q / 2, 0.862)
+
+    margin = f"{MEANINGFUL:g}"
+    steps = (
+        ("Is there anything\nto model?",
+         "fewer than 10 molecules, or no\nspread of the activity?",
+         "no model: too little to support\nany conclusion", grey),
+        ("",
+         "does no route reach q² = 0.1?",
+         "no model: the set does not\nsupport one as it is", grey),
+        ("Does the geometry\ncontribute anything?",
+         f"are the descriptors alone within\n{margin} in q² of the aligned model?",
+         "descriptors", green),
+        ("Does the frame\ncarry signal?",
+         f"is a kernel that needs no frame\nwithin {margin} in q² of the aligned model?",
+         "invariant kernel or counts,\nthe better of the two", green),
+        ("Can a frame exist\nat all?",
+         "are the molecules not superimposed?",
+         "topomer rule; or, where that rule is\nclearly worse, the aligned model\n"
+         "after the frame is curated", green),
+        ("",
+         "are there several chemotypes?",
+         "aligned model, with the\nframe checked", green),
+    )
+    height, gap, top = 0.082, 0.038, 0.862
+    for k, (question, test, outcome, colour) in enumerate(steps):
+        y = top - (k + 1) * height - k * gap
+        mid = y + height / 2
+        box(x_q, y, w_q, height, test, sand)
+        box(x_out, y + 0.006, w_out, height - 0.012, outcome, colour,
+            weight="bold" if colour == green else "normal", size=6.3)
+        arrow(x_q + w_q, mid, x_out - 0.014, mid, "yes")
+        if question:
+            ax.text(x_q - 0.02, mid, question, ha="right", va="center", fontsize=6.6,
+                    style="italic", linespacing=1.25)
+        arrow(x_q + w_q / 2, y, x_q + w_q / 2, y - gap + 0.013, "no")
+    y = top - 6 * height - 6 * gap - 0.062
+    box(x_q + 0.07, y, w_q - 0.14, 0.062, "aligned model", green, weight="bold", size=6.6)
+    ax.text(0.5, 0.012, "A descriptor route that reaches q² = 0.95 is read as the activity stored "
+            "under another name, and it is not recommended.\nA chosen attenuation at the edge of "
+            "its grid is reported as a warning beside any of these answers.", ha="center",
+            va="bottom", fontsize=6.3, linespacing=1.3, color="0.25")
+    save(fig, path)
+
+
+def fig_ensemble(path):
+    """Chapter 10: a conformational ensemble as one field.  The conformations of one steroid, the
+    field of one of them, the mean field of all of them, which is the field the ensemble mode
+    uses, and the variance of the field across them, which is the flexibility map."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.conformers import align_conformers, generate_conformers, single_conformer
+    from cmfqsar.fields import build_fields
+    s, c = steroids(), cofield_model()
+    ds, fs, frame, xs, ys = s["ds"], c["fs"], c["frame"], c["xs"], c["ys"]
+    i = s["train_idx"][int(np.argmax(s["y"]))]              # the most active training molecule
+    mol = generate_conformers(ds.mols[i], n=8, seed=0)      # its own pose stays the first one
+    rings = sorted({a for ring in mol.GetRingInfo().AtomRings() for a in ring})
+    align_conformers(mol, atom_ids=rings)                   # on the rigid ring system
+    members = [build_fields(single_conformer(mol, k), fs, ds.names[i])
+               for k in range(mol.GetNumConformers())]
+    f = fs.names.index("electrostatic")
+    pts, shape = plane_points(frame, xs, ys)
+    slices = np.array([field_slice(m, fs.specs[f], f, pts) for m in members])
+    mean = slices.mean(axis=0)                              # equal weights
+    variance = (slices ** 2).mean(axis=0) - mean ** 2
+    # the mean drawn here is the field the ensemble mode builds
+    fs_ens = fs.copy()
+    fs_ens.conformers = "ensemble"
+    library = field_slice(build_fields(mol, fs_ens, ds.names[i]), fs_ens.specs[f], f, pts)
+    gap = float(np.abs(library - mean).max())
+    vmax = float(np.abs(slices[0]).max())
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 3.9))
+    ax = axes[0, 0]
+    for k in range(len(members) - 1, -1, -1):
+        draw_skeleton(ax, members[k], frame, colour="black" if k == 0 else f"C{k % 10}")
+    ax.set_xlim(xs[0], xs[-1])
+    ax.set_ylim(ys[0], ys[-1])
+    ax.set_aspect("equal")
+    ax.set_title(f"{len(members)} conformations of {ds.names[i]},\nsuperimposed on the ring system",
+                 fontsize=7.5)
+    ax = axes[0, 1]
+    signed_map(ax, slices[0].reshape(shape), xs, ys, vmax=vmax)
+    draw_skeleton(ax, members[0], frame)
+    ax.set_title("the field of one conformation", fontsize=7.5)
+    ax = axes[1, 0]
+    signed_map(ax, mean.reshape(shape), xs, ys, vmax=vmax)
+    draw_skeleton(ax, members[0], frame, colour="0.4")
+    ax.set_title("the mean field of the ensemble:\nthe field the model is given", fontsize=7.5)
+    ax = axes[1, 1]
+    im = ax.imshow(variance.reshape(shape), origin="lower", extent=(xs[0], xs[-1], ys[0], ys[-1]),
+                   cmap="Purples", vmin=0.0, aspect="equal", interpolation="bilinear")
+    draw_skeleton(ax, members[0], frame, colour="0.4")
+    ax.set_title("the variance of the field across the\nconformations: the flexibility map",
+                 fontsize=7.5)
+    for ax in axes.ravel():
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(h_pad=1.0, w_pad=1.0)
+    print(f"  ensemble: {len(members)} conformations of {ds.names[i]}; the mean drawn and the field "
+          f"of the ensemble mode differ by {gap:.1e}; largest variance {variance.max():.3f} against "
+          f"largest field {vmax:.3f}")
+    save(fig, path)
+
+
+def fig_shells(path):
+    """Chapter 11: a distribution of solvation shells as one field.  The representative shells of
+    one electrolyte of ``examples/electrolyte``, each in the frame of its lithium ion: one shell,
+    all of them, the field of the one, and the mean field of all, which is the sample the model
+    is given.  The fields are drawn summed along the direction of view, because a shell has no
+    plane that holds its atoms."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from cmfqsar.cofields import _centres_and_widths
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.shells import ensemble_from_molecules
+    name = "LiPF6_EC30_EMC70_m1p110"
+    source = os.path.join(ROOT, "examples", "electrolyte", "shells", name + ".sdf")
+    mols = [m for m in Chem.SDMolSupplier(source, removeHs=False) if m is not None]
+    weights = np.array([float(m.GetProp("shell_weight")) for m in mols])
+    fs = FieldSet.create(physchem=["electrostatic", "steric", "hydrophobic", "hba", "hbd"],
+                         alpha=0.5, charge_model="gasteiger")
+    members = [build_fields(m, fs, f"shell {k + 1}") for k, m in enumerate(mols)]
+    ensemble = ensemble_from_molecules(mols, fs, name=name)       # the sample of the benchmark
+    first = int(np.argmax(weights))
+    f = fs.names.index("electrostatic")
+    half = 7.0
+    xs = ys = np.linspace(-half, half, 141)
+    X, Y = np.meshgrid(xs, ys, indexing="xy")
+
+    def projected(mol):
+        """The field of `mol` integrated along z: a Gaussian keeps its width in the plane and
+        gains the factor sqrt(2 pi / b)."""
+        centres, w, b = _centres_and_widths(mol, fs.specs[f], f)
+        out = np.zeros_like(X)
+        for (cx, cy, _cz), wk, bk in zip(centres, w, b):
+            if wk != 0.0:
+                out += wk * np.sqrt(2.0 * np.pi / bk) * np.exp(-0.5 * bk * ((X - cx) ** 2 + (Y - cy) ** 2))
+        return out
+
+    colours = {"O": "#c0392b", "F": "#2e8b57", "P": "#d98c1f", "Li": "#6a3d9a"}
+
+    def draw(ax, mol, alpha=1.0, marks=True):
+        xyz = np.asarray(mol.coords, float)
+        heavy = np.array([s != "H" for s in mol.symbols])
+        for a, b in mol.bonds:
+            if heavy[a] and heavy[b]:
+                ax.plot(xyz[[a, b], 0], xyz[[a, b], 1], color="0.35", lw=0.8, alpha=alpha,
+                        solid_capstyle="round", zorder=2)
+        if marks:
+            for element, colour in colours.items():
+                sel = np.array([s == element for s in mol.symbols])
+                if element != "Li" and sel.any():
+                    ax.scatter(xyz[sel, 0], xyz[sel, 1], s=9, color=colour, zorder=3, linewidth=0)
+
+    fig, axes = plt.subplots(2, 2, figsize=(WIDTH, 5.6))
+    ax = axes[0, 0]
+    draw(ax, members[first])
+    ax.set_title(f"one shell around a lithium ion\n({mols[first].GetProp('shell_composition')}; "
+                 f"ANI is the anion)", fontsize=7.5)
+    ax = axes[0, 1]
+    contacts = 0
+    for k, mol in enumerate(members):
+        draw(ax, mol, alpha=float(0.25 + 0.75 * weights[k] / weights.max()), marks=False)
+        xyz = np.asarray(mol.coords, float)
+        near = np.linalg.norm(xyz, axis=1) < 2.6
+        for element in ("O", "F"):
+            sel = near & np.array([s == element for s in mol.symbols])
+            contacts += int(sel.sum())
+            ax.scatter(xyz[sel, 0], xyz[sel, 1], s=11, color=colours[element], zorder=3,
+                       linewidth=0, alpha=0.85)
+    ax.set_title(f"the {len(members)} representative shells of this electrolyte,\n"
+                 "with the atoms that touch the ion", fontsize=7.5)
+    one = projected(members[first])
+    mean = projected(ensemble)
+    vmax = 0.5 * float(np.abs(one).max())
+    for ax, Z, title in ((axes[1, 0], one, "the electrostatic field of the one shell"),
+                         (axes[1, 1], mean, "the mean field of all shells:\nthe sample the model is given")):
+        ax.imshow(Z, origin="lower", extent=(-half, half, -half, half), cmap="RdBu_r", vmin=-vmax,
+                  vmax=vmax, interpolation="bilinear")
+        ax.set_title(title, fontsize=7.5)
+    for ax in axes.ravel():
+        ax.scatter([0.0], [0.0], marker="*", s=70, color=colours["Li"], edgecolor="white",
+                   linewidth=0.4, zorder=5)
+        ax.add_patch(plt.Circle((0.0, 0.0), 2.0, fill=False, color="0.2", lw=0.6, ls="--", zorder=4))
+        ax.set_xlim(-half, half)
+        ax.set_ylim(-half, half)
+        ax.set_aspect("equal")
+        ax.tick_params(length=2, labelsize=7)
+    for ax in axes[1]:
+        ax.set_xlabel("x / Å", fontsize=7.5)
+    for ax in axes[:, 0]:
+        ax.set_ylabel("y / Å", fontsize=7.5)
+    fig.tight_layout(h_pad=1.0, w_pad=0.6)
+    print(f"  shells: {name}, {len(members)} members, weights {weights.min():.3f} to "
+          f"{weights.max():.3f} (sum {weights.sum():.3f}); the mean field holds "
+          f"{ensemble.n_atoms} atoms; {contacts} atoms touch the ion")
+    save(fig, path)
+
+
+def fig_acquire(path):
+    """Chapter 9: which molecule to make next, and ten at once.  The ACE set of the Sutherland
+    collection, as the benchmark of the section starts it: twenty molecules drawn at random
+    that hold no hit are the molecules already made, and the rest are the candidates.  Left, the
+    candidates by prediction and posterior standard deviation, with the line of equal score of
+    each rule through the candidate that rule takes.  Right, a batch of ten on a map of the
+    candidates: the ten best scores, and the ten of the covariance rule."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar.active import acquisition_scores, batch_by_covariance
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    ds = load_dataset(os.path.join(ROOT, "examples", "sutherland", "ACE.sdf"))
+    y = np.asarray(ds.activity, float)
+    fs = FieldSet.create(alpha=0.5, charge_model="file")
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    rng = np.random.default_rng(0)
+    hit = y >= np.quantile(y, 0.95)
+    have = np.sort(rng.choice(np.where(~hit)[0], size=20, replace=False))
+    pool = np.array([i for i in range(len(y)) if i not in set(have.tolist())])
+    made = AtomTable.from_molecules([mf[i] for i in have])
+    candidates = AtomTable.from_molecules([mf[i] for i in pool])
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(made))
+    lams = (1e-3, 1e-2, 0.1, 1.0, 10.0)
+    lam = max(lams, key=lambda v: log_evidence(K, y[have], float(v), fit_bias=True))
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": lam})
+    model.fit(made, y[have], cv_folds=0)
+    mu, cov = model.predict_with_covariance(candidates)
+    sd = np.sqrt(np.maximum(np.diag(cov), 0.0))
+    best = float(y[have].max())
+    beta = 1.0
+    rules = (("greedy", "the prediction", "C0", "s"),
+             ("ucb", "prediction + deviation", "C1", "D"),
+             ("ei", "expected improvement", "C3", "o"),
+             ("variance", "the deviation", "C2", "^"))
+
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.15))
+    ax = axes[0]
+    ax.scatter(mu, sd, s=9, color="0.6", linewidth=0, zorder=2)
+    gm = np.linspace(mu.min() - 1.9, max(mu.max(), best) + 0.6, 240)
+    gs = np.linspace(0.0, sd.max() * 1.12, 200)
+    GM, GS = np.meshgrid(gm, gs)
+    picks = {}
+    for kind, label, colour, marker in rules:
+        score = acquisition_scores(kind, mu, sd, best=best, beta=beta)
+        j = int(np.argmax(score))
+        picks[kind] = j
+        surface = acquisition_scores(kind, GM.ravel(), GS.ravel(), best=best, beta=beta)
+        ax.contour(GM, GS, surface.reshape(GM.shape), levels=[float(score[j])], colors=[colour],
+                   linewidths=0.9, zorder=3)
+        ax.scatter([mu[j]], [sd[j]], s=46, marker=marker, facecolor="none", edgecolor=colour,
+                   linewidth=1.3, zorder=5, label=label)
+    ax.axvline(best, color="0.35", lw=0.7, ls=":")
+    ax.text(best + 0.06, 0.98 * gs[-1], "the best made so far", fontsize=6.3, va="top",
+            ha="left", rotation=90, color="0.25")
+    ax.set_xlim(gm[0], gm[-1])
+    ax.set_ylim(0.0, gs[-1])
+    ax.set_xlabel("predicted activity")
+    ax.set_ylabel("posterior standard deviation")
+    ax.set_title(f"{len(pool)} candidates, and the one each rule takes", fontsize=8)
+    ax.legend(frameon=False, fontsize=6.5, loc="lower left", title="the rule maximises",
+              title_fontsize=6.5)
+    ax.tick_params(length=2)
+
+    # a batch of ten, on the two leading directions of the candidates in the kernel
+    ax = axes[1]
+    Kc = probe.joint_kernel(probe.prepare_training_kernels(candidates))
+    n = len(pool)
+    J = np.eye(n) - np.ones((n, n)) / n
+    values, vectors = np.linalg.eigh(J @ Kc @ J)
+    xy = vectors[:, [-1, -2]] * np.sqrt(np.maximum(values[[-1, -2]], 0.0))
+    score = acquisition_scores("ucb", mu, sd, best=best, beta=beta)
+    ranked = [int(i) for i in np.argsort(-score)[:10]]
+    spread = batch_by_covariance("ucb", mu, cov, 10, best=best, beta=beta)
+    ax.scatter(xy[:, 0], xy[:, 1], s=9, color="0.7", linewidth=0, zorder=2)
+    ax.scatter(xy[ranked, 0], xy[ranked, 1], s=40, marker="s", facecolor="none", edgecolor="C1",
+               linewidth=1.1, zorder=4, label="the ten best scores")
+    ax.scatter(xy[spread, 0], xy[spread, 1], s=30, marker="x", color="C4", linewidth=1.3,
+               zorder=5, label="ten by the covariance rule")
+    ax.set_xlabel("first direction of the candidates")
+    ax.set_ylabel("second direction")
+    ax.set_title("a batch of ten, on a map of the candidates", fontsize=8)
+    ax.legend(frameon=False, fontsize=6.5, loc="best")
+    ax.tick_params(length=2)
+    fig.tight_layout(w_pad=1.6)
+
+    def mean_cosine(rows):
+        d = np.sqrt(np.diag(Kc))
+        C = (Kc / np.outer(d, d))[np.ix_(rows, rows)]
+        return float((C.sum() - len(rows)) / (len(rows) * (len(rows) - 1)))
+
+    print(f"  acquire: ACE, {len(have)} made, {len(pool)} candidates, lambda {lam:g}; picks "
+          + ", ".join(f"{k} {ds.names[pool[j]]}" for k, j in picks.items())
+          + f"; mean cosine inside the batch: best scores {mean_cosine(ranked):.3f}, covariance "
+          f"rule {mean_cosine(spread):.3f}; shared {len(set(ranked) & set(spread))}")
+    save(fig, path)
+
+
+def fig_design(path):
+    """Chapter 9: the design loop.  Above, its steps as a scheme.  Below, the loop as
+    ``cmf design`` runs it on the benzamide series with its default settings: the parent with
+    the position that is varied, and the candidates that come back, in the order of their
+    expected improvement."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyBboxPatch, Polygon
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from cmfqsar import CMFModel
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.design import design, fragment_smiles, read_fragments
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.fields import AtomTable, FieldSet
+    from cmfqsar.topomer import (TopomerSpec, attachment_label, choose_core, series_labels,
+                                 substituents, topomer_fields)
+    ds = load_dataset(os.path.join(ROOT, "examples", "benzamides_synthetic.sdf"))
+    y = np.asarray(ds.activity, float)
+    mols, names = list(ds.mols), list(ds.names)
+    core, _how = choose_core(mols, mode="framework")
+    labels = series_labels(mols, core)
+    at_site = {}
+    for mol in mols:
+        for frag in substituents(mol, core):
+            at_site.setdefault(attachment_label(frag), set()).add(Chem.MolToSmiles(frag))
+    label = max(at_site, key=lambda k: len(at_site[k]))          # the position that varies most
+    spec = TopomerSpec(torsion=180.0, seed=0)
+    best = None
+    for alpha in (0.3, 0.5, 1.0, 2.0):                             # the grids of the command
+        fs = FieldSet.create(alpha=alpha, charge_model="gasteiger", param_scheme="rdkit")
+        mf, _log = topomer_fields(mols, names, fs, core=core, labels=labels, spec=spec)
+        keep = [i for i, m in enumerate(mf) if m is not None]
+        probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+        table = AtomTable.from_molecules([mf[i] for i in keep])
+        K = probe.joint_kernel(probe.prepare_training_kernels(table))
+        for lam in (1e-3, 1e-2, 0.1, 1.0):
+            ev = log_evidence(K, y[keep], float(lam), fit_bias=True)
+            if np.isfinite(ev) and (best is None or ev > best[0]):
+                best = (ev, alpha, lam, fs, table, keep)
+    _ev, alpha, lam, fs, table, keep = best
+    model = CMFModel(fieldset=fs, method="krr", params={"lam": lam}, normalize=True)
+    model.fit(table, y[keep], cv_folds=10, cv_seed=0)
+    p = int(keep[int(np.argmax(y[keep]))])                         # the most active parent
+    frags = sorted(at_site.get(label, [])) + read_fragments("common")
+    seen = {fragment_smiles(f) for f in at_site.get(label, [])}
+    res = design(model, mols[p], core, label, fragments=frags, labels=labels, acquire="ei",
+                 spec=spec, parent_name=names[p], series=mols, series_names=names, series_y=y,
+                 known=seen, with_fields=0)
+    shown, taken = [], set()
+    for cand in res.candidates:                                    # a fragment listed twice is one
+        key = cand.smiles
+        if key not in taken:
+            taken.add(key)
+            shown.append(cand)
+        if len(shown) == 10:
+            break
+
+    sand, green, grey, blue = "#f6ead2", "#dcefdc", "#e9e9e9", "#dbe7f3"
+    fig = plt.figure(figsize=(WIDTH, 4.5))
+    ax = fig.add_axes((0.0, 0.76, 1.0, 0.24))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_axis_off()
+    steps = ((grey, "a parent of the\nseries and one of\nits positions"),
+             (grey, f"a library of\nfragments\n({len(set(frags))} here)"),
+             (sand, "every fragment is\nput there and posed\nby the topomer rule"),
+             (green, "a topomer model of\nthe series predicts\neach, with a deviation"),
+             (blue, "a rule turns the two\nnumbers into a score,\nand the list is ranked"))
+    w, gap, x0, yb, h = 0.168, 0.036, 0.008, 0.16, 0.66
+    for k, (colour, text_) in enumerate(steps):
+        x = x0 + k * (w + gap)
+        ax.add_patch(FancyBboxPatch((x, yb), w, h, boxstyle="round,pad=0.004,rounding_size=0.02",
+                                    facecolor=colour, edgecolor="0.35", linewidth=0.7))
+        ax.text(x + w / 2, yb + h / 2, text_, ha="center", va="center", fontsize=6.6,
+                linespacing=1.25)
+        if k:
+            xa, ym = x - gap, yb + h / 2
+            ax.plot([xa + 0.004, x - 0.012], [ym, ym], color="0.25", lw=0.9)
+            ax.add_patch(Polygon([(x - 0.013, ym - 0.045), (x - 0.013, ym + 0.045), (x - 0.002, ym)],
+                                 closed=True, facecolor="0.25", edgecolor="0.25", linewidth=0.5))
+
+    # the parent, drawn flat, with the group at the varied position marked
+    ax = fig.add_axes((0.0, 0.02, 0.45, 0.63))
+    flat = Chem.RemoveHs(mols[p])
+    match = flat.GetSubstructMatch(core)
+    rdDepictor.SetPreferCoordGen(False)
+    rdDepictor.Compute2DCoords(flat)
+    xy = np.array([[q.x, q.y] for q in (flat.GetConformer().GetAtomPosition(i)
+                                         for i in range(flat.GetNumAtoms()))])
+    Chem.Kekulize(flat, clearAromaticFlags=True)
+    centre = xy.mean(axis=0)
+    for bond in flat.GetBonds():
+        a, b = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        ax.plot(xy[[a, b], 0], xy[[a, b], 1], color="0.15", lw=1.0, solid_capstyle="round", zorder=2)
+        if bond.GetBondTypeAsDouble() == 2.0:
+            d = xy[b] - xy[a]
+            normal = np.array([-d[1], d[0]]) / np.linalg.norm(d)
+            if np.dot(normal, centre - 0.5 * (xy[a] + xy[b])) < 0:
+                normal = -normal
+            ia, ib = xy[a] + 0.15 * d + 0.13 * normal, xy[b] - 0.15 * d + 0.13 * normal
+            ax.plot([ia[0], ib[0]], [ia[1], ib[1]], color="0.15", lw=1.0, zorder=2)
+    for atom in flat.GetAtoms():
+        if atom.GetSymbol() != "C":
+            i = atom.GetIdx()
+            ax.text(xy[i, 0], xy[i, 1], atom.GetSymbol(), ha="center", va="center", fontsize=7.5,
+                    zorder=4, bbox=dict(boxstyle="circle,pad=0.12", facecolor="white",
+                                        edgecolor="none"))
+    site = match[label]                    # the core atom that carries the group
+    inside = set(match)
+    group, stack = set(), [n.GetIdx() for n in flat.GetAtomWithIdx(site).GetNeighbors()
+                           if n.GetIdx() not in inside]
+    while stack:
+        i = stack.pop()
+        if i not in group:
+            group.add(i)
+            stack += [n.GetIdx() for n in flat.GetAtomWithIdx(i).GetNeighbors()
+                      if n.GetIdx() not in inside and n.GetIdx() not in group]
+    marked = sorted(group) if group else [site]
+    gc = xy[marked].mean(axis=0)
+    radius = max(0.75, float(np.linalg.norm(xy[marked] - gc, axis=1).max()) + 0.6)
+    ax.add_patch(plt.Circle(gc, radius, facecolor="#f4c7c3", edgecolor="C3", lw=0.9, alpha=0.6,
+                            zorder=1))
+    ax.set_xlim(xy[:, 0].min() - 1.4, xy[:, 0].max() + 1.4)
+    ax.set_ylim(xy[:, 1].min() - 1.6, xy[:, 1].max() + 1.6)
+    ax.set_aspect("equal")
+    ax.set_axis_off()
+    ax.set_title(f"the parent, {names[p]}:\nthe group in the circle is replaced", fontsize=7.5)
+
+    # what comes back
+    ax = fig.add_axes((0.61, 0.115, 0.375, 0.545))
+    rows = np.arange(len(shown))
+    for k, cand in enumerate(shown):
+        colour = "C0" if cand.known else "C3"
+        ax.errorbar([cand.mean], [k], xerr=[cand.sd], fmt="o", ms=4, color=colour, capsize=2,
+                    lw=0.9, mfc=colour if cand.known else "white")
+    ax.axvline(res.parent_mean, color="0.4", lw=0.7, ls="--")
+    ax.set_yticks(rows)
+    ax.set_yticklabels(["–" + (c.smiles.split("]", 1)[1] if c.smiles.startswith("[") else c.smiles)
+                        for c in shown], fontsize=6.3, family="DejaVu Sans Mono")
+    ax.set_ylim(len(shown) - 0.5, -0.5)
+    ax.set_xlabel("predicted activity ± its standard deviation\n(dashed: the prediction of "
+                  "the parent)", fontsize=6.8)
+    ax.tick_params(length=2, labelsize=6.8)
+    ax.set_title("the ten fragments ranked first by expected improvement\n(filled: a group the "
+                 "series already uses there; open: a new one)", fontsize=7.2, x=0.38)
+    print(f"  design: {len(keep)} molecules posed, alpha {alpha:g}, lambda {lam:g}, q2 "
+          f"{model.stats.q2:+.3f}; parent {names[p]}, position {label}, {len(set(frags))} fragments, "
+          f"{len(res.candidates)} candidates; first {shown[0].smiles} "
+          f"({shown[0].mean:.2f} +- {shown[0].sd:.2f})")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -2421,9 +2996,11 @@ def fig_rule3(path):
 
 
 FIGURES = {
+    "idea.png": fig_idea,
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
+    "diagnose.svg": fig_diagnose,
     "featurespace.png": fig_featurespace,
     "parent.svg": fig_parent,
     "hop.png": fig_hop,
@@ -2436,11 +3013,13 @@ FIGURES = {
     "probe.png": fig_probe,
     "chemspace.png": fig_chemspace,
     "gradient.png": fig_gradient,
+    "ensemble.png": fig_ensemble,
     "vectorcofield.png": fig_vectorcofield,
     "copattern.svg": fig_copattern,
     "cospectrum.svg": fig_cospectrum,
     "phasefield.png": fig_phasefield,
     "multiscale.svg": fig_multiscale,
+    "shells.png": fig_shells,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
@@ -2451,6 +3030,8 @@ FIGURES = {
     "rule2.svg": fig_rule2,
     "rule3.svg": fig_rule3,
     "roc.svg": fig_roc,
+    "acquire.svg": fig_acquire,
+    "design.svg": fig_design,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
     "isosurface.png": fig_isosurface,
