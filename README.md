@@ -636,6 +636,38 @@ that the pair part of the feature vector is bit-identical with the block switche
 over, one being the single global invariant per field triple. In the application it is the
 *Signed three-point channels (chirality)* box beside the distance resolution.
 
+**Two enantiomers of the same compound, both measured**
+([make_enantiomer_examples.py](examples/make_enantiomer_examples.py),
+[run_enantiomers.py](benchmarks/run_enantiomers.py)), plan item MC3. Item C7 built the handedness
+channels and could only test them on synthetic pairs, because no set here held an enantiomeric
+pair. This is the missing series: 3,937 pairs of mirror images from ChEMBL whose two potencies were
+measured in the same assay, 3,849 of them passing the checks, over 60 human targets. A pair is
+found by inverting every stereocentre and comparing structures, never by reading a name or an R or
+S letter; the configuration of each built structure is checked against the record; and pairs are
+never selected by how much their potencies differ.
+
+The null is exact. The two members of a pair are one conformation and its reflection, so their
+two-point rows are identical to the last bit, and a model without handedness channels is forced to
+give them the same number: it names the better enantiomer in exactly 50.0 % of pairs.
+
+- **It names the better enantiomer more often than chance.** With whole scaffolds held out and 51
+  targets each fitted on its own, 59.1 % of the 1,144 pairs whose potencies differ by at least one
+  log unit are ranked correctly (interval 56.3 to 61.9; 676 of 1,144 against 572 for chance), and
+  53.8 % of all 3,667 pairs.
+- **The handedness is read at the stereocentre and nowhere else.** Built from the stereocentres
+  alone the channels give the best result of any variant; built from every other centre of the
+  same molecules they give chance (49.7 %, interval 48.1 to 51.3).
+- **It does not improve the potency itself.** The median q2 over the 51 targets moves from -0.018
+  to -0.023 when the 25 handedness columns are added, and improves on 16 of 51 targets.
+- **The effect is small.** The predicted and measured differences correlate at 0.199, and a
+  predicted difference is wrong by 0.78 log units on average against a spread of 1.04. The share
+  is above 50 % on 31 of 51 targets but its interval is clear of 50 % on only 7.
+
+```bash
+python examples/make_enantiomer_examples.py     # once: about 314,000 records from ChEMBL
+python benchmarks/run_enantiomers.py            # 9 minutes
+```
+
 **It is also a kernel to model with, not only to compare against.** `CMFModel` takes a
 `kernel_source`, so every learner, the grid search, the cross-validation, the external CV, the
 posterior variance, the screening scores and model save/load work on it unchanged:

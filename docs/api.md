@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 122 modules, 240 classes with 794 public methods, and 1232 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 122 modules, 240 classes with 794 public methods, and 1233 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -17694,6 +17694,17 @@ Attributes:
 ### `stereo_centres(mol, spec: StereoSpec=StereoSpec()) -> List[Tuple[int, np.ndarray]]`
 
 (atom, its neighbours) for every atom that has enough of them to define a frame.
+
+### `centre_channels(mol, spec: StereoSpec=StereoSpec(), n_fields: Optional[int]=None) -> List[Tuple[int, np.ndarray]]`
+
+(atom, what that atom alone adds to the channels) for every centre that adds anything.
+
+The channels of a molecule are a sum over its centres, so they split exactly into one
+contribution per centre.  That is what plan item MC3 needs in order to ask *where* a model's
+handedness comes from: a model that reads the configuration of the stereocentre should take
+its answer from that atom and not from the rest of the molecule.  The contributions sum to
+`stereo_channels`, which is built from this function so that the two cannot drift
+apart.
 
 ### `stereo_channels(mol, spec: StereoSpec=StereoSpec(), n_fields: Optional[int]=None) -> np.ndarray`
 

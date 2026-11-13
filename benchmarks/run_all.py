@@ -987,6 +987,19 @@ def registry() -> List[Benchmark]:
                   minutes="20",
                   report=lambda: _mod("run_chirality").report(_r("chirality")),
                   tables=["chirality/table.md"]),
+        Benchmark("enantiomers",
+                  "can the program tell two enantiomers apart: on pairs of mirror images from "
+                  "ChEMBL whose two potencies were measured in the same assay, the share of "
+                  "held-out pairs whose better enantiomer is named correctly, with pairs held "
+                  "out and with whole scaffolds held out, and the handedness channels built "
+                  "from every centre, from the stereocentres alone and from every other centre "
+                  "(the two members of a pair are exact reflections, so a description blind to "
+                  "handedness names one half of them right by construction)",
+                  "run_enantiomers.py", "enantiomers", compute=[[]],
+                  minutes="9",
+                  prepare=["../examples/make_enantiomer_examples.py"],
+                  report=lambda: _mod("run_enantiomers").report(_r("enantiomers")),
+                  tables=["enantiomers/table.md"]),
         Benchmark("structure", "is this set that set, and what are its real groups",
                   "run_structure.py", "structure", compute=[[]],
                   minutes="20",

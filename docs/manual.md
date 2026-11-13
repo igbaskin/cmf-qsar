@@ -7869,6 +7869,118 @@ $q^2$ never sees the left-out activities. The groups default to the continuous i
 names others. The fitted weights are printed by kind and stored with the model
 (`block_weight_report`).
 
+### Two enantiomers of the same compound, both measured
+
+The advice above -- turn the handedness channels on for a series whose stereochemistry varies --
+could not be tested when it was written, because no set in this repository held an enantiomeric
+pair. Plan item MC3 is that test. `examples/make_enantiomer_examples.py` builds the series from
+ChEMBL, and `benchmarks/run_enantiomers.py` measures it in 9 minutes
+(`benchmarks/results/enantiomers/table.md`).
+
+**The series.** 314,192 binding measurements of 60 human targets, each named by its UniProt
+accession and the list fixed before any count was seen, hold 3,937 pairs of mirror images whose
+two potencies come from **one assay**. 3,849 pairs pass the checks below, and the 3,834 of them
+that belong to a target with at least ten pairs are written as 54 files. Five rules decide what
+a pair is, and each of them refuses data that would make the question easier than it is.
+
+1. *A pair is a pair of mirror images.* Every tetrahedral centre of the first molecule is
+   inverted and the result has to be the second molecule. No compound name and no R or S letter
+   is read, so a pair is never built from a label; a diastereomer, which is one centre inverted
+   out of two, is not a pair.
+2. *The configuration comes from the record.* A molecule with a stereocentre whose configuration
+   ChEMBL does not give cannot be placed in space and is left out. The configuration of the
+   built structure is then read back from its coordinates and has to agree with the record. 85
+   pairs were refused for disagreeing, and they would have carried the wrong handedness into the
+   very channels under test.
+3. *Both potencies come from one assay identifier and one measurement type.* Where a pair was
+   measured in several assays of one target, the assay with the most records is used. A pair is
+   recognised by its two structures and not by its identifiers, so the free base and the
+   hydrochloride of one pair count once.
+4. *The two structures differ in handedness and in nothing else.* One enantiomer is embedded in
+   three dimensions and the other is its reflection, atom for atom, as item C7's synthetic pairs
+   are built. Two separate embeddings would differ in their torsions as well, and a description
+   blind to handedness could then appear to tell them apart.
+5. *Nothing is selected on the answer.* Pairs are not filtered by how much the two potencies
+   differ. Almost a third of them differ by less than 0.3 log units and 130 pairs do not differ
+   at all. They stay, because a set chosen by the quantity a model is asked to predict measures
+   nothing.
+
+**The null of this measurement is exact, not statistical.** The field autocorrelation counts
+pairs of atoms at a distance, and a mirror image has every such pair in the same amounts. Because
+the two members here are one conformation and its reflection, their rows are identical to the last
+bit: the largest difference found over 3,834 pairs is zero. A model built on that description
+alone is therefore *forced* to give the two members the same number. It names no better
+enantiomer, and its share of correctly ranked pairs is one half by construction. Any share above
+one half comes from the handedness channels and from nothing else. This is what makes the
+measurement worth making: no baseline has to be argued about.
+
+**The model names the better enantiomer more often than chance.** Each of the 51 targets with at
+least fifteen pairs is fitted on its own, and the held-out pairs of all of them are counted
+together. The mean of each pair is taken off its two potencies first, so what is predicted is half
+the difference between the two enantiomers.
+
+| Handedness channels built from | Pairs held out, all 3,667 pairs | Pairs held out, the 1,144 differing by 1 log unit or more | Scaffolds held out, all 3,667 pairs | Scaffolds held out, 1 log unit or more |
+|---|---|---|---|---|
+| only the atoms RDKit calls stereocentres | 55.2 % (53.6 to 56.9) | **60.5 % (57.7 to 63.3)** | 53.8 % (52.2 to 55.4) | **59.1 % (56.3 to 61.9)** |
+| every centre with three neighbours | 51.5 % (49.9 to 53.1) | 57.4 % (54.5 to 60.3) | 51.3 % (49.7 to 52.9) | 55.6 % (52.7 to 58.5) |
+| every centre except the stereocentres | 49.5 % (47.9 to 51.1) | 53.2 % (50.3 to 56.1) | 49.7 % (48.1 to 51.3) | 51.8 % (48.9 to 54.7) |
+| none, the two-point kernel alone | 50.0 % | 50.0 % | 50.0 % | 50.0 % |
+
+The brackets hold a 95 % interval for the share. With whole scaffolds held out and the channels
+read at the stereocentres, 676 of 1,144 pairs are named correctly where 572 is chance
+(a binomial test gives p = 8 x 10^-10); over all 3,667 pairs, 1,972 against 1,834 chance
+(p = 5 x 10^-6).
+
+**Two fold rules, and they agree.** Holding out a pair keeps other pairs of its scaffold in the
+training part, so the question is whether a new member of a known series can be ranked. Holding
+out whole scaffolds takes every near copy away with it, so the question is whether a series the
+model has never seen can be ranked. The second is the harder question and it is the one the
+alignment-free kernel exists for. The two answers differ by about one point, which says the
+ranking is not mostly read off a near neighbour. Getting this right needed care: when a
+stereocentre is a ring atom it survives into the Bemis-Murcko scaffold, the two members of a pair
+then fall into different scaffold groups, and a split pair is ranked *backwards* on purpose -- the
+model has seen one member, predicts the other as that one's measured value, and after the mean of
+the pair is removed that value has the opposite sign. 260 of 3,834 pairs were split that way at
+first, and the exact null is what exposed it: the description that cannot see handedness scored
+47.9 % where it has to score 50.0 %. The configuration is now taken off the molecule before its
+scaffold is read, and a run in which any pair would be split is refused outright.
+
+**The handedness is read at the stereocentre and nowhere else.** This is the sharpest result of the
+item. The channels are a sum over the centres of a molecule, so they split exactly into one
+contribution per atom (`cmfqsar.stereo.centre_channels`). Built from the stereocentres alone they
+give the best figure of any variant; built from every *other* centre of the same molecules they
+give chance, with an interval that holds 50 % under both fold rules. Reading more centres than the
+stereocentres does not add information, it adds noise: every centre together is two points worse
+than the stereocentres alone.
+
+**The potency itself does not improve.** The ordinary question -- add the 25 handedness columns to
+the two-point kernel and predict the potency, with whole pairs held out -- is answered no. The
+median q2 over the 51 targets moves from -0.018 to -0.023, the channels improve it on 16 of 51
+targets, and the mean change is -0.043. The columns that make the within-pair ranking possible
+dilute the kernel for the larger task, which is the same arithmetic that made them cost little on
+the five sets of item C7.
+
+**How large is the effect, honestly.** Small, and real. Pooled over the targets, the predicted and
+the measured differences correlate at 0.199 and a predicted difference is wrong by 0.78 log units
+on average, against a spread of 1.04. Target by target the evidence is thin: the share is above
+50 % on 31 of 51 targets, but the interval is clear of 50 % on only 7 of them and clear below on 2,
+and the median target sits at 53.0 %. What carries the result is the count over 1,144 pairs, not
+any single target. The targets where it works best are beta-2 adrenergic (93.6 % of 39 pairs),
+alpha-1A adrenergic (79.1 % of 44), fatty acid amide hydrolase (75.0 % of 54), PPAR gamma (67.5 %
+of 101) and serotonin 5-HT2C (67.1 % of 72) -- families in which one configuration is known to do
+the binding.
+
+**What this does not show.** The potencies are taken as ChEMBL standardises them, and a pair
+measured in one assay can still hold an error larger than the difference being predicted; the
+130 pairs with equal potencies are a reminder that some reported differences are below the noise
+of the measurement. The structures are single conformations, and the conformation a receptor
+selects may differ between two enantiomers in a way a reflection cannot represent. The share
+reported is a count of correct orderings, not a model of the difference: a correlation of 0.199
+is not a quantity to design with. And the chosen regularisation runs to the top of its grid on the
+targets where there is nothing to fit, which is the inner criterion asking for a constant
+predictor; extending the grid to 100,000 leaves the shares unchanged on the four targets tested,
+because shrinkage scales the predictions without changing their order.
+
 ### What the row length is worth, and when the division helps
 
 The kernel above divides every feature row by its own length, so what reaches the model is the
