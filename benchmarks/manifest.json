@@ -1,6 +1,6 @@
 {
- "commit": "b302d5740002a4d805fe8aba00f1cd34824b69f5",
- "created": "2026-11-13T20:52:23",
+ "commit": "fbdbd8c3d1a795e79ed5044e6db2643648f131d8",
+ "created": "2026-11-13T22:03:18",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2495,7 +2495,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2669,7 +2669,7 @@
   "benchmarks/results/cellmodel/stress_298K_2.5C.json": "94c8872a5f34203c711e039a4d40c9dc82993ef7a319f44cb1edf89d22d15d76",
   "benchmarks/results/cellmodel/stress_298K_2C.json": "62e5c3155df9d0fc19ff6ed72a66b685876a7ab03e19b38808acd49ea020e6e3",
   "benchmarks/results/cellmodel/stress_fits.json": "ae194cde9d622585aaa4ca59a25000bd4e76eec6d1c4ad31a6740b2895f461be",
-  "benchmarks/results/cellmodel/table.md": "4d3347c731f5a6ced94dda9d905d310f12d869e51a2875ba2ac3c6cfe1c779f6",
+  "benchmarks/results/cellmodel/table.md": "ed75e336475bf6c6c1bb3bac445195cf69a60b5e6018ddefebc3d92f4b2dc060",
   "benchmarks/results/cellmodel/tolerance_253K_1.5C.json": "2ed6cbb541688310692368b24fe29d5f5eaed1f70d46c94b1d096c4a6c193fd0",
   "benchmarks/results/cellmodel/tolerance_253K_1C.json": "8194d51bf685838bc803357475c04bb7a6d12b186ebc9078a4f902e33a7ed8a5",
   "benchmarks/results/cellmodel/tolerance_263K_1.5C.json": "d8c37c774df93fed4f91bdacdd3173570a65404b6f75f24c423e218aa2f5567c",
@@ -2679,6 +2679,14 @@
   "benchmarks/results/cellmodel/tolerance_298K_2.5C.json": "248bbe8020745625a161e8413592e7b8b21f5e9b81c523cc1f521d276db27928",
   "benchmarks/results/cellmodel/tolerance_298K_2C.json": "243b1a78153de09d1c63e9c1294cedc28be797f2c2a99e7976d05e4ae3c36b69",
   "benchmarks/results/cellmodel/tolerance_check.json": "b639db8c5d3f4f0063537c6edc037f5c5aa13e3ac5d8357ad555260eb214eb47",
+  "benchmarks/results/cellmodel/tolerance_exchange_253K_1.5C.json": "338891221f72f5f06b9652b936b9a397ff2c72e3c0f6e19f2d5225c6e0795564",
+  "benchmarks/results/cellmodel/tolerance_exchange_253K_1C.json": "bcd69e1684bbda544e2b971e470571aafc4bd6132877c6e23b22bfe1f3662811",
+  "benchmarks/results/cellmodel/tolerance_exchange_263K_1.5C.json": "608bca699bb0ab864ee6da2a59ecc0d573cca1a09b47a3565902cff723166f74",
+  "benchmarks/results/cellmodel/tolerance_exchange_263K_1C.json": "a39c1d49b0ba4dc6bbf4609ab88969591447cea2ba8be5b4b811b674e8bf1b3c",
+  "benchmarks/results/cellmodel/tolerance_exchange_298K_1.5C.json": "fb66d2484816ba52f23d86ad824e78f259def5568e6a5902af71a8c7cf97d213",
+  "benchmarks/results/cellmodel/tolerance_exchange_298K_1C.json": "961c04a8bf5271dc69fb704680ca725c32d531db042fb74e626fa603d2966305",
+  "benchmarks/results/cellmodel/tolerance_exchange_298K_2.5C.json": "86390539a1a95eee0307df54a178092effb93fcf5eaaa49c4984cc4c5d484c01",
+  "benchmarks/results/cellmodel/tolerance_exchange_298K_2C.json": "58ed0e01cd32189f39359b29f558b865260a1dd2fbc05a9ba8e4fe2b1222b5e8",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
