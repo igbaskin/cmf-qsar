@@ -6413,8 +6413,8 @@ that one of them fits this kernel, and `cmfqsar/lowrank.py` is that one.
 
     K(X, X) ~ K(X, Z) K(Z, Z)^+ K(Z, X),
 
-the Nystrom approximation. That is the Gram matrix of the features ``Phi = K(X, Z) W`` with
-``W W^T = K(Z, Z)^+``, so the model can be fitted in the space of the m columns instead of the
+the Nystrom approximation. That is the Gram matrix of the features `Phi = K(X, Z) W` with
+`W W^T = K(Z, Z)^+`, so the model can be fitted in the space of the m columns instead of the
 space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
 `(K + lam I) a = y`, in m by m memory. Nothing new is computed -- `K(X, Z)` is what the kernel
 module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
