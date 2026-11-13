@@ -6705,7 +6705,9 @@ suggestion — and, for the top few, what the candidate's fields have that the p
 
 The library is `--fragments common` (a built-in list of about forty ordinary medicinal-chemistry
 substituents), `series` (what this series already puts there), `both`, or a file of SMILES with
-one attachment point each.
+one attachment point each. A group is one candidate however often the library holds it:
+with `both`, a group of the built-in list that the series already uses is in both lists,
+and it is built and ranked once.
 
 ### Would it have suggested the right group, measured
 

@@ -231,16 +231,25 @@ def enumerate_replacements(parent: Chem.Mol, core: Chem.Mol, label: int,
     key naming the whole substitution pattern).  Everything the parent carries at its other
     positions is kept exactly as it is, so the only difference between two candidates is the one
     group being varied -- which is what makes the ranking a ranking of substituents.
+
+    A fragment is one candidate however often the library holds it.  A group cut out of the
+    series carries its hydrogens as atoms and the same group in the built-in list does not, so
+    a library made of both lists holds such a group under two spellings; it is built once, under
+    its canonical name (:func:`fragment_smiles`), and the first spelling met is the one used.
     """
     labels = list(labels) if labels is not None else series_labels([parent], core)
     others = [f for f in substituents(parent, core) if attachment_label(f) != label]
     cache = {} if cache is None else cache
-    out, failed = [], []
+    out, failed, taken = [], [], set()
     for smi in fragments:
         frag = as_fragment(smi, label)
         if frag is None:
             failed.append(smi)
             continue
+        name = fragment_smiles(frag)
+        if name in taken:                        # the same group, written a second way
+            continue
+        taken.add(name)
         try:
             built = topomer_assembly(others + [frag], labels, spec, cache)
         except Exception:                        # noqa: BLE001 - one fragment, not the library
@@ -248,7 +257,7 @@ def enumerate_replacements(parent: Chem.Mol, core: Chem.Mol, label: int,
         if built is None:
             failed.append(smi)
             continue
-        out.append((fragment_smiles(frag), built, _key(others + [frag])))
+        out.append((name, built, _key(others + [frag])))
     return out, failed
 
 
@@ -307,21 +316,28 @@ def enumerate_molecules(parent: Chem.Mol, core: Chem.Mol, label: int,
     """Build the parent with each library fragment in place of what sits at `label`.
 
     The candidates are whole molecules, each embedded once; nothing is superimposed on anything,
-    which is what a model with no frame allows and a guest table needs.
+    which is what a model with no frame allows and a guest table needs.  As in
+    :func:`enumerate_replacements`, a fragment the library holds twice is built once.  The seed
+    of an embedding stays the place of the fragment in the library, so dropping a repeat does
+    not change the geometry of any other candidate.
     """
     others = [f for f in substituents(parent, core) if attachment_label(f) != label]
-    out, failed = [], []
+    out, failed, taken = [], [], set()
     for k, smi in enumerate(fragments):
         frag = as_fragment(smi, label)
         if frag is None:
             failed.append(smi)
             continue
+        name = fragment_smiles(frag)
+        if name in taken:                        # the same group, written a second way
+            continue
+        taken.add(name)
         built = whole_molecule(core, others + [frag])
         posed = embed(built, seed=seed + k) if built is not None else None
         if posed is None:
             failed.append(smi)
             continue
-        out.append((fragment_smiles(frag), posed, _key(others + [frag])))
+        out.append((name, posed, _key(others + [frag])))
     return out, failed
 
 

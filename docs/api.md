@@ -4001,6 +4001,11 @@ key naming the whole substitution pattern).  Everything the parent carries at it
 positions is kept exactly as it is, so the only difference between two candidates is the one
 group being varied -- which is what makes the ranking a ranking of substituents.
 
+A fragment is one candidate however often the library holds it.  A group cut out of the
+series carries its hydrogens as atoms and the same group in the built-in list does not, so
+a library made of both lists holds such a group under two spellings; it is built once, under
+its canonical name (`fragment_smiles`), and the first spelling met is the one used.
+
 ### `whole_molecule(core: Chem.Mol, frags: Sequence[Chem.Mol]) -> Optional[Chem.Mol]`
 
 Put the core and its substituents back together into one molecule (plan item SC7).
@@ -4019,7 +4024,10 @@ One conformation of a molecule, the way the guest tables were embedded.
 Build the parent with each library fragment in place of what sits at `label`.
 
 The candidates are whole molecules, each embedded once; nothing is superimposed on anything,
-which is what a model with no frame allows and a guest table needs.
+which is what a model with no frame allows and a guest table needs.  As in
+`enumerate_replacements`, a fragment the library holds twice is built once.  The seed
+of an embedding stays the place of the fragment in the library, so dropping a repeat does
+not change the geometry of any other candidate.
 
 ### `design(model, parent: Chem.Mol, core: Chem.Mol, label: int, fragments: Optional[Sequence[str]]=None, labels: Optional[Sequence[int]]=None, acquire: str='ei', beta: float=1.0, xi: float=0.0, spec: TopomerSpec=TopomerSpec(), parent_name: str='the parent', series: Optional[Sequence[Chem.Mol]]=None, series_names: Optional[Sequence[str]]=None, series_y: Optional[Sequence[float]]=None, known: Optional[Sequence[str]]=None, with_fields: int=0, pose: str='auto', seed: int=1, progress=None) -> DesignResult`
 

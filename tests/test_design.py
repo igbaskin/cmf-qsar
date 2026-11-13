@@ -13,7 +13,7 @@ from rdkit import Chem
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.design import (COMMON_FRAGMENTS, Candidate, as_fragment, design,  # noqa: E402
-                            enumerate_replacements, read_fragments)
+                            enumerate_replacements, fragment_smiles, read_fragments)
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel  # noqa: E402
 from cmfqsar.topomer import (attachment_label, series_labels, substituents,  # noqa: E402
@@ -78,6 +78,42 @@ def test_replacing_a_group_with_itself_gives_the_parent_back():
     made = Chem.MolToSmiles(built[0][1])
     assert made == Chem.MolToSmiles(topomer_assembly(frags, labels))
     assert made == Chem.MolToSmiles(topomer_molecule(parent, CORE, labels))
+
+
+def test_a_fragment_written_two_ways_is_one_candidate():
+    """A group cut from the series carries its hydrogens as atoms, the built-in list writes it
+    without them, and `cmf design` puts both lists into one library by default.  The group has
+    to come back once, not twice in neighbouring places of the ranking."""
+    mols = [Chem.AddHs(m) for m in _mols()]
+    parent = mols[0]
+    labels = series_labels(mols, CORE)
+    frags = substituents(parent, CORE)
+    label = attachment_label(frags[0])
+    cut = Chem.MolToSmiles(frags[0])                     # with explicit hydrogens
+    bare = Chem.RemoveHs(frags[0])
+    for atom in bare.GetAtoms():
+        if atom.GetAtomicNum() == 0:
+            atom.SetIsotope(0)
+    plain = Chem.MolToSmiles(bare)                       # as a library writes it
+    assert "[H]" in cut and "[H]" not in plain, "the two spellings must differ for the test"
+    built, failed = enumerate_replacements(parent, CORE, label, [cut, plain, "[*]C#N", plain],
+                                           labels)
+    names = [b[0] for b in built]
+    assert not failed
+    assert len(names) == 2 and len(set(names)) == 2, names
+    assert names[0] == fragment_smiles(frags[0])
+    keys = [b[2] for b in built]
+    assert len(set(keys)) == len(keys), "two candidates must not be the same molecule"
+
+
+def test_a_ranking_holds_every_fragment_once(world):
+    model, mols, names, labels, _keep = world
+    label = attachment_label(substituents(mols[0], CORE)[0])
+    library = ["[*]F", "[*]Cl", "[*]F", "[*]C#N", "F[*]"]   # fluorine three times, two spellings
+    res = design(model, mols[0], CORE, label, fragments=library, labels=labels,
+                 parent_name=names[0])
+    got = [c.smiles for c in res.candidates]
+    assert sorted(got) == sorted(set(got)) and len(got) == 3, got
 
 
 def test_the_other_positions_are_left_alone():

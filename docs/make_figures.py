@@ -2394,14 +2394,7 @@ def fig_design(path):
     res = design(model, mols[p], core, label, fragments=frags, labels=labels, acquire="ei",
                  spec=spec, parent_name=names[p], series=mols, series_names=names, series_y=y,
                  known=seen, with_fields=0)
-    shown, taken = [], set()
-    for cand in res.candidates:                                    # a fragment listed twice is one
-        key = cand.smiles
-        if key not in taken:
-            taken.add(key)
-            shown.append(cand)
-        if len(shown) == 10:
-            break
+    shown = res.candidates[:10]
 
     sand, green, grey, blue = "#f6ead2", "#dcefdc", "#e9e9e9", "#dbe7f3"
     fig = plt.figure(figsize=(WIDTH, 4.5))
@@ -2410,7 +2403,7 @@ def fig_design(path):
     ax.set_ylim(0, 1)
     ax.set_axis_off()
     steps = ((grey, "a parent of the\nseries and one of\nits positions"),
-             (grey, f"a library of\nfragments\n({len(set(frags))} here)"),
+             (grey, f"a library of\nfragments\n({len(res.candidates)} here)"),
              (sand, "every fragment is\nput there and posed\nby the topomer rule"),
              (green, "a topomer model of\nthe series predicts\neach, with a deviation"),
              (blue, "a rule turns the two\nnumbers into a score,\nand the list is ranked"))
@@ -2492,8 +2485,8 @@ def fig_design(path):
     ax.set_title("the ten fragments ranked first by expected improvement\n(filled: a group the "
                  "series already uses there; open: a new one)", fontsize=7.2, x=0.38)
     print(f"  design: {len(keep)} molecules posed, alpha {alpha:g}, lambda {lam:g}, q2 "
-          f"{model.stats.q2:+.3f}; parent {names[p]}, position {label}, {len(set(frags))} fragments, "
-          f"{len(res.candidates)} candidates; first {shown[0].smiles} "
+          f"{model.stats.q2:+.3f}; parent {names[p]}, position {label}, {len(frags)} entries in "
+          f"the two lists, {len(res.candidates)} candidates; first {shown[0].smiles} "
           f"({shown[0].mean:.2f} +- {shown[0].sd:.2f})")
     save(fig, path)
 
