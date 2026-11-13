@@ -51,6 +51,18 @@ DEFAULT_OPTIONS = {"SEI": "solvent-diffusion limited"}
 #: which reduction of the cell model to run; the single-particle model with electrolyte is the
 #: cheapest one that still has the transport of the electrolyte in it
 MODELS = ("SPM", "SPMe", "DFN")
+#: the four transport parameters of the electrolyte in the cell model
+ELECTROLYTE_ENTRIES = ("Electrolyte conductivity [S.m-1]", "Electrolyte diffusivity [m2.s-1]",
+                       "Cation transference number", "Thermodynamic factor")
+#: the published set that holds a measured electrolyte with all four of them: LiPF6 in EC:EMC
+#: 3:7 by weight, the electrolyte of the Chen 2020 cell, measured by Landesfeind and Gasteiger
+#: (2019) between -10 and +50 degrees Celsius and between 0.1 and 3.0 mol/L
+MEASURED_ELECTROLYTE = "ORegan2022"
+#: the coldest temperature, in kelvin, at which that study's transference numbers and
+#: thermodynamic factors are used: the study says their precision is lower below +20 degrees
+#: Celsius, its -10 degree values have large errors and go negative, and the fitted transference
+#: number is negative at 0 degrees already from 0.5 mol/L up
+COLDEST_TRUSTED = 293.15
 
 
 def discharge(rate: float, cutoff: float = 2.5) -> Tuple[str]:
@@ -79,6 +91,38 @@ def _pybamm():
 def published_parameters(base: str = DEFAULT_BASE):
     """The published parameter set the cell model starts from."""
     return _pybamm().ParameterValues(str(base))
+
+
+def measured_electrolyte(names: Sequence[str] = ELECTROLYTE_ENTRIES,
+                         source: str = MEASURED_ELECTROLYTE,
+                         coldest: Optional[float] = COLDEST_TRUSTED) -> Dict[str, object]:
+    """The electrolyte functions of the published set `source`, as replacements for `run_cell`.
+
+    The default source holds the functions Landesfeind and Gasteiger (2019) fitted to their
+    measurements of the Chen 2020 cell's own electrolyte: each depends on the concentration and
+    the temperature, where the Chen 2020 functions depend on the concentration only and two of
+    the four are constants. Below `coldest` the transference number and the thermodynamic factor
+    are read at `coldest`, since the study's coldest measurements of these two are not reliable;
+    None reads them at the cell's temperature. The conductivity and the diffusivity are always
+    read at the cell's temperature.
+    """
+    pybamm = _pybamm()
+    p = pybamm.ParameterValues(str(source))
+    out = {}
+    for name in names:
+        if name not in ELECTROLYTE_ENTRIES:
+            raise KeyError(f"{name!r} is not one of the electrolyte's transport parameters")
+        f = p[name]
+        held = name in ELECTROLYTE_ENTRIES[2:] and coldest is not None and callable(f)
+        out[name] = _held_above(f, float(coldest)) if held else f
+    return out
+
+
+def _held_above(function, coldest: float):
+    """`function(c, T)` read at the larger of T and `coldest`."""
+    def held(c_e, T):
+        return function(c_e, _pybamm().maximum(T, coldest))
+    return held
 
 
 def build_model(kind: str = "SPMe", options: Optional[Dict[str, object]] = None):
@@ -169,20 +213,26 @@ def run_cell(overrides: Optional[Dict[str, object]] = None, cycles: int = 10,
 def sample(parameter: CellParameter, draws: int = 200, cycles: int = 10,
            base: str = DEFAULT_BASE, kind: str = "SPMe",
            options: Optional[Dict[str, object]] = None, cycle: Sequence[str] = DEFAULT_CYCLE,
-           seed: int = 0, progress=None, temperature: Optional[float] = None) -> List[CellRun]:
+           seed: int = 0, progress=None, temperature: Optional[float] = None,
+           fixed: Optional[Dict[str, object]] = None) -> List[CellRun]:
     """Run the cell model once per drawn value of one parameter, the others left published.
 
     This is the one-at-a-time sampling the report reads: it says what this parameter's deviation
-    alone does to the cell, which is the question a tolerance rule needs answered.
+    alone does to the cell, which is the question a tolerance rule needs answered. `fixed` holds
+    replacements that stay the same in every run, such as a measured electrolyte from
+    :func:`measured_electrolyte`; a drawn scale or shift then acts on the fixed value, not on the
+    published one.
     """
     p = published_parameters(base)
     if parameter.name not in p:
         raise KeyError(f"the parameter set {base} holds no entry called {parameter.name!r}")
+    fixed = dict(fixed or {})
+    start = fixed.get(parameter.name, p[parameter.name])
     rng = np.random.default_rng(int(seed))
     values = parameter.draw(int(draws), rng)
     out = []
     for i, v in enumerate(values):
-        out.append(run_cell({parameter.name: parameter.apply(p[parameter.name], v)},
+        out.append(run_cell({**fixed, parameter.name: parameter.apply(start, v)},
                             cycles=cycles, base=base, kind=kind, options=options, cycle=cycle,
                             parameters=p, temperature=temperature))
         out[-1].overrides = {parameter.name: float(v)}

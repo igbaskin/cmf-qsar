@@ -427,3 +427,82 @@ def test_a_shift_needs_the_value_it_shifts():
     p.published = None
     with pytest.raises(ValueError, match="needs the published value"):
         CM.local_sensitivity(p, cycles=1, kind="SPM")
+
+
+# --------------------------------------------------------------------------- the second reference
+def _value(f, c, T):
+    import pybamm
+    out = f(pybamm.Scalar(c), pybamm.Scalar(T))
+    return float(out.evaluate()) if hasattr(out, "evaluate") else float(out)
+
+
+def test_the_measured_electrolyte_holds_two_parameters_at_the_coldest_trusted_temperature():
+    """The transference number and the thermodynamic factor are read at +20 degrees in a colder
+    cell; the conductivity and the diffusivity follow the cell's temperature."""
+    pytest.importorskip("pybamm")
+    e = CM.measured_electrolyte()
+    assert set(e) == set(CM.ELECTROLYTE_ENTRIES)
+    for name in CM.ELECTROLYTE_ENTRIES[2:]:
+        assert _value(e[name], 1000.0, 253.15) == pytest.approx(
+            _value(e[name], 1000.0, CM.COLDEST_TRUSTED))
+    for name in CM.ELECTROLYTE_ENTRIES[:2]:
+        assert _value(e[name], 1000.0, 253.15) < _value(e[name], 1000.0, CM.COLDEST_TRUSTED)
+    raw = CM.measured_electrolyte(coldest=None)
+    assert _value(raw["Cation transference number"], 1000.0, 263.15) < 0.0
+
+
+def test_the_measured_electrolyte_refuses_a_parameter_that_is_not_a_transport_parameter():
+    pytest.importorskip("pybamm")
+    with pytest.raises(KeyError, match="transport parameters"):
+        CM.measured_electrolyte(("Positive electrode porosity",))
+
+
+def test_a_drawn_scale_acts_on_the_fixed_value(monkeypatch):
+    """With `fixed`, every run gets the fixed replacements, and the drawn parameter starts from
+    the fixed value instead of the published one."""
+    pytest.importorskip("pybamm")
+    seen = []
+
+    def fake(overrides=None, **kw):
+        seen.append(dict(overrides))
+        return CM.CellRun(capacity=np.array([5.0]), cycles=1)
+
+    monkeypatch.setattr(CM, "run_cell", fake)
+    name = "Positive electrode Bruggeman coefficient (electrolyte)"
+    other = "Negative electrode Bruggeman coefficient (electrolyte)"
+    p = CellParameter(name=name, value=2.0, sd=0.0, kind="value")
+    CM.sample(p, draws=3, cycles=1, kind="SPM", fixed={other: 1.7})
+    assert len(seen) == 3
+    assert all(s[other] == 1.7 and s[name] == pytest.approx(2.0) for s in seen)
+    scale = CellParameter(name=other, value=2.0, sd=0.0, kind="scale")
+    seen.clear()
+    CM.sample(scale, draws=2, cycles=1, kind="SPM", fixed={other: 1.7})
+    assert all(s[other] == pytest.approx(3.4) for s in seen)
+
+
+def _stress_row(temperature, rate, only, low, high, four, inside=True, brug=None):
+    cond = "Electrolyte conductivity [S.m-1]"
+    b = "Positive electrode Bruggeman coefficient (electrolyte)"
+    row = {"temperature": temperature, "rate": rate, "published": 4.9,
+           "parameters": {cond: {"low": low, "high": high}},
+           "landesfeind": {"conductivity_only": only, "all_four": four,
+                           "inside_the_measured_temperatures": inside,
+                           "transference_held_at": None if temperature >= 293.15 else 293.15,
+                           "conductivity_holds_it": low <= only <= high}}
+    if brug is not None:
+        row["parameters"][b] = {"low": 3.0, "high": 3.2}
+        row["landesfeind"]["bruggeman"] = {"low": brug[0], "high": brug[1],
+                                           "holds_it": brug[0] <= four <= brug[1]}
+    return row
+
+
+def test_the_second_reference_section_names_the_misses_and_the_range():
+    rows = [_stress_row(R.ROOM, 2.5, 3.70, 3.64, 3.72, 4.61, brug=(3.87, 4.57)),
+            _stress_row(263.15, 1.5, 4.80, 4.81, 4.85, 3.51),
+            _stress_row(253.15, 1.5, 4.43, 4.76, 4.82, 2.41, inside=False)]
+    text = "\n".join(R.second_reference_lines(rows))
+    assert "under 1 of 3 conditions" in text
+    assert "263 K and 1.5C by 0.010 A.h" in text
+    assert "below the coldest measured temperature" in text
+    assert "253 (outside the measured range)" in text
+    assert "misses by 0.040 A.h" in text and "read at 293 K" in text

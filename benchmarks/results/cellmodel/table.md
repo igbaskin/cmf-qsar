@@ -71,7 +71,28 @@ Three capacities are compared under every condition. *Published* is the cell mod
 
 **The conductivity is right, now that it can be seen.** The predicted interval holds the capacity of the measured electrolyte under 8 of 8 conditions. In the cold it also excludes the published curve under 4 of 4: the published set, whose electrolyte does not get colder, gives too much capacity, and the predicted activation energy corrects it by about as much as the measured one does. The effect is modest -- a few hundredths of an ampere-hour, at most about 1 % -- because the conductivity is the only electrolyte property that is carried to the cold; the electrolyte diffusivity and the two solid diffusivities stay at their room values in this parameter set.
 
-**The tortuosity takes over at faster discharge, and its error grows with it.** At 2.5C the Bruggeman exponent explains 99.7 % of the variance, its interval runs from 1.692 to 3.144 A.h, and it misses the published 3.675 A.h by 0.531 A.h. At 1C the same miss was 0.0015 A.h. The generated structures are more tortuous than the 1.5 the cell's authors fitted, and at a fast discharge that difference is worth a large part of the cell's capacity: this is the parameter that most needs measuring on the real electrode.
+**The tortuosity takes over at faster discharge, and its error grows with it.** At 2.5C the Bruggeman exponent explains 99.7 % of the variance, its interval runs from 1.692 to 3.144 A.h, and it misses the published 3.675 A.h by 0.531 A.h. At 1C the same miss was 0.0015 A.h. The generated structures are more tortuous than the 1.5 the cell's authors fitted. How much that costs at a fast discharge depends on the electrolyte the cell is given, as the second reference below shows.
+
+### The second reference: all four transport parameters measured
+
+The published cell takes its conductivity and electrolyte diffusivity from one study at room temperature and holds the transference number (the share of the current the lithium ion carries) and the thermodynamic factor constant. Landesfeind and Gasteiger (2019) measured all four for the same electrolyte, LiPF6 in EC:EMC 3:7 by weight, between 263 and 323 K and between 0.1 and 3.0 mol/L; PyBaMM ships their fitted functions in its ORegan2022 parameter set. *Conductivity only* puts their conductivity alone into the cell, which is the fair reference for the predicted conductivity. *All four* puts in every transport parameter; in colder cells the transference number and the thermodynamic factor are read at 293 K, because the study says these two are less precise below +20 degrees Celsius and its fit gives a negative transference number from 0 degrees down. At room temperature the Bruggeman exponent is drawn again with all four in place.
+
+| temperature, K | rate | published, A.h | measured conductivity only, A.h | interval from the predicted conductivity, A.h | holds it? | all four measured, A.h | interval from the Bruggeman exponent with all four measured, A.h | holds it? |
+|---:|---:|---:|---:|---|---|---:|---|---|
+| 298 | 1C | 4.991 | 4.991 | 4.990 to 4.993 | yes | 4.987 | 4.978 to 4.985 | no |
+| 298 | 1.5C | 4.905 | 4.904 | 4.901 to 4.908 | yes | 4.899 | 4.878 to 4.896 | no |
+| 298 | 2C | 4.783 | 4.778 | 4.771 to 4.793 | yes | 4.789 | 4.704 to 4.779 | no |
+| 298 | 2.5C | 3.675 | 3.699 | 3.640 to 3.715 | yes | 4.609 | 3.873 to 4.574 | no |
+| 263 | 1C | 4.960 | 4.948 | 4.943 to 4.956 | yes | 4.755 | -- | -- |
+| 263 | 1.5C | 4.863 | 4.804 | 4.814 to 4.852 | no | 3.512 | -- | -- |
+| 253 (outside the measured range) | 1C | 4.949 | 4.921 | 4.921 to 4.940 | yes | 3.788 | -- | -- |
+| 253 (outside the measured range) | 1.5C | 4.848 | 4.427 | 4.756 to 4.824 | no | 2.409 | -- | -- |
+
+**The predicted conductivity against the measured temperature dependence.** The predicted interval holds the capacity of the measured conductivity under 6 of 8 conditions. It misses at 263 K and 1.5C by 0.010 A.h; 253 K and 1.5C by 0.329 A.h, below the coldest measured temperature. A single activation energy, which is what the prediction carries to the cold, describes the conductivity near room temperature; the measured conductivity falls faster the colder it gets.
+
+**At fast discharge the published electrolyte decides the verdict on the tortuosity.** At 2.5C the cell with all four measured parameters gives 4.609 A.h against the published 3.675, mostly because the measured diffusivity is larger. With the measured electrolyte in place the Bruggeman interval runs from 3.873 to 4.574 A.h and misses by 0.035 A.h, where it missed the published curve by 0.531. The exponent is still too large, but most of the earlier miss came from the published electrolyte, not from the tortuosity.
+
+**In the cold the parameters that are not predicted decide the capacity.** At 253 K and 1.5C the measured conductivity alone gives 4.427 A.h and all four measured parameters give 2.409, against the published 4.848. The difference between the two measured capacities comes from the diffusivity, the transference number and the thermodynamic factor, for which this program has no prediction.
 
 ## What the gate asked, and what came out
 

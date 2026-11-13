@@ -1179,7 +1179,25 @@
       "sd": 0.002106412268012447
      }
     },
-    "seconds": 78.9
+    "seconds": 78.9,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.991175231452357,
+     "conductivity_only_ok": true,
+     "all_four": 4.986696867004586,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": null,
+     "conductivity_holds_it": true,
+     "bruggeman": {
+      "low": 4.978213481201294,
+      "high": 4.9851034433192485,
+      "median": 4.98251199717061,
+      "refused": 0.0,
+      "holds_it": false
+     },
+     "seconds": 41.4
+    }
    },
    {
     "temperature": 298.15,
@@ -1218,7 +1236,25 @@
       "sd": 0.017318941292602173
      }
     },
-    "seconds": 77.3
+    "seconds": 77.3,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.904093948848915,
+     "conductivity_only_ok": true,
+     "all_four": 4.899497139923161,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": null,
+     "conductivity_holds_it": true,
+     "bruggeman": {
+      "low": 4.878339302470804,
+      "high": 4.89588516158187,
+      "median": 4.889719326552316,
+      "refused": 0.0,
+      "holds_it": false
+     },
+     "seconds": 42.5
+    }
    },
    {
     "temperature": 298.15,
@@ -1257,7 +1293,25 @@
       "sd": 0.4954737379809978
      }
     },
-    "seconds": 82.4
+    "seconds": 82.4,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.777751522843004,
+     "conductivity_only_ok": true,
+     "all_four": 4.789404886405533,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": null,
+     "conductivity_holds_it": true,
+     "bruggeman": {
+      "low": 4.70400916427248,
+      "high": 4.779398375322843,
+      "median": 4.759451766921119,
+      "refused": 0.0,
+      "holds_it": false
+     },
+     "seconds": 42.8
+    }
    },
    {
     "temperature": 298.15,
@@ -1296,7 +1350,25 @@
       "sd": 0.44418124691567595
      }
     },
-    "seconds": 96.1
+    "seconds": 96.1,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 3.6990430090661364,
+     "conductivity_only_ok": true,
+     "all_four": 4.6090935646681395,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": null,
+     "conductivity_holds_it": true,
+     "bruggeman": {
+      "low": 3.8734905849332635,
+      "high": 4.5742793157945565,
+      "median": 4.442778975090444,
+      "refused": 0.0,
+      "holds_it": false
+     },
+     "seconds": 69.3
+    }
    },
    {
     "temperature": 263.15,
@@ -1325,7 +1397,18 @@
       "sd": 0.0031565233398224983
      }
     },
-    "seconds": 39.3
+    "seconds": 39.3,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.94801886933272,
+     "conductivity_only_ok": true,
+     "all_four": 4.754650236165344,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": 293.15,
+     "conductivity_holds_it": true,
+     "seconds": 0.8
+    }
    },
    {
     "temperature": 263.15,
@@ -1354,7 +1437,18 @@
       "sd": 0.009564930811539371
      }
     },
-    "seconds": 39.6
+    "seconds": 39.6,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.804075390672235,
+     "conductivity_only_ok": true,
+     "all_four": 3.5115862174173254,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": true,
+     "transference_held_at": 293.15,
+     "conductivity_holds_it": false,
+     "seconds": 2.4
+    }
    },
    {
     "temperature": 253.15,
@@ -1383,7 +1477,18 @@
       "sd": 0.005004765217926873
      }
     },
-    "seconds": 39.4
+    "seconds": 39.4,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.9211023769162585,
+     "conductivity_only_ok": true,
+     "all_four": 3.788453885617149,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": false,
+     "transference_held_at": 293.15,
+     "conductivity_holds_it": true,
+     "seconds": 4.4
+    }
    },
    {
     "temperature": 253.15,
@@ -1412,9 +1517,20 @@
       "sd": 0.017822662143046317
      }
     },
-    "seconds": 39.9
+    "seconds": 39.9,
+    "landesfeind": {
+     "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+     "conductivity_only": 4.426635785896557,
+     "conductivity_only_ok": true,
+     "all_four": 2.409308167206841,
+     "all_four_ok": true,
+     "inside_the_measured_temperatures": false,
+     "transference_held_at": 293.15,
+     "conductivity_holds_it": false,
+     "seconds": 5.4
+    }
    }
   ]
  },
- "seconds": 276.7
+ "seconds": 507.8
 }

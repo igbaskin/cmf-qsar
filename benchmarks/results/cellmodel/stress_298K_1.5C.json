@@ -35,5 +35,23 @@
    "sd": 0.017318941292602173
   }
  },
- "seconds": 77.3
+ "seconds": 77.3,
+ "landesfeind": {
+  "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+  "conductivity_only": 4.904093948848915,
+  "conductivity_only_ok": true,
+  "all_four": 4.899497139923161,
+  "all_four_ok": true,
+  "inside_the_measured_temperatures": true,
+  "transference_held_at": null,
+  "conductivity_holds_it": true,
+  "bruggeman": {
+   "low": 4.878339302470804,
+   "high": 4.89588516158187,
+   "median": 4.889719326552316,
+   "refused": 0.0,
+   "holds_it": false
+  },
+  "seconds": 42.5
+ }
 }

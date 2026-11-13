@@ -6584,9 +6584,23 @@ would discard the typed fields and the global kernel that are the method's own.
   the measured electrolyte's capacity under all eight conditions and, in the cold, excludes
   the published curve (up to 0.055 A.h too high). The Bruggeman exponent takes over at fast
   discharge: at 2.5C it explains 99.7 % of the variance and misses the published curve by
-  0.53 A.h (0.0015 A.h at 1C). *Open on the electrolyte side:* the diffusivity, the cation
-  transference number and the thermodynamic factor have no source here; the prediction is
-  one condition, a molality compared with a molarity.
+  0.53 A.h (0.0015 A.h at 1C).
+  **A second reference, measured 13 November 2026.** Landesfeind and Gasteiger (2019)
+  measured all four transport parameters of the same electrolyte against concentration and
+  temperature, and PyBaMM ships their functions (`ORegan2022`), so nothing was downloaded.
+  Against their conductivity the predicted interval holds under 6 of 8 conditions; it
+  misses at 263 K and 1.5C (0.010 A.h) and at 253 K and 1.5C (0.33 A.h, below their
+  measured range), because one activation energy does not describe the conductivity below
+  about 263 K (14.6 kJ/mol from 298 to 263 K, 20.7 from 263 to 253 K). With all four
+  measured, the cell gives 4.609 A.h at 2.5C against the published 3.675, and the Bruggeman
+  interval misses by 0.035 A.h instead of 0.53: most of that miss came from the published
+  electrolyte's diffusivity. Their transference number and thermodynamic factor are read
+  at +20 degrees Celsius in colder cells, since the study calls them less precise below
+  it and the fitted transference number is negative from 0 degrees down. *Open on the
+  electrolyte side:* the diffusivity, the transference number and the thermodynamic factor
+  now have a measured reference but no prediction, and in the cold they decide the
+  capacity; the conductivity prediction is one condition, a molality compared with a
+  molarity.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.

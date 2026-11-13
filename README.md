@@ -3421,9 +3421,16 @@ cell:
   published curve, which gives up to 0.055 A.h too much. At 2.5 times the one-hour rate the
   Bruggeman exponent explains almost all of the variance and misses the published curve by
   0.53 A.h.
+- A second reference has all four transport parameters of the electrolyte measured
+  (Landesfeind and Gasteiger 2019, shipped with PyBaMM). Against it the predicted
+  conductivity holds under 6 of 8 conditions and misses in the coldest cells, where one
+  activation energy no longer describes it. At 2.5 times the one-hour rate the measured
+  electrolyte gives 4.61 A.h against the published 3.68, and with it the Bruggeman exponent
+  misses by 0.035 A.h instead of 0.53: most of that miss came from the published
+  electrolyte. In the cold, the three parameters that are not predicted decide the capacity.
 
 ```bash
-python benchmarks/run_cellmodel.py             # 35 minutes after run_nebdft.py; needs pybamm
+python benchmarks/run_cellmodel.py             # 40 minutes after run_nebdft.py; needs pybamm
 ```
 
 ### A single-atom site as the sample: two reactions on one metal

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1250 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1251 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1598,6 +1598,18 @@ approximates the electrolyte and is not meant for high rates.
 
 The published parameter set the cell model starts from.
 
+### `measured_electrolyte(names: Sequence[str]=ELECTROLYTE_ENTRIES, source: str=MEASURED_ELECTROLYTE, coldest: Optional[float]=COLDEST_TRUSTED) -> Dict[str, object]`
+
+The electrolyte functions of the published set `source`, as replacements for `run_cell`.
+
+The default source holds the functions Landesfeind and Gasteiger (2019) fitted to their
+measurements of the Chen 2020 cell's own electrolyte: each depends on the concentration and
+the temperature, where the Chen 2020 functions depend on the concentration only and two of
+the four are constants. Below `coldest` the transference number and the thermodynamic factor
+are read at `coldest`, since the study's coldest measurements of these two are not reliable;
+None reads them at the cell's temperature. The conductivity and the diffusivity are always
+read at the cell's temperature.
+
 ### `build_model(kind: str='SPMe', options: Optional[Dict[str, object]]=None)`
 
 The cell model itself.
@@ -1613,12 +1625,15 @@ that has the published set already, so that reading it is not repeated per run.
 `temperature` sets the temperature of the cell and of its surroundings, in kelvin; how much
 that changes depends on which parameters of the published set depend on temperature at all.
 
-### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None, temperature: Optional[float]=None) -> List[CellRun]`
+### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None, temperature: Optional[float]=None, fixed: Optional[Dict[str, object]]=None) -> List[CellRun]`
 
 Run the cell model once per drawn value of one parameter, the others left published.
 
 This is the one-at-a-time sampling the report reads: it says what this parameter's deviation
-alone does to the cell, which is the question a tolerance rule needs answered.
+alone does to the cell, which is the question a tolerance rule needs answered. `fixed` holds
+replacements that stay the same in every run, such as a measured electrolyte from
+`measured_electrolyte`; a drawn scale or shift then acts on the fixed value, not on the
+published one.
 
 ### `band(runs: Sequence[CellRun], level: float=95.0) -> Dict[str, np.ndarray]`
 

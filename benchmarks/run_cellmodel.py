@@ -131,6 +131,9 @@ STRESS_RATES = (1.0, 1.5, 2.0, 2.5)
 STRESS_COLD = (263.15, 253.15)
 STRESS_COLD_RATES = (1.0, 1.5)
 STRESS_DRAWS = 100
+#: the coldest temperature, in kelvin, that Landesfeind and Gasteiger measured; a colder
+#: cell reads their fitted functions outside the range they were fitted on
+LANDESFEIND_COLDEST = 263.15
 ROOM = 298.15
 #: the stages, in order: fit the models and convert, run the published values, draw one
 #: parameter at a time, the electrolyte under stress, then put the result together
@@ -797,9 +800,13 @@ def stage_stress(results: str, draws: int = STRESS_DRAWS, force: bool = False) -
     in the cold, the predicted activation energy. At room temperature the Bruggeman exponent is
     drawn as well, because the two parameters together are what the electrolyte in a porous
     electrode is described by.
+
+    The **second reference** is the electrolyte as Landesfeind and Gasteiger (2019) measured it,
+    with all four of its transport parameters and their dependence on concentration and
+    temperature (see :func:`_second_reference`). A condition written before the second reference
+    existed keeps its draws and gets the second reference added.
     """
     from cmfqsar import cellmodel as CM
-    from cmfqsar.interfaces import conductivity_scale_at_temperature
 
     pset, _ = read_set(results)
     cond = pset["Electrolyte conductivity [S.m-1]"]
@@ -814,64 +821,127 @@ def stage_stress(results: str, draws: int = STRESS_DRAWS, force: bool = False) -
     with open(fits_path, encoding="utf-8") as fh:
         fits = json.load(fh)
     k, ea = fits["log10_k_298"], fits["ea_298"]
-    per_kelvin = 1000.0 / (8.314462618 * np.log(10.0))
     for temperature, rate in stress_conditions():
         path = stress_path(results, temperature, rate)
-        if os.path.isfile(path) and not force:
-            log(f"{temperature:.0f} K, {rate:g}C: done already")
-            continue
-        t0 = time.time()
-        cycle = CM.discharge(rate)
-        common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=cycle,
+        common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=CM.discharge(rate),
                       temperature=temperature)
-        published = CM.run_cell(parameters=p, **common)
-        reference = _conductivity_of(p, 1000.0, temperature)
-        shift = 1.0 / temperature - 1.0 / ROOM
-        measured_factor = 10.0 ** (k["measured"] - ea["measured"] * per_kelvin * shift
-                                   - reference)
-        measured = CM.run_cell({cond.name: cond.apply(p[cond.name], measured_factor)},
-                               parameters=p, **common)
-        if temperature == ROOM:
-            conductivity = cond
-        else:
-            conductivity = conductivity_scale_at_temperature(
-                k["predicted"], k["sd"], ea["predicted"], ea["sd"], reference, temperature,
-                cond.name, draws=2000, seed=SEED, source=cond.source + ", carried to "
-                f"{temperature:.0f} K by the activation energy the same model predicts")
-        entry = {"temperature": float(temperature), "rate": float(rate),
-                 "model": STRESS_MODEL, "draws": int(draws),
-                 "published": published.final, "published_ok": bool(published.ok),
-                 "measured": measured.final, "measured_ok": bool(measured.ok),
-                 "measured_factor": float(measured_factor),
-                 "predicted_factor": float(conductivity.value),
-                 "factor_interval": conductivity.interval(), "parameters": {}}
-        runs = {}
-        for parameter in ((conductivity, brug) if temperature == ROOM else (conductivity,)):
-            these = CM.sample(parameter, draws=draws, seed=SEED, **common)
-            runs[parameter.name] = these
-            b = CM.band(these)
-            lo, hi = ((float(b["low"][-1]), float(b["high"][-1])) if b["n"] > 1
-                      else (float("nan"), float("nan")))
-            entry["parameters"][parameter.name] = {
-                "low": lo, "high": hi, "median": float(b["median"][-1]) if b["n"] > 1
-                else float("nan"), "refused": float(b["refused"]),
-                "holds_published": bool(lo <= published.final <= hi),
-                "holds_measured": (bool(lo <= measured.final <= hi)
-                                   if parameter.name == cond.name else None)}
-        shares = CM.variance_shares(runs)
-        for name, s in shares.items():
-            entry["parameters"][name]["share"] = s["share"]
-            entry["parameters"][name]["sd"] = s["sd"]
-        entry["seconds"] = round(time.time() - t0, 1)
-        c = entry["parameters"][cond.name]
-        log(f"{temperature:.0f} K, {rate:g}C: published {published.final:.3f} A.h, measured "
-            f"electrolyte {measured.final:.3f}, predicted conductivity {c['low']:.3f} to "
-            f"{c['high']:.3f}" + (f", Bruggeman {entry['parameters'][brug.name]['low']:.3f} to "
-                                  f"{entry['parameters'][brug.name]['high']:.3f}"
-                                  if brug.name in entry["parameters"] else "")
-            + f" ({entry['seconds']:.0f} s)")
+        entry = None
+        if os.path.isfile(path) and not force:
+            with open(path, encoding="utf-8") as fh:
+                entry = json.load(fh)
+            if "landesfeind" in entry:
+                log(f"{temperature:.0f} K, {rate:g}C: done already")
+                continue
+        if entry is None:
+            entry = _stress_condition(temperature, rate, draws, p, cond, brug, k, ea, common)
+        entry["landesfeind"] = _second_reference(entry, p, cond.name, brug, draws, common)
+        s = entry["landesfeind"]
+        log(f"  the electrolyte Landesfeind and Gasteiger measured: conductivity alone "
+            f"{s['conductivity_only']:.3f} A.h, all four parameters {s['all_four']:.3f}"
+            + (f", Bruggeman {s['bruggeman']['low']:.3f} to {s['bruggeman']['high']:.3f}"
+               if "bruggeman" in s else "") + f" ({s['seconds']:.0f} s)")
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(entry, fh, indent=1)
+
+
+def _stress_condition(temperature: float, rate: float, draws: int, p, cond, brug,
+                      k: dict, ea: dict, common: dict) -> dict:
+    """One condition of the stress stage against the first reference, the electrolyte as
+    CALiSol-23 measured it."""
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import conductivity_scale_at_temperature
+
+    per_kelvin = 1000.0 / (8.314462618 * np.log(10.0))
+    t0 = time.time()
+    published = CM.run_cell(parameters=p, **common)
+    reference = _conductivity_of(p, 1000.0, temperature)
+    shift = 1.0 / temperature - 1.0 / ROOM
+    measured_factor = 10.0 ** (k["measured"] - ea["measured"] * per_kelvin * shift
+                               - reference)
+    measured = CM.run_cell({cond.name: cond.apply(p[cond.name], measured_factor)},
+                           parameters=p, **common)
+    if temperature == ROOM:
+        conductivity = cond
+    else:
+        conductivity = conductivity_scale_at_temperature(
+            k["predicted"], k["sd"], ea["predicted"], ea["sd"], reference, temperature,
+            cond.name, draws=2000, seed=SEED, source=cond.source + ", carried to "
+            f"{temperature:.0f} K by the activation energy the same model predicts")
+    entry = {"temperature": float(temperature), "rate": float(rate),
+             "model": STRESS_MODEL, "draws": int(draws),
+             "published": published.final, "published_ok": bool(published.ok),
+             "measured": measured.final, "measured_ok": bool(measured.ok),
+             "measured_factor": float(measured_factor),
+             "predicted_factor": float(conductivity.value),
+             "factor_interval": conductivity.interval(), "parameters": {}}
+    runs = {}
+    for parameter in ((conductivity, brug) if temperature == ROOM else (conductivity,)):
+        these = CM.sample(parameter, draws=draws, seed=SEED, **common)
+        runs[parameter.name] = these
+        b = CM.band(these)
+        lo, hi = ((float(b["low"][-1]), float(b["high"][-1])) if b["n"] > 1
+                  else (float("nan"), float("nan")))
+        entry["parameters"][parameter.name] = {
+            "low": lo, "high": hi, "median": float(b["median"][-1]) if b["n"] > 1
+            else float("nan"), "refused": float(b["refused"]),
+            "holds_published": bool(lo <= published.final <= hi),
+            "holds_measured": (bool(lo <= measured.final <= hi)
+                               if parameter.name == cond.name else None)}
+    shares = CM.variance_shares(runs)
+    for name, s in shares.items():
+        entry["parameters"][name]["share"] = s["share"]
+        entry["parameters"][name]["sd"] = s["sd"]
+    entry["seconds"] = round(time.time() - t0, 1)
+    c = entry["parameters"][cond.name]
+    log(f"{temperature:.0f} K, {rate:g}C: published {published.final:.3f} A.h, measured "
+        f"electrolyte {measured.final:.3f}, predicted conductivity {c['low']:.3f} to "
+        f"{c['high']:.3f}" + (f", Bruggeman {entry['parameters'][brug.name]['low']:.3f} to "
+                              f"{entry['parameters'][brug.name]['high']:.3f}"
+                              if brug.name in entry["parameters"] else "")
+        + f" ({entry['seconds']:.0f} s)")
+    return entry
+
+
+def _second_reference(entry: dict, p, cond_name: str, brug, draws: int,
+                      common: dict) -> dict:
+    """The same condition against the second reference, the electrolyte as Landesfeind and
+    Gasteiger (2019) measured it, with all four of its transport parameters.
+
+    Two curves are run. *Conductivity only* replaces the conductivity alone; it is the fair
+    reference for the predicted conductivity, which is the only one of the four that is
+    predicted. *All four* replaces every transport parameter, with the transference number and
+    the thermodynamic factor read at +20 degrees Celsius in colder cells (below it the study's
+    values of these two are less precise, and its fit gives a negative transference number from
+    0 degrees down). At room temperature the Bruggeman exponent is drawn
+    again with all four in place, because its interval against the published electrolyte says
+    nothing about how it would do in a cell with the real one.
+    """
+    from cmfqsar import cellmodel as CM
+
+    t0 = time.time()
+    temperature = float(entry["temperature"])
+    only = CM.run_cell(CM.measured_electrolyte((cond_name,)), parameters=p, **common)
+    four = CM.measured_electrolyte()
+    full = CM.run_cell(four, parameters=p, **common)
+    c = entry["parameters"][cond_name]
+    out = {"source": f"{CM.MEASURED_ELECTROLYTE} in PyBaMM: Landesfeind and Gasteiger (2019)",
+           "conductivity_only": only.final, "conductivity_only_ok": bool(only.ok),
+           "all_four": full.final, "all_four_ok": bool(full.ok),
+           "inside_the_measured_temperatures": bool(temperature >= LANDESFEIND_COLDEST - 1e-6),
+           "transference_held_at": (CM.COLDEST_TRUSTED if temperature < CM.COLDEST_TRUSTED
+                                    else None),
+           "conductivity_holds_it": bool(c["low"] <= only.final <= c["high"])}
+    if temperature == ROOM:
+        runs = CM.sample(brug, draws=draws, seed=SEED, fixed=four, **common)
+        b = CM.band(runs)
+        lo, hi = ((float(b["low"][-1]), float(b["high"][-1])) if b["n"] > 1
+                  else (float("nan"), float("nan")))
+        out["bruggeman"] = {"low": lo, "high": hi,
+                            "median": float(b["median"][-1]) if b["n"] > 1 else float("nan"),
+                            "refused": float(b["refused"]),
+                            "holds_it": bool(lo <= full.final <= hi)}
+    out["seconds"] = round(time.time() - t0, 1)
+    return out
 
 
 def read_stress(results: str) -> Optional[dict]:
@@ -1080,9 +1150,101 @@ def stress_lines(stress: dict, params: Dict[str, dict]) -> List[str]:
             f"and it misses the published {_n(worst['published'], 3)} A.h by "
             f"{_n(worst['published'] - b['high'], 3)} A.h. At {slow['rate']:g}C the same miss "
             f"was {_n(slow_miss, 4)} A.h. The generated structures are more tortuous than the "
-            "1.5 the cell's authors fitted, and at a fast discharge that difference is worth a "
-            "large part of the cell's capacity: this is the parameter that most needs measuring "
-            "on the real electrode.")
+            "1.5 the cell's authors fitted. How much that costs at a fast discharge depends on "
+            "the electrolyte the cell is given, as the second reference below shows.")
+        out.append("")
+    if rows and all("landesfeind" in r for r in rows):
+        out += second_reference_lines(rows)
+    return out
+
+
+def second_reference_lines(rows: List[dict]) -> List[str]:
+    """The part of the stress section on the second reference: the electrolyte with all four
+    of its transport parameters measured (Landesfeind and Gasteiger, 2019)."""
+    cond = "Electrolyte conductivity [S.m-1]"
+    brug = "Positive electrode Bruggeman coefficient (electrolyte)"
+    held_at = next((r["landesfeind"]["transference_held_at"] for r in rows
+                    if r["landesfeind"]["transference_held_at"]), None)
+    out = ["### The second reference: all four transport parameters measured", ""]
+    out.append(
+        "The published cell takes its conductivity and electrolyte diffusivity from one study "
+        "at room temperature and holds the transference number (the share of the current the "
+        "lithium ion carries) and the thermodynamic factor constant. Landesfeind and Gasteiger "
+        "(2019) measured all four for the same electrolyte, LiPF6 in EC:EMC 3:7 by weight, "
+        f"between {LANDESFEIND_COLDEST:.0f} and 323 K and between 0.1 and 3.0 mol/L; PyBaMM "
+        "ships their fitted functions in its ORegan2022 parameter set. *Conductivity only* puts "
+        "their conductivity alone into the cell, which is the fair reference for the predicted "
+        "conductivity. *All four* puts in every transport parameter"
+        + (f"; in colder cells the transference number and the thermodynamic factor are read "
+           f"at {held_at:.0f} K, because the study says these two are less precise below "
+           "+20 degrees Celsius and its fit gives a negative transference number from 0 degrees "
+           "down" if held_at else "") + ". At room temperature the Bruggeman exponent is drawn "
+        "again with all four in place.")
+    out.append("")
+    out.append("| temperature, K | rate | published, A.h | measured conductivity only, A.h | "
+               "interval from the predicted conductivity, A.h | holds it? | all four measured, "
+               "A.h | interval from the Bruggeman exponent with all four measured, A.h | "
+               "holds it? |")
+    out.append("|---:|---:|---:|---:|---|---|---:|---|---|")
+    for r in rows:
+        s, c = r["landesfeind"], r["parameters"][cond]
+        b = s.get("bruggeman")
+        mark = "" if s["inside_the_measured_temperatures"] else " (outside the measured range)"
+        out.append(
+            f"| {r['temperature']:.0f}{mark} | {r['rate']:g}C | {_n(r['published'], 3)} | "
+            f"{_n(s['conductivity_only'], 3)} | {_n(c['low'], 3)} to {_n(c['high'], 3)} | "
+            f"{'yes' if s['conductivity_holds_it'] else 'no'} | {_n(s['all_four'], 3)} | "
+            + (f"{_n(b['low'], 3)} to {_n(b['high'], 3)} | {'yes' if b['holds_it'] else 'no'} |"
+               if b else "-- | -- |"))
+    out.append("")
+    held = [r for r in rows if r["landesfeind"]["conductivity_holds_it"]]
+    missed = [r for r in rows if not r["landesfeind"]["conductivity_holds_it"]]
+
+    def miss(r):
+        v, c = r["landesfeind"]["conductivity_only"], r["parameters"][cond]
+        return max(c["low"] - v, v - c["high"])
+
+    words = "; ".join(
+        f"{r['temperature']:.0f} K and {r['rate']:g}C by {_n(miss(r), 3)} A.h"
+        + ("" if r["landesfeind"]["inside_the_measured_temperatures"]
+           else ", below the coldest measured temperature") for r in missed)
+    out.append(
+        f"**The predicted conductivity against the measured temperature dependence.** The "
+        f"predicted interval holds the capacity of the measured conductivity under {len(held)} "
+        f"of {len(rows)} conditions" + (f". It misses at {words}." if missed else ".")
+        + " A single activation energy, which is what the prediction carries to the cold, "
+        "describes the conductivity near room temperature; the measured conductivity falls "
+        "faster the colder it gets.")
+    out.append("")
+    warm = [r for r in rows if r["temperature"] == ROOM]
+    if warm:
+        fast = max(warm, key=lambda r: r["rate"])
+        s, b = fast["landesfeind"], fast["landesfeind"]["bruggeman"]
+        old = fast["parameters"][brug]
+        gap_old = fast["published"] - old["high"]
+        gap_new = s["all_four"] - b["high"] if not b["holds_it"] else 0.0
+        out.append(
+            f"**At fast discharge the published electrolyte decides the verdict on the "
+            f"tortuosity.** At {fast['rate']:g}C the cell with all four measured parameters "
+            f"gives {_n(s['all_four'], 3)} A.h against the published {_n(fast['published'], 3)}, "
+            "mostly because the measured diffusivity is larger. With the measured electrolyte "
+            f"in place the Bruggeman interval runs from {_n(b['low'], 3)} to {_n(b['high'], 3)} "
+            f"A.h and misses by {_n(gap_new, 3)} A.h, where it missed the published curve by "
+            f"{_n(gap_old, 3)}. The exponent is still too large, but most of the earlier miss "
+            "came from the published electrolyte, not from the tortuosity.")
+        out.append("")
+    cold = [r for r in rows if r["temperature"] != ROOM]
+    if cold:
+        worst = min(cold, key=lambda r: r["landesfeind"]["all_four"])
+        s = worst["landesfeind"]
+        out.append(
+            "**In the cold the parameters that are not predicted decide the capacity.** At "
+            f"{worst['temperature']:.0f} K and {worst['rate']:g}C the measured conductivity alone "
+            f"gives {_n(s['conductivity_only'], 3)} A.h and all four measured parameters give "
+            f"{_n(s['all_four'], 3)}, against the published {_n(worst['published'], 3)}. The "
+            "difference between the two measured capacities comes from the diffusivity, the "
+            "transference number and the thermodynamic factor, for which this program has no "
+            "prediction.")
         out.append("")
     return out
 
