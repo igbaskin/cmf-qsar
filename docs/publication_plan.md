@@ -171,9 +171,9 @@ release should carry the commit the manifest records. The supported interface of
 unclear licence status are decided with the reason written down, `.zenodo.json` supplies the
 archive's metadata, the package builds and passes `twine check` (1.6 MB source distribution,
 993 kB wheel, neither carrying the examples), the name `cmfqsar` is free on PyPI, and
-`.github/workflows/reproduce.yml` is the reproduction run: the 60 benchmarks of 30 minutes or less
-that need no outside file, 15.2 hours in four groups, each group rebuilding every table from its
-new result files and failing if one differs. **Released 7 November 2026.** The manifest was regenerated at the commit that carries it, with
+`.github/workflows/reproduce.yml` is the reproduction run: the benchmarks of 30 minutes or less
+that need no outside file -- 66 of 104, 16.7 hours in seven groups -- each group measuring its
+benchmarks again, rebuilding every table from its new result files and failing if one differs. **Released 7 November 2026.** The manifest was regenerated at the commit that carries it, with
 nothing uncommitted, and the regeneration found eighteen result files of plan item M15 that an
 additive patch had missed; the repository is public; Zenodo is connected; `v1.0.0` is tagged on
 commit `65ffa08` and released with the manual attached; the archive has concept DOI
@@ -182,6 +182,23 @@ commit `65ffa08` and released with the manual attached; the archive has concept 
 Two steps are left and neither blocks a submission that cites the DOI: upload to TestPyPI and
 then PyPI, which needs the account token; and run the reproduction workflow and record in
 `docs/public_3dqsar_datasets.md` which tables were reproduced elsewhere and which stayed here.
+
+**The reproduction run had to be repaired first** (7 November 2026). The first run was green in
+all four groups and had measured almost nothing: the scripts reused the result files the clone
+carries, and the check that was meant to compare the tables ran after the step that rewrites
+them. Both are repaired, a failing script now fails the run, the groups are computed from the
+rule instead of written out by hand -- which had quietly left seven benchmarks out of every
+reproduction run -- and the check now reports how far each table moved.
+
+The second run, that night, measured for real: 66 benchmarks, 5 hours 14 minutes of runner time,
+and red in all seven groups. Two groups stopped for want of a package the locked versions did
+not install, five named a table difference, and the comparison itself turned out to see only a
+part of what moved: 30 of the 66 tables moved and the check named six, because a script writes
+its own table while it measures and the check was reading that file. `--check --against-commit`
+compares every table with the one the repository carries instead. Step 7 of
+`docs/release_checklist.md` records both runs table by table, `fluctuation` included, whose q2
+on thrombin moved 0.302 to 0.278 on both runners because a runner generates other conformers.
+What is left of the step is the reading of the 30 tables under rule 4.
 
 ## The papers
 
@@ -740,14 +757,14 @@ which **site** of the cell carries the property. The autocorrelation of a cell i
 ordered pairs, so it splits exactly into one row per site; a linear model on the whole cell
 therefore splits into one number per site with nothing attributed, which is rule 3 for an
 invariant kernel. On the single-atom catalysts of item EC8 a model of the OH binding energy
-(q² +0.893) puts 8.9 % of its weight on the metal site, 11.3 times an even share of the 127
+(q² +0.908) puts 8.6 % of its weight on the metal site, 10.9 times an even share of the 127
 sites of the sheet, and the channels at that site name the d electron count of the metal and the
 electrostatic field in the first shell: a figure for the interpretation section that no
 autocorrelation could draw. The same split makes a site a **sample**, and on those catalysts the
 site profile taken inside the periodic cell, with nothing cut out of it, is level with the cut
-cluster of the pilot and with the whole cell (mean q² over the four endpoints +0.792, +0.721 and
-+0.755 in the three fold designs, against +0.801 / +0.739 / +0.712 for the invariant kernel of
-the cut cluster, +0.782 / +0.695 / +0.724 for its overlap kernel and +0.794 / +0.756 / +0.744
+cluster of the pilot and with the whole cell (mean q² over the four endpoints +0.786, +0.695 and
++0.763 in the three fold designs, against +0.802 / +0.738 / +0.725 for the invariant kernel of
+the cut cluster, +0.761 / +0.658 / +0.712 for its overlap kernel and +0.796 / +0.747 / +0.719
 for the whole cell; of the twelve paired comparisons one is clear of zero in its favour against
 the whole cell and two against it). **The section this supports is "reading a crystal model site
 by site"**, and what the site model itself supports is "the cut is not needed", not "better".

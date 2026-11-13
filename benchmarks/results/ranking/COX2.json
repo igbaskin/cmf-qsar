@@ -217,10 +217,225 @@
    "kendall": 0.5360539064305525,
    "pairs": 0.7689703808180536,
    "within": 0.8032021347565044
+  },
+  {
+   "repeat": 5,
+   "data": "clean",
+   "model": "krr",
+   "spearman": 0.7199265157333371,
+   "kendall": 0.5153788883053463,
+   "pairs": 0.7583779217121938
+  },
+  {
+   "repeat": 5,
+   "data": "clean",
+   "model": "ranksvm",
+   "spearman": 0.6886546802211587,
+   "kendall": 0.4895397287826805,
+   "pairs": 0.7454238242748522
+  },
+  {
+   "repeat": 5,
+   "data": "pooled",
+   "model": "krr",
+   "spearman": 0.6220261256830233,
+   "kendall": 0.4496575477803049,
+   "pairs": 0.7254294564911292,
+   "within": 0.776149233844104
+  },
+  {
+   "repeat": 5,
+   "data": "pooled",
+   "model": "ranksvm",
+   "spearman": 0.5932951268062093,
+   "kendall": 0.4176394588065668,
+   "pairs": 0.7093776401013799,
+   "within": 0.7481678880746169
+  },
+  {
+   "repeat": 5,
+   "data": "pooled",
+   "model": "ranksvm-groups",
+   "spearman": 0.6923291208938397,
+   "kendall": 0.49796554167050633,
+   "pairs": 0.7496479864826809,
+   "within": 0.7688207861425717
+  },
+  {
+   "repeat": 6,
+   "data": "clean",
+   "model": "krr",
+   "spearman": 0.7768808392133332,
+   "kendall": 0.5879418148062592,
+   "pairs": 0.7950889077053345
+  },
+  {
+   "repeat": 6,
+   "data": "clean",
+   "model": "ranksvm",
+   "spearman": 0.7802427751149256,
+   "kendall": 0.5907535881912724,
+   "pairs": 0.7965001411233418
+  },
+  {
+   "repeat": 6,
+   "data": "pooled",
+   "model": "krr",
+   "spearman": 0.7431832956415577,
+   "kendall": 0.549139342093077,
+   "pairs": 0.7756138865368332,
+   "within": 0.7915425848719476
+  },
+  {
+   "repeat": 6,
+   "data": "pooled",
+   "model": "ranksvm",
+   "spearman": 0.7014034236086866,
+   "kendall": 0.5114615787339002,
+   "pairs": 0.7567033587355348,
+   "within": 0.7772483621203097
+  },
+  {
+   "repeat": 6,
+   "data": "pooled",
+   "model": "ranksvm-groups",
+   "spearman": 0.7535329762223323,
+   "kendall": 0.5592617262791246,
+   "pairs": 0.7806943268416596,
+   "within": 0.7998808814770697
+  },
+  {
+   "repeat": 7,
+   "data": "clean",
+   "model": "krr",
+   "spearman": 0.8131520253711182,
+   "kendall": 0.6134639313139881,
+   "pairs": 0.8077248378911757
+  },
+  {
+   "repeat": 7,
+   "data": "clean",
+   "model": "ranksvm",
+   "spearman": 0.7649435940954354,
+   "kendall": 0.5696250063094155,
+   "pairs": 0.7857344234564421
+  },
+  {
+   "repeat": 7,
+   "data": "pooled",
+   "model": "krr",
+   "spearman": 0.23300904660573715,
+   "kendall": 0.15708948126638544,
+   "pairs": 0.5787989850577954,
+   "within": 0.7354497354497355
+  },
+  {
+   "repeat": 7,
+   "data": "pooled",
+   "model": "ranksvm",
+   "spearman": 0.2494563990965082,
+   "kendall": 0.17619875626837866,
+   "pairs": 0.5883845503242177,
+   "within": 0.7513227513227513
+  },
+  {
+   "repeat": 7,
+   "data": "pooled",
+   "model": "ranksvm-groups",
+   "spearman": 0.6383683656578435,
+   "kendall": 0.45609343129757346,
+   "pairs": 0.7287848886382858,
+   "within": 0.7513227513227513
+  },
+  {
+   "repeat": 8,
+   "data": "clean",
+   "model": "krr",
+   "spearman": 0.7435390080075965,
+   "kendall": 0.5595527693546946,
+   "pairs": 0.7805633802816901
+  },
+  {
+   "repeat": 8,
+   "data": "clean",
+   "model": "ranksvm",
+   "spearman": 0.7849069958747438,
+   "kendall": 0.6056203668316875,
+   "pairs": 0.8036619718309859
+  },
+  {
+   "repeat": 8,
+   "data": "pooled",
+   "model": "krr",
+   "spearman": 0.35992006264095494,
+   "kendall": 0.257866185877314,
+   "pairs": 0.6292957746478873,
+   "within": 0.7560837577815507
+  },
+  {
+   "repeat": 8,
+   "data": "pooled",
+   "model": "ranksvm",
+   "spearman": 0.4413660373361603,
+   "kendall": 0.311237182954318,
+   "pairs": 0.656056338028169,
+   "within": 0.7623089983022071
+  },
+  {
+   "repeat": 8,
+   "data": "pooled",
+   "model": "ranksvm-groups",
+   "spearman": 0.7824344938831566,
+   "kendall": 0.594384367447055,
+   "pairs": 0.7980281690140845,
+   "within": 0.8007923033389927
+  },
+  {
+   "repeat": 9,
+   "data": "clean",
+   "model": "krr",
+   "spearman": 0.6874936000649742,
+   "kendall": 0.517793646350772,
+   "pairs": 0.7599548150240045
+  },
+  {
+   "repeat": 9,
+   "data": "clean",
+   "model": "ranksvm",
+   "spearman": 0.7198334772771742,
+   "kendall": 0.5380441311618831,
+   "pairs": 0.7701214346229879
+  },
+  {
+   "repeat": 9,
+   "data": "pooled",
+   "model": "krr",
+   "spearman": 0.4802505972590806,
+   "kendall": 0.34116441772052486,
+   "pairs": 0.671279299632872,
+   "within": 0.7630906768837803
+  },
+  {
+   "repeat": 9,
+   "data": "pooled",
+   "model": "ranksvm",
+   "spearman": 0.423516542494251,
+   "kendall": 0.29222574609367297,
+   "pairs": 0.646709968935329,
+   "within": 0.7554278416347382
+  },
+  {
+   "repeat": 9,
+   "data": "pooled",
+   "model": "ranksvm-groups",
+   "spearman": 0.6757558567794341,
+   "kendall": 0.5014807558084879,
+   "pairs": 0.7517650381248235,
+   "within": 0.7777777777777778
   }
  ],
- "repeats": 5,
+ "repeats": 10,
  "n_sources": 3,
  "offset_sd": 1.5,
- "seconds": 43.5
+ "seconds": 58.1
 }
