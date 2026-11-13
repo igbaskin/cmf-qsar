@@ -3020,29 +3020,29 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   height channels of a layer; one cell is split once however many of its sites are asked for.
   **Measurement** (`benchmarks/run_sites.py`; `benchmarks/results/sites/table.md`), three parts.
   **The single-atom catalysts of EC8**, where one site of every cell is measured: 139 M@C(4-x)Nx
-  sheets, the binding energies of H, O and OH on 104 of them and of OOH on 91 (six bare sheets
-  had been recomputed with plain PBE when this ran and 29 more since, so neither the pilot's
-  numbers nor the rerun of 5 November are comparable and every reference is recomputed here),
+  sheets, the binding energies of H, O and OH on 133 of them and of OOH on 119 (thirty-five of
+  the thirty-six bare sheets have been recomputed with plain PBE, so neither the pilot's numbers
+  nor the first run of this benchmark are comparable and every reference is recomputed here),
   the pilot's three
   fold designs, every descriptor a family choosing its settings in an inner cross-validation of
   the same kind. Mean q² over the four endpoints, random / one metal held out / one motif held
-  out: **the site profile +0.792 / +0.721 / +0.755**, the invariant kernel of the cut cluster
-  (LP2) +0.801 / +0.739 / +0.712, its overlap kernel (EC8) +0.782 / +0.695 / +0.724, the
-  autocorrelation of the whole cell +0.794 / +0.756 / +0.744, counts in shells around the site
-  +0.758 / +0.096 / +0.749. In the twelve paired comparisons (four endpoints by three designs,
-  the catalysts resampled) the site profile is level with every descriptor built from fields: two
-  better and one worse against the cut-cluster overlap, one better and none worse against its
-  invariant kernel, one better (the OH binding with a motif held out, +0.066) and two worse (the
-  O and the OOH binding with a metal held out, -0.046 and -0.085) against the whole cell. It is
-  clearly better only than the counts, in five of the twelve. **So the site resolution of the
+  out: **the site profile +0.786 / +0.695 / +0.763**, the invariant kernel of the cut cluster
+  (LP2) +0.802 / +0.738 / +0.725, its overlap kernel (EC8) +0.761 / +0.658 / +0.712, the
+  autocorrelation of the whole cell +0.796 / +0.747 / +0.719, counts in shells around the site
+  +0.720 / +0.144 / +0.722. In the twelve paired comparisons (four endpoints by three designs,
+  the catalysts resampled) the site profile is level with every descriptor built from fields:
+  four better and none worse against the cut-cluster overlap, two better and two worse against
+  its invariant kernel, one better (the OH binding with a motif held out, +0.093) and two worse
+  (the H and the OOH binding with a metal held out, -0.101 and -0.103) against the whole cell. It
+  is clearly better than the counts in nine of the twelve. **So the site resolution of the
   periodic kernel does the work that cutting a cluster out of the sheet does -- which is what
   EC8's gate asked, and the cut is not where the pilot's accuracy came from -- and it buys no
   accuracy over the whole cell on a set whose cells differ only at one site.** The counts
-  collapse to +0.096 when the metal is new, as the one-hot did in the pilot, while every
+  collapse to +0.144 when the metal is new, as the one-hot did in the pilot, while every
   descriptor built from fields keeps most of its accuracy. The set is small enough to move: one
   recomputed sheet, added between two runs of this benchmark, took every method's OOH q² from
-  about +0.93 to about +0.77, so the differences between the methods are what this measurement
-  gives and the absolute values are not. **The lithium sites**, where many sites of a cell are
+  about +0.93 to about +0.77, and 29 more of them took it to about +0.70, so the differences
+  between the methods are what this measurement gives and the absolute values are not. **The lithium sites**, where many sites of a cell are
   measured: the bond-valence site energy of all 104 Li sites of the three electrolytes of
   `examples/hops`, a fold being a whole compound. The model cannot place an unseen compound on
   the energy scale (offsets -0.12, +0.04 and +0.13 eV; the overall q² is negative for every
@@ -3050,9 +3050,10 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   the variance is between them) and inside a compound it ranks the sites (Spearman +0.78, +0.84
   and +0.55; q² about the compound's own mean +0.60 and +0.77 for the two whose sites differ by
   more than 0.01 eV). **A whole-cell model read site by site**: on the OH binding energy of the
-  104 catalysts (q² +0.893 in five folds, 0.51 eV) the metal site carries 8.9 % of the weight,
-  11.3 times what an even spread over the 127 sites would give, the metal with its four
-  neighbours 16.0 % against 3.9 %, and everything beyond 5 Å about half an even share; the
+  133 catalysts (q² +0.908 in five folds, 0.44 eV) the metal site carries 8.6 % of the weight,
+  10.9 times what an even spread over the 127 sites would give, the metal with its four
+  neighbours 16.4 % against 3.9 %, and everything beyond 5 Å less than an even share, 0.7 times
+  it between 5 and 7 Å and 0.6 times beyond that; the
   channels at the metal name the d electron count for Pt@C4 and the electrostatic field at 2.0 Å
   for Fe@N4. The figure is `benchmarks/results/sites/contributions.png`.
   **What is open.** The height channels of a layer (M1) have no site split, so a site of a slab
