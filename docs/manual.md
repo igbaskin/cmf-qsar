@@ -4266,12 +4266,12 @@ loss of information.
 ### When it is worth it, measured
 
 `benchmarks/run_ranking.py` asks the only question that matters — does fitting the order beat
-fitting the values — on the eight Sutherland sets with five random 70/30 splits each, every model
+fitting the values — on the eight Sutherland sets with ten random 70/30 splits each, every model
 choosing its own hyper-parameters on its own criterion inside the training part.
 
 **On clean data it does not.** Where the activities are one assay's numbers and mean what they
-say, Spearman's ρ on held-out molecules is **+0.713 for kernel ridge and +0.689 for the ranking
-SVM**, ridge ahead on five of the eight sets. That is the expected answer and worth stating
+say, Spearman's ρ on held-out molecules is **+0.713 for kernel ridge and +0.692 for the ranking
+SVM**, ridge ahead on six of the eight sets. That is the expected answer and worth stating
 plainly: a regression model is already a ranking model, since the order of its predictions is all
 a ranking model ever produces, and it had the magnitudes to learn from as well. Fitting the order
 discards how far apart two molecules are, which on reliable data is information.
@@ -4284,12 +4284,12 @@ asks for the order of the true activity, which no model ever saw:
 
 | | KRR | ranking | ranking by source |
 |---|---:|---:|---:|
-| same-source pairs ordered correctly | 72.5 % | 71.6 % | **74.3 %** |
-| Spearman ρ over all held-out pairs | +0.574 | +0.565 | **+0.663** |
+| same-source pairs ordered correctly | 72.3 % | 71.7 % | **74.5 %** |
+| Spearman ρ over all held-out pairs | +0.550 | +0.537 | **+0.648** |
 
 A ranking model that is not told about the sources does no better than ridge: it is handed the
 same corrupted comparisons and learns them. Told which molecules share a source, it
-beats ridge by **0.089 in ρ**, on six of the eight sets, because the cross-source pairs — the
+beats ridge by **0.098 in ρ**, on seven of the eight sets, because the cross-source pairs — the
 only ones the offsets corrupt — are never formed. Note that it wins on the *global* order too,
 although it was never shown a cross-source comparison: it does not need one, since it fits a
 single scoring function over the fields and all that grouping did was stop it fitting an offset.
@@ -9192,10 +9192,10 @@ cutoff.
 
 **What a site profile is worth.** The first set is the single-atom catalysts of the EC8 pilot
 (`benchmarks/run_sac.py`, which cuts the site out of the sheet and is the thing to be level
-with): the metal site of 139 M@C(4-x)Nx sheets, with the binding energies of H, O and OH on 104
-of them and of OOH on 91. Six bare sheets have been recomputed with plain PBE since the pilot
-ran and more are being recomputed, so these numbers are not comparable with the pilot's own and
-every reference here is recomputed on the same catalysts. Three designs of folds, as the pilot
+with): the metal site of 139 M@C(4-x)Nx sheets, with the binding energies of H, O and OH on 133
+of them and of OOH on 119. Thirty-five bare sheets have been recomputed with plain PBE since the
+pilot ran, so these numbers are not comparable with the pilot's own and every reference here is
+recomputed on the same catalysts. Three designs of folds, as the pilot
 used: random catalysts, a whole metal held out, a whole motif held out. Every descriptor is a
 family -- three field sets by three cutoffs for the site profile and for the whole cell, the
 widths and attenuations of the pilot for the cut cluster -- and each family chooses inside an
@@ -9204,26 +9204,27 @@ q² over the four endpoints:
 
 | Descriptor | Random catalysts | One metal held out | One motif held out |
 | --- | ---: | ---: | ---: |
-| **site profile of the cell (M5)** | **+0.792** | **+0.721** | **+0.755** |
-| the cut cluster, invariant (LP2) | +0.801 | +0.739 | +0.712 |
-| the cut cluster, overlap kernel (EC8) | +0.782 | +0.695 | +0.724 |
-| the whole cell, autocorrelation | +0.794 | +0.756 | +0.744 |
-| counts in shells around the site | +0.758 | +0.096 | +0.749 |
+| **site profile of the cell (M5)** | **+0.786** | **+0.695** | **+0.763** |
+| the cut cluster, invariant (LP2) | +0.802 | +0.738 | +0.725 |
+| the cut cluster, overlap kernel (EC8) | +0.761 | +0.658 | +0.712 |
+| the whole cell, autocorrelation | +0.796 | +0.747 | +0.719 |
+| counts in shells around the site | +0.720 | +0.144 | +0.722 |
 
 **The site profile does what cutting the site out of the sheet does, without cutting it, and
 nothing more.** Of the twelve paired comparisons (four endpoints by three designs, the catalysts
-resampled) it is level with everything built from fields: against the cut cluster better in two
-and worse in one for the overlap kernel, better in one and worse in none for the invariant one;
-against the whole cell better in one (the OH binding with a motif held out, +0.066) and worse in
-two (the O and OOH binding with a metal held out, -0.046 and -0.085). It is clearly better only
-than the counts, in five of the twelve, never losing to them. So the site resolution saves the
+resampled) it is level with everything built from fields: against the cut cluster better in four
+and worse in none for the overlap kernel, better in two and worse in two for the invariant one;
+against the whole cell better in one (the OH binding with a motif held out, +0.093) and worse in
+two (the H and OOH binding with a metal held out, -0.101 and -0.103). It is clearly better than
+the counts in nine of the twelve, never losing to them. So the site resolution saves the
 cut and the termination of a cluster, which is worth having on a site that cannot be cut out
 cleanly, and it buys no accuracy on this set. The counts are the other reading of that table:
-they hold their own when the metals are known and collapse to +0.096 when a metal is new, which
+they hold their own when the metals are known and collapse to +0.144 when a metal is new, which
 is what a descriptor made of element labels does, while every descriptor built from fields keeps
-most of its accuracy. The set is small enough to move: the recomputed sheet added between two
-runs of this benchmark took every method's OOH q² from about +0.93 to about +0.77, so the
-differences between the methods are worth reading and their absolute values are not. The full
+most of its accuracy. The set is small enough to move: the recomputed sheets added between runs
+of this benchmark took every method's OOH q² from about +0.93 to about +0.77 and then, with 29
+more of them, to about +0.70, so the differences between the methods are worth reading and their
+absolute values are not. The full
 table is in `benchmarks/results/sites/table.md` (`benchmarks/run_sites.py`).
 
 **Many sites in one cell.** The second set is the bond-valence site energy of every lithium site
@@ -9255,11 +9256,11 @@ numbers. That is the local reading the autocorrelation could not give. A distanc
 says which pair of field types at which distance raises the property; the split says **which site
 of the cell** carries it.
 
-On a model of the OH binding energy over the 104 catalysts (q² +0.893 in five folds, 0.51 eV) the
-weight falls where a chemist would put it: the metal site carries 8.9 % of it, which is 11.3
+On a model of the OH binding energy over the 133 catalysts (q² +0.908 in five folds, 0.44 eV) the
+weight falls where a chemist would put it: the metal site carries 8.6 % of it, which is 10.9
 times what an even spread over the 127 sites of the sheet would put there, and the metal with its
-four neighbours carries 16.0 % against 3.9 %. Beyond 5 Å from the metal every site carries about
-half of an even share. The channels of the metal site say what the model reads there: for Pt@C4
+four neighbours carries 16.4 % against 3.9 %. Beyond 5 Å from the metal every site carries less
+than an even share, 0.7 times it between 5 and 7 Å and 0.6 times beyond that. The channels of the metal site say what the model reads there: for Pt@C4
 the d electron count at the site itself, for Fe@N4 the electrostatic field at 2.0 Å, which is the
 first shell.
 

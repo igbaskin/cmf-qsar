@@ -3514,17 +3514,17 @@ targets are the per-atom data model of plan item LP1, one array per cell with bl
 was not measured, and its folds, which hold out whole structures.
 
 **On the catalysts above it does what the cut does, without cutting, and nothing more.** The same
-139 sheets (104 with targets, six bare sheets having been recomputed since the pilot ran, so
-every reference is recomputed here as well), the same three fold designs, every descriptor a
-family that chooses its settings in an inner cross-validation of the same kind: mean q² over the
-four endpoints +0.792 with random catalysts, +0.721 with a metal held out and +0.755 with a motif
-held out, against +0.801 / +0.739 / +0.712 for the invariant kernel of the cut cluster,
-+0.782 / +0.695 / +0.724 for its overlap kernel, +0.794 / +0.756 / +0.744 for the autocorrelation
-of the whole cell and +0.758 / +0.096 / +0.749 for counts in shells around the site. In the
-twelve paired comparisons the site profile is level with every descriptor built from fields --
-two better and one worse against the cut-cluster overlap, one better against its invariant
-kernel, one better and two worse against the whole cell -- and clearly better only than the
-counts, in five. So the site resolution saves cutting and terminating a cluster, which is worth
+139 sheets (133 with targets, thirty-five bare sheets having been recomputed since the pilot
+ran, so every reference is recomputed here as well), the same three fold designs, every
+descriptor a family that chooses its settings in an inner cross-validation of the same kind: mean
+q² over the four endpoints +0.786 with random catalysts, +0.695 with a metal held out and +0.763
+with a motif held out, against +0.802 / +0.738 / +0.725 for the invariant kernel of the cut
+cluster, +0.761 / +0.658 / +0.712 for its overlap kernel, +0.796 / +0.747 / +0.719 for the
+autocorrelation of the whole cell and +0.720 / +0.144 / +0.722 for counts in shells around the
+site. In the twelve paired comparisons the site profile is level with every descriptor built from
+fields -- four better and none worse against the cut-cluster overlap, two better and two worse
+against its invariant kernel, one better and two worse against the whole cell -- and clearly
+better than the counts in nine. So the site resolution saves cutting and terminating a cluster, which is worth
 having where a site cannot be cut out cleanly, and buys no accuracy here. The counts are the
 other lesson of that table: a descriptor made of element labels collapses when the metal is new,
 where every descriptor built from fields keeps most of its accuracy. The set is small enough to
@@ -3544,9 +3544,9 @@ descriptor is linear in the channels and a cell's channels are the mean of its s
 prediction minus the bias is a sum of one number per site, exactly (`sites.site_contributions`;
 rule 3 for the autocorrelation kernel). It is the local reading that kernel could not give: not
 only which pair of field types at which distance raises the property, but which site carries it.
-On a model of the OH binding over the 104 catalysts (q² +0.893 in five folds) the metal site
-carries 8.9 % of the weight, eleven times an even share, the metal with its four neighbours 16.0
-% against 3.9 %, and the channels at the metal name the d electron count for Pt@C4 and the
+On a model of the OH binding over the 133 catalysts (q² +0.908 in five folds) the metal site
+carries 8.6 % of the weight, nearly eleven times an even share, the metal with its four
+neighbours 16.4 % against 3.9 %, and the channels at the metal name the d electron count for Pt@C4 and the
 electrostatic field at 2.0 Å for Fe@N4. The table and the map are in `benchmarks/results/sites/`.
 
 ### Which atom is attacked: a site of metabolism
@@ -6522,6 +6522,8 @@ python docs/make_figures.py                 # docs/figures/: the computed figure
 python docs/make_figures.py --check         # fail if a figure differs from the committed one
 python docs/make_screenshot.py              # the three screenshots of the manual: a pocket, a crystal, a slab (needs a display)
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
+python benchmarks/run_all.py --reproduce 3  # one group of the reproduction run: measure it again, and
+                                            # leave the tables and the manifest for --check to compare
 ```
 
 The two tables of `docs/benchmark.md` and the two-endpoint table above are spliced into the
@@ -6534,6 +6536,19 @@ not in the repository unless they are given (`--data-root`, `--cif-root`, `--orc
 every script builds are cached on disk by `benchmarks/kernel_cache.py`, keyed by the atoms and
 the field set exactly, so scripts that build the same set share them. The locked CI job runs
 `--check`.
+
+Most scripts keep the result files they find and compute only what is missing, so in a clone
+that carries the results `--compute` measures almost nothing. Two options are for the case
+where the measurement is the point: `--fresh` passes `--force` to every script that has it, and
+`--no-rebuild` leaves the tables and the manifest as they are, so that a `--check` afterwards
+compares them with what the new result files give instead of with files the same command has
+just written. `--reproduce GROUP` is both of them over one group of the reproduction run, and
+`.github/workflows/reproduce.yml` runs every group on a machine that is not the author's. The
+check of such a run takes a third option, `--check --against-commit`: a script writes its own
+table while it measures, so the file on disk is already the new table, and only a comparison
+with the table the repository carries asks the question a reproduction run asks. The rule that
+decides which benchmarks a reproduction run can measure, and what each run found, are in
+`docs/release_checklist.md`, step 7.
 
 The tests verify the analytic kernels against numerical integration, the symmetry/positive
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition

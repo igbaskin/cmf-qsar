@@ -15,7 +15,16 @@ them all and does four things:
     python benchmarks/run_all.py --check         # --tables, then fail if any table or document
                                                  # differs from what is committed, or any data
                                                  # file differs from the manifest
+                                                 #   --against-commit  compare every table with
+                                                 #                 the committed one, not with
+                                                 #                 the file on disk
     python benchmarks/run_all.py --compute NAME [NAME ...] | all   [--data-root D] [--cif-root C] [--orca]
+                                                 #   --fresh       measure again instead of
+                                                 #                 reusing the files on disk
+                                                 #   --no-rebuild  leave the tables and the
+                                                 #                 manifest for --check
+    python benchmarks/run_all.py --reproduce GROUP   # one group of the reproduction run:
+                                                 # --compute with both of those options
 
 ``--compute`` runs the scripts themselves, in the order listed, each as a subprocess.  Several
 need what is not in the repository: the Sutherland MOL2 originals (``--data-root``), the data of
@@ -23,7 +32,33 @@ the 2015 CIF paper (``--cif-root``), or an ORCA installation for the quantum sta
 says it is there).  A benchmark whose inputs are missing is skipped with a line that says so; the
 tables are rebuilt afterwards from whatever results exist.  The kernels every script computes
 are cached by ``kernel_cache.py``, so a second run of a script that builds a set another already
-built pays nothing for the kernels.
+built pays nothing for the kernels.  A script that exits with an error makes ``--compute``
+fail when it has run the rest, so a measurement that could not be made is not mistaken for a
+measurement that did not move.
+
+**A reproduction run** asks whether the committed tables are what the scripts give on another
+machine, and it needs two options that an ordinary run does not.  Most scripts keep the
+result files they find and recompute only what is missing, so in a clone that carries the
+results they recompute almost nothing: ``--fresh`` passes ``--force`` to every script that
+has the option, and names the scripts that recompute everything anyway.  ``--compute``
+rebuilds the tables and rewrites the manifest when it finishes, so a ``--check`` after it
+compares the tables with files the same command has just written: ``--no-rebuild`` leaves
+both as they are, and then ``--check`` is the comparison the reproduction run asks for.  It
+reports, for every table that differs, how many of its numbers moved and the largest
+difference, because a table whose timings moved and a table whose q2 moved are not the same
+finding.  ``--reproduce GROUP`` is that run for one group of
+``reproduce_groups()`` below, and ``.github/workflows/reproduce.yml`` is every group on a
+machine that is not the author's.  A red job there is the finding, not a fault of the run.
+
+``--check --against-commit`` is the third option such a run needs, and the run of 7 November
+2026 showed why.  Most scripts write their own ``results/<name>/table.md`` while they measure,
+so by the time the check reads that file it is already the new table: the comparison is then
+the new numbers against themselves and cannot fail.  ``--against-commit`` compares every table
+with the one the repository carries -- what a reader of the repository has -- and walks
+``benchmarks/results`` as well, so that a table no ``report`` rebuilds is also compared.  In
+that run 30 of the 66 tables moved and the comparison against the files on disk named six.
+Newlines are counted as equal in all of these comparisons: the same table written on Windows
+and on Linux is the same table.
 
 The tables in the documents.  ``docs/benchmark.md`` carries two tables between markers
 (``<!-- TABLE -->`` and ``<!-- CIF-TABLE -->``) that are the Sutherland and CIF result tables
@@ -46,7 +81,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -66,7 +101,10 @@ class Benchmark:
     script: str                                  # file under benchmarks/
     results: str                                 # folder under benchmarks/results/
     compute: List[List[str]] = field(default_factory=list)   # argument lists, run in order
-    needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | None
+    needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | "xtb"
+                                                 # | "pybamm" (not in requirements-lock.txt)
+                                                 # | None: a file or a program the machine
+                                                 # may not have
     minutes: str = "?"                           # what a full run costs on the author's machine
     report: Optional[Callable[[], None]] = None  # rebuilds results/<name>/table.md
     tables: List[str] = field(default_factory=list)          # files --tables writes
@@ -135,6 +173,83 @@ def _report(b):
 
 def _r(path):
     return os.path.join(RESULTS, path)
+
+
+# A reproduction run (item 0 of docs/publication_plan.md, step 7 of
+# docs/release_checklist.md) measures benchmarks again on a machine that is not the author's
+# and compares the tables rebuilt from the new result files with the tables the repository
+# carries.  Which benchmarks it can measure is a rule of two parts, and the split into groups
+# follows from it, because a list of sixty names written by hand drifts: the four groups this
+# replaces had lost the seven benchmarks added to the registry after they were written, and
+# nothing said so.
+REPRODUCE_MINUTES = 30        # the longest a benchmark may register and still join the run
+REPRODUCE_N_GROUPS = 7        # so that a group fits twice over in the time a job is given
+REPRODUCE_ALSO = ("hops",)    # longer than the rule allows, and in the run for a reason:
+                              # the barriers of a lithium hop are the one measurement this
+                              # program has compared with published numbers on the same
+                              # labels, its 110 minutes still fit a group, and it was in the
+                              # run before the rule was written down
+
+
+def reproducible() -> List[Benchmark]:
+    """The benchmarks a reproduction run can measure.
+
+    Two conditions, and a benchmark that fails either is left out with its reason in step 7 of
+    ``docs/release_checklist.md``: it must register ``REPRODUCE_MINUTES`` or less, because a
+    runner stops a job after six hours, and it must need no file or program the machine may
+    not have (``needs``).  A benchmark whose time is not recorded is left out too: a group
+    cannot be planned around an unknown.  ``REPRODUCE_ALSO`` names the exceptions to the first
+    condition, which the comment on it gives the reason for; the second condition has none.
+    """
+    out = []
+    for b in registry():
+        if b.needs is not None:
+            continue
+        if b.name in REPRODUCE_ALSO:
+            out.append(b)
+            continue
+        try:
+            if float(b.minutes) <= REPRODUCE_MINUTES:
+                out.append(b)
+        except ValueError:
+            continue
+    return out
+
+
+def reproduce_groups() -> Dict[int, List[str]]:
+    """Those benchmarks in ``REPRODUCE_N_GROUPS`` groups of about the same length.
+
+    The longest benchmark goes into the shortest group so far, which keeps the groups within a
+    few minutes of each other.  The order is fixed (minutes, then name), so the same registry
+    always gives the same groups.
+    """
+    groups: Dict[int, List[str]] = {g: [] for g in range(1, REPRODUCE_N_GROUPS + 1)}
+    load = {g: 0.0 for g in groups}
+    for b in sorted(reproducible(), key=lambda b: (-float(b.minutes), b.name)):
+        g = min(load, key=lambda k: (load[k], k))
+        groups[g].append(b.name)
+        load[g] += float(b.minutes)
+    return {g: sorted(names) for g, names in groups.items()}
+
+
+def reproduce_group(key) -> List[str]:
+    """The benchmarks of one group of the reproduction run."""
+    groups = reproduce_groups()
+    try:
+        g = int(key)
+    except (TypeError, ValueError):
+        g = None
+    if g not in groups:
+        raise SystemExit("--reproduce takes a group number: "
+                         + ", ".join(f"{k} ({len(v)} benchmarks)"
+                                     for k, v in sorted(groups.items())))
+    return groups[g]
+
+
+def group_minutes(key) -> float:
+    """The minutes the registry records for one group."""
+    minutes = {b.name: b.minutes for b in registry()}
+    return sum(float(minutes[name]) for name in reproduce_group(key))
 
 
 def registry() -> List[Benchmark]:
@@ -407,7 +522,7 @@ def registry() -> List[Benchmark]:
                   "shift of its activation energy "
                   "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
                   "run_cellmodel.py", "cellmodel",
-                  compute=[[]],
+                  compute=[[]], needs="pybamm",
                   prepare=["prepare_nebdft.py --fetch"],
                   minutes="54",
                   report=lambda: _mod("run_cellmodel").report(),
@@ -443,7 +558,10 @@ def registry() -> List[Benchmark]:
                   "complex, on measured conductivities",
                   "run_shells.py", "shells",
                   compute=[["--stage", "data"], ["--stage", "gate"], ["--stage", "cofield"]],
-                  minutes="25",
+                  # the complexes are built with xtb when benchmarks/cache has none, and the
+                  # built ones are not in the repository, so a machine without xtb cannot
+                  # run this one
+                  needs="xtb", minutes="25",
                   report=lambda: _mod("run_shells").write_table(_r("shells")),
                   tables=["shells/table.md"]),
         Benchmark("phenazine",
@@ -763,7 +881,7 @@ def registry() -> List[Benchmark]:
                   "a cheap quantum stage over many series: does a GFN2-xTB field help any of "
                   "them",
                   "run_xtb.py", "xtb", compute=[[]],
-                  minutes="90",
+                  needs="xtb", minutes="90",
                   report=lambda: _mod("run_xtb").report(path=_r("xtb/table.md")),
                   tables=["xtb/table.md"]),
         Benchmark("nystrom", "can a low-rank kernel reproduce the exact model",
@@ -1213,6 +1331,39 @@ def _read(path):
         return fh.read()
 
 
+def _norm(text: Optional[str]) -> Optional[str]:
+    """One newline style, so that a comparison is about content.
+
+    A table written on Windows ends its lines with CRLF and the same table written on Linux
+    with LF. Two tables that differ only in that are the same table, and a reproduction run
+    that reported the difference would be reporting the platform instead of the numbers.
+    """
+    return None if text is None else text.replace("\r\n", "\n")
+
+
+def _committed(path) -> Optional[str]:
+    """What the repository carries for `path`, or None when git cannot say.
+
+    None means the question cannot be asked: there is no git here, the path is outside this
+    checkout, or the file is not committed. A caller then falls back to the file on disk and
+    says so, because a silent fallback is the fault this function exists to remove.
+    """
+    try:
+        rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
+    except ValueError:                     # another drive on Windows: not in this checkout
+        return None
+    if rel.startswith(".."):
+        return None
+    try:
+        done = subprocess.run(["git", "-C", ROOT, "show", f"HEAD:{rel}"],
+                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except OSError:                        # no git on this machine
+        return None
+    if done.returncode != 0:               # not a checkout, or the file is not committed
+        return None
+    return done.stdout.decode("utf-8", "replace")
+
+
 def splice(doc: str, tag: str, text: str) -> bool:
     """Put `text` between the markers of `tag` in `doc`; True when the document changed."""
     src = _read(doc)
@@ -1228,19 +1379,83 @@ def splice(doc: str, tag: str, text: str) -> bool:
     return False
 
 
-def rebuild_tables(quiet=True):
+def _numbers(text):
+    """Every number of a table, in the order it appears."""
+    return [float(m) for m in re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", text)]
+
+
+def _moved_numbers(before, after) -> str:
+    """How far the numbers of a rebuilt table moved, in one line.
+
+    A reproduction run asks a narrower question than whether the file is the same: it asks
+    whether the numbers a reader would quote are the same.  The numbers are read in the order
+    they appear, so the comparison needs both versions to hold as many; a table whose shape
+    changed says so instead of comparing one row with another.  Seconds and dates are numbers
+    too, which is why the line gives the count as well as the largest difference.
+    """
+    if before is None:
+        return "a table that did not exist before"
+    old, new = _numbers(before), _numbers(after)
+    if len(old) != len(new):
+        return f"the shape changed: {len(old)} numbers before, {len(new)} now"
+    pairs = [(abs(a - b), a, b) for a, b in zip(old, new) if a != b]
+    if not pairs:
+        return "no number moved; the text around them did"
+    d, a, b = max(pairs)
+    return (f"{len(pairs)} of {len(old)} numbers moved, the largest by {d:.6g} "
+            f"({a:.6g} -> {b:.6g})")
+
+
+def _label(path) -> str:
+    """A path to print: relative to the repository, or the text of a document marker.
+
+    A path that has no relative form is printed as it is. On Windows there is none between two
+    drives, which is the case when a test points the results somewhere else, and a label is only
+    ever printed: it must not be the thing that fails.
+    """
+    if not os.path.isabs(path):
+        return path
+    try:
+        return os.path.relpath(path, ROOT)
+    except ValueError:                     # another drive on Windows: no relative path exists
+        return path
+
+
+def rebuild_tables(quiet=True, baseline="disk"):
     """Every table.md from its result files, then the documents.
 
-    Returns ``(written, changed)``: every file the rebuild wrote, and those whose content is not
-    what was on disk before.  ``--check`` is the statement that the second list is empty: the
-    committed tables and documents are what the result files give.
+    Returns ``(written, changed, moved)``: every file the rebuild wrote, those whose content is
+    not what it is compared with, and one line per changed file saying how far its numbers
+    moved.  ``--check`` is the statement that the second list is empty: the committed tables
+    and documents are what the result files give.
+
+    ``baseline`` says what the rebuilt table is compared with.  ``"disk"`` is the file as it
+    was before the rebuild, which is what an ordinary run asks: the developer has just measured
+    something and wants to know which tables the new results move.  ``"committed"`` is what the
+    repository carries, which is what a reproduction run asks: a script that measures writes
+    its own table, so the file on disk is already the new one and a comparison with it cannot
+    fail.  Newlines are counted as equal either way.
     """
-    written, changed = [], []
+    if baseline not in ("disk", "committed"):
+        raise ValueError(f"baseline is \"disk\" or \"committed\", not {baseline!r}")
+    written, changed, moved = [], [], {}
     devnull = open(os.devnull, "w", encoding="utf-8")
+
+    def _before(path):
+        """What a rebuilt table is compared with, and a line when that is not what was asked."""
+        if baseline == "committed":
+            text = _committed(path)
+            if text is not None:
+                return text
+            if os.path.exists(path):
+                print(f"  {_label(path)}: the repository carries no version of this table; "
+                      f"comparing with the file on disk")
+        return _read(path) if os.path.exists(path) else None
+
     for b in registry():
         if b.report is None:
             continue
-        before = {t: (_read(_r(t)) if os.path.exists(_r(t)) else None) for t in b.tables}
+        before = {t: _before(_r(t)) for t in b.tables}
         try:
             if quiet:
                 out, sys.stdout = sys.stdout, devnull
@@ -1255,13 +1470,16 @@ def rebuild_tables(quiet=True):
             continue
         for t in b.tables:
             written.append(_r(t))
-            if os.path.exists(_r(t)) and _read(_r(t)) != before[t]:
+            if os.path.exists(_r(t)) and _norm(_read(_r(t))) != _norm(before[t]):
                 changed.append(_r(t))
+                moved[_r(t)] = _moved_numbers(before[t], _read(_r(t)))
     for doc, tag, text in SPLICES:
         if splice(doc, tag, text()):
             written.append(doc)
-            changed.append(f"{doc} <!-- {tag} -->")
-    return written, changed
+            key = f"{doc} <!-- {tag} -->"
+            changed.append(key)
+            moved[key] = "the document's copy of a table was not the table"
+    return written, changed, moved
 
 
 # ----------------------------------------------------------------------------- the manifest
@@ -1380,6 +1598,36 @@ def write_manifest():
     return m
 
 
+def check_tables(skip=()) -> List[str]:
+    """Every Markdown file under benchmarks/results that is not the committed one.
+
+    ``rebuild_tables`` compares the tables a benchmark's ``report`` builds, and that is most of
+    them.  A benchmark that registers no ``report`` has none, and the run of 7 November 2026
+    showed what that costs: its table can move and nothing says so.  This compares the files
+    themselves with what the repository carries, so that no table is outside the comparison.
+
+    ``skip`` is the labels ``rebuild_tables`` has already reported, so that a table is named
+    once.  A file git cannot speak for is left out: a table that is not committed yet is new
+    work, not a difference.
+    """
+    problems = []
+    for folder, _dirs, files in os.walk(RESULTS):
+        for name in sorted(files):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(folder, name)
+            if _label(path) in skip:
+                continue
+            before = _committed(path)
+            if before is None:
+                continue
+            after = _read(path)
+            if _norm(after) != _norm(before):
+                problems.append(f"the table on disk is not the one the repository carries: "
+                                f"{_label(path)} -- {_moved_numbers(before, after)}")
+    return problems
+
+
 def check_manifest() -> List[str]:
     """Data files whose hash differs from the manifest, or that it does not know."""
     if not os.path.exists(MANIFEST):
@@ -1450,13 +1698,51 @@ def list_benchmarks():
     print("\nresult tables: " + ", ".join(f"results/{t}" for b in registry() for t in b.tables))
     print("spliced into the documents: " + ", ".join(f"{os.path.relpath(d, ROOT)} <!-- {t} -->"
                                                      for d, t, _ in SPLICES))
+    groups = reproduce_groups()
+    total = sum(group_minutes(g) for g in groups)
+    print(f"\nthe reproduction run, {sum(len(v) for v in groups.values())} benchmarks of "
+          f"{REPRODUCE_MINUTES} minutes or less in {len(groups)} groups, {total / 60:.1f} "
+          f"hours in all on the author's machine:")
+    for g in sorted(groups):
+        print(f"  group {g}: {group_minutes(g):3.0f} min  " + ", ".join(groups[g]))
+    left = [b.name for b in registry() if b.name not in
+            {n for names in groups.values() for n in names}]
+    print(f"left out, with the reason in docs/release_checklist.md: {len(left)} benchmarks")
 
 
-def compute(names, data_root=None, cif_root=None, orca=False):
+_FORCE = {}
+
+
+def accepts_force(script: str) -> bool:
+    """Whether a benchmark script has a ``--force`` option.
+
+    Most scripts keep the result files they find and recompute only what is missing, and
+    ``--force`` is how each of them is told to measure again.  A script without the option
+    measures everything every time and needs nothing.  The answer is read from the source,
+    because asking the script itself would import its libraries once per benchmark.
+    """
+    if script not in _FORCE:
+        path = os.path.join(HERE, script)
+        try:
+            src = _read(path)
+        except OSError:
+            src = ""
+        _FORCE[script] = ("add_argument(\"--force\"" in src
+                          or "add_argument('--force'" in src)
+    return _FORCE[script]
+
+
+def compute(names, data_root=None, cif_root=None, orca=False, fresh=False, rebuild=True):
     wanted = registry() if names == ["all"] else [b for b in registry() if b.name in names]
     unknown = set(names) - {b.name for b in registry()} - {"all"}
     if unknown:
         raise SystemExit("unknown benchmark(s): " + ", ".join(sorted(unknown)))
+    if fresh:
+        own = [b.name for b in wanted if not accepts_force(b.script)]
+        print(f"--fresh: --force goes to {len(wanted) - len(own)} of {len(wanted)} "
+              f"benchmarks; {len(own)} measure everything by themselves"
+              + (": " + ", ".join(own) if own else ""), flush=True)
+    failed = []
     for b in wanted:
         for argv in b.compute:
             args = []
@@ -1477,14 +1763,25 @@ def compute(names, data_root=None, cif_root=None, orca=False):
             if skip:
                 print(f"--- {b.name} {' '.join(argv)}: skipped, {skip}", flush=True)
                 continue
+            if fresh and accepts_force(b.script) and "--force" not in args:
+                args.append("--force")
             cmd = [sys.executable, os.path.join(HERE, b.script), *args]
             print(f"=== {b.name}: {' '.join(os.path.relpath(c, ROOT) if os.path.isabs(c) else c for c in cmd[1:])}",
                   flush=True)
             t0 = time.time()
             rc = subprocess.call(cmd, cwd=ROOT)
             print(f"--- {b.name}: exit {rc} after {(time.time() - t0) / 60:.1f} min", flush=True)
-    rebuild_tables()
-    write_manifest()
+            if rc != 0:
+                failed.append(f"{b.name}: {' '.join(args)} exit {rc}")
+    if rebuild:
+        rebuild_tables()
+        write_manifest()
+    else:
+        print("--no-rebuild: the tables and the manifest are as they were; --check now "
+              "compares them with what these result files give", flush=True)
+    if failed:
+        raise SystemExit("these scripts failed, so their results are the committed ones:\n  "
+                         + "\n  ".join(failed))
 
 
 def main(argv=None):
@@ -1498,31 +1795,68 @@ def main(argv=None):
     ap.add_argument("--data-root", default=None)
     ap.add_argument("--cif-root", default=None)
     ap.add_argument("--orca", action="store_true")
+    ap.add_argument("--fresh", action="store_true",
+                    help="with --compute: pass --force to every script that has the option, "
+                         "so the measurement is made again instead of the result files on "
+                         "disk being reused")
+    ap.add_argument("--no-rebuild", dest="rebuild", action="store_false",
+                    help="with --compute: leave the tables and the manifest as they are, so "
+                         "that a --check afterwards compares them with what the new result "
+                         "files give")
+    ap.add_argument("--reproduce", metavar="GROUP",
+                    help="measure one group of the reproduction run again and leave the "
+                         "tables and the manifest for a --check afterwards: --compute with "
+                         "--fresh and --no-rebuild")
+    ap.add_argument("--against-commit", action="store_true",
+                    help="with --check: compare every table with the one the repository "
+                         "carries instead of with the file on disk, which is what a "
+                         "reproduction run asks, since a script rewrites its own table while "
+                         "it measures")
     args = ap.parse_args(argv)
+    if (args.fresh or not args.rebuild) and not (args.compute or args.reproduce):
+        ap.error("--fresh and --no-rebuild are options of --compute")
+    if args.against_commit and not args.check:
+        ap.error("--against-commit is an option of --check")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
+    if args.reproduce:
+        names = reproduce_group(args.reproduce)
+        print(f"reproduction group {args.reproduce}: {len(names)} benchmarks, "
+              f"{group_minutes(args.reproduce):.0f} minutes on the author's machine",
+              flush=True)
+        compute(names, args.data_root, args.cif_root, args.orca, fresh=True, rebuild=False)
     if args.compute:
-        compute(args.compute, args.data_root, args.cif_root, args.orca)
-    changed = []
+        compute(args.compute, args.data_root, args.cif_root, args.orca,
+                fresh=args.fresh, rebuild=args.rebuild)
+    changed, moved = [], {}
     if args.tables or args.check:
-        written, changed = rebuild_tables()
-        print("tables rebuilt: " + ", ".join(os.path.relpath(w, ROOT) for w in written))
+        written, changed, moved = rebuild_tables(
+            baseline="committed" if args.against_commit else "disk")
+        print("tables rebuilt: " + ", ".join(_label(w) for w in written))
         if changed:
-            print("changed by the rebuild: " + ", ".join(os.path.relpath(c, ROOT) for c in changed))
+            print("changed by the rebuild:")
+            for c in changed:
+                print(f"  {_label(c)}: {moved.get(c, '')}")
     if args.manifest:
         write_manifest()
     if args.check:
         problems = check_manifest() + check_documents()
-        problems += ["table or document was not what its result files give: "
-                     + os.path.relpath(c, ROOT) for c in changed]
+        problems += [f"table or document was not what its result files give: {_label(c)}"
+                     + (f" -- {moved[c]}" if moved.get(c) else "") for c in changed]
+        if args.against_commit:
+            problems += check_tables(skip={_label(c) for c in changed})
         if problems:
             print("CHECK FAILED")
             for p in problems:
                 print("  " + p)
             return 1
-        print("check passed: tables and documents match their result files, every benchmark is "
-              "named in the manual, the manual PDF is current, data matches the manifest")
-    if not (args.compute or args.tables or args.manifest or args.check) or args.list:
+        passed = ("check passed: tables and documents match their result files, every benchmark "
+                  "is named in the manual, the manual PDF is current, data matches the manifest")
+        if args.against_commit:
+            passed += "; every table is the one the repository carries"
+        print(passed)
+    if not (args.compute or args.reproduce or args.tables or args.manifest or args.check) \
+            or args.list:
         list_benchmarks()
     return 0
 
