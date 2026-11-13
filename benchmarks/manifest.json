@@ -1,6 +1,6 @@
 {
- "commit": "864ecd7de630329a02fefdcdd142d6d77de5968d",
- "created": "2026-11-13T06:20:52",
+ "commit": "f80941b73b6a583fce49557a9f824e0424c91820",
+ "created": "2026-11-13T12:09:50",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2650,6 +2650,17 @@
   "benchmarks/results/cell_view/read.json": "3c86bb38dbb77e8e16dc75e99a8df92a6b813ec164fc21120f7a70396bb5ebc7",
   "benchmarks/results/cell_view/run.json": "d856de6a1f6e96a863f9a21ca154b8432ce0d4fdb0b1b83fa7381a30a617eb38",
   "benchmarks/results/cell_view/table.md": "c0fc22d5c73370bc9da37cb1efe9b0b63995b40e5a80d4630fa06eee4203ba88",
+  "benchmarks/results/cellmodel/cellmodel.json": "67612bad5a584fbf4a078155f0f8753cb4c3d7a178f5a090e962bf442f1fb7a5",
+  "benchmarks/results/cellmodel/channels.json": "a6fb76eee59fbd2b8a3b57661a579a0708d2a7564eba5fb81f90d3bdd5093fd8",
+  "benchmarks/results/cellmodel/parameters.csv": "1927cc3a01e09ce21858d2a5cd879181339e95c61b4d2fc980fd00ef15d99a24",
+  "benchmarks/results/cellmodel/parameters.json": "ad4765c9218e29cc9255ea913ca1977f05899bc069f1439da9894a936e91384d",
+  "benchmarks/results/cellmodel/reference.json": "da0310548e8488499ae7da717eb99ea269c0febb1455c82eb7f3323b2f03f2f7",
+  "benchmarks/results/cellmodel/sample_electrolyte_conductivity_s_m-1.json": "fbc50ff24995cf614737a327121116be2c8863cff8f04d00cd749a3ca7bfb198",
+  "benchmarks/results/cellmodel/sample_positive_electrode_bruggeman_coefficient_electrolyte.json": "d7d2cc2945bbe27f9bac5b8cb32d0aaef6347a554af494fc32f80816bea39234",
+  "benchmarks/results/cellmodel/sample_positive_electrode_exchange-current_density_a_m-2.json": "9c37a835889d80f6ecc1855b0bd4bec1fd52f534ad13418cc597facef9fa0cab",
+  "benchmarks/results/cellmodel/sample_positive_electrode_ocp_v.json": "7a82d59bb138858b36c18b7c9cc1439ca9df82faeb83dc392b6f312b7bdddd55",
+  "benchmarks/results/cellmodel/sample_positive_particle_diffusivity_m2_s-1.json": "f4105da4a84d9e7b6fb909b765bec38532a470b70bb48db95c92a6a9b80e4fae",
+  "benchmarks/results/cellmodel/table.md": "53477d570d447ccbf93bdaac6d233fc86cf70b72ea52a9488f60318da8c04c4b",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
