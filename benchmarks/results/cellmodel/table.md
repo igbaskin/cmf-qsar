@@ -45,6 +45,34 @@ The deviation of the predicted barrier is made smaller by each factor below and 
 
 No row is both. A narrower deviation gives a narrower interval, but the interval closes on the capacity the median prediction gives, and that prediction is wrong: the barrier is over-predicted, so the diffusion coefficient comes out several orders of magnitude too small. The error of this channel is a bias and not a spread, and a tolerance rule cannot repair a bias. What this parameter needs is not a smaller deviation but a better prediction, which for a cathode of this kind means the barrier from the fine level itself.
 
+## The electrolyte at faster discharge and in the cold
+
+At the one-hour rate the cell hardly responds to its electrolyte, so the two electrolyte-side parameters are drawn again where it can matter: faster discharges at room temperature, and colder cells. Each run is one discharge of the full DFN model, 100 draws per parameter, because the single-particle model approximates the electrolyte and is not meant for high rates.
+
+The published electrolyte functions have **no temperature dependence**; of the whole parameter set only the two exchange-current densities depend on temperature. A cold run of the published set is therefore a cold cell with a warm electrolyte. The program supplies what is missing: the composition model of item BT5 predicts the activation energy of the conductivity as well, with the solvent mixture held out.
+
+| quantity, for the cell's electrolyte | measured | predicted | over the 62 electrolytes: error, and for the mean | z rms |
+|---|---:|---:|---|---:|
+| conductivity at 298 K, log10 mS/cm | 0.946 | 0.971 +/- 0.058 | 0.069 against 0.146 | 1.01 |
+| activation energy, kJ/mol | 13.684 | 13.562 +/- 0.914 | 1.466 against 3.535 | 1.13 |
+
+Three capacities are compared under every condition. *Published* is the cell model's own. *Measured electrolyte* replaces its conductivity by the one CALiSol-23 measured for this electrolyte, carried to the cell's temperature by the measured activation energy: that is the curve a prediction is judged against. The intervals come from drawing the predicted parameters.
+
+| temperature, K | rate | published, A.h | measured electrolyte, A.h | interval from the conductivity, A.h | holds the measured electrolyte? | interval from the Bruggeman exponent, A.h | holds the published curve? | share of the Bruggeman exponent |
+|---:|---:|---:|---:|---|---|---|---|---:|
+| 298 | 1C | 4.991 | 4.991 | 4.990 to 4.993 | yes | 4.983 to 4.990 | no | 85.3 % |
+| 298 | 1.5C | 4.905 | 4.904 | 4.901 to 4.908 | yes | 4.837 to 4.900 | no | 98.6 % |
+| 298 | 2C | 4.783 | 4.779 | 4.771 to 4.793 | yes | 3.053 to 4.706 | no | 100.0 % |
+| 298 | 2.5C | 3.675 | 3.662 | 3.640 to 3.715 | yes | 1.692 to 3.144 | no | 99.7 % |
+| 263 | 1C | 4.960 | 4.949 | 4.943 to 4.956 | yes | -- | -- | -- |
+| 263 | 1.5C | 4.863 | 4.833 | 4.814 to 4.852 | yes | -- | -- | -- |
+| 253 | 1C | 4.949 | 4.930 | 4.921 to 4.940 | yes | -- | -- | -- |
+| 253 | 1.5C | 4.848 | 4.793 | 4.756 to 4.824 | yes | -- | -- | -- |
+
+**The conductivity is right, now that it can be seen.** The predicted interval holds the capacity of the measured electrolyte under 8 of 8 conditions. In the cold it also excludes the published curve under 4 of 4: the published set, whose electrolyte does not get colder, gives too much capacity, and the predicted activation energy corrects it by about as much as the measured one does. The effect is modest -- a few hundredths of an ampere-hour, at most about 1 % -- because the conductivity is the only electrolyte property that is carried to the cold; the electrolyte diffusivity and the two solid diffusivities stay at their room values in this parameter set.
+
+**The tortuosity takes over at faster discharge, and its error grows with it.** At 2.5C the Bruggeman exponent explains 99.7 % of the variance, its interval runs from 1.692 to 3.144 A.h, and it misses the published 3.675 A.h by 0.531 A.h. At 1C the same miss was 0.0015 A.h. The generated structures are more tortuous than the 1.5 the cell's authors fitted, and at a fast discharge that difference is worth a large part of the cell's capacity: this is the parameter that most needs measuring on the real electrode.
+
 ## What the gate asked, and what came out
 
 **The first part is not met.** The interval holds the published curve for 4 of 5 parameters, and the gate asks for every parameter whose deviation means what it says. It fails for Positive electrode Bruggeman coefficient (electrolyte), whose deviation is calibrated (z rms 1.04). The interval misses by 6.43e-04 A.h, because the structures this channel was fitted on are more tortuous than the exponent of 1.5 the authors of the cell fitted; the channel says so itself, since its structures are generated and it is marked as outside what the model was fitted on.

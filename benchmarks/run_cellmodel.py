@@ -50,11 +50,18 @@ What is measured
   changed by a tenth of itself, which is the reading the cell-model literature states.
 * How much more accurate the barrier would have to be for the capacity interval to be useful,
   which is the rule of plan item MS1 in the units of a cell.
+* The electrolyte where it can matter (``--stage stress``): at the one-hour rate the cell hardly
+  responds to its electrolyte, so the conductivity and the Bruggeman exponent are drawn again
+  at faster discharges with the full Doyle-Fuller-Newman model, and the conductivity in colder
+  cells, carried there by the activation energy the same model of item BT5 predicts. The
+  published electrolyte functions have no temperature dependence, so the curve a prediction is
+  judged against is that of the electrolyte as CALiSol-23 measured it.
 
 Usage
 -----
     python benchmarks/run_nebdft.py            # once: the rows of the hops
-    python benchmarks/run_cellmodel.py         # this benchmark, then the table
+    python benchmarks/run_cellmodel.py         # this benchmark, then the table (35 minutes)
+    python benchmarks/run_cellmodel.py --stage stress    # one stage; each writes its own file
     python benchmarks/run_cellmodel.py --report
 """
 from __future__ import annotations
@@ -117,9 +124,17 @@ TOL_CYCLES = 3
 #: an interval of the last cycle's capacity narrower than this share of the published capacity
 #: counts as useful
 TOL_SHARE = 0.05
+#: the electrolyte under stress: the full model, faster discharges at room temperature, and
+#: colder cells, where the conductivity follows the predicted activation energy
+STRESS_MODEL = "DFN"
+STRESS_RATES = (1.0, 1.5, 2.0, 2.5)
+STRESS_COLD = (263.15, 253.15)
+STRESS_COLD_RATES = (1.0, 1.5)
+STRESS_DRAWS = 100
+ROOM = 298.15
 #: the stages, in order: fit the models and convert, run the published values, draw one
-#: parameter at a time, then put the result together
-STAGES = ("channels", "reference", "sample", "finish")
+#: parameter at a time, the electrolyte under stress, then put the result together
+STAGES = ("channels", "reference", "sample", "stress", "finish")
 
 
 def log(msg: str) -> None:
@@ -422,11 +437,10 @@ def voltage_channel() -> Tuple[object, dict]:
                "mae": fit["mae"], "rmse": fit["rmse"], "z_rms": fit["z_rms"],
                "mae_of_the_mean": fit["mae_of_the_mean"],
                "coverage_2sd": float(fit["calibration"].coverage_2sd),
-               "error_units": "V", "chosen": fit["chosen"], "ladder": {k: (float(v) if isinstance(v, (int, float))
-                                                       else v)
-                                                   for k, v in ladder.items()
-                                                   if k in ("framework", "label", "published",
-                                                            "voltage", "steps")},
+               "error_units": "V", "chosen": fit["chosen"],
+               "ladder": {k: (float(v) if isinstance(v, (int, float)) else v)
+                          for k, v in ladder.items()
+                          if k in ("framework", "label", "published", "voltage", "steps")},
                "predicted": predicted, "sd": sd, "published": reference,
                "steps_averaged": int(len(mine)),
                "measured_of_the_steps": float(np.sum(weights * y[mine])),
@@ -734,6 +748,149 @@ def stage_sample(results: str, name: str, draws: int = DRAWS, cycles: int = CYCL
     return out
 
 
+def electrolyte_fits() -> Dict[str, dict]:
+    """The conductivity at 298 K and its activation energy for the cell's own electrolyte, each
+    predicted by the composition model of item BT5 with the solvent mixture held out."""
+    import run_shells as S
+    rows = S.load_series()
+    compositions = [str(r["composition"]) for r in rows]
+    kernels = descriptor_kernels(S.descriptors(rows, "composition"))
+    mine = [i for i, r in enumerate(rows) if str(r["id"]) == ELECTROLYTE_ID]
+    if not mine:
+        raise SystemExit(f"the measured series holds no electrolyte called {ELECTROLYTE_ID!r}")
+    i = mine[0]
+    out = {}
+    for target, unit in (("log10_k_298", "log10 mS/cm"), ("ea_298", "kJ/mol")):
+        y = np.array([float(r[target]) for r in rows], float)
+        fit = nested_surrogate(kernels, y, compositions)
+        out[target] = {"unit": unit, "measured": float(y[i]),
+                       "predicted": float(fit["predicted"][i]), "sd": float(fit["sd"][i]),
+                       "mae": fit["mae"], "mae_of_the_mean": fit["mae_of_the_mean"],
+                       "z_rms": fit["z_rms"],
+                       "coverage_2sd": float(fit["calibration"].coverage_2sd)}
+        log(f"  {target}: {ELECTROLYTE_ID} measured {y[i]:.3f}, predicted "
+            f"{fit['predicted'][i]:.3f} +/- {fit['sd'][i]:.3f} {unit}; over the {len(y)} "
+            f"electrolytes, mixtures held out, mean absolute error {fit['mae']:.3f} against "
+            f"{fit['mae_of_the_mean']:.3f} for the mean, z rms {fit['z_rms']:.2f}")
+    return out
+
+
+def stress_conditions() -> List[Tuple[float, float]]:
+    """(temperature, rate) of every condition of the stress stage."""
+    return ([(ROOM, r) for r in STRESS_RATES]
+            + [(t, r) for t in STRESS_COLD for r in STRESS_COLD_RATES])
+
+
+def stress_path(results: str, temperature: float, rate: float) -> str:
+    return os.path.join(results, f"stress_{temperature:.0f}K_{rate:g}C.json")
+
+
+def stage_stress(results: str, draws: int = STRESS_DRAWS, force: bool = False) -> None:
+    """The electrolyte where it can matter: faster discharges, and colder cells.
+
+    For every condition three curves are compared. The **published** one is the cell model's
+    own; its electrolyte functions have no temperature dependence, so in the cold it is the cell
+    with a warm electrolyte. The **measured** one replaces the conductivity by that of the
+    electrolyte as CALiSol-23 measured it -- its conductivity at 298 K carried to the cell's
+    temperature by its measured activation energy -- which is the curve a prediction should be
+    judged against. The **predicted** interval comes from drawing the predicted conductivity and,
+    in the cold, the predicted activation energy. At room temperature the Bruggeman exponent is
+    drawn as well, because the two parameters together are what the electrolyte in a porous
+    electrode is described by.
+    """
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import conductivity_scale_at_temperature
+
+    pset, _ = read_set(results)
+    cond = pset["Electrolyte conductivity [S.m-1]"]
+    brug = pset["Positive electrode Bruggeman coefficient (electrolyte)"]
+    p = CM.published_parameters(BASE)
+    fits_path = os.path.join(results, "stress_fits.json")
+    if force or not os.path.isfile(fits_path):
+        log("the electrolyte's conductivity and activation energy:")
+        fits = electrolyte_fits()
+        with open(fits_path, "w", encoding="utf-8") as fh:
+            json.dump(fits, fh, indent=1)
+    with open(fits_path, encoding="utf-8") as fh:
+        fits = json.load(fh)
+    k, ea = fits["log10_k_298"], fits["ea_298"]
+    per_kelvin = 1000.0 / (8.314462618 * np.log(10.0))
+    for temperature, rate in stress_conditions():
+        path = stress_path(results, temperature, rate)
+        if os.path.isfile(path) and not force:
+            log(f"{temperature:.0f} K, {rate:g}C: done already")
+            continue
+        t0 = time.time()
+        cycle = CM.discharge(rate)
+        common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=cycle,
+                      temperature=temperature)
+        published = CM.run_cell(parameters=p, **common)
+        reference = _conductivity_of(p, 1000.0, temperature)
+        shift = 1.0 / temperature - 1.0 / ROOM
+        measured_factor = 10.0 ** (k["measured"] - ea["measured"] * per_kelvin * shift
+                                   - reference)
+        measured = CM.run_cell({cond.name: cond.apply(p[cond.name], measured_factor)},
+                               parameters=p, **common)
+        if temperature == ROOM:
+            conductivity = cond
+        else:
+            conductivity = conductivity_scale_at_temperature(
+                k["predicted"], k["sd"], ea["predicted"], ea["sd"], reference, temperature,
+                cond.name, draws=2000, seed=SEED, source=cond.source + ", carried to "
+                f"{temperature:.0f} K by the activation energy the same model predicts")
+        entry = {"temperature": float(temperature), "rate": float(rate),
+                 "model": STRESS_MODEL, "draws": int(draws),
+                 "published": published.final, "published_ok": bool(published.ok),
+                 "measured": measured.final, "measured_ok": bool(measured.ok),
+                 "measured_factor": float(measured_factor),
+                 "predicted_factor": float(conductivity.value),
+                 "factor_interval": conductivity.interval(), "parameters": {}}
+        runs = {}
+        for parameter in ((conductivity, brug) if temperature == ROOM else (conductivity,)):
+            these = CM.sample(parameter, draws=draws, seed=SEED, **common)
+            runs[parameter.name] = these
+            b = CM.band(these)
+            lo, hi = ((float(b["low"][-1]), float(b["high"][-1])) if b["n"] > 1
+                      else (float("nan"), float("nan")))
+            entry["parameters"][parameter.name] = {
+                "low": lo, "high": hi, "median": float(b["median"][-1]) if b["n"] > 1
+                else float("nan"), "refused": float(b["refused"]),
+                "holds_published": bool(lo <= published.final <= hi),
+                "holds_measured": (bool(lo <= measured.final <= hi)
+                                   if parameter.name == cond.name else None)}
+        shares = CM.variance_shares(runs)
+        for name, s in shares.items():
+            entry["parameters"][name]["share"] = s["share"]
+            entry["parameters"][name]["sd"] = s["sd"]
+        entry["seconds"] = round(time.time() - t0, 1)
+        c = entry["parameters"][cond.name]
+        log(f"{temperature:.0f} K, {rate:g}C: published {published.final:.3f} A.h, measured "
+            f"electrolyte {measured.final:.3f}, predicted conductivity {c['low']:.3f} to "
+            f"{c['high']:.3f}" + (f", Bruggeman {entry['parameters'][brug.name]['low']:.3f} to "
+                                  f"{entry['parameters'][brug.name]['high']:.3f}"
+                                  if brug.name in entry["parameters"] else "")
+            + f" ({entry['seconds']:.0f} s)")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(entry, fh, indent=1)
+
+
+def read_stress(results: str) -> Optional[dict]:
+    """What the stress stage wrote, or None when it has not been run."""
+    fits_path = os.path.join(results, "stress_fits.json")
+    if not os.path.isfile(fits_path):
+        return None
+    with open(fits_path, encoding="utf-8") as fh:
+        fits = json.load(fh)
+    rows = []
+    for temperature, rate in stress_conditions():
+        path = stress_path(results, temperature, rate)
+        if not os.path.isfile(path):
+            raise SystemExit(f"{path} is missing: run this benchmark with --stage stress")
+        with open(path, encoding="utf-8") as fh:
+            rows.append(json.load(fh))
+    return {"fits": fits, "conditions": rows}
+
+
 def read_samples(results: str, pset) -> Dict[str, dict]:
     """What the sampling stages wrote, one parameter at a time."""
     out = {}
@@ -785,6 +942,8 @@ def run(results: str = RESULTS, draws: int = DRAWS, cycles: int = CYCLES,
                 log(f"{p.name}: drawn already")
                 continue
             stage_sample(results, p.name, draws, cycles)
+    if "stress" in stages:
+        stage_stress(results, force=force)
     if "finish" not in stages:
         return None
 
@@ -817,6 +976,7 @@ def run(results: str = RESULTS, draws: int = DRAWS, cycles: int = CYCLES,
                for k, v in details.items()},
            "per_parameter": per_parameter, "variance_shares": shares,
            "tolerance": tolerance, "tolerance_width": width,
+           "stress": read_stress(results),
            "seconds": round(time.time() - t0, 1)}
     with open(os.path.join(results, "cellmodel.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=1)
@@ -836,6 +996,95 @@ def _n(v, nd: int = 3, sign: bool = False) -> str:
     if x != 0 and (abs(x) < 1e-3 or abs(x) >= 1e5):
         return f"{x:.2e}"
     return f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
+
+
+def stress_lines(stress: dict, params: Dict[str, dict]) -> List[str]:
+    """The section of the table on the electrolyte at faster discharge and in the cold."""
+    cond = "Electrolyte conductivity [S.m-1]"
+    brug = "Positive electrode Bruggeman coefficient (electrolyte)"
+    k, ea = stress["fits"]["log10_k_298"], stress["fits"]["ea_298"]
+    rows = stress["conditions"]
+    model = rows[0]["model"] if rows else STRESS_MODEL
+    out = ["## The electrolyte at faster discharge and in the cold", ""]
+    out.append(
+        "At the one-hour rate the cell hardly responds to its electrolyte, so the two "
+        "electrolyte-side parameters are drawn again where it can matter: faster discharges at "
+        f"room temperature, and colder cells. Each run is one discharge of the full {model} "
+        f"model, {rows[0]['draws'] if rows else STRESS_DRAWS} draws per parameter, because the "
+        "single-particle model approximates the electrolyte and is not meant for high rates.")
+    out.append("")
+    out.append("The published electrolyte functions have **no temperature dependence**; of the "
+               "whole parameter set only the two exchange-current densities depend on "
+               "temperature. A cold run of the published set is therefore a cold cell with a "
+               "warm electrolyte. The program supplies what is missing: the composition model "
+               "of item BT5 predicts the activation energy of the conductivity as well, with the "
+               "solvent mixture held out.")
+    out.append("")
+    out.append("| quantity, for the cell's electrolyte | measured | predicted | over the 62 "
+               "electrolytes: error, and for the mean | z rms |")
+    out.append("|---|---:|---:|---|---:|")
+    for label, f in (("conductivity at 298 K, log10 mS/cm", k),
+                     ("activation energy, kJ/mol", ea)):
+        out.append(f"| {label} | {_n(f['measured'], 3)} | {_n(f['predicted'], 3)} +/- "
+                   f"{_n(f['sd'], 3)} | {_n(f['mae'], 3)} against "
+                   f"{_n(f['mae_of_the_mean'], 3)} | {_n(f['z_rms'], 2)} |")
+    out.append("")
+    out.append("Three capacities are compared under every condition. *Published* is the cell "
+               "model's own. *Measured electrolyte* replaces its conductivity by the one "
+               "CALiSol-23 measured for this electrolyte, carried to the cell's temperature by "
+               "the measured activation energy: that is the curve a prediction is judged "
+               "against. The intervals come from drawing the predicted parameters.")
+    out.append("")
+    out.append("| temperature, K | rate | published, A.h | measured electrolyte, A.h | "
+               "interval from the conductivity, A.h | holds the measured electrolyte? | "
+               "interval from the Bruggeman exponent, A.h | holds the published curve? | "
+               "share of the Bruggeman exponent |")
+    out.append("|---:|---:|---:|---:|---|---|---|---|---:|")
+    for r in rows:
+        c = r["parameters"][cond]
+        b = r["parameters"].get(brug)
+        out.append(
+            f"| {r['temperature']:.0f} | {r['rate']:g}C | {_n(r['published'], 3)} | "
+            f"{_n(r['measured'], 3)} | {_n(c['low'], 3)} to {_n(c['high'], 3)} | "
+            f"{'yes' if c['holds_measured'] else 'no'} | "
+            + (f"{_n(b['low'], 3)} to {_n(b['high'], 3)} | "
+               f"{'yes' if b['holds_published'] else 'no'} | "
+               f"{_n(100 * b['share'], 1)} % |" if b else "-- | -- | -- |"))
+    out.append("")
+    warm = [r for r in rows if r["temperature"] == ROOM]
+    cold = [r for r in rows if r["temperature"] != ROOM]
+    held = sum(bool(r["parameters"][cond]["holds_measured"]) for r in rows)
+    cold_out = sum(not (r["parameters"][cond]["low"] <= r["published"]
+                        <= r["parameters"][cond]["high"]) for r in cold)
+    worst = max(warm, key=lambda r: r["published"] - r["parameters"][brug]["high"]) if warm \
+        else None
+    out.append(
+        f"**The conductivity is right, now that it can be seen.** The predicted interval holds "
+        f"the capacity of the measured electrolyte under {held} of {len(rows)} conditions. In "
+        f"the cold it also excludes the published curve under {cold_out} of {len(cold)}: the "
+        "published set, whose electrolyte does not get colder, gives too much capacity, and the "
+        "predicted activation energy corrects it by about as much as the measured one does. "
+        "The effect is modest -- a few hundredths of an ampere-hour, at most about 1 % -- "
+        "because the conductivity is the only electrolyte property that is carried to the cold; "
+        "the electrolyte diffusivity and the two solid diffusivities stay at their room values "
+        "in this parameter set.")
+    out.append("")
+    if worst is not None:
+        b = worst["parameters"][brug]
+        slow = min(warm, key=lambda r: r["rate"])
+        slow_miss = slow["published"] - slow["parameters"][brug]["high"]
+        out.append(
+            "**The tortuosity takes over at faster discharge, and its error grows with it.** "
+            f"At {worst['rate']:g}C the Bruggeman exponent explains {100 * b['share']:.1f} % of "
+            f"the variance, its interval runs from {_n(b['low'], 3)} to {_n(b['high'], 3)} A.h, "
+            f"and it misses the published {_n(worst['published'], 3)} A.h by "
+            f"{_n(worst['published'] - b['high'], 3)} A.h. At {slow['rate']:g}C the same miss "
+            f"was {_n(slow_miss, 4)} A.h. The generated structures are more tortuous than the "
+            "1.5 the cell's authors fitted, and at a fast discharge that difference is worth a "
+            "large part of the cell's capacity: this is the parameter that most needs measuring "
+            "on the real electrode.")
+        out.append("")
+    return out
 
 
 def report(results: str = RESULTS) -> str:
@@ -938,6 +1187,9 @@ def report(results: str = RESULTS) -> str:
       "prediction, which for a cathode of this kind means the barrier from the fine level "
       "itself.")
     w("")
+    stress = res.get("stress")
+    if stress:
+        lines.extend(stress_lines(stress, params))
     w("## What the gate asked, and what came out")
     w("")
     failed = [n for n, p in params.items()

@@ -28,7 +28,9 @@ this program can give it is a value for one of its parameters, with a standard d
 unit the cell model reads. The functions in that section do the conversions: a migration barrier to
 a solid diffusion coefficient through an Arrhenius law, carrying the deviation through the
 exponential (:func:`diffusivity_from_barrier`); a predicted conductivity to a factor on the
-published one (:func:`conductivity_scale_from_log10`); a predicted average voltage to a shift of
+published one (:func:`conductivity_scale_from_log10`), and to another temperature with a
+predicted activation energy (:func:`conductivity_scale_at_temperature`); a predicted average
+voltage to a shift of
 the published open-circuit voltage (:func:`ocp_shift`); an insertion ladder to a
 voltage-against-stoichiometry curve (:func:`ladder_to_ocp_curve`); and an effective conductivity of
 a porous electrode to a Bruggeman exponent (:func:`bruggeman_from_conductivity_ratio`). The sampler
@@ -816,6 +818,46 @@ def conductivity_scale_from_log10(predicted: float, reference: float, name: str,
                          distribution="lognormal", published=published, units="factor",
                          source=source, calibration=calibration, in_domain=in_domain, note=note,
                          low=0.0)
+
+
+#: the gas constant in joule per mole and kelvin
+GAS_CONSTANT = 8.314462618
+
+
+def conductivity_scale_at_temperature(predicted: float, sd: float, activation: float,
+                                      sd_activation: float, reference: float,
+                                      temperature: float, name: str,
+                                      prediction_temperature: float = 298.15,
+                                      draws: int = 2000, seed: int = 0,
+                                      published: Optional[float] = None, source: str = "",
+                                      calibration: Optional[float] = None,
+                                      in_domain: bool = True, note: str = "") -> CellParameter:
+    """A factor on the published conductivity at another temperature, from a predicted
+    conductivity and a predicted activation energy.
+
+    The conductivity predicted at `prediction_temperature` is carried to `temperature` by an
+    Arrhenius law, ``log10 k(T) = log10 k(T0) - E / (R ln 10) (1/T - 1/T0)``, with `activation`
+    the activation energy in kJ/mol. `reference` is the base-ten logarithm of the cell model's
+    own conductivity *at* `temperature`, in the same unit as `predicted`, so the factor relates
+    the prediction to what the cell model would use there. A published function with no
+    temperature dependence simply has the same reference at every temperature.
+
+    The two predictions come from two models, so their errors are drawn independently: `draws`
+    pairs, each giving one factor. The record carries the drawn factors, which keeps the shape
+    the exponential gives them.
+    """
+    rng = np.random.default_rng(int(seed))
+    logs = rng.normal(float(predicted), float(sd), int(draws))
+    energies = rng.normal(float(activation), float(sd_activation), int(draws))
+    shift = (1.0 / float(temperature) - 1.0 / float(prediction_temperature))
+    logs_t = logs - energies * 1000.0 / (GAS_CONSTANT * np.log(10.0)) * shift
+    factors = 10.0 ** (logs_t - float(reference))
+    centre = 10.0 ** (float(predicted) - float(activation) * 1000.0
+                      / (GAS_CONSTANT * np.log(10.0)) * shift - float(reference))
+    return CellParameter(name=name, value=float(centre), sd=float(np.std(np.log(factors))),
+                         kind="scale", distribution="sample", sample=factors,
+                         published=published, units="factor", source=source,
+                         calibration=calibration, in_domain=in_domain, note=note, low=0.0)
 
 
 def ocp_shift(predicted: float, published: float, name: str, sd: float = 0.0,

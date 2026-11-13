@@ -16,8 +16,10 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
 
 from cmfqsar import cellmodel as CM  # noqa: E402
-from cmfqsar.interfaces import (BOLTZMANN_EV, CellParameter, CellParameterSet,  # noqa: E402
-                                arrhenius_diffusivity, bruggeman_from_conductivity_ratio,
+from cmfqsar.interfaces import (BOLTZMANN_EV, GAS_CONSTANT, CellParameter,  # noqa: E402
+                                CellParameterSet, arrhenius_diffusivity,
+                                bruggeman_from_conductivity_ratio,
+                                conductivity_scale_at_temperature,
                                 conductivity_scale_from_log10, diffusivity_from_barrier,
                                 ladder_to_ocp_curve, ocp_shift)
 
@@ -69,6 +71,42 @@ def test_a_logarithmic_difference_of_one_is_a_factor_of_ten():
     p = conductivity_scale_from_log10(1.5, 0.5, "k", sd=0.1)
     assert p.kind == "scale" and p.value == pytest.approx(10.0)
     assert p.sd == pytest.approx(np.log(10.0) * 0.1)
+
+
+def test_at_its_own_temperature_the_factor_is_the_plain_one():
+    p = conductivity_scale_at_temperature(1.0, 0.0, 15.0, 0.0, 0.9, 298.15, "k")
+    assert p.value == pytest.approx(10.0 ** 0.1)
+    assert np.allclose(p.sample, 10.0 ** 0.1)
+    assert p.kind == "scale" and p.distribution == "sample"
+
+
+def test_a_colder_cell_divides_the_conductivity_by_the_arrhenius_factor():
+    """With no deviation every draw is the centre, and the centre follows the Arrhenius law."""
+    warm = conductivity_scale_at_temperature(1.0, 0.0, 14.0, 0.0, 1.0, 298.15, "k")
+    cold = conductivity_scale_at_temperature(1.0, 0.0, 14.0, 0.0, 1.0, 263.15, "k")
+    expected = np.exp(-14000.0 / GAS_CONSTANT * (1.0 / 263.15 - 1.0 / 298.15))
+    assert cold.value / warm.value == pytest.approx(expected)
+    assert np.allclose(cold.sample, cold.value)
+
+
+def test_both_deviations_widen_the_cold_factor():
+    only_k = conductivity_scale_at_temperature(1.0, 0.05, 14.0, 0.0, 1.0, 253.15, "k")
+    both = conductivity_scale_at_temperature(1.0, 0.05, 14.0, 1.0, 1.0, 253.15, "k")
+    assert both.sd > only_k.sd > 0
+
+
+def test_a_discharge_is_a_cycle_of_one_step():
+    assert CM.discharge(2.5) == ("Discharge at 2.5C until 2.5 V",)
+    assert CM.discharge(1, cutoff=2.8) == ("Discharge at 1C until 2.8 V",)
+
+
+def test_the_stress_conditions_put_room_temperature_first():
+    conditions = R.stress_conditions()
+    assert conditions[:len(R.STRESS_RATES)] == [(R.ROOM, r) for r in R.STRESS_RATES]
+    assert len(conditions) == len(R.STRESS_RATES) + len(R.STRESS_COLD) * len(
+        R.STRESS_COLD_RATES)
+    names = {os.path.basename(R.stress_path("x", t, r)) for t, r in conditions}
+    assert len(names) == len(conditions)
 
 
 def test_a_voltage_prediction_becomes_a_shift():
@@ -369,6 +407,18 @@ def test_a_smaller_diffusion_coefficient_gives_less_capacity():
     low = CM.run_cell({name: 1e-17}, cycles=1, kind="SPM", parameters=p)
     high = CM.run_cell({name: 4e-14}, cycles=1, kind="SPM", parameters=p)
     assert low.final < high.final
+
+
+def test_a_colder_cell_gives_less_capacity():
+    """Only the exchange currents of the published set depend on temperature, and they slow
+    down in the cold."""
+    pytest.importorskip("pybamm")
+    p = CM.published_parameters(R.BASE)
+    warm = CM.run_cell(cycles=1, kind="SPM", cycle=CM.discharge(1), parameters=p)
+    cold = CM.run_cell(cycles=1, kind="SPM", cycle=CM.discharge(1), parameters=p,
+                       temperature=253.15)
+    assert warm.ok and cold.ok
+    assert cold.final < warm.final
 
 
 def test_a_shift_needs_the_value_it_shifts():

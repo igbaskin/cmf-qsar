@@ -1,0 +1,29 @@
+{
+ "temperature": 253.15,
+ "rate": 1.0,
+ "model": "DFN",
+ "draws": 100,
+ "published": 4.9488352782450455,
+ "published_ok": true,
+ "measured": 4.930468600335084,
+ "measured_ok": true,
+ "measured_factor": 0.34875515912357835,
+ "predicted_factor": 0.3730842901035474,
+ "factor_interval": [
+  0.27933510699334135,
+  0.4913919200650909
+ ],
+ "parameters": {
+  "Electrolyte conductivity [S.m-1]": {
+   "low": 4.921010377844482,
+   "high": 4.940136828645243,
+   "median": 4.932086946436759,
+   "refused": 0.0,
+   "holds_published": false,
+   "holds_measured": true,
+   "share": 1.0,
+   "sd": 0.005004765217926873
+  }
+ },
+ "seconds": 39.4
+}

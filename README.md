@@ -3413,9 +3413,17 @@ cell:
   because this program's deviation on a voltage is about one volt.
 - The deviations move the level of the capacity curve, not its slope: over 100 cycles the cell
   loses 0.18 to 0.20 % whatever the drawn value.
+- At the one-hour rate the cell hardly responds to its electrolyte, so the electrolyte is
+  tested again at faster discharge and in colder cells. The published electrolyte has no
+  temperature dependence; BT5's model also predicts the activation energy (13.56 +/- 0.91
+  kJ/mol against 13.68 measured). The predicted conductivity's interval holds the capacity of
+  the measured electrolyte under all eight conditions, and in the cold it excludes the
+  published curve, which gives up to 0.055 A.h too much. At 2.5 times the one-hour rate the
+  Bruggeman exponent explains almost all of the variance and misses the published curve by
+  0.53 A.h.
 
 ```bash
-python benchmarks/run_cellmodel.py             # 25 minutes after run_nebdft.py; needs pybamm
+python benchmarks/run_cellmodel.py             # 35 minutes after run_nebdft.py; needs pybamm
 ```
 
 ### A single-atom site as the sample: two reactions on one metal
