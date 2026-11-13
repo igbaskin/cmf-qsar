@@ -1,6 +1,6 @@
 {
- "commit": "fbdbd8c3d1a795e79ed5044e6db2643648f131d8",
- "created": "2026-11-13T22:03:18",
+ "commit": "fec35047241a364456e13cf3789d26602b739da1",
+ "created": "2026-11-13T22:48:43",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -167,8 +167,8 @@
    "sha256": "7dda493ddaf706c2eba513295ba031758d02b5537165d5b51f06bafcc75ff90d"
   },
   "examples/corrosion_fe110/README.md": {
-   "bytes": 59859,
-   "sha256": "ff411fc83dd9a04968cdf821da9058fcae1f0ffb11b0859efb89d6ad73bc5c7f"
+   "bytes": 61073,
+   "sha256": "16e0fe3496c07346cf0865054179718a08c2554c959f67fe9b67ce4b763ea726"
   },
   "examples/corrosion_fe110/alignment_comparison.csv": {
    "bytes": 445,
@@ -387,16 +387,24 @@
    "sha256": "d428940e831a9414f11833646c6055b25f3a9270be93ba84d255895977dfe8b0"
   },
   "examples/corrosion_fe110/surface_kernel_eads.csv": {
-   "bytes": 694,
-   "sha256": "e0aac299d47d1fd511b0ca0c8aff2f4dd267aa4231d85a431f45756442735b2a"
+   "bytes": 989,
+   "sha256": "fdeee5110a7e74a9e5818085f7fb49254356040e11458ea34395b11772adeecc"
   },
   "examples/corrosion_fe110/surface_kernel_eads.py": {
-   "bytes": 6419,
-   "sha256": "ab5c385c865579776c888be12ded7c67d918066d7ce853e4ab230fa79fbcfac5"
+   "bytes": 10793,
+   "sha256": "28f70bdf9ce8f7a1bd76a0c8922b9e0618805696c94597e00ed350c75b58bbf9"
+  },
+  "examples/corrosion_fe110/surface_kernel_eads_paired.csv": {
+   "bytes": 263,
+   "sha256": "05dcb34eeaf3ec9d864d866801adece725cd919529c186edc210743004f2f530"
+  },
+  "examples/corrosion_fe110/surface_kernel_eads_paired_quinoline.csv": {
+   "bytes": 267,
+   "sha256": "370761b7ade3daf8a9776a8fa457c22446d2bd3fcca0c4db36ab8e4597be3c53"
   },
   "examples/corrosion_fe110/surface_kernel_eads_quinoline.csv": {
-   "bytes": 750,
-   "sha256": "3942a2c51b8914b619fce28272ebb18da55698255a4f937a4141b8ff8ef1bf33"
+   "bytes": 1049,
+   "sha256": "eb870a8cb81bef5e4e1a4445c0829245a8c90bc956f8ffc9d37db3be8458f38a"
   },
   "examples/corrosion_hcl/0_c1ccccc1.csv": {
    "bytes": 51647,
@@ -2495,7 +2503,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
