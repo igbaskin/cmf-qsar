@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 245 classes with 813 public methods, and 1272 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1276 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1600,6 +1600,23 @@ The capacity of the last cycle, or not-a-number when there is none.
 
 How much of the first cycle's capacity is left at the last one.
 
+### `class ActivationEnergy  (dataclass)`
+
+A shift of the activation energy of a rate that the cell model holds as a function.
+
+It stands where a `cmfqsar.interfaces.CellParameter` stands in `response`: it
+has the `name` of the entry and an `apply`. The value is the shift in J/mol. The function
+is multiplied by the Arrhenius factor of that shift, so its value at `reference` stays the
+published one. The temperature has to be the last argument of the function, as it is for
+the exchange-current densities.
+
+Attributes:
+
+- `name: str`
+- `reference: float` = `ARRHENIUS_REFERENCE`
+
+#### `ActivationEnergy.apply(published, value: float)`
+
 ### `discharge(rate: float, cutoff: float=2.5) -> Tuple[str]`
 
 One discharge at `rate` times the one-hour rate down to `cutoff` volt, as a cycle.
@@ -1770,6 +1787,32 @@ both: `narrow` is true when the interval is inside `width` ampere-hours, `holds`
 still contains the capacity `published` gives, and `useful` when both are. A prediction whose
 error is a bias and not a spread narrows towards the wrong number, and then no deviation is
 small enough: that is what the two columns separate.
+
+### `arrhenius_factor(shift: float, temperature: float, reference: float=ARRHENIUS_REFERENCE) -> float`
+
+The factor on a rate at `temperature` when its activation energy is raised by `shift`
+(J/mol) and its value at `reference` is kept.
+
+The factor is 1 at the reference temperature. In a colder cell a higher activation energy
+gives a smaller rate, and in a warmer cell a larger one.
+
+### `activation_shift(factor: float, temperature: float, reference: float=ARRHENIUS_REFERENCE) -> float`
+
+The shift of an activation energy (J/mol) that puts `factor` on a rate at `temperature`:
+the inverse of `arrhenius_factor`. At the reference temperature no shift changes the
+rate, so the question has no answer there and is refused.
+
+### `exchange_current_at(function, temperature: float, concentration: float=1000.0, surface: float=15000.0, maximum: float=30000.0) -> float`
+
+An exchange-current density of the cell model as a number: `function` at one
+concentration of the electrolyte, one concentration at the surface of the particle and one
+maximum concentration (all mol/m3), and one temperature (K).
+
+### `activation_energy_of(function, temperatures: Tuple[float, float]=(298.15, 273.15), **where) -> float`
+
+The activation energy (J/mol) of an exchange-current density of the cell model, read
+from its values at two temperatures. For an Arrhenius law the result does not depend on
+which two.
 
 ## cmfqsar.chemotypes
 

@@ -5404,6 +5404,128 @@ concentration was driven, and the stage counts only discharges that ended at the
   without the thermodynamic factor and 1.4 times below with it. The item is therefore judged
   first by what its factor does to the diffusion coefficient of BT9.
 
+* **BT12. The activation energy of charge transfer at an electrode.** The exchange-current
+  density is the rate of the charge-transfer reaction at the surface of an electrode particle at
+  equilibrium, per unit of area. The Butler–Volmer equation of the cell model takes it as an
+  input and does not give it. MS9 does not predict it: it enters as a factor with a 95 %
+  interval of a factor of 10. Its absolute value is not a target this program can have, for
+  three reasons. It is a property of an interface whose atomic structure is not known, because
+  a surface film covers the electrode. A measurement gives a current for a whole electrode, and
+  the active area of a porous electrode is not known, so published values for one material
+  differ by about a factor of 10. And an error of 0.06 eV in a barrier is a factor of 10 in a
+  rate at room temperature. The *activation energy* of the same reaction does not have the
+  second fault. It is the slope of the logarithm of the charge-transfer resistance against the
+  inverse temperature (an Arrhenius plot), and the resistance is read from an impedance
+  spectrum. The unknown area multiplies the resistance at every temperature alike, so it does
+  not enter the slope. The cell model has a place for the number. In the published set each
+  exchange-current density carries an activation energy, 35 kJ/mol for the negative electrode
+  and 17.8 kJ/mol for the positive one, and these two are the only parameters of the set that
+  depend on temperature. The literature on charge transfer attributes a large part of this
+  barrier to the removal of the solvent shell from Li⁺ at the surface (desolvation), and the
+  solvation shell is the object that items BT4, BT5 and EC7 already build. That is the reason
+  to expect a dependence on the electrolyte that a field of the shell can describe. It is a
+  hypothesis of the literature and not a result of this program.
+  Of the four rules above, rules 1 and 4 hold here as written. Rules 2 and 3 do not apply,
+  because no label is simulated: an electrode surface with its film cannot be simulated on this
+  machine, so every label is a measurement.
+  *The tolerance first (rule 1).* The response stage is run with the activation energy of each
+  electrode changed over a fixed set of points around the published value, under the same
+  eight conditions. The Arrhenius law of the set has its reference at 298.15 K, so at 298 K the
+  activation energy changes almost nothing. In MS9's own run a factor of 10 on the
+  exchange-current density itself moves the capacity only between 4.958 and 4.998 A.h. The
+  question is therefore the four cold conditions. If the tolerated range at 263 K and 253 K is
+  wider than the range of the measured values, the published constants are enough and the item
+  ends there.
+  *Reference of its own:* the constant of the published set; the mean of the collected values
+  for the same electrode; a linear regression on the binding energy of Li⁺ with its first shell
+  from BT4, which is the one-number version of the desolvation hypothesis; and the activation
+  energy of the conductivity of the same electrolyte from BT5, which tests whether the two
+  barriers are one property of the liquid.
+  *Labels:* activation energies of the charge-transfer resistance, collected by hand from
+  published impedance studies in which one electrode is measured in several electrolytes, or
+  one electrolyte on several electrodes. The studies of the groups of Ogumi and Abe on graphite
+  and of Xu on graphite and lithium titanate are the known starting points. Reviews quote 50 to
+  70 kJ/mol for graphite with a film and about half of that where the ion enters together with
+  its shell. These numbers are to be read from the papers themselves before any of them is
+  used. The expected size is tens of values, not hundreds. Three properties of these labels
+  decide the design. First, the film contributes to the measured barrier, and the composition
+  of the film follows from the electrolyte, so a dependence on the solvent can be a dependence
+  on the film. Second, laboratories differ in the cell, in the fit of the spectrum and in the
+  temperature range, so values are compared inside one study first, as the corrosion series
+  were compared inside one paper. Third, one system measured by two laboratories gives the
+  repeatability. It is measured before any model, and no model can have an error below it.
+  *Models:* the five fields of the optimised complex of BT4 in the frame of the cation; the
+  ensemble of sampled shells of BT5 where the electrolyte is one of the 62 formulations or can
+  be sampled in the same way; and the cation-probe field of the solvent molecule from EC7. The
+  electrode enters as a task of the multi-task kernel of E1. The activation energy of the
+  conductivity is one more task, with 62 labels where this target has tens. With so few labels
+  the only model considered is Gaussian-process regression, which returns a standard deviation
+  with every value.
+  *Gate:* (a) rule 1 says that a cold cell needs a value better than the published constant;
+  (b) the collected values for one electrode differ between electrolytes by more than the
+  repeatability, because otherwise there is nothing to model and the mean is the answer;
+  (c) with each study centred on its own mean, and with every electrolyte that contains one
+  solvent held out together, a field model is ahead of the regression on the binding energy
+  and of the composition model by more than the interval of plan rule 4, on repeated folds;
+  (d) the deviation is calibrated (z rms near 1), and in the stress stage of MS9 the predicted
+  interval for 1 mol/L LiPF₆ in EC:EMC 3:7 holds the capacity that a measured activation energy
+  for that electrolyte gives, if one is found.
+  *What to expect, and what the item is not.* Four battery items in a row did not beat a
+  composition descriptor on a property of the liquid, and on tens of labels the interval of
+  plan rule 4 is wide. The likely result is that part (c) is not met, and that the regression
+  on the binding energy or the mean is the model. The item then still gives what MS9 lacks: a
+  value of the activation energy with a deviation that comes from data, in place of a spread
+  that is stated. The item does not predict the exchange-current density itself. Its prefactor
+  holds the active area and the film, and stays a stated spread. The item also does not test
+  the Butler–Volmer form: the cell model fixes the transfer coefficient and the dependence on
+  the state of charge. Size: medium, and most of it is reading papers. A paper that is not
+  open is asked for and is not summarised from memory.
+  *What the tolerance stage says (rule 1), run 13 November 2026*
+  (`benchmarks/run_cellmodel.py --stage exchange`, 3.5 minutes; `arrhenius_factor`,
+  `activation_shift` and `ActivationEnergy` in `cmfqsar/cellmodel.py`; files
+  `tolerance_exchange_*.json` and a section of `table.md` in
+  `benchmarks/results/cellmodel/`; 11 tests in `tests/test_cellmodel.py`). The item ends for a
+  cell at room temperature. For a cold cell it stays open, with a requirement that is not
+  strict. The cell holds the measured electrolyte. The exchange-current density of one
+  electrode at a time was multiplied by 17 factors from 0.001 to 100, and the full model was
+  run once per factor under the eight conditions. The cell is run at one temperature, so a
+  factor on the exchange-current density is also a shift of its activation energy, and a test
+  checks that the two give the same run.
+  *The exchange-current density itself is not a sensitive parameter of the discharge
+  capacity.* For a capacity that may move by 5 %, either electrode tolerates every factor that
+  was run from 100 down to 0.05 under every condition, except the negative electrode at
+  253 K, where the model does not start the discharge below a factor of 0.10. An end of that
+  kind is a limit of the solver and not of the cell. The stated spread of MS9, a
+  factor of 10 either way, changes the capacity by -3.6 to -0.7 % on the low side and by +0.1
+  to +2.8 % on the high side, so it is inside 5 % under every condition. For 1 % the tolerated
+  factor is about one half to two in the cold cells and at 2.5C. For comparison, the same cold
+  cells need the salt diffusion coefficient of BT9 within 4 to 10 %.
+  *The activation energy: what a cold cell tolerates.* For 5 % the activation energy of one
+  electrode may be higher than the published one by 32 kJ/mol or more (negative electrode at
+  253 K, the solver limit) up to 65 kJ/mol (positive electrode at 263 K), and lower by every
+  value that was run. The tolerated deviation is 16 to 33 kJ/mol. For 1 % the tolerated shift
+  is 9 to 15 kJ/mol upwards and the tolerated deviation 5 to 8 kJ/mol.
+  *Stated activation energies in place of the published ones.* With 60 kJ/mol on the negative
+  electrode in place of 35, the cold cell loses 1.8 to 2.6 % of its capacity. With 50 kJ/mol on
+  the positive electrode in place of 17.8, it loses 2.2 to 3.4 %. With the same value on both
+  electrodes it loses 3.4 to 5.1 % at 50 kJ/mol, 5.2 to 7.8 % at 60 kJ/mol and 7.1 to 10.4 % at
+  70 kJ/mol, and at 253 K and 1.5C the discharge with 70 kJ/mol is not usable.
+  *The verdict on gate (a).* It depends on the values that the papers give, which have not
+  been read yet. If the range that reviews quote is right, 50 to 70 kJ/mol, the published
+  constants are inside the 5 % tolerance for each electrode alone and outside it for the two
+  together. A cold cell then needs a measured activation energy for each electrode, to within
+  about 15 kJ/mol. The mean of the collected values for an electrode gives that, if the
+  repeatability between laboratories is better than 15 kJ/mol. A model of the dependence on
+  the electrolyte is needed only if the electrolytes differ by more than that. So the next
+  step is the collection of the labels and the repeatability, parts (a) and (b) of the gate,
+  and no model before both are known.
+  *Two limits.* The stage reads the discharge capacity down to 2.5 V and nothing else. Charge
+  transfer lowers the voltage of the cell, so it changes the energy and the power more than
+  the capacity, and it is one of the things that decide whether lithium is plated when a cold
+  cell is charged. None of these was run. And in three of the four cold conditions a factor of
+  100 on the negative electrode lowers the capacity by 0.9 to 3.2 %, where a faster reaction
+  was expected to raise it. This was not examined.
+
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
 same day**, and it does not pay: the difference of the two cells is
@@ -5427,6 +5549,13 @@ BT9 is first and is needed under every condition: its cheapest reference is outs
 tolerance everywhere. BT11 is second, because its factor is an input of BT9; for its own term
 the constant 1 is enough at room temperature. BT10 is last and for cold cells only: at room
 temperature the published constant costs at most 0.8 % of the capacity.
+BT12 was opened on 13 November 2026 from the fifth parameter of MS9, the exchange-current
+density, which is not predicted. Its tolerance stage was run the same day. The discharge
+capacity tolerates a factor of 10 on the exchange-current density under every condition, so
+the item is not needed at room temperature. In a cold cell the activation energy has to be
+known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
+10 % of BT9. BT12 therefore comes after BT9 and BT11, and its next step is to read the
+measured values from the papers, not to fit a model.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -6840,6 +6969,12 @@ would discard the typed fields and the global kernel that are the method's own.
   2.5C, and has to be within 4 to 10 % in the cold cells that exhaust their electrolyte. The
   two published constants cost at most 0.8 % and 2.2 % at room temperature. The record is in
   the battery section, before item BT9.
+  *Open on the electrode side:* the exchange-current density keeps its stated spread. What
+  can be given a value from data is its activation energy, which decides it in a cold cell.
+  That is item BT12 of the battery section. Its tolerance stage (`--stage exchange`, run
+  13 November 2026) says that the stated spread of a factor of 10 moves the capacity by less
+  than 5 % under all eight conditions, and that a cold cell tolerates an activation energy
+  that is 32 kJ/mol or more above the published one on one electrode.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
@@ -8120,7 +8255,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 15 | 12 | M7, M8, M9 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
-| H. Battery science | 11 | 7 | BT8, BT9, BT10, BT11 |
+| H. Battery science | 12 | 7 | BT8, BT9, BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
@@ -8160,7 +8295,10 @@ equally blocked.
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the
   diffusion coefficient needs a prediction under every condition and the other two only in
-  cold cells.
+  cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
+  same day. Its first stage says that the item is not needed at room temperature, and that a
+  cold cell needs the activation energy of each electrode to about 15 kJ/mol; its labels have
+  not been collected.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and

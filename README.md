@@ -3439,6 +3439,17 @@ cell:
   and fails under every condition. The published constants of the transference number and
   of the thermodynamic factor cost at most 0.8 % and 2.2 % at room temperature, so these two
   need a prediction only for cold cells.
+- The same question was asked for the exchange-current density of each electrode
+  (`--stage exchange`, plan item BT12). This is the rate of the charge-transfer reaction at
+  the surface of an electrode particle, and the program does not predict it. The discharge
+  capacity is not sensitive to it: a factor of 10 either way, which is the spread of the
+  published values, moves the capacity by less than 5 % under all eight conditions. The cell
+  is run at one temperature, so a factor is also a shift of the activation energy of the
+  reaction. A cold cell tolerates an activation energy that is 32 kJ/mol or more above the
+  published one on one electrode. With 60 kJ/mol on both electrodes, in place of 35 and
+  17.8 kJ/mol, it loses 5.2 to 7.8 % of its capacity. A cold cell therefore needs each
+  activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
+  capacity only; the energy, the power and the charging of a cold cell were not run.
 
 ```bash
 python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py; needs pybamm

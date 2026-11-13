@@ -169,6 +169,77 @@ In the colder cells the transference number and the thermodynamic factor called 
 
 The capacity with the measured electrolyte is 4.609 A.h, so the limit of 5 % is 0.230 A.h. The largest error of reading between points is 0.019 A.h, which is 8 % of that limit. About 2.5 % of the draws are expected to leave the limit, because the deviation is set by the nearer end of the range.
 
+### How accurate the exchange-current densities and their activation energies have to be
+
+This program does not predict the exchange-current density of either electrode (plan item BT12). The exchange-current density is the rate of the charge-transfer reaction at the surface of an electrode particle at equilibrium, per unit of area. This stage asks how accurate it has to be, in the same way as the stage above. The cell holds the measured electrolyte. The exchange-current density of one electrode at a time is multiplied by a factor over 17 points from 0.001 to 100, and the full model is run once per point. The tolerated range and the tolerated deviation are defined as above.
+
+**The capacity may move by 1 %.**
+
+| Temperature, K | Rate | Capacity with the published exchange-current densities, A.h | Negative electrode: tolerated factor | Tolerated deviation of its logarithm | Positive electrode: tolerated factor | Tolerated deviation of its logarithm |
+|---:|---:|---:|---|---:|---|---:|
+| 298 | 1C | 4.987 | 0.072 to > 100 | 1.343 | 0.044 to > 100 | 1.593 |
+| 298 | 1.5C | 4.899 | 0.13 to > 100 | 1.029 | 0.11 to > 100 | 1.134 |
+| 298 | 2C | 4.789 | 0.26 to 7.6 | 0.695 | 0.24 to > 100 | 0.725 |
+| 298 | 2.5C | 4.609 | 0.39 to 3.3 | 0.476 | 0.39 to 3.2 | 0.476 |
+| 263 | 1C | 4.755 | 0.46 to 2.4 | 0.397 | 0.45 to 2.9 | 0.409 |
+| 263 | 1.5C | 3.512 | 0.48 to 2.9 | 0.375 | 0.49 to 2.3 | 0.364 |
+| 253 | 1C | 3.788 | 0.51 to 2.1 | 0.346 | 0.51 to 2 | 0.341 |
+| 253 | 1.5C | 2.409 | 0.37 to 6 | 0.503 | 0.38 to 5.6 | 0.500 |
+
+**The capacity may move by 5 %.**
+
+| Temperature, K | Rate | Capacity with the published exchange-current densities, A.h | Negative electrode: tolerated factor | Tolerated deviation of its logarithm | Positive electrode: tolerated factor | Tolerated deviation of its logarithm |
+|---:|---:|---:|---|---:|---|---:|
+| 298 | 1C | 4.987 | 0.01* to > 100 | 2.350 | < 0.001 to > 100 | >= 2.350 |
+| 298 | 1.5C | 4.899 | 0.01* to > 100 | 2.350 | 0.0013 to > 100 | >= 2.350 |
+| 298 | 2C | 4.789 | 0.02* to > 100 | 1.996 | 0.0067 to > 100 | >= 2.350 |
+| 298 | 2.5C | 4.609 | 0.035 to > 100 | 1.712 | 0.035 to > 100 | 1.713 |
+| 263 | 1C | 4.755 | 0.05* to > 100 | 1.528 | 0.031 to > 100 | 1.769 |
+| 263 | 1.5C | 3.512 | 0.05* to > 100 | 1.528 | 0.048 to > 100 | 1.552 |
+| 253 | 1C | 3.788 | 0.1* to > 100 | 1.175 | 0.036 to > 100 | 1.695 |
+| 253 | 1.5C | 2.409 | 0.1* to > 100 | 1.175 | 0.032 to > 100 | 1.764 |
+
+For scale: the parameter set of this benchmark states a spread of a factor of 10 either way for an exchange-current density. With a factor of 0.1 on one electrode the capacity changes by -3.6 to -0.7 % over the conditions and the two electrodes, and with a factor of 10 by +0.1 to +2.8 %.
+
+An end written with * is not a point where the capacity left the limit. At the next factor the cell model did not start the discharge: its solver failed at the first step. The range is therefore at least that wide, and the deviation beside it is at least that large.
+
+In the published set each exchange-current density follows an Arrhenius law. The activation energy is 35.0 kJ/mol for the negative electrode and 17.8 kJ/mol for the positive one, and the law equals 1 at 298.15 K. The cell model is run at one temperature. A shift of the activation energy is then the same as a factor on the exchange-current density at that temperature, so a tolerated factor is also a tolerated shift of the activation energy. A positive shift is a higher activation energy, which is a slower reaction in a cold cell. At 298 K the activation energy changes nothing, so the tables below hold the cold conditions only. The column *published law* is the factor that the published activation energy puts on the exchange-current density at that temperature.
+
+**The capacity may move by 1 %: the tolerated shift of the activation energy.**
+
+| Temperature, K | Rate | Negative electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol | Positive electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol |
+|---:|---:|---:|---|---:|---:|---|---:|
+| 263 | 1C | 0.153 | -16.7 to +14.5 | 7.4 | 0.385 | -19.6 to +14.9 | 7.6 |
+| 263 | 1.5C | 0.153 | -20.1 to +13.7 | 7.0 | 0.385 | -15.6 to +13.3 | 6.8 |
+| 253 | 1C | 0.081 | -10.5 to +9.4 | 4.8 | 0.279 | -9.7 to +9.3 | 4.8 |
+| 253 | 1.5C | 0.081 | -25.0 to +13.7 | 7.0 | 0.279 | -24.0 to +13.7 | 7.0 |
+
+**The capacity may move by 5 %: the tolerated shift of the activation energy.**
+
+| Temperature, K | Rate | Negative electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol | Positive electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol |
+|---:|---:|---:|---|---:|---:|---|---:|
+| 263 | 1C | 0.153 | < -85.8 to +55.8* | 28.5 | 0.385 | < -85.8 to +64.6 | 33.0 |
+| 263 | 1.5C | 0.153 | < -85.8 to +55.8* | 28.5 | 0.385 | < -85.8 to +56.7 | 28.9 |
+| 253 | 1C | 0.081 | < -64.2 to +32.1* | 16.4 | 0.279 | < -64.2 to +46.3 | 23.6 |
+| 253 | 1.5C | 0.081 | < -64.2 to +32.1* | 16.4 | 0.279 | < -64.2 to +48.2 | 24.6 |
+
+**A stated activation energy in place of the published one.** The numbers are the difference of the capacity, in per cent of the capacity with the published activation energies. *Both* puts the same activation energy on both electrodes.
+
+| Temperature, K | Rate | Electrode | 20 kJ/mol | 30 kJ/mol | 40 kJ/mol | 50 kJ/mol | 60 kJ/mol | 70 kJ/mol |
+|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| 263 | 1C | negative | +0.9 % | +0.3 % | -0.3 % | -1.0 % | -1.8 % | -2.5 % |
+| 263 | 1C | positive | -0.1 % | -0.8 % | -1.5 % | -2.2 % | -3.0 % | -3.9 % |
+| 263 | 1C | both | +0.8 % | -0.5 % | -1.9 % | -3.4 % | -5.2 % | -7.1 % |
+| 263 | 1.5C | negative | +0.8 % | +0.3 % | -0.3 % | -1.1 % | -1.9 % | -2.8 % |
+| 263 | 1.5C | positive | -0.2 % | -0.9 % | -1.7 % | -2.6 % | -3.5 % | -4.5 % |
+| 263 | 1.5C | both | +0.7 % | -0.5 % | -2.1 % | -4.0 % | -6.1 % | -8.4 % |
+| 253 | 1C | negative | +1.4 % | +0.5 % | -0.5 % | -1.6 % | -2.6 % | -3.7 % |
+| 253 | 1C | positive | -0.2 % | -1.3 % | -2.4 % | -3.4 % | -4.5 % | -5.7 % |
+| 253 | 1C | both | +1.1 % | -0.8 % | -2.9 % | -5.1 % | -7.7 % | -10.4 % |
+| 253 | 1.5C | negative | +0.7 % | +0.3 % | -0.3 % | -1.1 % | -2.1 % | no usable discharge |
+| 253 | 1.5C | positive | -0.1 % | -0.9 % | -1.8 % | -2.9 % | -4.2 % | -5.5 % |
+| 253 | 1.5C | both | +0.6 % | -0.5 % | -2.3 % | -4.8 % | -7.8 % | no usable discharge |
+
 ## What the gate asked, and what came out
 
 **The first part is not met.** The interval holds the published curve for 4 of 5 parameters, and the gate asks for every parameter whose deviation means what it says. It fails for Positive electrode Bruggeman coefficient (electrolyte), whose deviation is calibrated (z rms 1.04). The interval misses by 6.43e-04 A.h, because the structures this channel was fitted on are more tortuous than the exponent of 1.5 the authors of the cell fitted; the channel says so itself, since its structures are generated and it is marked as outside what the model was fitted on.

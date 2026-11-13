@@ -13803,11 +13803,105 @@ gives at a drawn value differs from the run at the same value by at most 0.019 A
 8 % of the 5 % limit of 0.230 A.h. The runs left the limit in 2 %, 2 % and 0 % of the draws,
 where about 2.5 % is expected, because the deviation is set by the nearer end of the range.
 
+#### How accurate the exchange-current densities and their activation energies have to be
+
+The exchange-current density is the rate of the charge-transfer reaction at the surface of an
+electrode particle at equilibrium, per unit of area. The Butler-Volmer equation of the cell
+model takes it as an input. This program does not predict it for either electrode (plan item
+BT12), so `--stage exchange` asks the question of the section above for it. The cell holds the
+measured electrolyte. The exchange-current density of one electrode at a time is multiplied by
+17 factors between 0.001 and 100, and the full model is run once per factor under the same
+eight conditions. The table is for a capacity that may move by 5 %; the result table of the
+benchmark also holds the one for 1 %.
+
+| Temperature, K | Rate | Capacity with the published exchange-current densities, A.h | Negative electrode: tolerated factor | Deviation of its logarithm | Positive electrode: tolerated factor | Deviation of its logarithm |
+| ---: | ---: | ---: | --- | ---: | --- | ---: |
+| 298 | 1C | 4.987 | 0.01* to > 100 | 2.350 | < 0.001 to > 100 | >= 2.350 |
+| 298 | 1.5C | 4.899 | 0.01* to > 100 | 2.350 | 0.0013 to > 100 | >= 2.350 |
+| 298 | 2C | 4.789 | 0.02* to > 100 | 1.996 | 0.0067 to > 100 | >= 2.350 |
+| 298 | 2.5C | 4.609 | 0.035 to > 100 | 1.712 | 0.035 to > 100 | 1.713 |
+| 263 | 1C | 4.755 | 0.05* to > 100 | 1.528 | 0.031 to > 100 | 1.769 |
+| 263 | 1.5C | 3.512 | 0.05* to > 100 | 1.528 | 0.048 to > 100 | 1.552 |
+| 253 | 1C | 3.788 | 0.1* to > 100 | 1.175 | 0.036 to > 100 | 1.695 |
+| 253 | 1.5C | 2.409 | 0.1* to > 100 | 1.175 | 0.032 to > 100 | 1.764 |
+
+An end written with * is not a point where the capacity left the limit. At the next smaller
+factor the cell model did not start the discharge, because its solver failed at the first step.
+The range is therefore at least that wide.
+
+**The discharge capacity tolerates a factor of 10 on the exchange-current density.** The
+parameter set of this benchmark states a spread of a factor of 10 either way for this
+parameter. With a factor of 0.1 on one electrode the capacity changes by -3.6 to -0.7 % over
+the eight conditions, and with a factor of 10 by +0.1 to +2.8 %. For a capacity that may move
+by only 1 %, the tolerated factor is about one half to two in the cold cells and at 2.5C. The
+same cold cells need the salt diffusion coefficient within 4 to 10 %, so for the discharge
+capacity the exchange-current density is the less sensitive of the two parameters by a wide
+margin.
+
+**A tolerated factor is also a tolerated shift of the activation energy.** In the published set
+each exchange-current density follows an Arrhenius law that equals 1 at 298.15 K. Its
+activation energy is 35.0 kJ/mol for the negative electrode and 17.8 kJ/mol for the positive
+one (`cmfqsar.cellmodel.activation_energy_of` reads it from the function). The cell model is
+run at one temperature $T$. A shift $\Delta E$ of the activation energy is then the same as a
+factor on the exchange-current density (`cmfqsar.cellmodel.arrhenius_factor`):
+
+$$
+f = \exp\!\left[\frac{\Delta E}{R}\left(\frac{1}{298.15\ \mathrm{K}} - \frac{1}{T}\right)\right]
+$$
+
+In a cell colder than 298.15 K a higher activation energy gives a slower reaction. At 298 K
+the activation energy changes nothing, so the table holds the four cold conditions. The column
+*published law* is the factor that the published activation energy puts on the
+exchange-current density at that temperature.
+
+| Temperature, K | Rate | Negative electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol | Positive electrode: published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol |
+| ---: | ---: | ---: | --- | ---: | ---: | --- | ---: |
+| 263 | 1C | 0.153 | < -85.8 to +55.8* | 28.5 | 0.385 | < -85.8 to +64.6 | 33.0 |
+| 263 | 1.5C | 0.153 | < -85.8 to +55.8* | 28.5 | 0.385 | < -85.8 to +56.7 | 28.9 |
+| 253 | 1C | 0.081 | < -64.2 to +32.1* | 16.4 | 0.279 | < -64.2 to +46.3 | 23.6 |
+| 253 | 1.5C | 0.081 | < -64.2 to +32.1* | 16.4 | 0.279 | < -64.2 to +48.2 | 24.6 |
+
+For a capacity that may move by 1 % the tolerated shift is 9 to 15 kJ/mol upwards, and the
+tolerated deviation is 5 to 8 kJ/mol.
+
+**Stated activation energies in place of the published ones.** The cold cells were also run with
+an activation energy of 20 to 70 kJ/mol on one electrode or on both
+(`cmfqsar.cellmodel.ActivationEnergy`). The numbers are the difference of the capacity, in per
+cent of the capacity with the published activation energies.
+
+| Temperature, K | Rate | Electrode | 20 kJ/mol | 30 kJ/mol | 40 kJ/mol | 50 kJ/mol | 60 kJ/mol | 70 kJ/mol |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 263 | 1C | negative | +0.9 % | +0.3 % | -0.3 % | -1.0 % | -1.8 % | -2.5 % |
+| 263 | 1C | positive | -0.1 % | -0.8 % | -1.5 % | -2.2 % | -3.0 % | -3.9 % |
+| 263 | 1C | both | +0.8 % | -0.5 % | -1.9 % | -3.4 % | -5.2 % | -7.1 % |
+| 263 | 1.5C | negative | +0.8 % | +0.3 % | -0.3 % | -1.1 % | -1.9 % | -2.8 % |
+| 263 | 1.5C | positive | -0.2 % | -0.9 % | -1.7 % | -2.6 % | -3.5 % | -4.5 % |
+| 263 | 1.5C | both | +0.7 % | -0.5 % | -2.1 % | -4.0 % | -6.1 % | -8.4 % |
+| 253 | 1C | negative | +1.4 % | +0.5 % | -0.5 % | -1.6 % | -2.6 % | -3.7 % |
+| 253 | 1C | positive | -0.2 % | -1.3 % | -2.4 % | -3.4 % | -4.5 % | -5.7 % |
+| 253 | 1C | both | +1.1 % | -0.8 % | -2.9 % | -5.1 % | -7.7 % | -10.4 % |
+| 253 | 1.5C | negative | +0.7 % | +0.3 % | -0.3 % | -1.1 % | -2.1 % | no usable discharge |
+| 253 | 1.5C | positive | -0.1 % | -0.9 % | -1.8 % | -2.9 % | -4.2 % | -5.5 % |
+| 253 | 1.5C | both | +0.6 % | -0.5 % | -2.3 % | -4.8 % | -7.8 % | no usable discharge |
+
+One electrode alone stays inside 5 % up to 60 kJ/mol. The two electrodes together leave it at
+about 50 to 60 kJ/mol. Whether a cold cell needs better values than the published ones therefore
+depends on the measured activation energies, which plan item BT12 collects from the literature.
+The requirement is not strict: an activation energy known to about 15 kJ/mol for each electrode
+is enough for a capacity within 5 %.
+
+Two limits belong to this reading. The stage reads the discharge capacity down to 2.5 V and
+nothing else. Charge transfer lowers the voltage of the cell, so it changes the energy and the
+power more than the capacity, and it is one of the things that decide whether lithium is plated
+when a cold cell is charged. None of these was run. And in three of the four cold conditions a
+factor of 100 on the negative electrode lowers the capacity by 0.9 to 3.2 %, where a faster
+reaction was expected to raise it. This was not examined.
+
 ```bash
-python benchmarks/run_cellmodel.py      # 50 minutes, after run_nebdft.py
+python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py
 ```
 
-The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `tolerance`, `finish` -- and each stage
+The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `tolerance`, `exchange`, `finish` -- and each stage
 writes its own file, so a run that stops is continued and not repeated. One parameter is drawn
 with `--stage sample --parameter NAME`.
 

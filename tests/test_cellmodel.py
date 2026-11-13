@@ -738,3 +738,148 @@ def test_reading_the_tolerance_needs_every_condition(tmp_path):
         json.dump({}, fh)
     with pytest.raises(SystemExit, match="--stage tolerance"):
         R.read_tolerance(str(tmp_path))
+
+
+# --------------------------------------------------------------------------- #
+# The activation energy of an exchange-current density (plan item BT12)
+# --------------------------------------------------------------------------- #
+def test_a_higher_activation_energy_slows_a_cold_cell_and_changes_nothing_at_the_reference():
+    assert CM.arrhenius_factor(20000.0, 298.15) == pytest.approx(1.0)
+    assert CM.arrhenius_factor(20000.0, 263.15) < 1.0 < CM.arrhenius_factor(20000.0, 318.15)
+    assert CM.arrhenius_factor(-20000.0, 263.15) == pytest.approx(
+        1.0 / CM.arrhenius_factor(20000.0, 263.15))
+    # 10 kJ/mol at 263.15 K: exp(10000 / R * (1 / 298.15 - 1 / 263.15))
+    assert CM.arrhenius_factor(10000.0, 263.15) == pytest.approx(0.5848, abs=2e-4)
+
+
+def test_the_shift_of_the_activation_energy_is_the_inverse_of_the_factor():
+    f = CM.arrhenius_factor(12345.0, 253.15)
+    assert CM.activation_shift(f, 253.15) == pytest.approx(12345.0)
+    with pytest.raises(ValueError):
+        CM.activation_shift(0.5, 298.15)          # no shift changes the rate at the reference
+    with pytest.raises(ValueError):
+        CM.activation_shift(0.0, 253.15)
+
+
+def test_the_published_exchange_currents_have_the_activation_energies_of_the_set():
+    pytest.importorskip("pybamm")
+    p = CM.published_parameters()
+    negative, positive = CM.EXCHANGE_ENTRIES
+    assert CM.activation_energy_of(p[negative]) == pytest.approx(35000.0, rel=1e-6)
+    assert CM.activation_energy_of(p[positive]) == pytest.approx(17800.0, rel=1e-6)
+    # an Arrhenius law gives the same answer from any two temperatures
+    assert CM.activation_energy_of(p[negative], temperatures=(313.15, 253.15)) == pytest.approx(
+        35000.0, rel=1e-6)
+
+
+def test_a_shifted_activation_energy_keeps_the_rate_at_the_reference():
+    pytest.importorskip("pybamm")
+    p = CM.published_parameters()
+    negative = CM.EXCHANGE_ENTRIES[0]
+    shifted = CM.ActivationEnergy(negative).apply(p[negative], 25000.0)
+    assert CM.activation_energy_of(shifted) == pytest.approx(60000.0, rel=1e-6)
+    assert CM.exchange_current_at(shifted, 298.15) == pytest.approx(
+        CM.exchange_current_at(p[negative], 298.15))
+    assert CM.exchange_current_at(shifted, 263.15) == pytest.approx(
+        CM.arrhenius_factor(25000.0, 263.15) * CM.exchange_current_at(p[negative], 263.15))
+    with pytest.raises(TypeError):
+        CM.ActivationEnergy(negative).apply(1.0, 25000.0)
+
+
+def test_in_a_cell_at_one_temperature_a_shift_of_the_activation_energy_is_a_factor():
+    """The conversion the exchange-current stage rests on: two runs that have to be one run."""
+    pytest.importorskip("pybamm")
+    p = CM.published_parameters()
+    negative = CM.EXCHANGE_ENTRIES[0]
+    common = dict(cycles=1, kind="SPM", cycle=CM.discharge(1.0), temperature=263.15,
+                  parameters=p)
+    by_energy = CM.run_cell({negative: CM.ActivationEnergy(negative).apply(p[negative], 30000.0)},
+                            **common)
+    factor = CM.arrhenius_factor(30000.0, 263.15)
+    by_factor = CM.run_cell(
+        {negative: CellParameter(name=negative, value=1.0, kind="scale").apply(p[negative],
+                                                                               factor)},
+        **common)
+    unchanged = CM.run_cell({}, **common)
+    assert by_energy.ok and by_factor.ok and unchanged.ok
+    assert by_energy.final == pytest.approx(by_factor.final, abs=1e-6)
+    assert by_energy.final <= unchanged.final + 1e-9          # a slower reaction gives no more
+
+
+def test_a_tolerated_factor_becomes_a_tolerated_shift_of_the_activation_energy():
+    r = {"low": 0.5, "high": 4.0, "low_ends": "crossed", "high_ends": "open", "sd": 0.3,
+         "sd_is_a_lower_bound": False}
+    e = R.energy_range(r, 263.15)
+    # in a cold cell a smaller rate is a higher activation energy, so the ends change places
+    assert e["high"] == pytest.approx(CM.activation_shift(0.5, 263.15) / 1000.0)
+    assert e["high"] > 0 and e["high_ends"] == "crossed"
+    assert e["low"] < 0 and e["low_ends"] == "open"
+    assert e["sd"] == pytest.approx(0.3 * GAS_CONSTANT / abs(1 / 298.15 - 1 / 263.15) / 1000.0)
+    assert R.energy_range(r, 298.15) is None
+    warm = R.energy_range(r, 318.15)
+    assert warm["low"] < 0 and warm["low_ends"] == "crossed"   # warmer: the ends keep their places
+
+
+def _exchange_entry(temperature, energies=True):
+    r = {"centre": 1.0, "capacity": 4.0, "width": 0.2, "low": 0.25, "high": 100.0,
+         "low_ends": "crossed", "high_ends": "open", "sd": 0.707, "sd_is_a_lower_bound": False}
+    names = [spec["name"] for spec in R.EXCHANGE_PARAMETERS]
+    entry = {"temperature": temperature, "rate": 1.0, "reference": 4.0,
+             "published_energy": {names[0]: 35.0, names[1]: 17.8},
+             "published_law": {n: CM.arrhenius_factor(e, temperature)
+                               for n, e in zip(names, (35000.0, 17800.0))},
+             "parameters": {n: {"ranges": {f"{s:g}": r for s in R.TOLERANCE_SHARES},
+                                "energy_ranges": {f"{s:g}": R.energy_range(r, temperature)
+                                                  for s in R.TOLERANCE_SHARES}}
+                            for n in names},
+             "energies": {}}
+    if energies:
+        row = [{"energy": e, "usable": e < 70.0, "share": -0.001 * e} for e in R.EXCHANGE_ENERGIES]
+        entry["energies"] = {"negative": row, "positive": row, "both": row}
+    return entry
+
+
+def test_the_exchange_section_gives_the_factor_and_the_shift_for_the_cold_cells_only():
+    lines = R.exchange_lines({"conditions": [_exchange_entry(298.15, energies=False),
+                                             _exchange_entry(263.15)]})
+    text = "\n".join(lines)
+    assert "0.25 to > 100 |" in text                       # the tolerated factor, both cells
+    shift = CM.activation_shift(0.25, 263.15) / 1000.0     # +25.8 kJ/mol
+    assert f"to {shift:+.1f} |" in text                    # in a cold cell it is the upper end
+    assert "did not start the discharge" not in text       # no end of this example is refused
+    tables = [l for l in lines if l.startswith("| 263 |") or l.startswith("| 298 |")]
+    assert sum(l.startswith("| 298 |") for l in tables) == len(R.TOLERANCE_SHARES)
+    assert "no usable discharge" in text                   # the 70 kJ/mol column of the example
+    assert "35.0 kJ/mol for the negative electrode" in text
+
+
+def test_the_exchange_section_says_what_a_refused_end_is():
+    entry = _exchange_entry(263.15)
+    name = R.EXCHANGE_PARAMETERS[0]["name"]
+    r = dict(entry["parameters"][name]["ranges"]["0.05"], low=0.1, low_ends="refused")
+    entry["parameters"][name]["ranges"]["0.05"] = r
+    entry["parameters"][name]["energy_ranges"]["0.05"] = R.energy_range(r, 263.15)
+    text = "\n".join(R.exchange_lines({"conditions": [entry]}))
+    assert "0.1* to > 100 |" in text
+    assert "did not start the discharge" in text
+    # the refused lower end of the factor is the refused upper end of the shift
+    assert f"{CM.activation_shift(0.1, 263.15) / 1000.0:+.1f}* |" in text
+
+
+def test_a_factor_is_written_with_two_significant_digits():
+    assert [R._g(v) for v in (0.001, 0.026, 0.46, 2.45, 7.59, 100.0)] == [
+        "0.001", "0.026", "0.46", "2.5", "7.6", "100"]
+
+
+def test_the_exchange_section_of_a_warm_cell_alone_has_no_table_of_shifts():
+    lines = R.exchange_lines({"conditions": [_exchange_entry(298.15, energies=False)]})
+    assert not any("tolerated shift" in l for l in lines)
+
+
+def test_reading_the_exchange_stage_needs_every_condition(tmp_path):
+    assert R.read_exchange(str(tmp_path)) is None
+    t, rate = R.stress_conditions()[0]
+    with open(R.exchange_path(str(tmp_path), t, rate), "w", encoding="utf-8") as fh:
+        json.dump({}, fh)
+    with pytest.raises(SystemExit):
+        R.read_exchange(str(tmp_path))

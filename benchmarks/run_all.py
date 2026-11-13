@@ -402,12 +402,14 @@ def registry() -> List[Benchmark]:
                   "then the electrolyte at faster discharge and in colder cells, with the "
                   "activation energy BT5 predicts, against two measured electrolytes; and how "
                   "accurate the three parameters of the electrolyte that are not predicted "
-                  "would have to be, from the response curve of the cell to each "
+                  "would have to be, from the response curve of the cell to each; and the "
+                  "same for the exchange-current density of each electrode, read also as a "
+                  "shift of its activation energy "
                   "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
                   "run_cellmodel.py", "cellmodel",
                   compute=[[]],
                   prepare=["prepare_nebdft.py --fetch"],
-                  minutes="50",
+                  minutes="54",
                   report=lambda: _mod("run_cellmodel").report(),
                   tables=["cellmodel/table.md"]),
         Benchmark("battery",

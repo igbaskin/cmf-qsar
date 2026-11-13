@@ -1,3 +1,3 @@
 # the sha256 of manual.md that CMF_manual.pdf was built from
 # written by docs/make_manual.py; `python docs/make_manual.py --check` compares it
-2abe48a5919ff9449bc64b80cbacbdccd1c4e33c7f9041d030cd3f06b268c7e2  manual.md
+9c9fb90f1b9b4b7d644baacfb2e81db4a7614008ad8b1a8b1512f7816ce116db  manual.md

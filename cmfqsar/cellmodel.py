@@ -618,3 +618,86 @@ __all__ = ["CellRun", "DEFAULT_BASE", "DEFAULT_CYCLE", "DEFAULT_OPTIONS", "FARAD
            "measured_electrolyte", "nernst_einstein_diffusivity", "published_parameters",
            "response", "run_cell", "sample", "tolerance_for_capacity", "tolerated_range",
            "variance_shares"]
+
+
+# --------------------------------------------------------------------------- #
+# The activation energy of an exchange-current density (plan item BT12)
+# --------------------------------------------------------------------------- #
+#: the cell model's names of the exchange-current densities of the two electrodes
+EXCHANGE_ENTRIES = ("Negative electrode exchange-current density [A.m-2]",
+                    "Positive electrode exchange-current density [A.m-2]")
+#: the temperature, in kelvin, at which the Arrhenius laws of the published set equal one
+ARRHENIUS_REFERENCE = 298.15
+
+
+def arrhenius_factor(shift: float, temperature: float,
+                     reference: float = ARRHENIUS_REFERENCE) -> float:
+    """The factor on a rate at `temperature` when its activation energy is raised by `shift`
+    (J/mol) and its value at `reference` is kept.
+
+    The factor is 1 at the reference temperature. In a colder cell a higher activation energy
+    gives a smaller rate, and in a warmer cell a larger one.
+    """
+    return float(np.exp(float(shift) / GAS_CONSTANT
+                        * (1.0 / float(reference) - 1.0 / float(temperature))))
+
+
+def activation_shift(factor: float, temperature: float,
+                     reference: float = ARRHENIUS_REFERENCE) -> float:
+    """The shift of an activation energy (J/mol) that puts `factor` on a rate at `temperature`:
+    the inverse of :func:`arrhenius_factor`. At the reference temperature no shift changes the
+    rate, so the question has no answer there and is refused."""
+    slope = 1.0 / float(reference) - 1.0 / float(temperature)
+    if abs(slope) < 1e-12:
+        raise ValueError("at the reference temperature the activation energy does not change "
+                         "the rate, so a factor there says nothing about it")
+    if not float(factor) > 0:
+        raise ValueError(f"a factor on a rate has to be above zero, not {factor!r}")
+    return float(GAS_CONSTANT * np.log(float(factor)) / slope)
+
+
+def exchange_current_at(function, temperature: float, concentration: float = 1000.0,
+                        surface: float = 15000.0, maximum: float = 30000.0) -> float:
+    """An exchange-current density of the cell model as a number: `function` at one
+    concentration of the electrolyte, one concentration at the surface of the particle and one
+    maximum concentration (all mol/m3), and one temperature (K)."""
+    pybamm = _pybamm()
+    v = function(pybamm.Scalar(float(concentration)), pybamm.Scalar(float(surface)),
+                 pybamm.Scalar(float(maximum)), pybamm.Scalar(float(temperature)))
+    return float(v.evaluate()) if hasattr(v, "evaluate") else float(v)
+
+
+def activation_energy_of(function, temperatures: Tuple[float, float] = (298.15, 273.15),
+                         **where) -> float:
+    """The activation energy (J/mol) of an exchange-current density of the cell model, read
+    from its values at two temperatures. For an Arrhenius law the result does not depend on
+    which two."""
+    t1, t2 = (float(t) for t in temperatures)
+    v1 = exchange_current_at(function, t1, **where)
+    v2 = exchange_current_at(function, t2, **where)
+    return float(GAS_CONSTANT * np.log(v1 / v2) / (1.0 / t2 - 1.0 / t1))
+
+
+@dataclass
+class ActivationEnergy:
+    """A shift of the activation energy of a rate that the cell model holds as a function.
+
+    It stands where a :class:`cmfqsar.interfaces.CellParameter` stands in :func:`response`: it
+    has the `name` of the entry and an `apply`. The value is the shift in J/mol. The function
+    is multiplied by the Arrhenius factor of that shift, so its value at `reference` stays the
+    published one. The temperature has to be the last argument of the function, as it is for
+    the exchange-current densities.
+    """
+
+    name: str
+    reference: float = ARRHENIUS_REFERENCE
+
+    def apply(self, published, value: float):
+        if not callable(published):
+            raise TypeError(f"{self.name} is a number in this parameter set, so it has no "
+                            "activation energy to shift")
+        pybamm = _pybamm()
+
+        def shifted(*a, _f=published, _s=float(value), _t=float(self.reference)):
+            return _f(*a) * pybamm.exp(_s / GAS_CONSTANT * (1.0 / _t - 1.0 / a[-1]))
+        return shifted

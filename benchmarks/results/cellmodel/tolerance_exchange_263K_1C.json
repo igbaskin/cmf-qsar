@@ -1,0 +1,459 @@
+{
+ "temperature": 263.15,
+ "rate": 1.0,
+ "model": "DFN",
+ "reference": 4.754650236165344,
+ "published_energy": {
+  "Negative electrode exchange-current density [A.m-2]": 34.999999999354934,
+  "Positive electrode exchange-current density [A.m-2]": 17.79999999967194
+ },
+ "published_law": {
+  "Negative electrode exchange-current density [A.m-2]": 0.15291666472332058,
+  "Positive electrode exchange-current density [A.m-2]": 0.38480173473781537
+ },
+ "parameters": {
+  "Negative electrode exchange-current density [A.m-2]": {
+   "item": "BT12",
+   "key": "negative",
+   "label": "exchange-current density of the negative electrode",
+   "kind": "scale",
+   "values": [
+    0.001,
+    0.003,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    0.7,
+    1.0,
+    1.5,
+    2.0,
+    3.0,
+    5.0,
+    10.0,
+    100.0
+   ],
+   "capacity": [
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    4.552130578957496,
+    4.6055070338672,
+    4.653512116967573,
+    4.6798600472170815,
+    4.712506906085646,
+    4.733449538806287,
+    4.754650236165344,
+    4.777427482063334,
+    4.792594079286954,
+    4.811878041327647,
+    4.831944298767959,
+    4.8521679616632145,
+    4.886863108474226
+   ],
+   "usable": [
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "ended": [
+    "",
+    "",
+    "",
+    "",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]"
+   ],
+   "ranges": {
+    "0.01": {
+     "centre": 1.0,
+     "capacity": 4.754650236165344,
+     "width": 0.04754650236165344,
+     "low": 0.45946585261436146,
+     "high": 2.4474653886149658,
+     "low_ends": "crossed",
+     "high_ends": "crossed",
+     "sd": 0.3967882370826856,
+     "sd_is_a_lower_bound": false
+    },
+    "0.05": {
+     "centre": 1.0,
+     "capacity": 4.754650236165344,
+     "width": 0.2377325118082672,
+     "low": 0.05,
+     "high": 100.0,
+     "low_ends": "refused",
+     "high_ends": "open",
+     "sd": 1.528462919310735,
+     "sd_is_a_lower_bound": false
+    }
+   },
+   "energy_ranges": {
+    "0.01": {
+     "low": -16.68218983236775,
+     "low_ends": "crossed",
+     "high": 14.49476600095365,
+     "high_ends": "crossed",
+     "sd": 7.395424668660505,
+     "sd_is_a_lower_bound": false
+    },
+    "0.05": {
+     "low": -85.8321543179697,
+     "low_ends": "open",
+     "high": 55.83510368006914,
+     "high_ends": "refused",
+     "sd": 28.487821266354544,
+     "sd_is_a_lower_bound": false
+    }
+   }
+  },
+  "Positive electrode exchange-current density [A.m-2]": {
+   "item": "BT12",
+   "key": "positive",
+   "label": "exchange-current density of the positive electrode",
+   "kind": "scale",
+   "values": [
+    0.001,
+    0.003,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    0.7,
+    1.0,
+    1.5,
+    2.0,
+    3.0,
+    5.0,
+    10.0,
+    100.0
+   ],
+   "capacity": [
+    4.197574687883914,
+    4.308708752310641,
+    4.4216989835375,
+    4.480795515074583,
+    4.555143007958236,
+    4.60807163769729,
+    4.655624408218601,
+    4.681749945367225,
+    4.713963547404134,
+    4.734391543101428,
+    4.754650236165344,
+    4.775576025334082,
+    4.78868586200141,
+    4.8039502338436595,
+    4.817586597066767,
+    4.828177363599467,
+    4.837483485560266
+   ],
+   "usable": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "ended": [
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]",
+    "event: Voltage < 2.5 [V] [experiment]"
+   ],
+   "ranges": {
+    "0.01": {
+     "centre": 1.0,
+     "capacity": 4.754650236165344,
+     "width": 0.04754650236165344,
+     "low": 0.4484642367783669,
+     "high": 2.863470836977667,
+     "low_ends": "crossed",
+     "high_ends": "crossed",
+     "sd": 0.409153610276899,
+     "sd_is_a_lower_bound": false
+    },
+    "0.05": {
+     "centre": 1.0,
+     "capacity": 4.754650236165344,
+     "width": 0.2377325118082672,
+     "low": 0.03121560218015649,
+     "high": 100.0,
+     "low_ends": "crossed",
+     "high_ends": "open",
+     "sd": 1.7688270124497862,
+     "sd_is_a_lower_bound": false
+    }
+   },
+   "energy_ranges": {
+    "0.01": {
+     "low": -19.608045130336894,
+     "low_ends": "crossed",
+     "high": 14.946475941455835,
+     "high_ends": "crossed",
+     "sd": 7.625893158931356,
+     "sd_is_a_lower_bound": false
+    },
+    "0.05": {
+     "low": -85.8321543179697,
+     "low_ends": "open",
+     "high": 64.61565955213231,
+     "high_ends": "crossed",
+     "sd": 32.96777903155998,
+     "sd_is_a_lower_bound": false
+    }
+   }
+  }
+ },
+ "energies": {
+  "negative": [
+   {
+    "energy": 20.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 2.236244905172127
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.798187818027036,
+    "share": 0.00915684218589446
+   },
+   {
+    "energy": 30.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 1.3076949743822015
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.769874319197414,
+    "share": 0.0032019354265579655
+   },
+   {
+    "energy": 40.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.7647043228893753
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.73881558021035,
+    "share": -0.003330351375701818
+   },
+   {
+    "energy": 50.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.4471782127341768
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.705410627740273,
+    "share": -0.01035609476603337
+   },
+   {
+    "energy": 60.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.26149761150632433
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.671001604690116,
+    "share": -0.017593014695165252
+   },
+   {
+    "energy": 70.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.15291666471273574
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.635513958072481,
+    "share": -0.02505679117817651
+   }
+  ],
+  "positive": [
+   {
+    "energy": 20.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.8886631257949856
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.748127882974125,
+    "share": -0.001371784015069671
+   },
+   {
+    "energy": 30.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.5196659367822829
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.716355636746295,
+    "share": -0.00805413595468464
+   },
+   {
+    "energy": 40.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.3038864537225197
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.6825793850649955,
+    "share": -0.015157971148362346
+   },
+   {
+    "energy": 50.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.1777045024883716
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.647823965983265,
+    "share": -0.02246774523381878
+   },
+   {
+    "energy": 60.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.10391674198638193
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.610849334365565,
+    "share": -0.030244265015749068
+   },
+   {
+    "energy": 70.0,
+    "factors": {
+     "Positive electrode exchange-current density [A.m-2]": 0.06076767394101846
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.570475476329714,
+    "share": -0.03873571150086693
+   }
+  ],
+  "both": [
+   {
+    "energy": 20.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 2.236244905172127,
+     "Positive electrode exchange-current density [A.m-2]": 0.8886631257949856
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.792341419059427,
+    "share": 0.007927225142112844
+   },
+   {
+    "energy": 30.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 1.3076949743822015,
+     "Positive electrode exchange-current density [A.m-2]": 0.5196659367822829
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.732794503355517,
+    "share": -0.004596706744816911
+   },
+   {
+    "energy": 40.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.7647043228893753,
+     "Positive electrode exchange-current density [A.m-2]": 0.3038864537225197
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.665472400679291,
+    "share": -0.018755919164724
+   },
+   {
+    "energy": 50.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.4471782127341768,
+     "Positive electrode exchange-current density [A.m-2]": 0.1777045024883716
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.591468265923317,
+    "share": -0.03432049932943843
+   },
+   {
+    "energy": 60.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.26149761150632433,
+     "Positive electrode exchange-current density [A.m-2]": 0.10391674198638193
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.506648220513252,
+    "share": -0.052159886286842184
+   },
+   {
+    "energy": 70.0,
+    "factors": {
+     "Negative electrode exchange-current density [A.m-2]": 0.15291666471273574,
+     "Positive electrode exchange-current density [A.m-2]": 0.06076767394101846
+    },
+    "usable": true,
+    "ended": "event: Voltage < 2.5 [V] [experiment]",
+    "capacity": 4.415980340751261,
+    "share": -0.07122919217864955
+   }
+  ]
+ },
+ "seconds": 29.4
+}

@@ -63,6 +63,11 @@ What is measured
   inside which the capacity stays within 1 and within 5 per cent is read from that curve. The
   cheapest reference of each item is run as well: the Nernst-Einstein value from the
   conductivity, and the two constants of the published set.
+* The same question for the exchange-current density of each electrode (``--stage exchange``;
+  plan item BT12). It is multiplied by a factor over a fixed set of points. The cell is run at
+  one temperature, so a tolerated factor is also a tolerated shift of the activation energy of
+  the exchange-current density. In the cold cells the model is also run with stated activation
+  energies in place of the published ones.
 
 Usage
 -----
@@ -70,6 +75,7 @@ Usage
     python benchmarks/run_cellmodel.py         # this benchmark, then the table (50 minutes)
     python benchmarks/run_cellmodel.py --stage stress    # one stage; each writes its own file
     python benchmarks/run_cellmodel.py --stage tolerance # the three unpredicted parameters
+    python benchmarks/run_cellmodel.py --stage exchange  # the two exchange-current densities
     python benchmarks/run_cellmodel.py --report
 """
 from __future__ import annotations
@@ -163,6 +169,20 @@ TOLERANCE_PARAMETERS = (
     {"item": "BT11", "name": THERMODYNAMIC, "label": "thermodynamic factor", "kind": "scale",
      "values": (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0, 3.0, 5.0)},
 )
+#: the exchange-current densities of the two electrodes, which this program does not predict
+#: (plan item BT12), and the factors of the response curve of each
+EXCHANGE_PARAMETERS = (
+    {"item": "BT12", "key": "negative",
+     "name": "Negative electrode exchange-current density [A.m-2]",
+     "label": "exchange-current density of the negative electrode"},
+    {"item": "BT12", "key": "positive",
+     "name": "Positive electrode exchange-current density [A.m-2]",
+     "label": "exchange-current density of the positive electrode"},
+)
+EXCHANGE_FACTORS = (0.001, 0.003, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0,
+                    5.0, 10.0, 100.0)
+#: activation energies, in kJ/mol, that are put in place of the published one in the cold cells
+EXCHANGE_ENERGIES = (20.0, 30.0, 40.0, 50.0, 60.0, 70.0)
 #: the shares of the capacity a tolerance is stated for: the capacity may move by this much
 TOLERANCE_SHARES = (0.01, 0.05)
 #: the condition at which the reading of the response curve is checked against drawn values
@@ -174,8 +194,9 @@ MEASURED_CONCENTRATIONS = (100.0, 3000.0)
 EXHAUSTED = 1.0
 #: the stages, in order: fit the models and convert, run the published values, draw one
 #: parameter at a time, the electrolyte under stress, the tolerance of the cell to the three
-#: parameters that are not predicted, then put the result together
-STAGES = ("channels", "reference", "sample", "stress", "tolerance", "finish")
+#: parameters that are not predicted, its tolerance to the two exchange-current densities, then
+#: put the result together
+STAGES = ("channels", "reference", "sample", "stress", "tolerance", "exchange", "finish")
 
 
 def log(msg: str) -> None:
@@ -1241,6 +1262,293 @@ def read_tolerance(results: str) -> Optional[dict]:
     return {"conditions": rows, "check": check}
 
 
+# --------------------------------------------------------------------------- #
+# The tolerance of the cell to the exchange-current densities (plan item BT12)
+# --------------------------------------------------------------------------- #
+def exchange_path(results: str, temperature: float, rate: float) -> str:
+    return os.path.join(results, f"tolerance_exchange_{temperature:.0f}K_{rate:g}C.json")
+
+
+def energy_range(r: dict, temperature: float) -> Optional[dict]:
+    """A tolerated range of a factor on a rate, as a range of the shift of its activation
+    energy, in kJ/mol.
+
+    The cell is run at one temperature, so a shift of the activation energy is a factor on the
+    rate and the conversion is exact. In a cell colder than the reference temperature a smaller
+    rate is a higher activation energy, so the two ends change places. At the reference
+    temperature the activation energy does not change the rate, and the answer is None.
+    """
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import GAS_CONSTANT
+
+    slope = 1.0 / CM.ARRHENIUS_REFERENCE - 1.0 / float(temperature)
+    if abs(slope) < 1e-12:
+        return None
+    a = CM.activation_shift(r["low"], temperature) / 1000.0
+    b = CM.activation_shift(r["high"], temperature) / 1000.0
+    ends = [(a, r["low_ends"]), (b, r["high_ends"])]
+    ends.sort(key=lambda e: e[0])
+    return {"low": ends[0][0], "low_ends": ends[0][1], "high": ends[1][0],
+            "high_ends": ends[1][1], "sd": float(r["sd"]) * GAS_CONSTANT / abs(slope) / 1000.0,
+            "sd_is_a_lower_bound": bool(r["sd_is_a_lower_bound"])}
+
+
+def _exchange_condition(temperature: float, rate: float, p, four) -> dict:
+    """One condition: the response curve of the cell to a factor on the exchange-current
+    density of each electrode, the tolerated ranges read from it, and, in a cold cell, runs
+    with stated activation energies in place of the published ones."""
+    from cmfqsar import cellmodel as CM
+    from cmfqsar.interfaces import CellParameter
+
+    t0 = time.time()
+    common = dict(cycles=1, base=BASE, kind=STRESS_MODEL, cycle=CM.discharge(rate),
+                  temperature=temperature, parameters=p)
+    ref = CM.run_cell(four, details=True, **common)
+    if not _usable(ref):
+        raise SystemExit(f"{temperature:.0f} K, {rate:g}C: the cell with the measured "
+                         f"electrolyte gave no usable discharge ({ref.message or ref.termination})")
+    names = [spec["name"] for spec in EXCHANGE_PARAMETERS]
+    published = {name: CM.activation_energy_of(p[name]) for name in names}
+    entry = {"temperature": float(temperature), "rate": float(rate), "model": STRESS_MODEL,
+             "reference": ref.final,
+             "published_energy": {name: published[name] / 1000.0 for name in names},
+             "published_law": {name: CM.arrhenius_factor(published[name], temperature)
+                               for name in names},
+             "parameters": {}, "energies": {}}
+    values = list(EXCHANGE_FACTORS)
+    for spec in EXCHANGE_PARAMETERS:
+        parameter = CellParameter(name=spec["name"], value=1.0, kind="scale")
+        runs = CM.response(parameter, values, fixed=four, **common)
+        usable = [_usable(r) for r in runs]
+        capacity = [r.final if u else float("nan") for r, u in zip(runs, usable)]
+        at_centre = capacity[values.index(1.0)]
+        if not np.isclose(at_centre, ref.final, rtol=0, atol=1e-6):
+            raise SystemExit(f"{spec['name']}: the unchanged point gives {at_centre!r} and the "
+                             f"reference run {ref.final!r}; they have to be the same run")
+        ranges = {f"{share:g}": CM.tolerated_range(values, capacity, 1.0, share * ref.final,
+                                                   log=True)
+                  for share in TOLERANCE_SHARES}
+        entry["parameters"][spec["name"]] = {
+            "item": spec["item"], "key": spec["key"], "label": spec["label"], "kind": "scale",
+            "values": [float(v) for v in values],
+            "capacity": [float(r.final) for r in runs], "usable": usable,
+            "ended": [r.termination for r in runs], "ranges": ranges,
+            "energy_ranges": {k: energy_range(r, temperature) for k, r in ranges.items()}}
+    if abs(float(temperature) - CM.ARRHENIUS_REFERENCE) > 1e-9:
+        groups = [(spec["key"], [spec["name"]]) for spec in EXCHANGE_PARAMETERS]
+        groups.append(("both", names))
+        for key, group in groups:
+            rows = []
+            for energy in EXCHANGE_ENERGIES:
+                changed = dict(four)
+                factors = {}
+                for name in group:
+                    shift = 1000.0 * energy - published[name]
+                    changed[name] = CM.ActivationEnergy(name).apply(p[name], shift)
+                    factors[name] = CM.arrhenius_factor(shift, temperature)
+                run = CM.run_cell(changed, details=True, **common)
+                ok = _usable(run)
+                rows.append({"energy": float(energy), "factors": factors, "usable": ok,
+                             "ended": run.termination,
+                             "capacity": float(run.final) if ok else float("nan"),
+                             "share": float((run.final - ref.final) / ref.final) if ok
+                             else float("nan")})
+            entry["energies"][key] = rows
+    entry["seconds"] = round(time.time() - t0, 1)
+    return entry
+
+
+def stage_exchange(results: str, force: bool = False) -> None:
+    """How accurate the exchange-current density of each electrode, and its activation energy,
+    have to be (rule 1 of plan item BT12).
+
+    The cell holds the measured electrolyte, as in the tolerance stage. The exchange-current
+    density of one electrode at a time is multiplied by a factor over a fixed set of points, and
+    the full model is run once per point, under the eight conditions of the stress stage. The
+    cell model is run at one temperature, so the tolerated factor is also a tolerated shift of
+    the activation energy. In the cold cells the model is also run with stated activation
+    energies in place of the published ones.
+    """
+    from cmfqsar import cellmodel as CM
+
+    p = CM.published_parameters(BASE)
+    four = CM.measured_electrolyte()
+    wide = f"{max(TOLERANCE_SHARES):g}"
+    for temperature, rate in stress_conditions():
+        path = exchange_path(results, temperature, rate)
+        if os.path.isfile(path) and not force:
+            log(f"{temperature:.0f} K, {rate:g}C: the exchange-current stage is there already")
+            continue
+        entry = _exchange_condition(temperature, rate, p, four)
+        other = tolerance_path(results, temperature, rate)
+        if os.path.isfile(other):
+            with open(other, encoding="utf-8") as fh:
+                stored = float(json.load(fh)["reference"])
+            if not np.isclose(stored, entry["reference"], rtol=0, atol=1e-6):
+                raise SystemExit(f"{temperature:.0f} K, {rate:g}C: the reference run gives "
+                                 f"{entry['reference']!r} here and {stored!r} in the tolerance "
+                                 "stage; they have to be the same run")
+        parts = [f"{spec['key']} {_factor_range(entry['parameters'][spec['name']]['ranges'][wide])}"
+                 for spec in EXCHANGE_PARAMETERS]
+        log(f"{temperature:.0f} K, {rate:g}C: {entry['reference']:.3f} A.h; tolerated factor "
+            f"inside {100 * float(wide):.0f} %: " + "; ".join(parts)
+            + f" ({entry['seconds']:.0f} s)")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(entry, fh, indent=1)
+
+
+def read_exchange(results: str) -> Optional[dict]:
+    """What the exchange-current stage wrote, or None when it has not been run."""
+    paths = [exchange_path(results, t, r) for t, r in stress_conditions()]
+    if not any(os.path.isfile(path) for path in paths):
+        return None
+    rows = []
+    for path in paths:
+        if not os.path.isfile(path):
+            raise SystemExit(f"{path} is missing: run this benchmark with --stage exchange")
+        with open(path, encoding="utf-8") as fh:
+            rows.append(json.load(fh))
+    return {"conditions": rows}
+
+
+def _g(v: float) -> str:
+    """A factor as text: two significant digits below 10, a whole number from 10 up."""
+    return f"{v:.2g}" if abs(v) < 10 else f"{v:.0f}"
+
+
+def _ends(r: dict, text) -> str:
+    """A range as text, with the marks of :func:`_range` for an open and for a refused end."""
+    low = ("< " if r["low_ends"] == "open" else "") + text(r["low"]) \
+        + ("*" if r["low_ends"] == "refused" else "")
+    high = ("> " if r["high_ends"] == "open" else "") + text(r["high"]) \
+        + ("*" if r["high_ends"] == "refused" else "")
+    return f"{low} to {high}"
+
+
+def _factor_range(r: dict) -> str:
+    return _ends(r, _g)
+
+
+def _shift_range(e: dict) -> str:
+    return _ends(e, lambda v: f"{v:+.1f}")
+
+
+def exchange_lines(ex: dict) -> List[str]:
+    """The section of the table on the exchange-current densities and their activation
+    energies."""
+    rows = ex["conditions"]
+    specs = EXCHANGE_PARAMETERS
+    out = ["### How accurate the exchange-current densities and their activation energies "
+           "have to be", ""]
+    out.append(
+        "This program does not predict the exchange-current density of either electrode (plan "
+        "item BT12). The exchange-current density is the rate of the charge-transfer reaction "
+        "at the surface of an electrode particle at equilibrium, per unit of area. This stage "
+        "asks how accurate it has to be, in the same way as the stage above. The cell holds "
+        "the measured electrolyte. The exchange-current density of one electrode at a time is "
+        f"multiplied by a factor over {len(EXCHANGE_FACTORS)} points from "
+        f"{min(EXCHANGE_FACTORS):g} to {max(EXCHANGE_FACTORS):g}, and the full model is run "
+        "once per point. The tolerated range and the tolerated deviation are defined as above.")
+    out.append("")
+    for share in sorted(TOLERANCE_SHARES):
+        key = f"{share:g}"
+        out.append(f"**The capacity may move by {100 * share:g} %.**")
+        out.append("")
+        out.append("| Temperature, K | Rate | Capacity with the published exchange-current "
+                   "densities, A.h | Negative electrode: tolerated factor | Tolerated deviation "
+                   "of its logarithm | Positive electrode: tolerated factor | Tolerated "
+                   "deviation of its logarithm |")
+        out.append("|---:|---:|---:|---|---:|---|---:|")
+        for row in rows:
+            cells = [f"{row['temperature']:.0f}", f"{row['rate']:g}C", _n(row["reference"], 3)]
+            for spec in specs:
+                r = row["parameters"][spec["name"]]["ranges"][key]
+                cells += [_factor_range(r), _sd(r)]
+            out.append("| " + " | ".join(cells) + " |")
+        out.append("")
+    spread = []
+    for factor in (0.1, 10.0):
+        shares = []
+        for row in rows:
+            for spec in specs:
+                rec = row["parameters"][spec["name"]]
+                for v, c, u in zip(rec.get("values", []), rec.get("capacity", []),
+                                   rec.get("usable", [])):
+                    if u and np.isclose(v, factor):
+                        shares.append(100.0 * (c - row["reference"]) / row["reference"])
+        if shares:
+            spread.append((min(shares), max(shares)))
+    if len(spread) == 2:
+        out.append(
+            "For scale: the parameter set of this benchmark states a spread of a factor of 10 "
+            "either way for an exchange-current density. With a factor of 0.1 on one electrode "
+            f"the capacity changes by {spread[0][0]:+.1f} to {spread[0][1]:+.1f} % over the "
+            f"conditions and the two electrodes, and with a factor of 10 by {spread[1][0]:+.1f} "
+            f"to {spread[1][1]:+.1f} %.")
+        out.append("")
+    refused = any("refused" in (r["low_ends"], r["high_ends"])
+                  for row in rows for spec in specs
+                  for r in row["parameters"][spec["name"]]["ranges"].values())
+    if refused:
+        out.append(
+            "An end written with * is not a point where the capacity left the limit. At the "
+            "next factor the cell model did not start the discharge: its solver failed at the "
+            "first step. The range is therefore at least that wide, and the deviation beside "
+            "it is at least that large.")
+        out.append("")
+    cold = [row for row in rows if row["energies"]]
+    if not cold:
+        return out
+    energy = rows[0]["published_energy"]
+    neg, pos = specs[0]["name"], specs[1]["name"]
+    out.append(
+        "In the published set each exchange-current density follows an Arrhenius law. The "
+        f"activation energy is {_n(energy[neg], 1)} kJ/mol for the negative electrode and "
+        f"{_n(energy[pos], 1)} kJ/mol for the positive one, and the law equals 1 at 298.15 K. "
+        "The cell model is run at one temperature. A shift of the activation energy is then "
+        "the same as a factor on the exchange-current density at that temperature, so a "
+        "tolerated factor is also a tolerated shift of the activation energy. A positive shift "
+        "is a higher activation energy, which is a slower reaction in a cold cell. At 298 K "
+        "the activation energy changes nothing, so the tables below hold the cold conditions "
+        "only. The column *published law* is the factor that the published activation energy "
+        "puts on the exchange-current density at that temperature.")
+    out.append("")
+    for share in sorted(TOLERANCE_SHARES):
+        key = f"{share:g}"
+        out.append(f"**The capacity may move by {100 * share:g} %: the tolerated shift of the "
+                   "activation energy.**")
+        out.append("")
+        out.append("| Temperature, K | Rate | Negative electrode: published law | Tolerated "
+                   "shift, kJ/mol | Tolerated deviation, kJ/mol | Positive electrode: "
+                   "published law | Tolerated shift, kJ/mol | Tolerated deviation, kJ/mol |")
+        out.append("|---:|---:|---:|---|---:|---:|---|---:|")
+        for row in cold:
+            cells = [f"{row['temperature']:.0f}", f"{row['rate']:g}C"]
+            for spec in specs:
+                e = row["parameters"][spec["name"]]["energy_ranges"][key]
+                cells += [_n(row["published_law"][spec["name"]], 3), _shift_range(e),
+                          (">= " if e["sd_is_a_lower_bound"] else "") + _n(e["sd"], 1)]
+            out.append("| " + " | ".join(cells) + " |")
+        out.append("")
+    out.append(
+        "**A stated activation energy in place of the published one.** The numbers are the "
+        "difference of the capacity, in per cent of the capacity with the published activation "
+        "energies. *Both* puts the same activation energy on both electrodes.")
+    out.append("")
+    out.append("| Temperature, K | Rate | Electrode | "
+               + " | ".join(f"{e:g} kJ/mol" for e in EXCHANGE_ENERGIES) + " |")
+    out.append("|---:|---:|---|" + "---:|" * len(EXCHANGE_ENERGIES))
+    for row in cold:
+        for key in [spec["key"] for spec in specs] + ["both"]:
+            cells = [f"{row['temperature']:.0f}", f"{row['rate']:g}C", key]
+            for r in row["energies"][key]:
+                cells.append(f"{100 * r['share']:+.1f} %" if r["usable"]
+                             else "no usable discharge")
+            out.append("| " + " | ".join(cells) + " |")
+    out.append("")
+    return out
+
+
 def _range(r: dict, kind: str) -> str:
     """A tolerated range as text. "<" or ">" before an end says that the points ran out there
     with the capacity still inside, so the range is at least that wide; "*" after an end says
@@ -1541,6 +1849,8 @@ def run(results: str = RESULTS, draws: int = DRAWS, cycles: int = CYCLES,
         stage_stress(results, force=force)
     if "tolerance" in stages:
         stage_tolerance(results, force=force)
+    if "exchange" in stages:
+        stage_exchange(results, force=force)
     if "finish" not in stages:
         return None
 
@@ -1882,6 +2192,9 @@ def report(results: str = RESULTS) -> str:
     tolerance = read_tolerance(results)
     if tolerance:
         lines.extend(tolerance_lines(tolerance))
+    exchange = read_exchange(results)
+    if exchange:
+        lines.extend(exchange_lines(exchange))
     w("## What the gate asked, and what came out")
     w("")
     failed = [n for n, p in params.items()
