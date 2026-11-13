@@ -506,3 +506,235 @@ def test_the_second_reference_section_names_the_misses_and_the_range():
     assert "below the coldest measured temperature" in text
     assert "253 (outside the measured range)" in text
     assert "misses by 0.040 A.h" in text and "read at 293 K" in text
+
+
+# --------------------------------------------------------------------------- #
+# The tolerance of the cell to a parameter that has no prediction (items BT9 to BT11)
+# --------------------------------------------------------------------------- #
+Z95 = 1.959963984540054
+
+
+def test_a_tolerated_range_ends_where_the_capacity_leaves_the_limit():
+    """Below the centre the capacity falls by one for every halving, so a limit of a quarter is
+    crossed a quarter of the way to the next point on the logarithmic axis. Above the centre it
+    never leaves the limit, so that end is the outermost point and is marked open."""
+    r = CM.tolerated_range([0.25, 0.5, 1.0, 2.0, 4.0], [3.0, 4.0, 5.0, 5.05, 5.06], 1.0, 0.25,
+                           log=True)
+    assert r["capacity"] == pytest.approx(5.0)
+    assert r["low"] == pytest.approx(2.0 ** -0.25) and r["low_ends"] == "crossed"
+    assert r["high"] == pytest.approx(4.0) and r["high_ends"] == "open"
+    assert r["sd"] == pytest.approx(0.25 * np.log(2.0) / Z95)
+    assert r["sd_is_a_lower_bound"] is False        # the nearer end is the one that was crossed
+
+
+def test_a_shift_is_read_on_the_plain_axis():
+    x = [-0.2, -0.1, 0.0, 0.1, 0.2]
+    r = CM.tolerated_range(x, [5.0 + 2.0 * v for v in x], 0.0, 0.1)
+    assert r["low"] == pytest.approx(-0.05) and r["high"] == pytest.approx(0.05)
+    assert r["sd"] == pytest.approx(0.05 / Z95)
+
+
+def test_the_order_of_the_points_does_not_matter():
+    x, q = [2.0, 0.5, 1.0, 4.0, 0.25], [5.05, 4.0, 5.0, 5.06, 3.0]
+    a = CM.tolerated_range(x, q, 1.0, 0.25, log=True)
+    b = CM.tolerated_range(sorted(x), [q[x.index(v)] for v in sorted(x)], 1.0, 0.25, log=True)
+    assert a == b
+
+
+def test_an_open_end_makes_the_deviation_a_lower_bound():
+    r = CM.tolerated_range([0.5, 1.0, 2.0], [4.99, 5.0, 5.01], 1.0, 0.25, log=True)
+    assert (r["low"], r["high"]) == (0.5, 2.0)
+    assert r["low_ends"] == r["high_ends"] == "open" and r["sd_is_a_lower_bound"] is True
+
+
+def test_a_point_without_a_capacity_ends_the_range_at_the_last_point_that_has_one():
+    r = CM.tolerated_range([-0.2, -0.1, 0.0, 0.1, 0.2], [4.9, 4.95, 5.0, float("nan"), 5.0],
+                           0.0, 0.25)
+    assert r["high"] == 0.0 and r["high_ends"] == "refused"
+    assert r["low"] == -0.2 and r["low_ends"] == "open"
+    assert r["sd"] == 0.0 and r["sd_is_a_lower_bound"] is False
+
+
+def test_the_range_is_the_connected_one():
+    """A capacity that leaves the limit and comes back does not widen the range: the parameter
+    would have to pass through the forbidden part to get there."""
+    r = CM.tolerated_range([1.0, 2.0, 3.0, 4.0], [5.0, 4.0, 5.0, 5.0], 1.0, 0.5)
+    assert r["high"] == pytest.approx(1.5) and r["high_ends"] == "crossed"
+
+
+def test_what_the_tolerated_range_refuses():
+    with pytest.raises(ValueError, match="exactly one of the values"):
+        CM.tolerated_range([0.5, 2.0], [4.0, 5.0], 1.0, 0.1)
+    with pytest.raises(ValueError, match="no capacity"):
+        CM.tolerated_range([0.5, 1.0], [4.0, float("nan")], 1.0, 0.1)
+    with pytest.raises(ValueError, match="above zero"):
+        CM.tolerated_range([0.5, 1.0], [4.0, 5.0], 1.0, 0.0)
+    with pytest.raises(ValueError, match="logarithmic"):
+        CM.tolerated_range([0.0, 1.0], [4.0, 5.0], 1.0, 0.1, log=True)
+    with pytest.raises(ValueError, match="values and"):
+        CM.tolerated_range([0.5, 1.0], [4.0], 1.0, 0.1)
+
+
+def test_the_nernst_einstein_value_of_an_ideal_solution():
+    """With equal shares of the current the two ions diffuse equally fast, and the salt
+    diffusion coefficient is half of k R T / (F^2 c)."""
+    d = CM.nernst_einstein_diffusivity(lambda c, T: 1.0, 0.5)
+    expected = 0.5 * 1.0 * GAS_CONSTANT * 300.0 / (CM.FARADAY ** 2 * 1000.0)
+    assert d(1000.0, 300.0) == pytest.approx(expected)
+    # a transference number away from one half lowers it: 2 t (1 - t) is largest at one half
+    low = CM.nernst_einstein_diffusivity(lambda c, T: 1.0, 0.25)
+    assert low(1000.0, 300.0) == pytest.approx(expected * 0.75)
+
+
+def test_the_nernst_einstein_value_takes_functions_and_a_factor():
+    k = lambda c, T: 2.0e-3 * c                       # noqa: E731 - proportional to c
+    d = CM.nernst_einstein_diffusivity(k, lambda c, T: 0.5, factor=lambda c, T: 2.0)
+    plain = CM.nernst_einstein_diffusivity(k, 0.5)
+    assert d(500.0, 298.15) == pytest.approx(2.0 * plain(500.0, 298.15))
+    # a conductivity proportional to the concentration gives one value at every concentration
+    assert plain(500.0, 298.15) == pytest.approx(plain(2000.0, 298.15))
+
+
+def test_the_nernst_einstein_value_does_not_divide_by_zero():
+    d = CM.nernst_einstein_diffusivity(lambda c, T: 1.0, 0.5, floor=10.0)
+    assert d(0.0, 300.0) == pytest.approx(d(10.0, 300.0))
+    assert np.isfinite(d(0.0, 300.0))
+
+
+def test_a_run_without_details_does_not_claim_a_cutoff():
+    run = CM.CellRun(capacity=np.array([5.0]), cycles=1)
+    assert run.termination == "" and run.at_cutoff is False
+    assert CM.CellRun(capacity=np.array([5.0]), cycles=1,
+                      termination="event: Voltage < 2.5 [V] [experiment]").at_cutoff is True
+    assert CM.CellRun(capacity=np.array([5.0]), cycles=1,
+                      termination="event: Maximum voltage [V]").at_cutoff is False
+
+
+def test_a_run_with_details_says_why_the_discharge_ended():
+    pytest.importorskip("pybamm")
+    run = CM.run_cell(cycles=1, kind="SPMe", cycle=CM.discharge(1.0), details=True)
+    assert run.ok and run.at_cutoff
+    low, high = run.concentration
+    assert 0.0 < low < 1000.0 < high
+
+
+def test_the_response_curve_runs_once_per_value_on_the_fixed_entry(monkeypatch):
+    pytest.importorskip("pybamm")
+    seen = []
+
+    def fake(overrides=None, **kw):
+        seen.append((dict(overrides), kw.get("details")))
+        return CM.CellRun(capacity=np.array([5.0]), cycles=1)
+
+    monkeypatch.setattr(CM, "run_cell", fake)
+    name = "Positive electrode Bruggeman coefficient (electrolyte)"
+    other = "Negative electrode Bruggeman coefficient (electrolyte)"
+    scale = CellParameter(name=name, value=1.0, kind="scale")
+    runs = CM.response(scale, [0.5, 1.0, 2.0], kind="SPM", fixed={name: 1.6, other: 1.7})
+    assert [r.overrides[name] for r in runs] == [0.5, 1.0, 2.0]
+    assert [s[0][name] for s in seen] == pytest.approx([0.8, 1.6, 3.2])
+    assert all(s[0][other] == 1.7 and s[1] is True for s in seen)
+    with pytest.raises(KeyError, match="holds no entry"):
+        CM.response(CellParameter(name="No such entry", value=1.0, kind="scale"), [1.0])
+
+
+def test_a_curve_is_read_between_its_points():
+    read = R.curve_values([0.5, 1.0, 2.0], [4.0, 5.0, 5.1], [0.5 ** 0.5, 1.0, 2.0 ** 0.5],
+                          log=True)
+    assert list(read) == pytest.approx([4.5, 5.0, 5.05])
+    # a point without a capacity is left out, and beyond the outermost points the curve is flat
+    read = R.curve_values([-1.0, 0.0, 0.5, 1.0], [4.0, 5.0, float("nan"), 4.0],
+                          [-2.0, -0.5, 0.5, 3.0])
+    assert list(read) == pytest.approx([4.0, 4.5, 4.5, 4.0])
+
+
+def _tolerance_row(temperature, rate, reference, shares, concentration=(400.0, 2000.0)):
+    """A made-up condition: every parameter has the same response, and the three cheapest
+    references differ from the measured capacity by the three given shares."""
+    row = {"temperature": temperature, "rate": rate, "reference": reference,
+           "reference_concentration": list(concentration),
+           "at_1000": {R.CONDUCTIVITY: 0.9, R.DIFFUSIVITY: 3.0e-10, R.TRANSFERENCE: 0.22,
+                       R.THERMODYNAMIC: 2.2},
+           "parameters": {}, "references": {}}
+    for spec in R.TOLERANCE_PARAMETERS:
+        scale = spec["kind"] == "scale"
+        x = [0.5, 1.0, 2.0, 20.0] if scale else [-0.1, 0.0, 0.1, 0.4]
+        q = [reference - 1.0, reference, reference + 0.001, reference + 0.002]
+        row["parameters"][spec["name"]] = {"ranges": {
+            f"{s:g}": CM.tolerated_range(x, q, 1.0 if scale else 0.0, s * reference, log=scale)
+            for s in R.TOLERANCE_SHARES}}
+    keys = ("nernst_einstein", "published_constant", "ideal_solution")
+    items = ("BT9", "BT10", "BT11")
+    for key, item, share in zip(keys, items, shares):
+        row["references"][key] = {"item": item, "usable": True, "share": share,
+                                  "difference": share * reference, "at_1000": 1.0e-10}
+    for key in ("nernst_einstein_factor", "published_function"):
+        row["references"][key] = {"item": "BT9", "usable": True, "share": -0.2,
+                                  "difference": -0.2 * reference, "at_1000": 2.0e-10}
+    return row
+
+
+def test_the_tolerance_section_says_which_item_ends():
+    rows = [_tolerance_row(R.ROOM, 1.0, 5.0, (-0.16, 0.001, 0.002)),
+            _tolerance_row(253.15, 1.5, 2.4, (-0.90, 0.09, 0.003), concentration=(0.0, 3500.0))]
+    text = "\n".join(R.tolerance_lines({"conditions": rows, "check": None}))
+    # an end that is the outermost point, and a deviation that is a real one
+    assert "> 20.00" in text and "> +0.40" in text
+    # the diffusion coefficient: outside under both conditions
+    assert "inside 1 % of the capacity under 0 of 2 conditions" in text
+    assert "outside the tolerance under every condition, so the item does not end here" in text
+    # the transference number: inside at room temperature, outside in the cold
+    assert "inside 5 % of the capacity under 1 of 2 conditions" in text
+    assert "not inside the tolerance under every condition" in text
+    # the thermodynamic factor: inside everywhere
+    assert "inside the tolerance under every condition, so by rule 1 the item ends here" in text
+    # the reference that leaves the measured range is named, and so are the cold values
+    assert "leaves the measured range under 1 of 2 conditions" in text
+    assert "253 K and 1.5C" in text and "exhausted" in text
+    assert "values at 293 K" in text
+
+
+def test_a_reference_without_a_usable_discharge_counts_as_outside():
+    rows = [_tolerance_row(R.ROOM, 1.0, 5.0, (-0.001, 0.001, 0.002)),
+            _tolerance_row(R.ROOM, 2.5, 4.6, (-0.002, 0.001, 0.002))]
+    lost = rows[0]["references"]["nernst_einstein"]
+    lost.update(usable=False, share=float("nan"), difference=float("nan"))
+    text = "\n".join(R.tolerance_lines({"conditions": rows, "check": None}))
+    assert "| 298 | 1C | no usable discharge |" in text
+    assert "inside 5 % of the capacity under 1 of 2 conditions" in text
+    assert "At 298 K and 1C the cell model gave no usable discharge" in text
+    assert "Its largest difference is -0.009 A.h (-0.2 %) at 298 K and 2.5C" in text
+    assert "counted as outside" in text and "none A.h" not in text
+
+
+def test_the_tolerance_section_says_when_only_too_little_is_punished():
+    rows = [_tolerance_row(R.ROOM, 1.0, 5.0, (-0.16, 0.001, 0.002)),
+            _tolerance_row(R.ROOM, 2.5, 4.6, (-0.70, 0.001, 0.002))]
+    text = "\n".join(R.tolerance_lines({"conditions": rows, "check": None}))
+    assert "only a diffusion coefficient that is too small is punished" in text
+    assert "up to 20" in text and "at 1C" in text and "at 2.5C" in text
+    assert "err on the high side" in text
+
+
+def test_the_tolerance_section_reports_the_check():
+    rows = [_tolerance_row(R.ROOM, 2.5, 4.6, (-0.7, 0.008, 0.02))]
+    check = {"temperature": R.ROOM, "rate": 2.5, "draws": 100, "share": 0.05, "reference": 4.6,
+             "parameters": {R.DIFFUSIVITY: {"skipped": False, "sd": 0.1, "drawn_low": 4.40,
+                                            "drawn_high": 4.70, "curve_low": 4.38,
+                                            "curve_high": 4.71, "largest_difference": 0.023,
+                                            "outside": 0.02},
+                            R.TRANSFERENCE: {"skipped": True, "sd": 0.0}}}
+    text = "\n".join(R.tolerance_lines({"conditions": rows, "check": check}))
+    assert "drawn 100 times" in text
+    assert "| Salt diffusion coefficient | 0.100 | 0.023 | 4.400 to 4.700 | 4.380 to 4.710 | 2 % |" in text
+    assert "Cation transference number |" not in text.split("checked by drawing")[1]
+    assert "the limit of 5 % is 0.230 A.h" in text and "which is 10 % of that limit" in text
+
+
+def test_reading_the_tolerance_needs_every_condition(tmp_path):
+    assert R.read_tolerance(str(tmp_path)) is None
+    first = R.stress_conditions()[0]
+    with open(R.tolerance_path(str(tmp_path), *first), "w", encoding="utf-8") as fh:
+        json.dump({}, fh)
+    with pytest.raises(SystemExit, match="--stage tolerance"):
+        R.read_tolerance(str(tmp_path))

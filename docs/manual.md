@@ -13641,11 +13641,129 @@ diffusivity, the transference number and the thermodynamic factor. This program 
 of these three, so in a cold cell its conductivity prediction settles only a small part of the
 capacity.
 
+#### How accurate the three parameters without a prediction have to be
+
+The salt diffusion coefficient, the cation transference number and the thermodynamic factor of
+the electrolyte have a measured reference and no prediction (plan items BT9, BT10 and BT11).
+Before any of them is simulated, `--stage tolerance` asks a question that needs no prediction:
+how accurate would a prediction have to be?
+
+The cell holds the electrolyte with all four transport parameters as measured. One parameter at
+a time is then changed over a fixed set of points. The diffusion coefficient is multiplied by
+19 factors between 0.05 and 20, and the thermodynamic factor by 15 factors between 0.2 and 5.
+The transference number is shifted by 15 constants between -0.4 and +0.4. The full
+Doyle-Fuller-Newman model is run once per point, under the eight conditions of the stress stage.
+The result is the **response curve** of the cell to that parameter
+(`cmfqsar.cellmodel.response`). Nothing is drawn. A drawn sample says what one stated deviation
+does to the capacity. A response curve says it for every deviation at once, because the capacity
+for any spread of the parameter can be read from the curve.
+
+Two quantities are read from each curve (`cmfqsar.cellmodel.tolerated_range`):
+
+* The **tolerated range** is the connected range around the measured function inside which the
+  discharge capacity stays within a stated share of the capacity with the measured function. Its
+  ends are found by linear interpolation between neighbouring points, on the logarithm of a
+  factor.
+* The **tolerated deviation** is the largest standard deviation of an error whose 95 % interval
+  stays inside that range: of the natural logarithm for a factor, of the number itself for a
+  shift. The nearer end of the range sets it.
+
+A run counts only if its discharge ended at the lower voltage limit;
+`run_cell(..., details=True)` records why a discharge ended and the lowest and highest
+concentration of the electrolyte during it. The table below is for a capacity that may move by
+5 %; the result table of the benchmark also holds the one for 1 %. An end written with < or >
+is the outermost point that was run, so the range is at least that wide, and a deviation written
+with >= is a lower bound for the same reason.
+
+| Temperature, K | Rate | Capacity with the measured electrolyte, A.h | Diffusion coefficient: tolerated factor | Deviation of its logarithm | Transference number: tolerated shift | Deviation | Thermodynamic factor: tolerated factor | Deviation of its logarithm |
+| ---: | ---: | ---: | --- | ---: | --- | ---: | --- | ---: |
+| 298 | 1C | 4.987 | 0.32 to > 20.00 | 0.585 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to > 5.00 | >= 0.821 |
+| 298 | 1.5C | 4.899 | 0.49 to > 20.00 | 0.367 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to 3.34 | 0.616 |
+| 298 | 2C | 4.789 | 0.67 to > 20.00 | 0.206 | -0.28 to > +0.40 | 0.143 | < 0.20 to 2.20 | 0.403 |
+| 298 | 2.5C | 4.609 | 0.83 to > 20.00 | 0.098 | -0.13 to > +0.40 | 0.064 | < 0.20 to 1.58 | 0.233 |
+| 263 | 1C | 4.755 | 0.85 to > 20.00 | 0.086 | -0.10 to > +0.40 | 0.053 | < 0.20 to 1.41 | 0.174 |
+| 263 | 1.5C | 3.512 | 0.96 to 1.05 | 0.023 | -0.03 to +0.03 | 0.017 | 0.48 to 1.37 | 0.160 |
+| 253 | 1C | 3.788 | 0.93 to 1.10 | 0.040 | -0.05 to +0.06 | 0.027 | 0.67 to 1.35 | 0.154 |
+| 253 | 1.5C | 2.409 | 0.96 to 1.04 | 0.020 | -0.03 to +0.03 | 0.014 | < 0.20 to 1.55 | 0.224 |
+
+At 1 mol/L and 298 K the measured diffusion coefficient is 2.89e-10 m2/s, the measured
+transference number 0.221 and the measured thermodynamic factor 2.18.
+
+**At room temperature only a diffusion coefficient that is too small is punished.** A larger one
+costs less than 5 % of the capacity at every factor that was tried, up to 20. The lower end of
+the tolerated factor rises with the rate: 0.32 at 1C, 0.49 at 1.5C, 0.67 at 2C and 0.83 at 2.5C.
+A prediction of this parameter should therefore err on the high side.
+
+**In a cold cell the tolerance is narrower than the agreement of two measurements.** At 263 K and
+1.5C and at both rates at 253 K the tolerated factor of the diffusion coefficient lies between
+0.93 and 1.10, and the tolerated shift of the transference number is 0.03 to 0.06 either way. The
+two measurements of this electrolyte that the repository holds, the function of the published
+set and the function of the second reference, differ by a factor of 1.6 at 1 mol/L and 298 K.
+Under these three conditions the electrolyte is exhausted somewhere in the cell, which is what
+ends the discharge early, and a small change of a transport parameter moves the point where that
+happens.
+
+**What the cheapest reference of each item costs.** Each of the three plan items names a value
+that needs no new data. For the diffusion coefficient it is the Nernst-Einstein value from the
+measured conductivity $\kappa$ and the transference number $t$ of the published set, which is
+the coefficient of an ideal solution of fully dissociated ions
+(`cmfqsar.cellmodel.nernst_einstein_diffusivity`):
+
+$$
+D = \frac{2\,t\,(1-t)\,\kappa R T}{F^2 c}
+$$
+
+For the other two it is the constant of the published set. Each value is put in place of the
+measured function, with the other three parameters as measured. The table gives the difference
+of the capacity as a share of the capacity with the measured electrolyte. Two more values of the
+diffusion coefficient are run to say where the error of the first comes from.
+
+| Temperature, K | Rate | Diffusion coefficient: Nernst-Einstein value | Diffusion coefficient: Nernst-Einstein value times the measured thermodynamic factor | Diffusion coefficient: function of the published set | Transference number: the constant 0.2594 | Thermodynamic factor: the constant 1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 298 | 1C | no usable discharge | -0.2 % | -0.4 % | +0.0 % | +0.2 % |
+| 298 | 1.5C | -36.0 % | -0.6 % | -1.1 % | +0.1 % | +0.4 % |
+| 298 | 2C | -56.9 % | -15.8 % | -3.1 % | +0.3 % | +0.8 % |
+| 298 | 2.5C | -71.3 % | -40.4 % | -19.6 % | +0.8 % | +2.2 % |
+| 263 | 1C | -68.9 % | -48.8 % | +3.1 % | +2.4 % | +3.3 % |
+| 263 | 1.5C | -83.8 % | -70.0 % | +27.5 % | +9.5 % | +4.5 % |
+| 253 | 1C | -81.7 % | -70.3 % | +26.9 % | +8.0 % | +10.3 % |
+| 253 | 1.5C | -91.0 % | -82.6 % | +61.8 % | +9.1 % | +0.3 % |
+
+* **The diffusion coefficient needs a prediction under every condition.** The Nernst-Einstein
+  value is 3.1 times below the measured coefficient at 1 mol/L and 298 K. With it the cell loses
+  36 % of its capacity at 1.5C and more under every faster or colder condition, and at 1C the
+  discharge does not end at the voltage limit, so there is no capacity to compare. Multiplied by
+  the measured thermodynamic factor the value is 1.4 times below the measured one, and costs
+  0.2 % at 1C and 0.6 % at 1.5C, but 16 % at 2C and 40 % at 2.5C.
+* **The published constant of the transference number is enough at room temperature.** It costs
+  at most 0.8 % of the capacity at 298 K. In the colder cells it costs 2.4 % at 263 K and 1C and
+  8.0 to 9.5 % under the other three conditions.
+* **The thermodynamic factor matters more as an input of the diffusion coefficient than for its
+  own term.** The constant 1 costs at most 2.2 % at 298 K, 3.3 to 4.5 % at 263 K, and 10.3 % at
+  253 K and 1C. But it is the difference between a Nernst-Einstein value 3.1 times too low and
+  one 1.4 times too low.
+
+Two limits of this reading are stated with it. First, the reference itself leaves the measured
+range: the study measured between 100 and 3000 mol/m3, and with the measured electrolyte in
+place the concentration somewhere in the cell goes outside that range under 5 of the 8
+conditions, up to 4673 mol/m3 at 263 K and 1C. There the fitted functions are read outside the
+measurements they were fitted to, so the capacity called measured is the capacity of an
+extrapolation. Second, in the colder cells the transference number and the thermodynamic factor
+called measured are the values at 293 K, as in the second reference. A verdict on these two in
+the cold therefore compares two assumed values.
+
+**The reading of the curve was checked by drawing.** A tolerance is read from a curve of a few
+points, with straight lines between them. At 298 K and 2.5C each parameter was drawn 100 times
+with the deviation tolerated at 5 %, and the cell was run once per draw. The capacity the curve
+gives at a drawn value differs from the run at the same value by at most 0.019 A.h, which is
+8 % of the 5 % limit of 0.230 A.h. The runs left the limit in 2 %, 2 % and 0 % of the draws,
+where about 2.5 % is expected, because the deviation is set by the nearer end of the range.
+
 ```bash
-python benchmarks/run_cellmodel.py      # 40 minutes, after run_nebdft.py
+python benchmarks/run_cellmodel.py      # 50 minutes, after run_nebdft.py
 ```
 
-The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `finish` -- and each stage
+The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `tolerance`, `finish` -- and each stage
 writes its own file, so a run that stops is continued and not repeated. One parameter is drawn
 with `--stage sample --parameter NAME`.
 

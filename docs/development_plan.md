@@ -5201,10 +5201,13 @@ They are numbered on their own here; "plan rule 4" below is the rule on interval
 of this plan.
 
 1. *The tolerance first.* Before anything is simulated, the stress stage of MS9 is run with the
-   parameter drawn around its measured function at several spreads (`tolerance_for_capacity` and
-   `local_sensitivity` in `cmfqsar/cellmodel.py`). The result is the deviation of that parameter
+   parameter changed over a fixed set of points around its measured function (`response` and
+   `tolerated_range` in `cmfqsar/cellmodel.py`). The result is the deviation of that parameter
    which the capacity tolerates at each rate and temperature. If the cheapest reference of an
-   item is already inside that tolerance, the item ends there and its entry says so.
+   item is already inside that tolerance, the item ends there and its entry says so. This rule
+   first said that the parameter is drawn at several spreads. A curve of fixed points answers
+   the same question for every spread at once, so the stage was built that way, and a drawn
+   check confirms the reading of the curve.
 2. *A simulated label is checked against a measurement before a model is fitted on it.* Measured
    values of these three properties exist for a few solvent mixtures only. That is too few to
    train on, so the labels for the 62 formulations of BT5 have to come from simulation. MS9 found
@@ -5235,6 +5238,80 @@ and temperature in the form PyBaMM reads, in moles per litre. The density of the
 gives the conversion from the molality that CALiSol-23 uses. The same density closes the open
 point of MS9 that its conductivity was a molality compared with a molarity.
 
+**The tolerance stage of rule 1, built and measured 13 November 2026**
+(`benchmarks/run_cellmodel.py --stage tolerance`; `response`, `tolerated_range` and
+`nernst_einstein_diffusivity` in `cmfqsar/cellmodel.py`; `benchmarks/results/cellmodel/`,
+files `tolerance_*.json` and two sections of `table.md`; 19 tests in
+`tests/test_cellmodel.py`; nine minutes). The cell holds the electrolyte with all four
+parameters as measured. One parameter at a time is multiplied by a factor (the diffusion
+coefficient over 19 points from 0.05 to 20, the thermodynamic factor over 15 points from 0.2 to
+5) or shifted by a constant (the transference number over 15 points from -0.4 to +0.4), and the
+full Doyle–Fuller–Newman model is run once per point under the eight conditions of the stress
+stage. The *tolerated range* is the connected range around the measured function inside which
+the capacity stays within 5 % of the capacity with the measured function. The *tolerated
+deviation* is the largest standard deviation of an error whose 95 % interval stays inside that
+range: of the natural logarithm for a factor, of the number itself for a shift. An end written
+with < or > is the outermost point that was run. The table for 1 % is in `table.md`.
+
+| Temperature, K | Rate | Capacity with the measured electrolyte, A.h | Diffusion coefficient: tolerated factor | Deviation of its logarithm | Transference number: tolerated shift | Deviation | Thermodynamic factor: tolerated factor | Deviation of its logarithm |
+| ---: | ---: | ---: | --- | ---: | --- | ---: | --- | ---: |
+| 298 | 1C | 4.987 | 0.32 to > 20.00 | 0.585 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to > 5.00 | >= 0.821 |
+| 298 | 1.5C | 4.899 | 0.49 to > 20.00 | 0.367 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to 3.34 | 0.616 |
+| 298 | 2C | 4.789 | 0.67 to > 20.00 | 0.206 | -0.28 to > +0.40 | 0.143 | < 0.20 to 2.20 | 0.403 |
+| 298 | 2.5C | 4.609 | 0.83 to > 20.00 | 0.098 | -0.13 to > +0.40 | 0.064 | < 0.20 to 1.58 | 0.233 |
+| 263 | 1C | 4.755 | 0.85 to > 20.00 | 0.086 | -0.10 to > +0.40 | 0.053 | < 0.20 to 1.41 | 0.174 |
+| 263 | 1.5C | 3.512 | 0.96 to 1.05 | 0.023 | -0.03 to +0.03 | 0.017 | 0.48 to 1.37 | 0.160 |
+| 253 | 1C | 3.788 | 0.93 to 1.10 | 0.040 | -0.05 to +0.06 | 0.027 | 0.67 to 1.35 | 0.154 |
+| 253 | 1.5C | 2.409 | 0.96 to 1.04 | 0.020 | -0.03 to +0.03 | 0.014 | < 0.20 to 1.55 | 0.224 |
+
+The cheapest reference of each item was run under the same conditions, in place of the measured
+function and with the other three parameters as measured. The numbers are the difference of the
+capacity as a share of the capacity with the measured electrolyte.
+
+| Temperature, K | Rate | Diffusion coefficient: Nernst-Einstein value | Diffusion coefficient: Nernst-Einstein value times the measured thermodynamic factor | Diffusion coefficient: function of the published set | Transference number: the constant 0.2594 | Thermodynamic factor: the constant 1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 298 | 1C | no usable discharge | -0.2 % | -0.4 % | +0.0 % | +0.2 % |
+| 298 | 1.5C | -36.0 % | -0.6 % | -1.1 % | +0.1 % | +0.4 % |
+| 298 | 2C | -56.9 % | -15.8 % | -3.1 % | +0.3 % | +0.8 % |
+| 298 | 2.5C | -71.3 % | -40.4 % | -19.6 % | +0.8 % | +2.2 % |
+| 263 | 1C | -68.9 % | -48.8 % | +3.1 % | +2.4 % | +3.3 % |
+| 263 | 1.5C | -83.8 % | -70.0 % | +27.5 % | +9.5 % | +4.5 % |
+| 253 | 1C | -81.7 % | -70.3 % | +26.9 % | +8.0 % | +10.3 % |
+| 253 | 1.5C | -91.0 % | -82.6 % | +61.8 % | +9.1 % | +0.3 % |
+
+What the stage found, in the order of its weight:
+
+* *The diffusion coefficient needs a prediction under every condition.* The Nernst–Einstein
+  value is 3.1 times below the measured coefficient at 1 mol/L and 298 K, and fails everywhere;
+  at 1C the discharge with it does not end at the voltage limit, so there is no capacity to
+  compare.
+* *At room temperature only a coefficient that is too small is punished.* The lower end of the
+  tolerated factor is 0.32 at 1C, 0.49 at 1.5C, 0.67 at 2C and 0.83 at 2.5C, and every larger
+  value that was tried, up to 20 times, costs less than 5 %.
+* *In a cold cell the tolerance is narrower than the agreement of two measurements.* At 263 K
+  and 1.5C and at 253 K the coefficient has to be within 4 to 10 %. The function of the
+  published set and the function of the second reference, two studies of the same electrolyte,
+  differ by a factor of 1.6 at 1 mol/L and 298 K.
+* *The two constants are enough at room temperature.* The published transference number costs
+  at most 0.8 % of the capacity at 298 K, and the thermodynamic factor 1 at most 2.2 %.
+* *The thermodynamic factor matters more as an input of the diffusion coefficient than for its
+  own term.* With the measured factor the Nernst–Einstein value is 1.4 times below the measured
+  coefficient instead of 3.1 times.
+
+Two limits belong to every one of these statements. With the measured electrolyte in place, the
+concentration somewhere in the cell leaves the 100 to 3000 mol/m3 the study covers under 5 of
+the 8 conditions (up to 4673 mol/m3 at 263 K and 1C), and the electrolyte is exhausted
+somewhere in the cell under the three coldest and fastest. There the capacity called measured
+is the capacity of an extrapolated fit. And in the colder cells the transference number and the
+thermodynamic factor called measured are the values at 293 K, so a verdict on these two in the
+cold compares two assumed values. The reading of the curve was checked by drawing each
+parameter 100 times at 298 K and 2.5C: the curve differs from the run at the same drawn value
+by at most 0.019 A.h, 8 % of the 5 % limit, and the runs left the limit in 2 %, 2 % and 0 % of
+the draws, where about 2.5 % is expected. *What writing it found:* a run can end for a reason
+other than the voltage limit and still return a number, as the Nernst–Einstein run at 1C did,
+so `run_cell(..., details=True)` now records why a discharge ended and how far the
+concentration was driven, and the stage counts only discharges that ended at the limit.
+
 * **BT9. The salt diffusion coefficient of the electrolyte.** This is the parameter the cell
   responds to most among the three: MS9's second reference attributes most of the difference
   between the two capacities at fast discharge to it. *Reference of its own:* the diffusion
@@ -5258,6 +5335,17 @@ point of MS9 that its conductivity was a molality compared with a molarity.
   the Nernst–Einstein reference by more than the interval of plan rule 4; (c) in the stress stage
   of MS9 the predicted interval holds the capacity of the measured electrolyte under the eight
   conditions. Size: medium, and most of it is simulation time.
+  *What the tolerance stage says (rule 1).* The item does not end there: its cheapest reference
+  is outside the tolerance under every condition. With the Nernst–Einstein value the cell loses
+  36 % of its capacity at 1.5C and 57 to 91 % under the faster and the colder conditions.
+  Multiplied by the thermodynamic factor of the reference, the value costs 0.2 % at 1C and 0.6 %
+  at 1.5C, but 16 % at 2C and 40 % at 2.5C. The accuracy the item has to reach is one-sided at
+  room temperature, so a label from simulation should err on the high side, and a model whose
+  logarithm has a deviation of 0.37 serves cells up to 1.5C. Under the three conditions where
+  the electrolyte is exhausted (263 K at 1.5C, 253 K at both rates) the coefficient has to be
+  within 4 to 10 %, which no simulation reaches and two studies of this electrolyte do not
+  reach between them. Gate (c) is therefore not expected to give a useful interval there, and
+  that would be a property of the cell and not a failure of the model.
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated
@@ -5282,6 +5370,14 @@ point of MS9 that its conductivity was a molality compared with a molarity.
   function at 298 K inside the uncertainty the study states; (c) a model is ahead of the
   constant, of the self-diffusion ratio and of the ion-pair fraction on held-out compositions,
   by more than the interval of plan rule 4. Size: large.
+  *What the tolerance stage says (rule 1).* The item ends for a cell at room temperature and
+  stays open for a cold one. At 298 K the published constant costs at most 0.8 % of the
+  capacity, and the tolerated shift at 5 % is -0.13 or wider. In the colder cells the constant
+  costs 2.4 % at 263 K and 1C and 8.0 to 9.5 % under the other three conditions, where the
+  tolerated shift is 0.03 to 0.06 either way. The reference in the cold is the value at 293 K,
+  so that verdict compares two assumed values. What a cold cell needs first is therefore a
+  value at its own temperature and not a model. The ratio of the self-diffusion coefficients
+  from the trajectories of BT9 gives one at no further cost.
 
 * **BT11. The thermodynamic factor.** This is an equilibrium property and not a transport
   coefficient: it says how far the salt is from an ideal solution at each concentration. It
@@ -5301,6 +5397,12 @@ point of MS9 that its conductivity was a molality compared with a molarity.
   measured function at 298 K inside the uncertainty the study states; (c) a model is ahead of
   the constant, of the limiting law and of the linear regression on the concentration on
   held-out compositions, by more than the interval of plan rule 4. Size: large.
+  *What the tolerance stage says (rule 1).* For its own term in the cell model the constant 1
+  is enough at room temperature, where it costs at most 2.2 % of the capacity. It costs 3.3 to
+  4.5 % at 263 K and 10.3 % at 253 K and 1C. The larger use of this item is as an input of BT9:
+  the Nernst–Einstein value is 3.1 times below the diffusion coefficient of the reference
+  without the thermodynamic factor and 1.4 times below with it. The item is therefore judged
+  first by what its factor does to the diffusion coefficient of BT9.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -5320,11 +5422,11 @@ correction, clear of zero in three readings of four, and do not beat it on
 the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one
 complex, so the co-field and the accuracy pull against each other), BT8
 whenever EC6 is ready for it. BT9 to BT11 were opened on 13 November 2026 from the open
-point of MS9. The tolerance stage of their rule 1 comes first for all three: it costs minutes
-of cell-model runs and decides which of them are simulated at all. BT9 is next, since MS9
-attributes most of the difference at fast discharge to the diffusion coefficient and its labels
-are the cheapest. BT10 follows on the same trajectories in larger boxes. BT11 is last unless the
-tolerance stage says otherwise.
+point of MS9. The tolerance stage of their rule 1 was run the same day and decides the order.
+BT9 is first and is needed under every condition: its cheapest reference is outside the
+tolerance everywhere. BT11 is second, because its factor is an input of BT9; for its own term
+the constant 1 is enough at room temperature. BT10 is last and for cold cells only: at room
+temperature the published constant costs at most 0.8 % of the capacity.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -6731,6 +6833,13 @@ would discard the typed fields and the global kernel that are the method's own.
   capacity; the conductivity prediction is one condition, a molality compared with a
   molarity. The three are items BT9, BT10 and BT11 of the battery section, and the
   conversion to a molarity is part of them.
+  **How accurate the three would have to be, measured 13 November 2026**
+  (`--stage tolerance`). The response curve of the cell to each of the three was run around
+  the measured function under the same eight conditions. For a capacity that may move by 5 %
+  the diffusion coefficient may be as low as 0.32 of the measured value at 1C and 0.83 at
+  2.5C, and has to be within 4 to 10 % in the cold cells that exhaust their electrolyte. The
+  two published constants cost at most 0.8 % and 2.2 % at room temperature. The record is in
+  the battery section, before item BT9.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
@@ -8049,8 +8158,9 @@ equally blocked.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
-  opened on 13 November 2026; their first stage costs minutes and decides which of them are
-  simulated.
+  opened on 13 November 2026; their first stage was run the same day and says that the
+  diffusion coefficient needs a prediction under every condition and the other two only in
+  cold cells.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and

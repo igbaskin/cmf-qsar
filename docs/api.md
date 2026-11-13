@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1251 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 812 public methods, and 1254 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1558,6 +1558,13 @@ parameters and their deviations. Three things happen here.
   far the capacity moves when one parameter is changed by a fixed fraction of itself. The first
   reading says what this program contributes; the second is a property of the cell model alone,
   and it is the one the cell-model literature states.
+* `response` runs the cell model once per chosen value of one parameter, which is its
+  response curve, and `tolerated_range` reads from that curve how far the parameter may be
+  from its measured value before the capacity leaves a stated distance. This is the question to
+  ask *before* a parameter is predicted: how accurate does a prediction have to be? (Plan items
+  BT9 to BT11, the three parameters of the electrolyte this program does not predict.)
+  `nernst_einstein_diffusivity` is the reference such a prediction has to beat for the
+  diffusion coefficient: the value an ideal solution would have, from the conductivity alone.
 
 PyBaMM is an optional dependency, as pymatgen is. Nothing in `cmfqsar.interfaces` needs it,
 and every function here imports it when it is called, so the module can be imported without it.
@@ -1576,6 +1583,13 @@ Attributes:
 - `ok: bool` = `True`
 - `message: str` = `''`
 - `overrides: Dict[str, float]` = `field(default_factory=dict)`
+- `termination: str` = `''`
+- `concentration: Tuple[float, float]` = `(float('nan'), float('nan'))`
+
+#### `CellRun.at_cutoff` -> bool  (property)
+
+Did the last discharge end at the lower voltage limit, as a discharge should?  A
+discharge that ended for another reason has no discharge capacity to compare.
 
 #### `CellRun.final` -> float  (property)
 
@@ -1614,7 +1628,7 @@ read at the cell's temperature.
 
 The cell model itself.
 
-### `run_cell(overrides: Optional[Dict[str, object]]=None, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, initial_soc: float=1.0, parameters=None, temperature: Optional[float]=None) -> CellRun`
+### `run_cell(overrides: Optional[Dict[str, object]]=None, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, initial_soc: float=1.0, parameters=None, temperature: Optional[float]=None, details: bool=False) -> CellRun`
 
 One run of the cell model, with the entries in `overrides` put in place of the published
 ones. Returns the discharge capacity of every cycle.
@@ -1624,6 +1638,10 @@ what `cmfqsar.interfaces.CellParameter.apply` produces. `parameters` is for a ca
 that has the published set already, so that reading it is not repeated per run.
 `temperature` sets the temperature of the cell and of its surroundings, in kelvin; how much
 that changes depends on which parameters of the published set depend on temperature at all.
+`details` also records why the discharge of the last cycle ended and the lowest and highest
+concentration of the electrolyte during it, which say whether the capacity is that of an
+ordinary discharge and whether the electrolyte's functions were read inside the range they
+were measured in.
 
 ### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None, temperature: Optional[float]=None, fixed: Optional[Dict[str, object]]=None) -> List[CellRun]`
 
@@ -1679,6 +1697,64 @@ volt) the size of the change is `step` times the published value, since the shif
 starts at zero. A tenth of a voltage is a large change in a battery and a tenth of a
 diffusion coefficient is a small one, so the elasticities of parameters of different kinds
 order the cell model's response to equal *relative* changes and not to equally likely ones.
+
+### `response(parameter: CellParameter, values: Sequence[float], cycles: int=1, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, temperature: Optional[float]=None, fixed: Optional[Dict[str, object]]=None, parameters=None) -> List[CellRun]`
+
+The response curve of the cell to one parameter: one run per value in `values`.
+
+Nothing is drawn. A drawn sample answers what one stated deviation does to the capacity; a
+response curve answers it for every deviation at once, because the interval of the capacity
+for any spread of the parameter can be read from the curve. That is what a tolerance needs,
+and it is why this is the tool for a parameter that has no prediction yet.
+
+`fixed` holds replacements that stay the same in every run, as in `sample`, and the
+values act on the fixed entry: a factor of 1 or a shift of 0 is then the cell with the fixed
+entries and nothing else changed. Every run carries its details (`run_cell`).
+
+### `tolerated_range(values: Sequence[float], capacities: Sequence[float], centre: float, width: float, log: bool=False, level: float=95.0) -> Dict[str, object]`
+
+How far a parameter may be from `centre` before the capacity leaves `width` of the
+capacity there.
+
+`values` are the points a response curve was run at and `capacities` what the cell gave at
+them; `centre` is the unchanged value and has to be one of the points. The answer is the
+connected range around the centre inside which the capacity stays within `width`
+ampere-hours of the capacity at the centre. Its two ends are found by linear interpolation
+between neighbouring points, in the logarithm of the value when `log` is true, which is the
+right axis for a factor.
+
+Three things can end the range on a side, and the record says which. The capacity left the
+limit between two points (`"crossed"`). The next point gave no capacity, because the cell
+model refused it or the discharge did not end at the voltage limit (`"refused"`; the end is
+then the last point that did give one). Or the points ran out with the capacity still inside
+(`"open"`; the end is then the outermost point, and the true end is at least that far). A
+tolerance stated from an open end has to say so.
+
+`sd` is the largest standard deviation of an error whose central interval at `level` per
+cent stays inside the range: of the natural logarithm of the parameter for a factor, of the
+parameter itself otherwise. The nearer end sets it, because a cell responds differently to
+too little and to too much. `sd_is_a_lower_bound` is true when that nearer end is open.
+
+### `nernst_einstein_diffusivity(conductivity, transference, factor=1.0, floor: float=1.0)`
+
+The salt diffusion coefficient that a conductivity implies for an ideal solution of
+fully dissociated ions, as a function of concentration and temperature.
+
+For a salt of two singly charged ions the Nernst-Einstein relation ties the conductivity to
+the sum of the two self-diffusion coefficients, `kappa = F^2 c (D+ + D-) / (R T)`, and the
+transference number divides that sum between the ions, `t = D+ / (D+ + D-)`. The salt
+diffusion coefficient of a dilute solution is `2 D+ D- / (D+ + D-)`, so
+
+    D = 2 t (1 - t) kappa R T / (F^2 c)
+
+with the concentration in mol/m3 and the conductivity in S/m. It needs nothing but the
+conductivity, which is why it is the reference a predicted diffusion coefficient has to
+beat (plan item BT9).
+
+`conductivity` is a function of the concentration and the temperature; `transference` and
+`factor` are numbers or functions of the same two. `factor` multiplies the result: for a
+concentrated solution the thermodynamic factor belongs there, and 1 is the ideal solution.
+The concentration is read no lower than `floor`, because the relation divides by it.
 
 ### `tolerance_for_capacity(parameter: CellParameter, width: float, scales: Sequence[float], published: Optional[float]=None, draws: int=100, cycles: int=3, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0) -> List[Dict[str, float]]`
 

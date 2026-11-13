@@ -94,6 +94,81 @@ The published cell takes its conductivity and electrolyte diffusivity from one s
 
 **In the cold the parameters that are not predicted decide the capacity.** At 253 K and 1.5C the measured conductivity alone gives 4.427 A.h and all four measured parameters give 2.409, against the published 4.848. The difference between the two measured capacities comes from the diffusivity, the transference number and the thermodynamic factor, for which this program has no prediction.
 
+### How accurate the three parameters without a prediction have to be
+
+This program does not predict the salt diffusion coefficient, the cation transference number or the thermodynamic factor of the electrolyte (plan items BT9, BT10 and BT11). Before any of them is simulated, this stage asks how accurate each one has to be. The cell holds the electrolyte with all four transport parameters as Landesfeind and Gasteiger (2019) measured them. One parameter at a time is then multiplied by a factor (the diffusion coefficient and the thermodynamic factor) or shifted by a constant (the transference number) over a fixed set of points, and the full model is run once per point. Nothing is drawn: the capacity for any spread of the parameter can be read from such a curve.
+
+The *tolerated range* is the connected range around the measured function inside which the discharge capacity stays within the stated share of the capacity with the measured function. The *tolerated deviation* is the largest standard deviation of an error whose 95 % interval stays inside that range: of the natural logarithm for a factor, of the number itself for a shift. The nearer end of the range sets it. An end written with < or > is the outermost point that was run, so the range is at least that wide, and a deviation written with >= is a lower bound for the same reason. An end written with * is the last point before one at which the model gave no usable discharge.
+
+**The capacity may move by 1 %.**
+
+| Temperature, K | Rate | Capacity with the measured electrolyte, A.h | Diffusion coefficient: tolerated factor | Tolerated deviation of its logarithm | Transference number: tolerated shift | Tolerated deviation | Thermodynamic factor: tolerated factor | Tolerated deviation of its logarithm |
+|---:|---:|---:|---|---:|---|---:|---|---:|
+| 298 | 1C | 4.987 | 0.40 to > 20.00 | 0.470 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to 3.17 | 0.588 |
+| 298 | 1.5C | 4.899 | 0.61 to > 20.00 | 0.250 | -0.28 to > +0.40 | 0.143 | < 0.20 to 2.01 | 0.356 |
+| 298 | 2C | 4.789 | 0.81 to 2.53 | 0.105 | -0.11 to +0.30 | 0.057 | 0.30 to 1.40 | 0.171 |
+| 298 | 2.5C | 4.609 | 0.93 to 1.14 | 0.034 | -0.04 to +0.06 | 0.021 | 0.78 to 1.16 | 0.078 |
+| 263 | 1C | 4.755 | 0.96 to 1.07 | 0.023 | -0.03 to +0.03 | 0.013 | 0.89 to 1.09 | 0.046 |
+| 263 | 1.5C | 3.512 | 0.99 to 1.01 | 0.005 | -0.01 to +0.01 | 0.003 | 0.92 to 1.08 | 0.037 |
+| 253 | 1C | 3.788 | 0.98 to 1.02 | 0.008 | -0.01 to +0.01 | 0.005 | 0.93 to 1.06 | 0.032 |
+| 253 | 1.5C | 2.409 | 0.99 to 1.01 | 0.004 | -0.01 to +0.01 | 0.003 | 0.81 to 1.14 | 0.066 |
+
+**The capacity may move by 5 %.**
+
+| Temperature, K | Rate | Capacity with the measured electrolyte, A.h | Diffusion coefficient: tolerated factor | Tolerated deviation of its logarithm | Transference number: tolerated shift | Tolerated deviation | Thermodynamic factor: tolerated factor | Tolerated deviation of its logarithm |
+|---:|---:|---:|---|---:|---|---:|---|---:|
+| 298 | 1C | 4.987 | 0.32 to > 20.00 | 0.585 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to > 5.00 | >= 0.821 |
+| 298 | 1.5C | 4.899 | 0.49 to > 20.00 | 0.367 | < -0.40 to > +0.40 | >= 0.204 | < 0.20 to 3.34 | 0.616 |
+| 298 | 2C | 4.789 | 0.67 to > 20.00 | 0.206 | -0.28 to > +0.40 | 0.143 | < 0.20 to 2.20 | 0.403 |
+| 298 | 2.5C | 4.609 | 0.83 to > 20.00 | 0.098 | -0.13 to > +0.40 | 0.064 | < 0.20 to 1.58 | 0.233 |
+| 263 | 1C | 4.755 | 0.85 to > 20.00 | 0.086 | -0.10 to > +0.40 | 0.053 | < 0.20 to 1.41 | 0.174 |
+| 263 | 1.5C | 3.512 | 0.96 to 1.05 | 0.023 | -0.03 to +0.03 | 0.017 | 0.48 to 1.37 | 0.160 |
+| 253 | 1C | 3.788 | 0.93 to 1.10 | 0.040 | -0.05 to +0.06 | 0.027 | 0.67 to 1.35 | 0.154 |
+| 253 | 1.5C | 2.409 | 0.96 to 1.04 | 0.020 | -0.03 to +0.03 | 0.014 | < 0.20 to 1.55 | 0.224 |
+
+For scale: at 1 mol/L and 298 K the measured diffusion coefficient is 2.89e-10 m2/s, the measured transference number 0.221 and the measured thermodynamic factor 2.18.
+
+**Where each parameter has to be most accurate, at 5 % of the capacity:** the salt diffusion coefficient at 253 K and 1.5C, where the tolerated deviation is 0.020 (a factor between 0.96 and 1.04); the cation transference number at 253 K and 1.5C, where the tolerated deviation is 0.014 (an error within 0.026 either way); the thermodynamic factor at 253 K and 1C, where the tolerated deviation is 0.154 (a factor between 0.74 and 1.35).
+
+**At room temperature only a diffusion coefficient that is too small is punished.** A larger one costs less than 5 % of the capacity at every factor that was tried, up to 20. The lower end of the tolerated factor rises with the rate: 0.32 at 1C, 0.49 at 1.5C, 0.67 at 2C, 0.83 at 2.5C. A prediction of this parameter should therefore err on the high side.
+
+### What the cheapest reference of each item costs
+
+Each of the three items names a value that needs no new data. For the diffusion coefficient it is the Nernst-Einstein value, D = 2 t (1 - t) k R T / (F^2 c), from the measured conductivity k and the transference number t of the published set: the coefficient of an ideal solution of fully dissociated ions. For the other two it is the constant of the published set. Each is put in place of the measured function, with the other three as measured, and the difference of the capacity is given in A.h and as a share of the capacity with the measured electrolyte. Two more values of the diffusion coefficient are run to say where the error of the first comes from.
+
+| Temperature, K | Rate | Diffusion coefficient: Nernst-Einstein, ideal solution | Diffusion coefficient: Nernst-Einstein times the measured thermodynamic factor | Diffusion coefficient: function of the published set | Transference number: constant of the published set | Thermodynamic factor: 1 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 298 | 1C | no usable discharge | -0.008 (-0.2 %) | -0.018 (-0.4 %) | +0.002 (+0.0 %) | +0.009 (+0.2 %) |
+| 298 | 1.5C | -1.765 (-36.0 %) | -0.031 (-0.6 %) | -0.055 (-1.1 %) | +0.005 (+0.1 %) | +0.018 (+0.4 %) |
+| 298 | 2C | -2.723 (-56.9 %) | -0.757 (-15.8 %) | -0.149 (-3.1 %) | +0.013 (+0.3 %) | +0.040 (+0.8 %) |
+| 298 | 2.5C | -3.285 (-71.3 %) | -1.863 (-40.4 %) | -0.905 (-19.6 %) | +0.038 (+0.8 %) | +0.103 (+2.2 %) |
+| 263 | 1C | -3.276 (-68.9 %) | -2.322 (-48.8 %) | +0.149 (+3.1 %) | +0.114 (+2.4 %) | +0.159 (+3.3 %) |
+| 263 | 1.5C | -2.944 (-83.8 %) | -2.457 (-70.0 %) | +0.965 (+27.5 %) | +0.333 (+9.5 %) | +0.158 (+4.5 %) |
+| 253 | 1C | -3.096 (-81.7 %) | -2.662 (-70.3 %) | +1.021 (+26.9 %) | +0.301 (+8.0 %) | +0.390 (+10.3 %) |
+| 253 | 1.5C | -2.193 (-91.0 %) | -1.991 (-82.6 %) | +1.488 (+61.8 %) | +0.219 (+9.1 %) | +0.007 (+0.3 %) |
+
+At 1 mol/L and 298 K the Nernst-Einstein value is 9.34e-11 m2/s, 3.1 times below the measured 2.89e-10. Multiplied by the measured thermodynamic factor it is 2.04e-10, 1.4 times below. The function of the published set gives 1.77e-10 at every temperature.
+
+**BT9, the salt diffusion coefficient.** The reference is inside 1 % of the capacity under 0 of 8 conditions and inside 5 % of the capacity under 0 of 8 conditions. Its largest difference is -2.193 A.h (-91.0 %) at 253 K and 1.5C. At 298 K and 1C the cell model gave no usable discharge with this reference: the discharge did not end at the voltage limit, so there is no capacity to compare, and the condition is counted as outside. The reference is outside the tolerance under every condition, so the item does not end here.
+
+**BT10, the cation transference number.** The reference is inside 1 % of the capacity under 4 of 8 conditions and inside 5 % of the capacity under 5 of 8 conditions. Its largest difference is +0.333 A.h (+9.5 %) at 263 K and 1.5C. The reference is not inside the tolerance under every condition, so the item does not end here; the conditions where it is inside are the ones where this parameter does not need a prediction.
+
+**BT11, the thermodynamic factor.** The reference is inside 1 % of the capacity under 4 of 8 conditions and inside 5 % of the capacity under 7 of 8 conditions. Its largest difference is +0.390 A.h (+10.3 %) at 253 K and 1C. The reference is not inside the tolerance under every condition, so the item does not end here; the conditions where it is inside are the ones where this parameter does not need a prediction.
+
+**The reference itself leaves the measured range under 5 of 8 conditions.** The study measured between 100 and 3000 mol/m3. With the measured electrolyte in place, the concentration somewhere in the cell goes outside that range at 298 K and 2.5C, 263 K and 1C, 263 K and 1.5C, 253 K and 1C, 253 K and 1.5C; the highest is 4673 mol/m3 at 263 K and 1C. Under 3 of these the electrolyte is exhausted somewhere in the cell (below 1 mol/m3), which is what ends the discharge early. There the fitted functions are read outside the measurements they were fitted to, so the capacity called measured is the capacity of an extrapolation.
+
+In the colder cells the transference number and the thermodynamic factor called measured are the values at 293 K, as in the second reference, because the study calls its colder values of these two less precise. A tolerance of these two in the cold is therefore a tolerance around an assumed value.
+
+**The reading of the curve, checked by drawing.** A tolerance is read from a curve of a few points with straight lines between them. At 298 K and 2.5C each parameter was drawn 100 times with the deviation tolerated at 5 %, and the cell was run once per draw. Each run is compared with the capacity the curve gives at the same drawn value.
+
+| Parameter | Deviation drawn with | Largest difference between curve and run, A.h | 95 % interval of the runs, A.h | 95 % interval of the curve at the same draws, A.h | Draws whose run left the limit |
+|---|---:|---:|---|---|---:|
+| Salt diffusion coefficient | 0.098 | 0.019 | 4.502 to 4.668 | 4.484 to 4.666 | 2 % |
+| Cation transference number | 0.064 | 0.004 | 4.478 to 4.685 | 4.475 to 4.684 | 2 % |
+| Thermodynamic factor | 0.233 | 0.011 | 4.414 to 4.666 | 4.410 to 4.666 | 0 % |
+
+The capacity with the measured electrolyte is 4.609 A.h, so the limit of 5 % is 0.230 A.h. The largest error of reading between points is 0.019 A.h, which is 8 % of that limit. About 2.5 % of the draws are expected to leave the limit, because the deviation is set by the nearer end of the range.
+
 ## What the gate asked, and what came out
 
 **The first part is not met.** The interval holds the published curve for 4 of 5 parameters, and the gate asks for every parameter whose deviation means what it says. It fails for Positive electrode Bruggeman coefficient (electrolyte), whose deviation is calibrated (z rms 1.04). The interval misses by 6.43e-04 A.h, because the structures this channel was fitted on are more tortuous than the exponent of 1.5 the authors of the cell fitted; the channel says so itself, since its structures are generated and it is marked as outside what the model was fitted on.
