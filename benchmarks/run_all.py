@@ -505,6 +505,21 @@ def registry() -> List[Benchmark]:
                   minutes="10",
                   report=lambda: _mod("run_conductors").report(),
                   tables=["conductors/table.md"]),
+        Benchmark("cellmodel",
+                  "a parameter set for a cell model, with its deviations: the hop barriers of "
+                  "BT7 as a solid diffusion coefficient, the insertion ladder of BT3 as a "
+                  "shift of the open-circuit voltage, the measured conductivities of BT5 as a "
+                  "factor on the conductivity of the electrolyte, and a two-phase field as a "
+                  "Bruggeman exponent, each drawn from its deviation and run through PyBaMM's "
+                  "single-particle model with electrolyte, with the share of the variance of "
+                  "the capacity each one explains and how accurate the barrier would have to be "
+                  "(needs pybamm, and the rows that run_nebdft.py leaves in benchmarks/cache)",
+                  "run_cellmodel.py", "cellmodel",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="25",
+                  report=lambda: _mod("run_cellmodel").report(),
+                  tables=["cellmodel/table.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",

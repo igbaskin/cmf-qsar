@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 122 modules, 240 classes with 794 public methods, and 1233 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 123 modules, 243 classes with 811 public methods, and 1248 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -47,6 +47,7 @@ for.
 | [cmfqsar.bonds](#cmfqsarbonds) | Bonds of a periodic structure, perceived from distances, for drawing only. |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.celldiff](#cmfqsarcelldiff) | The difference between two cells of one ladder as a field in the cell (plan item BT6). |
+| [cmfqsar.cellmodel](#cmfqsarcellmodel) | Running a cell model once per drawn parameter set, and saying which deviation matters (plan item MS9). |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
 | [cmfqsar.cli](#cmfqsarcli) | Command-line interface for building CMF 3D-QSAR models (no GUI needed). |
 | [cmfqsar.coalign](#cmfqsarcoalign) | Co-alignment of a training set, treated as what it is: expectation-maximisation over poses. |
@@ -1525,6 +1526,147 @@ This is the reading the item asks for, as far as a set of different hosts allows
 coordination of the site the working ion takes, measured on the discharged cell itself rather
 than read off a model.  A co-field in the cell needs every pair on one lattice, which a
 collection of different hosts does not give.
+
+## cmfqsar.cellmodel
+
+Source: `cmfqsar/cellmodel.py`
+
+Running a cell model once per drawn parameter set, and saying which deviation matters
+(plan item MS9).
+
+A cell-level battery model -- the Doyle-Fuller-Newman model and its single-particle reductions,
+as PyBaMM implements them -- is a set of partial differential equations over the thickness of the
+electrodes and the radius of the particles, with time, boundary conditions and transport in it.
+It is not a model this program can be, because this program has no time axis and no transport
+equation. It is a model this program can feed: every one of its material parameters is a quantity
+that some benchmark here predicts, and the prediction comes with a standard deviation in the
+units of the parameter (plan item MS1).
+
+This module is the step after `cmfqsar.interfaces.CellParameterSet`, which holds the
+parameters and their deviations. Three things happen here.
+
+* `run_cell` runs the cell model once, with some parameters replaced, and returns the
+  discharge capacity of every cycle. A set of parameters the cell model refuses is not an error:
+  it is recorded as a run that did not complete, because a deviation wide enough to leave the
+  range the cell model accepts is a result about the deviation.
+* `sample` draws one parameter many times, with the others at their published values, and
+  runs the cell model per draw. The output is a set of capacity-against-cycle curves instead of
+  one curve, and `band` turns it into an interval per cycle.
+* `variance_shares` says which parameter's deviation moves the last cycle's capacity most,
+  as the share of the variance each one explains when it is drawn alone.
+  `local_sensitivity` is the other reading, which does not depend on the deviations: how
+  far the capacity moves when one parameter is changed by a fixed fraction of itself. The first
+  reading says what this program contributes; the second is a property of the cell model alone,
+  and it is the one the cell-model literature states.
+
+PyBaMM is an optional dependency, as pymatgen is. Nothing in `cmfqsar.interfaces` needs it,
+and every function here imports it when it is called, so the module can be imported without it.
+
+### `class CellRun  (dataclass)`
+
+What one run of the cell model gives: the discharge capacity of every cycle.
+
+`ok` is false when the cell model did not reach the last cycle asked for, and `message` says
+why. `capacity` then holds the cycles it did reach, which may be none of them.
+
+Attributes:
+
+- `capacity: np.ndarray`
+- `cycles: int`
+- `ok: bool` = `True`
+- `message: str` = `''`
+- `overrides: Dict[str, float]` = `field(default_factory=dict)`
+
+#### `CellRun.final` -> float  (property)
+
+The capacity of the last cycle, or not-a-number when there is none.
+
+#### `CellRun.fade` -> float  (property)
+
+How much of the first cycle's capacity is left at the last one.
+
+### `published_parameters(base: str=DEFAULT_BASE)`
+
+The published parameter set the cell model starts from.
+
+### `build_model(kind: str='SPMe', options: Optional[Dict[str, object]]=None)`
+
+The cell model itself.
+
+### `run_cell(overrides: Optional[Dict[str, object]]=None, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, initial_soc: float=1.0, parameters=None) -> CellRun`
+
+One run of the cell model, with the entries in `overrides` put in place of the published
+ones. Returns the discharge capacity of every cycle.
+
+`overrides` maps a parameter name to the value or the function that replaces it, which is
+what `cmfqsar.interfaces.CellParameter.apply` produces. `parameters` is for a caller
+that has the published set already, so that reading it is not repeated per run.
+
+### `sample(parameter: CellParameter, draws: int=200, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0, progress=None) -> List[CellRun]`
+
+Run the cell model once per drawn value of one parameter, the others left published.
+
+This is the one-at-a-time sampling the report reads: it says what this parameter's deviation
+alone does to the cell, which is the question a tolerance rule needs answered.
+
+### `band(runs: Sequence[CellRun], level: float=95.0) -> Dict[str, np.ndarray]`
+
+The interval of the capacity at every cycle, over the runs that completed.
+
+Returns the lower edge, the median and the upper edge, each one value per cycle, together
+with how many runs they are made of. A run the cell model refused is not in the interval;
+`refused` is the share of runs that did not complete, and it belongs next to the interval
+whenever it is not zero, because an interval of the runs that worked says nothing about the
+draws that did not.
+
+### `contains(interval: Dict[str, np.ndarray], curve: Sequence[float]) -> Dict[str, object]`
+
+Does the interval hold the published curve, cycle by cycle?
+
+Returns how many cycles of the curve lie inside the interval, the share, and the largest
+distance from the interval in the units of the capacity (zero when the curve is inside
+everywhere).
+
+### `variance_shares(results: Dict[str, Sequence[CellRun]]) -> Dict[str, Dict[str, float]]`
+
+Which parameter's deviation moves the last cycle's capacity most.
+
+For every parameter, the variance of the capacity of the last cycle over its own draws, and
+that variance as a share of the sum over the parameters. This is one-at-a-time attribution:
+it ignores what two deviations do together, which is the right reading when the question is
+which single parameter to measure better, and the wrong one when the parameters interact.
+Runs the cell model refused are left out and counted in `refused`.
+
+### `local_sensitivity(parameter: CellParameter, step: float=0.1, cycles: int=10, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE) -> Dict[str, float]`
+
+How far the capacity moves when one parameter is changed by a fixed fraction of itself.
+
+The reading that does not depend on the deviations of this program, so that the ranking can
+be compared with the cell-model literature. The parameter is changed up and down by `step`
+times its own size, around the *published* value and not around the prediction, and the
+answer is the elasticity, the relative change of the capacity of the last cycle over the
+relative change of the parameter. It is therefore a property of the cell model at the point
+its own authors fitted.
+
+For a parameter that is added to the published value (an open-circuit voltage shifted in
+volt) the size of the change is `step` times the published value, since the shift itself
+starts at zero. A tenth of a voltage is a large change in a battery and a tenth of a
+diffusion coefficient is a small one, so the elasticities of parameters of different kinds
+order the cell model's response to equal *relative* changes and not to equally likely ones.
+
+### `tolerance_for_capacity(parameter: CellParameter, width: float, scales: Sequence[float], published: Optional[float]=None, draws: int=100, cycles: int=3, base: str=DEFAULT_BASE, kind: str='SPMe', options: Optional[Dict[str, object]]=None, cycle: Sequence[str]=DEFAULT_CYCLE, seed: int=0) -> List[Dict[str, float]]`
+
+How accurate a parameter has to be for the capacity interval to be worth using.
+
+The deviation of the parameter is made smaller by each factor in `scales`, the cell model is
+run over the draws, and the interval of the last cycle's capacity is reported. This is the
+rule of plan item MS1 read in the units of the cell model.
+
+An interval is worth using only if it is both **narrow** and **right**, so every row carries
+both: `narrow` is true when the interval is inside `width` ampere-hours, `holds` when it
+still contains the capacity `published` gives, and `useful` when both are. A prediction whose
+error is a bias and not a spread narrows towards the wrong number, and then no deviation is
+small enough: that is what the two columns separate.
 
 ## cmfqsar.chemotypes
 
@@ -7102,6 +7244,21 @@ Gaussian cube file, which is what a visualiser or a grid-based code reads. For a
 lattice (plan item M4) the cube is the cell itself, with the lattice vectors in its header, so
 the file is a periodic field and not a box cut out of one.
 
+**A parameter set for a cell model.** `CellParameter` and `CellParameterSet` are the
+interface a continuum battery model is fed through (plan item MS9). A continuum cell model is a set
+of partial differential equations with time and transport in it, which this program is not; what
+this program can give it is a value for one of its parameters, with a standard deviation in the
+unit the cell model reads. The functions in that section do the conversions: a migration barrier to
+a solid diffusion coefficient through an Arrhenius law, carrying the deviation through the
+exponential (`diffusivity_from_barrier`); a predicted conductivity to a factor on the
+published one (`conductivity_scale_from_log10`); a predicted average voltage to a shift of
+the published open-circuit voltage (`ocp_shift`); an insertion ladder to a
+voltage-against-stoichiometry curve (`ladder_to_ocp_curve`); and an effective conductivity of
+a porous electrode to a Bruggeman exponent (`bruggeman_from_conductivity_ratio`). The sampler
+that runs the cell model once per drawn parameter set, and the report that says which parameter's
+deviation moves the result most, are in `cmfqsar.cellmodel`, because they need the cell model
+itself installed and this module needs nothing.
+
 The map of plan item MS2 needs no new interface: `cmfqsar.sitemap.write_maps` already writes
 one row per place. It is re-exported here so that one import gives every way out of a model.
 
@@ -7217,6 +7374,121 @@ environment, and nothing is filled in from a representative.
 
 The percolation thresholds of one structure under the predicted barriers.
 
+### `class CellParameter  (dataclass)`
+
+One parameter of a cell model, as this program can give it: a value and a deviation.
+
+`name` is the cell model's own name for the parameter, with the unit it reads, so that the
+record can be handed over without a translation table. `kind` says what the number does to
+the published value: `"value"` replaces it, `"scale"` multiplies it, and `"shift"` is
+added to it. A function of concentration or of state of charge cannot be replaced by one
+number, so a prediction for such a parameter is a scale or a shift.
+
+`sd` is the standard deviation in the same unit, and `distribution` says how to read it:
+`"normal"` spreads around `value`, `"lognormal"` spreads the natural logarithm (so `sd`
+is then the deviation of `ln value`, which is what an Arrhenius law produces), and
+`"sample"` means the values were drawn already and are in `sample`, which keeps the shape
+of the distribution instead of assuming one.
+
+The remaining fields are what the receiving side has to know to use the number responsibly:
+`source` names the model and the data it was fitted on, `calibration` is the root mean square
+of the standardised residual of that model on held-out activities (plan item MS1; one means
+the deviation means what it says), `predicted` is false for a parameter that this program does
+not predict and that carries a stated spread instead, and `in_domain` is false when the
+structure the prediction was made for lies outside what the model was fitted on.
+
+Attributes:
+
+- `name: str`
+- `value: float`
+- `sd: float` = `0.0`
+- `kind: str` = `'value'`
+- `distribution: str` = `'normal'`
+- `sample: Optional[np.ndarray]` = `None`
+- `published: Optional[float]` = `None`
+- `units: str` = `''`
+- `source: str` = `''`
+- `calibration: Optional[float]` = `None`
+- `predicted: bool` = `True`
+- `in_domain: bool` = `True`
+- `note: str` = `''`
+- `low: Optional[float]` = `None`
+- `high: Optional[float]` = `None`
+
+#### `CellParameter.calibrated` -> bool  (property)
+
+Does the deviation mean what it says?  The rule of plan item MS1: the root mean square
+of the standardised residual between 0.8 and 1.25.
+
+#### `CellParameter.draw(n: int, rng=None) -> np.ndarray`
+
+`n` values of this parameter, drawn from its deviation.
+
+#### `CellParameter.interval(level: float=95.0, draws: int=20000, seed: int=0) -> List[float]`
+
+The central interval of this parameter at `level` per cent.
+
+#### `CellParameter.apply(published, value: float)`
+
+The published entry of the cell model, changed by `value` the way `kind` says.
+
+A published entry that is a function of something (of the concentration, of the state of
+charge) is wrapped, so that a scale or a shift works on a function as it works on a
+number. A function cannot be replaced by a number, and that is refused.
+
+#### `CellParameter.as_dict() -> Dict[str, object]`
+
+The record as plain data, for the file the receiving side reads.
+
+#### `CellParameter.from_dict(record: Dict[str, object]) -> 'CellParameter'`  (class method)
+
+A record read back from the file `as_dict` wrote.
+
+The fields the file carries for the reader's benefit alone -- the interval, whether the
+deviation is calibrated, how many values the sample holds -- are ignored, because they
+follow from the rest.
+
+#### `CellParameter.describe() -> str`
+
+### `class CellParameterSet  (dataclass)`
+
+A parameter set for a cell model: the published set, and what this program changes in it.
+
+The set is written out as it stands, with one record per parameter, so that the receiving
+side can read the deviations without running this program. Nothing here knows about any
+particular cell model: the names are strings and the values are numbers.
+
+Attributes:
+
+- `base: str`
+- `parameters: List[CellParameter]` = `field(default_factory=list)`
+- `temperature: float` = `298.15`
+- `note: str` = `''`
+
+#### `CellParameterSet.names` -> List[str]  (property)
+
+#### `CellParameterSet.add(parameter: CellParameter) -> 'CellParameterSet'`
+
+#### `CellParameterSet.as_dict() -> Dict[str, object]`
+
+#### `CellParameterSet.write(path: str) -> str`
+
+Write the set as JSON, one record per parameter. Returns the path.
+
+#### `CellParameterSet.from_dict(record: Dict[str, object]) -> 'CellParameterSet'`  (class method)
+
+A set read back from the file `write` wrote.
+
+#### `CellParameterSet.read(path: str) -> 'CellParameterSet'`  (class method)
+
+Read a set from the JSON file `write` wrote, parameter for parameter.
+
+#### `CellParameterSet.write_table(path: str) -> str`
+
+Write the set as CSV, one row per parameter. Returns the path.
+
+#### `CellParameterSet.describe() -> str`
+
 ### `write_cofield_cube(model, path: str, field: int=0, spacing: float=0.4, margin: float=3.0, structure=None, name: str='') -> str`
 
 Write the co-field of a fitted model as a Gaussian cube file. Returns the path.
@@ -7228,6 +7500,80 @@ itself. `spacing` is the grid step in angstrom.
 
 The rotation-invariant kernels have no co-field at all -- their channels know no place -- and
 are refused rather than drawn, as the manual says of them.
+
+### `arrhenius_diffusivity(barrier: float, hop_length: float, temperature: float=298.15, attempt_frequency: float=10000000000000.0, dimension: int=3) -> float`
+
+A diffusion coefficient in m^2/s from a migration barrier in electronvolt.
+
+The random walk of one ion over sites a distance `hop_length` apart (in angstrom), each jump
+attempted `attempt_frequency` times a second and succeeding with the Boltzmann factor of the
+barrier, diffuses with `D = a^2 nu exp(-E / kT) / (2 d)`, with `d` the number of directions
+the ion can move in. The attempt frequency is not predicted by this program: it is an
+argument, and 10^13 per second is the usual order for an ion in a solid.
+
+### `diffusivity_from_barrier(barrier, hop_length: float, name: str, temperature: float=298.15, attempt_frequency: float=10000000000000.0, dimension: int=3, sd: Optional[float]=None, published: Optional[float]=None, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='', high: Optional[float]=None) -> CellParameter`
+
+A solid diffusion coefficient as a cell-model parameter, from a predicted barrier.
+
+`barrier` is either one barrier in electronvolt, and then `sd` is its standard deviation, or
+a set of barriers that were drawn already from a model's deviation, and then the diffusion
+coefficients of those draws are carried over as they are. The second form is the better one,
+because the exponential of a normal deviation is not symmetric and the drawn barriers already
+hold the shape the deviation has.
+
+The deviation of the logarithm of the diffusion coefficient is the deviation of the barrier
+divided by `kT`, which at room temperature is 0.0257 eV: a barrier known to 0.1 eV gives a
+diffusion coefficient known to a factor of 50.
+
+`high` is a limit the drawn values are kept under. A deviation of several electronvolt
+reaches diffusion coefficients no solid has, and a cell model spends a long time on them, so
+a caller that draws from such a deviation should say where physics stops.
+
+### `conductivity_scale_from_log10(predicted: float, reference: float, name: str, sd: float=0.0, published: Optional[float]=None, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='') -> CellParameter`
+
+A factor on the published conductivity, from a prediction on a base-ten logarithmic scale.
+
+A cell model holds the conductivity of the electrolyte as a function of concentration and
+temperature, which one number cannot replace. What a model of one condition can say is how
+far above or below the published function its own value lies, and that is a factor on it.
+`predicted` and `reference` are both logarithms to base ten of a conductivity in the same
+unit, so only their difference matters. `sd` is the deviation of the prediction on that same
+logarithmic scale.
+
+### `ocp_shift(predicted: float, published: float, name: str, sd: float=0.0, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='') -> CellParameter`
+
+A shift in volt of the published open-circuit voltage, from a predicted average voltage.
+
+The ladder of plan item BT3 predicts the average voltage of an insertion electrode, not the
+shape of its curve against the state of charge. The part of that prediction a cell model can
+take is therefore a shift of its own curve: the predicted average minus the published one.
+`ladder_to_ocp_curve` is the other conversion, for a model that gives the whole curve.
+
+### `bruggeman_from_conductivity_ratio(ratio: float, porosity: float, name: str, sd: float=0.0, published: Optional[float]=None, source: str='', calibration: Optional[float]=None, in_domain: bool=True, note: str='') -> CellParameter`
+
+A Bruggeman exponent from the effective conductivity of a porous electrode.
+
+A cell model writes the conductivity of the electrolyte inside a porous electrode as the bulk
+value times the porosity raised to an exponent: `sigma_eff = sigma eps^b`. A model that
+predicts the effective conductivity of a two-phase structure therefore gives the exponent as
+`b = ln(sigma_eff / sigma) / ln(eps)`. `ratio` is `sigma_eff / sigma`, between zero and
+one, and `sd` is its standard deviation, which is carried over by the derivative of the
+logarithm.
+
+### `ladder_to_ocp_curve(stoichiometry: Sequence[float], voltages: Sequence[float]) -> Tuple[np.ndarray, np.ndarray]`
+
+An insertion ladder as a voltage-against-stoichiometry curve a cell model can read.
+
+A ladder is a list of two-phase steps: between the stoichiometries `x[i]` and `x[i+1]` the
+voltage is flat at `voltages[i]`, because the two phases coexist. The curve is therefore a
+staircase, and it is returned as such: two points per step, at the beginning and at the end of
+its plateau, in the order of increasing `stoichiometry`. A cell model reads it as an
+interpolant between those points.
+
+`stoichiometry` holds `len(voltages) + 1` values. A real curve is not a staircase, because
+each phase takes up some working ion in solid solution before the next one appears; the
+staircase is what a ladder of computed phases gives, and the difference is a limit of the
+conversion, not of the cell model.
 
 ## cmfqsar.invariant
 

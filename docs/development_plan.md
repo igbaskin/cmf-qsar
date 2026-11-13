@@ -6548,6 +6548,33 @@ would discard the typed fields and the global kernel that are the method's own.
   shows that the materials kernel adds something a Gaussian process on the parameters alone does
   not. Under rule 5 the benchmark script is `benchmarks/run_cellmodel.py`, with PyBaMM an optional
   dependency as pymatgen is.
+  **Built and measured 13 November 2026** (`cmfqsar/interfaces.py`, `cmfqsar/cellmodel.py`,
+  `benchmarks/run_cellmodel.py`, `benchmarks/results/cellmodel/`). The writer, the sampler and
+  the report are as described; the cell model is PyBaMM's single-particle model with electrolyte
+  and the growth of the passivating layer, on the Chen 2020 set (4.992 A.h, 0.023 % lost over ten
+  cycles). Four parameters are predicted, each with a deviation measured on held-out groups: the
+  positive particle diffusivity from the forest on nebDFT2k through the percolation barrier of
+  layered LiNiO2 (which percolates in two directions), the open-circuit voltage as a shift from
+  the composition model on the 303 insertion pairs of BT3, the electrolyte conductivity as a
+  factor from the composition model on the 62 electrolytes of BT5 with the cell's own solvent
+  mixture held out, and the Bruggeman exponent from a kernel on 200 generated two-phase
+  structures. A fifth, the exchange-current density, carries a stated spread. All four
+  deviations are calibrated (z rms 0.98 to 1.07). **The gate is not met in either part.** The
+  interval holds the published curve for four of five parameters; it misses for the Bruggeman
+  exponent (4.983 to 4.990 A.h against 4.991), whose generated structures are more tortuous than
+  the fitted 1.5. The ranking puts the open-circuit voltage first under both readings (72.8 % of
+  the variance, elasticity -2.43), because this program's deviation on a voltage is about a volt;
+  between the two transport parameters the expected order holds. *What it shows:* the
+  electrolyte conductivity agrees with the published set to 1.3 %; the diffusion coefficient's
+  interval spans sixteen orders of magnitude and holds the published curve only by covering
+  every capacity from 0.61 to 5.01 A.h; its median barrier, 0.87 eV, is 0.41 eV above the one
+  the published coefficient corresponds to, and the tolerance rule, which now reports whether a
+  narrowed interval still holds the published value, finds no deviation that is both narrow and
+  right -- the error is a bias and not a spread. The deviations move the level of the capacity
+  curve and not its slope (0.18 to 0.20 % lost over 100 cycles at every edge). *Open:* barriers
+  for a cathode with partly occupied sites, and a measured electrode microstructure in place of
+  generated ones; the product kernel over materials and cell design stays a later item, since
+  MS9 did not show the materials kernel adding anything.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
@@ -7833,23 +7860,25 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8 (partly), MS9 |
+| H. Multiscale modelling | 9 | 6 | MS4, MS5, MS8 (partly) |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**171 items: 116 finished, 10 partly, 45 open.**
+**171 items: 117 finished, 10 partly, 44 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
 
 * **Waiting for data, not for code.** EC9 needs a measured catalytic property at more than one
-  potential, EC8 one at a periodic site, MC3 a series in which both enantiomers are measured, SC4
+  potential, EC8 one at a periodic site, SC4
   a host-guest set curated by conditions, and NT12 the structure sets the nanotechnology part
   would be judged on. Four items in a row had recorded that no machine-readable series could be
   found for the catalytic case; PO1 found one on 5 November 2026, a measured enantioselectivity
   on 43 molecular catalysts at one condition, which answers the molecular case and not EC8's or
-  EC9's. The search is written up in `docs/public_3dqsar_datasets.md`.
+  EC9's. The search is written up in `docs/public_3dqsar_datasets.md`. MC3 was on this list
+  until 13 November 2026, when its series of enantiomers measured in one assay was built
+  from ChEMBL.
 * **Waiting for the application.** G5, NT8 and NT11 are what is left of this block: the
   particle side of the window, where a structure that is neither a molecule nor a cell needs a
   data model of its own (NT1), and the model panel and command line that would offer it. Two of

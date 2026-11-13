@@ -3386,6 +3386,38 @@ times.
 python benchmarks/run_conductors.py            # 10 minutes after run_nebdft.py
 ```
 
+### A parameter set for a cell model, with its deviations
+
+**Feeding a continuum cell model** ([run_cellmodel.py](benchmarks/run_cellmodel.py), plan item
+MS9). A cell model such as PyBaMM's single-particle model predicts the capacity of a battery from
+cycle to cycle. This program cannot be such a model, but it can supply its material parameters.
+`cmfqsar/interfaces.py` converts a prediction and its standard deviation into a parameter the cell
+model reads, and `cmfqsar/cellmodel.py` draws each parameter from its deviation and runs the cell
+model once per draw. Measured on the published Chen 2020 graphite / nickel-manganese-cobalt oxide
+cell:
+
+- Four parameters are predicted by benchmarks of this repository: the solid diffusion coefficient
+  from the DFT hop barriers of BT7, the open-circuit voltage from the insertion pairs of BT3, the
+  electrolyte conductivity from the measured electrolytes of BT5, and the Bruggeman exponent from
+  a kernel on generated two-phase structures. All four deviations are calibrated (z rms 0.98 to
+  1.07).
+- The electrolyte conductivity of the cell's own electrolyte, with its solvent mixture held out,
+  agrees with the published parameter set to 1.3 %.
+- The diffusion coefficient's interval spans sixteen orders of magnitude. It holds the published
+  curve only because it covers almost every capacity the cell can give. Its median barrier, 0.87
+  eV, is 0.41 eV above the barrier the published diffusion coefficient corresponds to. Making the
+  deviation smaller narrows the interval towards the wrong capacity: the error is a bias, not a
+  spread.
+- The gate is not met. The Bruggeman exponent's interval misses the published curve, and the
+  open-circuit voltage, not the diffusion coefficient, explains most of the variance (72.8 %),
+  because this program's deviation on a voltage is about one volt.
+- The deviations move the level of the capacity curve, not its slope: over 100 cycles the cell
+  loses 0.18 to 0.20 % whatever the drawn value.
+
+```bash
+python benchmarks/run_cellmodel.py             # 25 minutes after run_nebdft.py; needs pybamm
+```
+
 ### A single-atom site as the sample: two reactions on one metal
 
 A metal atom held by four atoms of a graphene divacancy is the active site of the

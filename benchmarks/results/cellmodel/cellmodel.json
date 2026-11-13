@@ -1,0 +1,1122 @@
+{
+ "base": "Chen2020",
+ "model": "SPMe",
+ "cycles": 10,
+ "draws": 200,
+ "published": {
+  "first": 4.991990132822317,
+  "final": 4.990846257039271,
+  "fade": 0.9997708577636152,
+  "curve": [
+   4.991990132822317,
+   4.9918579274239825,
+   4.991725777392335,
+   4.991595377146955,
+   4.99146665875041,
+   4.991339565722886,
+   4.991214041013584,
+   4.991090018907187,
+   4.990967446679654,
+   4.990846257039271
+  ]
+ },
+ "parameters": {
+  "base": "Chen2020",
+  "temperature": 298.15,
+  "note": "the parameters a cell model reads, as the benchmarks of this repository predict them, each with a standard deviation in the unit of the parameter",
+  "parameters": [
+   {
+    "name": "Positive particle diffusivity [m2.s-1]",
+    "kind": "value",
+    "value": 4.806986657935387e-22,
+    "sd": 9.89361287487843,
+    "distribution": "sample",
+    "units": "m2.s-1",
+    "published": 4e-15,
+    "source": "the forest on the invariant field, fitted on the 1652 density-functional barriers of nebDFT2k (plan item BT7), read as the percolation barrier of the hop network of LiNiO2 (mp-2348641) in 2 directions",
+    "predicted": true,
+    "in_domain": true,
+    "calibration": 1.068086265967032,
+    "calibrated": true,
+    "note": "the attempt frequency is 1e+13 per second and the hop length 2.89 angstrom, neither of them predicted; the cathode of the cell is a nickel-manganese-cobalt oxide and the structure used is the ordered layered nickel oxide, which is the closest the public set holds",
+    "interval_95": [
+     3.7766301210641745e-30,
+     8.19133753039518e-14
+    ],
+    "sample_size": 200,
+    "sample": [
+     1.0468642216547758e-22,
+     1.353096558522413e-23,
+     3.796312452076348e-21,
+     1.8746468051646565e-16,
+     1.1099786176411807e-24,
+     2.8518381183985317e-19,
+     1.2933138052526306e-22,
+     8.55711504462408e-22,
+     1.4822010497829598e-21,
+     2.589516216406038e-25,
+     8.18398615016731e-22,
+     3.1924065354575814e-19,
+     6.763276807852003e-27,
+     1.9949895710643078e-19,
+     3.197690980557097e-15,
+     2.948503968977893e-18,
+     1.4747925519578465e-18,
+     1.3729140155512457e-22,
+     6.53681883442944e-22,
+     1.1413083037436286e-26,
+     9.749914252817811e-27,
+     3.682265785752448e-21,
+     7.578198349241755e-26,
+     2.6512743782204514e-24,
+     2.8041355837886587e-19,
+     5.043762652014757e-15,
+     1.2078149993162186e-20,
+     6.039808950712907e-26,
+     2.8141571164312217e-28,
+     2.049796927666263e-17,
+     6.889618604386825e-24,
+     7.24208561980078e-15,
+     4.253437241013216e-21,
+     3.687871969306186e-20,
+     5.694382464878012e-28,
+     2.1212181975899888e-18,
+     2.2055191946489242e-17,
+     8.149024733654406e-21,
+     1.6473985997135546e-19,
+     2.4942993554263572e-18,
+     2.411889751431297e-26,
+     4.668331662995994e-29,
+     4.557002099505697e-21,
+     4.925998806009171e-23,
+     4.8320730489386396e-26,
+     9.109647746427742e-23,
+     8.1171881687822e-21,
+     2.3300174636948813e-17,
+     5.753899646572666e-16,
+     4.807123814193439e-18,
+     2.018028903572077e-26,
+     9.454794504278984e-27,
+     2.9696467046341174e-25,
+     1.1813437953906687e-15,
+     2.0179116881643033e-14,
+     1.4995743530439825e-24,
+     5.0127833294287885e-22,
+     1.1713530966317756e-18,
+     7.882210348916088e-25,
+     9.553846231237022e-24,
+     2.103479988497832e-26,
+     3.372658311308315e-23,
+     6.264496243403589e-21,
+     1.0416629869265393e-20,
+     1.1824320394700557e-23,
+     4.503279154547585e-15,
+     3.24757641521356e-24,
+     4.687211166728815e-13,
+     4.2707319505604836e-21,
+     2.753065704482866e-24,
+     1.449391402872381e-23,
+     1.7062649522471215e-15,
+     1.0411765717149097e-23,
+     1.3449695992501588e-17,
+     1.6830304970092754e-22,
+     9.062170287321175e-28,
+     6.107325423043916e-19,
+     1.0784079400846288e-17,
+     2.9567049707093003e-24,
+     1.5631581018058168e-22,
+     8.775222586290174e-23,
+     1.0454391891173013e-21,
+     6.124526283435381e-21,
+     9.102995260827976e-17,
+     5.418873573614142e-26,
+     7.232082341148988e-16,
+     7.317983085677054e-25,
+     4.524573696814728e-28,
+     4.1842887654464665e-18,
+     4.601189986441985e-22,
+     1.4407908489927402e-27,
+     2.4445506125929603e-17,
+     1.6580632288941806e-27,
+     1.9101084588308285e-26,
+     2.198775025587214e-22,
+     6.768283015964109e-11,
+     2.6103471281470852e-27,
+     3.043032418070442e-17,
+     6.2184654287139984e-18,
+     9.269399583538566e-23,
+     2.5825373606940564e-18,
+     4.66833842243605e-19,
+     3.709270666014758e-17,
+     1.5155965338115617e-20,
+     9.771604664016155e-23,
+     8.19133753039518e-14,
+     3.3103940048776964e-24,
+     2.485635912132777e-14,
+     1.4659727763243316e-28,
+     4.305468374845262e-21,
+     1.0507912017439712e-09,
+     9.807170448458993e-23,
+     2.105501059486707e-17,
+     3.43503361348714e-26,
+     6.890992947455387e-15,
+     6.904271520018862e-24,
+     2.3275256596112994e-22,
+     3.8165203777812196e-18,
+     8.534860636582933e-25,
+     3.4858232406983856e-28,
+     1.6688222762284228e-23,
+     1.4966579143390986e-20,
+     5.508885338792688e-23,
+     1.2623496335235573e-31,
+     3.2625618709031577e-15,
+     4.623348085433934e-26,
+     9.235046618172936e-11,
+     6.65134243390682e-24,
+     7.959833054230602e-25,
+     2.8957366276267646e-21,
+     3.9148249918172024e-23,
+     5.769621353962316e-29,
+     5.516454633063804e-24,
+     2.200502915865541e-17,
+     1.504179759110028e-20,
+     3.2071775973331623e-31,
+     5.126230794416083e-21,
+     1.0178360026521006e-23,
+     3.574458735224918e-24,
+     1.5483341630587567e-21,
+     2.089475350482835e-18,
+     3.780056830345542e-18,
+     1.1188052414703278e-19,
+     4.138298423340394e-21,
+     5.288328417312251e-21,
+     3.9796745079178383e-17,
+     3.1927444072947995e-19,
+     7.756019641600719e-26,
+     7.806341797825585e-24,
+     4.0771291776852316e-22,
+     4.6911716680365e-24,
+     2.3699991008296263e-19,
+     5.2803125022162574e-23,
+     1.6521668705929896e-18,
+     2.856522284071523e-35,
+     4.1220122455406954e-27,
+     3.7143750643478693e-25,
+     1.7172712834317982e-22,
+     1.4680783317827086e-24,
+     3.653954028727259e-21,
+     1.5339632467945796e-26,
+     1.4112067581608053e-27,
+     3.385763553819623e-23,
+     2.2690820588288788e-23,
+     3.7766301210641745e-30,
+     4.231802088921953e-20,
+     9.112529374950325e-17,
+     2.6448924357625684e-19,
+     2.850985448832432e-24,
+     6.99802878172122e-26,
+     7.809138760242723e-17,
+     1.1021947096356688e-30,
+     1.8638379897309577e-19,
+     2.763414404686468e-27,
+     1.3976379883158273e-19,
+     4.833245065137745e-21,
+     6.887330418898183e-19,
+     5.926004967635351e-19,
+     2.818255362140155e-17,
+     5.248241736268731e-23,
+     3.036469720650097e-25,
+     1.2311824309813708e-16,
+     3.69623545365113e-21,
+     6.258713966981851e-24,
+     5.2419693808671364e-20,
+     2.153830992768438e-27,
+     1.0056924550827191e-22,
+     2.7550063073931925e-14,
+     8.865825587005166e-21,
+     8.46996559772693e-31,
+     9.26398805405497e-20,
+     9.745127578306807e-28,
+     7.136544949540518e-27,
+     1.284567173840444e-25,
+     9.053030340291543e-19,
+     2.18188028074071e-17,
+     3.816902886345187e-18,
+     2.6004248846786106e-29,
+     1.6857257015461604e-25,
+     3.2287663624620997e-23
+    ],
+    "low": 0.0,
+    "high": 1e-10
+   },
+   {
+    "name": "Positive electrode OCP [V]",
+    "kind": "shift",
+    "value": 0.2768278378301474,
+    "sd": 0.9857510794135902,
+    "distribution": "normal",
+    "units": "V",
+    "published": 3.8,
+    "source": "the kernel model on the composition of 303 insertion pairs reconstructed from public formation energies (plan item BT3), with the frameworks held out",
+    "predicted": true,
+    "in_domain": true,
+    "calibration": 0.9816913272049349,
+    "calibrated": true,
+    "note": "the shift is the model's own error on the layered nickel oxide, which is the closest material to the cell's cathode that the set holds; the ladder reconstructs 3.47 V and the model on the composition 4.08 V, against 3.80 V published",
+    "interval_95": [
+     -1.6354387115431002,
+     2.200331448633676
+    ]
+   },
+   {
+    "name": "Electrolyte conductivity [S.m-1]",
+    "kind": "scale",
+    "value": 0.9866162084320501,
+    "sd": 0.13266543346951698,
+    "distribution": "lognormal",
+    "units": "factor",
+    "published": null,
+    "source": "the kernel model on the composition of 62 measured conductivities of CALiSol-23 (plan item BT5), with the solvent mixture of this electrolyte held out",
+    "predicted": true,
+    "in_domain": true,
+    "calibration": 1.0095953443155556,
+    "calibrated": true,
+    "note": "the cell model holds the conductivity as a function of concentration and temperature, so a prediction of one condition can only be a factor on it; the condition is EC0.30+EMC0.70 at 1.11 mol/kg against the one mole per litre the cell model starts from",
+    "interval_95": [
+     0.7627439276429497,
+     1.2781285170250751
+    ],
+    "low": 0.0
+   },
+   {
+    "name": "Positive electrode Bruggeman coefficient (electrolyte)",
+    "kind": "value",
+    "value": 1.9063144484056422,
+    "sd": 0.1613541858157322,
+    "distribution": "normal",
+    "units": "exponent",
+    "published": 1.5,
+    "source": "the kernel on the radial autocorrelation of a two-phase field, fitted on 200 generated structures with their effective conductivity solved on the grid (the microstructure pilot)",
+    "predicted": true,
+    "in_domain": false,
+    "calibration": 1.0388705478300309,
+    "calibrated": true,
+    "note": "the structures are generated and not measured, so what this channel gives is the deviation such a model has, not the exponent of this cell's electrode; the training structures cover the porosity of the cell, as a model fitted for one cell would, and the structures read off are held out; the solid phase carries 0.001 of the conductivity of the electrolyte in the pores",
+    "interval_95": [
+     1.5933021488702124,
+     2.2211661036728687
+    ],
+    "low": 0.0
+   },
+   {
+    "name": "Positive electrode exchange-current density [A.m-2]",
+    "kind": "scale",
+    "value": 1.0,
+    "sd": 1.1747883127520642,
+    "distribution": "lognormal",
+    "units": "factor",
+    "published": 1.0,
+    "source": "not predicted by this program: a stated spread",
+    "predicted": false,
+    "in_domain": true,
+    "calibration": null,
+    "calibrated": false,
+    "note": "a 95 % interval of a factor of 10, which is the order the published values for one electrode material differ by; it is here because the ranking of the parameters needs every parameter in it",
+    "interval_95": [
+     0.10238844730066675,
+     9.898402786330248
+    ],
+    "low": 0.0
+   }
+  ]
+ },
+ "channels": {
+  "Positive particle diffusivity [m2.s-1]": {
+   "training": {
+    "hops": 1652,
+    "structures": 852,
+    "mae": 0.22796206354695384,
+    "rmse": 0.35850454677017185,
+    "mean_sd": 0.3315124526470829,
+    "factor": 1.068086265967032,
+    "shared": 0.4592894817616868,
+    "inside_2sd": 0.9642857142857143
+   },
+   "structure": {
+    "id": "mp-2348641",
+    "formula": "LiNiO2",
+    "hops": 24,
+    "distinct": 24,
+    "mean_barrier": 1.3391020208277882,
+    "mean_sd": 0.4279116875259441,
+    "hop_length": 2.894871222374971,
+    "dimension": 2,
+    "percolation": {
+     "1": 1.0092314539000138,
+     "2": 1.0111792909333488,
+     "3": null
+    }
+   },
+   "barrier_draws": {
+    "n": 200,
+    "median": 0.8660765488515185,
+    "interval": [
+     0.40638007314824176,
+     1.3463168421189182
+    ]
+   },
+   "shared": 0.4592894817616868,
+   "seconds": 385.2,
+   "label": "diffusion coefficient"
+  },
+  "Positive electrode OCP [V]": {
+   "n": 303,
+   "frameworks": 157,
+   "mae": 0.5552266169886262,
+   "rmse": 0.8080187146779073,
+   "z_rms": 0.9816913272049349,
+   "mae_of_the_mean": 1.2028194835243913,
+   "coverage_2sd": 0.9537953795379538,
+   "error_units": "V",
+   "chosen": [
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.1,
+     "n_test": 61
+    },
+    {
+     "kernel": "linear",
+     "lam": 0.0001,
+     "n_test": 61
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.01,
+     "n_test": 61
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.1,
+     "n_test": 60
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.01,
+     "n_test": 60
+    }
+   ],
+   "ladder": {
+    "framework": "NiO2",
+    "label": "LiNiO2, layered",
+    "published": 3.8,
+    "voltage": 3.4687461385976976,
+    "steps": 10.0
+   },
+   "predicted": 4.076827837830147,
+   "sd": 0.9857510794135902,
+   "published": 3.8,
+   "steps_averaged": 10,
+   "measured_of_the_steps": 3.4687461385976976,
+   "pairs": [
+    "NiO2 x=0.5->0.666667",
+    "NiO2 x=0.666667->0.7",
+    "NiO2 x=0.7->0.727273",
+    "NiO2 x=0.727273->0.75",
+    "NiO2 x=0.75->0.777778",
+    "NiO2 x=0.777778->0.8",
+    "NiO2 x=0.8->0.875",
+    "NiO2 x=0.875->0.9",
+    "NiO2 x=0.9->0.916667",
+    "NiO2 x=0.916667->1"
+   ],
+   "seconds": 2.8,
+   "label": "open-circuit voltage"
+  },
+  "Electrolyte conductivity [S.m-1]": {
+   "n": 62,
+   "mixtures": 22,
+   "mae": 0.0693738819714173,
+   "rmse": 0.09570197813871775,
+   "z_rms": 1.0095953443155556,
+   "mae_of_the_mean": 0.14602226847034339,
+   "coverage_2sd": 0.9516129032258065,
+   "error_units": "on the base-ten logarithmic scale",
+   "chosen": [
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.001,
+     "n_test": 13
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.001,
+     "n_test": 13
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.001,
+     "n_test": 12
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.0001,
+     "n_test": 12
+    },
+    {
+     "kernel": "gaussian, width 0.25",
+     "lam": 0.001,
+     "n_test": 12
+    }
+   ],
+   "id": "LiPF6_EC30_EMC70_m1p110",
+   "composition": "EC0.30+EMC0.70",
+   "molality": 1.11,
+   "measured": 0.9458,
+   "predicted": 0.9712771464876462,
+   "sd": 0.05761586569511419,
+   "cell_model": 0.9771289005806825,
+   "seconds": 0.9,
+   "label": "electrolyte conductivity"
+  },
+  "Positive electrode Bruggeman coefficient (electrolyte)": {
+   "n_train": 200,
+   "n_test": 24,
+   "grid": 16,
+   "contrast": 0.001,
+   "porosity": 0.335,
+   "porosity_window": [
+    0.25146484375,
+    0.419677734375
+   ],
+   "mae_log": 0.13514842110937178,
+   "rmse_log": 0.18342144968801816,
+   "z_rms": 1.0388705478300309,
+   "mae_of_the_mean": 0.29628480380555317,
+   "coverage_2sd": 0.9598214285714286,
+   "error_units": "on the natural logarithm of the conductivity ratio",
+   "chosen": [
+    {
+     "kernel": "radial autocorrelation, smoothing 0",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 40
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 40
+    }
+   ],
+   "predicted_ratio": 0.12433289709405485,
+   "true_ratio": 0.13458079082650215,
+   "sd_of_the_logarithm": 0.17646093066546512,
+   "true_exponent": 1.8338928322508095,
+   "seconds": 45.4,
+   "label": "electrode tortuosity"
+  },
+  "Positive electrode exchange-current density [A.m-2]": {
+   "spread": 10.0,
+   "sd_of_the_logarithm": 1.1747883127520642,
+   "seconds": 0.0,
+   "label": "exchange current"
+  }
+ },
+ "per_parameter": {
+  "Positive particle diffusivity [m2.s-1]": {
+   "name": "Positive particle diffusivity [m2.s-1]",
+   "draws": 200,
+   "cycles": 10,
+   "interval_of_the_last_cycle": [
+    0.6111601116328063,
+    5.008567873824115
+   ],
+   "median_of_the_last_cycle": 0.6113655090312251,
+   "runs_that_completed": 200,
+   "refused": 0.0,
+   "holds_the_published_curve": {
+    "cycles": 10,
+    "inside": 10,
+    "share": 1.0,
+    "largest_gap": 0.0,
+    "all_inside": true
+   },
+   "elasticity": {
+    "elasticity": 0.004183507280341781,
+    "capacity": 4.990846257039271,
+    "step": 0.1,
+    "down": 4.988521248067452,
+    "up": 4.99269709639773,
+    "refused": 0.0
+   },
+   "fade": {
+    "low": {
+     "value": 3.7766301210641745e-30,
+     "ok": true,
+     "first": 0.6111601154100876,
+     "final": 0.6111600798409422,
+     "fade": 0.9999999418006108,
+     "message": ""
+    },
+    "middle": {
+     "value": 4.806986657935387e-22,
+     "ok": true,
+     "first": 0.6111613504561976,
+     "final": 0.6114101630005542,
+     "fade": 1.0004071143310533,
+     "message": ""
+    },
+    "high": {
+     "value": 8.19133753039518e-14,
+     "ok": true,
+     "first": 5.00954277853203,
+     "final": 5.0015798475420095,
+     "fade": 0.9984104475513924,
+     "message": ""
+    }
+   },
+   "curve": {
+    "low": [
+     0.6111601154100887,
+     0.6111601146420175,
+     0.6111601142641068,
+     0.611160113886654,
+     0.6111601135097247,
+     0.6111601131332498,
+     0.6111601127573144,
+     0.6111601123819338,
+     0.6111601120070796,
+     0.6111601116328063
+    ],
+    "median": [
+     0.6111707479655891,
+     0.611192393301546,
+     0.6112140378055783,
+     0.6112356808783304,
+     0.6112573224012269,
+     0.6112789626410509,
+     0.6113006013667173,
+     0.611322238669321,
+     0.6113438745897253,
+     0.6113655090312251
+    ],
+    "high": [
+     5.00954277853203,
+     5.009429607692119,
+     5.009317751792921,
+     5.009207155904681,
+     5.0090977783322055,
+     5.008989579677748,
+     5.008882522634864,
+     5.00877657182677,
+     5.008671702540695,
+     5.008567873824115
+    ]
+   },
+   "seconds": 218.6
+  },
+  "Positive electrode OCP [V]": {
+   "name": "Positive electrode OCP [V]",
+   "draws": 200,
+   "cycles": 10,
+   "interval_of_the_last_cycle": [
+    0.037815093884225076,
+    5.421025250630023
+   ],
+   "median_of_the_last_cycle": 2.7671218465173086,
+   "runs_that_completed": 189,
+   "refused": 0.055,
+   "holds_the_published_curve": {
+    "cycles": 10,
+    "inside": 10,
+    "share": 1.0,
+    "largest_gap": 0.0,
+    "all_inside": true
+   },
+   "elasticity": {
+    "elasticity": -2.4263201585168908,
+    "capacity": 4.990846257039271,
+    "step": 0.1,
+    "down": 5.309068440267682,
+    "up": 2.8871902639650906,
+    "refused": 0.0
+   },
+   "fade": {
+    "low": {
+     "value": -1.6354387115431002,
+     "ok": false,
+     "first": NaN,
+     "final": NaN,
+     "fade": NaN,
+     "message": "SolverError: All steps in the cycle ('Discharge at 1C until 2.5 V', 'Charge at 1C until 4.2 V', 'Hold at 4.2 V until 50 mA') are infeasible due to exceeded bounds at initial conditions. skip_ok is True for all ste"
+    },
+    "middle": {
+     "value": 0.2768278378301474,
+     "ok": true,
+     "first": 3.3953753808244977,
+     "final": 3.3880747873458392,
+     "fade": 0.9978498420175016,
+     "message": ""
+    },
+    "high": {
+     "value": 2.200331448633676,
+     "ok": true,
+     "first": 0.022385861272535116,
+     "final": 0.023424493230997753,
+     "fade": 1.0463967834794419,
+     "message": ""
+    }
+   },
+   "curve": {
+    "low": [
+     0.036741365624243724,
+     0.037835822738474384,
+     0.037839878245931026,
+     0.03783824091961995,
+     0.03783501370056164,
+     0.03783145459376075,
+     0.03782704276228538,
+     0.03782314994497434,
+     0.03781915946179464,
+     0.037815093884225076
+    ],
+    "median": [
+     2.7679964870821467,
+     2.7678966266261518,
+     2.7677963955902336,
+     2.767697189340369,
+     2.7675989770313105,
+     2.7675017293585187,
+     2.7674054184323116,
+     2.7673100176823233,
+     2.767215501771632,
+     2.7671218465173086
+    ],
+    "high": [
+     5.422071865857153,
+     5.421951469071404,
+     5.421830906678252,
+     5.421712524173381,
+     5.421594736030095,
+     5.421478313186154,
+     5.421363344999683,
+     5.421247604971507,
+     5.421135068083401,
+     5.421025250630023
+    ]
+   },
+   "seconds": 220.8
+  },
+  "Electrolyte conductivity [S.m-1]": {
+   "name": "Electrolyte conductivity [S.m-1]",
+   "draws": 200,
+   "cycles": 10,
+   "interval_of_the_last_cycle": [
+    4.988893242721709,
+    4.992053737948316
+   ],
+   "median_of_the_last_cycle": 4.990802308746939,
+   "runs_that_completed": 200,
+   "refused": 0.0,
+   "holds_the_published_curve": {
+    "cycles": 10,
+    "inside": 10,
+    "share": 1.0,
+    "largest_gap": 0.0,
+    "all_inside": true
+   },
+   "elasticity": {
+    "elasticity": 0.0012556813773924207,
+    "capacity": 4.990846257039271,
+    "step": 0.1,
+    "down": 4.990155679776916,
+    "up": 4.991409062317395,
+    "refused": 0.0
+   },
+   "fade": {
+    "low": {
+     "value": 0.7627439276429497,
+     "ok": true,
+     "first": 4.990055500552801,
+     "final": 4.980950012646019,
+     "fade": 0.9981752732197522,
+     "message": ""
+    },
+    "middle": {
+     "value": 0.9866162084320501,
+     "ok": true,
+     "first": 4.991906261523285,
+     "final": 4.9828398536736715,
+     "fade": 0.9981837784255895,
+     "message": ""
+    },
+    "high": {
+     "value": 1.2781285170250751,
+     "ok": true,
+     "first": 4.993329399458432,
+     "final": 4.984293655844739,
+     "fade": 0.9981904371030133,
+     "message": ""
+    }
+   },
+   "curve": {
+    "low": [
+     4.990043568020535,
+     4.989910600076026,
+     4.989777684159795,
+     4.989646537584043,
+     4.98951709151715,
+     4.989389281347132,
+     4.989263046599883,
+     4.989138330425714,
+     4.989015079309083,
+     4.988893242721709
+    ],
+    "median": [
+     4.991946346304374,
+     4.991814123826586,
+     4.991681973594449,
+     4.991551572972938,
+     4.991422854269551,
+     4.9912957357189445,
+     4.991170175380275,
+     4.991046118413931,
+     4.990923512113296,
+     4.990802308746939
+    ],
+    "high": [
+     4.993193630427894,
+     4.993061880638249,
+     4.992930217047079,
+     4.992800291379539,
+     4.9926720354143255,
+     4.992545387638345,
+     4.992420288324103,
+     4.992296680418512,
+     4.992174513373029,
+     4.992053737948316
+    ]
+   },
+   "seconds": 220.0
+  },
+  "Positive electrode Bruggeman coefficient (electrolyte)": {
+   "name": "Positive electrode Bruggeman coefficient (electrolyte)",
+   "draws": 200,
+   "cycles": 10,
+   "interval_of_the_last_cycle": [
+    4.983218231611302,
+    4.990203017576547
+   ],
+   "median_of_the_last_cycle": 4.987184144147772,
+   "runs_that_completed": 200,
+   "refused": 0.0,
+   "holds_the_published_curve": {
+    "cycles": 10,
+    "inside": 0,
+    "share": 0.0,
+    "largest_gap": 0.0006432394627244875,
+    "all_inside": false
+   },
+   "elasticity": {
+    "elasticity": -0.002001491133497538,
+    "capacity": 4.990846257039271,
+    "step": 0.1,
+    "down": 4.9917481819497675,
+    "up": 4.989750355043345,
+    "refused": 0.0
+   },
+   "fade": {
+    "low": {
+     "value": 1.5933021488702124,
+     "ok": true,
+     "first": 4.991337512138077,
+     "final": 4.982257294909066,
+     "fade": 0.998180804802935,
+     "message": ""
+    },
+    "middle": {
+     "value": 1.9063144484056422,
+     "ok": true,
+     "first": 4.988431413114538,
+     "final": 4.9792904207100985,
+     "fade": 0.9981675617749483,
+     "message": ""
+    },
+    "high": {
+     "value": 2.2211661036728687,
+     "ok": true,
+     "first": 4.983758381859755,
+     "final": 4.974526929611448,
+     "fade": 0.9981476926566287,
+     "message": ""
+    }
+   },
+   "curve": {
+    "low": [
+     4.984388801639502,
+     4.984251105323693,
+     4.984116102143299,
+     4.983982922982682,
+     4.983851465219537,
+     4.983721692554215,
+     4.98359354199167,
+     4.9834669541920755,
+     4.983341865782739,
+     4.983218231611302
+    ],
+    "median": [
+     4.9883413042654166,
+     4.9882062720537625,
+     4.988072706873337,
+     4.987940927836609,
+     4.987810865153717,
+     4.987682453466237,
+     4.987555631460204,
+     4.987430341525529,
+     4.9873065294508745,
+     4.987184144147772
+    ],
+    "high": [
+     4.991350329569289,
+     4.991216584871828,
+     4.991084176086503,
+     4.990953523528759,
+     4.9908245591799405,
+     4.990697231679658,
+     4.990571468627323,
+     4.990447208515332,
+     4.9903244099244475,
+     4.990203017576547
+    ]
+   },
+   "seconds": 228.6
+  },
+  "Positive electrode exchange-current density [A.m-2]": {
+   "name": "Positive electrode exchange-current density [A.m-2]",
+   "draws": 200,
+   "cycles": 10,
+   "interval_of_the_last_cycle": [
+    4.958475417171023,
+    4.997871197200407
+   ],
+   "median_of_the_last_cycle": 4.991267285058148,
+   "runs_that_completed": 200,
+   "refused": 0.0,
+   "holds_the_published_curve": {
+    "cycles": 10,
+    "inside": 10,
+    "share": 1.0,
+    "largest_gap": 0.0,
+    "all_inside": true
+   },
+   "elasticity": {
+    "elasticity": 0.0015313116741049648,
+    "capacity": 4.990846257039271,
+    "step": 0.1,
+    "down": 4.990012797884452,
+    "up": 4.991541306111865,
+    "refused": 0.0
+   },
+   "fade": {
+    "low": {
+     "value": 0.10238844730066675,
+     "ok": true,
+     "first": 4.959967099458846,
+     "final": 4.950249885257786,
+     "fade": 0.9980408712384159,
+     "message": ""
+    },
+    "middle": {
+     "value": 1.0,
+     "ok": true,
+     "first": 4.991990132822317,
+     "final": 4.982925457853689,
+     "fade": 0.9981841560725395,
+     "message": ""
+    },
+    "high": {
+     "value": 9.898402786330248,
+     "ok": true,
+     "first": 4.999243624958328,
+     "final": 4.990223029374155,
+     "fade": 0.9981956079237391,
+     "message": ""
+    }
+   },
+   "curve": {
+    "low": [
+     4.9597248320800285,
+     4.959580533184141,
+     4.959435605119469,
+     4.959292794690349,
+     4.9591520265017195,
+     4.959013138506017,
+     4.958876126579006,
+     4.958740870382754,
+     4.958607321047981,
+     4.958475417171023
+    ],
+    "median": [
+     4.992410720210398,
+     4.992278547651587,
+     4.99214644113863,
+     4.992016083032141,
+     4.991887427582115,
+     4.991760388658989,
+     4.991634916869293,
+     4.991510945978008,
+     4.991388411061804,
+     4.991267285058148
+    ],
+    "high": [
+     4.9990077604440115,
+     4.998876183953495,
+     4.99874495093775,
+     4.998615438417013,
+     4.998487615012562,
+     4.998361299205968,
+     4.998236616582651,
+     4.99811341115006,
+     4.997991635594649,
+     4.997871197200407
+    ]
+   },
+   "seconds": 201.6
+  }
+ },
+ "variance_shares": {
+  "Positive particle diffusivity [m2.s-1]": {
+   "n": 200,
+   "refused": 0.0,
+   "mean": 1.0728975498971798,
+   "sd": 1.2472018412174726,
+   "variance": 1.5555124327362535,
+   "low": 0.6111601116328063,
+   "high": 5.008567873824115,
+   "share": 0.2721016773595823
+  },
+  "Positive electrode OCP [V]": {
+   "n": 189,
+   "refused": 0.055,
+   "mean": 2.5960837925124727,
+   "sd": 2.0398606766537535,
+   "variance": 4.161031580158309,
+   "low": 0.037815093884225076,
+   "high": 5.421025250630023,
+   "share": 0.7278782532876383
+  },
+  "Electrolyte conductivity [S.m-1]": {
+   "n": 200,
+   "refused": 0.0,
+   "mean": 4.990721044622365,
+   "sd": 0.0008192610343697546,
+   "variance": 6.711886424366003e-07,
+   "low": 4.988893242721709,
+   "high": 4.992053737948316,
+   "share": 1.1740925471771279e-07
+  },
+  "Positive electrode Bruggeman coefficient (electrolyte)": {
+   "n": 200,
+   "refused": 0.0,
+   "mean": 4.9870397964381565,
+   "sd": 0.0018263323903428329,
+   "variance": 3.335490000015366e-06,
+   "low": 4.983218231611302,
+   "high": 4.990203017576547,
+   "share": 5.834684472587446e-07
+  },
+  "Positive electrode exchange-current density [A.m-2]": {
+   "n": 200,
+   "refused": 0.0,
+   "mean": 4.987631855480721,
+   "sd": 0.010522497915451174,
+   "variance": 0.00011072296238067429,
+   "low": 4.958475417171023,
+   "high": 4.997871197200407,
+   "share": 1.936847507737778e-05
+  }
+ },
+ "tolerance": [
+  {
+   "scale": 1.0,
+   "width": 4.398590666022116,
+   "narrow": false,
+   "holds": true,
+   "useful": false,
+   "low": 0.6111601142650038,
+   "high": 5.00975078028712,
+   "refused": 0.0,
+   "barrier_sd": 0.2541924315769252
+  },
+  {
+   "scale": 0.5,
+   "width": 0.5750310064386155,
+   "narrow": false,
+   "holds": false,
+   "useful": false,
+   "low": 0.6111601160638915,
+   "high": 1.186191122502507,
+   "refused": 0.0,
+   "barrier_sd": 0.1270962157884626
+  },
+  {
+   "scale": 0.25,
+   "width": 0.0025023861254073188,
+   "narrow": true,
+   "holds": false,
+   "useful": false,
+   "low": 0.6111602068804864,
+   "high": 0.6136625930058938,
+   "refused": 0.0,
+   "barrier_sd": 0.0635481078942313
+  },
+  {
+   "scale": 0.1,
+   "width": 6.282552693581689e-05,
+   "narrow": true,
+   "holds": false,
+   "useful": false,
+   "low": 0.6111612269020288,
+   "high": 0.6112240524289646,
+   "refused": 0.0,
+   "barrier_sd": 0.025419243157692523
+  },
+  {
+   "scale": 0.05,
+   "width": 1.709478108846696e-05,
+   "narrow": true,
+   "holds": false,
+   "useful": false,
+   "low": 0.611162733574886,
+   "high": 0.6111798283559745,
+   "refused": 0.0,
+   "barrier_sd": 0.012709621578846262
+  },
+  {
+   "scale": 0.02,
+   "width": 5.458214467402023e-06,
+   "narrow": true,
+   "holds": false,
+   "useful": false,
+   "low": 0.6111645235998109,
+   "high": 0.6111699818142783,
+   "refused": 0.0,
+   "barrier_sd": 0.005083848631538505
+  }
+ ],
+ "tolerance_width": 0.24954231285196357,
+ "seconds": 338.0
+}
