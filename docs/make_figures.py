@@ -2498,6 +2498,469 @@ def fig_design(path):
     save(fig, path)
 
 
+def projected_gaussians(centres, weights, widths, frame, xs, ys):
+    """A sum of Gaussians integrated along the normal of `frame`, on the grid of its plane.  A
+    Gaussian exp(-b r^2 / 2) keeps its width in the plane and gains the factor sqrt(2 pi / b).
+    It is the way to draw a field whose centres do not lie in one plane."""
+    origin, e1, e2, _e3 = frame
+    d = np.asarray(centres, float) - np.asarray(origin, float)
+    px, py = d @ e1, d @ e2
+    X, Y = np.meshgrid(xs, ys, indexing="xy")
+    out = np.zeros_like(X)
+    for x0, y0, w, b in zip(px, py, np.asarray(weights, float), np.asarray(widths, float)):
+        if w != 0.0:
+            out += w * np.sqrt(2.0 * np.pi / b) * np.exp(-0.5 * b * ((X - x0) ** 2 + (Y - y0) ** 2))
+    return out
+
+
+def fig_water(path):
+    """Chapter 5: the water as a field.  The hydration sites of one ligand of the mcl1 set, the
+    field they make, and the co-field of a model fitted on the water fields alone.  The sites
+    are those of ``examples/md/mcl1_water.json``; the fields are drawn summed along the normal of
+    the ligand's plane, because the sites do not lie in it."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar import solvent as SV
+    from cmfqsar.cofields import _centres_and_widths
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    with open(os.path.join(ROOT, "examples", "md", "mcl1_water.json"), encoding="utf-8") as fh:
+        rec = json.load(fh)
+    alpha = float(rec["alpha"])
+    sites = {}
+    for row in rec["ligands"]:
+        arr = np.asarray(row["sites"], float)
+        if arr.size:
+            coeff = np.asarray((row.get("coefficients") or {}).get(f"{alpha:g}", arr[:, 3]), float)
+            sites[row["name"]] = (arr[:, :3], coeff, arr[:, 4])
+    ds = load_dataset(os.path.join(ROOT, "examples", "openff", "mcl1.sdf"), activity_prop="pAffinity")
+    keep = [i for i, n in enumerate(ds.names) if n in sites and np.isfinite(ds.activity[i])]
+    names = [ds.names[i] for i in keep]
+    y = np.asarray(ds.activity, float)[keep]
+    fs_w = SV.solvent_fieldset(alpha=alpha)
+    water = [SV.water_field(sites[n][0], sites[n][1], name=n) for n in names]
+    table = AtomTable.from_molecules(water)
+    best = None
+    for lam in (1e-3, 1e-2, 0.1, 1.0, 10.0):
+        model = CMFModel(fieldset=fs_w, method="krr", normalize=True, params={"lam": lam})
+        model.fit(table, y, cv_folds=10)
+        if best is None or model.stats.q2 > best[0]:
+            best = (float(model.stats.q2), lam, model)
+    q2, lam, model = best
+    k = int(np.argmax(y))                                         # the most active ligand
+    fs = FieldSet.create(alpha=alpha, charge_model="gasteiger")
+    ligand = build_fields(ds.mols[keep[k]], fs, names[k])
+    frame = plane_of([ligand])
+    centres, occupancy = sites[names[k]][0], sites[names[k]][2]
+    sxy = project(frame, centres)
+    lxy = project(frame, ligand.coords)
+    lo = np.minimum(sxy.min(axis=0), lxy.min(axis=0)) - 3.0
+    hi = np.maximum(sxy.max(axis=0), lxy.max(axis=0)) + 3.0
+    xs, ys = np.arange(lo[0], hi[0], 0.15), np.arange(lo[1], hi[1], 0.15)
+    extent = (xs[0], xs[-1], ys[0], ys[-1])
+
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.55))
+    ax = axes[0]
+    draw_skeleton(ax, ligand, frame, colour="0.2")
+    ax.scatter(sxy[:, 0], sxy[:, 1], s=260 * occupancy ** 2, facecolor="#9ecae1",
+               edgecolor="#2171b5", linewidth=0.8, alpha=0.85, zorder=5)
+    ax.set_title(f"the {len(centres)} hydration sites of one\nligand, from its simulation",
+                 fontsize=7.5)
+    ax = axes[1]
+    c0, w0, b0 = _centres_and_widths(water[k], fs_w.specs[0], 0)
+    ax.imshow(projected_gaussians(c0, w0, b0, frame, xs, ys), origin="lower", extent=extent,
+              cmap="Blues", vmin=0.0, interpolation="bilinear")
+    draw_skeleton(ax, ligand, frame, colour="0.2")
+    ax.set_title("the water field of that ligand:\na Gaussian on every site", fontsize=7.5)
+    ax = axes[2]
+    cc, cw, cb = model.cofield_coefficients(0)
+    Z = projected_gaussians(cc, cw, cb, frame, xs, ys)
+    signed_map(ax, Z, xs, ys)
+    draw_skeleton(ax, ligand, frame, colour="0.2")
+    ax.set_title(f"the co-field of the water fields of\nall {len(names)} ligands (water alone)",
+                 fontsize=7.5)
+    for ax in axes:
+        ax.set_xlim(xs[0], xs[-1])
+        ax.set_ylim(ys[0], ys[-1])
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=0.8)
+    print(f"  water: {len(names)} ligands with sites, alpha {alpha:g}, lambda {lam:g}, q2 of the "
+          f"water alone {q2:+.3f}; drawn {names[k]} with {len(centres)} sites, occupancy "
+          f"{occupancy.min():.2f} to {occupancy.max():.2f}")
+    save(fig, path)
+
+
+def fig_mask(path):
+    """Chapter 9: scoring only where the co-field has weight.  The co-field of the steroid model,
+    the mask on the ten atoms that carry the prediction, and their product, the masked
+    co-field, all in the mean plane of the series."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.cofields import evaluate_gaussians, masked_cofield, top_atom_mask
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame, xs, ys = c["fs"], c["mf"], c["model"], c["frame"], c["xs"], c["ys"]
+    idx = s["train_idx"]
+    ref = mf[idx[int(np.argmax(s["y"]))]]
+    f = fs.names.index("electrostatic")
+    pts, shape = plane_points(frame, xs, ys)
+    mask = top_atom_mask(model, [mf[i] for i in idx], k=10)
+    mc, mw, mb = mask.expansion()
+    region = evaluate_gaussians(pts, mc, mw, mb)
+    cofield = cofield_slice(model, f, pts)
+    pc, pw, pb = masked_cofield(model, f, mask)
+    scale = model.scale[f] if getattr(model, "scale", None) is not None else 1.0
+    masked = evaluate_gaussians(pts, pc, pw, pb) * model.fieldset.specs[f].h * scale
+    gap = float(np.abs(masked - cofield * region).max())
+    vmax = float(np.abs(cofield).max())
+
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 1.75))
+    signed_map(axes[0], cofield.reshape(shape), xs, ys, vmax=vmax)
+    axes[0].set_title("the electrostatic co-field", fontsize=7.5)
+    axes[1].imshow(region.reshape(shape), origin="lower", extent=(xs[0], xs[-1], ys[0], ys[-1]),
+                   cmap="Greys", vmin=0.0, vmax=1.0, aspect="equal", interpolation="bilinear")
+    mxy = project(frame, mc)
+    axes[1].scatter(mxy[:, 0], mxy[:, 1], s=14, facecolor="none", edgecolor="C1", linewidth=0.9,
+                    zorder=6)
+    axes[1].set_title("the mask: the ten atoms that\ncarry the prediction", fontsize=7.5)
+    signed_map(axes[2], masked.reshape(shape), xs, ys, vmax=vmax)
+    axes[2].set_title("the masked co-field:\ntheir product", fontsize=7.5)
+    for ax in axes:
+        draw_skeleton(ax, ref, frame, colour="0.25")
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=0.8)
+    print(f"  mask: {len(mc)} atoms; the masked co-field and the product of co-field and mask "
+          f"differ by {gap:.1e} at most (largest co-field {vmax:.3f})")
+    save(fig, path)
+
+
+def fig_matchedpair(path):
+    """Chapter 9: a matched pair as a field placed in space.  The pair of the hif2a set with the
+    largest measured change, found and posed as ``benchmarks/run_transformfield.py`` does it:
+    the two molecules in the frame of the series, and the difference field of the two groups
+    in the frame of their attachment point."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from cmfqsar.bioisostere import matched_pairs
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.transformfield import pair_field
+    ds = load_dataset(os.path.join(ROOT, "examples", "openff", "hif2a.sdf"))
+    mols = [Chem.RemoveHs(m) for m in ds.mols]
+    names = list(ds.names)
+    y = np.asarray(ds.activity, float)
+    fs = FieldSet.create(alpha=0.5, charge_model="gasteiger")
+    fields = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    pairs = matched_pairs(mols, y, names)
+    posed = [(p, t) for p, t in ((p, pair_field(mols, fields, p, "hif2a")) for p in pairs)
+             if t is not None]
+    pair, t = max(posed, key=lambda q: abs(q[0].delta))
+    a, b = int(pair.a), int(pair.b)
+
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.5))
+    ax = axes[0]
+    frame = plane_of([fields[a], fields[b]])
+    draw_skeleton(ax, fields[a], frame, colour="C0")
+    draw_skeleton(ax, fields[b], frame, colour="C3")
+    for which, atoms, colour in ((a, pair.atoms_a, "C0"), (b, pair.atoms_b, "C3")):
+        xy = project(frame, fields[which].coords[np.asarray(atoms, int)])
+        ax.scatter(xy[:, 0], xy[:, 1], s=42, facecolor="none", edgecolor=colour, linewidth=1.1,
+                   zorder=6)
+    ax.set_aspect("equal")
+    ax.set_title(f"the pair in the frame of the series\n{names[a]} (blue) and {names[b]} (red): "
+                 f"{pair.delta:+.2f}", fontsize=7.5)
+    own = (np.zeros(3), np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), np.array([0, 0, 1.0]))
+    xyz = np.asarray(t.field.coords, float)
+    lo, hi = xyz[:, :2].min(axis=0) - 4.0, xyz[:, :2].max(axis=0) + 4.0
+    lo, hi = np.minimum(lo, -3.0), np.maximum(hi, 3.0)
+    xs, ys = np.arange(lo[0], hi[0], 0.1), np.arange(lo[1], hi[1], 0.1)
+    pts, shape = plane_points(own, xs, ys)
+    steric = fs.names.index("steric")
+    side = np.sign(np.asarray(t.field.weights, float)[:, steric])
+    for ax, name in ((axes[1], "steric"), (axes[2], "electrostatic")):
+        f = fs.names.index(name)
+        signed_map(ax, field_slice(t.field, fs.specs[f], f, pts).reshape(shape), xs, ys)
+        for (px, py, _pz), sign, symbol in zip(xyz, side, t.field.symbols):
+            ax.text(px, py + (0.55 if sign > 0 else -0.55), symbol, ha="center", va="center",
+                    fontsize=7, color="#7f0000" if sign > 0 else "#08306b", fontweight="bold",
+                    zorder=6)
+            ax.scatter([px], [py], s=9, color="#7f0000" if sign > 0 else "#08306b", zorder=6,
+                       linewidth=0)
+        ax.scatter([0.0], [0.0], marker="s", s=16, color="black", zorder=6)
+        ax.plot([0.0, float(xyz[:, 0].min())], [0.0, 0.0], color="black", lw=0.8, zorder=5)
+        ax.set_title(f"the difference field, {name}:\nsecond group minus first", fontsize=7.5)
+    for ax in axes:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=0.8)
+    print(f"  matched pair: {len(pairs)} pairs in hif2a, {len(posed)} posed; drawn {names[a]} -> "
+          f"{names[b]}, {pair.groups[0]} -> {pair.groups[1]}, measured {pair.delta:+.2f}; "
+          f"{t.field.n_atoms} atoms in the difference field")
+    save(fig, path)
+
+
+def fig_ionprobe(path):
+    """Chapter 11: an ion as the probe.  Triglyme of ``examples/ether`` in the geometry of its
+    lithium complex with the ion taken out: the electrostatic field and the lithium probe field
+    in the plane through the place of the ion and the oxygens, with the place the relaxation
+    gave the ion and the deepest point of the probe field."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from cmfqsar.cofields import field_volume, make_grid
+    from cmfqsar.fields import FieldSet, build_fields
+    source = os.path.join(ROOT, "examples", "ether", "geometries.sdf")
+    mol = next(m for m in Chem.SDMolSupplier(source, removeHs=False)
+               if m is not None and m.GetProp("smiles") == "COCCOCCOCCOC")
+    ion = np.array([float(v) for v in mol.GetProp("ion_xyz").split()])
+    fs_p = FieldSet.create(physchem=[], probes=["lithium"], alpha=1.0, charge_model="gasteiger",
+                           param_scheme="rdkit")
+    fs_e = FieldSet.create(physchem=["electrostatic"], alpha=1.0, charge_model="gasteiger",
+                           param_scheme="rdkit")
+    probe, charges = build_fields(mol, fs_p, "triglyme"), build_fields(mol, fs_e, "triglyme")
+    # the deepest point of the probe field, searched as benchmarks/run_ether.py searches it
+    grid = make_grid(probe.coords, margin=3.0, spacing=0.4)
+    volume = field_volume(probe, fs_p.specs[0], 0, grid).ravel()
+    deepest = grid.points()[int(np.argmin(volume))]
+    # the plane: through the ion, along the two directions in which the oxygens spread most
+    oxygens = probe.coords[[s == "O" for s in probe.symbols]]
+    _u, _s, vt = np.linalg.svd(np.vstack([oxygens, ion[None, :]]) - ion, full_matrices=False)
+    frame = (ion, vt[0], vt[1], np.cross(vt[0], vt[1]))
+    xs = ys = np.arange(-6.0, 6.01, 0.1)
+    pts, shape = plane_points(frame, xs, ys)
+
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 3.0))
+    for ax, mf, spec, title in (
+            (axes[0], charges, fs_e.specs[0], "the electrostatic field"),
+            (axes[1], probe, fs_p.specs[0], "the lithium probe field:\nthe energy of the ion at each place")):
+        Z = field_slice(mf, spec, 0, pts).reshape(shape)
+        signed_map(ax, Z, xs, ys)
+        draw_skeleton(ax, mf, frame, colour="0.25")
+        oxy = project(frame, oxygens)
+        ax.scatter(oxy[:, 0], oxy[:, 1], s=22, color="#c0392b", zorder=6, linewidth=0)
+        ax.scatter([0.0], [0.0], marker="*", s=120, color="#6a3d9a", edgecolor="white",
+                   linewidth=0.5, zorder=8, label="the ion, as the relaxation placed it")
+        k = np.unravel_index(int(np.argmin(Z)), Z.shape)
+        ax.scatter([xs[k[1]]], [ys[k[0]]], marker="+", s=60, color="black", linewidth=1.3,
+                   zorder=9, label="the lowest point of this field in the plane")
+        ax.set_title(title, fontsize=7.5)
+        axes_in_angstrom(ax, ylabel=ax is axes[0])
+    fig.tight_layout(w_pad=1.0, rect=(0, 0.07, 1, 1))
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, fontsize=6.8, loc="lower center", ncol=2)
+    print(f"  ion probe: {mol.GetProp('_Name')} {mol.GetProp('smiles')}; the deepest point of the "
+          f"probe field in space lies {np.linalg.norm(deepest - ion):.2f} A from the ion, and "
+          f"{np.abs((deepest - ion) @ frame[3]):.2f} A off the drawn plane")
+    save(fig, path)
+
+
+def fig_fukui(path):
+    """Chapter 5: why a Fukui function is not a field of atom-centred Gaussians.  The quantum maps
+    of the section are not in the repository, so the function drawn is a model with the same
+    shape: the square of the Hueckel pi* orbital of acrolein, built from 2p Slater functions.  It
+    is fitted with the two bases of ``cmfqsar.anisotropic``, isotropic Gaussians alone and with
+    p functions, and all three are drawn in the plane through the chain that stands on the
+    molecular plane."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    from cmfqsar.anisotropic import design, fit_field
+    from cmfqsar.probes import basis_widths
+    mol = Chem.AddHs(Chem.MolFromSmiles("C=CC=O"))
+    AllChem.EmbedMolecule(mol, randomSeed=7)
+    AllChem.MMFFOptimizeMolecule(mol)
+    xyz = np.asarray(mol.GetConformer().GetPositions(), float)
+    heavy = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() > 1]
+    chain = xyz[heavy]
+    centre = chain.mean(axis=0)
+    _u, _s, vt = np.linalg.svd(xyz - centre, full_matrices=False)
+    e1, e2, normal = vt[0], vt[1], vt[2]                      # the molecule lies in (e1, e2)
+    # the Hueckel pi orbitals of C=C-C=O, the oxygen with alpha + beta; the third is pi*
+    H = np.array([[0.0, 1, 0, 0], [1, 0.0, 1, 0], [0, 1, 0.0, 1], [0, 0, 1, 1.0]])
+    values, vectors = np.linalg.eigh(H)
+    lumo = vectors[:, np.argsort(-values)[2]]
+    zeta = np.array([{6: 1.625, 8: 2.275}[mol.GetAtomWithIdx(i).GetAtomicNum()] for i in heavy]) / 0.529177
+
+    def model(points):
+        psi = np.zeros(len(points))
+        for c, z, r0 in zip(lumo, zeta, chain):
+            d = points - r0
+            psi += c * (d @ normal) * np.exp(-z * np.linalg.norm(d, axis=1))
+        return psi ** 2
+
+    span = np.arange(-4.0, 4.01, 0.2)
+    G = np.stack(np.meshgrid(span, span, span, indexing="ij"), axis=-1).reshape(-1, 3)
+    cloud = centre + G[:, [0]] * e1 + G[:, [1]] * e2 + G[:, [2]] * normal
+    target = model(cloud)
+    widths = basis_widths(4)
+    fit_s = fit_field(target, cloud, xyz, widths, p_type=False, name="s")
+    fit_sp = fit_field(target, cloud, xyz, widths, p_type=True, name="s and p")
+    off = float(np.sum(target[np.abs(G[:, 2]) > 0.5] ** 2) / np.sum(target ** 2))
+
+    def fitted(points, fit, p_type):
+        B = design(points, xyz, widths, p_type=p_type).reshape(len(points), -1)
+        return B @ np.asarray(fit.coeffs, float).reshape(-1)
+
+    # the cut: the plane that holds the C=C bond and stands on the molecular plane
+    c1, c2 = chain[0], chain[1]
+    along = (c2 - c1) / np.linalg.norm(c2 - c1)
+    middle = 0.5 * (c1 + c2)
+    frame = (middle, along, normal, np.cross(along, normal))
+    xs, ys = np.arange(-2.6, 2.61, 0.05), np.arange(-2.2, 2.21, 0.05)
+    pts, shape = plane_points(frame, xs, ys)
+    maps = [model(pts), fitted(pts, fit_s, False), fitted(pts, fit_sp, True)]
+    vmax = float(maps[0].max())
+    titles = ("a model Fukui function:\nπ* of acrolein, squared",
+              f"its best fit by Gaussians\non the atoms (error {100 * fit_s.rel_error:.0f} %)",
+              f"the fit with p functions\nadded (error {100 * fit_sp.rel_error:.0f} %)")
+    fig, axes = plt.subplots(1, 4, figsize=(WIDTH, 1.95), gridspec_kw=dict(width_ratios=(1, 1, 1, 1.15)))
+    bond = np.array([[(c1 - middle) @ along, 0.0], [(c2 - middle) @ along, 0.0]])
+    for ax, Z, title in zip(axes[:3], maps, titles):
+        signed_map(ax, Z.reshape(shape), xs, ys, vmax=vmax)
+        ax.plot(bond[:, 0], bond[:, 1], color="black", lw=1.0, zorder=4)
+        ax.scatter(bond[:, 0], bond[:, 1], s=12, color="black", zorder=5)
+        ax.set_title(title, fontsize=6.8)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    axes[0].set_ylabel("across the plane", fontsize=6.8)
+    # the same three functions on the line through the terminal carbon, across the plane
+    z = np.arange(-2.2, 2.21, 0.02)
+    line = c1 + z[:, None] * normal
+    ax = axes[3]
+    ax.plot(z, model(line), color="black", lw=1.2, label="the model")
+    ax.plot(z, fitted(line, fit_s, False), color="C0", lw=1.0, label="Gaussians")
+    ax.plot(z, fitted(line, fit_sp, True), color="C1", lw=1.0, ls="--", label="with p functions")
+    ax.axvline(0.0, color="0.6", lw=0.5)
+    ax.set_xlabel("height above the plane / Å", fontsize=6.8)
+    ax.set_title("through the end carbon:\nthe node is in the plane", fontsize=6.8)
+    ax.tick_params(length=2, labelsize=6.3)
+    ax.set_yticks([])
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.55 * (high - low))
+    ax.legend(frameon=False, fontsize=5.8, loc="upper center", handlelength=1.6)
+    fig.tight_layout(w_pad=0.6)
+    print(f"  fukui model: {off:.2f} of the squared function lies more than 0.5 A off the plane; "
+          f"relative error {fit_s.rel_error:.3f} with s, {fit_sp.rel_error:.3f} with s and p")
+    save(fig, path)
+
+
+def fig_complex(path):
+    """Chapter 5: a coordination complex.  The first nickel complex of ``examples/complexes_ni``
+    as the builder of ``cmfqsar.complexes`` reads it, in three pictures, and the whole series in
+    the frame the metal gives."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from cmfqsar.complexes import align_on_first_sphere, donor_indices, metal_index
+    source = os.path.join(ROOT, "examples", "complexes_ni", "ni_bpp.sdf")
+    mols = [m for m in Chem.SDMolSupplier(source, removeHs=False, sanitize=False) if m is not None]
+    aligned, _rmsd = align_on_first_sphere(mols, ref_index=0)
+    mol = aligned[0]
+    mi, donors = metal_index(mol), donor_indices(mol)
+    xyz = np.asarray(mol.GetConformer().GetPositions(), float)
+    symbols = [a.GetSymbol() for a in mol.GetAtoms()]
+    heavy = np.array([s != "H" for s in symbols])
+    # the view: the plane of the three nitrogen donors and the metal
+    nitrogens = [i for i in donors if symbols[i] == "N"]
+    _u, _s, vt = np.linalg.svd(xyz[nitrogens + [mi]] - xyz[mi], full_matrices=False)
+    # an oblique view: what stands on that plane is moved sideways, so that all six donors show
+    frame = (xyz[mi], vt[0] + 0.45 * vt[2], vt[1] + 0.25 * vt[2], vt[2])
+    xy = project(frame, xyz)
+    rest = Chem.RWMol(mol)
+    rest.RemoveAtom(mi)
+    pieces = Chem.GetMolFrags(rest.GetMol())                       # atom indices without the metal
+    back = [i for i in range(mol.GetNumAtoms()) if i != mi]
+    fragments = [[back[j] for j in piece] for piece in pieces]
+    charges = [sum(mol.GetAtomWithIdx(i).GetFormalCharge() for i in frag) for frag in fragments]
+    palette = ["C0", "C2", "C1", "C4", "C5", "C6"]
+    element = {"N": "#1f4e9c", "O": "#c0392b", "Ni": "#6a3d9a"}
+
+    def bonds(ax, colour_of, metal_bonds="line", orders=False):
+        for bond in mol.GetBonds():
+            a, b = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+            if not (heavy[a] and heavy[b]):
+                continue
+            to_metal = mi in (a, b)
+            if to_metal and metal_bonds == "none":
+                continue
+            colour = "0.3" if to_metal else colour_of(a)
+            if to_metal and metal_bonds == "arrow":
+                donor = b if a == mi else a
+                ax.annotate("", xy=xy[mi] + 0.22 * (xy[donor] - xy[mi]), xytext=xy[donor],
+                            arrowprops=dict(arrowstyle="-|>", color="0.2", lw=0.9), zorder=3)
+                continue
+            ax.plot(xy[[a, b], 0], xy[[a, b], 1], color=colour, lw=1.0, zorder=2,
+                    ls="--" if to_metal else "-", solid_capstyle="round")
+            if orders and bond.GetBondTypeAsDouble() > 1.4 and not to_metal:
+                d = xy[b] - xy[a]
+                n = np.array([-d[1], d[0]]) / max(np.linalg.norm(d), 1e-9)
+                ia, ib = xy[a] + 0.15 * d + 0.11 * n, xy[b] - 0.15 * d + 0.11 * n
+                ax.plot([ia[0], ib[0]], [ia[1], ib[1]], color=colour, lw=0.8, zorder=2)
+
+    def atoms(ax, show_metal=True):
+        for i in np.where(heavy)[0]:
+            if i == mi and not show_metal:
+                continue
+            if symbols[i] in element:
+                ax.text(xy[i, 0], xy[i, 1], symbols[i], ha="center", va="center", fontsize=6.5,
+                        color=element[symbols[i]], fontweight="bold", zorder=5,
+                        bbox=dict(boxstyle="circle,pad=0.1", facecolor="white", edgecolor="none"))
+
+    fig, axes = plt.subplots(1, 4, figsize=(WIDTH, 2.25))
+    ax = axes[0]
+    bonds(ax, lambda a: "0.3")
+    atoms(ax)
+    ax.set_title("1. the bonds are\nfound by distance", fontsize=7.2)
+    ax = axes[1]
+    owner = {i: k for k, frag in enumerate(fragments) for i in frag}
+    bonds(ax, lambda a: palette[owner[a] % len(palette)], metal_bonds="none", orders=True)
+    atoms(ax, show_metal=False)
+    for k, frag in enumerate(fragments):
+        members = [i for i in frag if heavy[i]]
+        centre = xy[members].mean(axis=0)
+        shift = (0.0, -1.0) if len(members) > 1 else (0.75, 0.0)
+        ax.text(centre[0] + shift[0], centre[1] + shift[1],
+                f"{charges[k]:+d}" if charges[k] else "0", ha="center", va="center",
+                fontsize=6.5, color=palette[k % len(palette)])
+    ax.set_title("2. metal out: every\nligand gets its charge", fontsize=7.2)
+    ax = axes[2]
+    bonds(ax, lambda a: "0.3", metal_bonds="arrow", orders=True)
+    atoms(ax)
+    ax.text(xy[mi, 0] - 0.85, xy[mi, 1] + 0.8, f"{mol.GetAtomWithIdx(mi).GetFormalCharge():+d}",
+            ha="center", va="center", fontsize=6.5, color=element["Ni"])
+    ax.set_title("3. metal back: a dative\nbond from every donor", fontsize=7.2)
+    ax = axes[3]
+    for other in aligned:
+        if other is None:
+            continue
+        oxyz = np.asarray(other.GetConformer().GetPositions(), float)
+        oxy = project(frame, oxyz)
+        oheavy = np.array([a.GetAtomicNum() > 1 for a in other.GetAtoms()])
+        omi = metal_index(other)
+        for bond in other.GetBonds():
+            a, b = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+            if oheavy[a] and oheavy[b] and omi not in (a, b):
+                ax.plot(oxy[[a, b], 0], oxy[[a, b], 1], color="0.45", lw=0.4, alpha=0.5, zorder=2)
+        od = donor_indices(other)
+        for i in od:
+            ax.scatter([oxy[i, 0]], [oxy[i, 1]], s=7, zorder=4, linewidth=0,
+                       color=element.get(other.GetAtomWithIdx(i).GetSymbol(), "0.3"))
+    ax.scatter([0.0], [0.0], s=26, color=element["Ni"], zorder=5)
+    ax.set_title(f"the frame of the metal:\nall {len(mols)} complexes", fontsize=7.2)
+    span = np.abs(xy[heavy]).max() + 1.2
+    for ax in axes:
+        ax.set_xlim(-span, span)
+        ax.set_ylim(-span, span)
+    for ax in axes:
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+    fig.tight_layout(w_pad=0.5)
+    print(f"  complex: {mol.GetProp('_Name')}, {len(donors)} donors, {len(fragments)} ligands with "
+          f"charges {charges}, metal {mol.GetAtomWithIdx(mi).GetFormalCharge():+d}; "
+          f"{sum(1 for m in aligned if m is not None)} complexes in the frame")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -3032,6 +3495,12 @@ FIGURES = {
     "roc.svg": fig_roc,
     "acquire.svg": fig_acquire,
     "design.svg": fig_design,
+    "water.png": fig_water,
+    "mask.png": fig_mask,
+    "matchedpair.png": fig_matchedpair,
+    "ionprobe.png": fig_ionprobe,
+    "fukui.png": fig_fukui,
+    "complex.svg": fig_complex,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
     "isosurface.png": fig_isosurface,

@@ -1891,6 +1891,8 @@ which the map does not say.
 On the mcl1 set that gives **7.8 sites per ligand** (from 4 to 12), the strongest averaging 73 %
 occupancy.
 
+![The water as a field, on the mcl1 set. Left: the hydration sites of the most active ligand, from its simulation in the pocket. The area of a circle grows with the share of frames in which a water sits there, and the ligand is drawn in its own mean plane. Middle: the water field of that ligand, one Gaussian on every site with its fitted coefficient. Right: the co-field of a kernel ridge model fitted on the water fields of all ligands and on nothing else. Red is where a water goes with a higher affinity in this series and blue where it goes with a lower one, so blue marks the places where displacing a water may help. The two fields are drawn summed along the direction of view, because the sites do not lie in the plane of the ligand. The measurements below say how little this block adds to the five fields. Drawn by `docs/make_figures.py`.](docs/figures/water.png)
+
 **The water field is a block of its own**, not a sixth column of the molecule's table: a table
 holds one set of atoms and a hydration site is not an atom of the molecule. So the kernel is
 mixed, $K(h) = (1-h) K_{\text{fields}} + h\,K_{\text{water}}$, with $h$ searched on the same
@@ -2412,6 +2414,8 @@ three quarters of its squared magnitude lies more than 0.5 Å off the molecular 
 a node *in* the plane. A function that is positive everywhere and centred on a nucleus cannot make
 a node.
 
+![Why Gaussians on the atoms cannot represent a Fukui function. The quantum maps of this section are not in the repository, so the function drawn is a model with the same shape: the square of the Hückel π* orbital of acrolein, built from 2p Slater functions. The three maps are cuts that hold the C=C bond and stand on the molecular plane, which is seen as the horizontal line through the two carbons. First: the model, with a lobe on each side of the plane and nothing in it. Second: its least-squares fit by Gaussians of four widths on every atom. Third: the fit with the p functions of the next subsection added. Right: the three functions along the line through the terminal carbon, across the plane. Both fits have their maximum where the model has its node. The errors in the titles are those of this model, not of the series in the table below. Drawn by `docs/make_figures.py`.](docs/figures/fukui.png)
+
 ### Giving every atom a direction
 
 The smallest extension that can make one is to multiply the Gaussian by a linear factor. With the
@@ -2616,6 +2620,8 @@ bond per donor. A fragment needs its charge before its bond orders can be found 
 cyclopentadienyl ring is aromatic at −1 and a radical at 0 — so the charges are taken from the
 data set where it states them, and tried in turn where it does not. The charge left over goes on
 the metal, which for a data set that states its ligand charges is the oxidation state.
+
+![A coordination complex as the program builds it, for the first nickel complex of `examples/complexes_ni`: a tridentate nitrogen ligand and three waters around nickel. The view is oblique, so that the two waters above and below the plane of the ligand show. (1) The bonds are found by distance; the dashed ones go to the metal. (2) With the metal taken out, the ligands are separate fragments, drawn here in different colours, and each gets its charge and its bond orders by itself. All four are neutral in this complex. (3) The metal is put back with one dative bond from every donor atom, drawn as an arrow, and it carries the charge that is left. Right: the 25 complexes of the series in the frame the metal gives, which the next subsection describes. The metal is at the origin, and every complex is turned so that its donor atoms lie closest to those of the first complex; nitrogen donors are blue and oxygen donors red. Hydrogens are not drawn. Drawn by `docs/make_figures.py`.](docs/figures/complex.svg)
 
 One trap in that step cost a quarter of the iron series before it was found. A chloride, bromide
 or iodide ligand is a single atom with no bond to determine, and bond perception leaves it
@@ -6802,6 +6808,8 @@ numbers for every candidate:
 | **outside** | the rest of the prediction: field the candidate places where the model rewards none |
 | **cosine** | the same comparison with the size of the molecule divided out, the cosine in the inner product the mask defines |
 
+![The mask, on the steroid model of the chapter *Reading the model*, in the mean plane of the series. Left: the electrostatic co-field. Middle: the mask, a sum of Gaussians on the ten atoms whose contributions to the predictions of the training molecules are largest; the circles are those atoms. Right: the masked co-field, the product of the two, which is again a sum of Gaussians. A candidate is scored by the overlap of its field with the right panel and not with the left one. Drawn by `docs/make_figures.py`.](docs/figures/mask.png)
+
 ```python
 from cmfqsar.cofields import top_atom_mask
 from cmfqsar.maskedmatch import MaskedScorer, screen_conformers
@@ -7129,6 +7137,8 @@ its own atoms by the mask of plan item MC1, and it is an ordinary field object: 
 every display of this program applies to it. The overlap kernel is bilinear, so reversing a pair
 reverses its kernel row, and a ridge with no intercept therefore predicts exactly the opposite
 change for the reverse of a pair -- the one property such a model must have.
+
+![A matched pair as a field, for the pair of `examples/openff/hif2a.sdf` with the largest measured change: a nitrile group replaced by a chlorine atom. Left: the two molecules in the frame of the series, with the atoms of the two groups in circles. Middle and right: the difference field, the second group minus the first, in the frame of the attachment point. The black square is the core atom that carries the group, and the line is the bond to the group. The steric part is positive everywhere in this plane, and the electrostatic part changes its sign along the bond. Drawn by `docs/make_figures.py`.](docs/figures/matchedpair.png)
 
 **The data** are the only sets here with a crystal pose for every ligand: the ten Merck KGaA FEP
 series of Schindler and co-workers and the eight Schrodinger JACS series, 3814 matched pairs in
@@ -13949,6 +13959,8 @@ the complexes. Two references that also need no model: the centroid of the molec
 0.65 ± 0.74 Å away (86 % within 1.0 Å) and the centroid of its heavy atoms 0.67 ± 0.80 Å (82 %).
 The probe field is thus a usable guess of the binding site in a flexible chain, which is the one
 thing a docking program would otherwise be needed for.
+
+![The lithium probe field of triglyme, in the geometry of its lithium complex with the ion taken out. The plane passes through the place of the ion and along the two directions in which the four oxygens, the red dots, spread most. Left: the electrostatic field, which is lowest on the oxygens. Right: the lithium probe field, the energy of a lithium ion at each place, which is lowest between them. The star is the ion as the published relaxation placed it, and the cross is the lowest point of the field of each panel in this plane. Drawn by `docs/make_figures.py`.](docs/figures/ionprobe.png)
 
 **The binding energy.** Nested cross-validation, five outer folds, the ridge and the field width
 chosen inside each fold, no frame anywhere (the alignment-free kernel). Mean absolute error in eV,
