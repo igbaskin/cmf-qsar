@@ -25,5 +25,16 @@
    "sd": 0.017822662143046317
   }
  },
- "seconds": 39.9
+ "seconds": 39.9,
+ "landesfeind": {
+  "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)",
+  "conductivity_only": 4.426635785896557,
+  "conductivity_only_ok": true,
+  "all_four": 2.409308167206841,
+  "all_four_ok": true,
+  "inside_the_measured_temperatures": false,
+  "transference_held_at": 293.15,
+  "conductivity_holds_it": false,
+  "seconds": 5.4
+ }
 }

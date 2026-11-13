@@ -13545,7 +13545,8 @@ temperature by the measured activation energy.
 | 253 | 1.5C | 4.848 | 4.793 | 4.756 to 4.824 | -- |
 
 **The conductivity is right, now that the cell can see it.** The predicted interval holds the
-capacity of the measured electrolyte under all eight conditions. In the cold it also excludes the
+capacity of this measured electrolyte under all eight conditions (the second reference below
+qualifies this for the coldest cells). In the cold it also excludes the
 published curve under all four: the published set, whose electrolyte does not get colder, gives
 too much capacity (0.055 A.h too much at 253 K and 1.5C), and the predicted activation energy
 corrects it by about as much as the measured one does. The effect is modest, at most about 1 %,
@@ -13557,23 +13558,81 @@ parameter set, so a real cold cell loses more.
 Bruggeman exponent explains all but a fraction of a per cent of the variance, against the
 conductivity. Its interval misses the published curve under every rate, by 0.0015 A.h at 1C and
 by 0.53 A.h at 2.5C, where the published cell gives 3.675 A.h and the interval ends at 3.144. The
-generated structures are more tortuous than the 1.5 the cell's authors fitted, and at a fast
-discharge that difference is worth a large part of the cell's capacity. Of the electrolyte-side
-parameters, this is the one that most needs measuring on the real electrode.
+generated structures are more tortuous than the 1.5 the cell's authors fitted. How much that
+costs at a fast discharge depends on the electrolyte the cell is given: with a measured
+electrolyte in place, most of this miss goes away (see the second reference below).
 
 **What stays open on the electrolyte side.** The cell model holds four electrolyte transport
 parameters, and only the conductivity is predicted. The electrolyte diffusivity, the cation
 transference number (0.2594 in the published set) and the thermodynamic factor (1.0) have no
-source in this repository, because the measured series of item BT5 holds conductivities and
-activation energies only. The prediction is also one point, at 1.11 mol/kg and 298 K, and the
+prediction here, because the measured series of item BT5 holds conductivities and activation
+energies only; the second reference below supplies measured values for them, but not a
+prediction. The prediction is also one point, at 1.11 mol/kg and 298 K, and the
 cell model keeps its own dependence on concentration; the measured point is a molality and the
 cell starts at one mole per litre, which is not converted (near the maximum of the conductivity,
 where this electrolyte is, the difference is small: 7.00, 8.83 and 6.99 mS/cm at 0.44, 1.11 and
 2.01 mol/kg). And the value comes from the composition model, not from the shell fields of item
 BT5, which were less accurate on this target.
 
+#### A second reference: all four transport parameters measured
+
+The published cell takes its conductivity and electrolyte diffusivity from one study at room
+temperature, and holds the transference number and the thermodynamic factor constant.
+Landesfeind and Gasteiger (*J. Electrochem. Soc.* 166 (2019) A3079, open access) measured all
+four for the same electrolyte, LiPF6 in EC:EMC 3:7 by weight, between 263 and 323 K and between
+0.1 and 3.0 mol/L. PyBaMM ships their fitted functions in its `ORegan2022` parameter set, and
+`cmfqsar.cellmodel.measured_electrolyte` returns them as replacements for the cell model, so
+nothing has to be downloaded. The stress stage runs two more curves under every condition:
+
+* **Conductivity only**: their conductivity alone in the cell. This is the fair reference for the
+  predicted conductivity, which is the only one of the four that is predicted.
+* **All four**: every transport parameter from the study. At 1 mol/L and 298 K their diffusivity
+  is 1.6 times the published one, their transference number 0.22 instead of 0.26, and their
+  thermodynamic factor 2.2 instead of 1.0. In colder cells the transference number and the
+  thermodynamic factor are read at +20 degrees Celsius (293 K). The study says these two are less
+  precise below +20 degrees, its -10 degree values have large errors and are negative, and its
+  fitted transference number is negative at 0 degrees from 0.5 mol/L up, which a model with two
+  kinds of ion cannot use.
+
+At room temperature the Bruggeman exponent is drawn again with all four in place.
+
+| Temperature, K | Rate | Published, A.h | Measured conductivity only, A.h | From the predicted conductivity, A.h | All four measured, A.h | From the Bruggeman exponent with all four measured, A.h |
+| ---: | ---: | ---: | ---: | --- | ---: | --- |
+| 298 | 1C | 4.991 | 4.991 | 4.990 to 4.993 | 4.987 | 4.978 to 4.985 |
+| 298 | 1.5C | 4.905 | 4.904 | 4.901 to 4.908 | 4.899 | 4.878 to 4.896 |
+| 298 | 2C | 4.783 | 4.778 | 4.771 to 4.793 | 4.789 | 4.704 to 4.779 |
+| 298 | 2.5C | 3.675 | 3.699 | 3.640 to 3.715 | 4.609 | 3.873 to 4.574 |
+| 263 | 1C | 4.960 | 4.948 | 4.943 to 4.956 | 4.755 | -- |
+| 263 | 1.5C | 4.863 | 4.804 | 4.814 to 4.852 | 3.512 | -- |
+| 253 (below the measured range) | 1C | 4.949 | 4.921 | 4.921 to 4.940 | 3.788 | -- |
+| 253 (below the measured range) | 1.5C | 4.848 | 4.427 | 4.756 to 4.824 | 2.409 | -- |
+
+**The predicted conductivity holds near room temperature and misses in the coldest cells.** Its
+interval holds the capacity of the measured conductivity under 6 of 8 conditions. It misses at
+263 K and 1.5C by 0.010 A.h, and at 253 K and 1.5C by 0.33 A.h, which is below the coldest
+temperature the study measured. The prediction carries the conductivity to the cold with one
+activation energy, and the measured conductivity falls faster the colder it gets: its apparent
+activation energy at 1 mol/L is 14.6 kJ/mol between 298 and 263 K, close to the predicted 13.6,
+and 20.7 kJ/mol between 263 and 253 K. One activation energy is a fair description from room
+temperature down to about 263 K, and not below.
+
+**At fast discharge the published electrolyte decided the verdict on the tortuosity.** At 2.5C
+the cell with all four measured parameters gives 4.609 A.h, against the published 3.675, mostly
+because the measured diffusivity is larger. With the measured electrolyte in place, the interval
+of the Bruggeman exponent runs from 3.873 to 4.574 A.h and misses by 0.035 A.h, where it missed
+the published curve by 0.53. It still misses under every rate (by 0.002 A.h at 1C), so the
+generated structures are still too tortuous. But most of the earlier miss came from the
+published electrolyte, not from the tortuosity.
+
+**In the cold the parameters that are not predicted decide the capacity.** At 253 K and 1.5C the
+measured conductivity alone gives 4.427 A.h, all four measured parameters give 2.409, and the
+published cell gives 4.848. The difference between the two measured capacities comes from the
+diffusivity, the transference number and the thermodynamic factor. This program predicts none
+of these three, so in a cold cell its conductivity prediction settles only a small part of the
+capacity.
+
 ```bash
-python benchmarks/run_cellmodel.py      # 35 minutes, after run_nebdft.py
+python benchmarks/run_cellmodel.py      # 40 minutes, after run_nebdft.py
 ```
 
 The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `finish` -- and each stage
