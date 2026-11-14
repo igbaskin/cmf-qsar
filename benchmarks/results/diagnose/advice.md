@@ -30,33 +30,34 @@ the rest. `advice` is the route recommended, `best` the route that actually won.
 | THR | 0 | aligned | +0.524 | invariant | +0.573 | +0.049 |
 | THR | 1 | invariant | +0.482 | aligned | +0.569 | +0.087 |
 | THR | 2 | invariant | +0.376 | aligned | +0.604 | +0.228 |
-| corrosion/0_c1ccccc1 | 0 | descriptors (leak) | +0.963 | descriptors | +0.963 | +0.000 |
-| corrosion/0_c1ccccc1 | 1 | descriptors (leak) | +0.976 | descriptors | +0.976 | +0.000 |
+| corrosion/0_c1ccccc1 | 0 | aligned | +0.405 | counts | +0.615 | +0.211 |
+| corrosion/0_c1ccccc1 | 1 | counts | +0.451 | topomer | +0.480 | +0.029 |
 | corrosion/0_c1ccccc1 | 2 | counts | +0.241 | topomer | +0.447 | +0.206 |
-| corrosion/7_c1nncs1 | 0 | aligned | +0.326 | aligned | +0.326 | +0.000 |
-| corrosion/7_c1nncs1 | 1 | aligned | -0.702 | invariant | +0.030 | +0.732 |
-| corrosion/7_c1nncs1 | 2 | aligned | -0.076 | counts | +0.047 | +0.123 |
-| corrosion/13_c1c_nH_nn1 | 0 | descriptors (leak) | +0.992 | descriptors | +0.992 | +0.000 |
-| corrosion/13_c1c_nH_nn1 | 1 | descriptors (leak) | +0.974 | descriptors | +0.974 | +0.000 |
-| corrosion/13_c1c_nH_nn1 | 2 | invariant | +0.515 | invariant | +0.515 | +0.000 |
-| corrosion/161_c1ccc2scnc2c1 | 0 | invariant | -0.091 | counts | -0.079 | +0.012 |
-| corrosion/161_c1ccc2scnc2c1 | 1 | descriptors (leak) | +0.976 | descriptors | +0.976 | +0.000 |
-| corrosion/161_c1ccc2scnc2c1 | 2 | invariant | +0.489 | invariant | +0.489 | +0.000 |
+| corrosion/7_c1nncs1 | 0 | no route; scored as aligned | +0.326 | aligned | +0.326 | +0.000 |
+| corrosion/7_c1nncs1 | 1 | no route; scored as aligned | -0.702 | invariant | +0.030 | +0.732 |
+| corrosion/7_c1nncs1 | 2 | no route; scored as aligned | -0.076 | counts | +0.047 | +0.123 |
+| corrosion/13_c1c_nH_nn1 | 0 | descriptors | +0.374 | invariant | +0.715 | +0.341 |
+| corrosion/13_c1c_nH_nn1 | 1 | descriptors | +0.221 | aligned | +0.382 | +0.161 |
+| corrosion/13_c1c_nH_nn1 | 2 | descriptors | +0.388 | invariant | +0.515 | +0.127 |
+| corrosion/161_c1ccc2scnc2c1 | 0 | descriptors | +0.567 | descriptors | +0.567 | +0.000 |
+| corrosion/161_c1ccc2scnc2c1 | 1 | descriptors | +0.780 | descriptors | +0.780 | +0.000 |
+| corrosion/161_c1ccc2scnc2c1 | 2 | descriptors | +0.779 | descriptors | +0.779 | +0.000 |
 | am_eu | 0 | aligned | +0.823 | aligned | +0.823 | +0.000 |
 | am_eu | 1 | aligned | +0.491 | invariant | +0.564 | +0.073 |
 | am_eu | 2 | aligned | +0.507 | aligned | +0.507 | +0.000 |
 
-The advice named the best route on **20 of 39** splits; over all splits it cost
-+0.095 in R2pred on average against the best route (worst +0.732).
+The advice named the best route on **16 of 39** splits; over all splits it cost
++0.117 in R2pred on average against the best route (worst +0.732).
 
-## The same count without the leak
+In 3 of these splits the advice was that no route is worth a model. A user who builds a model anyway builds the aligned one, so such a split is scored as the aligned model, for the advice and for the rule "always align" alike. In 2 of them no route reached an R2pred of 0.1 on the held-out molecules.
 
-In 5 of these splits the route advised was `descriptors` in a set whose descriptor columns read the activity: the diagnosis found that out in another split of the same set, and in this one the route scored a little below the 0.95 at which the warning is given. Its held-out score near 1 is the leak, and it is not a success of the advice. They are marked `(leak)` above.
+## Against always taking the aligned model
+
+No split advised a descriptor route that reads the activity from the columns of the file (`validation_splits` looks for such a split and marks it).
 
 | | splits | sets | advice names the best route | mean cost of the advice | the aligned model is the best route | mean cost of always aligning | advice minus aligned, mean over the sets [95 %] | sets better / worse |
 |---|---:|---:|---:|---:|---:|---:|---|---|
-| all splits | 39 | 13 | 20 | 0.095 | 11 | 0.200 | +0.105 [-0.020, +0.253] | 6 / 4 |
-| without the leak splits | 34 | 13 | 15 | 0.109 | 11 | 0.136 | +0.053 [-0.040, +0.189] | 6 / 4 |
+| all splits | 39 | 13 | 16 | 0.117 | 12 | 0.175 | +0.058 [-0.048, +0.225] | 5 / 5 |
 
 A set counts as better or worse when the mean difference over its splits is more than 0.02 in R2pred.
 

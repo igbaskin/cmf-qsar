@@ -26,8 +26,11 @@ Five questions, and the numbers that answer each:
    frame: the atom-type count kernel, which has thrown the geometry away entirely, and the
    rotation-invariant field autocorrelation, which keeps it without a pose.  If neither is
    outperformed, the alignment adds nothing and the cheaper route is also the more reliable one.
-4. **Does the geometry add anything?**  The same comparison against descriptors alone -- what the
-   file carries plus the few the program computes.  This is the question the ACE result forces.
+4. **Does the geometry add anything?**  The same comparison against descriptors alone: the few
+   that the program computes from the structure, and columns of the file only when they are
+   named.  This is the question the ACE result forces.  The file's own columns are scored
+   beside this baseline and reported, and they never decide the recommendation by themselves,
+   because such a column can be the activity in another form.
 5. **Was the model specified sensibly?**  Whether the chosen alpha sits on the edge of its grid,
    which means the search needed a value it was not offered.
 
@@ -53,6 +56,8 @@ LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 #: a difference smaller than this, or than the bootstrap interval, is not a difference
 MEANINGFUL = 0.05
+#: the name of the route that scores the file's own columns; it is reported and never recommended
+FILE_ROUTE = "file columns"
 
 
 @dataclass
@@ -73,6 +78,8 @@ class Route:
     leaked: bool = False
     #: the molecules this route could cover, when it cannot cover them all
     subset: Optional[List[int]] = None
+    #: set for a route that is shown for information and must not be recommended or compared
+    informative: bool = False
 
     def row(self) -> dict:
         return {"route": self.name, "q2": self.q2, "rmse_cv": self.rmse_cv,
@@ -329,14 +336,38 @@ def topomer_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0,
                  note=f"{len(keep)} of {len(mols)} molecules can be cut at the framework")
 
 
+def file_columns(mols, exclude: Sequence[str] = ()) -> List[str]:
+    """The numeric columns that the file itself carries, without the computed descriptors and
+    without the names in `exclude` (the activity, and columns that were named as descriptors)."""
+    from .descriptors import available, computed_names
+
+    skip = set(computed_names()) | {str(e) for e in exclude}
+    return [c for c in available(list(mols)) if c not in skip]
+
+
 def descriptor_route(mols, y, names_d: Optional[Sequence[str]] = None, folds=10, seed=0,
-                     exclude: Sequence[str] = (), leak: float = 0.95) -> Route:
+                     exclude: Sequence[str] = (), leak: float = 0.95,
+                     extra: Sequence[str] = (), with_file: bool = False) -> Route:
     """Descriptors alone: the question the ACE result forces on every set.
 
-    Most files store the activity as a molecule property, so the available descriptors usually
-    *include the quantity being predicted*; given it, this baseline returns q2 = 1.000 and the
-    diagnosis recommends descriptors for every set in the world.  Anything in `exclude`, and
-    anything correlating with the activity above `leak`, is therefore dropped and named.
+    **Which descriptors.**  By default the descriptors that the program computes from the
+    structure, and the columns of the file named in `extra`.  The other columns of the file are
+    left out.  A column of a file is a measurement, a count kept by whoever made the table, or
+    a condition of the experiment, and no rule can tell these apart: on the corrosion tables
+    the columns are the potency in other forms, on the Hammett file one is a second measured
+    constant, on the cyclodextrin tables two are the pH and the temperature.  Until
+    14 November 2026 all of them entered the baseline, and a guard looked for a leak afterwards:
+    a column was dropped when it correlated with the activity above `leak`, and the route was
+    marked as unusable when it reached q2 0.95.  Both tests are thresholds.  On 17 of the 25
+    pyrazoles of the corrosion tables the leaking columns gave q2 0.94, no warning was given
+    and descriptors were recommended; five splits of the validation counted that as a success.
+    So the baseline no longer takes a column that nobody named.  With `with_file` it takes all
+    of them, which is how :func:`diagnose` scores the file's columns for its report.
+
+    Most files store the activity as a molecule property, so the columns of a file usually
+    *include the quantity being predicted*; given it, a baseline returns q2 = 1.000.  Anything
+    in `exclude`, and anything correlating with the activity above `leak`, is therefore still
+    dropped and named, for the columns that were named and for the route `with_file`.
 
     `leak` is 0.95 and not something nearer 1 because the leak is rarely a copy.  The corrosion
     files carry the potency as ``activity`` and again as ``mwila_pooled_raw``, two reductions of
@@ -349,8 +380,12 @@ def descriptor_route(mols, y, names_d: Optional[Sequence[str]] = None, folds=10,
     from .descriptors import DescriptorScaler, available, computed_names, descriptor_kernel, \
         read_values
 
-    want = list(names_d) if names_d else (
-        list(computed_names()) + list(available(list(mols))))   # already carry the calc: prefix
+    if names_d:
+        want = list(names_d)
+    elif with_file:
+        want = list(computed_names()) + list(available(list(mols)))  # already carry the calc: prefix
+    else:
+        want = list(computed_names()) + [str(e) for e in extra]
     drop = {str(e) for e in exclude}
     want = [w for w in dict.fromkeys(want) if w not in drop]
     if not want:
@@ -516,7 +551,7 @@ def _superimposed_finding(mols: Sequence[Chem.Mol], core) -> Finding:
 
 def route_kernels(route, mols, names, alphas=ALPHAS, charge_model="gasteiger",
                   param_scheme="rdkit", fieldset=None, y=None, activity_prop="",
-                  leak=0.95):
+                  leak=0.95, descriptors=()):
     """[(alpha, K)] over all the molecules for one route, and the molecules it covers.
 
     The routes are scored inside :func:`diagnose` on their own cross-validation; to *follow* the
@@ -533,7 +568,8 @@ def route_kernels(route, mols, names, alphas=ALPHAS, charge_model="gasteiger",
         # one kernel: the field autocorrelation has no attenuation (see invariant_kernel)
         return [(float("nan"), invariant_kernel(mols, names, charge_model, param_scheme)[0])], None
     if route == "descriptors":
-        want = [w for w in (list(computed_names()) + list(available(mols)))
+        # the computed descriptors and the named columns, as descriptor_route takes them
+        want = [w for w in dict.fromkeys(list(computed_names()) + [str(c) for c in descriptors])
                 if w != activity_prop]
         Z = np.vstack([read_values(m, want) for m in mols])
         keep = [j for j in range(Z.shape[1])
@@ -613,7 +649,7 @@ def _fit_predict(kernels, y, train, test, lams=LAMS, inner=5, seed=0):
 
 def validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=ALPHAS,
                     charge_model="gasteiger", param_scheme="rdkit", activity_prop="",
-                    folds=5, progress=None):
+                    folds=5, progress=None, descriptors=()):
     """Take the advice, build that model, and see whether it did better than the aligned one.
 
     The diagnosis is run on the training part alone, so the advice never sees the molecules it
@@ -630,7 +666,8 @@ def validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=A
     for r in routes:
         try:
             kernels[r] = route_kernels(r, mols, names, alphas, charge_model, param_scheme,
-                                       y=y, activity_prop=activity_prop)
+                                       y=y, activity_prop=activity_prop,
+                                       descriptors=descriptors)
         except Exception as exc:                 # noqa: BLE001
             kernels[r] = ([], None)
             if progress:
@@ -642,7 +679,8 @@ def validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=A
         test, train = sorted(order[:k].tolist()), sorted(order[k:].tolist())
         d = diagnose([mols[i] for i in train], [names[i] for i in train], y[train],
                      alphas=alphas, folds=folds, seed=seed, charge_model=charge_model,
-                     param_scheme=param_scheme, activity_prop=activity_prop)
+                     param_scheme=param_scheme, activity_prop=activity_prop,
+                     descriptors=descriptors)
         advice = d.recommended.split(",")[0].split(" or ")[0].strip()
         # the diagnosis decides, on the training part, whether the descriptor baseline is
         # reading the activity; if it is, that route is not a route the advice could have taken
@@ -683,8 +721,15 @@ def diagnose(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
              seed: int = 0, charge_model: str = "gasteiger", param_scheme: str = "rdkit",
              routes: Sequence[str] = ("aligned", "counts", "invariant", "topomer",
                                       "descriptors"),
-             activity_prop: str = "", nested: bool = True, progress=None) -> Diagnosis:
-    """Ask a data set the questions that should precede modelling it."""
+             activity_prop: str = "", nested: bool = True, progress=None,
+             descriptors: Sequence[str] = ()) -> Diagnosis:
+    """Ask a data set the questions that should precede modelling it.
+
+    `descriptors` names columns of the file that are real descriptors, for example the pH and
+    the temperature of a measurement.  They join the computed descriptors in the descriptor
+    baseline.  Columns that are not named are scored beside it and reported, and they never
+    decide the recommendation (:func:`descriptor_route` says why).
+    """
     mols, names = list(mols), list(names)
     y = np.asarray(y, float)
     ok = np.isfinite(y)
@@ -696,13 +741,14 @@ def diagnose(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
     was, NESTED = NESTED, bool(nested)
     try:
         return _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model,
-                         param_scheme, routes, activity_prop, bool(nested), progress)
+                         param_scheme, routes, activity_prop, bool(nested), progress,
+                         [str(c) for c in descriptors])
     finally:
         NESTED = was
 
 
 def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param_scheme,
-              routes, activity_prop, nested, progress) -> Diagnosis:
+              routes, activity_prop, nested, progress, descriptors=()) -> Diagnosis:
     d = Diagnosis(n=len(mols), activity_sd=float(np.std(y)), nested=nested,
                   activity_range=(float(np.min(y)), float(np.max(y))))
 
@@ -738,8 +784,17 @@ def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param
             d.routes[name] = topomer_route(mols, names, y, alphas, folds, seed,
                                            charge_model, param_scheme)
         elif name == "descriptors":
-            d.routes[name] = descriptor_route(mols, y, folds=folds, seed=seed,
-                                              exclude=[activity_prop] if activity_prop else ())
+            hide = [activity_prop] if activity_prop else []
+            d.routes[name] = descriptor_route(mols, y, folds=folds, seed=seed, exclude=hide,
+                                              extra=descriptors)
+            own = file_columns(mols, hide + [str(c) for c in descriptors])
+            if own:
+                # what the file's own columns would add: shown, compared, and never recommended
+                r = descriptor_route(mols, y, folds=folds, seed=seed, exclude=hide,
+                                     with_file=True)
+                r.name, r.informative = FILE_ROUTE, True
+                r.note = (r.note + "; " if r.note else "") + "not used for the recommendation"
+                d.routes[FILE_ROUTE] = r
 
     aligned = d.routes.get("aligned")
     if aligned is not None and np.isfinite(aligned.alpha):
@@ -752,6 +807,32 @@ def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param
                 {"alpha": aligned.alpha}))
 
     desc = d.routes.get("descriptors")
+    filed = d.routes.get(FILE_ROUTE)
+    if (filed is not None and desc is not None and np.isfinite(filed.q2)
+            and np.isfinite(desc.q2)):
+        own = file_columns(mols, ([activity_prop] if activity_prop else [])
+                           + [str(c) for c in descriptors])
+        diff, lo, hi = paired_interval(filed, desc, y, seed=seed)
+        predict = bool(np.isfinite(lo) and lo > 0.0 and diff >= MEANINGFUL)
+        shown = ", ".join(own[:8]) + (f" and {len(own) - 8} more" if len(own) > 8 else "")
+        text = (f"the file has {len(own)} numeric column(s) of its own ({shown}); with them the "
+                f"descriptor baseline is {diff:+.3f} in q2 against the computed descriptors"
+                + (f" (95% interval {lo:+.3f} to {hi:+.3f})" if np.isfinite(lo) else ""))
+        if filed.dropped:
+            text += ("; the activity under another name, by a correlation above 0.95: "
+                     + ", ".join(filed.dropped))
+        if predict:
+            text += (" -- these columns predict the activity, so they are measurements or forms "
+                     "of the activity and not descriptions of the structure. They are not used. "
+                     "If some of them are real descriptors, such as the conditions of the "
+                     "measurement, name them (descriptors=..., or --descriptors on the command "
+                     "line) and run again")
+        else:
+            text += " -- they add nothing that can be seen, and they are not used"
+        d.findings.append(Finding(
+            "file-columns", "warn" if predict else "note", text,
+            {"columns": list(own), "difference": diff, "low": lo, "high": hi,
+             "q2": filed.q2, "dropped": list(filed.dropped)}))
     if desc is not None and np.isfinite(desc.q2) and desc.q2 >= 0.95:
         near = ", ".join(f"{n} (r {r:.2f})" for n, r in getattr(desc, "correlations", [])[:4])
         d.findings.append(Finding(
@@ -824,7 +905,8 @@ def _recommend(d: Diagnosis) -> Tuple[str, str]:
     if aligned is None:
         return "unknown", "the aligned model was not run"
     usable = [r for r in d.routes.values()
-              if np.isfinite(r.q2) and not getattr(r, "leaked", False)]
+              if np.isfinite(r.q2) and not getattr(r, "leaked", False)
+              and not getattr(r, "informative", False)]
     best = max(usable, key=lambda r: r.q2) if usable else aligned
     if best.q2 < 0.1:
         return "none", (f"no route reaches q2 0.1 (best {best.name} at {best.q2:+.3f}); the set "

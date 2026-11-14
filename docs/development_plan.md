@@ -797,11 +797,29 @@ can judge it.
   change of the topomer route, and with all splits the counts are now 20 and 11 (were 21 and 12).
   (2) The invariant route searched six attenuations that its kernel does not depend on and
   reported the first as chosen; it now builds one kernel and reports its width, which is not
-  searched. No score of the benchmark changed. **Open, for a decision:** the leak guard is a
-  threshold on q2 and passes on small sets or with five folds; a guard that compares the file's
-  own columns with the computed descriptors would not depend on that threshold.
+  searched. No score of the benchmark changed.
+  **The leak guard redesigned, 14 November 2026.** The guard was a threshold on q2, and it
+  passed on small sets or with five folds. A survey of the example files showed that no rule
+  can sort the columns of a file: the corrosion tables hold the activity in other forms, the
+  cyclodextrin tables hold the number of measurements beside the pH and the temperature, and
+  the Hammett file holds a second measured constant. So the rule is now that the descriptor
+  baseline takes the descriptors computed from the structure and the columns that the user
+  names (`descriptors=`, `--descriptors`). The other columns of the file are scored beside it
+  as a route `file columns`, which is printed with its gain over the baseline and is never
+  recommended. Nine of the thirteen sets have no columns of their own, and their results did
+  not change. On the four corrosion tables the descriptor baseline fell from 0.96 to 0.99 to
+  +0.15, -0.13, +0.35 and +0.71, and the file columns score 0.97 to 0.99 beside it. The
+  validation, run again: no split advises a route that reads the activity; the best route
+  named on 16 of 39 splits, cost 0.117 against 0.175 for always aligning; per set
+  +0.058 [-0.048, +0.225], better on five sets and worse on five. The gain rests on one set,
+  the benzothiazoles (+0.95, where the aligned model falls to R2 -1.26 on one split); the
+  mean over the other twelve is -0.02. The reading stays: insurance and not an advantage.
   **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
-  It was never triggered on these 39 splits, so the validation cannot set it.
+  It is triggered on three of the 39 splits, all of the thiadiazoles (the earlier text of this
+  item said never; the stored results have held this advice since 24 October). The validation
+  scores such a split as the aligned model. In two of the three no route reached 0.05 on the
+  held-out molecules, and in one the aligned model reached 0.33 on nine molecules. Three
+  splits of one set cannot set the cutoff.
 * **C7. A chirality descriptor anchored on the stereocentre.** Opened and built 25 October
   2026, out of C5's failure. The question C5 was asked -- can a field kernel see handedness -- is still a real
   one: a series in which both enantiomers are measured and differ in potency is an ordinary

@@ -43,20 +43,26 @@ def test_the_descriptor_baseline_refuses_the_activity_itself():
     for m, v in zip(mols, y):
         m.SetProp("pIC50", f"{v:.6f}")          # the activity, as a file would carry it
         m.SetProp("mw_copy", f"{m.GetNumHeavyAtoms():d}")
-    leaky = descriptor_route(mols, y, folds=4, seed=0)
+    leaky = descriptor_route(mols, y, folds=4, seed=0, with_file=True)
     assert "another name" in leaky.note or "activity itself" in leaky.note
     assert not (leaky.q2 > 0.999), "the activity was used as a descriptor"
-    named = descriptor_route(mols, y, folds=4, seed=0, exclude=["pIC50"])
+    named = descriptor_route(mols, y, folds=4, seed=0, exclude=["pIC50"], with_file=True)
     assert named.q2 < 0.999
+    # the baseline itself takes no column that nobody named, so it has nothing to drop
+    plain = descriptor_route(mols, y, folds=4, seed=0)
+    assert plain.dropped == [] and "another name" not in plain.note
 
 
 def test_a_perfect_descriptor_is_dropped_by_correlation_even_when_it_is_not_named():
     mols, names, y = _series(14)
     for m, v in zip(mols, y):
         m.SetProp("some_other_column", f"{v:.6f}")
-    r = descriptor_route(mols, y, folds=4, seed=0)        # nothing excluded by name
+    r = descriptor_route(mols, y, folds=4, seed=0, with_file=True)   # nothing excluded by name
     assert "some_other_column" in r.note
     assert not (r.q2 > 0.999)
+    # a column that is named as a descriptor is checked in the same way
+    r = descriptor_route(mols, y, folds=4, seed=0, extra=["some_other_column"])
+    assert "some_other_column" in r.note and not (r.q2 > 0.999)
 
 
 def test_the_frame_questions_notice_a_diverse_set_and_a_congeneric_one():
@@ -129,7 +135,9 @@ def test_a_leak_that_only_several_columns_together_reconstruct_is_caught_by_the_
     for m, v in zip(mols, y):                      # two columns, neither alone decisive
         m.SetProp("half_a", f"{0.5 * v + 0.4 * rng.normal():.6f}")
         m.SetProp("half_b", f"{0.5 * v - 0.4 * rng.normal():.6f}")
-    d = diagnose(mols, names, y, routes=("aligned", "descriptors"), folds=4, alphas=(0.3, 1.0))
+    # named as descriptors, the two columns enter the baseline, and the outcome is judged
+    d = diagnose(mols, names, y, routes=("aligned", "descriptors"), folds=4, alphas=(0.3, 1.0),
+                 descriptors=["half_a", "half_b"])
     desc = d.routes["descriptors"]
     if desc.q2 >= 0.95:
         assert any(f.code == "descriptor-leak" for f in d.findings)
@@ -186,3 +194,53 @@ def test_the_frameless_route_has_no_attenuation_and_reports_none():
     assert len(listed) == 1 and np.isnan(listed[0][0]) and subset is None
     assert np.allclose(listed[0][1], K)
 
+
+def test_columns_of_the_file_are_reported_and_never_decide_the_recommendation():
+    # the guard of 14 November 2026: a column that nobody named does not enter the baseline,
+    # whatever it scores.  The old guard was a threshold on q2, and a leak a little below it
+    # was recommended as "descriptors".
+    from cmfqsar.diagnose import FILE_ROUTE, file_columns
+
+    mols, names, y = _series(16)
+    rng = np.random.default_rng(5)
+    for m, v in zip(mols, y):                      # a noisy form of the activity: no copy
+        m.SetProp("adjusted", f"{v + 0.25 * rng.normal():.6f}")
+        m.SetProp("bookkeeping", f"{int(rng.integers(1, 9))}")
+    assert file_columns(mols) == ["adjusted", "bookkeeping"]
+    d = diagnose(mols, names, y, routes=("aligned", "counts", "descriptors"), folds=4,
+                 alphas=(0.3, 1.0))
+    plain = descriptor_route(mols, y, folds=4, seed=0)
+    assert d.routes["descriptors"].q2 == pytest.approx(plain.q2)        # computed descriptors only
+    assert "4 descriptors" in d.routes["descriptors"].note
+    shown = d.routes[FILE_ROUTE]
+    assert shown.informative and "not used" in shown.note
+    finding = next(f for f in d.findings if f.code == "file-columns")
+    assert finding.numbers["columns"] == ["adjusted", "bookkeeping"]
+    assert d.recommended != FILE_ROUTE
+    assert FILE_ROUTE in d.report() and FILE_ROUTE in d.to_dict()["routes"]
+
+
+def test_a_named_column_joins_the_descriptor_baseline():
+    from cmfqsar.diagnose import FILE_ROUTE, route_kernels
+
+    mols, names, y = _series(16)
+    rng = np.random.default_rng(7)
+    for m in mols:
+        m.SetProp("temperature", f"{298.0 + 10.0 * rng.normal():.3f}")
+    d = diagnose(mols, names, y, routes=("aligned", "descriptors"), folds=4, alphas=(0.3, 1.0),
+                 descriptors=["temperature"])
+    assert "5 descriptors" in d.routes["descriptors"].note
+    assert FILE_ROUTE not in d.routes                # no column of the file is left unnamed
+    assert not any(f.code == "file-columns" for f in d.findings)
+    with_it, _ = route_kernels("descriptors", mols, names, descriptors=["temperature"])
+    without, _ = route_kernels("descriptors", mols, names)
+    assert not np.allclose(with_it[0][1], without[0][1])
+
+
+def test_a_file_without_columns_of_its_own_has_no_file_route():
+    from cmfqsar.diagnose import FILE_ROUTE
+
+    mols, names, y = _series(16)
+    d = diagnose(mols, names, y, routes=("aligned", "descriptors"), folds=4, alphas=(0.3, 1.0))
+    assert FILE_ROUTE not in d.routes
+    assert not any(f.code == "file-columns" for f in d.findings)

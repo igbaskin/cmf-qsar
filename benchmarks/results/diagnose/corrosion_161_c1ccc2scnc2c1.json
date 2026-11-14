@@ -40,11 +40,19 @@
   },
   "descriptors": {
    "route": "descriptors",
+   "q2": 0.7107041749816365,
+   "rmse_cv": 1.027016145621505,
+   "alpha": NaN,
+   "lam": 0.0055,
+   "note": "4 descriptors"
+  },
+  "file columns": {
+   "route": "file columns",
    "q2": 0.9918284555046232,
    "rmse_cv": 0.1726069438190192,
    "alpha": NaN,
    "lam": 0.01,
-   "note": "9 descriptors; dropped as the activity under another name: mwila_hcl_adj, mwila_pooled_raw; not usable as a baseline (see the warning)"
+   "note": "9 descriptors; dropped as the activity under another name: mwila_hcl_adj, mwila_pooled_raw; not used for the recommendation"
   }
  },
  "findings": [
@@ -78,40 +86,27 @@
    }
   },
   {
-   "code": "descriptor-leak",
+   "code": "file-columns",
    "level": "warn",
-   "text": "the descriptor baseline reproduces the activity almost exactly (q2 +0.992); on a set this size that is not chemistry but the measurement itself, reached through the file's own columns -- the nearest are mwila_pooled_adj (r 0.95), calc:clogp (r 0.69), mw (r 0.57), calc:mw (r 0.57). No descriptor conclusion can be drawn until they are excluded.",
+   "text": "the file has 11 numeric column(s) of its own (mw, n_papers, depth, mwila_hcl_adj, mwila_h2so4_raw, mwila_h2so4_adj, mwila_pooled_raw, mwila_pooled_adj and 3 more); with them the descriptor baseline is +0.281 in q2 against the computed descriptors (95% interval +0.172 to +0.552); the activity under another name, by a correlation above 0.95: mwila_hcl_adj, mwila_pooled_raw -- these columns predict the activity, so they are measurements or forms of the activity and not descriptions of the structure. They are not used. If some of them are real descriptors, such as the conditions of the measurement, name them (descriptors=..., or --descriptors on the command line) and run again",
    "numbers": {
+    "columns": [
+     "mw",
+     "n_papers",
+     "depth",
+     "mwila_hcl_adj",
+     "mwila_h2so4_raw",
+     "mwila_h2so4_adj",
+     "mwila_pooled_raw",
+     "mwila_pooled_adj",
+     "n_rows",
+     "db_id",
+     "dG_ads"
+    ],
+    "difference": 0.28112428052298666,
+    "low": 0.1724454513095989,
+    "high": 0.5517758393269931,
     "q2": 0.9918284555046232,
-    "nearest": [
-     [
-      "mwila_pooled_adj",
-      0.9484091510356528
-     ],
-     [
-      "calc:clogp",
-      0.6850971490704704
-     ],
-     [
-      "mw",
-      0.567467355374734
-     ],
-     [
-      "calc:mw",
-      0.5674072597152775
-     ],
-     [
-      "n_papers",
-      0.43744397690923326
-     ]
-    ]
-   }
-  },
-  {
-   "code": "activity-as-descriptor",
-   "level": "warn",
-   "text": "dropped from the descriptor baseline because they reproduce the activity rather than describe the molecule: mwila_hcl_adj, mwila_pooled_raw -- if one of these is a real descriptor, name it and run again",
-   "numbers": {
     "dropped": [
      "mwila_hcl_adj",
      "mwila_pooled_raw"
@@ -141,17 +136,17 @@
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -1.064 in q2 against descriptors (95% interval -1.556 to -0.925) -- descriptors alone do as well, so the geometry adds nothing on this set",
+   "text": "the aligned model is -0.783 in q2 against descriptors (95% interval -1.165 to -0.594) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -1.0641704814202075,
-    "low": -1.5559425760902093,
-    "high": -0.9246134745777184
+    "difference": -0.7830462008972208,
+    "low": -1.1653094005343083,
+    "high": -0.5944716735079856
    }
   }
  ],
- "recommended": "invariant",
- "why": "the frame gains nothing over invariant, which needs no alignment to curate and cannot be done wrongly",
+ "recommended": "descriptors",
+ "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the purpose",
  "nested": true,
  "set": "corrosion/161_c1ccc2scnc2c1",
- "seconds": 0.8256769180297852
+ "seconds": 0.9590775966644287
 }

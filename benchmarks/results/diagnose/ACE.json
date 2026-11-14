@@ -131,5 +131,5 @@
  "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the purpose",
  "nested": true,
  "set": "ACE",
- "seconds": 22.18234133720398
+ "seconds": 10.78161072731018
 }

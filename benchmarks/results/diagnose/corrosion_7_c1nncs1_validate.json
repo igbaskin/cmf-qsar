@@ -9,11 +9,9 @@
     "aligned": 0.3257420736281079,
     "counts": 0.010359335173348527,
     "invariant": 0.015263525948690182,
-    "descriptors": 0.9939522483971507
+    "descriptors": -0.011844881480167047
    },
-   "unusable": [
-    "descriptors"
-   ]
+   "unusable": []
   },
   {
    "seed": 1,
@@ -24,11 +22,9 @@
     "aligned": -0.7021891917702918,
     "counts": -0.8416073755939939,
     "invariant": 0.030081358997584684,
-    "descriptors": 0.9783910786758957
+    "descriptors": -0.19858333864018474
    },
-   "unusable": [
-    "descriptors"
-   ]
+   "unusable": []
   },
   {
    "seed": 2,
@@ -39,14 +35,12 @@
     "aligned": -0.07558157910985863,
     "counts": 0.04730142515285718,
     "invariant": -0.017567665884006933,
-    "descriptors": 0.9919891114807772
+    "descriptors": -0.003251807934496753
    },
-   "unusable": [
-    "descriptors"
-   ]
+   "unusable": []
   }
  ],
  "test_fraction": 0.3,
  "set": "corrosion/7_c1nncs1",
- "seconds": 2.9794297218322754
+ "seconds": 3.3558382987976074
 }

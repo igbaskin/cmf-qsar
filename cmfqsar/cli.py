@@ -1271,9 +1271,10 @@ def cmd_diagnose(args):
     alphas = tuple(float(a) for a in args.alphas.split(",")) if args.alphas else ALPHAS
     routes = tuple(args.routes) if args.routes else ("aligned", "counts", "invariant",
                                                      "descriptors")
+    named = [c for c in (args.descriptors or "").split(",") if c]
     d = diagnose(ds.mols, ds.names, y, alphas=alphas, folds=args.folds, seed=args.seed,
                  charge_model=args.charges, param_scheme=args.params, routes=routes,
-                 activity_prop=ds.activity_prop,
+                 activity_prop=ds.activity_prop, descriptors=named,
                  progress=(lambda m: print(f"  ... {m}", flush=True)) if args.verbose else None)
     print(d.report())
     if args.json:
@@ -4564,6 +4565,10 @@ def main(argv=None):
                     choices=["aligned", "counts", "invariant", "descriptors"],
                     help="which comparisons to run (all four by default)")
     dg.add_argument("--alphas", default=None, help="comma-separated attenuations to search")
+    dg.add_argument("--descriptors", default=None,
+                    help="comma-separated columns of the file that are real descriptors (for "
+                         "example pH,T); they join the computed descriptors in the baseline. "
+                         "Columns that are not named are reported and not used")
     dg.add_argument("--folds", type=int, default=10)
     dg.add_argument("--seed", type=int, default=0)
     dg.add_argument("--charges", default="gasteiger", help="gasteiger | mmff | file")

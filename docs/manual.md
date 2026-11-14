@@ -3292,8 +3292,9 @@ atom-type count kernel, which has thrown the geometry away entirely, and the rot
 field autocorrelation, which keeps it without a pose. If neither is beaten, the alignment adds
 nothing and the cheaper route is also the more defensible one.
 
-**Does the geometry contribute anything?** The same comparison against descriptors alone — what the file
-carries plus the handful the program computes.
+**Does the geometry contribute anything?** The same comparison against descriptors alone: the
+handful that the program computes from the structure, and columns of the file only when they
+are named as descriptors.
 
 **Was the model specified sensibly?** Whether the chosen attenuation sits on the edge of its grid,
 which means the search wanted a value it was not offered.
@@ -3307,25 +3308,49 @@ drop the hard compounds.
 
 ## Two things the command protects you from
 
-**The activity as a descriptor.** Most files store the activity as a molecule property, so the
-descriptors available usually include the quantity being predicted. Given it, the descriptor
-baseline returns q² = 1.000 and the advice becomes "use descriptors" for every set in the world.
-Columns named as the activity are dropped, and so is anything correlating with it above 0.95 —
-but the leaked information is rarely a plain copy. The corrosion files carry the potency as `activity`, again as
-`mwila_pooled_raw`, and again as two laboratory-adjusted variants; excluding the first two still
-left a descriptor baseline at q² = 0.99, because the remainder reconstruct it between them. No
-per-column test can see that, so the outcome is judged as well: a descriptor baseline reaching
-q² ≥ 0.95 on a set of this size is not chemistry but the measurement itself, and the command says
-so, names the nearest columns with their correlations, and refuses to recommend descriptors.
+**The activity as a descriptor.** A file usually has numeric columns of its own, and a baseline
+that takes them as descriptors is in danger. Most files store the activity as a molecule
+property. Given it, a descriptor baseline returns q² = 1.000 and the advice becomes "use
+descriptors" for every set in the world. The leaked information is rarely a plain copy. The
+corrosion tables carry the potency as `activity`, again as `mwila_pooled_raw`, and again as two
+laboratory-adjusted variants, which rebuild it between them. And a column does not have to be a
+leak to be out of place: the Hammett file holds a second measured constant, and the
+cyclodextrin tables hold the number of measurements beside the pH and the temperature.
 
-This guard is a threshold, and a threshold can be passed. On the 25 pyrazoles of the corrosion
-tables the leaking columns give q² 0.98 and the warning is given. On 17 of those 25 molecules
-the same columns give 0.94, the warning is not given, and the command recommends descriptors
-(the twelfth tutorial shows both runs). With five folds in place of ten the whole table gives
-0.946 and passes as well. So the guard is a help and not a proof. When descriptors are
-recommended, or when they score far above every route that describes the molecule, read the
-names of the columns that the route used: a column that was measured on the molecule and not
-computed from its structure may be the activity.
+No rule can sort such columns. Until 14 November 2026 the command took all of them into the
+baseline and looked for a leak afterwards, with two tests: a column was dropped when it
+correlated with the activity above 0.95, and the whole baseline was refused when it reached
+q² 0.95. Both tests are thresholds, and a threshold can be passed. On the 25 pyrazoles of the
+corrosion tables the leaking columns gave q² 0.98 and the warning was given. On 17 of those 25
+molecules the same columns gave 0.94, no warning was given, and the command recommended
+descriptors. With five folds in place of ten the whole table gave 0.946 and passed as well.
+
+So the rule is now another one: **the descriptor baseline takes the descriptors that the program
+computes from the structure, and no column that nobody named.** The columns of the file are
+scored beside it, as a route of their own that is printed and never recommended, and one line
+of the report says what they add. These are the lines for the 17 pyrazoles:
+
+```
+  descriptors   q2 +0.181  RMSEcv 1.686  (lambda 0.1)   4 descriptors
+  file columns  q2 +0.940  RMSEcv 0.457  (lambda 0.01)   10 descriptors; dropped as the
+                activity under another name: mwila_pooled_raw; not used for the recommendation
+
+! the file has 11 numeric column(s) of its own (mw, n_papers, dG_ads, depth, ...); with them the
+  descriptor baseline is +0.759 in q2 against the computed descriptors (95% interval +0.510 to
+  +1.549) ... -- these columns predict the activity, so they are measurements or forms of the
+  activity and not descriptions of the structure. They are not used.
+```
+
+A column that is a real descriptor, such as a condition of the measurement, is named, and it
+then joins the baseline:
+
+```bash
+cmf diagnose table.csv --descriptors pH,T
+```
+
+The two old tests still apply to the columns that are named: such a column is dropped when it
+correlates with the activity above 0.95, and a baseline that reaches q² 0.95 is refused. For a
+column that the user has chosen, the thresholds are a second check and not the only one.
 
 **Searching harder and calling it a better model.** The five routes do not carry the same number
 of hyper-parameters — the aligned and the topomer route search six attenuations and five ridges,
@@ -3363,45 +3388,48 @@ Murcko scaffolds only mean the program could not have built it, not that it is w
 
 ## Does the advice work?
 
-A tool that reports five baselines is useful whatever its last line says, but advice that has
-never been followed is only a rule its author liked. `benchmarks/run_diagnose.py --validate`
-measures it the only way that matters: hold out 30 % of a set, run the diagnosis on the remaining
-70 % alone, build the model it recommends, and score that model on the held-out molecules
-against every other route — thirteen sets, three splits each.
+A tool that reports five baselines is useful whatever its last line says. Whether the last
+line, the recommendation, is good advice has to be measured, and the measurement is to follow
+it. `benchmarks/run_diagnose.py --validate` holds out 30 % of a set, runs the diagnosis on the
+remaining 70 % alone, builds the model that it recommends, and scores that model on the held-out
+molecules against every other route. It does this for thirteen sets, with three splits each.
+`benchmarks/results/diagnose/advice.md` lists every split. This is the summary:
 
-Five of the 39 splits have to be set apart first. In them the route advised was `descriptors`
-on a corrosion set whose columns read the activity: the part of the set that the diagnosis was
-given was small enough for the leak to pass the guard described above, and on the held-out
-molecules the route scored 0.96 to 0.99 where the aligned model scored 0.24 to 0.40. Until
-14 November 2026 this section counted them as the largest successes of the advice. They are not
-successes, because the activity cannot be used to predict the activity.
-`benchmarks/results/diagnose/advice.md` marks them and gives every number both ways:
+| splits | sets | advice names the best route | mean cost of the advice | the aligned model is the best route | mean cost of always aligning | advice minus aligned, mean over the sets [95 %] |
+|---:|---:|---:|---:|---:|---:|---|
+| 39 | 13 | 16 | 0.117 | 12 | 0.175 | +0.058 [−0.048, +0.225] |
 
-| | splits | advice names the best route | mean cost of the advice | the aligned model is the best route | mean cost of always aligning | advice minus aligned, mean over the sets [95 %] |
-|---|---:|---:|---:|---:|---:|---|
-| all splits | 39 | 20 | 0.095 | 11 | 0.200 | +0.105 [−0.020, +0.253] |
-| without the five leak splits | 34 | 15 | 0.109 | 11 | 0.136 | +0.053 [−0.040, +0.189] |
+The advice named the best of the five routes on **16 of 39 splits**, and the route it chose fell
+**0.117** in R² short of the best available. Always taking the aligned model, which is the
+default that this command exists to question, names the best route on 12 splits and costs 0.175.
+The correct unit is the set, because three splits of one set are not three measurements. Per set,
+following the advice is **0.058 better than always aligning** (95 % bootstrap interval −0.048 to
++0.225). It is better on five sets and worse on five.
 
-(The first row read 21, 0.096, 12 and 0.201 before. Those numbers were stored on 24 October 2026,
-one day before the topomer route was changed, and the validation was not run again then; with
-the present route one split has another best route.)
+The shape of that distribution matters more than its mean. The advice is **insurance and not an
+advantage**. Where it loses, it loses a little: 0.05 to 0.17 on AChE, BZR, THR and the
+thermolysin set, which are well-aligned series where the aligned model was right from the start,
+and 0.06 on the pyrazoles of the corrosion tables. Where it gains much, it gains on one set: the
+benzothiazoles of the corrosion tables, +0.95. There the aligned model on an automatic frame
+falls to R² −1.26 on one split, and the four computed descriptors, which were advised, reach
+0.57 to 0.78. Without that set the mean over the other twelve is −0.02. The interval contains
+zero, so on thirteen sets this is not a proven improvement in the average case. It is protection
+against the failure described at the start of this chapter.
 
-The second row is the fair one. The advice named the best of the five routes on **15 of 34
-splits**, and the route it chose fell **0.109** in R² short of the best available. Always taking
-the aligned model — the default this command exists to question — names the best route on 11
-splits and costs 0.136. Aggregated per set, which is the correct unit because three splits of one
-set are not three measurements, following the advice is **0.053 better than always aligning**
-(95 % bootstrap interval −0.040 to +0.189), better on six sets and worse on four.
+On the thiadiazoles the advice was "no route" in all three splits. A user who builds a model
+anyway builds the default, so these splits are scored as the aligned model, for the advice and
+for the rule "always align" alike. In two of them no route reached R² 0.05 on the held-out
+molecules, which agrees with the advice. In the third the aligned model reached 0.33 on nine
+molecules.
 
-The shape of that distribution matters more than its mean. The advice is **insurance, not an
-advantage**: where it loses it loses a little — 0.05 to 0.17 on AChE, BZR, THR and the thermolysin
-set, all of them well-aligned series where the aligned model was always going to be right. Where
-it wins a lot, it wins on one set: the benzothiazoles of the corrosion tables, +0.75, where the
-aligned model on an automatic frame falls to R² −1.26 on one split. On the other two corrosion
-sets the gain is +0.15 and +0.03 once the leak splits are left out; it was +0.48 and +0.44 with
-them. The interval crosses zero, so on thirteen sets this is not a proven improvement in the
-average case. What it is, is insurance against the failure described at the start of this
-chapter, and the measured value of that insurance is half of what this section said before.
+**Earlier numbers of this section, which should not be quoted.** The first form of the section
+(24 October 2026) gave 21 of 39 splits and +0.105 per set. In five of those splits the route
+advised was `descriptors` on a corrosion table, with columns of the file that held the activity.
+On the smaller training part these columns scored a little below the threshold of the old guard,
+and their scores of 0.96 to 0.99 on the held-out molecules were counted as the largest successes
+of the advice. Leaving the five splits out gave an estimate of +0.053 on 34 splits. With the
+rule of the section *Two things the command protects you from* such a route cannot be advised,
+all 39 splits count, and the measured value is +0.058.
 
 # Building a model
 

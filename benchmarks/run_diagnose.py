@@ -134,14 +134,18 @@ def validation_splits(rows):
     held-out molecules, the best route and the aligned route, and whether the advice was a
     leak.
 
-    The descriptor route of a file can read the activity from the file's own columns.  The
-    diagnosis warns of this when the route reaches q2 0.95 on the molecules it is given, and
-    such a route is then left out of the comparison (`unusable`).  On 70 % of a small set the
-    same columns can score a little below 0.95.  Then the warning is not given, descriptors are
-    advised, and the held-out score near 1 is the leak and not a success of the advice.  A
-    split is marked `leak` when descriptors were advised, scored `LEAK_SCORE` or more on the
-    held-out molecules, and the diagnosis found the descriptor route of the same set unusable
-    in another split.
+    A descriptor route can read the activity from columns of the file.  Until 14 November 2026
+    the route took every column, the diagnosis refused it only when it reached q2 0.95 on the
+    molecules it was given (`unusable`), and on 70 % of a small set the same columns scored a
+    little below that.  Descriptors were then advised, and the held-out score near 1 was the
+    leak and not a success of the advice.  A split is marked `leak` when descriptors were
+    advised, scored `LEAK_SCORE` or more on the held-out molecules, and the diagnosis found
+    the descriptor route of the same set unusable in another split.  The route now takes no
+    column that nobody named, so no split of the benchmark is marked; the test stays as a
+    check.
+
+    `no_route` is true when the advice was that no route is worth a model.  Such a split is
+    scored as the aligned model, which is what a user who builds a model anyway would build.
     """
     out = []
     for r in rows:
@@ -156,6 +160,7 @@ def validation_splits(rows):
             out.append({"set": r["set"], "seed": sp["seed"], "advised": adv, "got": held[adv],
                         "best": best, "best_score": held[best],
                         "aligned": held.get("aligned", float("nan")),
+                        "no_route": sp["advice"] == "none",
                         "leak": bool(known and adv == "descriptors"
                                      and held[adv] >= LEAK_SCORE)})
     return out
@@ -199,7 +204,8 @@ def report_validation(rows, results=RESULTS, out=None):
              "|---|---:|---|---:|---|---:|---:|"]
     splits = validation_splits(rows)
     for s in splits:
-        lines.append(f"| {s['set']} | {s['seed']} | {s['advised']}{' (leak)' if s['leak'] else ''} | "
+        said = "no route; scored as aligned" if s["no_route"] else s["advised"]
+        lines.append(f"| {s['set']} | {s['seed']} | {said}{' (leak)' if s['leak'] else ''} | "
                      f"{s['got']:+.3f} | {s['best']} | {s['best_score']:+.3f} | "
                      f"{s['best_score'] - s['got']:+.3f} |")
     if splits:
@@ -208,23 +214,40 @@ def report_validation(rows, results=RESULTS, out=None):
                       f"{everything['splits']}** splits; over all splits it cost",
                   f"{everything['advice_cost']:+.3f} in R2pred on average against the best route "
                   f"(worst {everything['advice_worst']:+.3f}).", ""]
+        silent = [s for s in splits if s["no_route"]]
+        if silent:
+            low = sum(1 for s in silent if s["best_score"] < 0.1)
+            lines += [f"In {len(silent)} of these splits the advice was that no route is worth a "
+                      "model. A user who builds a model anyway builds the aligned one, so such a "
+                      "split is scored as the aligned model, for the advice and for the rule "
+                      f"\"always align\" alike. In {low} of them no route reached an R2pred of "
+                      "0.1 on the held-out molecules.", ""]
         leaks = [s for s in splits if s["leak"]]
-        clean = advice_summary([s for s in splits if not s["leak"]])
-        lines += ["## The same count without the leak", "",
-                  f"In {len(leaks)} of these splits the route advised was `descriptors` in a set "
-                  "whose descriptor columns read the activity: the diagnosis found that out in "
-                  "another split of the same set, and in this one the route scored a little below "
-                  "the 0.95 at which the warning is given. Its held-out score near 1 is the leak, "
-                  "and it is not a success of the advice. They are marked `(leak)` above.", "",
-                  "| | splits | sets | advice names the best route | mean cost of the advice | "
-                  "the aligned model is the best route | mean cost of always aligning | "
-                  "advice minus aligned, mean over the sets [95 %] | sets better / worse |",
-                  "|---|---:|---:|---:|---:|---:|---:|---|---|"]
-        for label, s in (("all splits", everything), ("without the leak splits", clean)):
-            lines.append(f"| {label} | {s['splits']} | {s['sets']} | {s['advice_best']} | "
-                         f"{s['advice_cost']:.3f} | {s['aligned_best']} | {s['aligned_cost']:.3f} | "
-                         f"{s['gain']:+.3f} [{s['gain_low']:+.3f}, {s['gain_high']:+.3f}] | "
-                         f"{s['sets_better']} / {s['sets_worse']} |")
+        head = ("| | splits | sets | advice names the best route | mean cost of the advice | "
+                "the aligned model is the best route | mean cost of always aligning | "
+                "advice minus aligned, mean over the sets [95 %] | sets better / worse |")
+        rule = "|---|---:|---:|---:|---:|---:|---:|---|---|"
+
+        def row(label, s):
+            return (f"| {label} | {s['splits']} | {s['sets']} | {s['advice_best']} | "
+                    f"{s['advice_cost']:.3f} | {s['aligned_best']} | {s['aligned_cost']:.3f} | "
+                    f"{s['gain']:+.3f} [{s['gain_low']:+.3f}, {s['gain_high']:+.3f}] | "
+                    f"{s['sets_better']} / {s['sets_worse']} |")
+
+        if leaks:
+            clean = advice_summary([s for s in splits if not s["leak"]])
+            lines += ["## The same count without the leak", "",
+                      f"In {len(leaks)} of these splits the route advised was `descriptors` in a "
+                      "set whose descriptor columns read the activity: the diagnosis found that "
+                      "out in another split of the same set. Its held-out score near 1 is the "
+                      "leak, and it is not a success of the advice. They are marked `(leak)` "
+                      "above.", "", head, rule, row("all splits", everything),
+                      row("without the leak splits", clean)]
+        else:
+            lines += ["## Against always taking the aligned model", "",
+                      "No split advised a descriptor route that reads the activity from the "
+                      "columns of the file (`validation_splits` looks for such a split and "
+                      "marks it).", "", head, rule, row("all splits", everything)]
         lines += ["", "A set counts as better or worse when the mean difference over its splits is "
                       "more than 0.02 in R2pred.", ""]
     text = chr(10).join(lines) + chr(10)
@@ -246,15 +269,21 @@ def report(results=RESULTS, out=None):
         raise SystemExit(f"no results in {results}")
     rows.sort(key=lambda r: -r["n"])
     order = ["aligned", "counts", "invariant", "topomer", "descriptors"]
+    shown = order + ["file columns"]
     lines = ["# What the diagnosis says, on sets whose answers are known", "",
              "Each route scored by the same 10-fold cross-validation; the recommendation reads",
              "the paired bootstrap intervals, not the point estimates. The warnings column counts",
              "the questions the set failed.", "",
-             "| set | n | " + " | ".join(order) + " | warnings | recommended |",
-             "|---|---:|" + "---:|" * len(order) + "---:|---|"]
+             "`descriptors` are the descriptors that the program computes from the structure.",
+             "`file columns, not used` is the same baseline with the numeric columns of the file",
+             "added. It is shown for information: such columns can be the activity in another",
+             "form, and they never decide a recommendation. A dash means that the file has no",
+             "columns of its own, or that a route could not be scored.", "",
+             "| set | n | " + " | ".join(order) + " | file columns, not used | warnings | recommended |",
+             "|---|---:|" + "---:|" * len(shown) + "---:|---|"]
     for r in rows:
         cells = []
-        for k in order:
+        for k in shown:
             v = r["routes"].get(k, {})
             q = v.get("q2")
             cells.append("-" if q is None or not np.isfinite(q) else f"{q:+.3f}")

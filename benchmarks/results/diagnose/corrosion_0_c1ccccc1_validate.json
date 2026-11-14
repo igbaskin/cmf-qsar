@@ -2,7 +2,7 @@
  "splits": [
   {
    "seed": 0,
-   "advice": "descriptors",
+   "advice": "aligned",
    "n_train": 171,
    "n_test": 73,
    "held_out": {
@@ -10,13 +10,13 @@
     "counts": 0.6152171755725826,
     "invariant": 0.5110874414326658,
     "topomer": 0.4938726600191268,
-    "descriptors": 0.9629616118331971
+    "descriptors": 0.2276936996719603
    },
    "unusable": []
   },
   {
    "seed": 1,
-   "advice": "descriptors",
+   "advice": "counts",
    "n_train": 171,
    "n_test": 73,
    "held_out": {
@@ -24,7 +24,7 @@
     "counts": 0.45064445585400226,
     "invariant": 0.40967924484903573,
     "topomer": 0.4798785896222294,
-    "descriptors": 0.976479555479064
+    "descriptors": 0.171242708366661
    },
    "unusable": []
   },
@@ -38,14 +38,12 @@
     "counts": 0.2412220744343343,
     "invariant": 0.2617490232014873,
     "topomer": 0.44744149907474795,
-    "descriptors": 0.9632664370181634
+    "descriptors": 0.164728919680589
    },
-   "unusable": [
-    "descriptors"
-   ]
+   "unusable": []
   }
  ],
  "test_fraction": 0.3,
  "set": "corrosion/0_c1ccccc1",
- "seconds": 681.715904712677
+ "seconds": 484.8970093727112
 }

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1279 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1280 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -4074,8 +4074,11 @@ Five questions, and the numbers that answer each:
    frame: the atom-type count kernel, which has thrown the geometry away entirely, and the
    rotation-invariant field autocorrelation, which keeps it without a pose.  If neither is
    outperformed, the alignment adds nothing and the cheaper route is also the more reliable one.
-4. **Does the geometry add anything?**  The same comparison against descriptors alone -- what the
-   file carries plus the few the program computes.  This is the question the ACE result forces.
+4. **Does the geometry add anything?**  The same comparison against descriptors alone: the few
+   that the program computes from the structure, and columns of the file only when they are
+   named.  This is the question the ACE result forces.  The file's own columns are scored
+   beside this baseline and reported, and they never decide the recommendation by themselves,
+   because such a column can be the activity in another form.
 5. **Was the model specified sensibly?**  Whether the chosen alpha sits on the edge of its grid,
    which means the search needed a value it was not offered.
 
@@ -4101,6 +4104,7 @@ Attributes:
 - `correlations: List[Tuple[str, float]]` = `field(default_factory=list)`
 - `leaked: bool` = `False`
 - `subset: Optional[List[int]]` = `None`
+- `informative: bool` = `False`
 
 #### `Route.row() -> dict`
 
@@ -4176,14 +4180,33 @@ same molecules -- comparing a subset against the whole set is the mistake this r
 already made once, and it overstates the quality of whichever route happens to drop the hard
 compounds.
 
-### `descriptor_route(mols, y, names_d: Optional[Sequence[str]]=None, folds=10, seed=0, exclude: Sequence[str]=(), leak: float=0.95) -> Route`
+### `file_columns(mols, exclude: Sequence[str]=()) -> List[str]`
+
+The numeric columns that the file itself carries, without the computed descriptors and
+without the names in `exclude` (the activity, and columns that were named as descriptors).
+
+### `descriptor_route(mols, y, names_d: Optional[Sequence[str]]=None, folds=10, seed=0, exclude: Sequence[str]=(), leak: float=0.95, extra: Sequence[str]=(), with_file: bool=False) -> Route`
 
 Descriptors alone: the question the ACE result forces on every set.
 
-Most files store the activity as a molecule property, so the available descriptors usually
-*include the quantity being predicted*; given it, this baseline returns q2 = 1.000 and the
-diagnosis recommends descriptors for every set in the world.  Anything in `exclude`, and
-anything correlating with the activity above `leak`, is therefore dropped and named.
+**Which descriptors.**  By default the descriptors that the program computes from the
+structure, and the columns of the file named in `extra`.  The other columns of the file are
+left out.  A column of a file is a measurement, a count kept by whoever made the table, or
+a condition of the experiment, and no rule can tell these apart: on the corrosion tables
+the columns are the potency in other forms, on the Hammett file one is a second measured
+constant, on the cyclodextrin tables two are the pH and the temperature.  Until
+14 November 2026 all of them entered the baseline, and a guard looked for a leak afterwards:
+a column was dropped when it correlated with the activity above `leak`, and the route was
+marked as unusable when it reached q2 0.95.  Both tests are thresholds.  On 17 of the 25
+pyrazoles of the corrosion tables the leaking columns gave q2 0.94, no warning was given
+and descriptors were recommended; five splits of the validation counted that as a success.
+So the baseline no longer takes a column that nobody named.  With `with_file` it takes all
+of them, which is how `diagnose` scores the file's columns for its report.
+
+Most files store the activity as a molecule property, so the columns of a file usually
+*include the quantity being predicted*; given it, a baseline returns q2 = 1.000.  Anything
+in `exclude`, and anything correlating with the activity above `leak`, is therefore still
+dropped and named, for the columns that were named and for the route `with_file`.
 
 `leak` is 0.95 and not something nearer 1 because the leak is rarely a copy.  The corrosion
 files carry the potency as `activity` and again as `mwila_pooled_raw`, two reductions of
@@ -4204,7 +4227,7 @@ of 0.04 on twenty-five molecules from being read as a result.
 
 Whether a common frame can exist, and whether the molecules are already in one.
 
-### `route_kernels(route, mols, names, alphas=ALPHAS, charge_model='gasteiger', param_scheme='rdkit', fieldset=None, y=None, activity_prop='', leak=0.95)`
+### `route_kernels(route, mols, names, alphas=ALPHAS, charge_model='gasteiger', param_scheme='rdkit', fieldset=None, y=None, activity_prop='', leak=0.95, descriptors=())`
 
 [(alpha, K)] over all the molecules for one route, and the molecules it covers.
 
@@ -4212,7 +4235,7 @@ The routes are scored inside `diagnose` on their own cross-validation; to *follo
 advice one needs the kernels themselves, so that a model can be fitted on part of a set and
 asked about the rest.
 
-### `validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=ALPHAS, charge_model='gasteiger', param_scheme='rdkit', activity_prop='', folds=5, progress=None)`
+### `validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=ALPHAS, charge_model='gasteiger', param_scheme='rdkit', activity_prop='', folds=5, progress=None, descriptors=())`
 
 Take the advice, build that model, and see whether it did better than the aligned one.
 
@@ -4222,9 +4245,14 @@ is the measurement that decides whether the recommendation is worth printing: a 
 reports four baselines is useful whatever its advice, but advice that has never been
 followed is only a rule its author liked.
 
-### `diagnose(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float], fieldset: Optional[FieldSet]=None, alphas=ALPHAS, folds: int=10, seed: int=0, charge_model: str='gasteiger', param_scheme: str='rdkit', routes: Sequence[str]=('aligned', 'counts', 'invariant', 'topomer', 'descriptors'), activity_prop: str='', nested: bool=True, progress=None) -> Diagnosis`
+### `diagnose(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float], fieldset: Optional[FieldSet]=None, alphas=ALPHAS, folds: int=10, seed: int=0, charge_model: str='gasteiger', param_scheme: str='rdkit', routes: Sequence[str]=('aligned', 'counts', 'invariant', 'topomer', 'descriptors'), activity_prop: str='', nested: bool=True, progress=None, descriptors: Sequence[str]=()) -> Diagnosis`
 
 Ask a data set the questions that should precede modelling it.
+
+`descriptors` names columns of the file that are real descriptors, for example the pH and
+the temperature of a measurement.  They join the computed descriptors in the descriptor
+baseline.  Columns that are not named are scored beside it and reported, and they never
+decide the recommendation (`descriptor_route` says why).
 
 ## cmfqsar.docking
 

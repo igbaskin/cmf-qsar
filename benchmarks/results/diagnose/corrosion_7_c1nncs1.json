@@ -40,11 +40,19 @@
   },
   "descriptors": {
    "route": "descriptors",
+   "q2": -0.13104168116606263,
+   "rmse_cv": 1.7084884919669339,
+   "alpha": NaN,
+   "lam": 10.0,
+   "note": "4 descriptors"
+  },
+  "file columns": {
+   "route": "file columns",
    "q2": 0.9919664063256313,
    "rmse_cv": 0.1439884590423916,
    "alpha": NaN,
    "lam": 0.001,
-   "note": "10 descriptors; dropped as the activity under another name: mwila_pooled_raw; not usable as a baseline (see the warning)"
+   "note": "10 descriptors; dropped as the activity under another name: mwila_pooled_raw; not used for the recommendation"
   }
  },
  "findings": [
@@ -78,40 +86,27 @@
    }
   },
   {
-   "code": "descriptor-leak",
+   "code": "file-columns",
    "level": "warn",
-   "text": "the descriptor baseline reproduces the activity almost exactly (q2 +0.992); on a set this size that is not chemistry but the measurement itself, reached through the file's own columns -- the nearest are mwila_hcl_adj (r 0.93), mwila_pooled_adj (r 0.92), db_id (r 0.27), n_papers (r 0.23). No descriptor conclusion can be drawn until they are excluded.",
+   "text": "the file has 11 numeric column(s) of its own (mw, n_papers, dG_ads, depth, mwila_hcl_adj, mwila_h2so4_raw, mwila_h2so4_adj, mwila_pooled_raw and 3 more); with them the descriptor baseline is +1.123 in q2 against the computed descriptors (95% interval +0.955 to +1.547); the activity under another name, by a correlation above 0.95: mwila_pooled_raw -- these columns predict the activity, so they are measurements or forms of the activity and not descriptions of the structure. They are not used. If some of them are real descriptors, such as the conditions of the measurement, name them (descriptors=..., or --descriptors on the command line) and run again",
    "numbers": {
+    "columns": [
+     "mw",
+     "n_papers",
+     "dG_ads",
+     "depth",
+     "mwila_hcl_adj",
+     "mwila_h2so4_raw",
+     "mwila_h2so4_adj",
+     "mwila_pooled_raw",
+     "mwila_pooled_adj",
+     "n_rows",
+     "db_id"
+    ],
+    "difference": 1.123008087491694,
+    "low": 0.9551076797965906,
+    "high": 1.5471645447577318,
     "q2": 0.9919664063256313,
-    "nearest": [
-     [
-      "mwila_hcl_adj",
-      0.9307990750825517
-     ],
-     [
-      "mwila_pooled_adj",
-      0.9168770339670282
-     ],
-     [
-      "db_id",
-      0.2687293462223389
-     ],
-     [
-      "n_papers",
-      0.22507704568376316
-     ],
-     [
-      "n_rows",
-      0.1932206229043903
-     ]
-    ]
-   }
-  },
-  {
-   "code": "activity-as-descriptor",
-   "level": "warn",
-   "text": "dropped from the descriptor baseline because they reproduce the activity rather than describe the molecule: mwila_pooled_raw -- if one of these is a real descriptor, name it and run again",
-   "numbers": {
     "dropped": [
      "mwila_pooled_raw"
     ]
@@ -140,11 +135,11 @@
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -1.081 in q2 against descriptors (95% interval -1.559 to -0.900) -- descriptors alone do as well, so the geometry adds nothing on this set",
+   "text": "the aligned model is +0.042 in q2 against descriptors (95% interval -0.257 to +0.335) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -1.0808129472499115,
-    "low": -1.5593737350888635,
-    "high": -0.8998747516075887
+    "difference": 0.04219514024178239,
+    "low": -0.257386323044207,
+    "high": 0.33496193448644895
    }
   }
  ],
@@ -152,5 +147,5 @@
  "why": "no route reaches q2 0.1 (best aligned at -0.089); the set does not support a model as it is",
  "nested": true,
  "set": "corrosion/7_c1nncs1",
- "seconds": 1.0134339332580566
+ "seconds": 1.5198137760162354
 }
