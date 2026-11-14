@@ -1,0 +1,638 @@
+{
+ "folds": 10,
+ "seed": 0,
+ "model": "stereocentres only / scaffolds held out",
+ "pooled": {
+  "all pairs": {
+   "margin 0.0": {
+    "pairs": 3667,
+    "model": 0.5379056449413689,
+    "model interval": [
+     0.5217378117810878,
+     0.5539941431709305
+    ],
+    "lowest": 0.5459503681483502,
+    "lowest interval": [
+     0.5297959940121022,
+     0.5620085700844095
+    ],
+    "highest": 0.5448595582219798,
+    "highest interval": [
+     0.528703111272964,
+     0.560922115990396
+    ],
+    "model minus lowest": {
+     "mean": -0.008044723206981184,
+     "low": -0.028091764385055902,
+     "high": 0.01200231797109355
+    },
+    "model minus highest": {
+     "mean": -0.006953913280610854,
+     "low": -0.02686460321788928,
+     "high": 0.012411371693482423
+    },
+    "agreement of the model and the rule (lowest)": 0.5110444505044995
+   },
+   "margin 0.5": {
+    "pairs": 2015,
+    "model": 0.5667493796526054,
+    "model interval": [
+     0.5450066535871528,
+     0.5882380837926021
+    ],
+    "lowest": 0.5652605459057072,
+    "lowest interval": [
+     0.5435120203641511,
+     0.5867607154383604
+    ],
+    "highest": 0.5553349875930521,
+    "highest interval": [
+     0.5335528491895521,
+     0.5769065427646686
+    ],
+    "model minus lowest": {
+     "mean": 0.001488833746898263,
+     "low": -0.025806451612903226,
+     "high": 0.028542183622828805
+    },
+    "model minus highest": {
+     "mean": 0.01141439205955335,
+     "low": -0.015136476426799007,
+     "high": 0.034739454094292806
+    },
+    "agreement of the model and the rule (lowest)": 0.5106699751861042
+   },
+   "margin 1.0": {
+    "pairs": 1144,
+    "model": 0.5913461538461539,
+    "model interval": [
+     0.5626003607300377,
+     0.6194805341382262
+    ],
+    "lowest": 0.5826048951048951,
+    "lowest interval": [
+     0.5537993296894634,
+     0.6108575561004979
+    ],
+    "highest": 0.5476398601398601,
+    "highest interval": [
+     0.5186863260428174,
+     0.5762745234339326
+    ],
+    "model minus lowest": {
+     "mean": 0.008741258741258742,
+     "low": -0.027097902097902096,
+     "high": 0.04501748251748252
+    },
+    "model minus highest": {
+     "mean": 0.043706293706293704,
+     "low": 0.010926573426573426,
+     "high": 0.0764969405594406
+    },
+    "agreement of the model and the rule (lowest)": 0.5218531468531469
+   }
+  },
+  "one stereocentre": {
+   "margin 0.0": {
+    "pairs": 2343,
+    "model": 0.528809218950064,
+    "model interval": [
+     0.5085665299267187,
+     0.5489575944614505
+    ],
+    "lowest": 0.5324370465215535,
+    "lowest interval": [
+     0.5121974108739277,
+     0.5525704921408997
+    ],
+    "highest": 0.537345283824157,
+    "highest interval": [
+     0.5171114825566967,
+     0.5574568268353743
+    ],
+    "model minus lowest": {
+     "mean": -0.0036278275714895433,
+     "low": -0.02774221084080239,
+     "high": 0.020486555697823303
+    },
+    "model minus highest": {
+     "mean": -0.008536064874093044,
+     "low": -0.03179684165599658,
+     "high": 0.014938113529662825
+    },
+    "agreement of the model and the rule (lowest)": 0.518992744344857
+   },
+   "margin 0.5": {
+    "pairs": 1207,
+    "model": 0.5613090306545153,
+    "model interval": [
+     0.5331636544657846,
+     0.5890653945269201
+    ],
+    "lowest": 0.5526097763048882,
+    "lowest interval": [
+     0.524435991470858,
+     0.5804497465161252
+    ],
+    "highest": 0.5509527754763878,
+    "highest interval": [
+     0.5227745606709394,
+     0.57880768950543
+    ],
+    "model minus lowest": {
+     "mean": 0.008699254349627174,
+     "low": -0.023208367854183926,
+     "high": 0.04184962717481363
+    },
+    "model minus highest": {
+     "mean": 0.010356255178127589,
+     "low": -0.020712510356255178,
+     "high": 0.042678127589063836
+    },
+    "agreement of the model and the rule (lowest)": 0.5153272576636289
+   },
+   "margin 1.0": {
+    "pairs": 676,
+    "model": 0.5857988165680473,
+    "model interval": [
+     0.5482833523812461,
+     0.622344664613896
+    ],
+    "lowest": 0.5591715976331361,
+    "lowest interval": [
+     0.5215148926048909,
+     0.5961596018745174
+    ],
+    "highest": 0.5473372781065089,
+    "highest interval": [
+     0.5096526871614452,
+     0.5844869084220815
+    ],
+    "model minus lowest": {
+     "mean": 0.026627218934911243,
+     "low": -0.016272189349112426,
+     "high": 0.07100591715976332
+    },
+    "model minus highest": {
+     "mean": 0.038461538461538464,
+     "low": -0.0036982248520710057,
+     "high": 0.08062130177514792
+    },
+    "agreement of the model and the rule (lowest)": 0.5295857988165681
+   }
+  },
+  "two or more stereocentres": {
+   "margin 0.0": {
+    "pairs": 1324,
+    "model": 0.5540030211480362,
+    "model interval": [
+     0.5271102980173008,
+     0.5805832816970102
+    ],
+    "lowest": 0.5698640483383686,
+    "lowest interval": [
+     0.5430316350150766,
+     0.5962922268530881
+    ],
+    "highest": 0.5581570996978852,
+    "highest interval": [
+     0.5312775051142583,
+     0.5847001961165382
+    ],
+    "model minus lowest": {
+     "mean": -0.015861027190332326,
+     "low": -0.05362537764350453,
+     "high": 0.0188821752265861
+    },
+    "model minus highest": {
+     "mean": -0.004154078549848943,
+     "low": -0.03927492447129909,
+     "high": 0.028700906344410877
+    },
+    "agreement of the model and the rule (lowest)": 0.49697885196374625
+   },
+   "margin 0.5": {
+    "pairs": 808,
+    "model": 0.5748762376237624,
+    "model interval": [
+     0.5405139528448327,
+     0.6085299259523108
+    ],
+    "lowest": 0.5841584158415841,
+    "lowest interval": [
+     0.5498545744344245,
+     0.6176658182631911
+    ],
+    "highest": 0.5618811881188119,
+    "highest interval": [
+     0.5274575645258782,
+     0.5957191948106041
+    ],
+    "model minus lowest": {
+     "mean": -0.009282178217821782,
+     "low": -0.055693069306930694,
+     "high": 0.03590655940594065
+    },
+    "model minus highest": {
+     "mean": 0.012995049504950494,
+     "low": -0.027227722772277228,
+     "high": 0.05693069306930693
+    },
+    "agreement of the model and the rule (lowest)": 0.5037128712871287
+   },
+   "margin 1.0": {
+    "pairs": 468,
+    "model": 0.5993589743589743,
+    "model interval": [
+     0.554327486145243,
+     0.6427726165470822
+    ],
+    "lowest": 0.6164529914529915,
+    "lowest interval": [
+     0.5716204444470021,
+     0.6593893533321749
+    ],
+    "highest": 0.5480769230769231,
+    "highest interval": [
+     0.5027779382575261,
+     0.5925930791742442
+    ],
+    "model minus lowest": {
+     "mean": -0.017094017094017096,
+     "low": -0.07799145299145299,
+     "high": 0.04487179487179487
+    },
+    "model minus highest": {
+     "mean": 0.05128205128205128,
+     "low": 0.0,
+     "high": 0.10363247863247864
+    },
+    "agreement of the model and the rule (lowest)": 0.5106837606837606
+   }
+  }
+ },
+ "targets": [
+  {
+   "target": "11-beta-hydroxysteroid_dehydrogenase_1",
+   "pairs": 26,
+   "model": 0.5,
+   "lowest": 0.6538461538461539,
+   "highest": 0.6153846153846154
+  },
+  {
+   "target": "PI3-kinase_alpha",
+   "pairs": 133,
+   "model": 0.5488721804511278,
+   "lowest": 0.6766917293233082,
+   "highest": 0.6992481203007519
+  },
+  {
+   "target": "PIM1_kinase",
+   "pairs": 174,
+   "model": 0.5344827586206896,
+   "lowest": 0.5919540229885057,
+   "highest": 0.5689655172413793
+  },
+  {
+   "target": "PPAR_gamma",
+   "pairs": 100,
+   "model": 0.675,
+   "lowest": 0.3,
+   "highest": 0.38
+  },
+  {
+   "target": "acetylcholinesterase",
+   "pairs": 28,
+   "model": 0.6607142857142857,
+   "lowest": 0.42857142857142855,
+   "highest": 0.6785714285714286
+  },
+  {
+   "target": "alpha-1A_adrenergic_receptor",
+   "pairs": 43,
+   "model": 0.7906976744186046,
+   "lowest": 0.6976744186046512,
+   "highest": 0.7209302325581395
+  },
+  {
+   "target": "alpha-2A_adrenergic_receptor",
+   "pairs": 16,
+   "model": 0.625,
+   "lowest": 0.6875,
+   "highest": 0.6875
+  },
+  {
+   "target": "androgen_receptor",
+   "pairs": 43,
+   "model": 0.37209302325581395,
+   "lowest": 0.6976744186046512,
+   "highest": 0.7441860465116279
+  },
+  {
+   "target": "beta-2_adrenergic_receptor",
+   "pairs": 39,
+   "model": 0.9358974358974359,
+   "lowest": 0.6666666666666666,
+   "highest": 0.5
+  },
+  {
+   "target": "beta-secretase_1",
+   "pairs": 141,
+   "model": 0.6453900709219859,
+   "lowest": 0.46099290780141844,
+   "highest": 0.5673758865248227
+  },
+  {
+   "target": "butyrylcholinesterase",
+   "pairs": 27,
+   "model": 0.6296296296296297,
+   "lowest": 0.5,
+   "highest": 0.6666666666666666
+  },
+  {
+   "target": "cannabinoid_CB1_receptor",
+   "pairs": 55,
+   "model": 0.6272727272727273,
+   "lowest": 0.45454545454545453,
+   "highest": 0.42727272727272725
+  },
+  {
+   "target": "cannabinoid_CB2_receptor",
+   "pairs": 61,
+   "model": 0.5,
+   "lowest": 0.4016393442622951,
+   "highest": 0.4180327868852459
+  },
+  {
+   "target": "carbonic_anhydrase_2",
+   "pairs": 58,
+   "model": 0.5086206896551724,
+   "lowest": 0.603448275862069,
+   "highest": 0.603448275862069
+  },
+  {
+   "target": "coagulation_factor_Xa",
+   "pairs": 52,
+   "model": 0.625,
+   "lowest": 0.3076923076923077,
+   "highest": 0.5
+  },
+  {
+   "target": "cyclin-dependent_kinase_2",
+   "pairs": 42,
+   "model": 0.6071428571428571,
+   "lowest": 0.5476190476190477,
+   "highest": 0.6190476190476191
+  },
+  {
+   "target": "cyclooxygenase_2",
+   "pairs": 43,
+   "model": 0.627906976744186,
+   "lowest": 0.5813953488372093,
+   "highest": 0.5813953488372093
+  },
+  {
+   "target": "delta_opioid_receptor",
+   "pairs": 31,
+   "model": 0.5645161290322581,
+   "lowest": 0.5,
+   "highest": 0.6451612903225806
+  },
+  {
+   "target": "dipeptidyl_peptidase_4",
+   "pairs": 30,
+   "model": 0.55,
+   "lowest": 0.23333333333333334,
+   "highest": 0.7
+  },
+  {
+   "target": "dopamine_D2_receptor",
+   "pairs": 231,
+   "model": 0.5324675324675324,
+   "lowest": 0.5627705627705628,
+   "highest": 0.5800865800865801
+  },
+  {
+   "target": "dopamine_D3_receptor",
+   "pairs": 163,
+   "model": 0.5552147239263804,
+   "lowest": 0.38650306748466257,
+   "highest": 0.43558282208588955
+  },
+  {
+   "target": "dopamine_D4_receptor",
+   "pairs": 62,
+   "model": 0.5,
+   "lowest": 0.3870967741935484,
+   "highest": 0.5
+  },
+  {
+   "target": "dopamine_transporter",
+   "pairs": 144,
+   "model": 0.4861111111111111,
+   "lowest": 0.5555555555555556,
+   "highest": 0.5347222222222222
+  },
+  {
+   "target": "epidermal_growth_factor_receptor",
+   "pairs": 99,
+   "model": 0.5303030303030303,
+   "lowest": 0.46464646464646464,
+   "highest": 0.4393939393939394
+  },
+  {
+   "target": "fatty_acid_amide_hydrolase",
+   "pairs": 54,
+   "model": 0.75,
+   "lowest": 0.8518518518518519,
+   "highest": 0.8703703703703703
+  },
+  {
+   "target": "glucocorticoid_receptor",
+   "pairs": 19,
+   "model": 0.5789473684210527,
+   "lowest": 0.6842105263157895,
+   "highest": 0.631578947368421
+  },
+  {
+   "target": "hERG_potassium_channel",
+   "pairs": 136,
+   "model": 0.4852941176470588,
+   "lowest": 0.41911764705882354,
+   "highest": 0.5514705882352942
+  },
+  {
+   "target": "histamine_H1_receptor",
+   "pairs": 30,
+   "model": 0.5166666666666667,
+   "lowest": 0.6,
+   "highest": 0.3
+  },
+  {
+   "target": "histamine_H3_receptor",
+   "pairs": 117,
+   "model": 0.4829059829059829,
+   "lowest": 0.6239316239316239,
+   "highest": 0.5555555555555556
+  },
+  {
+   "target": "kappa_opioid_receptor",
+   "pairs": 78,
+   "model": 0.5897435897435898,
+   "lowest": 0.5641025641025641,
+   "highest": 0.5897435897435898
+  },
+  {
+   "target": "monoamine_oxidase_A",
+   "pairs": 31,
+   "model": 0.41935483870967744,
+   "lowest": 0.5806451612903226,
+   "highest": 0.6451612903225806
+  },
+  {
+   "target": "monoamine_oxidase_B",
+   "pairs": 38,
+   "model": 0.5526315789473685,
+   "lowest": 0.5,
+   "highest": 0.2631578947368421
+  },
+  {
+   "target": "mu_opioid_receptor",
+   "pairs": 66,
+   "model": 0.4393939393939394,
+   "lowest": 0.5757575757575758,
+   "highest": 0.4090909090909091
+  },
+  {
+   "target": "muscarinic_M1_receptor",
+   "pairs": 34,
+   "model": 0.5147058823529411,
+   "lowest": 0.29411764705882354,
+   "highest": 0.5588235294117647
+  },
+  {
+   "target": "muscarinic_M2_receptor",
+   "pairs": 38,
+   "model": 0.4342105263157895,
+   "lowest": 0.631578947368421,
+   "highest": 0.6578947368421053
+  },
+  {
+   "target": "muscarinic_M3_receptor",
+   "pairs": 51,
+   "model": 0.4117647058823529,
+   "lowest": 0.29411764705882354,
+   "highest": 0.2549019607843137
+  },
+  {
+   "target": "neurokinin_NK1_receptor",
+   "pairs": 58,
+   "model": 0.4482758620689655,
+   "lowest": 0.5689655172413793,
+   "highest": 0.603448275862069
+  },
+  {
+   "target": "noradrenaline_transporter",
+   "pairs": 182,
+   "model": 0.5384615384615384,
+   "lowest": 0.6428571428571429,
+   "highest": 0.6098901098901099
+  },
+  {
+   "target": "oestrogen_receptor_alpha",
+   "pairs": 75,
+   "model": 0.48,
+   "lowest": 0.38,
+   "highest": 0.42
+  },
+  {
+   "target": "phosphodiesterase_4D",
+   "pairs": 23,
+   "model": 0.5217391304347826,
+   "lowest": 0.6086956521739131,
+   "highest": 0.32608695652173914
+  },
+  {
+   "target": "phosphodiesterase_5A",
+   "pairs": 56,
+   "model": 0.48214285714285715,
+   "lowest": 0.6785714285714286,
+   "highest": 0.5357142857142857
+  },
+  {
+   "target": "protein_kinase_B",
+   "pairs": 45,
+   "model": 0.5222222222222223,
+   "lowest": 0.5777777777777777,
+   "highest": 0.5777777777777777
+  },
+  {
+   "target": "renin",
+   "pairs": 22,
+   "model": 0.25,
+   "lowest": 0.6818181818181818,
+   "highest": 0.5909090909090909
+  },
+  {
+   "target": "rho-associated_kinase_1",
+   "pairs": 53,
+   "model": 0.42452830188679247,
+   "lowest": 0.5849056603773585,
+   "highest": 0.6226415094339622
+  },
+  {
+   "target": "serotonin_5-HT1A_receptor",
+   "pairs": 81,
+   "model": 0.4444444444444444,
+   "lowest": 0.5432098765432098,
+   "highest": 0.5555555555555556
+  },
+  {
+   "target": "serotonin_5-HT2A_receptor",
+   "pairs": 104,
+   "model": 0.4375,
+   "lowest": 0.6057692307692307,
+   "highest": 0.5576923076923077
+  },
+  {
+   "target": "serotonin_5-HT2C_receptor",
+   "pairs": 70,
+   "model": 0.6714285714285714,
+   "lowest": 0.6142857142857143,
+   "highest": 0.6
+  },
+  {
+   "target": "serotonin_5-HT6_receptor",
+   "pairs": 81,
+   "model": 0.6666666666666666,
+   "lowest": 0.7530864197530864,
+   "highest": 0.7530864197530864
+  },
+  {
+   "target": "serotonin_5-HT7_receptor",
+   "pairs": 63,
+   "model": 0.373015873015873,
+   "lowest": 0.6825396825396826,
+   "highest": 0.6666666666666666
+  },
+  {
+   "target": "serotonin_transporter",
+   "pairs": 199,
+   "model": 0.4949748743718593,
+   "lowest": 0.6381909547738693,
+   "highest": 0.39195979899497485
+  },
+  {
+   "target": "thrombin",
+   "pairs": 22,
+   "model": 0.6363636363636364,
+   "lowest": 0.09090909090909091,
+   "highest": 0.09090909090909091
+  }
+ ],
+ "above one half": {
+  "model": 31,
+  "lowest": 33,
+  "highest": 35
+ }
+}

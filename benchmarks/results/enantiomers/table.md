@@ -247,6 +247,30 @@ Among the pairs whose two potencies differ by at least one log unit, with every 
 
 The spread of the difference between the two potencies of a pair is 1.04 log units.
 
+## A cheap reference: which configuration the target prefers
+
+The channels are compared with a rule that learns one bit for each target. The training pairs say whether the R or the S member of a pair was the better one more often, and the rule names that member in a held-out pair. It reads the configuration code at one stereocentre. The two members of a pair have opposite codes at the same atom, and the atom is chosen by its canonical rank, which is the rank that RDKit gives an atom from its place in the graph of the molecule. A molecule with one stereocentre has no other choice. With several, the choice is arbitrary, so the centre of lowest rank and the centre of highest rank are both given. The folds are those of the model (whole scaffolds), and the shares are counted on the same held-out pairs.
+
+| Pairs | Pairs counted | Channels at the stereocentres | Rule, centre of lowest rank | Rule, centre of highest rank | Channels minus rule (lowest) | Channels minus rule (highest) |
+|---|---|---|---|---|---|---|
+| all pairs | 3667 | 53.8 % | 54.6 % | 54.5 % | -0.8 points (-2.8 to +1.2) | -0.7 points (-2.7 to +1.2) |
+| all pairs, differing by 0.5 log units or more | 2015 | 56.7 % | 56.5 % | 55.5 % | +0.1 points (-2.6 to +2.9) | +1.1 points (-1.5 to +3.5) |
+| all pairs, differing by 1.0 log units or more | 1144 | 59.1 % | 58.3 % | 54.8 % | +0.9 points (-2.7 to +4.5) | +4.4 points (+1.1 to +7.6) |
+| one stereocentre | 2343 | 52.9 % | 53.2 % | 53.7 % | -0.4 points (-2.8 to +2.0) | -0.9 points (-3.2 to +1.5) |
+| one stereocentre, differing by 0.5 log units or more | 1207 | 56.1 % | 55.3 % | 55.1 % | +0.9 points (-2.3 to +4.2) | +1.0 points (-2.1 to +4.3) |
+| one stereocentre, differing by 1.0 log units or more | 676 | 58.6 % | 55.9 % | 54.7 % | +2.7 points (-1.6 to +7.1) | +3.8 points (-0.4 to +8.1) |
+| two or more stereocentres | 1324 | 55.4 % | 57.0 % | 55.8 % | -1.6 points (-5.4 to +1.9) | -0.4 points (-3.9 to +2.9) |
+| two or more stereocentres, differing by 0.5 log units or more | 808 | 57.5 % | 58.4 % | 56.2 % | -0.9 points (-5.6 to +3.6) | +1.3 points (-2.7 to +5.7) |
+| two or more stereocentres, differing by 1.0 log units or more | 468 | 59.9 % | 61.6 % | 54.8 % | -1.7 points (-7.8 to +4.5) | +5.1 points (+0.0 to +10.4) |
+
+Of the 51 targets, the channels name the better enantiomer in more than half of the pairs on 31, the rule with the centre of lowest rank on 33 and the rule with the centre of highest rank on 35. The first three targets of the channels:
+
+| Target | Pairs | Channels | Rule (lowest) | Rule (highest) |
+|---|---|---|---|---|
+| beta-2 adrenergic receptor | 39 | 93.6 % | 66.7 % | 50.0 % |
+| alpha-1A adrenergic receptor | 43 | 79.1 % | 69.8 % | 72.1 % |
+| fatty acid amide hydrolase | 54 | 75.0 % | 85.2 % | 87.0 % |
+
 ## The potency itself, one target at a time
 
 The ordinary question of item C7, on sets that do hold enantiomeric pairs: does the handedness block add anything to the two-point kernel? Whole pairs are held out, and every variant chooses its distance grid and its regularisation inside the training part of each fold.

@@ -8316,6 +8316,37 @@ alpha-1A adrenergic (79.1 % of 44), fatty acid amide hydrolase (75.0 % of 54), P
 of 101) and serotonin 5-HT2C (67.1 % of 72) -- families in which one configuration is known to do
 the binding.
 
+**A cheap reference: which configuration the target prefers (added 14 November 2026).** The channels
+were compared with chance, which is the right null for the question whether anything is read, and
+not with a rule that reads only a configuration label. `configuration_reference` in
+`benchmarks/run_enantiomers.py` makes that rule. For each target the training pairs say whether
+the R or the S member of a pair was the better one more often, and the rule names that member in
+a held-out pair. It reads the code at one stereocentre, the one of lowest canonical rank, which
+is the same atom in both members of a pair. With one stereocentre there is no other choice. With
+several the choice is arbitrary, so the centre of highest rank is given as well. The folds are
+those of the model, and both are scored on the same held-out pairs
+(`benchmarks/results/enantiomers/reference.json`, 35 seconds from the saved result).
+
+Among the 1,144 pairs that differ by a log unit or more, the rule names the better enantiomer in
+58.3 % with the centre of lowest rank and in 54.8 % with the centre of highest rank, against
+59.1 % for the channels. The channels minus the first rule are +0.9 points (−2.7 to +4.5), and
+minus the second +4.4 points (+1.1 to +7.6). With all 3,667 pairs the channels name 53.8 % and
+the rules 54.6 % and 54.5 %. On the 676 pairs with one stereocentre, where no centre is chosen,
+the channels name 58.6 % and the rules 55.9 % and 54.7 % (+2.7 points, −1.6 to +7.1, and
++3.8 points, −0.4 to +8.1). The rule names the better enantiomer in more than half of the pairs
+on 33 of the 51 targets (35 with the second centre), the channels on 31. The two agree on which
+member is better in 52 % of the pairs, which is what independent guesses of this accuracy would
+give, so they do not read the same thing. By target they differ: beta-2 adrenergic 93.6 % for
+the channels against 66.7 % for the rule, alpha-1A adrenergic 79.1 % against 69.8 %, fatty acid
+amide hydrolase 75.0 % against 85.2 %.
+
+So the channels are **not shown to read more than a configuration label**. The pooled margin over
+the rule is inside the noise, or depends on which centre the rule reads. What stands is the
+exact null, the localisation at the stereocentre, and a few targets, beta-2 above all, on which
+the channels are far ahead of the rule. Whether the two together beat each alone was not tried.
+The tenth tutorial, `docs/tutorials/10_enantiomer_pairs.ipynb`, runs the exact null, the check of
+split pairs, a live fit of two targets and this comparison.
+
 **What this does not show.** The potencies are taken as ChEMBL standardises them, and a pair
 measured in one assay can still hold an error larger than the difference being predicted; the
 130 pairs with equal potencies are a reminder that some reported differences are below the noise
@@ -8654,7 +8685,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a q�
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The twelfth tutorial, `docs/tutorials/12_on_a_surface.ipynb`, makes
+this program adds to it yet. The thirteenth tutorial, `docs/tutorials/13_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11642,7 +11673,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The tenth tutorial, `docs/tutorials/10_a_spectrum_as_the_sample.ipynb`, runs the central part
+The eleventh tutorial, `docs/tutorials/11_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12403,7 +12434,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The eleventh tutorial, `docs/tutorials/11_a_mixture.ipynb`, runs the case of the computed
+The twelfth tutorial, `docs/tutorials/12_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13075,7 +13106,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The thirteenth tutorial, `docs/tutorials/13_a_hop_in_a_crystal.ipynb`, runs the references and the
+The fourteenth tutorial, `docs/tutorials/14_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16446,7 +16477,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Thirteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Fourteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -16454,7 +16485,7 @@ built, the Hammett constants of substituted benzenes, read from co-fields in the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
 frame of their reaction centre, with the enantioselectivity as the activity, the redox
 potentials of metal complexes, read with fields and compared with the composition of the
-complex, the infrared spectra of benzoic acids as the samples, read with the kernel of
+complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, and the hops of a lithium ion in crystals, with
