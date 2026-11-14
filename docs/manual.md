@@ -3182,8 +3182,8 @@ comparison depends on it. `benchmarks/results/denmark/table.md` gives every widt
 | 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
 
 The interval excludes zero at every width, so the frame is worth something on this series. How
-much depends on a setting of the kernel it is compared with. The tenth tutorial,
-`docs/tutorials/10_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
+much depends on a setting of the kernel it is compared with. The eighth tutorial,
+`docs/tutorials/08_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
 each catalyst, where the frame gives 0.88 and the invariant kernel 0.77 at its best width.
 
 **Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
@@ -8543,7 +8543,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The eighth tutorial, `docs/tutorials/08_on_a_surface.ipynb`, makes
+this program adds to it yet. The ninth tutorial, `docs/tutorials/09_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11531,7 +11531,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The ninth tutorial, `docs/tutorials/09_a_spectrum_as_the_sample.ipynb`, runs the central part
+The tenth tutorial, `docs/tutorials/10_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -15994,12 +15994,12 @@ plots and 3D views: a first model on an aligned series, a series with no alignme
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
 built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
-ring and compared with the charge of one ring carbon, molecules adsorbed on a metal surface,
-read with the surface kernel and compared with a count of the atoms near the metal, the
-infrared spectra of benzoic acids as the samples,
-read with the kernel of spectra and compared with the position of one band, a series of
-chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
-activity, the hops of a lithium ion in crystals, with the barrier of a hop read from the
+ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
+frame of their reaction centre, with the enantioselectivity as the activity, molecules
+adsorbed on a metal surface, read with the surface kernel and compared with a count of the
+atoms near the metal, the infrared spectra of benzoic acids as the samples, read with the
+kernel of spectra and compared with the position of one band, the hops of a lithium ion in
+crystals, with the barrier of a hop read from the
 environment of its path, and mixtures, with the amounts of the components read from one
 spectrum. Each runs on the
 example data of the repository, locally
