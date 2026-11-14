@@ -12203,6 +12203,10 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
+The eleventh tutorial, `docs/tutorials/11_a_mixture.ipynb`, runs the case of the computed
+components in one minute, with ten repeats in place of twenty and with the curves as they are
+(a smoothing width is searched for the slopes only).
+
 **What is not done.** No measured mixture is used: that is the second half of the item, and no
 public set of mixtures with known composition was looked for yet. The mixtures are ideal:
 the bands of a component do not move or widen with the composition, which they do in real
@@ -15896,7 +15900,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Ten notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Eleven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, molecules adsorbed on a metal surface, read with
@@ -15905,8 +15909,9 @@ constants of substituted benzenes, read from co-fields in the plane of the ring 
 with the charge of one ring carbon, the infrared spectra of benzoic acids as the samples,
 read with the kernel of spectra and compared with the position of one band, a series of
 chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
-activity, and the hops of a lithium ion in crystals, with the barrier of a hop read from the
-environment of its path. Each runs on the
+activity, the hops of a lithium ion in crystals, with the barrier of a hop read from the
+environment of its path, and mixtures, with the amounts of the components read from one
+spectrum. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
