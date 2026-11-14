@@ -25,7 +25,11 @@ The models
 ``composition``  element counts, the number of atoms, the charge and the metal site: no geometry
                  at all.  This is the control that matters, because a redox potential of a metal
                  complex is largely decided by what is coordinated to the metal, and items BT1 to
-                 BT3 already found a composition beating the fields on a battery voltage.
+                 BT3 already found a composition beating the fields on a battery voltage.  It was
+                 first measured on the iron series only.  It was added to the nickel series on
+                 14 November 2026, because the gate of that series compared the fields with the
+                 quantum numbers of the calculation and with the metal site, and neither of them
+                 is the strong reference.
 ``site``         the first coordination sphere alone: how many donors, of which elements, at what
                  distances.  It says how much of the composition's score is the metal site.
 ``quantum``      (nickel only) the natural population analysis of the same calculation the target
@@ -104,7 +108,7 @@ NICKEL_QUANTUM = ("npa_charge_Ni", "npa_charge_BPP", "npa_charge_subst", "npa_ch
                   "npa_spin_Ni", "npa_spin_BPP", "npa_spin_waters", "s2_after")
 
 IRON_MODELS = ("composition", "site", "invariant", "overlap-raw", "overlap-rule")
-NICKEL_MODELS = ("quantum", "site", "invariant", "overlap-rule", "physchem")
+NICKEL_MODELS = ("composition", "quantum", "site", "invariant", "overlap-rule", "physchem")
 
 # Every model is measured on the whole iron series.  The overlap kernel is a sum over every pair
 # of atoms of every pair of molecules, and its cost grows faster than the square of the number of
@@ -125,6 +129,8 @@ IRON_PAIRS = {
 NICKEL_PAIRS = {
     "physchem vs quantum": ("quantum", "physchem"),
     "invariant vs quantum": ("quantum", "invariant"),
+    "physchem vs composition": ("composition", "physchem"),
+    "invariant vs composition": ("composition", "invariant"),
     "physchem vs site": ("site", "physchem"),
     "physchem vs invariant": ("invariant", "physchem"),
     "overlap-rule vs physchem": ("physchem", "overlap-rule"),
@@ -356,6 +362,14 @@ def overlap_kernels(mols, names) -> Dict[float, np.ndarray]:
 
 
 def invariant_kernels(mols, names) -> Dict[float, np.ndarray]:
+    """The frameless kernel, once for every attenuation of the list.
+
+    The autocorrelation is built from the atom weights and the distances between atoms, so the
+    attenuation of the fields does not enter it: the four kernels are equal element by element
+    (checked on 14 November 2026 on both series), and the search over the attenuation inside a
+    fold only chooses between four copies of one kernel.  The scores are right.  The attenuation
+    that the stored folds name for this model means nothing.
+    """
     out = {}
     spec = AutocorrelationSpec()
     for alpha in ALPHAS:

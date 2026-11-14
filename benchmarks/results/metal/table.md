@@ -83,6 +83,7 @@ and cannot separate two of them.
 
 | model | MAE (V) | standard deviation | R2 |
 |---|---|---|---|
+| composition | 0.2451 | 0.0535 | +0.641 |
 | quantum | 0.3449 | 0.0842 | +0.375 |
 | site | 0.3704 | 0.0844 | +0.299 |
 | invariant | 0.1545 | 0.0540 | +0.825 |
@@ -93,6 +94,8 @@ and cannot separate two of them.
 |---|---|---|
 | physchem vs quantum | +0.1949 | [+0.0682, +0.3211] |
 | invariant vs quantum | +0.1905 | [+0.0684, +0.3122] |
+| physchem vs composition | +0.0950 | [+0.0143, +0.1802] |
+| invariant vs composition | +0.0906 | [+0.0183, +0.1666] |
 | physchem vs site | +0.2204 | [+0.0854, +0.3552] |
 | physchem vs invariant | +0.0044 | [-0.0761, +0.0681] |
 | overlap-rule vs physchem | +0.0000 | [-0.0432, +0.0468] |
@@ -101,6 +104,7 @@ and cannot separate two of them.
 
 | model | MAE (V) | standard deviation | R2 |
 |---|---|---|---|
+| composition | 0.1949 | 0.1741 | +0.779 |
 | quantum | 0.3518 | 0.2745 | +0.357 |
 | site | 0.3661 | 0.2689 | +0.333 |
 | invariant | 0.1910 | 0.1768 | +0.781 |
@@ -111,6 +115,8 @@ and cannot separate two of them.
 |---|---|---|
 | physchem vs quantum | +0.1946 | [+0.0789, +0.3090] |
 | invariant vs quantum | +0.1608 | [+0.0424, +0.2773] |
+| physchem vs composition | +0.0378 | [-0.0245, +0.0969] |
+| invariant vs composition | +0.0040 | [-0.0356, +0.0463] |
 | physchem vs site | +0.2089 | [+0.0864, +0.3242] |
 | physchem vs invariant | +0.0338 | [-0.0339, +0.0869] |
 | overlap-rule vs physchem | +0.0209 | [-0.0316, +0.0779] |
@@ -119,6 +125,7 @@ and cannot separate two of them.
 
 | model | MAE (V) | standard deviation | R2 |
 |---|---|---|---|
+| composition | 0.0484 | 0.0143 | +0.003 |
 | quantum | 0.0428 | 0.0196 | -0.059 |
 | site | 0.0468 | 0.0227 | -0.003 |
 | invariant | 0.0314 | 0.0110 | +0.340 |
@@ -129,6 +136,8 @@ and cannot separate two of them.
 |---|---|---|
 | physchem vs quantum | +0.0134 | [+0.0055, +0.0219] |
 | invariant vs quantum | +0.0113 | [+0.0033, +0.0196] |
+| physchem vs composition | +0.0191 | [+0.0074, +0.0310] |
+| invariant vs composition | +0.0170 | [+0.0076, +0.0266] |
 | physchem vs site | +0.0175 | [+0.0051, +0.0303] |
 | physchem vs invariant | +0.0021 | [-0.0041, +0.0080] |
 | overlap-rule vs physchem | -0.0124 | [-0.0243, -0.0028] |
@@ -137,6 +146,7 @@ and cannot separate two of them.
 
 | model | MAE (V) | standard deviation | R2 |
 |---|---|---|---|
+| composition | 0.0463 | 0.0395 | +0.053 |
 | quantum | 0.0408 | 0.0564 | -0.239 |
 | site | 0.0470 | 0.0406 | +0.012 |
 | invariant | 0.0309 | 0.0363 | +0.418 |
@@ -147,6 +157,8 @@ and cannot separate two of them.
 |---|---|---|
 | physchem vs quantum | +0.0081 | [-0.0004, +0.0169] |
 | invariant vs quantum | +0.0099 | [-0.0005, +0.0220] |
+| physchem vs composition | +0.0136 | [+0.0002, +0.0276] |
+| invariant vs composition | +0.0154 | [+0.0027, +0.0283] |
 | physchem vs site | +0.0143 | [+0.0016, +0.0282] |
 | physchem vs invariant | -0.0018 | [-0.0092, +0.0056] |
 | overlap-rule vs physchem | -0.0102 | [-0.0187, -0.0012] |

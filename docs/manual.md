@@ -2700,6 +2700,8 @@ Both targets are computed, not measured, so both say how well a representation o
 that one calculation produced. `benchmarks/run_metal.py` measures them with five outer folds and
 ten inner folds. The iron series is measured twice: with five random folds, and with five folds
 built from the first coordination spheres, so that no sphere in a test fold was seen in training.
+The ninth tutorial, `docs/tutorials/09_a_metal_complex.ipynb`, runs the three checks of this
+chapter, both frames and both series.
 
 ### The iron series: the field beats the composition, and the frame decides everything
 
@@ -2727,6 +2729,15 @@ margin over the composition grows to +0.022 V [+0.009, +0.033]. On a series whos
 nothing but the metal, a rule frame is far better than no frame, slightly better than no geometry
 at all, and worse than not needing a frame.
 
+The frameless kernel has no attenuation of the fields: it is built from the weights of the atoms
+and the distances between them, so the four kernels that the benchmark builds for the four
+attenuations are equal element by element (checked on 14 November 2026 on both series), and the
+search inside the folds chooses between four copies of one kernel. The scores are right, and the
+attenuation that the stored folds name for this model means nothing. A new run of this model gives
+0.254 V and 0.285 V, less than 0.001 V from the stored 0.253 V and 0.284 V. The code of the commit
+that stored them gives the stored numbers exactly, so the difference comes from later changes of the
+program.
+
 ### The nickel series: the gate, and what the co-field reads
 
 Here the series is congeneric and the frame is real. For the Ni(III)/Ni(II) couple, against a
@@ -2744,6 +2755,21 @@ other couple is much harder: the Ni(II)/Ni(I) potentials have a standard deviati
 their training-mean error is 0.050 V, so there is little to predict. The fields reach
 0.029 V against the quantum descriptors' 0.043 V, which the random folds call a difference
 (+0.013 V [+0.006, +0.022]) and leave-one-out does not (+0.008 V [−0.000, +0.017]).
+
+**The composition as a reference (added 14 November 2026).** The gate compared the fields with the
+numbers of the calculation and with the metal site. Neither is a strong reference, and the
+composition, which was the reference on the iron series, had not been run on this one. Element
+counts, the number of atoms, the charge and the first sphere give a mean absolute error of 0.195 V
+with leave-one-out (R² +0.779) and 0.245 V with five random folds (R² +0.641) on the oxidation
+potential, against 0.157 V (+0.821) and 0.150 V (+0.820) for the fields in the matched frame. The
+fields are better by +0.038 V [−0.025, +0.097] with leave-one-out and by +0.095 V [+0.014, +0.180]
+with five folds. For the frameless kernel the two differences are +0.004 V [−0.036, +0.046] and
++0.091 V [+0.018, +0.167]. The two designs do not agree, so 25 complexes do not show how much the
+fields add to the composition. One number does much of the work: the number of nitrogen atoms alone
+has a leave-one-out q² of 0.76, and that is the best of eight numbers, so it is too high as an
+estimate. The gate against the quantum numbers is unchanged. For the reduction potential the fields
+are better than the composition by +0.015 V [+0.003, +0.028] with leave-one-out, but the best error,
+0.031 V, is half of the standard deviation of the target, so nothing is worth using.
 
 **The co-field** says what the model is reading, and it is the second coordination sphere. For the
 oxidation potential the largest weights sit 4.5 to 7.3 Å from the nickel atom — the acceptor field
@@ -8543,7 +8569,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a q�
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The eleventh tutorial, `docs/tutorials/11_on_a_surface.ipynb`, makes
+this program adds to it yet. The twelfth tutorial, `docs/tutorials/12_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11531,7 +11557,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The ninth tutorial, `docs/tutorials/09_a_spectrum_as_the_sample.ipynb`, runs the central part
+The tenth tutorial, `docs/tutorials/10_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12292,7 +12318,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The tenth tutorial, `docs/tutorials/10_a_mixture.ipynb`, runs the case of the computed
+The eleventh tutorial, `docs/tutorials/11_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -12964,7 +12990,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The twelfth tutorial, `docs/tutorials/12_a_hop_in_a_crystal.ipynb`, runs the references and the
+The thirteenth tutorial, `docs/tutorials/13_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16335,15 +16361,16 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twelve notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Thirteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
 built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
-frame of their reaction centre, with the enantioselectivity as the activity, the infrared
-spectra of benzoic acids as the samples, read with the kernel of spectra and compared with
-the position of one band, mixtures, with the amounts of the components read from one
+frame of their reaction centre, with the enantioselectivity as the activity, the redox
+potentials of metal complexes, read with fields and compared with the composition of the
+complex, the infrared spectra of benzoic acids as the samples, read with the kernel of
+spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, and the hops of a lithium ion in crystals, with
 the barrier of a hop read from the environment of its path. Each runs on the
