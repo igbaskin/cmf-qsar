@@ -564,6 +564,20 @@ def registry() -> List[Benchmark]:
                   needs="xtb", minutes="25",
                   report=lambda: _mod("run_shells").write_table(_r("shells")),
                   tables=["shells/table.md"]),
+        Benchmark("diffusion",
+                  "the salt diffusion coefficient of the reference cell's electrolyte from "
+                  "simulation, against the measured coefficient and conductivity and against "
+                  "what the cell tolerates: three factors on the charges of the ions, four "
+                  "sizes of the box and three repeats of one box (the boxes are simulated by "
+                  "the prepare step and are not in the repository; the analysis reads their "
+                  "stored centres from benchmarks/cache/transport and needs pybamm for the "
+                  "measured functions)",
+                  "run_diffusion.py", "diffusion",
+                  compute=[["--stage", "analyse"]], needs="pybamm",
+                  prepare=["run_diffusion.py --stage simulate"],
+                  minutes="5",
+                  report=lambda: _mod("run_diffusion").report(),
+                  tables=["diffusion/table.md"]),
         Benchmark("phenazine",
                   "quantum fields (Hirshfeld charge, Fukui indices, the spin of the radical "
                   "anion) against the five ordinary fields and against the global quantum "

@@ -3455,6 +3455,35 @@ cell:
 python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py; needs pybamm
 ```
 
+**A transport coefficient from a simulated electrolyte**
+([run_diffusion.py](benchmarks/run_diffusion.py), plan item BT9, first part). A cell model reads
+the salt diffusion coefficient of its electrolyte, and measured values exist for a few solvent
+mixtures only, so a label for a model has to come from simulation. `cmfqsar/transport.py` runs
+a box for transport (constant volume, a thermostat that conserves momentum, unwrapped molecule
+centres stored once per picosecond) and computes the self-diffusion coefficients, the salt
+diffusion coefficient, the conductivity and the correction for a finite box. Measured on the
+electrolyte of the reference cell, against the values Landesfeind and Gasteiger (2019) measured
+for it:
+
+- With whole charges on the ions the force field fails: the conductivity is a tenth of the
+  measured one, and the ions are not yet diffusive after 4 ns.
+- Multiplying the charges of the ions by 0.8 gives a salt diffusion coefficient of 0.66 +/-
+  0.04 of the measured one over three repeats, and a conductivity of 0.28 of the measured one.
+  At 0.7 the two ratios are 0.98 and 0.67, from one run.
+- The correction for the size of the box is not determined. A box of 125 solvent molecules is
+  an outlier in every quantity, and from 250 to 1,000 molecules the coefficients show no common
+  trend. Two fits bracket the correction: it adds between 17 % and 61 % to the coefficient of
+  the cation in the base box.
+- One 4 ns run gives a self-diffusion coefficient to about 8 % and does not determine a
+  conductivity: three repeats give 0.17, 0.25 and 0.34 S/m.
+- The error over blocks had to be corrected before anything was measured. Fitting each block in
+  a shorter window of its own understated the true scatter by a factor of three on random
+  walks.
+
+```bash
+python benchmarks/run_diffusion.py --stage analyse    # 5 minutes, after the simulations; needs pybamm
+```
+
 ### A single-atom site as the sample: two reactions on one metal
 
 A metal atom held by four atoms of a graphene divacancy is the active site of the

@@ -252,10 +252,223 @@ def stage_analyse(names: Sequence[str], results: str = RESULTS, cache: str = CAC
             json.dump(res, fh, indent=1)
 
 
-def size_study(rows: Sequence[dict]) -> Optional[dict]:
+def _species(row: dict) -> Dict[str, dict]:
+    """The self-diffusion records of one result, by species."""
+    out = {"cation": row["whole"]["cation"], "anion": row["whole"]["anion"]}
+    out.update({name: row["whole"]["solvents"][name] for name in sorted(row["whole"]["solvents"])})
+    return out
+
+
+def repeat_study(rows: Sequence[dict]) -> Optional[dict]:
+    """What repeats of one box say about the error of one run.
+
+    Needs at least two of the runs in :data:`REPEATS` among `rows`; returns None otherwise. For
+    every species it gives the coefficient of each repeat, their mean, their standard deviation
+    and the mean of their block errors. The ratio of the last two is the number of interest: a
+    value near one says that the blocks of one run see the whole error, and a larger value says
+    that two runs differ by more than either of them knows. `error_factor` is the median of
+    that ratio over the species, and never below one; the size study multiplies the block
+    errors of single runs by it.
+    """
+    chosen = [r for r in rows if r["run"] in REPEATS]
+    if len(chosen) < 2:
+        return None
+    n = len(chosen)
+    species = {}
+    for name in _species(chosen[0]):
+        d = np.array([_species(r)[name]["d"] for r in chosen], float)
+        se = np.array([_species(r)[name]["se"] for r in chosen], float)
+        sd = float(np.std(d, ddof=1))
+        species[name] = {"d": [float(v) for v in d], "mean": float(d.mean()), "sd": sd,
+                         "se_of_mean": sd / np.sqrt(n), "block_error": float(se.mean()),
+                         "ratio": sd / float(se.mean()) if se.mean() > 0 else float("nan")}
+    ratios = [v["ratio"] for v in species.values() if np.isfinite(v["ratio"])]
+
+    def spread(values):
+        v = np.array(values, float)
+        return {"values": [float(x) for x in v], "mean": float(v.mean()),
+                "sd": float(np.std(v, ddof=1)), "se_of_mean": float(np.std(v, ddof=1) / np.sqrt(n))}
+    return {"runs": [r["run"] for r in chosen], "species": species,
+            "error_factor": float(max(1.0, np.median(ratios))) if ratios else 1.0,
+            "ratio_with_factor": spread([r["ratio_with_factor"] for r in chosen]),
+            "conductivity": spread([r["whole"]["conductivity"]["sigma"] for r in chosen]),
+            "conductivity_block_error": float(np.mean(
+                [r["whole"]["conductivity"]["se"] for r in chosen])),
+            "ionicity": spread([r["whole"]["ionicity"] for r in chosen]),
+            "measured": chosen[0]["measured"]}
+
+
+def repeat_lines(study: dict) -> List[str]:
+    """The section of the table on repeats of one box."""
+    out: List[str] = []
+    w = out.append
+    label = {"cation": "Cation", "anion": "Anion"}
+    n = len(study["runs"])
+    w("## Repeats of one box")
+    w("")
+    w(f"The same box was packed and started {n} times ({', '.join(study['runs'])}). The error "
+      "over the blocks of one run says how well that run determined its own coefficient. It "
+      "cannot see a difference between two runs that start from different arrangements of the "
+      "ions, if an arrangement lasts longer than the run. The standard deviation between the "
+      "repeats does see it, and the ratio of the two is the test.")
+    w("")
+    w("| Species | " + " | ".join(f"{r}, m2/s" for r in study["runs"])
+      + " | Mean, m2/s | Standard deviation between repeats | Mean block error of one run | "
+        "Ratio of the two |")
+    w("|---|" + "---:|" * n + "---:|---:|---:|---:|")
+    for name, v in study["species"].items():
+        w(f"| {label.get(name, name)} | " + " | ".join(_e(x) for x in v["d"])
+          + f" | {_e(v['mean'])} | {_e(v['sd'], 1)} | {_e(v['block_error'], 1)} | "
+            f"{_f(v['ratio'], 1)} |")
+    w("")
+    factor = study["error_factor"]
+    w(f"The median ratio is {_f(factor, 1)}. "
+      + ("The blocks of one run see the whole error of its coefficient."
+         if factor < 1.5 else
+         f"Two runs of this length differ by {_f(factor, 1)} times what the blocks of either "
+         "say, so every block error of a single run in this table is too small by about that "
+         "factor, and the size study below multiplies them by it.")
+      + f" With {n} repeats a standard deviation is itself known only to within a factor of "
+        "about two, so this ratio is a size and not a number.")
+    w("")
+    r, k, m = study["ratio_with_factor"], study["conductivity"], study["measured"]
+    w("Over the repeats, the salt diffusion coefficient with the measured thermodynamic "
+      f"factor is {_f(r['mean'])} +/- {_f(r['se_of_mean'])} of the measured one (single runs: "
+      + ", ".join(_f(x) for x in r["values"]) + f"), and the conductivity from the total "
+      f"charge is {_f(k['mean'], 3)} +/- {_f(k['se_of_mean'], 3)} S/m against the measured "
+      f"{_f(m['conductivity'], 3)} (single runs: "
+      + ", ".join(_f(x, 3) for x in k["values"])
+      + f"; the mean block error of one run is {_f(study['conductivity_block_error'], 3)}). "
+        "The error after +/- here is the standard error of the mean over the repeats.")
+    w("")
+    return out
+
+
+def charge_study(rows: Sequence[dict]) -> Optional[List[dict]]:
+    """The runs of the base box by the factor on the charges of the ions, largest first.
+
+    A factor that was run several times (:data:`REPEATS`) enters with the mean over its repeats
+    and the standard error of that mean; a factor that was run once enters with its block
+    errors. Returns None when fewer than two factors were run.
+    """
+    base = [r for r in rows if r["settings"].get("n_solvent", 250) == 250]
+    scales = sorted({float(r["settings"]["ion_charge_scale"]) for r in base}, reverse=True)
+    if len(scales) < 2:
+        return None
+    out = []
+    for scale in scales:
+        runs = [r for r in base if float(r["settings"]["ion_charge_scale"]) == scale]
+        n = len(runs)
+
+        def mean(get, error):
+            v = np.array([get(r) for r in runs], float)
+            if n > 1:
+                return float(v.mean()), float(np.std(v, ddof=1) / np.sqrt(n))
+            return float(v[0]), float(error(runs[0])) if error is not None else float("nan")
+        m = runs[0]["measured"]
+        entry = {"scale": scale, "runs": [r["run"] for r in runs],
+                 "cation": mean(lambda r: r["whole"]["cation"]["d"],
+                                lambda r: r["whole"]["cation"]["se"]),
+                 "anion": mean(lambda r: r["whole"]["anion"]["d"],
+                               lambda r: r["whole"]["anion"]["se"]),
+                 "ratio_with_factor": mean(lambda r: r["ratio_with_factor"], None),
+                 "conductivity": mean(lambda r: r["whole"]["conductivity"]["sigma"],
+                                      lambda r: r["whole"]["conductivity"]["se"]),
+                 "ionicity": mean(lambda r: r["whole"]["ionicity"], None),
+                 "exponent": float(np.mean([r["whole"]["cation"]["exponent"] for r in runs])),
+                 "measured_conductivity": float(m["conductivity"])}
+        out.append(entry)
+    return out
+
+
+def charge_lines(study: Sequence[dict], limits: Sequence[Dict[str, float]]) -> List[str]:
+    """The section of the table on the charges of the ions."""
+    out: List[str] = []
+    w = out.append
+
+    def pm(pair, fmt):
+        return fmt(pair[0]) + (f" +/- {fmt(pair[1])}" if np.isfinite(pair[1]) else "")
+    w("## The charges of the ions")
+    w("")
+    w("A force field with fixed charges has no polarisation. It binds a small cation to its "
+      "neighbours too strongly, and the ions move too slowly. Multiplying the charges of the "
+      "ions by a factor below one is the usual repair. The table gives the base box at each "
+      "factor that was run. Where a factor was run several times, the numbers are means over "
+      "the repeats with the standard error of the mean; where it was run once, the error is "
+      "the block error of that run, which the repeats found too small by a factor of about "
+      "1.4. None of these numbers is corrected for the size of the box.")
+    w("")
+    w("| Factor on the charges | Runs | Cation, m2/s | Anion, m2/s | Exponent of the cation | "
+      "Salt coefficient with the measured thermodynamic factor, ratio to the measured | "
+      "Rates at which the cell tolerates it | Conductivity, S/m | Ratio to the measured | "
+      "Ratio to the Nernst-Einstein value |")
+    w("|---:|---:|---|---|---:|---|---|---|---:|---:|")
+    for e in study:
+        served = served_rates(e["ratio_with_factor"][0], limits)
+        text = (", ".join(f"{x:g}C" for x in served) if served else "none") if limits \
+            else "not run"
+        w(f"| {e['scale']:g} | {len(e['runs'])} | {pm(e['cation'], _e)} | "
+          f"{pm(e['anion'], _e)} | {_f(e['exponent'])} | {pm(e['ratio_with_factor'], _f)} | "
+          f"{text} | {pm(e['conductivity'], lambda v: _f(v, 3))} | "
+          f"{_f(e['conductivity'][0] / e['measured_conductivity'])} | "
+          f"{_f(e['ionicity'][0])} |")
+    w("")
+    first, last = study[0], study[-1]
+    w(f"From a factor of {first['scale']:g} to {last['scale']:g} the self-diffusion coefficient "
+      f"of the cation rises {_f(last['cation'][0] / first['cation'][0], 1)} times and the "
+      f"conductivity {_f(last['conductivity'][0] / first['conductivity'][0], 1)} times. The "
+      "conductivity rises faster because the ions also pair less: the last column is the share "
+      "of the conductivity that is left when the motion of ions together is counted. "
+      "Choosing the factor by the measured conductivity of this one electrolyte is a "
+      "calibration of one parameter on one number. The test of it is whether the same factor "
+      "gives the diffusion coefficient here and the conductivities of other electrolytes.")
+    w("")
+    return out
+
+
+def bracket_lines(whole: dict, rest: dict, limits: Sequence[Dict[str, float]]) -> List[str]:
+    """What the two size fits say together: a range, where neither can be preferred."""
+    out: List[str] = []
+    if not (whole.get("determined") and rest.get("determined")
+            and "ratio_with_factor" in whole and "ratio_with_factor" in rest):
+        return out
+    lo, hi = sorted([rest["ratio_with_factor"], whole["ratio_with_factor"]])
+    base = whole["runs"].index(rest["runs"][0])
+    add = sorted([rest["fit"]["correction"][0], whole["fit"]["correction"][base]])
+    cation = rest["d"]["cation"][0]
+    big = rest["largest"]
+    served_lo, served_hi = served_rates(lo, limits), served_rates(hi, limits)
+    out.append("## The two fits read together")
+    out.append("")
+    out.append(
+        "Neither fit can be preferred. The fit over all boxes gives hydrodynamic radii of a "
+        "plausible size and takes its slope from the smallest box, which differs from the "
+        "others in every quantity. The fit without the smallest box describes its boxes well "
+        f"(a residual of {_f(rest['fit']['chi'], 2)} against {_f(whole['fit']['chi'], 2)}) and "
+        "gives radii smaller than an atom, which says that the coefficients of the larger "
+        "boxes depend on the size less than the correction predicts for a liquid that "
+        "diffuses this fast. The two are therefore reported as a range. In the base box "
+        f"(`{rest['runs'][0]}`) the correction adds between {_e(add[0])} and {_e(add[1])} m2/s "
+        f"to every coefficient, which is {_f(100 * add[0] / cation, 0)} % to "
+        f"{_f(100 * add[1] / cation, 0)} % of the cation's. The salt diffusion coefficient of "
+        "an infinite box, with the measured thermodynamic factor, is between "
+        f"{_f(lo)} and {_f(hi)} of the measured value; the largest box without any correction "
+        f"gives {_f(big['ratio_with_factor'])}."
+        + (f" The cell tolerates the lower end at {', '.join(f'{x:g}C' for x in served_lo)}"
+           f" and the upper end at {', '.join(f'{x:g}C' for x in served_hi)}."
+           if limits and served_lo and served_hi else ""))
+    out.append("")
+    return out
+
+
+def size_study(rows: Sequence[dict], exclude: Sequence[str] = ()) -> Optional[dict]:
     """The coefficients of an infinite box, from the runs that differ only in their size.
 
-    Needs at least two of the runs in :data:`SIZE_RUNS` among `rows`; returns None otherwise.
+    Needs at least two of the runs in :data:`SIZE_RUNS` among `rows`, the ones in `exclude`
+    left out; returns None otherwise. Where the box of one size was repeated
+    (:func:`repeat_study`), it enters with the mean of its repeats and the standard error of
+    that mean, and the block errors of the other boxes are multiplied by the factor the repeats
+    give, because a single run does not see its whole error.
     The species share one slope against one over the side of the box
     (:func:`cmfqsar.transport.joint_size_fit`). The salt diffusion coefficient and its ratio to
     the measured one are then given for the infinite box, with the measured values of the
@@ -263,15 +476,23 @@ def size_study(rows: Sequence[dict]) -> Optional[dict]:
     """
     from cmfqsar import transport as T
 
-    chosen = sorted((r for r in rows if r["run"] in SIZE_RUNS), key=lambda r: r["side"])
+    chosen = sorted((r for r in rows if r["run"] in SIZE_RUNS and r["run"] not in exclude),
+                    key=lambda r: r["side"])
     if len(chosen) < 2:
         return None
-    species = {"cation": lambda r: r["whole"]["cation"], "anion": lambda r: r["whole"]["anion"]}
-    for name in sorted(chosen[0]["whole"]["solvents"]):
-        species[name] = (lambda r, n=name: r["whole"]["solvents"][n])
-    d = {k: [f(r)["d"] for r in chosen] for k, f in species.items()}
-    se = {k: [f(r)["se"] for r in chosen] for k, f in species.items()}
+    repeats = repeat_study(rows)
+    factor = repeats["error_factor"] if repeats else 1.0
+    names = list(_species(chosen[0]))
+    d = {k: [_species(r)[k]["d"] for r in chosen] for k in names}
+    se = {k: [_species(r)[k]["se"] * factor for r in chosen] for k in names}
     sides = [r["side"] for r in chosen]
+    # the box that was repeated enters with the mean of its repeats and the error of that mean
+    repeated = [j for j, r in enumerate(chosen) if repeats and r["run"] in repeats["runs"]]
+    for j in repeated:
+        for k in names:
+            d[k][j] = repeats["species"][k]["mean"]
+            se[k][j] = repeats["species"][k]["se_of_mean"]
+        sides[j] = float(np.mean([r["side"] for r in rows if r["run"] in repeats["runs"]]))
     temperature = float(chosen[0]["temperature"])
     fit = T.joint_size_fit(d, sides, temperature, se=se)
     separate = {k: T.extrapolate_size(d[k], sides, temperature, se=se[k]) for k in d}
@@ -281,8 +502,15 @@ def size_study(rows: Sequence[dict]) -> Optional[dict]:
     dm = fit["species"]["anion"]["d_infinite"]
     out = {"runs": [r["run"] for r in chosen], "sides": sides,
            "pairs": [r["pairs"] for r in chosen], "d": d, "se": se, "fit": fit,
-           "separate": separate, "measured": m}
-    if dp > 0 and dm > 0:
+           "separate": separate, "measured": m, "error_factor": float(factor),
+           "repeated": [chosen[j]["run"] for j in repeated], "excluded": list(exclude)}
+    # a slope of the wrong sign determines no correction: the coefficients do not rise with
+    # the size of the box, and a line through them must not be read at an infinite box
+    out["determined"] = bool(np.isfinite(fit["viscosity"]))
+    out["largest"] = {"run": last["run"], "ratio_with_factor": last["ratio_with_factor"],
+                      "ratio_ideal": last["ratio_ideal"]}
+    out["change"] = {k: float(d[k][-1] / d[k][0] - 1.0) for k in names}
+    if out["determined"] and dp > 0 and dm > 0:
         salt = T.salt_diffusivity(dp, dm)
         out.update({"salt_ideal": salt,
                     "salt_with_factor": salt * m["thermodynamic_factor"],
@@ -312,14 +540,42 @@ def size_lines(study: dict, limits: Sequence[Dict[str, float]]) -> List[str]:
       "for the ions, which have few. The value of a line at 1 / L = 0 is the coefficient of an "
       "infinite box.")
     w("")
+    if study.get("repeated"):
+        w(f"The box of the run `{study['repeated'][0]}` was repeated, so it enters with the "
+          "mean of its repeats and the standard error of that mean. The errors of the other "
+          f"boxes are their block errors multiplied by {_f(study['error_factor'], 1)}, the "
+          "factor the repeats give.")
+        w("")
+    if study.get("excluded"):
+        w("Left out of this fit: " + ", ".join(f"`{x}`" for x in study["excluded"]) + ".")
+        w("")
     w("| Run | Ion pairs | Side, A | " + " | ".join(f"{label.get(n, n)}, m2/s" for n in names)
       + " | What the correction adds, m2/s |")
     w("|---|---:|---:|" + "---|" * len(names) + "---:|")
     for j, run in enumerate(study["runs"]):
         cells = [run, str(study["pairs"][j]), _f(study["sides"][j])]
         cells += [f"{_e(study['d'][n][j])} +/- {_e(study['se'][n][j], 1)}" for n in names]
-        cells.append(_e(fit["correction"][j]))
+        cells.append(_e(fit["correction"][j]) if study["determined"] else "not determined")
         w("| " + " | ".join(cells) + " |")
+    if not study["determined"]:
+        w("")
+        change = study["change"]
+        low, high = min(change.values()), max(change.values())
+        big = study["largest"]
+        served = served_rates(big["ratio_with_factor"], limits)
+        w("**These boxes determine no correction.** The correction says that a coefficient "
+          "rises as the box grows. Here the common slope has the other sign: from the smallest "
+          "box of this fit to the largest, the coefficients change by "
+          f"{_f(100 * low, 0)} % to {_f(100 * high, 0)} %. A line through them is therefore not "
+          "read at an infinite box. The best estimate is the largest box as it is, without a "
+          f"correction: in `{big['run']}` the salt diffusion coefficient with the measured "
+          f"thermodynamic factor is {_f(big['ratio_with_factor'])} of the measured value"
+          + (f", which the cell tolerates at {', '.join(f'{x:g}C' for x in served)}"
+             if served else (", which the cell tolerates at none of the four rates"
+                             if limits else ""))
+          + ". A correction that exists and was not resolved would raise it.")
+        w("")
+        return out
     w("| infinite box | | | "
       + " | ".join(_e(fit["species"][n]["d_infinite"]) for n in names) + " | 0 |")
     w("")
@@ -333,10 +589,13 @@ def size_lines(study: dict, limits: Sequence[Dict[str, float]]) -> List[str]:
     w("")
     w("Fitted one species at a time, without the common slope, the same boxes give: "
       + "; ".join(f"{label.get(n, n).lower() if n in label else n} "
-                  f"{_e(study['separate'][n]['d_infinite'])} m2/s with a viscosity of "
-                  f"{_f(1000.0 * study['separate'][n]['viscosity'], 2)} mPa s"
+                  f"{_e(study['separate'][n]['d_infinite'])} m2/s"
+                  + (f" with a viscosity of "
+                     f"{_f(1000.0 * study['separate'][n]['viscosity'], 2)} mPa s"
+                     if np.isfinite(study["separate"][n]["viscosity"])
+                     else " with a slope of the wrong sign")
                   for n in names)
-      + ". The spread of these viscosities says how well the boxes determine the slope.")
+      + ". The spread of these says how well the boxes determine the slope.")
     w("")
     if "salt_ideal" in study:
         m = study["measured"]
@@ -530,9 +789,25 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]]) -> Li
               f"{_f(a['exponent'])} | {_e(part['salt'])} | {_f(k['sigma'], 3)} +/- "
               f"{_f(k['se'], 3)} |")
     w("")
+    repeats = repeat_study(rows)
+    if repeats is not None:
+        out.extend(repeat_lines(repeats))
+    charges = charge_study(rows)
+    if charges is not None:
+        out.extend(charge_lines(charges, limits))
     study = size_study(rows)
     if study is not None:
         out.extend(size_lines(study, limits))
+        smallest = study["runs"][0]
+        rest = size_study(rows, exclude=(smallest,))
+        if rest is not None:
+            lines = size_lines(rest, limits)
+            lines[0] = "## The size of the box, without the smallest box"
+            lines[2] = (f"The same fit without `{smallest}`, the smallest box. If the two fits "
+                        "disagree, the smallest box is too small for the correction to "
+                        "describe it.")
+            out.extend(lines)
+            out.extend(bracket_lines(study, rest, limits))
     return out
 
 

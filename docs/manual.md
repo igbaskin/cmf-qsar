@@ -14674,6 +14674,175 @@ and the point it is reported at is a corner of the box 16 Å away.
 * **A composition descriptor remains the baseline to beat on a property of a whole electrolyte**,
   and on these two targets it is not beaten.
 
+## A transport coefficient from a simulated electrolyte: what a label costs
+
+A cell model reads the salt diffusion coefficient of its electrolyte, and this program has no
+prediction of it (plan item BT9). The tolerance stage of `run_cellmodel.py` says how accurate
+one has to be: for a capacity that may move by 5 %, no lower than 0.32 of the measured value at
+the one-hour rate and 0.83 at 2.5 times that rate, with no limit on the high side at room
+temperature. Measured values exist for a few solvent mixtures only, so the labels a model could
+be fitted on have to come from simulation. `benchmarks/run_diffusion.py` asks the two questions
+that come before any model: is a simulated label right, and what does it cost? It asks them on
+the one electrolyte for which the answer can be checked, that of the reference cell: lithium
+hexafluorophosphate in ethylene carbonate and ethyl methyl carbonate, 3 to 7 by weight, at
+1.11 mol of salt per kilogram of solvent and 298 K. Landesfeind and Gasteiger (2019) measured
+its salt diffusion coefficient (2.70e-10 m2/s at the concentration of the box),
+its conductivity (0.908 S/m) and its thermodynamic factor
+(2.35).
+
+### The run and the estimates
+
+`cmfqsar.electrolyte` already runs a box of a named formulation for the solvation shells of
+item BT5. That run is right for the shape of a shell and wrong for a transport coefficient, and
+`cmfqsar.transport.run_transport` changes three things:
+
+* **The volume is fixed during production.** A barostat rescales the positions, which adds a
+  displacement that is not diffusion. The box is equilibrated at constant pressure, set to its
+  mean volume, and then run at constant volume.
+* **The thermostat conserves momentum.** A Langevin thermostat puts a friction on every atom,
+  which slows diffusion. The production run uses a Nose-Hoover chain.
+* **Unwrapped centres are stored once per picosecond.** A displacement needs positions that are
+  not folded back into the box. The centre of mass of every molecule is stored, which is small
+  and is all that every quantity here needs. No atom trajectory is written.
+
+A **self-diffusion coefficient** (`cmfqsar.transport.diffusion`) is the slope of the mean
+squared displacement of one species against time, divided by six. The slope is fitted between a
+fortieth and a tenth of the run. The **exponent** is the power with which the mean squared
+displacement grows in that window: 1 is diffusion, and a value below 1 says that the molecules
+had not left their cages yet, so the coefficient overstates the long-time value. The **salt
+diffusion coefficient** of an ideal solution is 2 D+ D- / (D+ + D-). A concentrated solution
+multiplies it by the thermodynamic factor, and the measured factor is used here, because this
+program has no prediction of it (plan item BT11). The **conductivity** is computed from the
+displacement of the total charge (`cmfqsar.transport.conductivity`), which counts a cation and
+an anion that move together as carrying no current. Its ratio to the Nernst-Einstein value,
+which treats every ion as moving alone, says how much of the conductivity is left.
+
+**The error of a coefficient has to belong to the estimate it stands next to.** The first
+version of the error fitted each block of a run in a shorter window of its own. That is a
+different and more precise estimator than the one reported, and on random walks, where the true
+scatter can be measured over many made-up runs, it understated that scatter by a factor of
+three. The error is now the standard error of the same slope, at the same lags, over five
+blocks of time origins, and a test compares it with the scatter over twelve made-up runs. The
+same comparison showed that a window that ends at a tenth of the run is about twice as precise
+as the usual one that ends at a quarter.
+
+### The charges of the ions
+
+A force field with fixed charges has no polarisation. It binds a small cation to its neighbours
+too strongly, and the ions move too slowly. Multiplying the charges of the ions by a factor
+below one is the usual repair in the literature. Here the factor is a setting
+(`TransportSettings.ion_charge_scale`) that is tested against the measurements. The base box
+holds 250 solvent molecules and 27 ion pairs (3,546 atoms, a side of 34.3 A) and is run for
+4 ns. Its density is 1.186 to 1.198 g/cm3 at every factor.
+
+| Factor on the charges of the ions | Runs | Cation, m2/s | Anion, m2/s | Salt coefficient with the measured thermodynamic factor, ratio to the measured | Conductivity, S/m | Ratio to the measured | Share of the conductivity left when ions that move together are counted |
+| ---: | ---: | ---: | ---: | --- | --- | ---: | ---: |
+| 1 | 1 | 3.46e-11 | 4.60e-11 | 0.35 | 0.093 +/- 0.028 | 0.10 | 0.27 |
+| 0.8 | 3 | 6.53e-11 | 8.93e-11 | 0.66 +/- 0.04 | 0.253 +/- 0.051 | 0.28 | 0.38 |
+| 0.7 | 1 | 9.67e-11 | 1.35e-10 | 0.98 | 0.610 +/- 0.149 | 0.67 | 0.63 |
+
+* **With whole charges the force field fails.** The conductivity is a tenth of the measured
+  one, and the exponent of the cation is 0.73: the ions have not
+  reached diffusive motion within 4 ns.
+* **The factor acts on the ions and not on the liquid.** From 1 to 0.7 the self-diffusion
+  coefficient of the cation rises 2.8 times and the conductivity 6.5 times. The conductivity
+  rises faster because the ions also pair less.
+* **At 0.7 the salt diffusion coefficient equals the measured one**, before any correction for
+  the size of the box, and the conductivity is two thirds of the measured one, with an error
+  of a quarter of its value.
+
+Choosing the factor by the measured conductivity of this one electrolyte is a calibration of
+one parameter on one number. The test of it is whether the same factor gives the conductivities
+of other electrolytes, which this benchmark has not run.
+
+### Repeats, and what one run determines
+
+The base box at a factor of 0.8 was packed and started three times. The standard deviation
+between the repeats is 1.4 times the mean block error of one run
+(the median over the four species). So the blocks of one run see most of its error, and one
+4 ns run of this box gives the self-diffusion coefficient of the cation to about 8 %. A
+conductivity is another matter: it is one quantity per box and not one per ion, and the three
+repeats give 0.342, 0.251 and 0.166 S/m. One run of this
+length does not determine a conductivity.
+
+### The size of the box
+
+A periodic box makes a diffusion coefficient too small, because a molecule interacts with its
+own images through the liquid. The amount is 2.837 k T / (6 pi eta L) for a cubic box of the
+side L and a liquid of the viscosity eta (Yeh and Hummer, 2004), and it is the same amount for
+every species of one liquid. `cmfqsar.transport.joint_size_fit` therefore fits one straight
+line per species against 1 / L with one slope for all of them. Four sizes were run at a factor
+of 0.8. The box of 250 solvent molecules enters with the mean of its three repeats, and the
+errors of the other boxes are their block errors multiplied by 1.4.
+
+| Solvent molecules | Ion pairs | Side of the box, A | Cation, m2/s | Anion, m2/s | EC, m2/s | EMC, m2/s |
+| ---: | ---: | ---: | --- | --- | --- | --- |
+| 125 | 14 | 27.2 | 4.55e-11 +/- 1.8e-12 | 8.36e-11 +/- 1.1e-11 | 1.30e-10 +/- 1.1e-11 | 1.37e-10 +/- 6.6e-12 |
+| 250 | 27 | 34.3 | 6.53e-11 +/- 3.1e-12 | 8.93e-11 +/- 7.0e-12 | 1.86e-10 +/- 5.4e-12 | 1.66e-10 +/- 4.0e-12 |
+| 500 | 55 | 43.2 | 6.80e-11 +/- 1.7e-12 | 9.21e-11 +/- 7.4e-12 | 1.78e-10 +/- 8.1e-12 | 1.66e-10 +/- 7.1e-12 |
+| 1000 | 110 | 54.4 | 7.15e-11 +/- 2.1e-12 | 8.96e-11 +/- 2.6e-12 | 1.68e-10 +/- 7.9e-12 | 1.74e-10 +/- 3.3e-12 |
+
+**The smallest box is too small.** It differs from the others in every quantity: its
+conductivity is 0.133 S/m, less than half
+of what the larger boxes give, and its ions pair more.
+
+**From 250 to 1,000 solvent molecules the coefficients show no common trend.** The cation
+changes by +10 %, the anion by less than 1 %, ethylene carbonate by -10 % and ethyl methyl
+carbonate by +5 %.
+
+**The two fits disagree, and neither can be preferred.** Over all four sizes the common slope
+gives a viscosity of 4.5 mPa s and hydrodynamic radii of a
+plausible size (2.3 A for a solvent molecule, 4.9 A for the cation with its shell), but the
+slope comes from the smallest box. Without the smallest box the lines describe their three
+boxes well and give a viscosity of 16.4 mPa s with radii
+smaller than an atom, which says that the larger boxes depend on the size less than the
+correction predicts for a liquid that diffuses this fast. The correction is therefore reported
+as a range: in the base box it adds between 17 % and 61 % to the coefficient of the cation.
+The salt diffusion coefficient of an infinite box, with the measured thermodynamic factor, is
+between 0.77 and 0.96 of the measured
+value at a factor of 0.8, and the largest box without any correction gives
+0.71. A fit whose slope has the wrong sign is not
+extrapolated at all: the table then says that the boxes determine no correction and gives the
+largest box as it is.
+
+### What this says about a label
+
+* **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient
+  and the simulated conductivity is a tenth of the measured one.
+* **At a factor of 0.8 the label is 0.66 to 0.96 of the measured coefficient**, depending on
+  the correction for the size of the box, which this benchmark did not determine. The cell
+  tolerates that range at 1C and 1.5C, and at 2C and 2.5C only towards its upper end. The
+  conductivity of the same runs is 0.28 of the measured one, so the agreement of the diffusion
+  coefficient is not evidence that the motion of the ions is right.
+* **At a factor of 0.7 the label is 0.98 of the measured coefficient before the correction**,
+  so it is on the high side after it. That is the side the cell tolerates: at room temperature
+  every larger value that was tried, up to 20 times, costs less than 5 % of the capacity. The
+  conductivity is 0.67 of the measured one. This is one run of one electrolyte.
+* **What a label costs.** One box of 250 solvent molecules for 4 ns took 45 to 66 minutes
+  with its equilibration, on a graphics card shared with another job (99 to 142 ns/day); item
+  BT5 recorded 400 ns/day for a box of this size on the same card alone. The eight runs of
+  this benchmark took 5.8 hours of production. A box of 125 solvent molecules is not
+  usable. A box four times the base size, 14,200 atoms, ran at 116 ns/day, as fast as the
+  base box, so on this card a larger box costs no more time and gives four times as many
+  ions to average over.
+* **What stays open.** Three things limit every number above. The ideal-solution formula with
+  the measured thermodynamic factor is not the relation of a concentrated solution, so part of
+  the agreement can come from the formula. The exponent of the ions is about 0.8 in the window
+  of the fit, so their coefficients overstate the long-time values by an amount that longer
+  runs would have to measure. And everything was measured at one concentration; gate (a) of
+  item BT9 asks for the range of concentrations of the study.
+
+```bash
+python benchmarks/run_diffusion.py --stage simulate   # in the simulation environment; hours
+python benchmarks/run_diffusion.py --stage analyse    # 5 minutes; then the table
+python benchmarks/run_diffusion.py --report
+```
+
+The simulation stage needs OpenMM with a GPU platform, packmol and AmberTools, which on the
+machine these numbers come from is a conda environment in WSL. The other stages need none of
+that. Every run writes its own directory under `benchmarks/cache/transport` and is not run
+again.
+
 ## Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is one of the standard moves in medicinal chemistry, and the

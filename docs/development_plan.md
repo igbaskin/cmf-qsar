@@ -5347,6 +5347,66 @@ concentration was driven, and the stage counts only discharges that ended at the
   within 4 to 10 %, which no simulation reaches and two studies of this electrolyte do not
   reach between them. Gate (c) is therefore not expected to give a useful interval there, and
   that would be a property of the cell and not a failure of the model.
+  **The label and its two tests on one electrolyte, built and measured 14 November 2026**
+  (`cmfqsar/transport.py`, `benchmarks/run_diffusion.py`, `benchmarks/results/diffusion/`, 43
+  tests in `tests/test_transport.py` and `tests/test_diffusion_runs.py`, the manual under *A
+  transport coefficient from a simulated electrolyte*). The electrolyte is that of the
+  reference cell at 1.11 mol/kg and 298 K, the only one whose label can be checked. A run for
+  transport differs from the run of BT5 in three things: the volume is fixed during
+  production, the thermostat conserves momentum, and the unwrapped centre of every molecule is
+  stored once per picosecond. Eight boxes were run for 4 ns each: three factors on the charges
+  of the ions, four sizes at one factor, and three repeats of one box.
+
+  | Factor on the charges of the ions | Runs | Cation, m2/s | Anion, m2/s | Salt coefficient with the measured thermodynamic factor, ratio to the measured | Conductivity, S/m | Ratio to the measured | Share of the conductivity left when ions that move together are counted |
+  | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: |
+  | 1 | 1 | 3.46e-11 | 4.60e-11 | 0.35 | 0.093 +/- 0.028 | 0.10 | 0.27 |
+  | 0.8 | 3 | 6.53e-11 | 8.93e-11 | 0.66 +/- 0.04 | 0.253 +/- 0.051 | 0.28 | 0.38 |
+  | 0.7 | 1 | 9.67e-11 | 1.35e-10 | 0.98 | 0.610 +/- 0.149 | 0.67 | 0.63 |
+
+  *Rule 2, is a simulated label right.* With whole charges, no: the conductivity is a tenth of
+  the measured one and the ions are not yet diffusive after 4 ns. With the charges of the ions
+  multiplied by 0.8 the salt diffusion coefficient is 0.66 to 0.96 of the measured one,
+  depending on the correction for the box, and the conductivity of the same runs is 0.28 of
+  the measured one, so the agreement of the diffusion coefficient is not evidence that the
+  ions move correctly. At 0.7 the coefficient is 0.98 before the correction, which puts it on
+  the high side after it, the side the cell tolerates, and the conductivity is 0.67 of the
+  measured one with an error of a quarter of its value. That is one run of one electrolyte.
+  The factor is a calibration of one parameter on one number. The rank and the level of the
+  conductivity over the 62 formulations, which rule 2 asks for, have not been run.
+  *Rule 3, the box and the run.* A box of 125 solvent molecules is too small: it differs from
+  the larger ones in every quantity. From 250 to 1,000 molecules the coefficients change by
+  -10 % to +10 % with no common trend, and two fits of the correction of Yeh and Hummer
+  disagree by a factor of 3.6 in the
+  slope, so the correction is recorded as a range: it adds 17 % to 61 % to the coefficient of
+  the cation in the box of 250. One 4 ns run of that box gives the coefficient of the cation
+  to about 8 % (the block errors are too small by a factor of
+  1.4, from three repeats) and does not determine a conductivity:
+  the repeats give 0.17, 0.25 and 0.34 S/m. The exponent of the mean squared displacement of
+  the ions is about 0.8 in the window of the fit, so 4 ns is short of the diffusive regime
+  and the coefficients overstate the long-time values. *The cost:* one box of 250 for 4 ns
+  took 45 to 66 minutes with its equilibration on a graphics card shared with another job,
+  against the 400 ns/day that BT5 recorded for the same size on the card alone; the eight
+  runs took 5.8 hours of production. The box of 1,000 solvent molecules ran as fast
+  as the box of 250 (116 ns/day), so the labels should come from the larger box: it costs no
+  more time on this card, has four times as many ions and needs a smaller correction. The 62
+  formulations at one temperature are then about 17 hours on the card alone, and three
+  temperatures three times that.
+  *Gate (a) is not decided.* It asks for the range of concentrations of the study and for the
+  uncertainty the study states, and one concentration was run and the paper has not been read
+  for its uncertainty. Gates (b) and (c) have not been started.
+  *What writing it found.* The first error estimate fitted each block of a run in a shorter
+  window of its own, which is a more precise estimator than the one reported, and on random
+  walks it understated the true scatter by a factor of three; the error now uses the lags and
+  the window of the estimate. A size fit whose slope has the wrong sign had been extrapolated
+  to an infinite box slower than every real one; it is now refused, and the largest box is
+  given as it is. And the size puzzle was first blamed on a difference between runs that the
+  blocks could not see; the repeats measured that difference and it is a factor of 1.4, so
+  the explanation was wrong and the puzzle is real.
+  *Next, in this order:* the range of concentrations at a factor of 0.7, with a repeat of
+  each, which decides gate (a); then the conductivity of a part of the 62 formulations at the
+  same factor, which is rule 2's test of the calibration; then the 62 formulations; then
+  the model of gate (b). A longer run of one box (20 ns) says how much the short window
+  overstates.
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated
@@ -8256,7 +8316,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 15 | 12 | M7, M8, M9 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
-| H. Battery science | 12 | 7 | BT8, BT9, BT10, BT11, BT12 |
+| H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
@@ -8266,7 +8326,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**174 items: 117 finished, 10 partly, 47 open.**
+**175 items: 117 finished, 11 partly, 47 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
