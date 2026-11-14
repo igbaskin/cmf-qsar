@@ -656,7 +656,7 @@ give them the same number: it names the better enantiomer in exactly 50.0 % of p
   53.8 % of all 3,667 pairs.
 - **The handedness is read at the stereocentre and nowhere else.** Built from the stereocentres
   alone the channels give the best result of any variant; built from every other centre of the
-  same molecules they give chance (49.7 %, interval 48.1 to 51.3).
+  same molecules they give chance (49.8 %, interval 48.2 to 51.4).
 - **It does not improve the potency itself.** The median q2 over the 51 targets moves from -0.018
   to -0.023 when the 25 handedness columns are added, and improves on 16 of 51 targets.
 - **The effect is small.** The predicted and measured differences correlate at 0.199, and a
@@ -1189,7 +1189,7 @@ collections — the same compounds, curated superposition against automatic
 | AChE | +0.547 | +0.243 | 1.61 Å | +0.337 | +0.078 |
 | BZR | +0.424 | +0.361 | 1.29 Å | +0.162 | +0.039 |
 | COX2 | +0.552 | +0.248 | 1.01 Å | +0.244 | −0.095 |
-| DHFR | +0.651 | +0.490 | 0.50 Å | +0.272 | +0.225 |
+| DHFR | +0.651 | +0.494 | 0.50 Å | +0.272 | +0.228 |
 | GPB | +0.593 | +0.260 | 1.12 Å | +0.285 | −0.063 |
 | THER | +0.538 | +0.043 | 1.60 Å | +0.292 | −0.236 |
 | THR | +0.701 | +0.021 | 2.71 Å | +0.691 | −0.163 |
@@ -1456,11 +1456,14 @@ the posteriors of many series what a typical series needs and how much series di
 prior over the log-shares, fitted by empirical Bayes), and a series then takes its weights from the
 evidence under that prior. On the 38 Mittal sets, each set's prior learned from the other 37
 ([benchmarks/run_pooled_mixing.py](benchmarks/run_pooled_mixing.py)), the collection's answer is
-clear (steric 0.49 of the kernel, hydrophobic 0.25, electrostatic 0.11, the two hydrogen-bond fields
-0.16 together) and prediction does not move: pooled weights are -0.003 in R²pred against equal
-weights (95 % interval [-0.027, +0.017]), +0.009 on the fifteen sets below forty molecules. Against
-the weights fitted on the series alone they gain +0.022 [+0.002, +0.047], which is the variance of
-fitting five weights on one series removed, and nothing more.
+clear (steric 0.50 of the kernel, hydrophobic 0.24, electrostatic 0.11, the two hydrogen-bond fields
+0.16 together) and prediction does not move: pooled weights are -0.002 in R²pred against equal
+weights (95 % interval [-0.026, +0.019]), +0.008 on the fifteen sets below forty molecules. Against
+the weights fitted on the series alone they gain +0.024 [+0.004, +0.048], which is the variance of
+fitting five weights on one series removed, and nothing more. (Measured again on 14 November 2026
+after one structure of the DHFR set was built again; the numbers were 0.49, 0.25, -0.003, +0.009
+and +0.022 before. Another seed of the sampler changes them as much, so the last digit is inside
+the sampling error.)
 
 ### A map instead of one number: the prediction place by place
 
@@ -2250,18 +2253,26 @@ and for every suggestion a sentence saying what it gains and what it loses again
 compound already made.
 
 **Run backwards on a series that came in two parts**, the gate is not met. The loop is trained
-on the 78 compounds of part 1 with their H3 affinity and their hERG activity, and scores 425
+on the 78 compounds of part 1 with their H3 affinity and their hERG activity, and scores 427
 candidates -- every other H3 ligand in ChEMBL that fits the frame -- of which 16 are the
-compounds the same authors made next. The Pareto front holds 5 of the 425 and none of the 16;
-those 16 sit at Pareto layer 23 of 47 against 19 for the pool and at rank 343 of 425 against
-208, so the loop puts them in the worse half.
+compounds the same authors made next. The Pareto front holds 5 of the 427 and none of the 16;
+those 16 sit at Pareto layer 22 of 51 against 19 for the pool and at rank 344 of 427 against
+209, so the loop puts them in the worse half.
 
-The model does see that they are good -- their measured affinity averages 9.15 against 7.98,
-and it predicted 8.68 against 8.59 -- but it predicts their hERG at 6.29 against 5.89, and an
+The model does see that they are good -- their measured affinity averages 9.15 against 7.97,
+and it predicted 8.68 against 8.57 -- but it predicts their hERG at 6.29 against 5.90, and an
 acquisition that adds improvements prefers a candidate extreme in one objective to one that is
 good in both. No hERG number was ever measured for them, so that prediction cannot be checked,
 which is the honest limit of a two-objective test on a series where only one objective was
 followed up.
+
+These numbers were measured again on 14 November 2026, after a repair of the candidate file.
+30 of its 425 records were hydrochlorides that had been embedded with the chloride as a second
+fragment, 0.3 to 1.2 Å from an atom of the compound. One of them was on the Pareto front. The
+candidates are now built without their counter-ions, and two oxalates that the size rule had
+left out for their counter-ion are in the pool, which gives 427. The front is the same five
+compounds, and none of the readings above changed: the layer was 23 of 47 and the rank 343 of
+425 against 208 before the repair. `examples/antitarget/README.md` has the details.
 
 ```bash
 python benchmarks/run_designloop.py        # results/designloop/table.md
@@ -6543,6 +6554,34 @@ MOL2 blocks that RDKit's reader rejects (unusual valences) are parsed by a toler
 (`--mittal` repeats it on the 38 automatically aligned sets of `examples/mittal`), and
 `benchmarks/run_alignment.py` measures a curated alignment against an automatic one on the nine
 targets the two collections share — all from the SDF files in `examples/` alone.
+
+### The structures of the example files, checked
+
+A model fit does not check the structures it is given. After two example files were found to
+hold a structure that was not the molecule (the SF5 records of the Hammett and the catalyst
+series), every example file was read with one check on 14 November 2026.
+`cmfqsar.orca.geometry_faults` asks that every bond length is between 0.7 and 1.3 times the sum
+of the covalent radii, and that no two atoms without a bond are closer than 1.3 Å.
+
+112 of the 31,744 records of the 318 SDF files failed, in 30 files:
+
+| Kind of record | Records | What was done |
+|---|---:|---|
+| a structure built here that is not the molecule: 30 hydrochlorides of `antitarget/h3_candidates.sdf` embedded with the chloride on top of the compound, four SF5 pairs and one pair with a linear nitrogen in `enantiomers/`, and `DHFR_364` of `mittal/` | 41 | the builder was repaired and the records were built again |
+| a property of the published structure (`sutherland`, `decoys`, `ross`, `schindler`, `selectivity`, `phenazine`, `ether`) | 67 | coordinates kept; each folder has a README that describes its records |
+| a molecule that broke in a calculation and is marked by the data set (`corrosion_fe110`, `gas_intact` = 0) | 4 | kept |
+
+Every benchmark that reads a repaired file was run on the old file first, where it reproduced
+its stored result, and then on the new one. No conclusion changed. The design loop has the same
+five compounds on its front; the enantiomer result at the stereocentres is the same to the
+digit; the q2 of the automatically aligned DHFR set goes from +0.490 to +0.494. The largest
+single change is the potency q2 of the histamine H3 enantiomer set with the two-point kernel,
++0.152 to +0.222, from 4 repaired structures of 240.
+
+`tests/test_example_geometries.py` now reads every record of every example file and fails if a
+record fails the check and is not one of the 71 kept records listed, with its reason, in
+`examples/geometry_exceptions.csv`. The manual has the full account in *The structures of the
+example files, checked*.
 
 ## Field parameterisation
 

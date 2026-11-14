@@ -1816,16 +1816,19 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   `evidence_mixing(prior_mean=mu, prior_sd=tau)` gives a series its weights under that prior.
   **Measured on the 38 Mittal sets** (`benchmarks/run_pooled_mixing.py`), each set's prior
   learned from the other 37, ten 70/30 splits per set. The collection does have an opinion:
-  a typical series gives the steric field 0.49 of the kernel, the hydrophobic 0.25, the
+  a typical series gives the steric field 0.50 of the kernel, the hydrophobic 0.24, the
   electrostatic 0.11, the acceptor 0.10 and the donor 0.06, with a spread between series of
-  tau = 0.76 in the log-shares (the fixed prior has 1.5), and both estimators agree on it.
-  Prediction does not follow: pooled against equal weights is **-0.003** in R2pred with a 95 %
-  interval of [-0.027, +0.017] over the sets, +0.009 [-0.021, +0.042] on the 15 sets below
+  tau = 0.79 in the log-shares (the fixed prior has 1.5), and both estimators agree on it.
+  Prediction does not follow: pooled against equal weights is **-0.002** in R2pred with a 95 %
+  interval of [-0.026, +0.019] over the sets, +0.008 [-0.022, +0.040] on the 15 sets below
   forty molecules where a prior should matter most, and the population weights alone are
-  +0.010 [-0.014, +0.032]. What pooling does do is repair the per-series fit: the evidence
+  +0.011 [-0.013, +0.033]. What pooling does do is repair the per-series fit: the evidence
   optimum on the series alone is -0.025 [-0.055, -0.001] against equal weights on this
-  collection, and the pooled weights are +0.022 [+0.002, +0.047] against it, better on 25 of
-  the 38 sets. So the hierarchy removes the variance that fitting five weights on one series
+  collection, and the pooled weights are +0.024 [+0.004, +0.048] against it, better on 26 of
+  the 38 sets. (Measured again on 14 November 2026 after `DHFR_364` was built again; before
+  that: 0.49, 0.25, tau 0.76, -0.003, +0.009, +0.010, +0.022, 25 of 38. Another seed of the
+  300-draw sampler changes the DHFR posterior as much as the repair did, so these last digits
+  are inside the sampling error.) So the hierarchy removes the variance that fitting five weights on one series
   adds, and ends where equal weights already were. The reason is the one the intervals gave:
   the field kernels of a congeneric series are so correlated that the weights hardly change
   the prediction, so no prior over them, however well informed, can move it. One set is an
@@ -6745,7 +6748,7 @@ because the fourth-dimension verdict says ensembles do not help, so it has nothi
   *The collection is 38 sets, not 86.* The repository holds the 38 Mittal sets that the other
   collection benchmarks use (15 of them under forty molecules); the gate was read on those and
   on the eight Sutherland sets, 44 series in all, five 70/30 splits each. Two of the collection's 38 sets are not in the table, APZ and RYR, which have 16 and 17 molecules, too few for a 70/30 split with an interval.
-  *Measured, and the item's own rule makes it an option, not a default.* The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.904 [-2.107, -0.242], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
+  *Measured, and the item's own rule makes it an option, not a default.* The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.905 [-2.127, -0.243], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
   *What writing it found.* Three sets of the collection (PTC, DIAZEPAM, EV71) have no hydrogen-bond donor on any molecule, so the donor field is zero throughout, and the choice of attenuation and ridge by the evidence in `benchmarks/run_errorpred.py`, which the error benchmarks share, divided by the mean of that field's zero diagonal: the kernel filled with NaN and the evidence was finite for nothing. It now uses the model's own rule, a scale of zero for such a field; the Sutherland sets all have donors, so no stored number changed.
   *Open:* the warped process on the low-rank path, which refuses it; a transform with a
   learned number of terms rather than a fixed one; and the collection of 86 series the item
@@ -8079,10 +8082,10 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   more, so the ranking is not read off a near neighbour.
   **And the localisation it asks for is met, sharply.** Built from the stereocentres alone the
   channels are the best variant; built from every other centre of the same molecules they are at
-  chance (49.7 %, interval 48.1 to 51.3). Reading more centres adds noise, not information.
+  chance (49.8 %, interval 48.2 to 51.4). Reading more centres adds noise, not information.
   **The first part of the gate is not met.** Adding the 25 handedness columns to the two-point
   kernel does not improve the potency itself: the median q2 over the 51 targets moves from -0.018
-  to -0.023, it improves on 16 of 51 targets, and the mean change is -0.043. The channels carry
+  to -0.023, it improves on 16 of 51 targets, and the mean change is -0.044. The channels carry
   the difference inside a pair, which is a small part of the variance of a potency across a
   series, and they dilute the kernel for the larger task.
   *The size of it:* predicted and measured differences correlate at 0.199, a predicted difference
@@ -8395,18 +8398,21 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   uncertainty and not the promise, so two compounds the model is sure are a log unit better are
   both still worth making.
   **The data for the retrospective test** came with MC4's series, which is in two parts. The
-  loop is trained on the 78 compounds of part 1 with both endpoints and scores 425 candidates
+  loop is trained on the 78 compounds of part 1 with both endpoints and scores 427 candidates
   (`examples/antitarget/h3_candidates.sdf`, built by the same script with `--candidates`): every
   other H3 ligand in ChEMBL that fits the frame, of which 16 are the compounds the same authors
   made next, in part 2 of the paper. The loop sees no activity of any candidate.
-  **Measured** by `benchmarks/run_designloop.py`: the Pareto front holds 5 of the 425 and none
+  **Measured** by `benchmarks/run_designloop.py`: the Pareto front holds 5 of the 427 and none
   of the 16; nor do the first 50 by the acquisition. The compounds they made sit at Pareto layer
-  23 of 47 against 19 for the rest and at rank 343 of 425 against 208, so the loop puts them in
-  the worse half; the best of them reaches layer 2 and rank 79.
+  22 of 51 against 19 for the rest and at rank 344 of 427 against 209, so the loop puts them in
+  the worse half; the best of them reaches layer 2 and rank 79. (Measured again on 14 November
+  2026 after the candidate file was rebuilt without counter-ions: 30 of its records were
+  hydrochlorides with the chloride embedded on top of the compound. Before the repair the
+  numbers were layer 23 of 47 and rank 343 of 425 against 208; no reading changed.)
   **Why, in three parts.** The model does see that they are good -- measured affinity 9.15
-  against 7.98 for the pool, predicted 8.68 against 8.59, the order right and the size not,
+  against 7.97 for the pool, predicted 8.68 against 8.57, the order right and the size not,
   which is what q2 +0.28 on a narrow series buys. What sinks them is the second objective: their
-  hERG is predicted at 6.29 against 5.89, and an acquisition that adds improvements prefers a
+  hERG is predicted at 6.29 against 5.90, and an acquisition that adds improvements prefers a
   candidate extreme in one objective to one that is good in both. And no hERG was ever measured
   for them, so that prediction cannot be checked.
   **What the test cannot settle**: the compounds the authors made were chosen with knowledge the

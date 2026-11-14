@@ -146,7 +146,14 @@ Output: `157_benzimidazole_uma.sdf` (the adsorbed poses, loads with
 - **One artefact.** 1-Dodecyl-2-((dodecylthio)methyl)-1H-benzimidazole (91 atoms): the oc20
   head rearranged the free molecule during the gas-phase relaxation (`gas_intact` = 0), so its
   reference is too low and E_ads = +2.52 eV is meaningless; drop it or recompute the reference
-  with the omol head.
+  with the omol head. The coordinates of this record in `157_benzimidazole_uma.sdf` are those of
+  the rearranged molecule: one C-C bond of its bond table is 5.2 Å long and one C-H bond 3.7 Å.
+  The two records with `gas_intact` = 0 in `158_quinoline_uma.sdf` are in the same state. Every
+  model of the adsorption energy leaves these three records out. The models of the potency in
+  the pose frame (`compare_alignments.py`) and `benchmarks/run_surface_view.py` read every
+  record, so they read these three structures too. The geometry check of the repository
+  (`cmfqsar.orca.geometry_faults`) finds them, and they are listed in
+  `examples/geometry_exceptions.csv` as records that the data set marks.
 - **Against the literature columns.** Pearson r between E_ads and the electrochemical
   potency (`activity`) is 0.18, and -0.20 against the tabulated `dG_ads` (59 values): no
   simple linear relation, as expected for a descriptor that ignores solvation, protonation

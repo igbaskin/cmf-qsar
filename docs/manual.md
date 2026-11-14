@@ -4477,19 +4477,29 @@ weights; a collection of series can. `benchmarks/run_pooled_mixing.py` learns a 
 over the shares from 38 Mittal sets and applies it to a thirty-ninth, never using that set itself
 (`cmfqsar.mixing.pool_priors`, 300 posterior draws per set; the table is
 `results/pooled_mixing/table.md`). What the collection says is that the fields are not equal: the
-typical shares are steric 0.488, hydrophobic 0.246, electrostatic 0.109, H-bond acceptor 0.100 and
+typical shares are steric 0.495, hydrophobic 0.238, electrostatic 0.109, H-bond acceptor 0.102 and
 H-bond donor 0.056, where equal shares would be 0.200. The spread of the log-shares between series
-is τ = 0.76, against the 1.5 of the fixed prior above, so the series differ from one another less
+is τ = 0.79, against the 1.5 of the fixed prior above, so the series differ from one another less
 than that prior allows; an estimate that makes no Gaussian assumption gives τ = 0.86.
 
 The measurement says the same as the rest of this section. Against equal weights the pooled
-weights are **-0.003** in R²pred, 95 % interval [-0.027, +0.017], which contains zero. Against the
-weights a series fits for itself by its own evidence they gain **+0.022** [+0.002, +0.047]. The
+weights are **-0.002** in R²pred, 95 % interval [-0.026, +0.019], which contains zero. Against the
+weights a series fits for itself by its own evidence they gain **+0.024** [+0.004, +0.048]. The
 prior from the other series therefore repairs the damage that fitting five weights on one series
 does, and does not improve on leaving the weights equal. On the 15 sets below 40 molecules, where
-a prior should matter most, pooled against equal is +0.009 [-0.022, +0.042]. Equal weights stay
+a prior should matter most, pooled against equal is +0.008 [-0.022, +0.040]. Equal weights stay
 the default, and the pooled prior is the answer to *what do these series have in common*, not a
 way to predict better.
+
+These numbers were measured again on 14 November 2026, after one structure of one set was
+built again (`DHFR_364`, see *The structures of the example files, checked*). Before that the
+shares were 0.488, 0.246, 0.109, 0.100 and 0.056, τ was 0.76, and the three differences were
+-0.003, +0.022 and +0.009. The size of this change says something about the measurement and
+little about the structure. The posterior of a set is a sample of 300 draws, and on the
+unchanged file another seed of the sampler moves the mean shares of DHFR by as much as the
+repair did (the steric share is 0.350 with one seed, 0.327 with another and 0.332 after the
+repair). So the third decimal of the shares, and one or two sets in a count of sets, are
+inside the sampling error of this benchmark.
 
 
 ## Choosing α and λ without holding anything out
@@ -4852,7 +4862,7 @@ interval calibrated on the plain fit's folds, on the held-out molecules
 | Sutherland | 8 | 32% of splits | +0.484 | +0.482 | 88% | 89% | 88% | 3.00 | 3.17 | 2.96 |
 | Mittal | 36 | 41% of splits | +0.102 | +0.057 | 88% | 90% | 87% | 4.93 | 5.73 | 4.83 |
 
-The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.904 [-2.107, -0.242], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
+The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.905 [-2.127, -0.243], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
 
 **What writing it found.** Three sets of the collection -- PTC, DIAZEPAM and EV71 -- have no hydrogen-bond donor on any molecule, so the donor field is zero throughout. The choice of attenuation and ridge by the evidence that the error benchmarks share divided each field by the mean of its training diagonal, which is zero for such a field, so the kernel filled with NaN and the evidence was finite for nothing. The model's own rule, a scale of zero for a field that is zero everywhere, is now used there too; the Sutherland sets all have donors, so no stored number changed.
 
@@ -7017,7 +7027,7 @@ the trade it is making.
 
 The series of the previous section comes in two parts, which makes a retrospective test
 possible. The loop is trained on the 78 compounds of part 1 with both their endpoints, and then
-scores 425 candidates: every other histamine H3 ligand in ChEMBL that fits the same frame. 16 of
+scores 427 candidates: every other histamine H3 ligand in ChEMBL that fits the same frame. 16 of
 them are the compounds **the same authors went on to make** in part 2 of the paper. The loop
 sees no activity of any candidate.
 
@@ -7028,18 +7038,28 @@ sees no activity of any candidate.
 | the first 50 by the acquisition | 50 | 0 | 0.0% |
 
 **The gate is not met.** The front holds none of them, and the compounds the authors made sit at
-Pareto layer 23 of 47 against 19 for the rest of the pool, at rank 343 of 425 against 208: the
+Pareto layer 22 of 51 against 19 for the rest of the pool, at rank 344 of 427 against 209: the
 loop puts them in the worse half. The best of them reaches layer 2 and rank 79, so they are not
 invisible to it.
 
 Three things explain the miss, and they are worth more than the verdict. The model does see that
-these compounds are good: their measured H3 affinity averages 9.15 against 7.98 for the rest of
-the pool, and the model predicted 8.68 against 8.59 -- the order is right and the size is not,
+these compounds are good: their measured H3 affinity averages 9.15 against 7.97 for the rest of
+the pool, and the model predicted 8.68 against 8.57 -- the order is right and the size is not,
 which is what a q2 of +0.28 on a narrow series buys. What sinks them in the ranking is the other
-objective: the model predicts their hERG activity at 6.29 against 5.89 for the pool, and an
+objective: the model predicts their hERG activity at 6.29 against 5.90 for the pool, and an
 acquisition that adds improvements prefers a candidate extreme in one objective to one that is
 good in both. And no hERG number was ever measured for them, so whether the model is right about
 that cannot be checked.
+
+The numbers of this section were measured again on 14 November 2026, after a repair of the
+candidate file. 30 of its 425 records were hydrochlorides that had been embedded with the
+chloride as a second fragment, and the chloride lay 0.3 to 1.2 Å from an atom of the compound.
+No score showed it, and one of these records was on the Pareto front. The candidates are now
+built without their counter-ions. Two oxalates that the size rule had left out because of
+their counter-ion are now in the pool, which gives 427 candidates. The front holds the same
+five compounds as before, and no reading of this section changed: before the repair the layer
+was 23 of 47 and the rank 343 of 425 against 208. The section *The structures of the example
+files, checked* describes the check that found the records.
 
 The last point is the real limit of this test. The compounds the authors made next were chosen
 with knowledge the loop does not have -- synthetic access, a chemical idea, the rest of a
@@ -8068,8 +8088,8 @@ the difference between the two enantiomers.
 | Handedness channels built from | Pairs held out, all 3,667 pairs | Pairs held out, the 1,144 differing by 1 log unit or more | Scaffolds held out, all 3,667 pairs | Scaffolds held out, 1 log unit or more |
 |---|---|---|---|---|
 | only the atoms RDKit calls stereocentres | 55.2 % (53.6 to 56.9) | **60.5 % (57.7 to 63.3)** | 53.8 % (52.2 to 55.4) | **59.1 % (56.3 to 61.9)** |
-| every centre with three neighbours | 51.5 % (49.9 to 53.1) | 57.4 % (54.5 to 60.3) | 51.3 % (49.7 to 52.9) | 55.6 % (52.7 to 58.5) |
-| every centre except the stereocentres | 49.5 % (47.9 to 51.1) | 53.2 % (50.3 to 56.1) | 49.7 % (48.1 to 51.3) | 51.8 % (48.9 to 54.7) |
+| every centre with three neighbours | 51.6 % (50.0 to 53.2) | 57.8 % (54.9 to 60.6) | 51.3 % (49.7 to 52.9) | 55.8 % (52.9 to 58.6) |
+| every centre except the stereocentres | 49.3 % (47.7 to 50.9) | 53.0 % (50.1 to 55.8) | 49.8 % (48.2 to 51.4) | 51.8 % (48.9 to 54.7) |
 | none, the two-point kernel alone | 50.0 % | 50.0 % | 50.0 % | 50.0 % |
 
 The brackets hold a 95 % interval for the share. With whole scaffolds held out and the channels
@@ -8102,7 +8122,7 @@ than the stereocentres alone.
 **The potency itself does not improve.** The ordinary question -- add the 25 handedness columns to
 the two-point kernel and predict the potency, with whole pairs held out -- is answered no. The
 median q2 over the 51 targets moves from -0.018 to -0.023, the channels improve it on 16 of 51
-targets, and the mean change is -0.043. The columns that make the within-pair ranking possible
+targets, and the mean change is -0.044. The columns that make the within-pair ranking possible
 dilute the kernel for the larger task, which is the same arithmetic that made them cost little on
 the five sets of item C7.
 
@@ -16084,6 +16104,109 @@ sets. `benchmarks/run_sutherland.py` reruns that comparison, `benchmarks/run_top
 the alignment against the topomer rule (`--mittal` for the automatically aligned collection),
 `benchmarks/run_alignment.py` compares the value of a curated alignment with that of an automatic one, and
 `benchmarks/run_corrosion.py` does the same for corrosion-inhibitor series.
+
+## The structures of the example files, checked
+
+A model fit does not check the structures it is given. On 14 November 2026 two example files were
+found to hold a structure that was not the molecule: an SF5 group that a force field without
+parameters for it had left with two fluorines on one point (*Quantum-chemical properties with
+ORCA* and *A kinetic selectivity as the activity* above). No score had shown either of them, and one published comparison had depended on
+each. All example files were then read with one check, and the check is now a test of the
+repository.
+
+**The check** is `cmfqsar.orca.geometry_faults`. It asks two things of a structure with a bond
+table. Every bond length has to be between 0.7 and 1.3 times the sum of the covalent radii of its
+two atoms. And no two atoms without a bond between them may be closer than 1.3 Å. Two hydrogens
+on one carbon are 1.75 Å apart, so a real molecule has no pair of atoms below that limit. The same
+function checks a file of your own:
+
+```python
+from rdkit import Chem
+from cmfqsar.orca import geometry_faults
+
+for mol in Chem.SDMolSupplier("my_series.sdf", removeHs=False):
+    faults = geometry_faults(mol)
+    if faults:
+        print(mol.GetProp("_Name"), faults)
+```
+
+**What it found.** 112 of the 31,744 records of the 318 SDF files failed, in 30 files. They are
+of three kinds, and the kind decides what was done.
+
+| Kind of record | Files | Records | What was done |
+|---|---|---:|---|
+| a structure built here that is not the molecule | `antitarget/h3_candidates.sdf`; three files of `enantiomers/`; `mittal/DHFR.sdf` | 41 | the script that builds the file was repaired and the records were built again |
+| a property of the published structure | four files of `sutherland/`, four of `decoys/`, seven of `ross/`, two each of `selectivity/`, `schindler/` and `phenazine/`, `ether/geometries.sdf` | 67 | the coordinates are kept; the records are listed and described |
+| a molecule that broke in a calculation, marked by the data set | three files of `corrosion_fe110/` | 4 | kept; the records carry `gas_intact` = 0 |
+
+**The structures built here had three causes.**
+
+*A counter-ion embedded with the compound* (30 records of the candidate pool of the design loop).
+ChEMBL writes a hydrochloride as the compound and `Cl` in one SMILES. The two fragments have no
+bond between them, so the embedding placed the chloride anywhere, and it lay 0.3 to 1.2 Å from an
+atom of the compound. The pool is now built without counter-ions, and the size and
+common-substructure rules of its selection are applied to the compound alone. That admits two
+oxalates which the rules had left out for their counter-ion, so the pool has 427 candidates
+where it had 425. The design loop was measured again: the Pareto front is the same five
+compounds, one of which was a faulty record, and no reading of *What happened when it was run
+backwards* changed.
+
+*An SF5 group* (four enantiomer pairs, eight records: two pairs of the histamine H3 set and two
+of the cyclooxygenase 2 set). MMFF94 has no parameters for hexavalent sulfur, so the refinement
+did nothing and the file held the raw embedding, with S–F lengths from 1.23 to 2.49 Å and two
+fluorines 1.0 Å apart. These molecules are now refined with CF3 in place of the group, and the
+group is then set to a regular octahedron, as in the Hammett and the catalyst series.
+
+*A refinement that stopped at a point that is not a minimum* (one enantiomer pair of the PIM1
+set and `DHFR_364` of the Mittal collection). The embedding had put the two carbons of a
+secondary amine on one line with the nitrogen. The force on the hydrogen is then zero by
+symmetry, and MMFF94 reported convergence with a C–N–C angle of 180° and an N–H length of
+1.34 Å. The builders now check every structure and embed it again with another seed if it
+fails; a record that needed this says so in its `geometry_note` column.
+
+**What the repairs changed in the enantiomer measurement.** `benchmarks/run_enantiomers.py` was
+first run on the old files and reproduced its stored result to the last digit, and then run on
+the repaired files. Five of the 3,834 pairs had changed, in three of the 51 targets. The result
+with the channels read at the stereocentres did not change by a digit: 55.2 % and 60.5 % with
+pairs held out, 53.8 % and 59.1 % with scaffolds held out. The two other rows of that table moved
+by 0.1 to 0.4 points. One number of one target moved more. The q2 of the potency of the
+histamine H3 set with the two-point kernel went from +0.152 to +0.222, and the repaired
+structures are 4 of the 240 of that set. The catalyst series showed the same effect at a larger
+size: a few structures that are not the molecule lower a score, and nothing in the score says
+why.
+
+**What the repair changed in the Mittal collection.** Five benchmarks read `mittal/DHFR.sdf`.
+Each was first run on the old file and reproduced its stored result (the largest difference was
+3 x 10^-15), and then run on the repaired file. With one structure of 397 built again, the
+cross-validated q2 of the five fields on the automatic alignment of DHFR goes from +0.490 to
++0.494 (`run_alignment.py`, `run_topomer.py --mittal`, `run_pharmfields.py --mittal`), and the
+other numbers of the DHFR rows move in the third decimal. The pooled field weights
+(`run_pooled_mixing.py`) moved more, in all 38 sets, because every set takes its prior from the
+other 37. *What it is good for, measured* gives the new numbers and shows that the change is the
+size of the sampling error of that benchmark.
+
+**The structures that are kept as they are** are published structures, and this repository does
+not change the coordinates of a source. Most of them have one pair of hydrogens closer than
+1.3 Å, on two groups that are several bonds apart, which matters little to a field. Three are
+worse, and a reader who uses these files should know them. The docked AMPA pose of compound 30 of the
+selectivity set has the methyl group of its ethyl ester on a ring nitrogen, 0.52 Å from it. And
+two of the 69 phenazines are drawn structures with two substituents on top of each other; their
+quantum properties were computed on that geometry. Leaving these two out does not change the
+answer drawn from the phenazine series, and it moves one comparison across zero, which
+`examples/phenazine/README.md` reports. Each folder has a README that describes its records.
+
+**The test.** `tests/test_example_geometries.py` reads every record of every SDF file under
+`examples/` and fails if a record fails the check and is not in
+`examples/geometry_exceptions.csv`. That list holds the 71 kept records, each with its class
+(`source` or `marked`), what the check found and the reason. The test also fails if a listed
+record passes, so the list cannot go out of date. A new example file with a wrong structure
+therefore does not reach the repository unnoticed.
+
+What the check does not find is a structure that is wrong and still has ordinary distances: a
+wrong conformer, a wrong tautomer, or a group left unrefined that happens to have possible bond
+lengths. Six molecules of the enantiomer sets have no MMFF94 parameters (a selenol and two
+boronic acids, each with its mirror image) and are raw embeddings that pass. Look at a structure
+that lies apart in a plot, as before.
 
 # When something goes wrong
 
