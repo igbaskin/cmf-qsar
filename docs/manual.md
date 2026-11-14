@@ -1803,7 +1803,7 @@ The same series gives two cautions. The first is about what the gain belongs to.
 Hirshfeld charges alone reaches 0.87 and 0.92, and a linear regression on the Hirshfeld charge of
 one ring carbon, the meta carbon for sigma-meta and the para carbon for sigma-para, reaches 0.89
 and 0.86. So the gain belongs to the charges, and on this series a field is not needed to collect
-it; the seventh tutorial makes the comparison. The second caution is about the structures. Until
+it; the eighth tutorial makes the comparison. The second caution is about the structures. Until
 14 November 2026 these two numbers were 0.79 and 0.78, because one record of the 95, the
 pentafluorosulfanyl group, held a structure that is not the molecule: no force field of RDKit
 holds that group, the embedded geometry had S-F distances from 1.19 to 2.49 Ã…, and the quantum
@@ -3182,8 +3182,8 @@ comparison depends on it. `benchmarks/results/denmark/table.md` gives every widt
 | 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
 
 The interval excludes zero at every width, so the frame is worth something on this series. How
-much depends on a setting of the kernel it is compared with. The ninth tutorial,
-`docs/tutorials/09_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
+much depends on a setting of the kernel it is compared with. The tenth tutorial,
+`docs/tutorials/10_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
 each catalyst, where the frame gives 0.88 and the invariant kernel 0.77 at its best width.
 
 **Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
@@ -3266,7 +3266,7 @@ are simply never asked, because asking means running four baselines by hand.
 cmf diagnose data.sdf --charges file
 ```
 
-The twelfth tutorial, `docs/tutorials/12_before_you_model.ipynb`, runs the command on four sets
+The sixth tutorial, `docs/tutorials/06_before_you_model.ipynb`, runs the command on four sets
 with four different recommendations and reads one report line by line.
 
 The command answers five questions and prints the numbers behind each.
@@ -8543,7 +8543,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The sixth tutorial, `docs/tutorials/06_on_a_surface.ipynb`, makes
+this program adds to it yet. The seventh tutorial, `docs/tutorials/07_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11531,7 +11531,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The eighth tutorial, `docs/tutorials/08_a_spectrum_as_the_sample.ipynb`, runs the central part
+The ninth tutorial, `docs/tutorials/09_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12292,7 +12292,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The eleventh tutorial, `docs/tutorials/11_a_mixture.ipynb`, runs the case of the computed
+The twelfth tutorial, `docs/tutorials/12_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -12964,7 +12964,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The tenth tutorial, `docs/tutorials/10_a_hop_in_a_crystal.ipynb`, runs the references and the
+The eleventh tutorial, `docs/tutorials/11_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -15992,15 +15992,16 @@ print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first fi
 Twelve notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
-a library against a model of one series, molecules adsorbed on a metal surface, read with
+a library against a model of one series, the diagnosis of a data set before any model is
+built, molecules adsorbed on a metal surface, read with
 the surface kernel and compared with a count of the atoms near the metal, the Hammett
 constants of substituted benzenes, read from co-fields in the plane of the ring and compared
 with the charge of one ring carbon, the infrared spectra of benzoic acids as the samples,
 read with the kernel of spectra and compared with the position of one band, a series of
 chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
 activity, the hops of a lithium ion in crystals, with the barrier of a hop read from the
-environment of its path, mixtures, with the amounts of the components read from one
-spectrum, and the diagnosis of a data set before any model is built. Each runs on the
+environment of its path, and mixtures, with the amounts of the components read from one
+spectrum. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.

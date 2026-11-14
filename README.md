@@ -5185,7 +5185,7 @@ charge at its periphery (NO2, CF3, SO2R) raises the constant and a donor that do
 lowers it. This is the learned form of Topsom's electrostatic model of the field effect. The two
 maps differ in sharpness, and that difference is not chemistry: the cross-validation chose an
 attenuation of 3 for σ_m and of 0.5 for σ_p, and the score changes little over the whole range of
-attenuations (the seventh tutorial prints it). The para model has the larger errors, and they are
+attenuations (the eighth tutorial prints it). The para model has the larger errors, and they are
 the resonance cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2
 are predicted far too high (N(CH3)2: −0.31 for a tabulated −0.83) and the nitroso group far too low
 (0.33 for 0.91). Its largest single error is C(CF3)3 (1.17 for 0.55). For σ_m the worst cases are
@@ -5214,7 +5214,7 @@ ten minutes for the set six at a time), q²:
 
 σ_m gains 0.16 in q² and σ_p gains 0.21, and the gain is where it was predicted to be. On five sets
 of folds a bootstrap over the substituents puts the two gains at +0.13 [+0.07, +0.22] and
-+0.19 [+0.12, +0.29] (the seventh tutorial), so both are resolved. The donors that the Gasteiger
++0.19 [+0.12, +0.29] (the eighth tutorial), so both are resolved. The donors that the Gasteiger
 model missed are closer (N(CH3)2 −0.50 for −0.83, NH2 −0.49 for −0.66, nitroso 0.66 for 0.91).
 
 Two readings of this table are new.
@@ -5224,7 +5224,7 @@ Two readings of this table are new.
 - **One number does as well as the field.** A linear regression on the Hirshfeld charge of the meta
   carbon predicts σ_m with a q² of 0.89, and one on the charge of the para carbon predicts σ_p
   with 0.86. The five fields minus that one number are −0.00 [−0.04, +0.03] and
-  +0.05 [−0.00, +0.12]. `docs/tutorials/07_a_substituent_constant.ipynb` makes the comparison
+  +0.05 [−0.00, +0.12]. `docs/tutorials/08_a_substituent_constant.ipynb` makes the comparison
   for every ring carbon. So the field model with quantum charges is to be given credit for finding
   where to read, and not for predicting better than the charge of one carbon atom.
 
@@ -6384,7 +6384,7 @@ for.
 ### Tutorials
 
 Twelve notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the tenth reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
+example data in the repository (the eleventh reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6394,13 +6394,13 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
 | `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, and what the ranking is worth against 100 presumed inactives |
-| `06_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
-| `08_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `09_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
-| `10_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `11_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `12_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
+| `06_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
+| `07_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `08_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
+| `09_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
+| `10_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
+| `11_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `12_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
