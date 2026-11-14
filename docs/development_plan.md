@@ -4174,6 +4174,18 @@ for anything molecular.
   on the iron series it is nearly degenerate for 11 % of the complexes. The matched frame is also
   the one place the phenazine symmetry trap of EC1 reappears, and the search over assignments is
   there for it.
+  *The composition on the nickel series, added 14 November 2026,* while the ninth tutorial was
+  written. The gate compared the fields with the numbers of the calculation and with the metal
+  site, and the composition, the reference of the iron series, had not been run on the nickel
+  series. It gives 0.195 V with leave-one-out (R² +0.779) and 0.245 V with five folds against
+  0.157 V and 0.150 V for the fields in the matched frame: +0.038 V [−0.025, +0.097] and
+  +0.095 V [+0.014, +0.180], so two designs disagree and 25 complexes do not show what the fields
+  add to it. The number of nitrogen atoms alone has a leave-one-out q² of 0.76. The gate against
+  the quantum numbers stands. Also found: the four invariant kernels that the benchmark builds
+  for four attenuations are equal, so the search inside the folds chooses between copies; the
+  scores are right. A new run of the iron invariant model gives 0.254 V and 0.285 V against the
+  stored 0.253 V and 0.284 V, and the code of the commit that stored them reproduces the stored
+  numbers, so later changes of the program moved them by less than 0.001 V.
   **Not done:** the metal identity is a descriptor the reader provides and neither series
   exercises it, since one is all iron and the other all nickel; no series with a measured
   electrocatalytic property was found in machine-readable form, so the catalysis claim the item
