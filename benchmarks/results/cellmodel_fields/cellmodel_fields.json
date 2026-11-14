@@ -1,0 +1,311 @@
+{
+ "base": "Chen2020",
+ "model": "SPMe",
+ "published": 4.990846257039271,
+ "cycles": 10,
+ "rows": [
+  {
+   "name": "Positive particle diffusivity [m2.s-1]",
+   "model": "kernel ridge regression on the invariant field of the hop",
+   "other_model": "random forest on the same field rows",
+   "predicted": true,
+   "value": 3.876180469025758e-14,
+   "units": "m2.s-1",
+   "published": 4e-15,
+   "kind": "value",
+   "interval": [
+    3.062820032640083e-21,
+    1e-10
+   ],
+   "calibrated": true,
+   "error": {
+    "mae": 0.2978797433282728,
+    "mean": null,
+    "z_rms": 1.0468265231334442
+   },
+   "chosen": {
+    "kernel": "invariant field of the hop",
+    "lam": 0.1
+   },
+   "capacity": [
+    0.6115249889885545,
+    5.009398342768174
+   ],
+   "refused": 0.0,
+   "holds": true,
+   "variance": 2.7912772454510355,
+   "other": {
+    "error": {
+     "mae": 0.22796206354695384,
+     "mean": null,
+     "z_rms": 1.068086265967032
+    },
+    "value": 4.806986657935387e-22,
+    "capacity": [
+     0.6111601116328063,
+     5.008567873824115
+    ],
+    "holds": true
+   },
+   "share": 0.4042072689607876
+  },
+  {
+   "name": "Positive electrode OCP [V]",
+   "model": "autocorrelation kernel on the periodic fields of the cell",
+   "other_model": "kernel on the composition",
+   "predicted": true,
+   "value": -0.5334118405469628,
+   "units": "V",
+   "published": 0.0,
+   "kind": "shift",
+   "interval": [
+    -3.1316728008720274,
+    2.0801172935756527
+   ],
+   "calibrated": true,
+   "error": {
+    "mae": 0.7007933994871713,
+    "mean": 1.2028194835243913,
+    "z_rms": 0.909924519810622
+   },
+   "chosen": [
+    {
+     "kernel": "periodic fields, width 0.5 A",
+     "lam": 0.1,
+     "n_test": 61
+    },
+    {
+     "kernel": "periodic fields, width 0.5 A",
+     "lam": 0.1,
+     "n_test": 61
+    },
+    {
+     "kernel": "periodic fields, width 0.35 A",
+     "lam": 0.1,
+     "n_test": 61
+    },
+    {
+     "kernel": "periodic fields, width 0.35 A",
+     "lam": 0.1,
+     "n_test": 60
+    },
+    {
+     "kernel": "periodic fields, width 0.5 A",
+     "lam": 0.1,
+     "n_test": 60
+    }
+   ],
+   "capacity": [
+    0.049364492179626775,
+    5.424424584005788
+   ],
+   "refused": 0.315,
+   "holds": true,
+   "variance": 4.114165192218536,
+   "other": {
+    "error": {
+     "mae": 0.5552266169886262,
+     "mean": 1.2028194835243913,
+     "z_rms": 0.9816913272049349
+    },
+    "value": 0.2768278378301474,
+    "capacity": [
+     0.037815093884225076,
+     5.421025250630023
+    ],
+    "holds": true
+   },
+   "share": 0.5957758152151856
+  },
+  {
+   "name": "Electrolyte conductivity [S.m-1]",
+   "model": "kernel on the fields of the sampled solvation shells, with the molality",
+   "other_model": "kernel on the composition and the molality",
+   "predicted": true,
+   "value": 0.9101128165108094,
+   "units": "factor",
+   "published": 1.0,
+   "kind": "scale",
+   "interval": [
+    0.5727581790635887,
+    1.450110265370417
+   ],
+   "calibrated": true,
+   "error": {
+    "mae": 0.11346005396138154,
+    "mean": 0.14602226847034339,
+    "z_rms": 1.2331093890235956
+   },
+   "chosen": [
+    {
+     "kernel": "fields of the sampled shells, no alignment, width 0.3",
+     "lam": 0.001,
+     "n_test": 13
+    },
+    {
+     "kernel": "fields of the sampled shells, no alignment, width 0.3",
+     "lam": 0.001,
+     "n_test": 13
+    },
+    {
+     "kernel": "fields of the sampled shells, in the frame of the cation, width 0.3",
+     "lam": 0.1,
+     "n_test": 12
+    },
+    {
+     "kernel": "fields of the sampled shells, no alignment, width 0.3",
+     "lam": 0.01,
+     "n_test": 12
+    },
+    {
+     "kernel": "fields of the sampled shells, no alignment, width 0.3",
+     "lam": 0.01,
+     "n_test": 12
+    }
+   ],
+   "capacity": [
+    4.986121142572078,
+    4.992541656602093
+   ],
+   "refused": 0.0,
+   "holds": true,
+   "variance": 2.7547727142890028e-06,
+   "other": {
+    "error": {
+     "mae": 0.0693738819714173,
+     "mean": 0.14602226847034339,
+     "z_rms": 1.0095953443155556
+    },
+    "value": 0.9866162084320501,
+    "capacity": [
+     4.988893242721709,
+     4.992053737948316
+    ],
+    "holds": true
+   },
+   "share": 3.989210162713616e-07
+  },
+  {
+   "name": "Positive electrode Bruggeman coefficient (electrolyte)",
+   "model": "kernel on the radial autocorrelation of the two-phase field",
+   "other_model": "the same model",
+   "predicted": true,
+   "value": 1.9063144484056422,
+   "units": "exponent",
+   "published": 1.5,
+   "kind": "value",
+   "interval": [
+    1.5933021488702124,
+    2.2211661036728687
+   ],
+   "calibrated": true,
+   "error": {
+    "mae": 0.13514842110937178,
+    "mean": 0.29628480380555317,
+    "z_rms": 1.0388705478300309
+   },
+   "chosen": [
+    {
+     "kernel": "radial autocorrelation, smoothing 0",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 48
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 40
+    },
+    {
+     "kernel": "radial autocorrelation, smoothing 1",
+     "lam": 1e-06,
+     "n_test": 40
+    }
+   ],
+   "capacity": [
+    4.983218231611302,
+    4.990203017576547
+   ],
+   "refused": 0.0,
+   "holds": false,
+   "variance": 3.335490000015366e-06,
+   "other": {
+    "error": {
+     "mae": 0.13514842110937178,
+     "mean": 0.29628480380555317,
+     "z_rms": 1.0388705478300309
+    },
+    "value": 1.9063144484056422,
+    "capacity": [
+     4.983218231611302,
+     4.990203017576547
+    ],
+    "holds": false
+   },
+   "share": 4.830151880288666e-07
+  },
+  {
+   "name": "Positive electrode exchange-current density [A.m-2]",
+   "model": "not predicted: a stated spread",
+   "other_model": "not predicted: a stated spread",
+   "predicted": false,
+   "value": 1.0,
+   "units": "factor",
+   "published": 1.0,
+   "kind": "scale",
+   "interval": [
+    0.10238844730066675,
+    9.898402786330248
+   ],
+   "calibrated": null,
+   "error": null,
+   "chosen": null,
+   "capacity": [
+    4.958475417171023,
+    4.997871197200407
+   ],
+   "refused": 0.0,
+   "holds": true,
+   "variance": 0.00011072296238067429,
+   "other": {
+    "error": null,
+    "value": 1.0,
+    "capacity": [
+     4.958475417171023,
+     4.997871197200407
+    ],
+    "holds": true
+   },
+   "share": 1.6033887822529263e-05
+  }
+ ],
+ "joint": {
+  "draws": 200,
+  "cycles": 10,
+  "interval_of_the_last_cycle": [
+   0.048714576286253135,
+   5.402856693695326
+  ],
+  "median_of_the_last_cycle": 2.3140442714044536,
+  "runs_that_completed": 122,
+  "refused": 0.39,
+  "holds_the_published_curve": {
+   "cycles": 10,
+   "inside": 10,
+   "share": 1.0,
+   "largest_gap": 0.0,
+   "all_inside": true
+  },
+  "seconds": 122.0
+ },
+ "compared": true
+}

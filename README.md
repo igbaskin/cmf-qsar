@@ -3413,6 +3413,15 @@ cell:
   because this program's deviation on a voltage is about one volt.
 - The deviations move the level of the capacity curve, not its slope: over 100 cycles the cell
   loses 0.18 to 0.20 % whatever the drawn value.
+- The same scheme runs with a kernel on continuous fields in every predicted channel
+  ([run_cellmodel_fields.py](benchmarks/run_cellmodel_fields.py)): fields of a hop for the
+  barriers, periodic fields of the cell for the voltage, fields of sampled solvation shells
+  for the conductivity, and the two-phase field for the tortuosity. All four deviations are
+  calibrated (z rms 0.91 to 1.23). In three channels the field model has the larger error
+  (0.298 against 0.228 eV, 0.701 against 0.555 V, 0.113 against 0.069 on the logarithm of
+  the conductivity), and the verdict on the intervals does not change. With all five
+  parameters drawn together the cell model completes 122 of 200 runs, and their capacity is
+  between 0.049 and 5.403 A.h.
 - At the one-hour rate the cell hardly responds to its electrolyte, so the electrolyte is
   tested again at faster discharge and in colder cells. The published electrolyte has no
   temperature dependence; BT5's model also predicts the activation energy (13.56 +/- 0.91

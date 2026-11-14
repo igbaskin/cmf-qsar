@@ -527,6 +527,18 @@ def registry() -> List[Benchmark]:
                   minutes="54",
                   report=lambda: _mod("run_cellmodel").report(),
                   tables=["cellmodel/table.md"]),
+        Benchmark("cellmodel_fields",
+                  "the cell model of the entry above with a kernel on continuous fields in "
+                  "every predicted channel: the hop barriers, the voltage, the conductivity "
+                  "and the tortuosity, with each parameter drawn alone and all of them drawn "
+                  "together (needs pybamm, the results of run_cellmodel.py for the "
+                  "comparison, and the rows that run_nebdft.py leaves in benchmarks/cache)",
+                  "run_cellmodel_fields.py", "cellmodel_fields",
+                  compute=[[]], needs="pybamm",
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="20",
+                  report=lambda: _mod("run_cellmodel_fields").report(),
+                  tables=["cellmodel_fields/table.md"]),
         Benchmark("charge_transfer",
                   "measured activation energies of charge transfer at an electrode, collected "
                   "from the literature (plan item BT12): how well laboratories agree on one "

@@ -7364,6 +7364,28 @@ would discard the typed fields and the global kernel that are the method's own.
   13 November 2026) says that the stated spread of a factor of 10 moves the capacity by less
   than 5 % under all eight conditions, and that a cold cell tolerates an activation energy
   that is 32 kJ/mol or more above the published one on one electrode.
+  *The same scheme with a field model in every channel, 14 November 2026*
+  (`benchmarks/run_cellmodel_fields.py`, `benchmarks/results/cellmodel_fields/`, 9 tests in
+  `tests/test_cellmodel_fields.py`; the channels of `run_cellmodel.py` were made reusable for
+  it, and its own parameter set came out identical afterwards). The entry above takes for
+  every parameter the model with the smallest error, and for the voltage and the
+  conductivity that is a kernel on the composition, for the barriers a forest. The question
+  here is narrower: is the scheme implemented when every predicted channel is a kernel on
+  continuous fields? It is. The barriers come from kernel ridge regression on the invariant
+  field of a hop (0.298 eV with structures held out, against 0.228 for the forest on the
+  same rows), the voltage from the kernel on the periodic fields of the cell (0.701 against
+  0.555 V), the conductivity from the kernel on the fields of the sampled solvation shells
+  with the molality (0.113 against 0.069 on the base-ten logarithm), and the tortuosity from
+  the same field kernel as before. All four deviations are calibrated, with z rms from 0.91
+  to 1.23. Each parameter was drawn alone and all five together: the cell model completes
+  122 of 200 joint runs, with a capacity between 0.049 and 5.403 A.h, and refuses the rest
+  because a drawn voltage far from the published one leaves no capacity inside the voltage
+  limits. *What this does not claim.* The field models are not the better ones in three of
+  the four channels, and the verdict of this item does not change: the intervals of the
+  diffusion coefficient and of the voltage cover almost every capacity the cell can give.
+  One observation is recorded and not read as a result: for the cathode itself the kernel
+  on the fields gives 3.9e-14 m2/s and the forest 4.8e-22, against 4e-15 published. It is
+  one structure, inside intervals of many orders of magnitude.
 
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.

@@ -352,33 +352,17 @@ def drawn_barriers(hc, reps: Sequence[int], pred: np.ndarray, sd: np.ndarray, sh
     return np.asarray(out, float)
 
 
-def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
-    """The diffusion coefficient of the positive particles, from predicted hop barriers."""
-    import run_conductors as C
+def cathode_rows(hs) -> Tuple[object, List[int], np.ndarray, dict]:
+    """The lithium hops of the layered nickel oxide, described as the training hops `hs` are.
+
+    Returns the hop set of the cathode, the indices of the hops that are distinct by symmetry,
+    their rows of the invariant field, and the record of the structure."""
     import run_hops as H
     import run_nebdft as N
-    from sklearn.ensemble import RandomForestRegressor
 
     from cmfqsar.hops import HopSet
-    from cmfqsar.interfaces import diffusivity_from_barrier
     from cmfqsar.localenv import local_features
     from cmfqsar.periodic import inorganic_fieldset
-
-    if not os.path.isfile(N.PREPARED):
-        raise SystemExit(
-            f"{N.PREPARED} is missing: run 'python benchmarks/prepare_nebdft.py --fetch' and "
-            "'python benchmarks/run_nebdft.py' once, which leave the barriers and the rows "
-            "this channel is fitted on")
-    hs, doc, _, _ = N.load(N.PREPARED, 0)
-    t = hs.targets()
-    y = np.asarray(t.y, float)
-    groups = np.asarray(t.molecule, int)
-    _, rows = N.descriptions(hs, 8, N.CACHE, "")
-    X = rows["invariant"]
-    errors = C.error_model(X, y, groups, folds)
-    log(f"  the forest on {len(y)} barriers, whole structures held out: mean absolute error "
-        f"{errors['mae']:.3f} eV, z rms {errors['factor']:.2f}, shared within a structure "
-        f"{errors['shared']:.2f}")
 
     atoms, record = layered_oxide()
     fs_train = H.fieldset_for(hs, "file")
@@ -394,11 +378,21 @@ def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
         reps = list(hc.annotate(crystals))
         envs = hc.environments(crystals, rows=reps, rho=N.RHO, r_max=N.R_MAX)
         Xc = local_features(envs)
-    forest = RandomForestRegressor(n_estimators=N.FOREST_TREES, n_jobs=-1,
-                                   random_state=SEED).fit(X, y)
-    trees = np.array([e.predict(Xc) for e in forest.estimators_])
-    pred = trees.mean(axis=0)
-    sd = np.maximum(trees.std(axis=0), 1e-6) * errors["factor"]
+    return hc, reps, Xc, record
+
+
+def barrier_parameter(hc, reps: Sequence[int], record: dict, pred: np.ndarray, sd: np.ndarray,
+                      errors: dict, n_hops: int, n_structures: int, model: str,
+                      draws: int = DRAWS) -> Tuple[object, dict]:
+    """The diffusion coefficient of the cathode from the predicted barriers of its hops.
+
+    `pred` and `sd` are the barriers of the distinct hops and their deviations, `errors` what
+    the model measured on held-out structures (its ``factor`` and its ``shared`` are used), and
+    `model` names the model in the record of the parameter."""
+    import run_conductors as C
+
+    from cmfqsar.interfaces import diffusivity_from_barrier
+
     point = C.spread_values(hc, reps, pred)
     by_dim = percolation_by_dimension(hc, 0, point)
     dimension = max([d for d in (1, 2, 3) if np.isfinite(by_dim[d])] or [1])
@@ -419,7 +413,7 @@ def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
         barriers, hop_length, "Positive particle diffusivity [m2.s-1]",
         attempt_frequency=ATTEMPT_FREQUENCY, dimension=dimension, published=published,
         high=FASTEST_DIFFUSION,
-        source=f"the forest on the invariant field, fitted on the {len(y)} density-functional "
+        source=f"{model}, fitted on the {n_hops} density-functional "
                f"barriers of nebDFT2k (plan item BT7), read as the percolation barrier of the "
                f"hop network of {record['formula']} ({record['id']}) in {dimension} directions",
         calibration=float(errors["factor"]), in_domain=True,
@@ -427,7 +421,7 @@ def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
              f"{hop_length:.2f} angstrom, neither of them predicted; the cathode of the cell is "
              "a nickel-manganese-cobalt oxide and the structure used is the ordered layered "
              "nickel oxide, which is the closest the public set holds")
-    details = {"training": {"hops": int(len(y)), "structures": int(len(np.unique(groups))),
+    details = {"training": {"hops": int(n_hops), "structures": int(n_structures),
                             **{k: v for k, v in errors.items() if k != "predicted"}},
                "structure": {"id": record["id"], "formula": record["formula"],
                              "hops": len(hc.hops), "distinct": len(reps),
@@ -444,11 +438,48 @@ def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
     return parameter, details
 
 
+def barrier_channel(draws: int = DRAWS, folds: int = 10) -> Tuple[object, dict]:
+    """The diffusion coefficient of the positive particles, from predicted hop barriers."""
+    import run_conductors as C
+    import run_nebdft as N
+    from sklearn.ensemble import RandomForestRegressor
+
+    if not os.path.isfile(N.PREPARED):
+        raise SystemExit(
+            f"{N.PREPARED} is missing: run 'python benchmarks/prepare_nebdft.py --fetch' and "
+            "'python benchmarks/run_nebdft.py' once, which leave the barriers and the rows "
+            "this channel is fitted on")
+    hs, doc, _, _ = N.load(N.PREPARED, 0)
+    t = hs.targets()
+    y = np.asarray(t.y, float)
+    groups = np.asarray(t.molecule, int)
+    _, rows = N.descriptions(hs, 8, N.CACHE, "")
+    X = rows["invariant"]
+    errors = C.error_model(X, y, groups, folds)
+    log(f"  the forest on {len(y)} barriers, whole structures held out: mean absolute error "
+        f"{errors['mae']:.3f} eV, z rms {errors['factor']:.2f}, shared within a structure "
+        f"{errors['shared']:.2f}")
+
+    hc, reps, Xc, record = cathode_rows(hs)
+    forest = RandomForestRegressor(n_estimators=N.FOREST_TREES, n_jobs=-1,
+                                   random_state=SEED).fit(X, y)
+    trees = np.array([e.predict(Xc) for e in forest.estimators_])
+    pred = trees.mean(axis=0)
+    sd = np.maximum(trees.std(axis=0), 1e-6) * errors["factor"]
+    return barrier_parameter(hc, reps, record, pred, sd, errors, len(y), len(np.unique(groups)),
+                             "the forest on the invariant field", draws)
+
+
 # --------------------------------------------------------------------------- #
 # Channel 2: the open-circuit voltage of the positive electrode
 # --------------------------------------------------------------------------- #
-def voltage_channel() -> Tuple[object, dict]:
-    """A shift of the published open-circuit voltage, from the insertion ladder of item BT3."""
+def voltage_channel(kernels_for=None, described_by: str = "the composition"
+                    ) -> Tuple[object, dict]:
+    """A shift of the published open-circuit voltage, from the insertion ladder of item BT3.
+
+    `kernels_for`, when given, is called with the structures, their names and their elements
+    and returns the kernels the model chooses among, in place of the kernels on the
+    composition; `described_by` then names that description in the record."""
     import run_battery as B
 
     from cmfqsar import battery
@@ -458,8 +489,12 @@ def voltage_channel() -> Tuple[object, dict]:
     structures, y, names = battery.pair_table(pairs, frame="discharged")
     frameworks = [p.framework for p in pairs]
     elements = sorted(B.elements_in(structures))
-    X = np.nan_to_num(B.composition_features(structures, elements), nan=0.0)
-    fit = nested_surrogate(descriptor_kernels(X), y, frameworks)
+    if kernels_for is None:
+        X = np.nan_to_num(B.composition_features(structures, elements), nan=0.0)
+        kernels = descriptor_kernels(X)
+    else:
+        kernels = kernels_for(structures, names, elements)
+    fit = nested_surrogate(kernels, y, frameworks)
     log(f"  the voltage of {len(y)} insertion pairs over {len(set(frameworks))} frameworks, "
         f"frameworks held out: mean absolute error {fit['mae']:.3f} V against "
         f"{fit['mae_of_the_mean']:.3f} V for the mean, z rms {fit['z_rms']:.2f}")
@@ -488,12 +523,12 @@ def voltage_channel() -> Tuple[object, dict]:
         f"same {len(mine)} steps, the published value is {reference:.2f} V")
     parameter = ocp_shift(
         predicted, reference, "Positive electrode OCP [V]", sd=sd,
-        source=f"the kernel model on the composition of {len(y)} insertion pairs reconstructed "
+        source=f"the kernel model on {described_by} of {len(y)} insertion pairs reconstructed "
                "from public formation energies (plan item BT3), with the frameworks held out",
         calibration=float(fit["z_rms"]), in_domain=True,
         note="the shift is the model's own error on the layered nickel oxide, which is the "
              "closest material to the cell's cathode that the set holds; the ladder "
-             f"reconstructs {ladder['voltage']:.2f} V and the model on the composition "
+             f"reconstructs {ladder['voltage']:.2f} V and the model on {described_by} "
              f"{predicted:.2f} V, against {reference:.2f} V published")
     details = {"n": int(len(y)), "frameworks": int(len(set(frameworks))),
                "mae": fit["mae"], "rmse": fit["rmse"], "z_rms": fit["z_rms"],
@@ -513,8 +548,13 @@ def voltage_channel() -> Tuple[object, dict]:
 # --------------------------------------------------------------------------- #
 # Channel 3: the conductivity of the electrolyte
 # --------------------------------------------------------------------------- #
-def electrolyte_channel() -> Tuple[object, dict]:
-    """A factor on the published conductivity of the electrolyte, from the model of item BT5."""
+def electrolyte_channel(kernels_for=None, described_by: str = "the composition"
+                        ) -> Tuple[object, dict]:
+    """A factor on the published conductivity of the electrolyte, from the model of item BT5.
+
+    `kernels_for`, when given, is called with the rows of the measured series and returns the
+    kernels the model chooses among, in place of the kernels on the composition;
+    `described_by` then names that description in the record."""
     import run_shells as S
 
     from cmfqsar.cellmodel import published_parameters
@@ -523,8 +563,9 @@ def electrolyte_channel() -> Tuple[object, dict]:
     rows = S.load_series()
     y = np.array([float(r["log10_k_298"]) for r in rows], float)
     compositions = [str(r["composition"]) for r in rows]
-    fit = nested_surrogate(descriptor_kernels(S.descriptors(rows, "composition")), y,
-                           compositions)
+    kernels = (descriptor_kernels(S.descriptors(rows, "composition")) if kernels_for is None
+               else kernels_for(rows))
+    fit = nested_surrogate(kernels, y, compositions)
     log(f"  the conductivity of {len(y)} electrolytes over {len(set(compositions))} solvent "
         f"mixtures, mixtures held out: mean absolute error {fit['mae']:.3f} on the logarithmic "
         f"scale against {fit['mae_of_the_mean']:.3f} for the mean, z rms {fit['z_rms']:.2f}")
@@ -540,7 +581,7 @@ def electrolyte_channel() -> Tuple[object, dict]:
         f"the cell model holds {reference:+.3f} (all base-ten logarithms of mS/cm)")
     parameter = conductivity_scale_from_log10(
         predicted, reference, "Electrolyte conductivity [S.m-1]", sd=sd,
-        source=f"the kernel model on the composition of {len(y)} measured conductivities of "
+        source=f"the kernel model on {described_by} of {len(y)} measured conductivities of "
                "CALiSol-23 (plan item BT5), with the solvent mixture of this electrolyte held out",
         calibration=float(fit["z_rms"]), in_domain=True,
         note="the cell model holds the conductivity as a function of concentration and "
@@ -668,15 +709,16 @@ CHANNELS = (("diffusion coefficient", barrier_channel),
             ("exchange current", exchange_channel))
 
 
-def build_set() -> Tuple[object, Dict[str, dict]]:
-    """The parameter set and what every channel measured on the way to it."""
+def build_set(channels=None) -> Tuple[object, Dict[str, dict]]:
+    """The parameter set and what every channel measured on the way to it. `channels` is a
+    list of pairs of a label and a function, :data:`CHANNELS` when it is not given."""
     from cmfqsar.interfaces import CellParameterSet
     pset = CellParameterSet(
         base=BASE, temperature=298.15,
         note="the parameters a cell model reads, as the benchmarks of this repository predict "
              "them, each with a standard deviation in the unit of the parameter")
     details = {}
-    for label, channel in CHANNELS:
+    for label, channel in (CHANNELS if channels is None else channels):
         log(f"{label}:")
         t0 = time.time()
         parameter, info = channel()
@@ -716,11 +758,11 @@ def slug(name: str) -> str:
     return "_".join("".join(keep).split())
 
 
-def stage_channels(results: str) -> object:
+def stage_channels(results: str, channels=None) -> object:
     """The first stage: fit the models, convert, and write the parameter set."""
     from cmfqsar.interfaces import CellParameterSet
     os.makedirs(results, exist_ok=True)
-    pset, details = build_set()
+    pset, details = build_set(channels)
     pset.write(os.path.join(results, "parameters.json"))
     pset.write_table(os.path.join(results, "parameters.csv"))
     with open(os.path.join(results, "channels.json"), "w", encoding="utf-8") as fh:
