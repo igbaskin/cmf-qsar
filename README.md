@@ -6384,7 +6384,7 @@ for.
 ### Tutorials
 
 Twelve notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the eleventh reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
+example data in the repository (the twelfth reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6398,9 +6398,9 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
 | `08_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
 | `09_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `10_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `11_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `12_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `10_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `11_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `12_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.

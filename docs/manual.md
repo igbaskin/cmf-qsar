@@ -8543,7 +8543,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The tenth tutorial, `docs/tutorials/10_on_a_surface.ipynb`, makes
+this program adds to it yet. The eleventh tutorial, `docs/tutorials/11_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -12292,7 +12292,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The twelfth tutorial, `docs/tutorials/12_a_mixture.ipynb`, runs the case of the computed
+The tenth tutorial, `docs/tutorials/10_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -12964,7 +12964,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The eleventh tutorial, `docs/tutorials/11_a_hop_in_a_crystal.ipynb`, runs the references and the
+The twelfth tutorial, `docs/tutorials/12_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -15997,11 +15997,10 @@ built, the Hammett constants of substituted benzenes, read from co-fields in the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
 frame of their reaction centre, with the enantioselectivity as the activity, the infrared
 spectra of benzoic acids as the samples, read with the kernel of spectra and compared with
-the position of one band, molecules adsorbed on a metal surface, read with the surface
-kernel and compared with a count of the atoms near the metal, the hops of a lithium ion in
-crystals, with the barrier of a hop read from the
-environment of its path, and mixtures, with the amounts of the components read from one
-spectrum. Each runs on the
+the position of one band, mixtures, with the amounts of the components read from one
+spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
+with a count of the atoms near the metal, and the hops of a lithium ion in crystals, with
+the barrier of a hop read from the environment of its path. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
