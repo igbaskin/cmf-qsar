@@ -501,6 +501,18 @@ def registry() -> List[Benchmark]:
                   minutes="18",
                   report=lambda: _mod("run_nebdft_rule").report(),
                   tables=["nebdft/rule.md"]),
+        Benchmark("conductivity",
+                  "from DFT barriers to the conductivity of a conductor: the hop network "
+                  "solved for its long-time diffusion coefficient, an attempt frequency and "
+                  "the lattice gas of the lithium sites, the barriers and the frequency drawn "
+                  "together, against three measured conductivities (plan item MS8; reads the "
+                  "rows that run_nebdft.py leaves in benchmarks/cache, or builds them)",
+                  "run_conductivity.py", "conductivity",
+                  compute=[[]],
+                  prepare=["prepare_nebdft.py --fetch"],
+                  minutes="4",
+                  report=lambda: _mod("run_conductivity").report(),
+                  tables=["conductivity/table.md"]),
         Benchmark("conductors",
                   "from DFT barriers to the activation energy of a conductor, with the error "
                   "carried through: the forest fitted on nebDFT2k predicts the hops of the "

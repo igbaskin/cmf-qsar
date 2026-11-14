@@ -7392,9 +7392,28 @@ would discard the typed fields and the global kernel that are the method's own.
   for a conductivity; an activation energy is what the program can give without an attempt
   frequency and a number of carriers. Five of the six measured values come from search
   summaries and are marked so.
-  *Open:* DFT barriers of a few hops of the conductors, which would measure the transfer; a
-  training set with partly occupied sites; the prefactor of a conductivity; a hop
-  simulation in place of the percolation barrier.
+  **The conductivity, built and measured 15 November 2026** (`cmfqsar/conduction.py`,
+  `benchmarks/run_conductivity.py`, `benchmarks/results/conductivity/`). The hop simulation is
+  solved exactly: the long-time diffusion coefficient of one ion on the periodic hop network
+  follows from one linear system with the graph Laplacian, checked against kinetic Monte Carlo
+  and against networks with a known answer; rates beyond 10^5 either way of the critical one
+  are dropped or capped, which moves the result by under 1e-4. The rate is nu exp(-E/kT) with
+  the attempt frequency drawn from 10^12.5 to 10^13.5 Hz; the conductivity is that of a
+  lattice gas of the lithium sites, q^2 (N/V) c (1 - c) D / kT. Three conductors have a measured
+  conductivity read in its source (Li10GeP2S12, Ta-doped LLZO, LLTO). *The gate as written is
+  met:* each has a conductivity with an interval, and each interval holds the measured value.
+  *It is worth little:* the intervals are about 20 decades wide; the point predictions
+  are 6.0 decades off on average (LGPS -0.2,
+  the garnet -11, LLTO
+  -7), the bond-valence landscape
+  4.2, and the mean of the other measured values
+  0.7. *The deviation of MS1 carried through:* 0.50 eV per
+  barrier gives 20 decades, 0.05 eV gives 2.6, 0.025 eV 1.6; the attempt
+  frequency alone adds 1.0. 12 tests in
+  `tests/test_conduction.py`. *Open:* DFT barriers of a few hops of the conductors, which would
+  measure the transfer; a training set with partly occupied sites; site energies for the
+  forest's network; measured values for the other conductors (the beta-Li3PS4 and Li3N pages
+  showed a bot check or no absolute value).
 
 * **MS9. A parameter set for a cell model, with its deviations.** A cell-level continuum model
   (the Doyle–Fuller–Newman model and its single-particle reductions, as PyBaMM implements them)
@@ -8824,7 +8843,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 9 | 9 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 8 | MS8 (partly) |
+| H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |

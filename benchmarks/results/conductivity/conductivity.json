@@ -1,0 +1,354 @@
+{
+ "temperature": 298.15,
+ "attempt_frequency": [
+  3162277660168.3794,
+  31622776601683.793
+ ],
+ "draws": 400,
+ "training": {
+  "hops": 1652,
+  "mae": 0.22796206354695384,
+  "rmse": 0.35850454677017185,
+  "mean_sd": 0.3315124526470829,
+  "factor": 1.068086265967032,
+  "shared": 0.4592894817616868,
+  "inside_2sd": 0.9642857142857143
+ },
+ "structures": [
+  {
+   "structure": "cod_1545083",
+   "compound": "LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)",
+   "disorder": "Li sites 0.38/0.62, Zr/Ta shared",
+   "sites": 120,
+   "occupancy": 0.428,
+   "volume": 2170.7916109916423,
+   "hops": 1728,
+   "measured": {
+    "sigma": 0.00084,
+    "temperature": "297 K",
+    "what": "total (bulk and grain boundary not separated)",
+    "sample": "sintered pellet of Li6.5La3Zr1.5Ta0.5O12, tetragonal and cubic phases together",
+    "source": "N. Hamao, K. Kataoka, N. Kijima, J. Akimoto, J. Ceram. Soc. Jpn. 124, 678 (2016), doi:10.2109/jcersj2.16019; the same composition as a single crystal: 1.27e-3 S/cm (cited in K. Kataoka, J. Akimoto, J. Ceram. Soc. Jpn. 127, 521 (2019))",
+    "checked": "full text read (open access PDF)"
+   },
+   "diffusion_point": 0.0007344751316120099,
+   "log10_sigma_point": -14.207717303899166,
+   "log10_sigma_interval": [
+    -25.081443418547842,
+    -13.174044642649696,
+    -0.1985643129636704
+   ],
+   "log10_sigma_bond_valence": -2.753012426015005
+  },
+  {
+   "structure": "cod_1552152",
+   "compound": "LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)",
+   "disorder": "Li sites 0.28/0.96, Zr/Ta shared",
+   "sites": 120,
+   "occupancy": 0.4136000000000001,
+   "volume": 2150.235484224912,
+   "hops": 1824,
+   "measured": null,
+   "diffusion_point": 0.9026024111670622,
+   "log10_sigma_point": -11.118131106305027,
+   "log10_sigma_interval": [
+    -22.83915346989095,
+    -10.03986115045456,
+    -0.2814072815959533
+   ],
+   "log10_sigma_bond_valence": -2.7451784246877944
+  },
+  {
+   "structure": "cod_1545085",
+   "compound": "LLZO:Ta tetragonal",
+   "disorder": "ordered",
+   "sites": 56,
+   "occupancy": 1.0,
+   "volume": 2183.2124767200003,
+   "hops": 416,
+   "measured": null,
+   "diffusion_point": 2.344212669412885,
+   "log10_sigma_point": -Infinity,
+   "log10_sigma_interval": [
+    -Infinity,
+    -Infinity,
+    -Infinity
+   ],
+   "log10_sigma_bond_valence": -Infinity
+  },
+  {
+   "structure": "cod_1525568",
+   "compound": "LLTO rhombohedral (La0.5Li0.5TiO3)",
+   "disorder": "Li sites 0.16",
+   "sites": 18,
+   "occupancy": 0.162,
+   "volume": 347.46763357190235,
+   "hops": 252,
+   "measured": null,
+   "diffusion_point": 1.713198850558177e-29,
+   "log10_sigma_point": -40.12417235277834,
+   "log10_sigma_interval": [
+    -50.894999608151096,
+    -32.16378726321449,
+    -10.762754217044831
+   ],
+   "log10_sigma_bond_valence": -27.42950542300936
+  },
+  {
+   "structure": "cod_1000437",
+   "compound": "LLTO tetragonal (La0.56Li0.33TiO3)",
+   "disorder": "La/Li shared sites",
+   "sites": 2,
+   "occupancy": 0.33,
+   "volume": 116.25550830917905,
+   "hops": 12,
+   "measured": {
+    "sigma": 0.001,
+    "temperature": "room temperature",
+    "what": "not stated in the abstract",
+    "sample": "the x of about 0.1 member of Li3xLa2/3-xTiO3, which is this composition (La0.557Li0.33TiO3, x = 0.11)",
+    "source": "S. Stramare, V. Thangadurai, W. Weppner, Chem. Mater. 15, 3974 (2003), doi:10.1021/cm0300516",
+    "checked": "abstract read (through OpenAlex; the publisher's page shows a bot check)"
+   },
+   "diffusion_point": 61.59542253278202,
+   "log10_sigma_point": -9.835343671284322,
+   "log10_sigma_interval": [
+    -21.848449157900085,
+    -7.581864187177149,
+    2.4111810637073265
+   ],
+   "log10_sigma_bond_valence": -11.434800285096632
+  },
+  {
+   "structure": "cod_7215190",
+   "compound": "LGPS (Li10GeP2S12)",
+   "disorder": "Li sites 0.47 to 0.89, Ge/P shared",
+   "sites": 32,
+   "occupancy": 0.6244999999999999,
+   "volume": 941.8520825280001,
+   "hops": 416,
+   "measured": {
+    "sigma": 0.012,
+    "temperature": "room temperature",
+    "what": "total",
+    "sample": "not stated in the abstract",
+    "source": "N. Kamaya et al., Nat. Mater. 10, 682 (2011), doi:10.1038/nmat3066",
+    "checked": "abstract read on the publisher's page"
+   },
+   "diffusion_point": 1652237912.8077188,
+   "log10_sigma_point": -2.085715065494678,
+   "log10_sigma_interval": [
+    -5.586139296416072,
+    -1.4944633442902207,
+    2.733162963926149
+   ],
+   "log10_sigma_bond_valence": -5.82587610445001
+  },
+  {
+   "structure": "cod_7222155",
+   "compound": "LiTi2(PO4)3 NASICON",
+   "disorder": "ordered",
+   "sites": 6,
+   "occupancy": 1.0,
+   "volume": 1307.5311414699593,
+   "hops": 0,
+   "measured": null,
+   "diffusion_point": 0.0,
+   "log10_sigma_point": -Infinity,
+   "log10_sigma_interval": [
+    -Infinity,
+    -Infinity,
+    -Infinity
+   ]
+  },
+  {
+   "structure": "cod_7222156",
+   "compound": "Li3.18Ti2(PO4)3 NASICON",
+   "disorder": "Li sites 0.34/0.72",
+   "sites": 36,
+   "occupancy": 0.5299999999999999,
+   "volume": 1391.9767171186759,
+   "hops": 216,
+   "measured": null,
+   "diffusion_point": 1085.519922596871,
+   "log10_sigma_point": -8.36041525321014,
+   "log10_sigma_interval": [
+    -20.314071635699452,
+    -8.092417451645478,
+    -0.06681482538444293
+   ],
+   "log10_sigma_bond_valence": -4.462825820650536
+  },
+  {
+   "structure": "cod_4002499",
+   "compound": "Li2.92N",
+   "disorder": "Li site 0.96",
+   "sites": 3,
+   "occupancy": 0.9733333333333333,
+   "volume": 44.877288561842015,
+   "hops": 72,
+   "measured": null,
+   "diffusion_point": 4197547.286552825,
+   "log10_sigma_point": -5.3427767373109445,
+   "log10_sigma_interval": [
+    -19.943986572113495,
+    -4.515289626519123,
+    1.662510925096824
+   ],
+   "log10_sigma_bond_valence": 0.3746441822210394
+  },
+  {
+   "structure": "cod_1524557",
+   "compound": "LISICON (Li13.7Zn1.2Ge4O16)",
+   "disorder": "Li sites 0.16 to 0.98, Li/Zn shared",
+   "sites": 20,
+   "occupancy": 0.6834,
+   "volume": 347.90515592,
+   "hops": 416,
+   "measured": null,
+   "diffusion_point": 1167.6139210872986,
+   "log10_sigma_point": -8.04304302893247,
+   "log10_sigma_interval": [
+    -13.824159895739006,
+    -5.915458019427994,
+    1.8286304428137978
+   ],
+   "log10_sigma_bond_valence": -3.756773604025646
+  },
+  {
+   "structure": "cod_9011044",
+   "compound": "Li3PO4 (Pmnb)",
+   "disorder": "ordered",
+   "sites": 12,
+   "occupancy": 1.0,
+   "volume": 317.70694800000007,
+   "hops": 144,
+   "measured": null,
+   "diffusion_point": 244850.87515126483,
+   "log10_sigma_point": -Infinity,
+   "log10_sigma_interval": [
+    -Infinity,
+    -Infinity,
+    -Infinity
+   ],
+   "log10_sigma_bond_valence": -Infinity
+  },
+  {
+   "structure": "cod_1570310",
+   "compound": "beta-Li3PS4",
+   "disorder": "Li sites 0.3/0.7",
+   "sites": 16,
+   "occupancy": 0.75,
+   "volume": 645.2178322338,
+   "hops": 152,
+   "measured": null,
+   "diffusion_point": 147150687.7128468,
+   "log10_sigma_point": -3.36992011975661,
+   "log10_sigma_interval": [
+    -10.116643411190951,
+    -1.8339035352614137,
+    2.3816423094067987
+   ],
+   "log10_sigma_bond_valence": -1.265739861273672
+  },
+  {
+   "structure": "cod_1529523",
+   "compound": "Li3.16Zn0.24GeO4",
+   "disorder": "Li sites 0.06 to 0.92, Li/Zn shared",
+   "sites": 28,
+   "occupancy": 0.4514285714285714,
+   "volume": 351.71861274038525,
+   "hops": 760,
+   "measured": null,
+   "diffusion_point": 1098.55289920093,
+   "log10_sigma_point": -7.86949142754907,
+   "log10_sigma_interval": [
+    -12.814374525556087,
+    -5.831174339332269,
+    2.1646323133472833
+   ],
+   "log10_sigma_bond_valence": -2.7363123880060307
+  }
+ ],
+ "sensitivity": [
+  {
+   "scale": 1.0,
+   "barrier_sd": 0.5028249936376714,
+   "width": 20.24605455151608
+  },
+  {
+   "scale": 0.5,
+   "barrier_sd": 0.2514124968188357,
+   "width": 10.727680496043154
+  },
+  {
+   "scale": 0.25,
+   "barrier_sd": 0.12570624840941785,
+   "width": 5.8293937844488175
+  },
+  {
+   "scale": 0.1,
+   "barrier_sd": 0.05028249936376714,
+   "width": 2.588107722898223
+  },
+  {
+   "scale": 0.05,
+   "barrier_sd": 0.02514124968188357,
+   "width": 1.6012299382240598
+  }
+ ],
+ "width_attempt_frequency_only": 0.9653858052408637,
+ "width_barriers_only": 19.873462667411562,
+ "comparison": {
+  "structures": 3,
+  "inside": 3,
+  "rows": [
+   {
+    "structure": "cod_1545083",
+    "measured": -3.0757207139381184,
+    "point": -14.207717303899166,
+    "interval": [
+     -25.081443418547842,
+     -0.1985643129636704
+    ],
+    "inside": true,
+    "point_minus_measured": -11.131996589961048,
+    "others_mean_minus_measured": 0.615311336961931,
+    "bond_valence_minus_measured": 0.32270828792311335
+   },
+   {
+    "structure": "cod_1000437",
+    "measured": -3.0,
+    "point": -9.835343671284322,
+    "interval": [
+     -21.848449157900085,
+     2.4111810637073265
+    ],
+    "inside": true,
+    "point_minus_measured": -6.835343671284322,
+    "others_mean_minus_measured": 0.5017302660547531,
+    "bond_valence_minus_measured": -8.434800285096632
+   },
+   {
+    "structure": "cod_7215190",
+    "measured": -1.9208187539523751,
+    "point": -2.085715065494678,
+    "interval": [
+     -5.586139296416072,
+     2.733162963926149
+    ],
+    "inside": true,
+    "point_minus_measured": -0.164896311542303,
+    "others_mean_minus_measured": -1.1170416030166839,
+    "bond_valence_minus_measured": -3.9050573504976347
+   }
+  ],
+  "mean_decades_off": {
+   "forest": 6.044078857595891,
+   "bond_valence": 4.220855307839127,
+   "mean_of_the_others": 0.7446944020111227
+  },
+  "gate_met": true
+ },
+ "seconds": 197.7
+}

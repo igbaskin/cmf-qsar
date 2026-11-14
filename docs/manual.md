@@ -13858,6 +13858,87 @@ from impedance, which also holds the energy to form a carrier where carriers hav
 formed. The intervals come from errors that were measured inside the training set, so they
 are a lower bound.
 
+### From the barriers to the conductivity
+
+The gate of item MS8 asks for a conductivity, not an activation energy, so the second half
+of the item (`benchmarks/run_conductivity.py`, `cmfqsar/conduction.py`) carries the same
+predicted barriers, with the same draws, two steps further.
+
+**The hop simulation, solved exactly.** The hops of a structure form a periodic network of
+lithium sites. The diffusion coefficient of one ion on it, over long times, is what a kinetic
+Monte Carlo simulation of the hops measures, and for a network whose rates are equal in both
+directions of a hop it has a closed form: one linear system with the graph Laplacian of the
+network gives the correction of every site, and the diffusion tensor follows from it. The
+tests check this form against a simulation and against networks with a known answer. At room
+temperature the rates of one network differ by up to thirty orders of magnitude, so the rates
+are divided by that of the critical hop of the percolation barrier: hops more than 10^5 times
+slower are dropped, because the network bypasses them, and hops more than 10^5 times faster
+are capped, because they act as short circuits. A wider window changes the result by less than
+1 part in 10^4.
+
+**The prefactor and the carriers.** A hop of barrier E has the rate nu exp(-E/kT); the two
+directions of a hop share the mean of their barriers. The attempt frequency nu is drawn from
+10^12.5 to 10^13.5 Hz, and it is the one number of the chain that is assumed rather than
+computed. The lithium sites of the structure file, with their mean occupancy c, are a lattice
+gas, and its conductivity is sigma = q^2 (N/V) c (1 - c) D / kT. A structure without empty
+lithium sites does not conduct in this picture; three of the thirteen are such structures.
+
+**Measured values, read in their sources.** Three of the conductors have a measured
+conductivity that was read where it was published: Li10GeP2S12, 12 mS/cm at room temperature
+(Kamaya et al. 2011, the abstract on the publisher's page); Ta-doped cubic LLZO of the same
+composition as the structure, 8.4e-4 S/cm total at 297 K on a sintered pellet (Hamao et al.
+2016, the full text); and Li0.33La0.557TiO3, 1e-3 S/cm at room temperature for the member of
+that composition (Stramare et al. 2003, the abstract). The pages for beta-Li3PS4 and Li3N
+showed a bot check or gave no absolute value, and those structures are left without one.
+
+| Conductor | Measured log10 sigma, S/cm | Forest, point | 95 % interval | Bond-valence landscape | Mean of the other two measured values |
+|---|---:|---:|---|---:|---:|
+| Li10GeP2S12 (LGPS) | -1.9 | -2.1 | -5.6 to +2.7 | -5.8 | -3.0 |
+| Ta-doped cubic LLZO, x = 0.5 | -3.1 | -14.2 | -25.1 to -0.2 | -2.8 | -2.5 |
+| La0.557Li0.33TiO3 (LLTO) | -3.0 | -9.8 | -21.8 to +2.4 | -11.4 | -2.5 |
+
+**The gate, as the plan states it, is met:** each of the three conductors has a predicted
+conductivity with an interval, and each interval holds the measured value. **What that is
+worth is nearly nothing.** The intervals are about 20 decades wide, so they would
+hold almost any value. The point predictions are 6.0 decades from the measured
+values on average: Li10GeP2S12 is right to 0.2
+decades, the garnet is 11 decades too low,
+because the forest predicts its barriers twice as high as they are (the first half found
+that), and LLTO is
+7 decades too low. The same network with the
+bond-valence landscape (its own site and saddle energies, with every site weighted by its
+Boltzmann factor) is 4.2 decades off, and one number, the mean of the other
+two measured values, is 0.7 decades off. Neither model predicts a conductivity better than
+the measured values of the other conductors do.
+
+**How the error of one barrier moves the conductivity**, which the plan item asks for by name:
+
+| Standard deviation of one barrier, eV | Width of the 95 % interval of log10 sigma, decades |
+|---|---|
+| 0.503 (the model) | 20.2 |
+| 0.251 | 10.7 |
+| 0.126 | 5.8 |
+| 0.050 | 2.6 |
+| 0.025 | 1.6 |
+
+The barriers decide the interval: with them fixed, the attempt frequency alone gives
+1.0 decade; with the attempt frequency fixed, the barriers
+alone give 20. An interval of one decade either way needs every
+barrier to about 0.03 eV, and even 0.05 eV still gives 2.6 decades. A conductivity is
+exponential in its barrier, so it asks for more than the accuracy of the DFT calculation that
+labelled the training set.
+
+**What this subsection does not show.** The forest has no site energies, so its network treats
+every site as equally likely. The lattice gas has no interaction between ions beyond a site
+holding one, so it gives no Haven ratio and no correlation. The intervals come from errors
+measured inside the training set, which the conductors are not. DFT barriers of a few hops of
+the conductors, which would measure the transfer, and training data with partly occupied sites
+are still open.
+
+```bash
+python benchmarks/run_conductivity.py      # 4 minutes after run_nebdft.py
+```
+
 ## Reading the model from another program
 
 Everything above reads a model from inside this program: the window, the command line, the library.

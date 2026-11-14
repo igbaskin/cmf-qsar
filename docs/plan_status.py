@@ -65,9 +65,6 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "BT9": ("partly", "the label and its two tests on one electrolyte built and measured "
                       "14 November 2026; gate (a) measured over the range of concentrations "
                       "and not met; the 62 formulations and the model are left"),
-    "MS8": ("partly", "the chain to the activation energy built and measured 12 November "
-                      "2026, with the error carried through; a conductivity and a hop "
-                      "simulation are left"),
     "MC3": ("partly", "the series built from ChEMBL and measured 13 November 2026: the "
                       "handedness channels name the better enantiomer more often than chance "
                       "and read it at the stereocentre, but they do not improve the potency "

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 126 modules, 248 classes with 815 public methods, and 1302 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 127 modules, 248 classes with 815 public methods, and 1309 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -54,6 +54,7 @@ for.
 | [cmfqsar.cofields](#cmfqsarcofields) | Molecular co-fields (fields of regression coefficients), molecular fields and their overlap evaluated on a rectangular grid for visualisation (isosurfaces) and export. |
 | [cmfqsar.complementarity](#cmfqsarcomplementarity) | Compatibility of molecular fields and co-fields with the fields of a protein pocket. |
 | [cmfqsar.complexes](#cmfqsarcomplexes) | Transition-metal complexes: reading one from coordinates, and the frame its metal gives. |
+| [cmfqsar.conduction](#cmfqsarconduction) | From hop barriers to a diffusion coefficient and a conductivity (plan item MS8). |
 | [cmfqsar.conformal](#cmfqsarconformal) | Prediction intervals with a coverage guarantee, for any learner and any kernel source. |
 | [cmfqsar.conformers](#cmfqsarconformers) | Conformational ensembles: the fourth dimension of the CMF approach. |
 | [cmfqsar.contract](#cmfqsarcontract) | What has to match between fitting and predicting, checked rather than assumed. |
@@ -3023,6 +3024,108 @@ molecule decides the sign.
 Returns the molecule in that frame and the relative gap between the two closest moments.  A
 small gap means the two axes are interchangeable and the frame is arbitrary in that plane, so
 the number is reported rather than hidden: it says how much of the frame is a real rule.
+
+## cmfqsar.conduction
+
+Source: `cmfqsar/conduction.py`
+
+From hop barriers to a diffusion coefficient and a conductivity (plan item MS8).
+
+The hops of a crystal form a periodic network of sites. With a rate on every hop, an ion on
+that network performs a random walk, and its diffusion coefficient over long times is what a
+hop simulation (kinetic Monte Carlo) would measure. For a network whose rates are the same in
+both directions of a hop, that long-time limit has an exact form (homogenisation of a random
+walk on a periodic graph). Find the correction `chi` of every site that makes the mean
+displacement out of each site zero,
+
+    sum over the hops out of i of  rate * (d + chi_b - chi_i) = 0,
+
+which is one linear system with the graph Laplacian of the network. Then
+
+    D = 1 / (2 N) * sum over hops of  rate * (d + chi_b - chi_a) (d + chi_b - chi_a)^T,
+
+with `N` the number of sites in the cell and `d` the displacement of the hop. A network
+that does not cross the cell gives D = 0, because the correction then cancels every
+displacement. `network_diffusion` solves this; `simulate_walk` is the kinetic
+Monte Carlo simulation it replaces, used to check it.
+
+**The rates.** A hop of barrier `E` has the rate `nu exp(-E / kT)`. The two directions of
+a hop get the mean of their two barriers, so that the walk is reversible with every site
+equally likely, which is what a network of barriers without site energies says.
+
+**Thirty orders of magnitude.** At room temperature the rates of one network can differ by a
+factor of 10^30, more than a double-precision linear system can hold. The conductance of such a
+network is set by the hops near its percolation barrier (the critical-path argument of
+Ambegaokar, Halperin and Langer), so the rates are divided by the rate of the critical hop,
+hops more than `window` times slower are dropped (the network bypasses them) and hops more
+than `window` times faster are capped (they act as short circuits). With the default window of
+10^5 the change in D is below 10^-4 of its value, which a test checks; a direction whose own
+percolation barrier lies more than `kT ln(window)` (0.30 eV at 298 K) above the lowest one
+gets D = 0 in that direction instead of a value 10^5 times smaller.
+
+**The conductivity.** The sites hold the mobile ion at a mean occupancy `c`. In a lattice gas
+whose only interaction is that a site holds one ion, the conductivity is
+
+    sigma = q^2 (N / V) c (1 - c) D / (k T),
+
+the Nernst-Einstein relation with the carriers `c N / V` and the share `1 - c` of empty
+sites to move into (`lattice_gas_conductivity`). A fully occupied network does not
+conduct in this picture.
+
+### `pair_barriers(edges: Sequence[Tuple[int, int, Tuple[int, int, int]]], barriers: Sequence[float]) -> np.ndarray`
+
+The barrier of each hop with its two directions averaged.
+
+`edges` lists hops as (site a, site b, cell offset of b); a hop and its reverse are
+(a, b, o) and (b, a, -o). A hop whose reverse is missing keeps its own barrier.
+
+### `critical_rate(n_sites: int, edges, rates: np.ndarray) -> float`
+
+The largest rate at which the hops at or above it still cross the cell (0 if none do).
+
+Hops are joined from the fastest down, with the union-find of the percolation barrier
+(`cmfqsar.hops._Wrapping`), until a site meets one of its own images.
+
+### `network_diffusion(n_sites: int, edges: Sequence[Tuple[int, int, Tuple[int, int, int]]], vectors: np.ndarray, rates: np.ndarray, window: float=WINDOW, site_weights: Optional[np.ndarray]=None) -> np.ndarray`
+
+The long-time diffusion tensor (3, 3) of one ion on a periodic network, in the units of
+`vectors` squared times those of `rates` (A^2/s for A and 1/s).
+
+Sites are 0 .. n_sites - 1. `edges` and `vectors` give every directed hop (a, b, offset)
+and its displacement; `rates` its rate. Without `site_weights` every site is equally likely
+and a hop and its reverse must have the same rate. With them (the probability of finding
+the ion on each site, summing to one) the walk must be reversible: weight(a) rate(a to b)
+equals weight(b) rate(b to a), as it is for rates from site and saddle energies
+(`landscape_rates`). That product is the conductance of the hop, and only it enters.
+See the module text for the window around the critical conductance.
+
+### `landscape_rates(edges: Sequence[Tuple[int, int, Tuple[int, int, int]]], site_energy: np.ndarray, saddle: np.ndarray, nu: float=10000000000000.0, temperature: float=298.15) -> Tuple[np.ndarray, np.ndarray]`
+
+Rates and site weights of a landscape with an energy on every site and every saddle.
+
+The rate of a hop from a is `nu exp(-(saddle - E_a) / kT)` and the weight of a site is
+its Boltzmann factor, normalised; a hop with an unknown saddle gets rate 0. Returns
+`(rates, site_weights)` for `network_diffusion`.
+
+### `lattice_gas_conductivity(D: float, n_sites: int, occupancy: float, volume: float, temperature: float=298.15, charge: float=1.0) -> float`
+
+The conductivity in S/cm of a lattice gas of mobile ions.
+
+`D` is the diffusion coefficient of one ion on the empty network in A^2/s, `n_sites` the
+number of sites in a cell of `volume` A^3, `occupancy` their mean occupancy (0 to 1).
+
+### `rates_from_barriers(barriers: np.ndarray, nu: float=10000000000000.0, temperature: float=298.15) -> np.ndarray`
+
+`nu exp(-E / kT)` for barriers in eV; an infinite or missing barrier gives rate 0.
+
+### `simulate_walk(n_sites: int, edges, vectors: np.ndarray, rates: np.ndarray, walkers: int=2000, steps: int=2000, seed: int=0) -> np.ndarray`
+
+Kinetic Monte Carlo of independent walkers; the diffusion tensor from their spread.
+
+Each walker starts on a site chosen uniformly, picks a hop out of its site with a
+probability proportional to the rate, and advances its clock by an exponential waiting
+time. The tensor is `<R R^T> / (2 t)` at the end. This is the simulation that
+`network_diffusion` solves in closed form; it is kept to check that form.
 
 ## cmfqsar.conformal
 

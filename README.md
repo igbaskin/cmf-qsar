@@ -3422,6 +3422,25 @@ times.
 python benchmarks/run_conductors.py            # 10 minutes after run_nebdft.py
 ```
 
+**From DFT barriers to the conductivity**
+([run_conductivity.py](benchmarks/run_conductivity.py), `cmfqsar/conduction.py`), the second
+half of plan item MS8. The hop network of each conductor gives the long-time diffusion
+coefficient of one ion in closed form (the limit of a kinetic Monte Carlo simulation, checked
+against one), an attempt frequency between 10^12.5 and 10^13.5 Hz and the lattice gas of the
+lithium sites give the conductivity at 298 K, and the barriers and the attempt frequency are
+drawn together. Against three conductors with a measured conductivity read in its source
+(Li10GeP2S12, Ta-doped LLZO, LLTO), every 95 % interval holds the measured value, which is the
+gate, and every interval is about 20 decades wide, so that says little. The point
+predictions are 6.0 decades off on average (LGPS right to
+0.2, the garnet 11
+too low), the bond-valence landscape 4.2, and the mean of the other measured
+values 0.7. A barrier known to 0.05 eV would still give an interval of
+2.6 decades.
+
+```bash
+python benchmarks/run_conductivity.py          # 4 minutes after run_nebdft.py
+```
+
 ### A parameter set for a cell model, with its deviations
 
 **Feeding a continuum cell model** ([run_cellmodel.py](benchmarks/run_cellmodel.py), plan item
