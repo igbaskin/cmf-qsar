@@ -1,6 +1,6 @@
 {
- "commit": "3a25c5937ad6169caab35fe68e4c06cc429cbedd",
- "created": "2026-11-14T11:49:27",
+ "commit": "a7fa048138eaabe067caa5018e1e11c79dbb9bda",
+ "created": "2026-11-14T12:18:19",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -41,6 +41,18 @@
   "examples/case_studies.py": {
    "bytes": 22633,
    "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
+  },
+  "examples/charge_transfer/README.md": {
+   "bytes": 6932,
+   "sha256": "32539074efdc107a4de355827fa2805201541a81302563a83848f4ea8d068931"
+  },
+  "examples/charge_transfer/activation_energies.csv": {
+   "bytes": 35623,
+   "sha256": "106b9c082835299b98837d48bff41391e724055f0d59617c147a06f405b9de72"
+  },
+  "examples/charge_transfer/sources.csv": {
+   "bytes": 6496,
+   "sha256": "940bb682aec0d3e5627a7a6aadb998759518aca3dab44ab7a416e738f349ed3b"
   },
   "examples/complexes_fe/fe_redox.sdf": {
    "bytes": 7991354,
@@ -2503,7 +2515,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2695,6 +2707,8 @@
   "benchmarks/results/cellmodel/tolerance_exchange_298K_1C.json": "961c04a8bf5271dc69fb704680ca725c32d531db042fb74e626fa603d2966305",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2.5C.json": "86390539a1a95eee0307df54a178092effb93fcf5eaaa49c4984cc4c5d484c01",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2C.json": "58ed0e01cd32189f39359b29f558b865260a1dd2fbc05a9ba8e4fe2b1222b5e8",
+  "benchmarks/results/charge_transfer/summary.json": "9254053791fa72f24e066f8c3ea8c012310f7160f9792893c178c2764e303c9f",
+  "benchmarks/results/charge_transfer/table.md": "68cfd5b0ef07a43d8322518e0cd64f7c1a3c545b5c5a27a4da82dc5e2fbc73e0",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
