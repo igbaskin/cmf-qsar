@@ -1,7 +1,7 @@
 {
- "n_rows": 90,
- "n_primary": 88,
- "n_secondary": 2,
+ "n_rows": 92,
+ "n_primary": 92,
+ "n_secondary": 0,
  "n_studies": 16,
  "classes": {
   "graphite": 39,
@@ -9,7 +9,7 @@
   "lithium titanate": 14,
   "non-graphitizable carbon": 3,
   "olivine": 1,
-  "solid electrolyte": 7,
+  "solid electrolyte": 9,
   "spinel oxide": 5
  },
  "repeatability": {
@@ -282,15 +282,16 @@
   {
    "source": "YamadaSagane2009",
    "electrode_class": "solid electrolyte",
-   "n": 2,
+   "n": 4,
    "low": 32.0,
-   "high": 51.0,
-   "range": 19.0,
+   "high": 53.0,
+   "range": 21.0,
    "varied": [
-    "solvent"
+    "solvent",
+    "temperature range"
    ],
    "read_from": [
-    "secondary"
+    "primary"
    ]
   }
  ],
@@ -617,29 +618,33 @@
   },
   {
    "series": "YamadaSagane2009: solid electrolyte, no film",
-   "n": 2,
+   "n": 4,
    "solvents": [
     "DMC",
-    "EC:DMC"
+    "EC:DMC 1:14",
+    "EC:DMC 1:1",
+    "EC:DMC 1:9"
    ],
    "values": [
     32.0,
-    51.0
+    48.0,
+    51.0,
+    53.0
    ],
    "low": 32.0,
-   "high": 51.0,
-   "range": 19.0,
+   "high": 53.0,
+   "range": 21.0,
    "one_solvent": [
     "DMC"
    ],
    "read_from": [
-    "secondary"
+    "primary"
    ]
   }
  ],
  "solvent_count": {
   "n_series": 10,
-  "n_rows": 36,
+  "n_rows": 38,
   "largest": 8,
   "solvents": [
    "2,2,2-trifluoroethyl acetate",
@@ -649,6 +654,7 @@
    "EC",
    "EC:DMC",
    "EC:DMC 1:1",
+   "EC:DMC 1:14",
    "EC:DMC 1:9",
    "EC:DMC 20:80",
    "EC:DMC 30:70",
@@ -800,12 +806,43 @@
     {
      "series": "Yamada2009: graphite, one film formed with pentafluorostyrene",
      "difference": -4.0
+    },
+    {
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "difference": -19.0
+    }
+   ]
+  },
+  {
+   "first": "DMC",
+   "second": "EC:DMC 1:9",
+   "differences": [
+    {
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "difference": -15.0
+    },
+    {
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "difference": -21.0
+    }
+   ]
+  },
+  {
+   "first": "EC:DMC 1:1",
+   "second": "EC:DMC 1:9",
+   "differences": [
+    {
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "difference": 3.0
+    },
+    {
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "difference": -2.0
     }
    ]
   }
  ],
  "to_read": [
-  "KyotoRepository",
-  "YamadaSagane2009"
+  "KyotoRepository"
  ]
 }

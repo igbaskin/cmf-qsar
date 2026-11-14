@@ -33,7 +33,7 @@ def test_an_energy_in_another_unit_is_converted_and_an_unknown_unit_is_refused()
 
 def test_the_table_loads_and_every_row_names_a_paper_that_has_a_record():
     rows, sources = CT.read_labels(), CT.read_sources()
-    assert len(rows) == 90
+    assert len(rows) == 92
     assert len({r["id"] for r in rows}) == len(rows)
     assert {r["source"] for r in rows} <= set(sources)
     assert all(r["location"] or r["cited_in"] for r in rows)       # the place it was read
@@ -139,7 +139,7 @@ def test_the_collected_values_and_what_they_say():
     """The numbers the plan entry quotes."""
     rows, sources = CT.read_labels(), CT.read_sources()
     res = CT.summarise(rows, sources)
-    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (88, 2, 16)
+    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (92, 0, 16)
     rep = res["repeatability"]
     assert rep["n"] == 5
     assert rep["mean"] == pytest.approx(59.7, abs=0.05) and rep["sd"] == pytest.approx(5.0, abs=0.05)
@@ -147,7 +147,7 @@ def test_the_collected_values_and_what_they_say():
     neg, pos = res["means"]["negative"], res["means"]["positive"]
     assert neg["mean"] == pytest.approx(61.7, abs=0.05) and neg["shift"] == pytest.approx(26.7, abs=0.05)
     assert pos["mean"] == pytest.approx(68.0, abs=0.05) and pos["shift"] == pytest.approx(50.2, abs=0.05)
-    assert res["to_read"] == ["KyotoRepository", "YamadaSagane2009"]
+    assert res["to_read"] == ["KyotoRepository"]
 
 
 def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
@@ -160,17 +160,21 @@ def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
                   "sulfite"] == pytest.approx(29.1)
     assert ranges["Xu2010: lithium titanate, no film"] == pytest.approx(14.86)
     count = res["solvent_count"]
-    assert (count["n_series"], count["n_rows"], count["largest"]) == (10, 36, 8)
+    assert (count["n_series"], count["n_rows"], count["largest"]) == (10, 38, 8)
     assert len(count["one_solvent"]) == 13
     assert count["one_solvent_in_two_series"] == ["DMC", "PC", "THF", "acetonitrile", "water"]
-    # one pair of solvents was measured in more than one series, and the series do not agree
-    assert len(res["contrasts"]) == 1
-    c = res["contrasts"][0]
-    assert (c["first"], c["second"]) == ("DMC", "EC:DMC 1:1")
+    # three pairs of solvents were measured in more than one series; on the pair that most
+    # series share, the series do not agree
+    pairs = {(c["first"], c["second"]): c for c in res["contrasts"]}
+    assert sorted(pairs) == [("DMC", "EC:DMC 1:1"), ("DMC", "EC:DMC 1:9"),
+                             ("EC:DMC 1:1", "EC:DMC 1:9")]
+    c = pairs[("DMC", "EC:DMC 1:1")]
+    assert len(c["differences"]) == 5
     d = {x["series"].split(":")[0]: x["difference"] for x in c["differences"]
          if "pentafluorostyrene" not in x["series"]}
     assert d["Ishihara2014"] == pytest.approx(-17.0) and d["Xu2010"] == pytest.approx(-1.41)
     assert d["Yamada2009"] == pytest.approx(-18.0)
+    assert d["YamadaSagane2009"] == pytest.approx(-19.0)
 
 
 # ---------------------------------------------------------------- the reference regression
@@ -306,8 +310,8 @@ def test_the_sets_of_points_of_the_regression_on_the_collected_values():
              for key, v in reg["variants"].items()}
     assert sizes["single"] == (7, 20, 13)
     assert sizes["single_no_chelate"] == (7, 18, 11)
-    assert sizes["mixtures"] == (10, 36, 13)
-    assert sizes["mixtures_no_chelate"] == (10, 34, 11)
+    assert sizes["mixtures"] == (10, 38, 13)
+    assert sizes["mixtures_no_chelate"] == (10, 36, 11)
     assert sizes["published"] == (4, 12, 8)
     assert reg["repeatability"] == pytest.approx(5.0, abs=0.05)
     # every held-out value of the first set is predicted once
@@ -378,9 +382,9 @@ def test_what_the_regression_on_the_binding_energy_says():
         (7.6, 0.2, 13.2), abs=0.05)
     assert w["permutation"]["share_not_above"] < 0.001
     m = v["mixtures_no_chelate"]
-    assert m["held_out"]["regression"]["mae"] == pytest.approx(7.1, abs=0.05)
+    assert m["held_out"]["regression"]["mae"] == pytest.approx(7.0, abs=0.05)
     assert (m["gain"]["gain"], m["gain"]["low"], m["gain"]["high"]) == pytest.approx(
-        (6.1, 3.8, 9.1), abs=0.05)
+        (6.4, 4.2, 9.2), abs=0.05)
     # the binding energies of the papers give the same answer on the eight solvents they cover
     p = v["published"]
     assert p["gain"]["gain"] == pytest.approx(4.7, abs=0.05) and p["gain"]["low"] > 0.0
@@ -389,8 +393,9 @@ def test_what_the_regression_on_the_binding_energy_says():
     assert w["between_series"]["n"] == 12
     assert w["between_series"]["regression_mae"] == pytest.approx(11.3, abs=0.05)
     assert w["between_series"]["floor_mae"] == pytest.approx(10.4, abs=0.05)
-    assert m["between_series"]["regression_mae"] == pytest.approx(8.3, abs=0.05)
-    assert m["between_series"]["floor_mae"] == pytest.approx(7.5, abs=0.05)
+    assert m["between_series"]["n"] == 21
+    assert m["between_series"]["regression_mae"] == pytest.approx(7.5, abs=0.05)
+    assert m["between_series"]["floor_mae"] == pytest.approx(6.6, abs=0.05)
 
 
 def test_the_table_holds_the_reference_when_its_results_are_given():
@@ -411,7 +416,8 @@ def test_the_table_is_written_without_the_cell_model_results():
     text = CT.table(res, sources)
     assert "| negative | 18 | 61.7 |" in text
     assert "What that difference costs a cold cell" not in text
-    assert "| YamadaSagane2009 |" in text                # a paper that is still to be read
+    assert "| KyotoRepository |" in text                 # a file that is still to be read
+    assert "| YamadaSagane2009 | solid electrolyte | 4 |" in text
     assert "| DMC | EC:DMC 1:1 | Xu2010: lithium titanate, no film | -1.4 |" in text
 
 

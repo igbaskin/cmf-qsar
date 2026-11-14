@@ -575,48 +575,48 @@
    "words": "single solvents, without the two that wrap the ion"
   },
   "mixtures": {
-   "n_points": 36,
+   "n_points": 38,
    "n_series": 10,
    "n_solvents": 13,
-   "slope": 0.06261369302076066,
-   "correlation_inside_series": 0.3335328253799912,
-   "sd_y_inside_series": 11.542551155646361,
-   "residual_sd": 11.097105500275921,
+   "slope": 0.06357937157108098,
+   "correlation_inside_series": 0.33442040891014113,
+   "sd_y_inside_series": 11.271792649128528,
+   "residual_sd": 10.817738046802369,
    "held_out": {
-    "n": 42,
+    "n": 44,
     "mean": {
-     "mae": 11.699144501133787,
-     "rmse": 15.951896486781859
+     "mae": 12.008274296536797,
+     "rmse": 16.08531661319087
     },
     "regression": {
-     "mae": 14.153677116962884,
-     "rmse": 18.263353021136332
+     "mae": 14.286446030399402,
+     "rmse": 18.24028815160752
     }
    },
    "gain": {
-    "gain": -2.4545326158290965,
-    "low": -6.56677555680845,
-    "high": 1.4865614954600745,
+    "gain": -2.278171733862605,
+    "low": -6.585180184859271,
+    "high": 1.5133643385873647,
     "groups": 13
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.8125,
+    "share_not_above": 0.803,
     "solvents": 13
    },
    "between_series": {
-    "n": 20,
+    "n": 21,
     "electrolytes": [
      "DMC",
-     "EC:DMC",
      "EC:DMC 1:1",
+     "EC:DMC 1:9",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 12.681448026305496,
-    "floor_mae": 10.161056502819
+    "regression_mae": 13.452540614334847,
+    "floor_mae": 9.635281176570231
    },
    "per_series": [
     {
@@ -684,10 +684,10 @@
     },
     {
      "series": "YamadaSagane2009: solid electrolyte, no film",
-     "n": 2,
-     "slope": 0.8277456760119682,
+     "n": 4,
+     "slope": 0.8132238220468434,
      "range_x": 22.953910301943182,
-     "range_y": 19.0
+     "range_y": 21.0
     }
    ],
    "predictions": [
@@ -698,8 +698,8 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 46.82709008366967,
-     "slope": 0.06134213553585037
+     "regression": 46.818838794439145,
+     "slope": 0.06231008754157325
     },
     {
      "held_out": "DMC",
@@ -798,8 +798,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 42.19769701682855,
-     "slope": 0.05802793592677508
+     "regression": 42.233637535624844,
+     "slope": 0.059010437953843545
     },
     {
      "held_out": "DMSO",
@@ -808,8 +808,8 @@
      "solvent": "DMSO",
      "y": 69.9,
      "mean": 44.4,
-     "regression": 46.50858680141639,
-     "slope": 0.05671519002440642
+     "regression": 46.54512487906046,
+     "slope": 0.0576979638970863
     },
     {
      "held_out": "EC",
@@ -935,8 +935,28 @@
      "held_out": "EC",
      "id": "YS09-01",
      "series": "YamadaSagane2009: solid electrolyte, no film",
-     "solvent": "EC:DMC",
+     "solvent": "EC:DMC 1:1",
      "y": 51.0,
+     "mean": 32.0,
+     "regression": 33.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-03",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC 1:9",
+     "y": 53.0,
+     "mean": 32.0,
+     "regression": 33.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-04",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC 1:14",
+     "y": 48.0,
      "mean": 32.0,
      "regression": 33.63535047970113,
      "slope": 0.07124496254403714
@@ -959,7 +979,7 @@
      "y": 67.75,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.060567335352264266
+     "slope": 0.061538385433887476
     },
     {
      "held_out": "EMC",
@@ -969,7 +989,7 @@
      "y": 66.65,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.060567335352264266
+     "slope": 0.061538385433887476
     },
     {
      "held_out": "EMC",
@@ -978,8 +998,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 69.95751490051136,
-     "slope": 0.060567335352264266
+     "regression": 69.93919792746541,
+     "slope": 0.061538385433887476
     },
     {
      "held_out": "FEC",
@@ -988,8 +1008,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 61.44739257987935,
-     "slope": 0.05460666287550668
+     "regression": 61.40849344347304,
+     "slope": 0.05559344384078306
     },
     {
      "held_out": "PC",
@@ -998,8 +1018,8 @@
      "solvent": "PC",
      "y": 57.3,
      "mean": 50.7,
-     "regression": 50.79964249828932,
-     "slope": 0.04444924078711275
+     "regression": 50.801930628374215,
+     "slope": 0.045469946277658956
     },
     {
      "held_out": "PC",
@@ -1008,8 +1028,8 @@
      "solvent": "PC",
      "y": 64.0,
      "mean": 45.5,
-     "regression": 46.29658449044145,
-     "slope": 0.04444924078711275
+     "regression": 46.31487677504923,
+     "slope": 0.045469946277658956
     },
     {
      "held_out": "PC",
@@ -1018,8 +1038,8 @@
      "solvent": "PC",
      "y": 45.7,
      "mean": 43.050000000000004,
-     "regression": 43.747366640193704,
-     "slope": 0.04444924078711275
+     "regression": 43.763380546077464,
+     "slope": 0.045469946277658956
     },
     {
      "held_out": "PC",
@@ -1028,8 +1048,8 @@
      "solvent": "PC",
      "y": 61.7504,
      "mean": 15.4376,
-     "regression": 18.61040563172587,
-     "slope": 0.04444924078711275
+     "regression": 18.68326402191186,
+     "slope": 0.045469946277658956
     },
     {
      "held_out": "THF",
@@ -1038,8 +1058,8 @@
      "solvent": "THF",
      "y": 40.08,
      "mean": 51.787142857142854,
-     "regression": 48.363361779024316,
-     "slope": 0.05824524758998237
+     "regression": 48.30420154009672,
+     "slope": 0.059251679568312565
     },
     {
      "held_out": "THF",
@@ -1048,8 +1068,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 42.588510460884706,
-     "slope": 0.05824524758998237
+     "regression": 42.56628093546372,
+     "slope": 0.059251679568312565
     },
     {
      "held_out": "acetonitrile",
@@ -1058,8 +1078,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 42.17572495377308,
-     "slope": 0.06345427968235098
+     "regression": 42.15435770830915,
+     "slope": 0.06444086760987836
     },
     {
      "held_out": "acetonitrile",
@@ -1068,8 +1088,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 27.65903333333333,
-     "regression": 24.530687972887787,
-     "slope": 0.06345427968235098
+     "regression": 24.482048420422576,
+     "slope": 0.06444086760987836
     },
     {
      "held_out": "diglyme",
@@ -1078,8 +1098,8 @@
      "solvent": "diglyme",
      "y": 34.7346,
      "mean": 24.76448333333333,
-     "regression": 35.76673221201466,
-     "slope": 0.06396825251356561
+     "regression": 35.980759372905716,
+     "slope": 0.06521262933357821
     },
     {
      "held_out": "poly(ethylene glycol) of molar mass 222",
@@ -1088,8 +1108,8 @@
      "solvent": "poly(ethylene glycol) of molar mass 222",
      "y": 50.16,
      "mean": 50.34714285714285,
-     "regression": 103.09656564946226,
-     "slope": 0.19204921889241994
+     "regression": 103.75752253715166,
+     "slope": 0.1944556197074976
     },
     {
      "held_out": "water",
@@ -1098,8 +1118,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 58.75877440160181,
-     "slope": 0.041911009372407826
+     "regression": 58.67916320027906,
+     "slope": 0.0430263179880892
     },
     {
      "held_out": "water",
@@ -1108,35 +1128,35 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 29.910349999999998,
-     "regression": 25.524861010470936,
-     "slope": 0.041911009372407826
+     "regression": 25.4081572200531,
+     "slope": 0.0430263179880892
     }
    ],
    "words": "single solvents and mixtures; a mixture takes its strongest solvent"
   },
   "mixtures_no_chelate": {
-   "n_points": 34,
+   "n_points": 36,
    "n_series": 10,
    "n_solvents": 11,
-   "slope": 0.486786007740342,
-   "correlation_inside_series": 0.8400237434836861,
-   "sd_y_inside_series": 11.883829353185986,
-   "residual_sd": 6.586240547591936,
+   "slope": 0.49061710949340526,
+   "correlation_inside_series": 0.8406255929932225,
+   "sd_y_inside_series": 11.574025299209824,
+   "residual_sd": 6.392829417291565,
    "held_out": {
-    "n": 40,
+    "n": 42,
     "mean": {
-     "mae": 13.141072708333335,
-     "rmse": 16.79959881765508
+     "mae": 13.396259722222222,
+     "rmse": 16.893264942381144
     },
     "regression": {
-     "mae": 7.082172571956937,
-     "rmse": 8.749746580109896
+     "mae": 7.007135578542329,
+     "rmse": 8.6267572663657
     }
    },
    "gain": {
-    "gain": 6.058900136376398,
-    "low": 3.840104789965373,
-    "high": 9.107683671508024,
+    "gain": 6.389124143679894,
+    "low": 4.209837457464322,
+    "high": 9.164454162203135,
     "groups": 11
    },
    "permutation": {
@@ -1145,18 +1165,18 @@
     "solvents": 11
    },
    "between_series": {
-    "n": 20,
+    "n": 21,
     "electrolytes": [
      "DMC",
-     "EC:DMC",
      "EC:DMC 1:1",
+     "EC:DMC 1:9",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 8.25317627695576,
-    "floor_mae": 7.5129067420392825
+    "regression_mae": 7.495844936675736,
+    "floor_mae": 6.612282740110678
    },
    "per_series": [
     {
@@ -1224,10 +1244,10 @@
     },
     {
      "series": "YamadaSagane2009: solid electrolyte, no film",
-     "n": 2,
-     "slope": 0.8277456760119682,
+     "n": 4,
+     "slope": 0.8132238220468434,
      "range_x": 22.953910301943182,
-     "range_y": 19.0
+     "range_y": 21.0
     }
    ],
    "predictions": [
@@ -1238,8 +1258,8 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 43.28556098225444,
-     "slope": 0.47679602416689526
+     "regression": 43.251612770628924,
+     "slope": 0.4807784611674134
     },
     {
      "held_out": "DMC",
@@ -1338,8 +1358,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 57.915376297199,
-     "slope": 0.4877004134250579
+     "regression": 58.071427317159134,
+     "slope": 0.49196636307108116
     },
     {
      "held_out": "DMSO",
@@ -1348,8 +1368,8 @@
      "solvent": "DMSO",
      "y": 69.9,
      "mean": 44.4,
-     "regression": 61.754295452197816,
-     "slope": 0.46678285363919736
+     "regression": 61.92136736216878,
+     "slope": 0.47127662886124605
     },
     {
      "held_out": "EC",
@@ -1475,8 +1495,28 @@
      "held_out": "EC",
      "id": "YS09-01",
      "series": "YamadaSagane2009: solid electrolyte, no film",
-     "solvent": "EC:DMC",
+     "solvent": "EC:DMC 1:1",
      "y": 51.0,
+     "mean": 32.0,
+     "regression": 44.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-03",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC 1:9",
+     "y": 53.0,
+     "mean": 32.0,
+     "regression": 44.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-04",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC 1:14",
+     "y": 48.0,
      "mean": 32.0,
      "regression": 44.59563341630209,
      "slope": 0.5487358472092573
@@ -1499,7 +1539,7 @@
      "y": 67.75,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.47789178115947306
+     "slope": 0.48194319827518733
     },
     {
      "held_out": "EMC",
@@ -1509,7 +1549,7 @@
      "y": 66.65,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.47789178115947306
+     "slope": 0.48194319827518733
     },
     {
      "held_out": "EMC",
@@ -1518,8 +1558,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 62.085500088995175,
-     "slope": 0.47789178115947306
+     "regression": 62.009077976983875,
+     "slope": 0.48194319827518733
     },
     {
      "held_out": "FEC",
@@ -1528,8 +1568,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 45.887514472018786,
-     "slope": 0.44932471981330885
+     "regression": 45.69829683652815,
+     "slope": 0.4541247328276459
     },
     {
      "held_out": "PC",
@@ -1538,8 +1578,8 @@
      "solvent": "PC",
      "y": 57.3,
      "mean": 50.7,
-     "regression": 51.64184882262367,
-     "slope": 0.4201466825962378
+     "regression": 51.65664871131995,
+     "slope": 0.4267487231670539
     },
     {
      "held_out": "PC",
@@ -1548,8 +1588,8 @@
      "solvent": "PC",
      "y": 64.0,
      "mean": 45.5,
-     "regression": 53.02953987829697,
-     "slope": 0.4201466825962378
+     "regression": 53.14785648012973,
+     "slope": 0.4267487231670539
     },
     {
      "held_out": "PC",
@@ -1558,8 +1598,8 @@
      "solvent": "PC",
      "y": 45.7,
      "mean": 43.050000000000004,
-     "regression": 49.64170494798677,
-     "slope": 0.4201466825962378
+     "regression": 49.74528473404753,
+     "slope": 0.4267487231670539
     },
     {
      "held_out": "PC",
@@ -1568,8 +1608,8 @@
      "solvent": "PC",
      "y": 61.7504,
      "mean": 15.4376,
-     "regression": 45.42784813667406,
-     "slope": 0.4201466825962378
+     "regression": 45.89910458859622,
+     "slope": 0.4267487231670539
     },
     {
      "held_out": "THF",
@@ -1578,8 +1618,8 @@
      "solvent": "THF",
      "y": 40.08,
      "mean": 52.05833333333333,
-     "regression": 42.07957474610683,
-     "slope": 0.5001558356690883
+     "regression": 42.00095097938981,
+     "slope": 0.5040966200263869
     },
     {
      "held_out": "THF",
@@ -1588,8 +1628,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 32.82782830549052,
-     "slope": 0.5001558356690883
+     "regression": 32.740786391148205,
+     "slope": 0.5040966200263869
     },
     {
      "held_out": "acetonitrile",
@@ -1598,8 +1638,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 32.558797728300895,
-     "slope": 0.5074958065406965
+     "regression": 32.47821672048342,
+     "slope": 0.5112164662595601
     },
     {
      "held_out": "acetonitrile",
@@ -1608,8 +1648,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 24.12125,
-     "regression": 28.706434702299706,
-     "slope": 0.5074958065406965
+     "regression": 28.740050570264575,
+     "slope": 0.5112164662595601
     },
     {
      "held_out": "water",
@@ -1618,8 +1658,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 24.28577171396919,
-     "slope": 0.5248585879430694
+     "regression": 23.864604421180978,
+     "slope": 0.5307589072760934
     },
     {
      "held_out": "water",
@@ -1628,8 +1668,8 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 27.498224999999998,
-     "regression": -0.4345296099592133,
-     "slope": 0.5248585879430694
+     "regression": -0.7485421379730184,
+     "slope": 0.5307589072760934
     }
    ],
    "words": "the same, without the two solvents that wrap the ion"

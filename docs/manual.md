@@ -14055,11 +14055,11 @@ reaction was expected to raise it. This was not examined.
 #### The measured activation energies of charge transfer
 
 Plan item BT12 collects the measured activation energies from the literature
-(`examples/charge_transfer/`, 90 values from 16 studies) and
+(`examples/charge_transfer/`, 92 values from 16 studies) and
 `benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
-is *primary* when it was read in the paper that measured it (88 values) and *secondary* when
-it was read in a paper that cites it (2 values); the file names the paper and the place for
-every value.
+is *primary* when it was read in the paper that measured it and *secondary* when it was read
+in a paper that cites it. All 92 values are primary now. The file names the paper and the
+place for every value.
 
 Five studies measured the same reference system: graphite with a formed surface film, in a
 carbonate electrolyte with ethylene carbonate and no additive. Their values are 56.0 to 68.5
@@ -14077,7 +14077,7 @@ conditions. The mean per electrode is accurate enough for a cold cell with a car
 electrolyte, because the cell needs about 15 kJ/mol.
 
 A *series* is a set of values of one study that share the electrode and the surface film and
-differ in the solvent. The table holds 10 series with 36 values and 13 single solvents. Inside
+differ in the solvent. The table holds 10 series with 38 values and 13 single solvents. Inside
 a series the solvent changes the value by far more than the repeatability. An additive on
 graphite changes it by 11 kJ/mol.
 
@@ -14086,13 +14086,15 @@ graphite changes it by 11 kJ/mol.
 | Solid electrolyte, no film (Abe 2005) | 3 | 31.5 | 69.9 | 38.4 |
 | Graphite in concentrated electrolytes (Sawayama 2025) | 5 | 28.5 | 57.6 | 29.1 |
 | Lithium titanate thin film, no film (Ishihara 2014) | 3 | 37.0 | 64.0 | 27.0 |
+| Solid electrolyte, no film (Yamada, Sagane 2009) | 4 | 32.0 | 53.0 | 21.0 |
 | Graphite, one film formed in EC:DMC (Yamada 2009) | 3 | 40.0 | 58.0 | 18.0 |
 | Graphite, film formed in each electrolyte (Xu 2007) | 4 | 53.1 | 71.1 | 18.0 |
 | LiMn2O4 (Chekushkin 2021) | 4 | 19.3 | 34.7 | 15.4 |
 | Lithium titanate composite, no film (Xu 2010) | 8 | 40.1 | 54.9 | 14.9 |
 
-The series do not agree with each other. Only one pair of solvents was measured in more than
-one series: dimethyl carbonate (DMC) against its 1:1 mixture with ethylene carbonate (EC).
+The series do not all agree with each other. Three pairs of solvents were measured in more
+than one series. Five series share one pair: dimethyl carbonate (DMC) against its 1:1 mixture
+with ethylene carbonate (EC).
 
 | Series | DMC minus EC:DMC 1:1, kJ/mol |
 | --- | ---: |
@@ -14100,9 +14102,13 @@ one series: dimethyl carbonate (DMC) against its 1:1 mixture with ethylene carbo
 | Graphite, one film formed in EC:DMC (Yamada 2009) | -18.0 |
 | Graphite, one film formed with pentafluorostyrene (Yamada 2009) | -4.0 |
 | Lithium titanate composite, no film (Xu 2010) | -1.4 |
+| Solid electrolyte, no film (Yamada, Sagane 2009) | -19.0 |
 
-Two laboratories measured this pair on the same electrode material with no film, and their
-results differ by 16 kJ/mol. That is three times the repeatability of the reference system.
+Three series give 17 to 19 kJ/mol on three different solids, and all three come from one
+group of authors. Two laboratories measured this pair on the same electrode material with no
+film, and their results differ by 16 kJ/mol. That is three times the repeatability of the
+reference system. The amount of EC changes little: at the solid electrolyte the mixtures
+1:1, 1:9 and 1:14 give 51, 53 and 48 kJ/mol.
 The value of one solvent also moves between the series: propylene carbonate gives 46 to 64
 kJ/mol in four series. So only differences inside a series can be modelled.
 
@@ -14133,8 +14139,8 @@ energies at random between the solvents and gives the share of the exchanges tha
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
 | Single solvents | 20 | 13 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
 | Single solvents, without the two that wrap the ion | 18 | 11 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
-| Single solvents and mixtures | 36 | 13 | 11.7 | 14.2 | -2.5 [-6.6, +1.5] | 81.2 % |
-| The same, without the two that wrap the ion | 34 | 11 | 13.1 | 7.1 | +6.1 [+3.8, +9.1] | 0.1 % |
+| Single solvents and mixtures | 38 | 13 | 12.0 | 14.3 | -2.3 [-6.6, +1.5] | 80.3 % |
+| The same, without the two that wrap the ion | 36 | 11 | 13.4 | 7.0 | +6.4 [+4.2, +9.2] | 0.1 % |
 | Single solvents, binding energies of the papers | 12 | 8 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding

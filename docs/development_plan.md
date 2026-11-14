@@ -5752,8 +5752,8 @@ concentration was driven, and the stage counts only discharges that ended at the
   |---|---:|---:|---:|---:|---|---:|
   | single solvents | 20 | 13 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
   | single solvents, without the two that wrap the ion | 18 | 11 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
-  | single solvents and mixtures | 36 | 13 | 11.7 | 14.2 | -2.5 [-6.6, +1.5] | 81.2 % |
-  | the same, without the two that wrap the ion | 34 | 11 | 13.1 | 7.1 | +6.1 [+3.8, +9.1] | 0.1 % |
+  | single solvents and mixtures | 38 | 13 | 12.0 | 14.3 | -2.3 [-6.6, +1.5] | 80.3 % |
+  | the same, without the two that wrap the ion | 36 | 11 | 13.4 | 7.0 | +6.4 [+4.2, +9.2] | 0.1 % |
   | single solvents, binding energies of the papers | 12 | 8 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
 
   With all 13 single solvents the regression is no better than the mean of the series. The
@@ -5771,7 +5771,7 @@ concentration was driven, and the stage counts only discharges that ended at the
   low in one series and 11 kJ/mol too high in another. A better model of the solvent moves
   both errors by the same amount. On these 12 values the regression has an error of
   11.3 kJ/mol, and no model of the solvent alone can have less than 10.4 kJ/mol. With the
-  mixtures the two numbers are 8.3 and 7.5 kJ/mol on 20 values. So a better description of
+  mixtures the two numbers are 7.5 and 6.6 kJ/mol on 21 values. So a better description of
   the solvent can gain about 1 kJ/mol where it can be checked, and the interval of rule 4 on
   a gain is several kJ/mol wide on these labels.
   *The verdict.* Part (c) of the gate is closed without a field model, because it cannot be
@@ -5792,7 +5792,30 @@ concentration was driven, and the stage counts only discharges that ended at the
   of 2 to 5 single solvents, on different electrodes and with different salts. The exclusion
   of the two wrapping solvents was fixed before the regression was run, but for a reason
   that the regression then confirmed, so the gain of 6 to 8 kJ/mol holds for solvents with
-  one donor atom only. Still to be read: Yamada, Sagane 2009.
+  one donor atom only.
+  *The labels, third reading, 14 November 2026.* The two documents that were still unread
+  were supplied as files and were read. The supporting information of Sawayama 2025 does not
+  print the five activation energies either, so they stay values read from the figure. It
+  gives the temperatures (278 to 338 K), the electrode, the method and the composition of
+  each electrolyte, and these are now in the rows. The paper of Yamada, Sagane 2009 gives the
+  two values that Ishihara 2014 cites, 51 kJ/mol for EC:DMC 1:1 and 32 kJ/mol for DMC, and
+  two more: 53 kJ/mol for EC:DMC 1:9 and 48 kJ/mol for EC:DMC 1:14. The table now holds 92
+  values from 16 studies, and every value was read in the paper that measured it. The 10
+  series hold 38 values. One file of the Kyoto University repository is still unread.
+  *What the new rows change.* The second reading found one pair of solvents in more than one
+  series. There are now three. For DMC against EC:DMC 1:1 a fifth series is there: at the
+  solid electrolyte DMC is lower by 19 kJ/mol. The lithium titanate thin film gives 17 and
+  graphite gives 18 kJ/mol, so three series on three different solids agree to 2 kJ/mol. All
+  three come from one group of authors. The composite electrode of Xu 2010 gives 1.4 kJ/mol
+  and graphite with another film gives 4 kJ/mol, so the disagreement of the second reading
+  stays. DMC against EC:DMC 1:9 gives -15 and -21 kJ/mol in two series, and EC:DMC 1:1
+  against 1:9 gives +3 and -2 kJ/mol. The amount of EC changes little: 51, 53 and 48 kJ/mol
+  for 1:1, 1:9 and 1:14. The authors conclude from this that the removal of the last solvent
+  molecule sets the barrier. The regression makes the same assumption for a mixture, which
+  takes the binding energy of its most strongly binding solvent. The regression was run
+  again. Its two rows for single solvents do not change, because no row with a single
+  solvent changed. Its two rows with mixtures change by 0.3 kJ/mol or less, and the table
+  above gives them as they are now. The verdict does not change.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -5823,7 +5846,7 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 90 measured values from 16 studies, 88 of them read in the paper that measured
+November: 92 measured values from 16 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
@@ -8594,7 +8617,7 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 90 measured values (13 and 14 November) says that the constants of the cell set are 27
+  of 92 measured values (13 and 14 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:

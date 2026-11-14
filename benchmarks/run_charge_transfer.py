@@ -25,7 +25,7 @@ No model is fitted here. The script answers the four questions that come before 
    ``--stage exchange`` of ``run_cellmodel.py``.
 4. *Are there enough solvents to test a model of the solvent?*  A *series* is a set of rows of
    one study that share the electrode and the film and differ in the solvent. The script lists
-   the series, counts the solvents, and compares one pair of solvents between the series that
+   the series, counts the solvents, and compares each pair of solvents between the series that
    measured both.
 
 The reference of the item is then run (``--stage binding`` and ``--stage regression``). It is
@@ -1018,7 +1018,7 @@ def table(res: dict, sources: Dict[str, dict], binding: Optional[dict] = None,
                 L.append(f"| {q['solvent']} | {x['series']} | {_f(x['value'])} |")
         L.append("")
     if res["contrasts"]:
-        L += ["### One pair of solvents in more than one series", "",
+        L += ["### Pairs of solvents in more than one series", "",
               "For every pair of solvents that two or more series measured: the value in the "
               "first solvent minus the value in the second, in each series. A difference that "
               "changes from series to series is not a property of the two solvents alone.", "",

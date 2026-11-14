@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 90 rows from 16 studies.
+* `activation_energies.csv`: one row per value, 92 rows from 16 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,14 +22,13 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 88 such rows, from 15 papers. Five of the papers are open: four under CC BY 4.0
-  and one as an open file on the site of its society. The other ten are behind a paywall and
-  were read from files that the author of the program supplied.
-* A row is **secondary** when the number was read in another paper that cites it. There are 2
-  such rows: two values of Yamada, Sagane 2009 that Table I of Ishihara 2014 cites. `source`
-  is then the paper that measured the value, and `cited_in` names the paper and the place
-  where the number was read. A secondary value has to be checked against its own paper before
-  it is used for more than a first estimate.
+  There are 92 such rows, from 16 papers. Five of the papers are open: four under CC BY 4.0
+  and one as an open file on the site of its society. The other eleven are behind a paywall
+  and were read from files that the author of the program supplied.
+* A row is **secondary** when the number was read in another paper that cites it. No row is
+  secondary now. `source` is then the paper that measured the value, and `cited_in` names the
+  paper and the place where the number was read. A secondary value has to be checked against
+  its own paper before it is used for more than a first estimate.
 * The first collection, of 13 November, held 20 secondary rows. All of them were checked
   against their own papers on 14 November, and two differ from their papers. For graphite in
   1 M LiClO4 in EC:DMC 1:1 the review gives 55 kJ/mol; the paper of Yamada 2009 gives 58, and
@@ -80,13 +79,23 @@ Nothing was written from memory.
   equivalent circuit. Abraham 2006 and 2008 take the width of the whole arc at middle
   frequencies, and Chekushkin 2021 calls its value the activation energy of a kinetic
   resistance. `method` says which.
-* The series do not agree with each other on the one pair of solvents that more than one of
-  them measured. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
-  17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison.
+* The series do not all agree on the pair of solvents that five of them measured, DMC against
+  EC:DMC 1:1. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
+  17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison for
+  each of the three pairs of solvents that more than one series measured.
 * One paper argues against the hypothesis that desolvation alone sets the barrier:
   Chekushkin 2021 (Electrochim. Acta 372, 137843). Its six values are in the table.
-* The set is not complete. Two documents are known and have not been read: Yamada, Sagane
-  2009, and one file of the Kyoto University repository. The supporting information of
-  Sawayama 2025 was not read either.
+* The set is not complete. One document is known and has not been read: a file of the Kyoto
+  University repository.
+* Yamada, Sagane 2009 was read on 14 November 2026. Its two values that Table I of Ishihara
+  2014 cites agree with the paper (51 kJ/mol for EC:DMC 1:1 and 32 kJ/mol for DMC), and its
+  Table 1 gives two more: 53 kJ/mol for EC:DMC 1:9 and 48 kJ/mol for EC:DMC 1:14. One sentence
+  of its discussion gives 30 kJ/mol for DMC where the rest of the paper gives 32.
+* The supporting information of Sawayama 2025 was read on 14 November 2026. It does not print
+  the five activation energies either, so they stay values read from the figure. It gives the
+  composition of each electrolyte, the temperatures of the measurement (278 to 338 K), the
+  electrode (a composite graphite electrode at 0.1 V against lithium) and the method. These
+  are now in the rows. A sixth solvent, hexamethylphosphoric triamide, gave no insertion
+  current and has no value.
 * `sources.csv` gives the DOI of every paper that has one. The DOIs were taken from the
   Crossref registry and checked against the journal, the volume and the page.

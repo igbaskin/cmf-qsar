@@ -361,16 +361,15 @@ settings, and `cmfqsar/mutants.py` explains why each was chosen.
 ### The charge-transfer activation energies
 
 Plan item BT12 needs measured activation energies of the charge-transfer reaction of Li+ at an
-electrode. `examples/charge_transfer/activation_energies.csv` holds 90 values collected from
+electrode. `examples/charge_transfer/activation_energies.csv` holds 92 values collected from
 the literature on 13 and 14 November 2026, and `examples/charge_transfer/sources.csv` holds
 the papers with their DOIs; `examples/charge_transfer/README.md` is the record. The values are
 numbers taken from published papers, and every row names its paper and the place in it. No
-text, table or figure is copied. 88 values were read in the paper that measured them, in 15
+text, table or figure is copied. Every value was read in the paper that measured it, in 16
 papers. Five of the papers are open: four under **CC BY 4.0** (Jow 2018, Keefe 2019, Keefe
-2020, Sawayama 2025) and one open proceedings paper (Doi 2004). The other ten are behind a
-paywall. They were read from files that are not in the repository, and only numbers were
-taken from them. 2 values were read in one of these papers as citations of another paper
-that has not been read; each such row says so. There is no script that rebuilds the table,
+2020, Sawayama 2025) and one open proceedings paper (Doi 2004). The other eleven are behind
+a paywall. They were read from files that are not in the repository, and only numbers were
+taken from them. There is no script that rebuilds the table,
 because it was read by hand: the README says how.
 
 ## What is not in the repository
