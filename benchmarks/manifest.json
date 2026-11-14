@@ -1,6 +1,6 @@
 {
- "commit": "4d019aa3893b4b31131ab1b0f8e147c7fb63cfb2",
- "created": "2026-11-14T14:54:33",
+ "commit": "99312266630910b32110a2407fe45f7a469d99df",
+ "created": "2026-11-14T15:20:01",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2707,6 +2707,18 @@
   "benchmarks/results/cellmodel/tolerance_exchange_298K_1C.json": "961c04a8bf5271dc69fb704680ca725c32d531db042fb74e626fa603d2966305",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2.5C.json": "86390539a1a95eee0307df54a178092effb93fcf5eaaa49c4984cc4c5d484c01",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2C.json": "58ed0e01cd32189f39359b29f558b865260a1dd2fbc05a9ba8e4fe2b1222b5e8",
+  "benchmarks/results/cellmodel_fields/cellmodel_fields.json": "07c0774bebedc0325ed5590284aa8c632ddbadd9da24024e9205837f4755c9a2",
+  "benchmarks/results/cellmodel_fields/channels.json": "f4ce35f678e30c9a2237793eaf3c6848ac58c77fa3863b703af14206eae0dd75",
+  "benchmarks/results/cellmodel_fields/joint.json": "41346464961d7a8faadeaa1aac8ae9cb9c12ea0f890fcee97f6405d7aa0d8155",
+  "benchmarks/results/cellmodel_fields/parameters.csv": "8539ba37f4b0e0a244a605213a7f3e21d7f6f1aca8e616bb2ce8da44210aff14",
+  "benchmarks/results/cellmodel_fields/parameters.json": "ba239be5d98be7d2b695c8e584ac1125de3e1071f3ed9cdd299f4ebc7f687a50",
+  "benchmarks/results/cellmodel_fields/reference.json": "da0310548e8488499ae7da717eb99ea269c0febb1455c82eb7f3323b2f03f2f7",
+  "benchmarks/results/cellmodel_fields/sample_electrolyte_conductivity_s_m-1.json": "60db4ac8afa96e70eb8e6b488c1cba98e9c0d0069c50cf7ae5dd67aad87da7b7",
+  "benchmarks/results/cellmodel_fields/sample_positive_electrode_bruggeman_coefficient_electrolyte.json": "d6b237f38b35d9c57c02cbdd416cf578d2e14b4da41043cfdc5f7835c208afe8",
+  "benchmarks/results/cellmodel_fields/sample_positive_electrode_exchange-current_density_a_m-2.json": "ac55d2a5577f45492bb8f5b52022108d25bb698f8feee742c0f9800df1ec1f64",
+  "benchmarks/results/cellmodel_fields/sample_positive_electrode_ocp_v.json": "c06ffa355e06ac0b9bbae4788eeb0ae2400d78264695ec656912464cc6cee452",
+  "benchmarks/results/cellmodel_fields/sample_positive_particle_diffusivity_m2_s-1.json": "cf333cc57ed97b305c2f49f0ff2a63b22b828ec47045877092206f3bf9159f5f",
+  "benchmarks/results/cellmodel_fields/table.md": "72867ebd17af459e84efe220a4ab3c41cb080b846f7e600d77b0e7aff55c8c59",
   "benchmarks/results/charge_transfer/binding.json": "0d47c155b367184a256cfe6bd98bbec1311975bb1e6557ad7d8ca53a5a7286c9",
   "benchmarks/results/charge_transfer/regression.json": "d4408d50b6649bc6a01a4574bd359c7e795552fd412419ef1b691b31bd6e981c",
   "benchmarks/results/charge_transfer/summary.json": "815e53a38797ac16c81841f83fbfb2f8b79a73998321212e351a4e2d1bb3536d",
