@@ -74,9 +74,9 @@ The charges are a Mulliken-like tight-binding population against a Hirshfeld cha
 | fep | tnks2 | 27 | +0.484 | +0.480 | +0.583 | +0.433 | xtb_charges +0.100 [-0.089, +0.282] |
 | fep | tnks2_fullmap | 33 | +0.538 | +0.719 | +0.593 | +0.539 | base+fukui +0.181 [+0.061, +0.330] |
 | fep | tyk2 | 16 | +0.630 | +0.621 | +0.614 | +0.576 | base+fukui -0.009 [-0.128, +0.142] |
-| hammett | hammett | 95 | +0.748 | +0.751 | +0.758 | +0.826 | base+desc +0.078 [-0.015, +0.200] |
-| hammett | hammett_ens | 464 | +0.928 | +0.954 | +0.914 | +0.945 | base+fukui +0.025 [+0.014, +0.035] |
-| hammett | hammett_sym | 380 | +0.882 | +0.922 | +0.883 | +0.909 | base+fukui +0.040 [+0.023, +0.058] |
+| hammett | hammett | 95 | +0.748 | +0.753 | +0.798 | +0.848 | base+desc +0.101 [+0.032, +0.188] |
+| hammett | hammett_ens | 464 | +0.932 | +0.955 | +0.914 | +0.950 | base+fukui +0.023 [+0.013, +0.034] |
+| hammett | hammett_sym | 380 | +0.895 | +0.924 | +0.876 | +0.906 | base+fukui +0.029 [+0.019, +0.041] |
 | sutherland | ACE | 114 | +0.651 | +0.717 | +0.649 | +0.724 | base+desc +0.073 [+0.018, +0.138] |
 | sutherland | AChE | 111 | +0.547 | +0.579 | +0.539 | +0.552 | base+fukui +0.032 [-0.044, +0.112] |
 | sutherland | BZR | 147 | +0.424 | +0.467 | +0.410 | +0.433 | base+fukui +0.043 [-0.040, +0.126] |

@@ -4,9 +4,9 @@
 
 | target | n | q² linear | q² gauss | γ | index joint | index electrostatic | index steric | index hydrophobic | mean cosine joint | spread map stability | mean map stability | index of the refits |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| sigma_m | 95 | 0.70 | 0.80 | 1 | 0.199 | 0.178 | 0.305 | 0.188 | 0.847 | 1.00 | 0.99 | 0.201 |
-| sigma_p | 95 | 0.66 | 0.78 | 0.5 | 0.100 | 0.083 | 0.199 | 0.106 | 0.936 | 0.99 | 0.99 | 0.100 |
-| pi | 69 | 0.72 | 0.88 | 1 | 0.316 | 0.412 | 0.228 | 0.265 | 0.706 | 0.87 | 0.54 | 0.313 |
-| sigma_p*pi | 69 | 0.19 | 0.44 | 1 | 0.413 | 0.416 | 0.451 | 0.409 | 0.566 | 0.96 | 0.80 | 0.410 |
+| sigma_m | 95 | 0.69 | 0.80 | 1 | 0.203 | 0.180 | 0.271 | 0.196 | 0.842 | 1.00 | 0.99 | 0.204 |
+| sigma_p | 95 | 0.67 | 0.79 | 0.5 | 0.102 | 0.084 | 0.176 | 0.115 | 0.934 | 0.99 | 0.99 | 0.102 |
+| pi | 69 | 0.75 | 0.88 | 1 | 0.317 | 0.421 | 0.232 | 0.269 | 0.706 | 0.85 | 0.49 | 0.312 |
+| sigma_p*pi | 69 | 0.17 | 0.46 | 1 | 0.408 | 0.407 | 0.451 | 0.405 | 0.572 | 0.97 | 0.83 | 0.407 |
 
 The figure `maps.png` cuts the ring plane: the linear co-field, the mean of the local co-fields and their spread, for the electrostatic field.

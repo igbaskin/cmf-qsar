@@ -1377,8 +1377,8 @@ training kernel matrix without a grid. `cmf cofield --kind local --molecule FILE
 write them as cube files. Measured on the Hammett set (`benchmarks/run_nonlinearity.py`): the index
 orders the targets as it should, 0.10 for σp, 0.20 for σm, 0.32 for π and 0.41 for the product σp·π
 made non-additive on purpose; the spread maps survive refitting on four-fifths of the set at a
-correlation of 0.96 or better except on π, whose near-interpolating fit (λ = 10⁻⁴) also makes its mean
-map unstable (0.54), which is what the stability check is for. Second derivatives, how the effect of
+correlation of 0.97 or better except on π, whose near-interpolating fit (λ = 10⁻⁴) also makes its mean
+map unstable (0.49), which is what the stability check is for. Second derivatives, how the effect of
 field at one place depends on the field at another, are a two-point function and are not drawn. The
 recommended use is still to keep the linear model for interpretation and to report the nonlinear one
 beside it when prediction is the goal, now with the spread map saying where the two differ.
@@ -5007,12 +5007,14 @@ integral here that changes sign: zero at 2.45 Å for α = 1 and negative beyond,
 atom pairs of a real series are, while the kernel matrix stays positive semidefinite.
 
 One number, measured before any model, says what to expect: the vector and scalar cosine kernels
-**correlate +0.980** over the 4371 pairs of the Hammett series. They order the series almost
+**correlate +0.980** over the 4465 pairs of the Hammett series. They order the series almost
 identically, and the models confirm it. Added to the five fields the vector kernel changes nothing
-on σ_m (+0.0005 [−0.0037, +0.0051]) or σ_p (+0.0068 [−0.0045, +0.0190]), and on the nickel
+on σ_m (+0.0034 [−0.0048, +0.0137]) or σ_p (+0.0053 [−0.0061, +0.0186]), and on the nickel
 oxidation potential of item EC4 it makes the model worse by −0.0138 V [−0.0342, −0.0005]: a sixth
 field that is a near-copy of the first costs accuracy. Used in place of the electrostatic field it
-ties the five-field model, so it is a substitute at the same price, and on that nickel series the
+ties the five-field model on the σ constants and on the nickel potentials and is a little behind
+on π (−0.0167 [−0.0300, −0.0033]), so it is a substitute at the same price where the property is
+electronic, and on that nickel series the
 vector kernel alone beats the scalar field alone by +0.0299 V [+0.0144, +0.0459] under
 leave-one-out but not under random folds. The gate is not passed; the field type is kept and
 labelled, because it is exact, it is a working substitute, and its co-field is an arrow field —
@@ -5029,12 +5031,15 @@ Because a Gaussian field is not a Coulomb potential, the true point-charge poten
 offered as a second source, in e/Å and e/Å².
 
 Reading everywhere wins, everywhere. Against the five-field model the anchored block loses by
-0.035 units on σ_m [−0.066, −0.008], 0.060 on σ_p [−0.119, −0.015], 0.473 on π and 0.015 V on a
+0.034 units on σ_m [−0.067, −0.004], 0.037 on σ_p [−0.073, −0.006], 0.506 on π and 0.015 V on a
 nickel reduction potential, every interval excluding zero, and adding it to the five fields does
-not help. Two results survive: the **true Coulomb potential is the better anchored descriptor**
-(+0.0235 units on σ_m [+0.0031, +0.0478]) — if you read a potential at a point, read the real one;
-and the field model's advantage is not that it has more numbers, since the anchored block has 100
-columns on 95 substituents and still loses.
+not help. Two results survive, the first of them only in part. The true Coulomb potential is the
+better anchored descriptor on σ_m (+0.0253 units [+0.0017, +0.0522]): if you read a potential at
+a point, read the real one. But it is not better on σ_p (+0.0007 [−0.0512, +0.0461]) or on π, and
+with one faulty record that was in the data set until 14 November 2026 the interval on σ_m
+contained zero, so this is not a firm result. The second is firm: the field model's advantage is
+not that it has more numbers, since the anchored block has 100 columns on 95 substituents and
+still loses.
 
 The useful part is a lesson about diagnostics. Item EC5 asks, before fitting, whether a new
 description can differ from the one the model already has, and there one number — the correlation
@@ -5043,6 +5048,11 @@ single anchored column reaches |r| = 0.85 with the nickel oxidation potential, a
 gives R² = −0.88 under nested cross-validation. A correlation between two kernels is one number
 computed once; the best of 60 columns on 25 molecules is a maximum over 60 tries. Whole-kernel
 correlation is a fair diagnostic, best-of-N column correlation is not.
+
+This section and the one before it were measured again on 14 November 2026, after two repairs of
+the Hammett files: the charges of the selenomethyl substituent (item D11) and the structure of the
+pentafluorosulfanyl substituent. No verdict of a gate changed. The manual section on the
+electric-field kernel says what moved and why.
 
 ### A metal surface as the receptor, and a score that needs the answer to compute
 
@@ -6004,12 +6014,15 @@ The same analysis on the two other pairings the program can build (`benchmarks/r
 
 | view A against view B | series | directions of A that B contains | q² on A's contained part | q² on A's own part | sets with the interval below / above zero |
 |---|---:|---:|---:|---:|---|
-| GFN2-xTB reactivity fields against the five empirical fields | 49 | 23 % | +0.181 | −0.058 | 20 / 3 |
+| GFN2-xTB reactivity fields against the five empirical fields | 49 | 23 % | +0.184 | −0.058 | 20 / 2 |
 | ligand fields against its interaction profile with the pocket | 21 | 35 % | −0.010 | +0.018 | 3 / 2 |
 
 **The quantum fields** know about the activity through the part of them that shape and charge
-already contain: their own part predicts nothing on 20 of 49 series, and the three exceptions
-include the Hammett set, the one series where a quantum field was built to matter. That is why
+already contain: their own part predicts less than the contained part on 20 of 49 series and more
+on two, which are free-energy sets of 34 and 40 ligands. The symmetrised Hammett set, the one
+series where a quantum field was built to matter, was a third exception until 14 November 2026
+(+0.085 [+0.003, +0.156]). One faulty structure of that set, the SF5 record, had produced it: with
+the record repaired the difference is −0.018 [−0.124, +0.082]. That is why
 adding them to the five fields gained little before, and it is a statement about the condensed
 atom-centred form of the fields rather than about conceptual DFT. **The pocket pairing** uses the
 interaction profile of a ligand with its stored binding site as the pocket's view of it, since the

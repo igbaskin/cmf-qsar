@@ -944,8 +944,8 @@ them. That is a property of the cell and not of the rule, and it is the one caut
 a picture: a long inhibitor in a small surface cell needs a wider cell, or sticks read with care.
 No bond ever reaches the 144-atom slab, which the benchmark asserts rather than reports.
 Perceiving the bonds of one molecule costs 0.1 ms in the open and about 1 ms in a cell; on the
-largest cells of `examples/hops/disordered/`, 192 and 256 atoms, the bonds take 2 ms and the
-polyhedra 29 to 59 ms, so neither option makes the window wait. Those garnets are also the case
+largest cells of `examples/hops/disordered/`, 192 and 256 atoms, the bonds take 3 ms and the
+polyhedra 47 to 94 ms, so neither option makes the window wait. Those garnets are also the case
 the two options were built as a pair for: only their oxygen is a bonding element and no two
 oxygen atoms are within 2.4 A, so the distance rule gives them no bonds at all and the polyhedra
 are the whole of their reading.
@@ -1117,8 +1117,8 @@ is at most the *patch* radius — measured **in the plane**, not in space, so th
 surface under a molecule that sits high above it instead of thinning out to nothing. A small
 radius shows the patch under the molecule and a large one shows that the surface continues.
 `benchmarks/results/surface_view/table.md` measures the cost on both Fe(110) sets: on the
-benzimidazole set a 6 Å patch is 93 surface atoms and a 24 Å patch 845, chosen in 1 ms either
-way, and the whole view — the patch, the molecule, the frame — is drawn in 3 ms and 11 ms. Every
+benzimidazole set a 6 Å patch is 93 surface atoms and a 24 Å patch 845, chosen in 1 to 2 ms,
+and the whole view — the patch, the molecule, the frame — is drawn in 6 ms and 19 ms. Every
 drawn atom lies at or below $z = 0$, and all of them are atoms of the complementarity receptor
 `cmfqsar.slab.slab_receptor` builds, so the picture shows what a score against the surface is
 computed from and not something that merely looks like it.
@@ -1186,12 +1186,12 @@ than a reading.
 
 `benchmarks/results/surface_view/table.md` measures the drawing on 95 Hammett benzenes with the
 electric-field kind as the only field and $\sigma_m$ as the property. Sixteen arrows on a 0.5 Å
-grid of 21,600 points take 0.7 s. The longest arrow is the largest gradient the grid holds, at
+grid of 21,600 points take 1.0 s. The longest arrow is the largest gradient the grid holds, at
 every spacing tried, so the arrows do stand on the strongest places; the weakest arrow drawn is
-40 to 50 % of the longest, and the gradient is at least that strong in 1.5 to 2.2 % of the
+42 to 43 % of the longest, and the gradient is at least that strong in 1.9 to 2.0 % of the
 volume, so the drawing is the strong part of the reading and not a sample of all of it. One thing
 the measurement found is worth knowing before an angle is read off the screen: refining the grid
-from 0.7 Å to 0.35 Å turns the arrows by about 16° on average, because an arrow is taken at the
+from 0.7 Å to 0.35 Å turns the arrows by about 13° on average, because an arrow is taken at the
 grid point nearest a peak and a finer grid has a nearer one. An arrow states a direction to
 roughly fifteen degrees and not better. That is enough for the question it answers and not enough
 to measure an angle from the picture.
@@ -1244,7 +1244,7 @@ autocorrelation of the 73 Fe(110) adsorbates, whose property has a spread of 63.
 are rounding. The same table says what the chart opens on: on the thirteen conductors the leading
 pair is the electrostatic field with itself, 26 % of the whole reading, peaking at 8.0 Å; on the
 Fe(110) adsorbates it is the electrostatic field with the hydrophobic one, 28 %, peaking at
-2.25 Å in the plane. One curve costs between 0.1 and 1.1 ms to build, so the chart follows the
+2.25 Å in the plane. One curve costs between 0.1 and 1.9 ms to build, so the chart follows the
 box without a wait.
 
 The same numbers are available without the window. `cmfqsar.copattern.copattern` returns one
@@ -2794,8 +2794,8 @@ may lower the kernel, and the diagonal cannot be negative.
 ### The reading that predicts the result
 
 Before any model is fitted, one number says what to expect. The cosine-normalised vector kernel
-and the cosine-normalised scalar kernel **correlate +0.980** over the 4371 pairs of the Hammett
-series. Two molecules are 0.312 ± 0.314 alike through the scalar kernel and 0.302 ± 0.312 through
+and the cosine-normalised scalar kernel **correlate +0.980** over the 4465 pairs of the Hammett
+series. Two molecules are 0.317 ± 0.314 alike through the scalar kernel and 0.307 ± 0.312 through
 the vector one. The vector kernel orders the pairs of this series almost exactly as the scalar one
 does, and a model cannot do much with a description that is a near-copy of one it already has.
 This is the same reading that explained the spin field of item EC1, used in advance this time
@@ -2812,32 +2812,40 @@ field kind.
 
 | target | five fields | five + efield | efield alone | electrostatic alone |
 |---|---|---|---|---|
-| σ_m | 0.0972 | 0.0967 | 0.0963 | 0.0977 |
-| σ_p | 0.1541 | 0.1473 | 0.1624 | 0.1582 |
-| π | 0.3129 | 0.3187 | 0.7762 | 0.8373 |
+| σ_m | 0.1022 | 0.0988 | 0.1139 | 0.1117 |
+| σ_p | 0.1501 | 0.1448 | 0.1655 | 0.1631 |
+| π | 0.2930 | 0.2982 | 0.8910 | 0.8371 |
 | nickel E_ox (V) | 0.1501 | 0.1638 | 0.2176 | 0.2234 |
 | nickel E_red (V) | 0.0293 | 0.0282 | 0.0312 | 0.0294 |
 
 **The gate is not passed.** Added to the five fields, the vector kernel changes nothing on σ_m
-(+0.0005 [−0.0037, +0.0051]) and on σ_p (+0.0068 [−0.0045, +0.0190]), and on the nickel oxidation
+(+0.0034 [−0.0048, +0.0137]) and on σ_p (+0.0053 [−0.0061, +0.0186]), and on the nickel oxidation
 potential it makes the model *worse* by −0.0138 V [−0.0342, −0.0005], an interval that excludes
 zero in both fold designs. That last result is the clearest statement in the table: a sixth field
 that is a near-copy of the first costs accuracy rather than adding any, which is what a kernel
 with two nearly collinear blocks should do.
 
 Two places where it does something are worth recording. Used *in place of* the electrostatic field
-rather than beside it, the vector kernel ties the five-field model everywhere (nickel E_ox
-+0.0019 V [−0.0031, +0.0077]), so it is a legitimate substitute at the same price. And on the
+rather than beside it, the vector kernel ties the five-field model on both σ constants and on both
+nickel potentials (nickel E_ox +0.0019 V [−0.0031, +0.0077]). On π it is a little behind
+(−0.0167 [−0.0300, −0.0033]). So it is a substitute at the same price where the property is
+electronic. And on the
 nickel oxidation potential, the vector kernel alone beats the scalar field alone by
 +0.0299 V [+0.0144, +0.0459] under leave-one-out, though not under five random folds
 (+0.0057 V [−0.0072, +0.0194]). That is the one measurement consistent with the through-space
 catalysis argument, on the one cationic series available, and it is too small and too
 design-dependent to carry the item.
 
-The apparent win on π — the vector kernel alone beats the scalar field alone by
-+0.0620 [+0.0238, +0.1084] — is a difference between two bad models. Hydrophobicity is not an
-electrostatic quantity, both models score R² below 0.2 where the five fields reach 0.86, and
-nothing should be concluded from which of two failures fails less.
+On π the comparison of the two single-field models shows how little such a comparison is worth
+when neither model predicts. The vector kernel alone is behind the scalar field alone by
+−0.0545 [−0.1113, −0.0051]. Hydrophobicity is not an electrostatic quantity: the two models score
+an R² of −0.12 and +0.05 where the five fields reach 0.88. The same comparison has given three
+answers on three states of the data. It was +0.0620 [+0.0238, +0.1084] while one molecule of the
+series had no electrostatic field, −0.0086 [−0.0379, +0.0200] after that fault was repaired, and
+it has the present value after one faulty structure was repaired as well; the end of this section
+describes both repairs. Two of the three intervals exclude zero, and they have opposite signs. An
+interval that excludes zero is not a finding when both models fail, and nothing should be
+concluded from which of two failing models fails less.
 
 ### What the arrows say
 
@@ -2854,15 +2862,32 @@ able to make.
 is a working substitute for the electrostatic field, and it gives the arrow reading that no scalar
 field can. It is not one of the five default fields and has to be asked for by name.
 
-### One fault this measurement uncovered and did not fix
+### One fault this measurement uncovered, and what its repair changed
 
-One of the 95 Hammett molecules, the selenomethyl substituent, has an electrostatic field that is
-identically zero. The cause is the one item EC4 found for metals: the Gasteiger scheme has no
-parameters for selenium, and one such atom makes it return "not a number" for every atom of the
-molecule. EC4's repair covers the d-block metals only, so selenium and the other elements the
-scheme does not know are still affected. This is left as it is rather than repaired here, because
-a general repair would change the published Hammett tables, and such a change belongs to its own
-item with its own measurement.
+When this section was first measured, one of the 95 Hammett molecules, the selenomethyl
+substituent, had an electrostatic field that was identically zero. The cause is the one item EC4
+found for metals: the Gasteiger scheme has no parameters for selenium, and one such atom makes it
+return "not a number" for every atom of the molecule. Item D11 then repaired the charge model for
+every element (section *Charges and per-atom properties*). On 14 November 2026 a second fault of
+the same series was repaired: the record of the pentafluorosulfanyl substituent held a structure
+that is not the molecule. The numbers of this section were measured again after both repairs.
+
+The reading that predicts the result did not move. The two kernels correlate +0.980, now over the
+4465 pairs of all 95 molecules and before over the 4371 pairs of the 94 that had a field. The gate
+did not move either: no interval of the comparison *five fields with the vector kernel against
+five fields* changed its side of zero.
+
+The single numbers moved more than one molecule of 95 suggests. The mean absolute error of the
+electrostatic field alone on σ_m was 0.0977 with the selenium fault, 0.1102 after the charge
+repair and is 0.1117 after both repairs. The program as it was just before the charge repair
+gives the first number exactly and the program just after it gives the second, so the cause of
+that step is certain. A molecule without a field is predicted by the bias alone, and it also
+changes which attenuation and which ridge parameter the inner folds choose for all the other
+molecules. So a mean absolute error from five outer folds of 95 molecules can move by 0.014 when
+one molecule changes. The two comparisons whose reading changed are both on π: the two
+single-field models, which both fail, and the vector kernel in place of the electrostatic field,
+whose interval was [−0.0531, +0.0016] and now excludes zero. Read the differences of this table
+with their intervals, and do not read the third decimal of a single model.
 
 ## Reading a few places instead of all of them
 
@@ -2909,26 +2934,33 @@ bootstrap interval on the per-sample absolute errors.
 
 | target | five fields | anchored, all points | anchored, reaction centre | true Coulomb |
 |---|---|---|---|---|
-| σ_m | **0.0972** | 0.1322 | 0.2328 | 0.1087 |
-| σ_p | **0.1541** | 0.2138 | 0.3588 | 0.1801 |
-| π | **0.3129** | 0.7841 | 0.9958 | 0.8985 |
+| σ_m | **0.1022** | 0.1361 | 0.3050 | 0.1108 |
+| σ_p | **0.1501** | 0.1871 | 0.6514 | 0.1864 |
+| π | **0.2930** | 0.7964 | 0.9891 | 0.8767 |
 | nickel E_ox (V) | **0.1501** | 0.2801 | 0.4718 | 0.4375 |
 | nickel E_red (V) | 0.0293 | 0.0440 | 0.0362 | 0.0487 |
 
 **The gate is not passed, and it is not close.** Against the field model the anchored block loses
-by 0.035 units on σ_m [−0.066, −0.008], 0.060 on σ_p [−0.119, −0.015], 0.473 on π
-[−0.637, −0.327] and 0.015 V on the nickel reduction potential [−0.023, −0.006], every interval
+by 0.034 units on σ_m [−0.067, −0.004], 0.037 on σ_p [−0.073, −0.006], 0.506 on π
+[−0.672, −0.347] and 0.015 V on the nickel reduction potential [−0.023, −0.006], every interval
 excluding zero. Added to the five fields it does not help either: a tie on σ_m
-(−0.0029 [−0.0190, +0.0127]) and a loss everywhere else. The reaction-centre points alone are the
+(+0.0011 [−0.0156, +0.0175]), and a loss on σ_p, on π and on the nickel reduction potential with
+intervals that exclude zero. The reaction-centre points alone are the
 worst model in the table, with a negative R² on four targets of five — at 2.9 Å from the ring
 centre the Gaussian field is small, and eight columns of small numbers with a ridge chosen inside
 the fold overfit.
 
-Two things in the table are worth keeping. The **true Coulomb potential is the better anchored
-descriptor**, by +0.0235 units on σ_m [+0.0031, +0.0478], which is the physical argument of the
-item confirmed in the one place it could show: if you are going to read a potential at a point,
-read the real one and not a sum of Gaussians. And the field model's advantage is not that it has
-more numbers — the anchored block has 100 columns on 95 substituents and still loses.
+Two things in the table are worth keeping, and the first is weaker than it looked at first. On
+σ_m the **true Coulomb potential is the better anchored descriptor**, by +0.0253 units
+[+0.0017, +0.0522]. That is the physical argument of the item: if you are going to read a
+potential at a point, read the real one and not a sum of Gaussians. But the interval excludes zero
+by a small margin, on σ_p the two sources are equal (+0.0007 [−0.0512, +0.0461]), and on π the
+Coulomb source is behind (−0.0781 [−0.1756, +0.0245]). The result also depends on single records.
+With the faulty structure of the pentafluorosulfanyl substituent, which was in the data set until
+14 November 2026, the same difference on σ_m was +0.0079 [−0.0337, +0.0427]. So it is a result on
+one target of three, and it is not a firm one. The second thing is firm: the field model's
+advantage is not that it has more numbers, because the anchored block has 100 columns on 95
+substituents and still loses.
 
 ### The lesson about diagnostics, which is the most useful thing here
 
@@ -2937,7 +2969,7 @@ the model has. There it was one number — the correlation between two whole ker
 predicted the result exactly. The same question was asked here and the answer **misled**. The best
 single anchored column reaches |r| = 0.85 with the nickel oxidation potential and |r| = 0.83 with
 σ_p, which looks like a model waiting to be fitted; under nested cross-validation the same block
-gives R² = −0.88 and 0.12. The difference is selection: a correlation between two kernels is one
+gives R² = −0.88 and 0.51, and the second of these is below the 0.71 of the five fields. The difference is selection: a correlation between two kernels is one
 number computed once, while the best of 60 columns on 25 molecules is a maximum over 60 tries and
 is inflated by exactly that. A whole-kernel correlation is a fair diagnostic; a best-of-N column
 correlation is not, and this measurement is what says so.
@@ -3165,7 +3197,7 @@ after the expensive version had already been built.
 your series the same way, nothing you do with the new one can change a prediction. The
 electric-field kernel of the section *The field a reaction centre feels* is exact, physically
 better motivated than the scalar field it replaces, and correlates **+0.980** with it over the
-4371 pairs of the Hammett series. Every model result followed from that number: nothing gained
+4465 pairs of the Hammett series. Every model result followed from that number: nothing gained
 where it was added, accuracy lost where it displaced nothing. One cosine kernel, one correlation,
 five minutes.
 
@@ -5429,27 +5461,29 @@ and therefore quadratic in the fields if each factor is linear in them.
 
 | target | n | q² linear | q² Gaussian layer | γ | index, joint | index, electrostatic | spread map, stability | mean map, stability |
 |---|---|---|---|---|---|---|---|---|
-| σm | 95 | 0.70 | 0.80 | 1 | 0.20 | 0.18 | 1.00 | 0.99 |
-| σp | 95 | 0.66 | 0.78 | 0.5 | 0.10 | 0.08 | 0.99 | 0.99 |
-| π | 69 | 0.72 | 0.88 | 1 | 0.32 | 0.41 | 0.87 | 0.54 |
-| σp · π | 69 | 0.19 | 0.44 | 1 | 0.41 | 0.42 | 0.96 | 0.80 |
+| σm | 95 | 0.69 | 0.80 | 1 | 0.20 | 0.18 | 1.00 | 0.99 |
+| σp | 95 | 0.67 | 0.79 | 0.5 | 0.10 | 0.08 | 0.99 | 0.99 |
+| π | 69 | 0.75 | 0.88 | 1 | 0.32 | 0.42 | 0.85 | 0.49 |
+| σp · π | 69 | 0.17 | 0.46 | 1 | 0.41 | 0.41 | 0.97 | 0.83 |
 
 Stability is the mean correlation between the maps of five refits on random four-fifths of the
 set. Four things follow. The index orders the targets as it should: the product made
 non-additive on purpose has the largest index, 0.41, and $\sigma_p$ the smallest, 0.10, with a
-mean cosine of 0.94 between its local co-fields, so its model is close to additive and its mean
-local co-field is the linear co-field with slightly sharper lobes (figure). The constants
-themselves are not linear in the *normalised* field: the Gaussian layer gains 0.10 to 0.16 in
+mean cosine of 0.93 between its local co-fields, so its model is close to additive and its mean
+local co-field has the pattern of the linear co-field with sharper lobes (figure). Part of that
+sharpness is the attenuation, which the cross-validation chose as 0.3 for the linear model and as
+1.2 for the layered one. The constants
+themselves are not linear in the *normalised* field: the Gaussian layer gains 0.10 to 0.14 in
 $q^2$ on all three, most on $\pi$. One likely reason, not tested here, is that $\pi$ grows with
 the size of the substituent while a cosine-normalised kernel does not see size. The spread maps
-survive refitting on three of the four targets at a correlation of 0.96 or better; on $\pi$ the
+survive refitting on three of the four targets at a correlation of 0.97 or better; on $\pi$ the
 chosen $\lambda$ is $10^{-4}$, the fit is close to interpolation and the mean map changes from
-refit to refit (0.54), which is the stability check doing its job: that map should not be read.
+refit to refit (0.49), which is the stability check doing its job: that map should not be read.
 And the spread of $\sigma_p$ sits at the ipso carbon and the first atom of the substituent,
 which says that the effect of charge there depends on what the rest of the substituent is, while
 for the product it covers the whole substituent region.
 
-![The electrostatic field in the ring plane, for σp (top) and for the product σp · π (bottom): the co-field of the linear model, the mean of the local co-fields of the Gaussian layer, and their spread over the 95 (69) training molecules. For σp the mean local co-field is the linear co-field, slightly sharpened, and the spread is confined to the ipso position; for the target made non-additive on purpose the mean map differs from the linear one and the spread covers the substituent.](docs/figures/nonlinearity_maps.png)
+![The electrostatic field in the ring plane, for σp (top) and for the product σp · π (bottom): the co-field of the linear model, the mean of the local co-fields of the Gaussian layer, and their spread over the 95 (69) training molecules. For σp the mean local co-field has the pattern of the linear co-field with sharper lobes (the linear model was fitted at an attenuation of 0.3, the layered one at 1.2), and the spread is confined to the ipso position; for the target made non-additive on purpose the mean map differs from the linear one and the spread covers the substituent.](docs/figures/nonlinearity_maps.png)
 
 ### Second derivatives: the pair-interaction field and the interaction modes
 
@@ -6070,7 +6104,12 @@ stage (f+, f−, the dual descriptor) against the five empirical fields, on 49 s
 directions, and that part predicts the activity at q² +0.18 while the quantum view's own part
 predicts at −0.06, below it with the interval on 20 of 49 series. So what the reactivity fields
 know about the activity, shape and charge already contain, which is why adding them gained little
-in the earlier chapters; the Hammett set is the exception, as it should be. And the ligand's fields
+in the earlier chapters. The symmetrised Hammett set looked like an exception until 14 November
+2026. The difference between the own part and the contained part was +0.085 [+0.003, +0.156] there,
+and it came from one faulty structure, the pentafluorosulfanyl record: with that record repaired
+the difference is −0.018 [−0.124, +0.082], and the same program on the faulty record still gives
++0.110 [+0.033, +0.184]. Two series remain where the own part predicts more than the contained
+part, both free-energy sets of 34 and 40 ligands. And the ligand's fields
 against its interaction profile with the stored binding site, the pocket's view of the ligand, on
 21 free-energy series (`benchmarks/run_kcca_pocket.py`): the profile contains 35 % of the field's
 directions, but on sets of 22 to 44 ligands neither part can be said to carry more of the activity

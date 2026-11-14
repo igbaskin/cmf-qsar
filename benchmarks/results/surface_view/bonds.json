@@ -9,8 +9,8 @@
    "extra_bonds": 0,
    "missing_bonds": 2,
    "crossing_median": 14.0,
-   "open_ms": 0.09703636169433594,
-   "cell_ms": 0.8869171142578125,
+   "open_ms": 0.14972686767578125,
+   "cell_ms": 1.3191699981689453,
    "bonds_to_the_slab": 0,
    "cell_edges": [
     16.68,
@@ -30,8 +30,8 @@
    "extra_bonds": 3,
    "missing_bonds": 8,
    "crossing_median": 14.0,
-   "open_ms": 0.10275840759277344,
-   "cell_ms": 0.9295940399169922,
+   "open_ms": 0.1468658447265625,
+   "cell_ms": 1.2412071228027344,
    "bonds_to_the_slab": 0,
    "cell_edges": [
     16.68,
@@ -52,7 +52,7 @@
     6
    ],
    "expected": 6,
-   "seconds": 0.0049991607666015625,
+   "seconds": 0.006753206253051758,
    "metals": 4
   },
   {
@@ -64,9 +64,9 @@
     8
    ],
    "expected": null,
-   "seconds": 0.02641749382019043,
+   "seconds": 0.04673624038696289,
    "bonds": 0,
-   "bond_seconds": 0.0020627975463867188,
+   "bond_seconds": 0.0033020973205566406,
    "shell_too_small": 96,
    "metals": 160
   },
@@ -79,9 +79,9 @@
     8
    ],
    "expected": null,
-   "seconds": 0.05086779594421387,
+   "seconds": 0.0937347412109375,
    "bonds": 0,
-   "bond_seconds": 0.001978158950805664,
+   "bond_seconds": 0.0031037330627441406,
    "shell_too_small": 0,
    "metals": 160
   },
@@ -95,9 +95,9 @@
     8
    ],
    "expected": null,
-   "seconds": 0.03102397918701172,
+   "seconds": 0.056700706481933594,
    "bonds": 0,
-   "bond_seconds": 0.0019485950469970703,
+   "bond_seconds": 0.0028438568115234375,
    "shell_too_small": 16,
    "metals": 96
   }

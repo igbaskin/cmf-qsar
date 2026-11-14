@@ -42,27 +42,27 @@
     {
      "target": "sigma_m",
      "best_column": "at:ipso:electrostatic:value",
-     "best_abs_r": 0.8203043276283175,
-     "mean_abs_r": 0.14587659945831677,
+     "best_abs_r": 0.8233240288876894,
+     "mean_abs_r": 0.15052779655144846,
      "columns_above_0.5": 6
     },
     {
      "target": "sigma_p",
      "best_column": "at:ipso:electrostatic:value",
-     "best_abs_r": 0.8323915856879983,
-     "mean_abs_r": 0.17378255014880256,
+     "best_abs_r": 0.8342069359164894,
+     "mean_abs_r": 0.17248097173102994,
      "columns_above_0.5": 3
     },
     {
      "target": "pi",
      "best_column": "at:ipso:hydrophobic:gx",
-     "best_abs_r": 0.5230407815189957,
-     "mean_abs_r": 0.18177641426911773,
+     "best_abs_r": 0.5190583900339172,
+     "mean_abs_r": 0.1885233838248614,
      "columns_above_0.5": 1
     }
    ],
    "dead_columns": 0,
-   "spread_median": 0.0015574779839476877
+   "spread_median": 0.0011333750000185612
   },
   "coulomb": {
    "n_columns": 20,
@@ -70,27 +70,27 @@
     {
      "target": "sigma_m",
      "best_column": "at:ipso:coulomb:value",
-     "best_abs_r": 0.8364781480118396,
-     "mean_abs_r": 0.3939371587806588,
-     "columns_above_0.5": 8
+     "best_abs_r": 0.8350931196328018,
+     "mean_abs_r": 0.4610276823299594,
+     "columns_above_0.5": 10
     },
     {
      "target": "sigma_p",
      "best_column": "at:face:coulomb:gx",
-     "best_abs_r": 0.8121908841099234,
-     "mean_abs_r": 0.33479934907304887,
-     "columns_above_0.5": 6
+     "best_abs_r": 0.8083204788253833,
+     "mean_abs_r": 0.37853106678197657,
+     "columns_above_0.5": 9
     },
     {
      "target": "pi",
-     "best_column": "at:centroid:coulomb:gx",
-     "best_abs_r": 0.33323788624507966,
-     "mean_abs_r": 0.19444915642790908,
+     "best_column": "at:meta_site:coulomb:gx",
+     "best_abs_r": 0.37518700666526456,
+     "mean_abs_r": 0.22490556046387694,
      "columns_above_0.5": 0
     }
    ],
    "dead_columns": 0,
-   "spread_median": 0.011160834189962453
+   "spread_median": 0.007650372601520905
   }
  },
  "nickel": {
@@ -161,5 +161,5 @@
    "spread_median": 0.09693736198004024
   }
  },
- "seconds": 0.36614131927490234
+ "seconds": 0.5739564895629883
 }

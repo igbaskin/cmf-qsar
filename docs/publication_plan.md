@@ -310,9 +310,9 @@ stays positive semidefinite because it is an inner product of two vector fields.
 
 The paper's use of this item is methodological and it is the diagnostic, not the model. One number
 computed before any fitting says what the vector kernel can do: it correlates **+0.980** with the
-scalar kernel over the 4371 pairs of the Hammett series. The models then behave exactly as that
-number predicts — nothing on sigma_m (+0.0005 [-0.0037, +0.0051]) or sigma_p
-(+0.0068 [-0.0045, +0.0190]), and on a nickel redox potential the sixth field makes the model
+scalar kernel over the 4465 pairs of the Hammett series. The models then behave exactly as that
+number predicts — nothing on sigma_m (+0.0034 [-0.0048, +0.0137]) or sigma_p
+(+0.0053 [-0.0061, +0.0186]), and on a nickel redox potential the sixth field makes the model
 *worse* by -0.0138 V [-0.0342, -0.0005]. Two nearly collinear kernel blocks cost accuracy, which
 is a statement about kernel methods rather than about electrostatics, and the kernel correlation
 is the cheap test that tells a reader in advance which new field is worth adding. That is the
@@ -320,8 +320,9 @@ transferable claim: before building a new field, correlate its cosine kernel wit
 already in the model.
 
 The item also leaves two smaller statements. Used in place of the electrostatic field rather than
-beside it, the vector kernel ties the five-field model, so it is a legitimate substitute at the
-same price; and its co-field is a direction rather than a value, which on the nickel series puts
+beside it, the vector kernel ties the five-field model on the electronic properties (on pi it is
+a little behind, -0.0167 [-0.0300, -0.0033]), so it is a substitute at the same price there; and
+its co-field is a direction rather than a value, which on the nickel series puts
 the strongest arrows 5.6 to 6.6 angstrom from the metal pointing inward, the second-sphere
 statement in the only form a vector kernel can make it. The through-space prediction the item
 named — that the vector kernel should win on cationic porphyrins — is tested only on 25 nickel
@@ -333,20 +334,21 @@ diagnostics.** The item reads a field and its gradient at a few anchored points 
 — for the electrostatic field, the oriented electric field the catalysis literature is about — and
 offers both the field set's Gaussian field and the true point-charge potential, since a Gaussian
 field is not a Coulomb potential and only the latter is in e/angstrom. Reading a few places loses
-to reading everywhere on every target measured: against the five-field model, -0.035 units on
-sigma_m [-0.066, -0.008], -0.060 on sigma_p [-0.119, -0.015], -0.473 on pi and -0.015 V on a
+to reading everywhere on every target measured: against the five-field model, -0.034 units on
+sigma_m [-0.067, -0.004], -0.037 on sigma_p [-0.073, -0.006], -0.506 on pi and -0.015 V on a
 nickel reduction potential, with 100 anchored columns against 95 substituents, so the field
-model's advantage is not that it has more numbers. One secondary result is worth a sentence: the
-true Coulomb potential is the better anchored descriptor (+0.0235 units on sigma_m
-[+0.0031, +0.0478]), which is what the physics says and what a reader would want confirmed.
+model's advantage is not that it has more numbers. One secondary result is not firm enough for a
+paper: the true Coulomb potential is the better anchored descriptor on sigma_m (+0.0253 units
+[+0.0017, +0.0522]) and on no other target, and with one faulty record that the series held until
+14 November 2026 the interval contained zero.
 
 The warning is the part a methods paper should carry, and it pairs with item EC5. EC5 established
 a cheap test: before building a new field, correlate its cosine kernel with the kernels the model
 already has, and a correlation near one says the new field cannot change anything. That test
 predicted EC5's own result exactly. The same question asked of a *descriptor block* misleads. The
 best single anchored column here reaches |r| = 0.85 with the nickel oxidation potential and 0.83
-with sigma_p, which looks like a model waiting to be fitted; the block gives R2 = -0.88 and +0.12
-under nested cross-validation. The difference is selection: a kernel correlation is one number
+with sigma_p, which looks like a model waiting to be fitted; the block gives R2 = -0.88 and +0.51
+under nested cross-validation, the second of these against +0.71 for the five fields. The difference is selection: a kernel correlation is one number
 computed once, while the best of 60 columns on 25 molecules is a maximum over 60 tries. A paper
 that recommends the first diagnostic should say plainly that the second is not the same thing,
 because the two look alike and one of them is a selection effect.
