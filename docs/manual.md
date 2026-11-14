@@ -3182,7 +3182,9 @@ comparison depends on it. `benchmarks/results/denmark/table.md` gives every widt
 | 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
 
 The interval excludes zero at every width, so the frame is worth something on this series. How
-much depends on a setting of the kernel it is compared with.
+much depends on a setting of the kernel it is compared with. The ninth tutorial,
+`docs/tutorials/09_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
+each catalyst, where the frame gives 0.88 and the invariant kernel 0.77 at its best width.
 
 **Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
 2026 this section gave 0.26 for the invariant kernel and said that the frame is most of the
@@ -15662,14 +15664,16 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Eight notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Nine notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, molecules adsorbed on a metal surface, read with
 the surface kernel and compared with a count of the atoms near the metal, the Hammett
 constants of substituted benzenes, read from co-fields in the plane of the ring and compared
-with the charge of one ring carbon, and the infrared spectra of benzoic acids as the samples,
-read with the kernel of spectra and compared with the position of one band. Each runs on the
+with the charge of one ring carbon, the infrared spectra of benzoic acids as the samples,
+read with the kernel of spectra and compared with the position of one band, and a series of
+chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
+activity. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
