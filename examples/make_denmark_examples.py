@@ -36,7 +36,10 @@ What is built
 Each catalyst is assembled from its scaffold and two copies of its substituent, bonded at the
 3 and 3' carbons (the ring carbon next to the phosphate oxygen that is not the biaryl carbon).
 The catalyst is then embedded with ETKDG, every conformer is minimised with MMFF94 and the
-lowest one is kept.  The scaffold has an axial stereocentre that a 2D file does not carry and
+lowest one is kept.  One catalyst (181_i) has two pentafluorosulfanyl groups, which no force
+field of RDKit holds: its conformers are found with CF3 in place of each SF5 group, and each
+group is then set to a regular octahedron (:func:`sf5_stand_in`).  The scaffold has an axial
+stereocentre that a 2D file does not carry and
 that ETKDG assigns at random; every conformer is reflected, where needed, so that the dihedral
 C2-C1-C1'-C2' of the biaryl bond is positive in every catalyst.  Whether that is (R) or (S)
 is not known from the source; what matters is that the 43 catalysts are the same enantiomer,
@@ -86,6 +89,9 @@ from rdkit.Chem import rdMolTransforms
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
+sys.path.insert(0, HERE)
+
+from make_hammett_examples import regular_sf5  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -270,39 +276,87 @@ def biaryl_dihedral(mol: Chem.Mol, conf_id: int = -1) -> float:
     return float(rdMolTransforms.GetDihedralDeg(mol.GetConformer(conf_id), i, j, k, l))
 
 
+def sf5_stand_in(mol: Chem.Mol) -> Tuple[Optional[Chem.Mol], List[int]]:
+    """The molecule with a CF3 group in place of every SF5 group, and for every atom of that
+    stand-in the index of the same atom in `mol`; (None, []) for a molecule without the group.
+
+    No force field of RDKit holds an SF5 group.  MMFF94 has no parameters for hexavalent
+    sulfur.  UFF, which was used for this catalyst until 14 November 2026, moved the fluorines
+    6 to 8 A away from the sulfur, put two of them on one point and opened the biaryl dihedral
+    to 71 degrees, where the other catalysts of the scaffold have 54 to 59.  So the conformers
+    are found for the stand-in, with the force field of the other catalysts, and the group
+    itself is then built by a rule (:func:`make_hammett_examples.regular_sf5`).  The stand-in
+    has the same ring carbon, the same atom on it and three of the five fluorines.
+    """
+    sulfurs, dropped = [], []
+    for s in mol.GetAtoms():
+        if s.GetSymbol() != "S" or s.GetDegree() != 6:
+            continue
+        fluorines = sorted(n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "F")
+        if len(fluorines) == 5:
+            sulfurs.append(s.GetIdx())
+            dropped += fluorines[3:]
+    if not sulfurs:
+        return None, []
+    rw = Chem.RWMol(mol)
+    for s in sulfurs:
+        rw.GetAtomWithIdx(s).SetAtomicNum(6)
+    for a in sorted(dropped, reverse=True):      # from the last atom, so the others keep their order
+        rw.RemoveAtom(a)
+    stand_in = rw.GetMol()
+    Chem.SanitizeMol(stand_in)
+    return stand_in, [a for a in range(mol.GetNumAtoms()) if a not in set(dropped)]
+
+
 def embed_lowest(mol: Chem.Mol, n: int = 30, seed: int = 2026,
                  same_axis: bool = True) -> Tuple[Chem.Mol, float, int]:
     """AddHs, embed `n` conformers, minimise each with MMFF94, keep the lowest.
 
     With `same_axis` every conformer whose biaryl dihedral is negative is reflected first, so
     the lowest conformer has a positive dihedral whatever the embedding produced; a reflection
-    does not change an MMFF energy.  Returns (molecule with one conformer, energy, conformers).
+    does not change an MMFF energy.  A molecule with an SF5 group is embedded and minimised as
+    its stand-in with CF3 (:func:`sf5_stand_in`), and the energy returned is that of the
+    stand-in.  Returns (molecule with one conformer, energy, conformers).
     """
     mh = Chem.AddHs(mol)
     # the dihedral atoms are found on the sanitised graph: setting MMFF up rewrites the
     # aromaticity flags in place, so the search would fail after it
     dihedral = biaryl_dihedral_atoms(mh) if same_axis else None
+    stand_in, kept = sf5_stand_in(mh)
+    work = mh if stand_in is None else stand_in
     params = AllChem.ETKDGv3()
     params.randomSeed = int(seed)
     params.useSmallRingTorsions = True
     params.pruneRmsThresh = -1.0
-    ids = list(AllChem.EmbedMultipleConfs(mh, numConfs=int(n), params=params))
+    ids = list(AllChem.EmbedMultipleConfs(work, numConfs=int(n), params=params))
     if not ids:
         params.useRandomCoords = True
-        ids = list(AllChem.EmbedMultipleConfs(mh, numConfs=int(n), params=params))
+        ids = list(AllChem.EmbedMultipleConfs(work, numConfs=int(n), params=params))
     if not ids:
         raise RuntimeError(f"no conformer could be embedded for {Chem.MolToSmiles(mol)}")
-    props = AllChem.MMFFGetMoleculeProperties(mh)
-    # MMFF94 has no parameters for hexavalent sulfur (the SF5 substituent); UFF stands in there
+    props = AllChem.MMFFGetMoleculeProperties(work)
+    # UFF stands in where MMFF94 has no parameters; no catalyst of the series needs it now
     force_field = "MMFF94" if props is not None else "UFF"
     energies = []
     for cid in ids:
         if props is not None:
-            ff = AllChem.MMFFGetMoleculeForceField(mh, props, confId=cid)
+            ff = AllChem.MMFFGetMoleculeForceField(work, props, confId=cid)
         else:
-            ff = AllChem.UFFGetMoleculeForceField(mh, confId=cid)
+            ff = AllChem.UFFGetMoleculeForceField(work, confId=cid)
         ff.Minimize(maxIts=2000)
         energies.append(float(ff.CalcEnergy()))
+    if stand_in is not None:
+        # the conformers of the stand-in, on the atoms of the catalyst itself; the sulfur and
+        # the fluorines are placed by `regular_sf5` below, which needs the ring atoms only
+        for cid in ids:
+            pos = np.zeros((mh.GetNumAtoms(), 3))
+            pos[kept] = np.array(work.GetConformer(cid).GetPositions(), float)
+            conf = Chem.Conformer(mh.GetNumAtoms())
+            for atom, p in enumerate(pos):
+                conf.SetAtomPosition(atom, p.tolist())
+            conf.SetId(cid)
+            mh.AddConformer(conf, assignId=False)
+        force_field += " on the stand-in with CF3, SF5 set to a regular octahedron"
     mh.SetProp("force_field", force_field)
     Chem.SanitizeMol(mh)                 # restores the aromaticity MMFF set-up altered
     if same_axis:
@@ -314,6 +368,9 @@ def embed_lowest(mol: Chem.Mol, n: int = 30, seed: int = 2026,
                 pos[:, 0] *= -1.0
                 for atom, p in enumerate(pos):
                     conf.SetAtomPosition(atom, p.tolist())
+    if stand_in is not None:
+        for cid in ids:
+            regular_sf5(mh, cid)
     best = int(np.argmin(energies))
     keep = Chem.Mol(mh)
     keep.RemoveAllConformers()

@@ -934,6 +934,10 @@ can judge it.
   the symmetrised Hammett set +0.040 [+0.023, +0.058] and DHFR +0.042 [+0.026, +0.059] on 361
   molecules. The Hammett sets were the positive control and they gain, which is what the item
   predicted.
+  *Measured again 14 November 2026* for the three Hammett files, after the SF5 record was
+  repaired: the symmetrised set gains +0.029 [+0.019, +0.041] and the ensemble set
+  +0.023 [+0.013, +0.034] with the reactivity fields. The counts of series ahead and behind and
+  the median change are unchanged.
   **What this settles.** A quantum field helps a minority of series and costs the rest a little,
   and the cheap stage is good enough to find which. That could not be known before, because the
   expensive stage could not be run on more than four series.
@@ -1541,6 +1545,10 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   means unchanged; the same series in `corrosion_hcl`, +0.413 to +0.415; the beta-cyclodextrin
   host, 1 of 7, invariant +0.447 to +0.451; and the slab benchmark's corrosion stage not at all.
   No verdict in any of them changed.
+  *Three benchmarks were missing from this list.* `efield`, `anchors` and `nonlinearity` read the
+  Hammett files too and kept the results of the fault until 14 November 2026, when they were
+  rerun together with the repair of the SF5 record of those files. The entries of items EC5 and
+  EC3 give the numbers. No verdict of a gate changed there either; some secondary readings did.
   *And item BT5 moved a great deal, which is why this item earned its place.* 717 of its 989
   solvation shells carried a **net charge of +1** in the electrostatic field, because the
   phosphorus of hexafluorophosphate is a valence state the scheme cannot do and was being set to
@@ -2472,7 +2480,11 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   the quantum view's own part, with the interval below zero on **20 of 49** series and above
   zero on 3 (`hammett_sym`, the one series where the quantum field was built to matter, and the
   pfkfb3 and eg5 free-energy sets). The empirical view alone reaches +0.364 and the whole quantum
-  view +0.272. So what the reactivity fields know about the activity is the part of them that
+  view +0.272. (*Measured again 14 November 2026* after the SF5 record of the Hammett files was
+  repaired: the interval is above zero on 2 series and no longer on `hammett_sym`, where the
+  difference is now −0.018 [−0.124, +0.082]. The present program on the faulty record gives
+  +0.110 [+0.033, +0.184], so that exception came from one faulty structure. The means are
+  +0.184 for the contained part, −0.058 for the own part and +0.273 for the whole quantum view.) So what the reactivity fields know about the activity is the part of them that
   shape and charge already contain, which is why adding them to the five fields gained little in
   D3 and in the corrosion study; it is a statement about the condensed atom-centred form of the
   fields, not about conceptual DFT. The four ORCA corrosion series (20 to 29 molecules) say the
@@ -2515,6 +2527,9 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   the substituent, which a cosine-normalised kernel does not see — a likely reason, not tested);
   the spread maps are stable under refitting on four-fifths of the set (r ≥ 0.96) except on π
   (0.87; its mean map 0.54 at λ = 10⁻⁴).
+  *Measured again 14 November 2026* on the repaired Hammett files (see item EC5): the four
+  indices are the same to two decimals, the Gaussian layer gains 0.10 to 0.14, and on π the
+  stability is 0.85 for the spread map and 0.49 for the mean map.
   **Second derivatives, done the same day.** Taken with respect to the amplitudes of probe atoms
   (finite, and the kernel normalisation differentiated exactly; `Tangent` in the same module), as
   the pair-interaction field (`pair_interaction_field`, `cmf cofield --kind pair`), the curvature
@@ -4035,6 +4050,17 @@ for anything molecular.
   has no way to place points in a frame, so the block is available to a script and not to the
   window; and the block cannot be named like the other computed descriptors, because it needs the
   field set and the points as well as the molecule.
+  **Measured again 14 November 2026**, for the reason given in the entry of item EC5. The numbers
+  above are those of the first measurement. Mean absolute error against the five-field model now:
+  sigma_m 0.136 against 0.102, -0.034 [-0.067, -0.004]; sigma_p 0.187 against 0.150,
+  -0.037 [-0.073, -0.006]; pi 0.796 against 0.293, -0.506 [-0.672, -0.347]. The nickel numbers do
+  not depend on the Hammett files. The verdict of the gate is unchanged. Two readings changed.
+  The Coulomb source against the Gaussian one on sigma_m is +0.0253 [+0.0017, +0.0522], but with
+  the charge repair of item D11 alone, on the faulty SF5 structure, it was
+  +0.0079 [-0.0337, +0.0427]; on sigma_p it is +0.0007 [-0.0512, +0.0461]. So that secondary
+  result is not firm. And the anchored block on sigma_p now gives R2 +0.51 instead of +0.12, where
+  the five fields give +0.71; the nickel example of the methodological result (R2 -0.88) is
+  unchanged.
 
 **Medium (one to two weeks each)**
 
@@ -4181,6 +4207,21 @@ for anything molecular.
   is identically zero, because the Gasteiger scheme has no parameters for selenium and EC4's
   repair covers the d-block metals only. A general repair would move the published Hammett tables
   and belongs to its own item.
+  **Measured again 14 November 2026.** Item D11 repaired the selenium fault on 5 November, and its
+  list of reruns did not include this benchmark, item EC3 or the nonlinearity index, so their
+  stored results were still those of the fault. They were rerun together with the repair of the
+  SF5 record of the Hammett files. The numbers above are those of the first measurement. The
+  program just before item D11 reproduces them exactly and the program at item D11 does not, so
+  the cause is certain. The kernel correlation is unchanged, +0.980, now over the 4465 pairs of
+  all 95 molecules. Added to the five fields: sigma_m +0.0034 [-0.0048, +0.0137], sigma_p
+  +0.0053 [-0.0061, +0.0186]. The verdict of the gate is unchanged. In place of the electrostatic
+  field the kernel still ties on both sigma constants and is now behind on pi
+  (-0.0167 [-0.0300, -0.0033]). The comparison of the two single-field models on pi has given
+  three answers: +0.0620 [+0.0238, +0.1084] with the selenium fault, -0.0086 [-0.0379, +0.0200]
+  after item D11, and -0.0545 [-0.1113, -0.0051] after the SF5 repair. Two intervals exclude zero
+  with opposite signs, on two models that both fail, which is one more reason not to read that
+  comparison. The mean absolute error of the electrostatic field alone on sigma_m went from 0.0977
+  to 0.1102 and then to 0.1117.
 * **EC6. A slab as the receptor.** `cmfqsar/protein.py` reads a PDB or mmCIF protein by residue;
   an electrode is a POSCAR or CIF slab with periodic images. A reader that builds the fields of
   the top layers as a `MoleculeFields` with the images inside the cutoff (the inorganic field set
@@ -4454,7 +4495,9 @@ for anything molecular.
   **about 16 degrees** on average, because an arrow is taken at the grid point nearest a peak and
   a finer grid has a nearer one, so an arrow states a direction to roughly fifteen degrees and not
   better -- enough for which way the field should point, not enough to measure an angle off the
-  picture.
+  picture. (*Measured again 14 November 2026* on the repaired Hammett files: the weakest arrow
+  drawn is 42 to 43 % of the longest, the gradient exceeds it in 1.9 to 2.0 % of the volume, and
+  the refinement turns the arrows by about 13 degrees.)
   **Not done:** no docking from the window (the constrained pose search stays in `slab.py` and its
   benchmark), one slab at a time, and the slab is not part of a project file.
 
@@ -6352,6 +6395,23 @@ What it leaves open, in order:
   consistent across the 43 but not known to be (R) or (S); a co-field drawn for a design would
   need the enantiomer stated. EC9's potential-dependent target is not touched: this series has one
   condition.
+  **Measured again 14 November 2026, after one structure was repaired.** The catalyst with SF5
+  groups (`181_i`) had been minimised with UFF, which moved its fluorines 6 to 8 A from the
+  sulfur and opened the biaryl dihedral to 71 degrees. The builder now finds its conformers with
+  CF3 in place of each SF5 group and sets the groups to regular octahedra. A control run of the
+  present program on the old files reproduces the stored summary exactly, so the changes are the
+  repair. The numbers above are those of the first measurement. All five fields: unchanged, MAD
+  0.224 and q2 0.82 on the catalyst holdout. Field by field: electrostatic 0.34 (was 0.41), the
+  hydrogen-bond acceptor field 0.20 (was -3.4), and the rotation-invariant kernel 0.51 (was
+  0.26) at the same width.
+  **The invariant kernel given a search of its own, the same day.** It had been run at its
+  default width of 0.75 A only, while the attenuation of the framed kernels was chosen from six
+  values. `benchmarks/run_denmark.py` now runs six widths, reports each, and takes the one with
+  the highest evidence: q2 0.75 at 0.15 A, **0.70 at 0.35 A (chosen)**, 0.48 at 0.75 A. The five
+  fields in the frame minus the chosen one: **+0.13 [+0.05, +0.26]** over the catalysts, and the
+  interval excludes zero at every width. So the frame is worth a measured and modest part, and
+  the sentence "the frame is the result" above overstated it twice: by one faulty molecule and
+  by a reference that was not tuned.
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework

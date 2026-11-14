@@ -1,6 +1,6 @@
 # The surface side of the program on screen: what it costs, and what it reads
 
-`python benchmarks/run_surface_view.py --force`, written 2026-11-07 00:24:32.
+`python benchmarks/run_surface_view.py --force`, written 2026-11-14 08:25:14.
 
 ## The slab behind the molecules
 
@@ -8,14 +8,14 @@ The slab is 144 atoms of Fe(110) in 4 layers, the one the adsorption energies we
 
 | Set | Patch radius | Surface atoms drawn | Choosing them | Drawing the whole view |
 | --- | ---: | ---: | ---: | ---: |
-| benzimidazole (73 molecules) | 6 A | 93 | 1 ms | 3 ms |
-| benzimidazole (73 molecules) | 10 A | 196 | 1 ms | 4 ms |
-| benzimidazole (73 molecules) | 16 A | 421 | 1 ms | 6 ms |
-| benzimidazole (73 molecules) | 24 A | 845 | 1 ms | 11 ms |
-| quinoline (65 molecules) | 6 A | 140 | 1 ms | 5 ms |
-| quinoline (65 molecules) | 10 A | 259 | 1 ms | 7 ms |
-| quinoline (65 molecules) | 16 A | 513 | 1 ms | 9 ms |
-| quinoline (65 molecules) | 24 A | 979 | 2 ms | 15 ms |
+| benzimidazole (73 molecules) | 6 A | 93 | 1 ms | 6 ms |
+| benzimidazole (73 molecules) | 10 A | 196 | 1 ms | 8 ms |
+| benzimidazole (73 molecules) | 16 A | 421 | 2 ms | 11 ms |
+| benzimidazole (73 molecules) | 24 A | 845 | 2 ms | 19 ms |
+| quinoline (65 molecules) | 6 A | 140 | 1 ms | 9 ms |
+| quinoline (65 molecules) | 10 A | 259 | 2 ms | 10 ms |
+| quinoline (65 molecules) | 16 A | 513 | 2 ms | 16 ms |
+| quinoline (65 molecules) | 24 A | 979 | 3 ms | 24 ms |
 
 On the benzimidazole set the highest drawn atom is at z = +0.000 A, which is the top atomic layer of the frame, and 100 % of the drawn atoms are atoms of the complementarity receptor itself: the picture shows what the score is computed against.
 On the quinoline set the highest drawn atom is at z = +0.000 A, which is the top atomic layer of the frame, and 100 % of the drawn atoms are atoms of the complementarity receptor itself: the picture shows what the score is computed against.
@@ -37,9 +37,9 @@ The electric-field kind as the only field of a model on 95 Hammett benzenes, tar
 
 | Grid spacing | Grid points | Gradient | Arrows | Longest arrow | Largest gradient on the grid | Weakest arrow | Volume at least that strong | Direction change |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0.70 A | 8740 | 0.27 s | 16 | 0.2468 | 0.2468 | 45 % of the longest | 1.8 % | reference |
-| 0.50 A | 21600 | 0.70 s | 16 | 0.2502 | 0.2502 | 50 % of the longest | 1.5 % | 16.3 deg (16 matched) |
-| 0.35 A | 61560 | 1.96 s | 16 | 0.2557 | 0.2557 | 40 % of the longest | 2.2 % | 16.0 deg (15 matched) |
+| 0.70 A | 8740 | 0.41 s | 16 | 0.2577 | 0.2577 | 42 % of the longest | 1.9 % | reference |
+| 0.50 A | 21600 | 0.99 s | 16 | 0.26 | 0.26 | 43 % of the longest | 2.0 % | 13.4 deg (16 matched) |
+| 0.35 A | 61560 | 2.97 s | 16 | 0.2633 | 0.2633 | 43 % of the longest | 2.0 % | 13.1 deg (14 matched) |
 
 The longest arrow is the largest gradient the grid holds, on every grid, and the arrows of a finer grid stand within one grid spacing of the arrows of the coarsest one: the places the drawing points at are not an artefact of the sampling. The direction is another matter. Refining the grid turns the arrows by about 16 degrees on average, because an arrow is taken at the grid point nearest a peak and a finer grid has a nearer one. So an arrow states a direction to roughly fifteen degrees and not better. That is enough for the question it answers -- which way the field should point -- and not enough to measure an angle off the picture.
 
@@ -53,7 +53,7 @@ The chart draws the channel weights of one pair of field types against distance.
 | surface autocorrelation, 73 Fe(110) adsorbates | 73 | 3672 | 6 | 17 | 2e-12 (target sd 63.8) | Electrostatic x Hydrophobic | 28 % | 36 |
 
 On the periodic autocorrelation, 13 COD electrolytes the curve of the leading pair peaks at 8.00 with +3.2588, and one curve costs 0.1 ms to build, so the chart follows the box without a wait.
-On the surface autocorrelation, 73 Fe(110) adsorbates the curve of the leading pair peaks at 2.25 with +16.7619, and one curve costs 1.2 ms to build, so the chart follows the box without a wait.
+On the surface autocorrelation, 73 Fe(110) adsorbates the curve of the leading pair peaks at 2.25 with +16.7619, and one curve costs 1.9 ms to build, so the chart follows the box without a wait.
 
 ## The bonds the crystal view draws
 
@@ -72,10 +72,10 @@ What a metal gets instead is its first coordination shell, drawn as a polyhedron
 
 | Structure | Metal atoms | Polyhedra drawn | Left out: a shell of fewer than three | Coordination numbers found | Expected | Polyhedra | Bonds, and their time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| rock salt NaCl, 6-coordinate by construction | 4 | 4 | 0 | 6 | 6 | 5 ms | - |
-| cod_1545083 (256 atoms, from the COD) | 160 | 64 | 96 | 4, 6, 8 | not known in advance | 26 ms | 0 in 2 ms |
-| cod_1552152 (256 atoms, from the COD) | 160 | 160 | 0 | 4, 6, 8 | not known in advance | 51 ms | 0 in 2 ms |
-| cod_1545085 (192 atoms, from the COD) | 96 | 80 | 16 | 3, 4, 6, 8 | not known in advance | 31 ms | 0 in 2 ms |
+| rock salt NaCl, 6-coordinate by construction | 4 | 4 | 0 | 6 | 6 | 7 ms | - |
+| cod_1545083 (256 atoms, from the COD) | 160 | 64 | 96 | 4, 6, 8 | not known in advance | 47 ms | 0 in 3 ms |
+| cod_1552152 (256 atoms, from the COD) | 160 | 160 | 0 | 4, 6, 8 | not known in advance | 94 ms | 0 in 3 ms |
+| cod_1545085 (192 atoms, from the COD) | 96 | 80 | 16 | 3, 4, 6, 8 | not known in advance | 57 ms | 0 in 3 ms |
 
 The fourth column is why a cell can have more metal atoms than polyhedra, and it is a limit of the ratio rule worth stating. On a disordered conductor the lithium sites are partly occupied and their distances to oxygen are very uneven, so for 96 of the 160 lithium atoms of `cod_1545083` the nearest oxygen is more than 1.3 times closer than the next one and the shell comes out as a single atom, which is not a shape. Those atoms get no polyhedron. Widening the ratio would draw them and would also inflate every well-behaved shell, so the convention is kept and the count is reported.
 

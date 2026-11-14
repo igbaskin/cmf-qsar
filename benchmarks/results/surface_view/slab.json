@@ -14,7 +14,7 @@
   -3.932,
   -5.897
  ],
- "build_seconds": 0.09965872764587402,
+ "build_seconds": 0.14824676513671875,
  "receptor_atoms": 2520,
  "radii": [
   6.0,
@@ -34,26 +34,26 @@
     {
      "radius": 6.0,
      "atoms_median": 93.0,
-     "cut_seconds": 0.0006821155548095703,
-     "draw_seconds": 0.0033600330352783203
+     "cut_seconds": 0.0010993480682373047,
+     "draw_seconds": 0.005533456802368164
     },
     {
      "radius": 10.0,
      "atoms_median": 196.0,
-     "cut_seconds": 0.0007090568542480469,
-     "draw_seconds": 0.004186153411865234
+     "cut_seconds": 0.001310110092163086,
+     "draw_seconds": 0.007508277893066406
     },
     {
      "radius": 16.0,
      "atoms_median": 421.0,
-     "cut_seconds": 0.0009353160858154297,
-     "draw_seconds": 0.00618433952331543
+     "cut_seconds": 0.0015671253204345703,
+     "draw_seconds": 0.01072239875793457
     },
     {
      "radius": 24.0,
      "atoms_median": 845.0,
-     "cut_seconds": 0.00142669677734375,
-     "draw_seconds": 0.011265754699707031
+     "cut_seconds": 0.002226591110229492,
+     "draw_seconds": 0.018575668334960938
     }
    ]
   },
@@ -67,26 +67,26 @@
     {
      "radius": 6.0,
      "atoms_median": 140.0,
-     "cut_seconds": 0.0008575916290283203,
-     "draw_seconds": 0.00530695915222168
+     "cut_seconds": 0.0013666152954101562,
+     "draw_seconds": 0.008538007736206055
     },
     {
      "radius": 10.0,
      "atoms_median": 259.0,
-     "cut_seconds": 0.0010988712310791016,
-     "draw_seconds": 0.006691455841064453
+     "cut_seconds": 0.0017223358154296875,
+     "draw_seconds": 0.010040044784545898
     },
     {
      "radius": 16.0,
      "atoms_median": 513.0,
-     "cut_seconds": 0.0011639595031738281,
-     "draw_seconds": 0.009152412414550781
+     "cut_seconds": 0.0019228458404541016,
+     "draw_seconds": 0.015622377395629883
     },
     {
      "radius": 24.0,
      "atoms_median": 979.0,
-     "cut_seconds": 0.0019049644470214844,
-     "draw_seconds": 0.014857769012451172
+     "cut_seconds": 0.0029382705688476562,
+     "draw_seconds": 0.023633480072021484
     }
    ]
   }

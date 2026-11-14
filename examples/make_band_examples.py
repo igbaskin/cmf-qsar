@@ -95,7 +95,7 @@ from rdkit import Chem, RDLogger  # noqa: E402
 from rdkit.Chem import AllChem, rdMolTransforms  # noqa: E402
 from rdkit.Geometry import Point3D  # noqa: E402
 
-from make_hammett_examples import SUBSTITUENTS  # noqa: E402
+from make_hammett_examples import SF5_BONDS, SUBSTITUENTS, regular_sf5  # noqa: E402,F401
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -137,56 +137,9 @@ def acid_dihedral(mol: Chem.Mol, conf_id: int = -1) -> Optional[float]:
     return float(rdMolTransforms.GetDihedralDeg(mol.GetConformer(conf_id), *match))
 
 
-#: bond lengths of an aryl-SF5 group in angstrom, from gas-phase structures of C6H5SF5
-SF5_BONDS = {"C-S": 1.80, "S-F": 1.59}
 #: a start structure is accepted when every bond length is between these multiples of the sum of
 #: the covalent radii; the 187 acids without SF5 lie between 0.79 and 1.03
 START_BOND_LIMITS = (0.7, 1.3)
-
-
-def regular_sf5(mol: Chem.Mol) -> int:
-    """Set every aryl-SF5 group of `mol` to a regular octahedron, in place; returns the number
-    of groups.
-
-    UFF, the only force field of RDKit with parameters for this group, leaves it far from an
-    octahedron: S-F lengths from 1.25 to 2.17 A and F-S-F angles down to 25 degrees in these
-    acids.  A quantum optimisation from such a start breaks the group apart.  The construction
-    puts the sulfur on the line that bisects the ring at its carbon, one fluorine on the same
-    line (axial) and four in the plane perpendicular to it (equatorial), turned by 45 degrees
-    from the ring plane, which is the arrangement the gas-phase structure has.
-    """
-    conf = mol.GetConformer()
-    r = np.asarray(conf.GetPositions(), float)
-    done = 0
-    for s in mol.GetAtoms():
-        if s.GetSymbol() != "S":
-            continue
-        fluorines = [n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "F"]
-        others = [n for n in s.GetNeighbors() if n.GetSymbol() != "F"]
-        if len(fluorines) != 5 or len(others) != 1 or not others[0].GetIsAromatic():
-            continue
-        c = others[0]
-        ring = [n.GetIdx() for n in c.GetNeighbors() if n.GetIdx() != s.GetIdx()]
-        if len(ring) != 2:
-            continue
-        axis = r[c.GetIdx()] - 0.5 * (r[ring[0]] + r[ring[1]])
-        axis /= np.linalg.norm(axis)
-        normal = np.cross(r[ring[0]] - r[c.GetIdx()], r[ring[1]] - r[c.GetIdx()])
-        normal -= axis * float(normal @ axis)
-        normal /= np.linalg.norm(normal)
-        in_plane = np.cross(normal, axis)
-        centre = r[c.GetIdx()] + SF5_BONDS["C-S"] * axis
-        w = 1.0 / np.sqrt(2.0)
-        directions = [axis, w * (in_plane + normal), w * (in_plane - normal),
-                      -w * (in_plane + normal), -w * (in_plane - normal)]
-        r[s.GetIdx()] = centre
-        for f, d in zip(fluorines, directions):
-            r[f] = centre + SF5_BONDS["S-F"] * d
-        done += 1
-    if done:
-        for a, (x, y, z) in enumerate(r):
-            conf.SetAtomPosition(a, Point3D(float(x), float(y), float(z)))
-    return done
 
 
 def wrong_bonds(mol: Chem.Mol) -> List[str]:

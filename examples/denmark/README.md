@@ -41,8 +41,19 @@ absolute deviation of 0.161 kcal/mol for new substrate combinations of training 
 
 Each catalyst is assembled from its scaffold and two copies of its substituent, bonded at the
 ring carbon next to the phosphate oxygen that is not the biaryl carbon. The molecule is embedded
-with ETKDG (30 conformers), each conformer is minimised with MMFF94 (UFF for the one substituent
-MMFF has no parameters for, the pentafluorosulfanyl group), and the lowest is kept.
+with ETKDG (30 conformers), each conformer is minimised with MMFF94, and the lowest is kept.
+
+One catalyst, `181_i`, has a pentafluorosulfanyl group on each of its two aryl substituents, and
+no force field of RDKit holds that group. MMFF94 has no parameters for it. UFF, which the builder
+used for this catalyst until 14 November 2026, moved the fluorines 6 to 8 A away from the sulfur,
+put two of them on one point and opened the biaryl dihedral to 71 degrees, where the other 31
+catalysts of the scaffold have 54 to 59. The builder now finds the conformers of this catalyst
+with a CF3 group in place of each SF5 group, with MMFF94 as for the other 42, and then sets each
+SF5 group to a regular octahedron on its ring carbon (S-F 1.59 A, C-S 1.80 A; `regular_sf5` of
+`make_hammett_examples.py`). Its biaryl dihedral is 54.5 degrees. The property `force_field` of
+the record says so, and `mmff_energy` is the energy of the stand-in with CF3. The other 42
+records did not change. `tests/test_denmark_example.py` checks every bond length and every
+close contact of the four structure files.
 
 A 2D file does not carry the axial configuration of the binaphthyl, and ETKDG assigns it at
 random, so every conformer is reflected where needed until the biaryl dihedral C2-C1-C1'-C2' is

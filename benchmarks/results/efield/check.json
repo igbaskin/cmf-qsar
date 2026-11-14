@@ -1,19 +1,17 @@
 {
  "negative_pair_share": 0.715510891297485,
  "sign_change_distance": 2.449489742783178,
- "zero_field_molecules": [
-  "SeCH3"
- ],
- "n_zero_field": 1,
+ "zero_field_molecules": [],
+ "n_zero_field": 0,
  "similarity_electrostatic": {
-  "mean": 0.3121043346454171,
-  "sd": 0.3140084584685532
+  "mean": 0.31698728431561807,
+  "sd": 0.3142431657844776
  },
  "similarity_efield": {
-  "mean": 0.30215996627272074,
-  "sd": 0.3119265755235967
+  "mean": 0.30658911493307955,
+  "sd": 0.3118828223701949
  },
- "kernel_correlation": 0.9796305831291319,
+ "kernel_correlation": 0.9800294322746649,
  "quadrature": {
   "closed_form": 0.25939523032804335,
   "grid_integral": 0.25939523032803824,
@@ -28,5 +26,5 @@
   "3.0": -0.440173089729136,
   "4.0": -0.2549687120099953
  },
- "seconds": 2.8713152408599854
+ "seconds": 4.060051202774048
 }

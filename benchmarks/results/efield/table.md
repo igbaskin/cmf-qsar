@@ -12,7 +12,7 @@ On two molecules of the Hammett series the closed form gives 0.259395 and a grid
 
 The pair integral changes sign at 2.45 angstrom (at the field width alpha = 1), and 72 % of the atom pairs of this series lie beyond it, so most pairs contribute a negative term. This is the only pair integral in the program that can, and the kernel matrix is still positive semidefinite because it is an inner product of two vector fields.
 
-Two molecules of the series are 0.312 +/- 0.314 alike through the scalar kernel and 0.302 +/- 0.312 through the vector one; the two cosine kernels correlate +0.980. A correlation of one would mean the vector kernel orders the pairs exactly as the scalar one does, and no model built on it could differ.
+Two molecules of the series are 0.317 +/- 0.314 alike through the scalar kernel and 0.307 +/- 0.312 through the vector one; the two cosine kernels correlate +0.980. A correlation of one would mean the vector kernel orders the pairs exactly as the scalar one does, and no model built on it could differ.
 
 ## The Hammett substituent constants
 
@@ -22,17 +22,17 @@ Two molecules of the series are 0.312 +/- 0.314 alike through the scalar kernel 
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.0977 | 0.0163 | +0.730 |
-| efield | 0.0963 | 0.0169 | +0.736 |
-| physchem | 0.0972 | 0.0148 | +0.748 |
-| physchem+efield | 0.0967 | 0.0106 | +0.760 |
-| efield-for-es | 0.0986 | 0.0103 | +0.746 |
+| electrostatic | 0.1117 | 0.0254 | +0.664 |
+| efield | 0.1139 | 0.0267 | +0.659 |
+| physchem | 0.1022 | 0.0202 | +0.725 |
+| physchem+efield | 0.0988 | 0.0124 | +0.752 |
+| efield-for-es | 0.1049 | 0.0168 | +0.710 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| efield vs electrostatic | +0.0014 | [-0.0037, +0.0064] |
-| physchem+efield vs physchem | +0.0005 | [-0.0037, +0.0051] |
-| efield-for-es vs physchem | -0.0015 | [-0.0055, +0.0028] |
+| efield vs electrostatic | -0.0022 | [-0.0061, +0.0017] |
+| physchem+efield vs physchem | +0.0034 | [-0.0048, +0.0137] |
+| efield-for-es vs physchem | -0.0027 | [-0.0085, +0.0027] |
 
 ### sigma_p
 
@@ -40,17 +40,17 @@ Two molecules of the series are 0.312 +/- 0.314 alike through the scalar kernel 
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.1582 | 0.0302 | +0.694 |
-| efield | 0.1624 | 0.0281 | +0.680 |
-| physchem | 0.1541 | 0.0187 | +0.703 |
-| physchem+efield | 0.1473 | 0.0102 | +0.745 |
-| efield-for-es | 0.1501 | 0.0175 | +0.727 |
+| electrostatic | 0.1631 | 0.0323 | +0.679 |
+| efield | 0.1655 | 0.0293 | +0.680 |
+| physchem | 0.1501 | 0.0181 | +0.713 |
+| physchem+efield | 0.1448 | 0.0099 | +0.747 |
+| efield-for-es | 0.1482 | 0.0153 | +0.730 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| efield vs electrostatic | -0.0043 | [-0.0140, +0.0048] |
-| physchem+efield vs physchem | +0.0068 | [-0.0045, +0.0190] |
-| efield-for-es vs physchem | +0.0040 | [-0.0021, +0.0101] |
+| efield vs electrostatic | -0.0024 | [-0.0119, +0.0065] |
+| physchem+efield vs physchem | +0.0053 | [-0.0061, +0.0186] |
+| efield-for-es vs physchem | +0.0019 | [-0.0039, +0.0077] |
 
 ### pi
 
@@ -58,17 +58,17 @@ Two molecules of the series are 0.312 +/- 0.314 alike through the scalar kernel 
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.8373 | 0.1627 | +0.082 |
-| efield | 0.7762 | 0.1162 | +0.185 |
-| physchem | 0.3129 | 0.0280 | +0.863 |
-| physchem+efield | 0.3187 | 0.0501 | +0.860 |
-| efield-for-es | 0.3398 | 0.0348 | +0.849 |
+| electrostatic | 0.8371 | 0.1746 | +0.053 |
+| efield | 0.8910 | 0.2214 | -0.123 |
+| physchem | 0.2930 | 0.0429 | +0.877 |
+| physchem+efield | 0.2982 | 0.0423 | +0.873 |
+| efield-for-es | 0.3094 | 0.0357 | +0.866 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| efield vs electrostatic | +0.0620 | [+0.0238, +0.1084] |
-| physchem+efield vs physchem | -0.0061 | [-0.0273, +0.0129] |
-| efield-for-es vs physchem | -0.0266 | [-0.0531, +0.0016] |
+| efield vs electrostatic | -0.0545 | [-0.1113, -0.0051] |
+| physchem+efield vs physchem | -0.0056 | [-0.0204, +0.0094] |
+| efield-for-es vs physchem | -0.0167 | [-0.0300, -0.0033] |
 
 ## The nickel complexes of item EC4
 

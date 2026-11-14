@@ -222,7 +222,7 @@ What is left of the step is the reading of the 30 tables under rule 4.
 | 16 | **The gap of a benzenoid in a frame given by rule.** On 8,678 polybenzenoid hydrocarbons the HOMO-LUMO gap is topology: ring-centred fields carry it, and they are the one representation that extrapolates to larger molecules | `results/compas/` (`table.md`, `REPORT.md`, `NOTES.md`), `cmfqsar/pbh.py`, `benchmarks/run_compas.py`, manual "A frame by rule" | J. Chem. Inf. Model., J. Phys. Chem. A or Phys. Chem. Chem. Phys. | Results done; the gap to the equivariant networks must be stated |
 | 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample, the rotation about it is averaged in closed form, and the field beats the counts and the geometric descriptors on 1732 hops in 472 oxides | `results/hops/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Labels are bond-valence site energies; needs a DFT-labelled subset |
 | 18 | **The fourth dimension, measured.** Conformer ensembles, protonation ensembles, a trajectory in the crystal site and the water as a field: none beats one well-posed conformation, and where the pose is unknown the ensemble is worse | README "The verdict on the fourth dimension", `results/protonation/`, `md/`, `solvent/`, `trajectory/`, `examples/md/`, the Hammett ensemble rows | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
-| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the same fields without the frame lose three quarters of the explained variance | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on one series; a section of paper 2 until the published splits, a substrate field and a second catalytic series are in hand |
+| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the frame adds +0.13 [+0.05, +0.26] in q² to the same fields compared without it | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on one series; a section of paper 2 until the published splits, a substrate field and a second catalytic series are in hand |
 | 21 | **A congeneric series in the crystal sense.** Symmetry averaging turns the overlap kernel into an arrangement kernel: on 5,933 DFT-labelled defect cells per material it reaches 1.9 and 4.4 meV per defect site, extrapolates from two defects to three where the autocorrelation cannot, and its per-defect contributions are the single-defect energies of the set | `results/2dmd/`, `prototypes/`, `threebody/` (the extrapolation rows), `cmfqsar/periodic.py`, `prototypes.py`, `threebody.py` | npj Comput. Mater., Digital Discovery or Chem. Mater. | Results done; needs one split shared with the published networks |
 | 22 | **Fields of electrochemical objects.** An average over a cell or over a liquid belongs to the composition and the energy of one object belongs to its field: the cell voltage and the electrolyte conductivity go to the composition, the reduction potential of a complex and the binding energy of a cation to the fields | `results/battery/`, `ether/`, `solvation/`, `shells/`, `metal/`, `phenazine/`, `cmfqsar/battery.py`, `celldiff.py`, `solvation.py`, `shells.py`, `complexes.py` | J. Chem. Inf. Model., J. Phys. Chem. C or Chem. Mater. | Results done; the targets are computed, which the paper states |
 
@@ -310,9 +310,9 @@ stays positive semidefinite because it is an inner product of two vector fields.
 
 The paper's use of this item is methodological and it is the diagnostic, not the model. One number
 computed before any fitting says what the vector kernel can do: it correlates **+0.980** with the
-scalar kernel over the 4371 pairs of the Hammett series. The models then behave exactly as that
-number predicts — nothing on sigma_m (+0.0005 [-0.0037, +0.0051]) or sigma_p
-(+0.0068 [-0.0045, +0.0190]), and on a nickel redox potential the sixth field makes the model
+scalar kernel over the 4465 pairs of the Hammett series. The models then behave exactly as that
+number predicts — nothing on sigma_m (+0.0034 [-0.0048, +0.0137]) or sigma_p
+(+0.0053 [-0.0061, +0.0186]), and on a nickel redox potential the sixth field makes the model
 *worse* by -0.0138 V [-0.0342, -0.0005]. Two nearly collinear kernel blocks cost accuracy, which
 is a statement about kernel methods rather than about electrostatics, and the kernel correlation
 is the cheap test that tells a reader in advance which new field is worth adding. That is the
@@ -320,8 +320,9 @@ transferable claim: before building a new field, correlate its cosine kernel wit
 already in the model.
 
 The item also leaves two smaller statements. Used in place of the electrostatic field rather than
-beside it, the vector kernel ties the five-field model, so it is a legitimate substitute at the
-same price; and its co-field is a direction rather than a value, which on the nickel series puts
+beside it, the vector kernel ties the five-field model on the electronic properties (on pi it is
+a little behind, -0.0167 [-0.0300, -0.0033]), so it is a substitute at the same price there; and
+its co-field is a direction rather than a value, which on the nickel series puts
 the strongest arrows 5.6 to 6.6 angstrom from the metal pointing inward, the second-sphere
 statement in the only form a vector kernel can make it. The through-space prediction the item
 named — that the vector kernel should win on cationic porphyrins — is tested only on 25 nickel
@@ -333,20 +334,21 @@ diagnostics.** The item reads a field and its gradient at a few anchored points 
 — for the electrostatic field, the oriented electric field the catalysis literature is about — and
 offers both the field set's Gaussian field and the true point-charge potential, since a Gaussian
 field is not a Coulomb potential and only the latter is in e/angstrom. Reading a few places loses
-to reading everywhere on every target measured: against the five-field model, -0.035 units on
-sigma_m [-0.066, -0.008], -0.060 on sigma_p [-0.119, -0.015], -0.473 on pi and -0.015 V on a
+to reading everywhere on every target measured: against the five-field model, -0.034 units on
+sigma_m [-0.067, -0.004], -0.037 on sigma_p [-0.073, -0.006], -0.506 on pi and -0.015 V on a
 nickel reduction potential, with 100 anchored columns against 95 substituents, so the field
-model's advantage is not that it has more numbers. One secondary result is worth a sentence: the
-true Coulomb potential is the better anchored descriptor (+0.0235 units on sigma_m
-[+0.0031, +0.0478]), which is what the physics says and what a reader would want confirmed.
+model's advantage is not that it has more numbers. One secondary result is not firm enough for a
+paper: the true Coulomb potential is the better anchored descriptor on sigma_m (+0.0253 units
+[+0.0017, +0.0522]) and on no other target, and with one faulty record that the series held until
+14 November 2026 the interval contained zero.
 
 The warning is the part a methods paper should carry, and it pairs with item EC5. EC5 established
 a cheap test: before building a new field, correlate its cosine kernel with the kernels the model
 already has, and a correlation near one says the new field cannot change anything. That test
 predicted EC5's own result exactly. The same question asked of a *descriptor block* misleads. The
 best single anchored column here reaches |r| = 0.85 with the nickel oxidation potential and 0.83
-with sigma_p, which looks like a model waiting to be fitted; the block gives R2 = -0.88 and +0.12
-under nested cross-validation. The difference is selection: a kernel correlation is one number
+with sigma_p, which looks like a model waiting to be fitted; the block gives R2 = -0.88 and +0.51
+under nested cross-validation, the second of these against +0.71 for the five fields. The difference is selection: a kernel correlation is one number
 computed once, while the best of 60 columns on 25 molecules is a maximum over 60 tries. A paper
 that recommends the first diagnostic should say plainly that the second is not the same thing,
 because the two look alike and one of them is a selection effect.
@@ -888,11 +890,16 @@ states, and a congeneric catalyst series with the reaction centre as its frame i
 like any binding series. On the 1,075 N,S-acetal formations of Zahrt et al. (Science 2019), the
 field model of the 43 chiral phosphoric acids, with the 25 substrate combinations as endpoints of
 one multi-task model, reaches the published accuracy on both of the paper's splits (0.224
-kcal/mol on a catalyst it has not seen, 0.148 to 0.164 on a reaction of one it has; published
-0.211 and 0.161). The result worth a paper is the second table: the same fields through the
-rotation-invariant kernel give q² 0.26 where the framed kernel gives 0.82, so the shared frame,
-which the binding sets can never isolate because their alignment is itself uncertain, is here
-measured directly and is most of the result. The co-field is a map of where bulk helps and where it
+kcal/mol on a catalyst it has not seen, 0.149 to 0.164 on a reaction of one it has; published
+0.211 and 0.161). The second table measures the shared frame, which the binding sets can never
+isolate because their alignment is itself uncertain: the same fields through the
+rotation-invariant kernel give q² 0.70 where the framed kernel gives 0.82, a difference of
++0.13 [+0.05, +0.26] over the catalysts, with the width of the invariant kernel chosen by the
+evidence. That is a measured gain and a modest one. (Until 14 November 2026 this paragraph quoted
+0.26 and called the frame most of the result. One faulty structure, the catalyst with SF5 groups,
+and an invariant kernel that was run at its default width only had produced that number; both
+are corrected. The claim of this paper is weaker for it, and the statement in its status column
+stands: it is a section of paper 2.) The co-field is a map of where bulk helps and where it
 hurts in the acid's own frame, which the published steric-occupancy descriptor cannot draw.
 
 Source material: `results/denmark/` (`table.md`, `cofields.png`), `examples/make_denmark_examples.py`,

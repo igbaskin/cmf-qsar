@@ -18,12 +18,12 @@ The gradient matches a finite difference to 5.6e-12 at every point of every fiel
 
 | source | columns | target | best column | its \|r\| | columns with \|r\| above 0.5 |
 |---|---|---|---|---|---|
-| field | 100 | sigma_m | `at:ipso:electrostatic:value` | 0.820 | 6 |
-| field | 100 | sigma_p | `at:ipso:electrostatic:value` | 0.832 | 3 |
-| field | 100 | pi | `at:ipso:hydrophobic:gx` | 0.523 | 1 |
-| coulomb | 20 | sigma_m | `at:ipso:coulomb:value` | 0.836 | 8 |
-| coulomb | 20 | sigma_p | `at:face:coulomb:gx` | 0.812 | 6 |
-| coulomb | 20 | pi | `at:centroid:coulomb:gx` | 0.333 | 0 |
+| field | 100 | sigma_m | `at:ipso:electrostatic:value` | 0.823 | 6 |
+| field | 100 | sigma_p | `at:ipso:electrostatic:value` | 0.834 | 3 |
+| field | 100 | pi | `at:ipso:hydrophobic:gx` | 0.519 | 1 |
+| coulomb | 20 | sigma_m | `at:ipso:coulomb:value` | 0.835 | 10 |
+| coulomb | 20 | sigma_p | `at:face:coulomb:gx` | 0.808 | 9 |
+| coulomb | 20 | pi | `at:meta_site:coulomb:gx` | 0.375 | 0 |
 
 ### nickel: 25 members, points `metal`, `substituent_left`, `substituent_right`
 
@@ -44,21 +44,21 @@ The gradient matches a finite difference to 1.9e-11 at every point of every fiel
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.0977 | 0.0163 | +0.730 |
-| physchem | 0.0972 | 0.0148 | +0.748 |
-| anchors-near | 0.2328 | 0.1694 | -4.824 |
-| anchors-far | 0.1078 | 0.0262 | +0.639 |
-| anchors-all | 0.1322 | 0.0221 | +0.475 |
-| coulomb-all | 0.1087 | 0.0231 | +0.661 |
-| physchem+anchors-all | 0.1001 | 0.0208 | +0.718 |
+| electrostatic | 0.1117 | 0.0254 | +0.664 |
+| physchem | 0.1022 | 0.0202 | +0.725 |
+| anchors-near | 0.3050 | 0.2959 | -16.363 |
+| anchors-far | 0.1145 | 0.0190 | +0.650 |
+| anchors-all | 0.1361 | 0.0252 | +0.429 |
+| coulomb-all | 0.1108 | 0.0225 | +0.660 |
+| physchem+anchors-all | 0.1011 | 0.0218 | +0.703 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| anchors-all vs physchem | -0.0350 | [-0.0657, -0.0077] |
-| anchors-near vs physchem | -0.1356 | [-0.2844, -0.0438] |
-| coulomb-all vs anchors-all | +0.0235 | [+0.0031, +0.0478] |
-| physchem+anchors-all vs physchem | -0.0029 | [-0.0190, +0.0127] |
-| anchors-all vs electrostatic | -0.0345 | [-0.0636, -0.0073] |
+| anchors-all vs physchem | -0.0339 | [-0.0671, -0.0043] |
+| anchors-near vs physchem | -0.2027 | [-0.4586, -0.0387] |
+| coulomb-all vs anchors-all | +0.0253 | [+0.0017, +0.0522] |
+| physchem+anchors-all vs physchem | +0.0011 | [-0.0156, +0.0175] |
+| anchors-all vs electrostatic | -0.0244 | [-0.0539, +0.0021] |
 
 ### sigma_p
 
@@ -66,21 +66,21 @@ The gradient matches a finite difference to 1.9e-11 at every point of every fiel
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.1582 | 0.0302 | +0.694 |
-| physchem | 0.1541 | 0.0187 | +0.703 |
-| anchors-near | 0.3588 | 0.2178 | -3.825 |
-| anchors-far | 0.1812 | 0.0429 | +0.550 |
-| anchors-all | 0.2138 | 0.0634 | +0.120 |
-| coulomb-all | 0.1801 | 0.0413 | +0.579 |
-| physchem+anchors-all | 0.1836 | 0.0273 | +0.475 |
+| electrostatic | 0.1631 | 0.0323 | +0.679 |
+| physchem | 0.1501 | 0.0181 | +0.713 |
+| anchors-near | 0.6514 | 0.7889 | -58.911 |
+| anchors-far | 0.1760 | 0.0428 | +0.569 |
+| anchors-all | 0.1871 | 0.0407 | +0.506 |
+| coulomb-all | 0.1864 | 0.0594 | +0.466 |
+| physchem+anchors-all | 0.2009 | 0.0616 | +0.233 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| anchors-all vs physchem | -0.0597 | [-0.1192, -0.0154] |
-| anchors-near vs physchem | -0.2047 | [-0.3870, -0.0846] |
-| coulomb-all vs anchors-all | +0.0337 | [-0.0052, +0.0827] |
-| physchem+anchors-all vs physchem | -0.0296 | [-0.0640, +0.0005] |
-| anchors-all vs electrostatic | -0.0556 | [-0.1180, -0.0100] |
+| anchors-all vs physchem | -0.0370 | [-0.0728, -0.0055] |
+| anchors-near vs physchem | -0.5012 | [-1.2041, -0.0966] |
+| coulomb-all vs anchors-all | +0.0007 | [-0.0512, +0.0461] |
+| physchem+anchors-all vs physchem | -0.0508 | [-0.1010, -0.0107] |
+| anchors-all vs electrostatic | -0.0240 | [-0.0565, +0.0068] |
 
 ### pi
 
@@ -88,21 +88,21 @@ The gradient matches a finite difference to 1.9e-11 at every point of every fiel
 
 | model | MAE (units) | standard deviation | R2 |
 |---|---|---|---|
-| electrostatic | 0.8373 | 0.1627 | +0.082 |
-| physchem | 0.3129 | 0.0280 | +0.863 |
-| anchors-near | 0.9958 | 0.4570 | -2.123 |
-| anchors-far | 0.7614 | 0.0742 | +0.169 |
-| anchors-all | 0.7841 | 0.1160 | +0.131 |
-| coulomb-all | 0.8985 | 0.1712 | -0.053 |
-| physchem+anchors-all | 0.4886 | 0.2499 | +0.398 |
+| electrostatic | 0.8371 | 0.1746 | +0.053 |
+| physchem | 0.2930 | 0.0429 | +0.877 |
+| anchors-near | 0.9891 | 0.3633 | -2.126 |
+| anchors-far | 0.7369 | 0.0631 | +0.212 |
+| anchors-all | 0.7964 | 0.1185 | +0.065 |
+| coulomb-all | 0.8767 | 0.1202 | -0.001 |
+| physchem+anchors-all | 0.4478 | 0.1723 | +0.562 |
 
 | comparison | difference (units) | 95 % interval |
 |---|---|---|
-| anchors-all vs physchem | -0.4732 | [-0.6366, -0.3268] |
-| anchors-near vs physchem | -0.6889 | [-1.1440, -0.3960] |
-| coulomb-all vs anchors-all | -0.1128 | [-0.2354, +0.0042] |
-| physchem+anchors-all vs physchem | -0.1781 | [-0.3481, -0.0444] |
-| anchors-all vs electrostatic | +0.0535 | [-0.0771, +0.1822] |
+| anchors-all vs physchem | -0.5059 | [-0.6721, -0.3474] |
+| anchors-near vs physchem | -0.7023 | [-1.1498, -0.4091] |
+| coulomb-all vs anchors-all | -0.0781 | [-0.1756, +0.0245] |
+| physchem+anchors-all vs physchem | -0.1570 | [-0.2982, -0.0459] |
+| anchors-all vs electrostatic | +0.0411 | [-0.0904, +0.1761] |
 
 ## The nickel complexes of item EC4
 

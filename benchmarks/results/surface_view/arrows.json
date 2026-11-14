@@ -6,42 +6,42 @@
   {
    "spacing": 0.7,
    "points": 8740,
-   "gradient_seconds": 0.2686324119567871,
-   "arrow_seconds": 0.26343274116516113,
+   "gradient_seconds": 0.4107625484466553,
+   "arrow_seconds": 0.46649789810180664,
    "n_arrows": 16,
-   "longest": 0.2467741167462392,
-   "grid_maximum": 0.2467741167462392,
-   "shortest_drawn": 0.1099369821819926,
-   "shortest_over_longest": 0.4454964063149383,
-   "volume_share_above_shortest": 0.017734553775743706
+   "longest": 0.25772991905225956,
+   "grid_maximum": 0.25772991905225956,
+   "shortest_drawn": 0.1094870618043035,
+   "shortest_over_longest": 0.42481316180486967,
+   "volume_share_above_shortest": 0.01933638443935927
   },
   {
    "spacing": 0.5,
    "points": 21600,
-   "gradient_seconds": 0.6993570327758789,
-   "arrow_seconds": 0.6513557434082031,
+   "gradient_seconds": 0.9915759563446045,
+   "arrow_seconds": 1.0248908996582031,
    "n_arrows": 16,
-   "longest": 0.2502113274507367,
-   "grid_maximum": 0.2502113274507367,
-   "shortest_drawn": 0.12596265160410117,
-   "shortest_over_longest": 0.5034250562812811,
-   "volume_share_above_shortest": 0.014583333333333334,
+   "longest": 0.259998994764589,
+   "grid_maximum": 0.259998994764589,
+   "shortest_drawn": 0.11244034575378496,
+   "shortest_over_longest": 0.4324645403171342,
+   "volume_share_above_shortest": 0.01972222222222222,
    "matched_arrows": 16,
-   "direction_change_median_deg": 16.291791987560103
+   "direction_change_median_deg": 13.373593669814406
   },
   {
    "spacing": 0.35,
    "points": 61560,
-   "gradient_seconds": 1.955686330795288,
-   "arrow_seconds": 2.0209643840789795,
+   "gradient_seconds": 2.966745615005493,
+   "arrow_seconds": 2.9710936546325684,
    "n_arrows": 16,
-   "longest": 0.2556620053694836,
-   "grid_maximum": 0.2556620053694836,
-   "shortest_drawn": 0.10317452274021166,
-   "shortest_over_longest": 0.40355829404961246,
-   "volume_share_above_shortest": 0.02215724496426251,
-   "matched_arrows": 15,
-   "direction_change_median_deg": 16.049725444027562
+   "longest": 0.2633484524109007,
+   "grid_maximum": 0.2633484524109007,
+   "shortest_drawn": 0.112058335636332,
+   "shortest_over_longest": 0.42551355290096093,
+   "volume_share_above_shortest": 0.020451591942820015,
+   "matched_arrows": 14,
+   "direction_change_median_deg": 13.110156530303703
   }
  ]
 }

@@ -47,6 +47,15 @@ compilations of substituent constants and have not been checked against any of t
 Charged substituents (NMe3+, COO-, O-) are left out: their electrostatic field would dominate the
 kernel.  pi is given where it is well established and omitted otherwise.
 
+One group is built by a rule
+----------------------------
+RDKit has no force field that holds a pentafluorosulfanyl group.  MMFF94 has no parameters for
+it, UFF folds two of its fluorines onto one point, and the embedded geometry that was used
+instead had S-F distances from 1.19 to 2.49 A.  The files written before 14 November 2026 held
+that structure, and the quantum charges of ``hammett_qm.sdf`` were computed on it.  The group is
+now set to a regular octahedron with the gas-phase bond lengths of C6H5SF5 (:func:`regular_sf5`),
+and its quantum charges were computed again on that structure.
+
 Outputs
 -------
     examples/hammett/hammett.sdf        one conformer per substituent, in frame
@@ -72,6 +81,7 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem
+from rdkit.Geometry import Point3D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
@@ -286,6 +296,56 @@ def _distinct_in_frame(coords: np.ndarray, kept: Sequence[np.ndarray], atoms: np
     return True
 
 
+#: bond lengths of an aryl-SF5 group in angstrom, from gas-phase structures of C6H5SF5
+SF5_BONDS = {"C-S": 1.80, "S-F": 1.59}
+
+def regular_sf5(mol: Chem.Mol, conf_id: int = -1) -> int:
+    """Set every aryl-SF5 group of one conformer of `mol` to a regular octahedron, in place;
+    returns the number of groups.
+
+    UFF, the only force field of RDKit with parameters for this group, leaves it far from an
+    octahedron: S-F lengths from 1.25 to 2.17 A and F-S-F angles down to 25 degrees in the
+    benzoic acids of ``make_band_examples.py``.  A quantum optimisation from such a start breaks
+    the group apart, and charges computed on it are not the charges of the molecule.  The
+    construction
+    puts the sulfur on the line that bisects the ring at its carbon, one fluorine on the same
+    line (axial) and four in the plane perpendicular to it (equatorial), turned by 45 degrees
+    from the ring plane, which is the arrangement the gas-phase structure has.
+    """
+    conf = mol.GetConformer(conf_id)
+    r = np.asarray(conf.GetPositions(), float)
+    done = 0
+    for s in mol.GetAtoms():
+        if s.GetSymbol() != "S":
+            continue
+        fluorines = [n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "F"]
+        others = [n for n in s.GetNeighbors() if n.GetSymbol() != "F"]
+        if len(fluorines) != 5 or len(others) != 1 or not others[0].GetIsAromatic():
+            continue
+        c = others[0]
+        ring = [n.GetIdx() for n in c.GetNeighbors() if n.GetIdx() != s.GetIdx()]
+        if len(ring) != 2:
+            continue
+        axis = r[c.GetIdx()] - 0.5 * (r[ring[0]] + r[ring[1]])
+        axis /= np.linalg.norm(axis)
+        normal = np.cross(r[ring[0]] - r[c.GetIdx()], r[ring[1]] - r[c.GetIdx()])
+        normal -= axis * float(normal @ axis)
+        normal /= np.linalg.norm(normal)
+        in_plane = np.cross(normal, axis)
+        centre = r[c.GetIdx()] + SF5_BONDS["C-S"] * axis
+        w = 1.0 / np.sqrt(2.0)
+        directions = [axis, w * (in_plane + normal), w * (in_plane - normal),
+                      -w * (in_plane + normal), -w * (in_plane - normal)]
+        r[s.GetIdx()] = centre
+        for f, d in zip(fluorines, directions):
+            r[f] = centre + SF5_BONDS["S-F"] * d
+        done += 1
+    if done:
+        for a, (x, y, z) in enumerate(r):
+            conf.SetAtomPosition(a, Point3D(float(x), float(y), float(z)))
+    return done
+
+
 def build_conformers(fragment: str, n_embed: int = 30, seed: int = 2026, keep: int = 8,
                      window: float = 6.0, prune: float = 0.3) -> Tuple[Chem.Mol, List[Tuple[np.ndarray, float]]]:
     """X-C6H5 with hydrogens: the molecule (no conformer) and its distinct MMFF conformers in frame.
@@ -326,6 +386,11 @@ def build_conformers(fragment: str, n_embed: int = 30, seed: int = 2026, keep: i
         work = Chem.Mol(mol)
         energies = np.zeros(len(ids))
         keep = 1
+    # the embedded geometry of an SF5 group is no better than the optimised one (S-F from 1.2 to
+    # 2.5 A in the files written before 14 November 2026), so the group is set to a regular
+    # octahedron on every conformer; a molecule without the group is not touched
+    for cid in ids:
+        regular_sf5(work, cid)
     atoms = _shape_atoms(mol)
     kept: List[Tuple[np.ndarray, float]] = []
     e_min = float(energies.min())

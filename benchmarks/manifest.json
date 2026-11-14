@@ -1,6 +1,6 @@
 {
- "commit": "d26eece95a3d4bd0e0d4fb26b9795d01a087cb65",
- "created": "2026-11-14T03:31:35",
+ "commit": "6d151fb00c21604db01447bd6212aff3e15ccd68",
+ "created": "2026-11-14T11:14:56",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -623,16 +623,16 @@
    "sha256": "c471d3a50df9675290c6e0edf49e649fd390f0b815bf2b75a0af95440c667e2f"
   },
   "examples/denmark/README.md": {
-   "bytes": 4216,
-   "sha256": "be5419e9741d9ec698ab33a9c22066952717a3c8814458f2c8c11640cd5e933a"
+   "bytes": 5124,
+   "sha256": "279785f9e6b3cfbba444f61d9af35e05a07a2fbf5da9ccdbe69e4723b1fc0a49"
   },
   "examples/denmark/catalysts.sdf": {
-   "bytes": 360158,
-   "sha256": "82c4a87cdb19c87440bff41885b6e75325b6cfde473831d3541fba10f0a69ad6"
+   "bytes": 360219,
+   "sha256": "68022002e04084f1b6c88ce8bf6e4fcfaf1d96c59f1ffa514b62e4b0d99fa164"
   },
   "examples/denmark/catalysts_sym.sdf": {
-   "bytes": 727371,
-   "sha256": "66210aac727b80ebc4a814300f3fd21ddf33e7b7b7ab8860f57983f95b9dcf7a"
+   "bytes": 727493,
+   "sha256": "bd4500950cce8579be1f324d87f0c962e4a2d7cdaffd6714d22a6e9d9a8bbf6b"
   },
   "examples/denmark/imines.sdf": {
    "bytes": 16466,
@@ -1159,28 +1159,28 @@
    "sha256": "b7a6b6f7d3c25bca733a8cfda3c44d42b715ff8a2c8d9946dfcfffb75541680e"
   },
   "examples/hammett/hammett.sdf": {
-   "bytes": 208482,
-   "sha256": "ef6da245e6a8f0d7a12eb3219d7f507493c624044b6dfed5b1ada3a2738ac8cb"
+   "bytes": 208577,
+   "sha256": "386f56a735394d9b5f220d1e70c0269ddf111f05ce2e67b12e8cf86a76850f17"
   },
   "examples/hammett/hammett_ens.sdf": {
-   "bytes": 1078511,
-   "sha256": "46325a8844a17e735d5f6157635fd72779e509711e9b45473f2e245540119066"
+   "bytes": 1128159,
+   "sha256": "13533a556300bd7f25ffd7b0b17d6b19dc5d5731bd9d4ea76fb7d2a0080acb79"
   },
   "examples/hammett/hammett_ens_qm.sdf": {
-   "bytes": 1985387,
-   "sha256": "a89a0e4cefb72b01b806fe5bd073cc1efa19faffa66e4bc7b763fc9d42a92b93"
+   "bytes": 2035251,
+   "sha256": "e2ea831947f49b1045d79781493bacf335377dac498e8fd5bc7a55bd321138b1"
   },
   "examples/hammett/hammett_qm.sdf": {
-   "bytes": 404371,
-   "sha256": "baaa9a1af25300cb1834ea62c76a8032bd854afa212c48d490217e66d11934d2"
+   "bytes": 404532,
+   "sha256": "abd306dfad5c96fe020bac336c18010cb84e89951e8bd0b7cdc47870e5052af3"
   },
   "examples/hammett/hammett_qm_sym.sdf": {
-   "bytes": 1638447,
-   "sha256": "cebcab85fcebba26df8dc3f3298c9e1da7c39b7a0244377b9b349abc5121e8aa"
+   "bytes": 1639091,
+   "sha256": "3eaeca5708f056e9ebc58fce7287143c734179aa73684cdc831b0f639561e3fd"
   },
   "examples/hammett/hammett_sym.sdf": {
-   "bytes": 849963,
-   "sha256": "26649ede34a48b06f6c72a25735e6dce1b8c56a6bafdcb988dfca2f861519f00"
+   "bytes": 850343,
+   "sha256": "3742e93e3980a9fb05e52f9b25bfa7cdb8ec6ee4aea89873cfdeb5ea59841c49"
   },
   "examples/hops/README.md": {
    "bytes": 5524,
@@ -1307,8 +1307,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 29145,
-   "sha256": "efbe4f98511a8e218c317957bfd6c0c482d3259a28de7dfbacb76469acfd6ae0"
+   "bytes": 26912,
+   "sha256": "f93936b54b36064f6d05d71591b202ca612ce4dcf662c144845e63ecb1b7865f"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -1319,8 +1319,8 @@
    "sha256": "81a6d68b5f8291f7319e63999b5d3aa4280f0a2a4def563cd536591e16546dad"
   },
   "examples/make_denmark_examples.py": {
-   "bytes": 23911,
-   "sha256": "893fd9390d4c4f3406a24e2fc01b9e5634db65b562961d47b9ed0d7ff5161b84"
+   "bytes": 26898,
+   "sha256": "2e3f12af2beb172cabeed05622cd4ba2d157be5331abc0c6494d31d1b3e013ac"
   },
   "examples/make_docked_poses.py": {
    "bytes": 15002,
@@ -1347,8 +1347,8 @@
    "sha256": "d51cb0483bb38a80807ab93fd94aff4e0c1f4c92ccc32f75c4efb88bb5dac8fd"
   },
   "examples/make_hammett_examples.py": {
-   "bytes": 25494,
-   "sha256": "f4961927f40bd328539633d97424e71d1c4b7364bf8952d5e092b939280e7257"
+   "bytes": 28861,
+   "sha256": "efb3ff764f0faed38fcdc4517f9a5c43c68f1980873e8b0c0073908d505ec2e8"
   },
   "examples/make_host_structures.py": {
    "bytes": 4978,
@@ -2589,10 +2589,10 @@
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",
-  "benchmarks/results/anchors/check.json": "a4ea4462e9e2e4ae9747d294d3c089c6b8286cc0fcd7cf15cd18998f80b357cf",
-  "benchmarks/results/anchors/hammett.json": "bb016ba474c9d5f281202b1f6d4f77ee0c8d203558985d26861184169be02573",
+  "benchmarks/results/anchors/check.json": "06e81b4ca83fba91e790166bb27bef8d2311f82e2e16ae3983057ac4cb97001a",
+  "benchmarks/results/anchors/hammett.json": "c9ed0b8cc58c461b7f61dfac71f34a0157df10e13f155c9680d2517ae5f8cc32",
   "benchmarks/results/anchors/nickel.json": "f51654fc301cf562ba78d358080b0cb8d6b3bca3f8dfa5bee487be30e70526b3",
-  "benchmarks/results/anchors/table.md": "87c3308f6733a0c133f39ba76c33f10d5a020604a4f44d4b080e0fcca579830b",
+  "benchmarks/results/anchors/table.md": "d279d434ad9e3f6e06da533df2e9bfb7ab54f41949507db710af0a18a38caea8",
   "benchmarks/results/anisotropic/12_c1ccoc1.json": "377b634317b918acbd1e586af105bf2613f9eb6dcba12d0c996e39ec03ef8936",
   "benchmarks/results/anisotropic/13_c1c_nH_nn1.json": "bbef8fb19087073d297fe3795613977f0a2d710d28ad3c3a5ab61839cf0d815b",
   "benchmarks/results/anisotropic/161_c1ccc2scnc2c1.json": "0b38c2b68a0a9510b025455c7efbc3afabae0375cd1ad39512f70c98b44fc9db",
@@ -2861,10 +2861,10 @@
   "benchmarks/results/cyclodextrin/methyl_beta.json": "7bb7e12423519d391df841c17ae68985fbe6828fb0f961267eb46cf8a716465f",
   "benchmarks/results/cyclodextrin/sbe_beta.json": "0f275b229d6b9a6e80726de62863eae64a3b519343ec0d8214fc893cf7598add",
   "benchmarks/results/cyclodextrin/table.md": "fc0e5abac03ccfb5ba81bb3bc741dcab6af50ebda0d8a6e6931320201da94b16",
-  "benchmarks/results/denmark/cofields.png": "29cdb8c209fbe2d74605359ce3deb70ba9c88f55ff1445e4df6d025970be2044",
-  "benchmarks/results/denmark/cv_scatter.png": "40ea3501da607ed8dc9ca424a06bcb56382c7c16f7e5f3b016dbf4e2b03e5624",
-  "benchmarks/results/denmark/summary.json": "cc6fdb8251ef2d76aeae5b0d6bb355b8c867244c9e4397f00bffd14082f6454b",
-  "benchmarks/results/denmark/table.md": "28eefc0901bff315bc0532b69286261ae03f9f19e25a3a2da6eaedac24424682",
+  "benchmarks/results/denmark/cofields.png": "73c15549dc4591d655a9589171840c895b993e3f337a5aa129555f6c52bff8b0",
+  "benchmarks/results/denmark/cv_scatter.png": "6d4a1317be97937f69ecaa1d582e9aa9da9296b6890e27690491be2fc1a3eb15",
+  "benchmarks/results/denmark/summary.json": "0d97e2563634de1e3177e1b60d71fedeebe17360d146408ad0bb8abfc2997097",
+  "benchmarks/results/denmark/table.md": "474d0650bf3b6fc65f121b727c71cccadd46e5ff9b0d7a396b4b317f68462bbf",
   "benchmarks/results/design/ACE.json": "91be8eaae78a3119d2323fb98240f443c69781686ac2c6ce179d032560ad7e3f",
   "benchmarks/results/design/AChE.json": "50d6b310b1ba018dc632550baa43f21bb6e1b2d4935d8df45b20bd5976809323",
   "benchmarks/results/design/BZR.json": "7dc8f44ce8d4e0be8e18caef41fc572c127aeb2efaff444dbd6651b6731559ec",
@@ -2904,19 +2904,10 @@
   "benchmarks/results/diagnose/corrosion_7_c1nncs1.json": "216bc5a674253413cdebefe033b2907108746bf451b5ada8895866ffa76b8ea6",
   "benchmarks/results/diagnose/corrosion_7_c1nncs1_validate.json": "c064321587a57434c5d93c505b759f75aaaf5ef7f74b1ca23fb03638890922a8",
   "benchmarks/results/diagnose/table.md": "7f913f3c07415747517481e846acb1d7f6072a84fb1ec07a92d549bc06f1fc5d",
-  "benchmarks/results/diffusion/run_full.json": "1efe6bbc2daf604801b992974fabc04a9cb48d8f1afcf34b136bf09bc14164d4",
-  "benchmarks/results/diffusion/run_scaled.json": "c72c960dc5218ba8e519637f62ba3da17cc786ffbda0407975e17305c5188027",
-  "benchmarks/results/diffusion/run_scaled_07.json": "9baf6ad8374fde45d9251b6b6ab474afd892110ef34e4c6f00ae6870cd82fd2f",
-  "benchmarks/results/diffusion/run_scaled_huge.json": "cd17c9161f4266edd7a36ed9b1bad22542c7ceb5817b3cebdcd415dbee4a7ec8",
-  "benchmarks/results/diffusion/run_scaled_large.json": "fcd9b9937aee4f1cdbbba7282b5467ab3b506b1dfbc5136912dee66ec60cadfe",
-  "benchmarks/results/diffusion/run_scaled_seed2.json": "13a9516042d73ff6384497b0fbe60f1d3dfea14d9c73ed3edfbcdbe3db6b0a80",
-  "benchmarks/results/diffusion/run_scaled_seed3.json": "a8c8b40240d0a09d496688674fa68ff1aec929b410e154d9a63fa80ce853893b",
-  "benchmarks/results/diffusion/run_scaled_small.json": "dd58d69fc2cdff5bffa1f2e022c4c021e322575407e1ec5a571f852d9befb203",
-  "benchmarks/results/diffusion/table.md": "39e0ee807d46888080aeae9137f8f43f9457284e0fe4ea2002d12ca22a4fafc9",
-  "benchmarks/results/efield/check.json": "bbac59631cfd4f2a674e82c7933c1309a0f672ca68fe595392e82f21838ada36",
-  "benchmarks/results/efield/hammett.json": "5852d7e02f1a31e9de2c02eb1893c027f7bb5d04ff114927bc54b3e77725f0c4",
+  "benchmarks/results/efield/check.json": "fe3f237756f77cc30ffa47b63e1cc9bcbb465418b64f75a9712ee4c20087bf2e",
+  "benchmarks/results/efield/hammett.json": "cbcdf0dbba08c27e552ab308689c7bb7105c8e229783074188585cbb013cdc37",
   "benchmarks/results/efield/nickel.json": "bef3237e9997a25ca2009a998708d0189b7151ea2399ceb17d9444602b07a0fc",
-  "benchmarks/results/efield/table.md": "7f5621d29aab832459fa6a7f95690d833c25684c27c4dd25ee404a2fe1c19254",
+  "benchmarks/results/efield/table.md": "18e4b16e47ace360a397dda46b6c0ddba3cac060ca22de7a520a9b11082e17cb",
   "benchmarks/results/enantiomers/enantiomers.json": "b789a1d4c6cc78161a1b3e3c26b76a3671ec3d99fcd0b109605f8dfb62ff958e",
   "benchmarks/results/enantiomers/table.md": "c2bc9ce53151012e9108cea8192751a9cbf9e2c4a2cad3c604c6d6c71920b9c3",
   "benchmarks/results/errorpred/ACE.json": "8f8bed378f2c755499083b93071295110de02aa97493ca9f0188827fa5b5a425",
@@ -2990,31 +2981,31 @@
   "benchmarks/results/guest_atoms/table.md": "872b4c82d814222e0809e8ac496c4f523cbbb9f782f11b031ba8e91979546f1a",
   "benchmarks/results/guest_design/beta.json": "cfaf0fbe7710710bcee4fb80cdbb9fd65f536f9fd2f10225e1cce49138a633c3",
   "benchmarks/results/guest_design/table.md": "19e5ae9af257bc7d336aa3f3f5ac32edd230f6ab4431f034e033f2fb7653267e",
-  "benchmarks/results/hammett/cofields.png": "57db581e8f086118b349e51860d97f30140315df2d7e10f5d61cf76988ee1c04",
-  "benchmarks/results/hammett/cofields_ens.png": "6cc2fde75f5b71baab9f9b8189281d94476415e7c74c92b415a8acc49d34ebc4",
-  "benchmarks/results/hammett/cofields_ens_boltzmann.png": "69f7a995f41e1c73a9f84f2ce2d568cf916ae4382586ab02589a3f5879ec078e",
-  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "b70e9c206ba7c34c86a5f211c6cf6a9134cf0033bb4d55f2061bbc86ef52d29e",
-  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "320e1744ca527e14ac4b928c03c958b17d03168699875f94b5d4ca8f7e4fce19",
-  "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "c72774e3675bc901255a95502c9dc720326767099dcf521e2036883fb6d70871",
-  "benchmarks/results/hammett/cv_scatter.png": "02c0b59d6261fd15e0eaac375bd1930569833396a8221eb0b6ca5ee5b59e4213",
-  "benchmarks/results/hammett/cv_scatter_ens.png": "5ede478dbfab4c32e2294da6a138a691d9059fcec8c7c1b69a36a70e5176a569",
-  "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "234bea6cdc4977e29232fac804d360badd25222685a186b8ada49679ba4d3837",
-  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "89af696e65816b3bd7d7321ec0e5bc7987928b3c4a998745267a58af8b80f35c",
-  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "aa6b0fb2a568dfd19fee08602527a43eba2e08290a8b69b9e46bbd6bf50ba549",
-  "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "0ac96453386fc09ac3b4f4776c2feaa9d9f48127109e5940c58462a2908d2f5b",
-  "benchmarks/results/hammett/run.json": "601b06a58e455ba30f56551175a4a7ecc2aa9ca11cdb4429c136afdca72bc898",
-  "benchmarks/results/hammett/run_ens.json": "5e199c794a4a5a58af986dd95d1a208aea5b1dc7adbb2a8813ebc035571bb502",
-  "benchmarks/results/hammett/run_ens_boltzmann.json": "b9b1084f59bc2f8bb4569dc090a56952bb40dec804b527d7ef5651f72d47dd03",
-  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld.json": "d78fcd442740cc6b7a7aac1c66132e631f35ad683ea8e846b2bd8f554eda9c2e",
-  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld_boltzmann.json": "00b416fc473fc67eeda299ee372ba1b0742065bf2cabc88b165a4f111174d366",
-  "benchmarks/results/hammett/run_qm_sym_q_hirshfeld.json": "afc89df510428a2554fb9bca5db3155c365c50749d47f5385b9755d5ee65d474",
-  "benchmarks/results/hammett/summary.csv": "1a620b88a3eea58986261df14cc4c602bf3a4fb0536195588ad2b47c4b3113d9",
-  "benchmarks/results/hammett/summary_ens.csv": "a441c1904e1cc00ed3bc3960c602a99f90adc7200d1b5eff257914df1f43a80d",
-  "benchmarks/results/hammett/summary_ens_boltzmann.csv": "9493e8913bdd50626ea0d17e79fb2d96eed1a0ea2103705abd4d41469f9988d4",
-  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "3702e24032775ca6d20c2cba78d02caa246833ae3056fea3735fcce65475e814",
-  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "2056148e3798cfeb301a6f8f7257a9596f60e608eaf33c83f3b3ff63bde73eef",
-  "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "57795e52b180575cb9ffc12219cf1a0cbec2596877e86727e98797ea0581853f",
-  "benchmarks/results/hammett/table.md": "fa86f57fa0bf4e12b21459b3e961288423b15aaf4a84c25c0bd12e1f562b8ec7",
+  "benchmarks/results/hammett/cofields.png": "a61b2ec9b4cfa9d8494622d8b6a8ad0ea60210f4b80cf5df71848c6d3be1d1bd",
+  "benchmarks/results/hammett/cofields_ens.png": "efa54b7b43891b988f3fcc627e331d569460c76f69bb1759010d1c5ea9f09547",
+  "benchmarks/results/hammett/cofields_ens_boltzmann.png": "389dd35c12120b38681ee4a0ff4e21723b982d73c4e2388b11da09c5b41e39d4",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "bb60b33b23211496cf636591f9a132c20ff6e05a404c665809c27ab73f28ec5d",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "47121b2fe7aeadcc464d12b1f11909048b3544c94c3c640dfa929cd956f8c784",
+  "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "4413132583fb346a51dd01059ece6d20d8ed7190c60914c28ed6658638f0720d",
+  "benchmarks/results/hammett/cv_scatter.png": "4f54d6b368bb1c8f865e42e90f9da6bd4241e9fe17b2f0cc7ff0a28ce1a758fa",
+  "benchmarks/results/hammett/cv_scatter_ens.png": "fe1c752de5427c6f5fad709328c7e10345520d276a1d8257e4d383075673e398",
+  "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "bb250dad6e2992d4cdaca90da8f780d5bf1cfd2844e238384a47b52279b2e89b",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "f3989ab0cfdd9463ca927e5cfcb13703be4a6630329df745b216e9601a77166d",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "296b05188994b350a2d700c87113bd38ff396663f305c9bfa6a05370fc759486",
+  "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "cc652cb6883a03e94daf7285cc41ca70a8bb44904dbe8daf537a9efeaff61275",
+  "benchmarks/results/hammett/run.json": "35553dbf7f2158178f04935e22ba0d601b34379e532e4eff90682f06a9c02973",
+  "benchmarks/results/hammett/run_ens.json": "b3adacc13e4ae070a97eed6cf768384e5493d82579f810ad75d707d32ce216f6",
+  "benchmarks/results/hammett/run_ens_boltzmann.json": "80f0511d2b87dbbfd1df095b99e379412871c648decbfbd4a83af287ffaa88c7",
+  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld.json": "878e0d70eed2912cee994c5cc1c482a5c17bcaa5ca7efbe7877e8754b5adcd47",
+  "benchmarks/results/hammett/run_ens_qm_q_hirshfeld_boltzmann.json": "e68a51a1d3afac762cdde86ff4c53cfebdda46396ba2d3ed857df14c218d5254",
+  "benchmarks/results/hammett/run_qm_sym_q_hirshfeld.json": "0e32371d67944b1a68450656af38e2a42549c59dfc7c6d63a24c7e97a4562c6f",
+  "benchmarks/results/hammett/summary.csv": "6d99f4a593f0c2608f0f5dfbafbc44ecaf94894f763f4b02c77f7f33dc9ab292",
+  "benchmarks/results/hammett/summary_ens.csv": "c07b1ea33bf4de016fcaea0a542ff1d962664e666865769123a9d4cb02685583",
+  "benchmarks/results/hammett/summary_ens_boltzmann.csv": "88fab5d4e3e00b4027e95404910018fd3b7a0db746d05f5af2c33175631f1220",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "c70aae975c07e6b7c8ffd82a9c48cdee0e91897dce5878797c0acb34b3dca3e8",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "67c4075afa973a2051f38fb669430893cdd28992d8fb91ce6dae582c6520a8c7",
+  "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "e18198306a793aeb765067c52445d4cdeb5cc676abafcfe415af0f892c0eca8a",
+  "benchmarks/results/hammett/table.md": "1ff394fbb71c2bff39075d570668cc9bbbc9b2482462d3091d8c1c0e1037e68f",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
   "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",
@@ -3168,9 +3159,9 @@
   "benchmarks/results/kcca_quantum/fep__thrombin.json": "686d4002bf63cacdced353892da4bcbbdd9fc4c0cfbe5d16d42ec6772fa3702c",
   "benchmarks/results/kcca_quantum/fep__tnks2.json": "c8a77d69af937ac0ea83b892a5924531576e7f752b6e8cdd75c8e0f941b83f06",
   "benchmarks/results/kcca_quantum/fep__tnks2_fullmap.json": "60f3a1e5b915d2b2ec629db9796964d0152876141f3a6ccef6d76903ebf83333",
-  "benchmarks/results/kcca_quantum/hammett__hammett.json": "b4ba14cd050671542fa84c8f1a87c6d143f3d6261e3ed26fe54dbc008907860b",
-  "benchmarks/results/kcca_quantum/hammett__hammett_ens.json": "99e0ffe002c89408a671dde350934fdd9d305c2f58300d584b33a748e7d6ecd2",
-  "benchmarks/results/kcca_quantum/hammett__hammett_sym.json": "e835fb4d48476cebb03bbad698a5793159fdec6a19c81ffb09051e41f6e29d29",
+  "benchmarks/results/kcca_quantum/hammett__hammett.json": "7210b8221e0b68d0ab6d3145f56f9eb13c292e0d86197255ed99a37cb542db15",
+  "benchmarks/results/kcca_quantum/hammett__hammett_ens.json": "c41fff7a7d29208aca7e23093f9d6ab765fc31e3a7d09a705ddb6dbc56c06838",
+  "benchmarks/results/kcca_quantum/hammett__hammett_sym.json": "58100a9b19bdeb7e549091a2f6870498baeb999c2c8ae1f68f3c992ff21a8e2c",
   "benchmarks/results/kcca_quantum/orca__12_c1ccoc1.json": "d48f29709a8fc2c7dd3e3b4dfbbe29512f580128da775c1b6f34f106085198f5",
   "benchmarks/results/kcca_quantum/orca__13_c1c_nH_nn1.json": "cffa06358838bca4a8ed77a7559957d8c0a771d447594269efd0296a424aae69",
   "benchmarks/results/kcca_quantum/orca__161_c1ccc2scnc2c1.json": "58ab2d7ca56237f541ba64b4a0c7324b2d8201a946998565137ab7f8722a9ff5",
@@ -3183,7 +3174,7 @@
   "benchmarks/results/kcca_quantum/sutherland__GPB.json": "0974f726a168cf9b2e848aea08c61541989822ee1168d6d0c4c040866a12d1cc",
   "benchmarks/results/kcca_quantum/sutherland__THER.json": "40970ced58499734f5cf2f4e9302f0fef654e59ea72f864064b6dd553cf5422c",
   "benchmarks/results/kcca_quantum/sutherland__THR.json": "545d1dba18696d8cc85a90b725e3beb9165e4400dba17c9c70103197c8a69272",
-  "benchmarks/results/kcca_quantum/table.md": "4a979f7c5b23964ff5eab6bb60ca5b96467dc7e13b3bd0d00f93566000a2f4b3",
+  "benchmarks/results/kcca_quantum/table.md": "da7529ffb0903a628195d39f37df849700e7f8bbca73af213353191b9668cb7e",
   "benchmarks/results/kfda/gate_ESR1_ant.json": "c3f01116288dc6b764e22d60a641992d7bf68c2dd2431debd8fabe98f875eb00",
   "benchmarks/results/kfda/gate_TP53.json": "27a590ba80466b8e390d59aac604f0c46ce642d1bd296f3e8b8fdf1e42a288b3",
   "benchmarks/results/kfda/table.md": "b962461af0f06160b63ffd2c86ecbb1be71cf96ca831d49d16519c243beaa585",
@@ -3330,9 +3321,9 @@
   "benchmarks/results/nebdft/rule.md": "8093224e645ceba02c52f8b7b40757e5c24e0511d888d16b3cd8bd75d961709b",
   "benchmarks/results/nebdft/run.json": "38651b3ef78a3b5e1047e9e76bb18c84eaf3e3893cd3b3c55b3b7729753f079f",
   "benchmarks/results/nebdft/table.md": "82c50c0f8998cb08aba2e7d77dd3a224b52eddb9fbfdba6fed825a791abb001d",
-  "benchmarks/results/nonlinearity/maps.png": "6222162e4be4dbcca85183d001549fe94ba868e30f44c4e11c08dc2e03e54d4e",
-  "benchmarks/results/nonlinearity/summary.csv": "034a6115aef45a8f53271f5ac178cb248ee1e655b3c6be966812c6b6c27de9e4",
-  "benchmarks/results/nonlinearity/table.md": "fd87668ad631badbca4cf541c53da340a6a3dc3b7ad76194b7488e13e9b2ebe6",
+  "benchmarks/results/nonlinearity/maps.png": "a5b8a57f83e92f50e50e612bb3328b8fd9761f706593ef42abb3bfdc71ae74b6",
+  "benchmarks/results/nonlinearity/summary.csv": "19e83648381b5f7b58676ab16cbc95c959bb863d5389bae29c01b075dee461aa",
+  "benchmarks/results/nonlinearity/table.md": "e2e1c6085a51d3fe3b5fd2558993f67da90daeeb4ac48103c61a14523c48bbc9",
   "benchmarks/results/nystrom/rank.json": "8ae38d47f9409de0b6b76857b737e1ad9b6b0748296b1f1297e327ed79aaa4b4",
   "benchmarks/results/nystrom/select.json": "4771519914d32ee0a893e66a06f5bfdacf2d6fe3dec27fbb88780bb3f7ae6c63",
   "benchmarks/results/nystrom/table.md": "ba0427b7787242c1ce6c8e867a9bcd37c70805e0ce25a4b49abd94dfa3b60a58",
@@ -3856,14 +3847,14 @@
   "benchmarks/results/structure/THR.json": "cffb48db9ff9813d285eab50ecaa3f72c08c10b7eb571c2d9be990e5fde32081",
   "benchmarks/results/structure/power.json": "6ba17e1803acb41bf4aed4389c87b2541c8269935d6e13b3cd07144023fcb31d",
   "benchmarks/results/structure/table.md": "b83ed92793fedf864848a4766b670abf636c04df56b94e2d12b0ece03a21e102",
-  "benchmarks/results/surface_view/arrows.json": "c45165598b8923073d8cd44f2309ac30d929c2f86ded086d5f114d7208f70dc2",
-  "benchmarks/results/surface_view/bonds.json": "3d7589a0a4e0afaf87084d49b4be6bdc9e700253a1a91a90fc7259c3db7d1f7a",
-  "benchmarks/results/surface_view/copattern.json": "a5b382f01857f2043b1dff2f8c874dc07fd9a0f63da829067e847c017cd65958",
+  "benchmarks/results/surface_view/arrows.json": "15969fa124819f15f1984c5d2f693b17cb0ef9149ee6ad9740e0ab880306156a",
+  "benchmarks/results/surface_view/bonds.json": "456da232f6a238d4a275067ef967918eb4f602da86a6347ea3a6e192e7fdea97",
+  "benchmarks/results/surface_view/copattern.json": "408461633ed2392d9cf0464caf97ded1c086480e9bf3e5ef2db541bdfe6cf366",
   "benchmarks/results/surface_view/frame.json": "67ceef29b4aab31994495c5ad3fe11442e36696984100bfc2ef8653a8f826e01",
-  "benchmarks/results/surface_view/log.txt": "6997ae193e1f53bbc8cda02a2d5bb91973ef738efe5d476c66fbf0f566a730cb",
-  "benchmarks/results/surface_view/run.json": "82fce5d96badc80964ce9f41e6095206cc590a057b21d6a4dbf89c1f7f68e57b",
-  "benchmarks/results/surface_view/slab.json": "7597b1caf7dc7d14fa8f3d479899146a68e0e79bb652a632cdd0a88c7bd81eab",
-  "benchmarks/results/surface_view/table.md": "e6367167e9fffca5d74e3d8ce940fcdcb55702297653da75bc5a2933218aba36",
+  "benchmarks/results/surface_view/log.txt": "5e92bd1d1f87fc9bd1ad1741ba35e40f8a0669740249840a477eb6b9ae7ae7ed",
+  "benchmarks/results/surface_view/run.json": "e1e66c130cf9bcf08f95f2acd5b10d3cc9e29540faeae76950fdc38fc830d265",
+  "benchmarks/results/surface_view/slab.json": "b299bd6d0eb2f544440b0083aa5513a0bcac964cc4b80298f4602501f7242c60",
+  "benchmarks/results/surface_view/table.md": "f4376ea0ad665668c8a1a619e4d6171ff733f3f7c28e5b7baf177817d82f427c",
   "benchmarks/results/surrogate/ACE.json": "bfeb30d64cf8e44cf4b811e2240f603b71c6b8b10bc705c5b5973f191f97d4b6",
   "benchmarks/results/surrogate/AChE.json": "f8ea5bc921a97420d7541bec015fa8fb45a29d45ab48865ea291548d5f42c6b2",
   "benchmarks/results/surrogate/BZR.json": "7421dcd8e51881fbf3942d6960732f6d2f41e462854e8f34e8ed2c8958b0d8ae",
@@ -4064,9 +4055,9 @@
   "benchmarks/results/xtb/sets/fep__tnks2.json": "4a0f6ebf2115c7af56caf860d2d44c389adb6613956a00d55cbc1d4b121e8e35",
   "benchmarks/results/xtb/sets/fep__tnks2_fullmap.json": "feb208dd14ec77c78ede4d91b43879504a801ab4fc20e4b1c68c8ef76d04d0a6",
   "benchmarks/results/xtb/sets/fep__tyk2.json": "b99971f3a52591f221c52c14b6ddcc8c83d242794b6000e36e47e8860d9a175e",
-  "benchmarks/results/xtb/sets/hammett__hammett.json": "b90028bf7851f6116e2f32df598fd5773a2eea4df54a6bcced7c1f1b4fc0819e",
-  "benchmarks/results/xtb/sets/hammett__hammett_ens.json": "91d1f0da1601e0075e5a403f49ab48d11e4a50fbdcc60f046574b11ad7b16587",
-  "benchmarks/results/xtb/sets/hammett__hammett_sym.json": "6993e2682bca12db681f9c5fefd311934ca46170f1128f602bf630dfe20c8f8b",
+  "benchmarks/results/xtb/sets/hammett__hammett.json": "10e6d3adc061f804318f3bede95d06f37e72a3cb0a0982b6d3a15c4aa5caf4e1",
+  "benchmarks/results/xtb/sets/hammett__hammett_ens.json": "8a57beb9343dcdc27858d8ef37e5621c809eeb2a2441930afda762d625e0649b",
+  "benchmarks/results/xtb/sets/hammett__hammett_sym.json": "6adad0e4de18f6d32304e120977e5f9330a059dd6a341ce95c3318f05cfe95c3",
   "benchmarks/results/xtb/sets/sutherland__ACE.json": "def438af829aa6df84f7e861cabe06750d0cbcc977d3e01c0fd702072a10865f",
   "benchmarks/results/xtb/sets/sutherland__AChE.json": "30ee02958b897e1848fcb92724f8ea850af9dc8db7a5eb3f9a22c2133bf5534d",
   "benchmarks/results/xtb/sets/sutherland__BZR.json": "ff87fc2b228100babfbaf2c6b95d752d08dfd47186db868eb0272b8a7b66553d",
@@ -4075,6 +4066,6 @@
   "benchmarks/results/xtb/sets/sutherland__GPB.json": "b460caf04c8359e4c372cc19bf2b55df66e03ae500bb679f9a9d5dabe7111d4d",
   "benchmarks/results/xtb/sets/sutherland__THER.json": "25c7b145283ca63091dfa3219ebb60081272808efcb052ad54d0e17fe39b19ff",
   "benchmarks/results/xtb/sets/sutherland__THR.json": "3d2dd907c78c790c5dec6052e48f694a0580a38c9e1a17eaef6908a19443b9d2",
-  "benchmarks/results/xtb/table.md": "35b03d0b1c3b9f5ff39cb4e3d150a01feeb2768fda5cf42e153f437b52778288"
+  "benchmarks/results/xtb/table.md": "e7b6b67fbdf0a8f56af119c2cb8f5b1101623cae574fd84b1d2a19c372c225be"
  }
 }

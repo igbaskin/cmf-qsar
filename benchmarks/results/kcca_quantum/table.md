@@ -18,14 +18,14 @@ Over 4 series: 70 % of the canonical pairs hold out above the shuffled pairing, 
 
 | series | n | α | mean ρ | real | contained | q² quantum | q² contained | q² quantum's own | own − contained [95 %] | q² empirical | q² empirical's own |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|
-| hammett_ens | 464 | 2 | +0.437 | 267/281 | 48/318 | +0.630 | +0.559 | +0.423 | -0.136 [-0.215, -0.066] | +0.893 | +0.870 |
-| hammett_sym | 380 | 2 | +0.449 | 207/221 | 37/246 | +0.601 | +0.342 | +0.428 | +0.085 [+0.003, +0.156] | +0.860 | +0.820 |
+| hammett_ens | 464 | 2 | +0.440 | 264/280 | 44/316 | +0.663 | +0.640 | +0.419 | -0.221 [-0.313, -0.140] | +0.896 | +0.866 |
+| hammett_sym | 380 | 2 | +0.446 | 205/221 | 37/244 | +0.633 | +0.421 | +0.403 | -0.018 [-0.124, +0.082] | +0.843 | +0.799 |
 | DHFR | 361 | 2 | +0.502 | 277/288 | 82/360 | +0.683 | +0.631 | +0.561 | -0.070 [-0.127, -0.014] | +0.639 | +0.579 |
 | COX2 | 282 | 2 | +0.439 | 195/225 | 37/280 | +0.380 | +0.436 | +0.338 | -0.098 [-0.166, -0.037] | +0.520 | +0.503 |
 | BZR | 147 | 2 | +0.578 | 112/117 | 43/146 | +0.238 | +0.250 | +0.086 | -0.163 [-0.285, -0.051] | +0.394 | +0.185 |
 | ACE | 114 | 1 | +0.490 | 83/90 | 25/112 | +0.706 | +0.628 | +0.586 | -0.042 [-0.140, +0.050] | +0.538 | +0.456 |
 | AChE | 111 | 2 | +0.563 | 82/88 | 29/110 | +0.537 | +0.445 | +0.098 | -0.347 [-0.551, -0.084] | +0.535 | +0.035 |
-| hammett | 95 | 1 | +0.253 | 42/75 | 4/94 | +0.044 | +0.171 | -0.004 | -0.175 [-0.623, +0.129] | +0.599 | +0.626 |
+| hammett | 95 | 1 | +0.248 | 47/75 | 3/94 | +0.042 | +0.165 | -0.004 | -0.168 [-0.635, +0.144] | +0.584 | +0.656 |
 | THR | 88 | 0.5 | +0.526 | 59/70 | 23/87 | +0.413 | +0.381 | +0.028 | -0.353 [-0.521, -0.186] | +0.593 | +0.279 |
 | pfkfb3_automap | 87 | 2 | +0.554 | 63/69 | 23/84 | +0.531 | +0.398 | +0.173 | -0.225 [-0.374, -0.086] | +0.457 | -0.017 |
 | THER | 75 | 1 | +0.580 | 55/59 | 21/74 | +0.337 | +0.454 | +0.132 | -0.322 [-0.474, -0.193] | +0.337 | +0.133 |
@@ -67,9 +67,9 @@ Over 4 series: 70 % of the canonical pairs hold out above the shuffled pairing, 
 | pde2 | 21 | 2 | +0.406 | 7/16 | 4/20 | +0.355 | +0.382 | -0.176 | -0.558 [-0.982, -0.069] | +0.347 | -0.169 |
 | hne | 20 | 0.5 | +0.518 | 9/15 | 2/19 | +0.635 | -0.039 | +0.191 | +0.230 [-0.667, +0.560] | +0.226 | +0.210 |
 | p2y1_meta_sub | 20 | 0.5 | +0.494 | 8/15 | 3/19 | -0.255 | -0.478 | -0.223 | +0.255 [-0.439, +1.560] | -0.197 | -0.152 |
-| **mean** |  |  |  |  |  | **+0.272** | **+0.181** | **-0.058** | **-0.239** | **+0.364** | **+0.090** |
+| **mean** |  |  |  |  |  | **+0.273** | **+0.184** | **-0.058** | **-0.243** | **+0.363** | **+0.090** |
 
-Over 49 series: 78 % of the canonical pairs hold out above the shuffled pairing, and the empirical view contains 23 % of the quantum view's directions on average. The quantum view's own part predicts the activity at q² **-0.058** on average against **+0.181** for its contained part and **+0.272** for the whole quantum view; the difference (own minus contained) is **-0.239**, with its interval above zero on 3 and below zero on 20 of the 49 series. The empirical view alone reaches **+0.364**, and its own part relative to the quantum view **+0.090**.
+Over 49 series: 78 % of the canonical pairs hold out above the shuffled pairing, and the empirical view contains 23 % of the quantum view's directions on average. The quantum view's own part predicts the activity at q² **-0.058** on average against **+0.184** for its contained part and **+0.273** for the whole quantum view; the difference (own minus contained) is **-0.243**, with its interval above zero on 2 and below zero on 20 of the 49 series. The empirical view alone reaches **+0.363**, and its own part relative to the quantum view **+0.090**.
 
 ## Verdict
 
