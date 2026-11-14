@@ -8543,7 +8543,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The ninth tutorial, `docs/tutorials/09_on_a_surface.ipynb`, makes
+this program adds to it yet. The tenth tutorial, `docs/tutorials/10_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11531,7 +11531,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The tenth tutorial, `docs/tutorials/10_a_spectrum_as_the_sample.ipynb`, runs the central part
+The ninth tutorial, `docs/tutorials/09_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -15995,10 +15995,10 @@ that say how far a prediction can be trusted, two endpoints with their selectivi
 a library against a model of one series, the diagnosis of a data set before any model is
 built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
-frame of their reaction centre, with the enantioselectivity as the activity, molecules
-adsorbed on a metal surface, read with the surface kernel and compared with a count of the
-atoms near the metal, the infrared spectra of benzoic acids as the samples, read with the
-kernel of spectra and compared with the position of one band, the hops of a lithium ion in
+frame of their reaction centre, with the enantioselectivity as the activity, the infrared
+spectra of benzoic acids as the samples, read with the kernel of spectra and compared with
+the position of one band, molecules adsorbed on a metal surface, read with the surface
+kernel and compared with a count of the atoms near the metal, the hops of a lithium ion in
 crystals, with the barrier of a hop read from the
 environment of its path, and mixtures, with the amounts of the components read from one
 spectrum. Each runs on the
