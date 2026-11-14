@@ -1,6 +1,6 @@
 {
- "commit": "9faa578a26551f9960c7f829e1413064eabc2791",
- "created": "2026-11-15T00:45:06",
+ "commit": "f4ac7dc3936c1eea5c03725b6c8b3fcdc829c088",
+ "created": "2026-11-15T01:24:14",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2575,7 +2575,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2885,6 +2885,8 @@
   "benchmarks/results/compas/splits_2D.json": "4643519c7dac99492ce74b97280c558f38fdceb9a2543bc1bc7cf666188ee225",
   "benchmarks/results/compas/splits_3D.json": "f08bbda89fa90fb7d48eec2bd11eaf260ad87194213da35e0489b60c81523f20",
   "benchmarks/results/compas/table.md": "ef25c86d6e94954a11563136e3331549e728bb3fc69611213f317ead231aaf86",
+  "benchmarks/results/conductivity/conductivity.json": "580138d0d055ed0d77c33f906c71e69a884ebf6e08c30bceedd3a0aee95e6e45",
+  "benchmarks/results/conductivity/table.md": "4733f52b4e6a142d06f6df326b54c8e694d8f34d6a9490ce0a5c3cde6ef16bae",
   "benchmarks/results/conductors/conductors.json": "a38b0de2be5c8324e6fb450b8ef76fe48f01cef62a86dc4767256a00089b04e4",
   "benchmarks/results/conductors/table.md": "7b54fdf59e763ed0df2759bb8954fcd4836c622119d4f6c47fe49d5ff331979b",
   "benchmarks/results/conformal/ACE.json": "75eac2cad3d45ddfc6fe4aa18148fd42d5ad98ed9bfdd71e9409fb5b3b8dcd81",
