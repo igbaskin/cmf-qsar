@@ -3477,7 +3477,7 @@ python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py;
 ```
 
 **A transport coefficient from a simulated electrolyte**
-([run_diffusion.py](benchmarks/run_diffusion.py), plan item BT9, first part). A cell model reads
+([run_diffusion.py](benchmarks/run_diffusion.py), plan item BT9, partly done). A cell model reads
 the salt diffusion coefficient of its electrolyte, and measured values exist for a few solvent
 mixtures only, so a label for a model has to come from simulation. `cmfqsar/transport.py` runs
 a box for transport (constant volume, a thermostat that conserves momentum, unwrapped molecule
@@ -3500,9 +3500,23 @@ for it:
 - The error over blocks had to be corrected before anything was measured. Fitting each block in
   a shorter window of its own understated the true scatter by a factor of three on random
   walks.
+- Over the range of concentrations of the measured study, 0.1 to 3.0 mol/L, the simulated
+  coefficient does not agree with the measured one within 10 %, which was the gate. With a
+  factor of 0.7 on the charges and runs of 4 ns its ratio to the measured coefficient rises
+  from 0.35 to 1.61. Two runs of 20 ns show that the short runs overstate it by a factor of
+  1.06 near 1 mol/L and of 1.53 at 3 mol/L. Corrected for that, the ratio is within 10 % at
+  four of six concentrations. The correction for the size of the box acts in the other
+  direction, and with both corrections it is within 10 % at one or two of six.
+- The conductivity of the same runs is 0.59 to 1.02 of the measured one, with no trend over
+  the concentration.
+- The reference cell tolerates the simulated coefficient at room temperature: with it in
+  place of the measured one, the discharge capacity changes by 0.6 % or less up to twice the
+  one-hour rate, and by -2.3 % to +1.4 % at 2.5 times that rate with both corrections. No box
+  was simulated in the cold, where the cell needs the coefficient within 4 to 10 %.
 
 ```bash
-python benchmarks/run_diffusion.py --stage analyse    # 5 minutes, after the simulations; needs pybamm
+python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm
+python benchmarks/run_diffusion.py --stage cell       # 1 minute; the series in the cell model
 ```
 
 ### A single-atom site as the sample: two reactions on one metal

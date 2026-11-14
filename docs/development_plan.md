@@ -5445,11 +5445,80 @@ concentration was driven, and the stage counts only discharges that ended at the
   given as it is. And the size puzzle was first blamed on a difference between runs that the
   blocks could not see; the repeats measured that difference and it is a factor of 1.4, so
   the explanation was wrong and the puzzle is real.
-  *Next, in this order:* the range of concentrations at a factor of 0.7, with a repeat of
-  each, which decides gate (a); then the conductivity of a part of the 62 formulations at the
-  same factor, which is rule 2's test of the calibration; then the 62 formulations; then
-  the model of gate (b). A longer run of one box (20 ns) says how much the short window
-  overstates.
+  **The range of concentrations, measured 14 November 2026: gate (a) is not met**
+  (`CONCENTRATION_RUNS`, `LONG_RUNS` and the stage `cell` of `benchmarks/run_diffusion.py`;
+  26 tests in `tests/test_diffusion_runs.py`; the manual under *The range of
+  concentrations*). The six base concentrations of the measured study, 0.1 to 3.0 mol/L,
+  were simulated at 298 K with a factor of 0.7 on the charges of the ions, in a box of 1,000
+  solvent molecules, for 4 ns and from two starts each. Two of the boxes were also run for
+  20 ns.
+  *The uncertainty the study states.* Landesfeind and Gasteiger give no single number. Their
+  error bars are the scatter of two cells with two pulses each and leave out the systematic
+  error of building a cell. A repeat was up to 10 % lower, which they call inside the
+  uncertainty of the measurement, and their fitted function has a coefficient of
+  determination of 0.978. The gate was read with 10 %, fixed before the series was analysed.
+
+  | Concentration, mol/L | Ratio to the measured coefficient, runs of 4 ns | Corrected for the length of the run | With the correction for the size of the box as well | Conductivity, ratio to the measured |
+  | ---: | --- | ---: | --- | ---: |
+  | 0.10 | 0.35 +/- 0.03 | 0.35 | 0.38 to 0.47 | 0.84 |
+  | 0.49 | 0.75 +/- 0.02 | 0.72 | 0.78 to 0.97 | 0.99 |
+  | 1.13 | 1.14 +/- 0.01 | 1.07 | 1.16 to 1.45 | 0.74 |
+  | 1.49 | 1.15 +/- 0.04 | 0.98 | 1.07 to 1.33 | 0.59 |
+  | 1.98 | 1.24 +/- 0.02 | 0.99 | 1.07 to 1.33 | 1.02 |
+  | 2.97 | 1.61 +/- 0.12 | 1.06 | 1.14 to 1.42 | 0.79 |
+
+  *The reading.* As run, the ratio is within 10 % at none of the six concentrations and
+  rises from 0.35 to 1.61. The rise above 1 mol/L is an effect of the short runs. The runs
+  of 20 ns give a coefficient that is 1.06 times lower at 1.13 mol/L and 1.53 times lower at
+  2.97 mol/L, where the exponent of the cation is 0.56 in the window of a 4 ns run and still
+  0.71 in that of the 20 ns run. With that correction, estimated from the exponent for the
+  other four concentrations, the ratio is within 10 % at four of six. The correction for the
+  size of the box acts in the other direction, and with both the ratio is within 10 % at
+  one or two of six. So gate (a) is not met under any reading.
+  *The lowest concentration.* At 0.1 mol/L the ratio is 0.35 to 0.47 under every reading.
+  Faster ions cannot close this difference: the measured coefficient divided by the measured
+  thermodynamic factor is 9.4e-10 m2/s there, and the solvent of the same box diffuses at
+  5.1e-10 to 5.6e-10 m2/s. The difference lies in the ideal-solution formula or in the two
+  measured functions at the lower end of their range, and this program cannot say in which.
+  *The box at a factor of 0.7.* All four species are faster in the box of 1,000 solvent
+  molecules than in the box of 250, by 7 to 18 %. This is what the correction of Yeh and
+  Hummer predicts and what the size runs at 0.8 did not show. The difference corresponds to
+  a viscosity of 3.4 mPa s and leaves a correction of +26 % for the box of the series,
+  inside the range of +8 % to +35 %. The smaller box was run once.
+  *The conductivity* is 0.59 to 1.02 of the measured one, 0.83 on average, with no trend, so
+  one factor on the charges gives its level over a 30-fold range of concentration. Two
+  starts of 4 ns do not determine it: 0.746 and 0.479 S/m at 1.98 mol/L. The 20 ns run at
+  2.97 mol/L gives 0.58 of the measured one where the short runs gave 0.79. Above 1 mol/L
+  the diffusion coefficient with both corrections is on the high side and the conductivity
+  on the low side, so no factor on the charges repairs both.
+  *What the difference costs in the cell* (stage `cell`). The reference cell was discharged
+  at 298 K with the measured coefficient multiplied by the ratio of the series, in six
+  versions: as run and corrected for the length, each without the size correction and with
+  both ends of its range. Up to 2C the capacity changes by 0.6 % or less in every version.
+  At 2.5C it changes by -1.3 % as run, by -9.4 % with the length correction alone, and by
+  -2.3 % to +1.4 % with both corrections. The tolerance is 5 %. So a coefficient that fails
+  gate (a) is good enough for this cell at room temperature up to 2C, and at 2.5C once the
+  size correction is applied. The reason is the one-sided tolerance of rule 1. Nothing was
+  run in the cold, where the cell needs 4 to 10 %.
+  *The gate is not changed.* It is recorded as not met. The cell reading says that it asks
+  for more than a cell at room temperature needs, and for less than a cold cell needs.
+  *A second measurement.* PyBaMM also ships the functions of Nyman and others (2008) for
+  this electrolyte. They are 0.56 of those of Landesfeind and Gasteiger at 1.13 mol/L and
+  0.28 at 1.98 mol/L, although the later paper calls the earlier values slightly higher. The
+  paper of Nyman was not read, and the difference is recorded and not used.
+  *The cost.* The twelve boxes of 4 ns took 3.2 hours with their equilibration, about 15
+  minutes each on the card alone (364 to 406 ns/day for 13,400 to 15,900 atoms). The two
+  runs of 20 ns took 2.9 hours. A run of 4 ns is too short above about 1.5 mol/L.
+  *What writing it found.* The first run of the cell stage used the 4 ns ratios only and
+  said that the cell tolerates the coefficient at all four rates. The long runs lowered the
+  ratios at the high concentrations, and without the size correction the cell then loses
+  9.4 % at 2.5C. The length of the run and the size of the box change a coefficient in
+  opposite directions, so a reading that applies one of them alone is not a result.
+  *Next, in this order:* the conductivity of a part of the 62 formulations at the same
+  factor, which is rule 2's test of the calibration on other solvents, with runs of 20 ns
+  where the exponent is below about 0.8; then the 62 formulations; then the model of gate
+  (b). The thermodynamic factor of BT11 is needed before a label for an electrolyte without
+  a measured factor can be made.
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated

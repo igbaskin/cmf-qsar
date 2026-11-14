@@ -358,6 +358,12 @@
   "thermodynamic_factor": 2.351808144883762,
   "source": "ORegan2022 in PyBaMM: Landesfeind and Gasteiger (2019)"
  },
+ "second_measured": {
+  "conductivity": 0.9367471590938106,
+  "diffusivity": 1.5304479912051164e-10,
+  "inside": true,
+  "source": "Chen2020 in PyBaMM: Nyman, Behm and Lindbergh (2008)"
+ },
  "calisol_conductivity": 0.8826733207212579,
  "salt_ideal": 7.5498323805489e-11,
  "salt_with_factor": 1.7755757285082063e-10,

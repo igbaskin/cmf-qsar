@@ -583,14 +583,16 @@ def registry() -> List[Benchmark]:
                   "the salt diffusion coefficient of the reference cell's electrolyte from "
                   "simulation, against the measured coefficient and conductivity and against "
                   "what the cell tolerates: three factors on the charges of the ions, four "
-                  "sizes of the box and three repeats of one box (the boxes are simulated by "
-                  "the prepare step and are not in the repository; the analysis reads their "
-                  "stored centres from benchmarks/cache/transport and needs pybamm for the "
-                  "measured functions)",
+                  "sizes of the box and three repeats of one box; then the six concentrations "
+                  "of the measured study from two starts each, two runs of 20 ns, and the "
+                  "reference cell discharged with the simulated coefficient (the boxes are "
+                  "simulated by the prepare step and are not in the repository; the analysis "
+                  "reads their stored centres from benchmarks/cache/transport and needs pybamm "
+                  "for the measured functions and for the cell)",
                   "run_diffusion.py", "diffusion",
-                  compute=[["--stage", "analyse"]], needs="pybamm",
+                  compute=[["--stage", "analyse"], ["--stage", "cell"]], needs="pybamm",
                   prepare=["run_diffusion.py --stage simulate"],
-                  minutes="5",
+                  minutes="10",
                   report=lambda: _mod("run_diffusion").report(),
                   tables=["diffusion/table.md"]),
         Benchmark("phenazine",

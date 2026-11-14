@@ -42,6 +42,21 @@ differ in one setting each, and :data:`RUNS` lists them.
   measure it.
   A periodic box makes every diffusion coefficient too small by an amount that falls with the
   side of the box, so three sizes give the coefficient of an infinite box and the viscosity.
+* ``conc_c0p1`` to ``conc_c3p0``, and the same names with ``_seed2``: the concentration series
+  of gate (a). The measured study has six base concentrations from 0.1 to 3.0 mol/L. Each is
+  simulated in a box of 1,000 solvent molecules with the charges of the ions multiplied by
+  0.7, and each box is packed and started twice. :data:`CONCENTRATIONS` holds the molalities
+  that give those concentrations.
+* ``conc_c1p1_long`` and ``conc_c3p0_long``: two boxes of the series run for 20 ns in place of
+  4 ns. They say how much a short run overstates a coefficient.
+
+The cell stage
+--------------
+Gate (a) compares two coefficients, and the cell stage asks what their difference costs. The
+reference cell of ``run_cellmodel.py`` is discharged at 298 K and four rates with the measured
+electrolyte, and again with the measured salt diffusion coefficient multiplied by the ratio
+that the series found at each concentration. The change of the capacity is compared with the
+5 % that the tolerance stage allows.
 
 What is compared
 ----------------
@@ -57,6 +72,7 @@ Usage
 -----
     python benchmarks/run_diffusion.py --stage simulate    # needs the md environment and a GPU
     python benchmarks/run_diffusion.py --stage analyse     # numpy only; PyBaMM for the reference
+    python benchmarks/run_diffusion.py --stage cell        # the series in the cell model; PyBaMM
     python benchmarks/run_diffusion.py --report
 
 The simulation stage is run inside the environment that has OpenMM with a GPU platform, packmol
@@ -92,6 +108,17 @@ ELECTROLYTE_ID = "LiPF6_EC30_EMC70_m1p110"
 ROOM = 298.15
 #: the published set that holds the measured functions of this electrolyte
 MEASURED = "ORegan2022"
+#: a second published set for the same electrolyte: its diffusion coefficient and conductivity
+#: are the functions of Nyman, Behm and Lindbergh (2008), measured at 298 K only and between
+#: 0.2 and 2 mol/L
+SECOND_MEASURED = "Chen2020"
+SECOND_RANGE = (0.2, 2.0)
+#: the only number the measured study gives for the uncertainty of its diffusion coefficient. Its
+#: error bars are the scatter of two cells with two pulses each, and the authors write that
+#: these do not include the systematic error of building a cell. They report that a repeat at
+#: the end of a temperature cycle was up to 10 % lower and that this is inside the uncertainty
+#: of the measurement. Gate (a) is read with this number. It was fixed before the series ran.
+STUDY_UNCERTAINTY = 0.10
 
 #: the runs: what each one changes from the defaults of ``TransportSettings``
 RUNS: Dict[str, Dict[str, object]] = {
@@ -111,6 +138,39 @@ RUNS: Dict[str, Dict[str, object]] = {
     "scaled_huge": {"label": "scaled charges, four times as many molecules",
                     "settings": {"ion_charge_scale": 0.8, "n_solvent": 1000}},
 }
+#: the concentration series of gate (a): the six salt concentrations of the measured study
+#: (0.1, 0.5, 1.0, 1.5, 2.0 and 3.0 mol/L) as the molality that gives about each of them. The
+#: third is the molality of the reference cell, so that it joins the other runs. The measured
+#: functions are read at the concentration the box really has, so these need not be exact.
+CONCENTRATIONS: Dict[str, float] = {"c0p1": 0.092, "c0p5": 0.47, "c1p1": MOLALITY,
+                                    "c1p5": 1.50, "c2p0": 2.07, "c3p0": 3.32}
+#: the factor on the charges of the ions and the number of solvent molecules of the series: what
+#: the first part of the item chose
+SERIES_SETTINGS = {"ion_charge_scale": 0.7, "n_solvent": 1000}
+for _key, _molality in CONCENTRATIONS.items():
+    RUNS[f"conc_{_key}"] = {
+        "label": f"{_molality:g} mol/kg, charges multiplied by 0.7, 1,000 solvent molecules",
+        "molality": _molality, "settings": dict(SERIES_SETTINGS)}
+    RUNS[f"conc_{_key}_seed2"] = {
+        "label": f"{_molality:g} mol/kg, a second start",
+        "molality": _molality, "settings": dict(SERIES_SETTINGS, seed=2)}
+#: the runs of the concentration series, by concentration: the first start and its repeat
+CONCENTRATION_RUNS: Dict[str, tuple] = {k: (f"conc_{k}", f"conc_{k}_seed2")
+                                        for k in CONCENTRATIONS}
+#: two boxes of the series run five times as long, with the centres stored every 2 ps. In a
+#: short run the fit sits where the molecules have not all left their cages, and the long run
+#: says how much the short one overstates. One is the concentration of the reference cell and
+#: the other the highest concentration, where the short run is furthest from diffusion.
+LONG_RUNS: Dict[str, str] = {"c1p1": "conc_c1p1_long", "c3p0": "conc_c3p0_long"}
+for _key, _name in LONG_RUNS.items():
+    RUNS[_name] = {
+        "label": f"{CONCENTRATIONS[_key]:g} mol/kg, 20 ns",
+        "molality": CONCENTRATIONS[_key],
+        "settings": dict(SERIES_SETTINGS, production_ps=20000.0, sample_ps=2.0)}
+#: the smaller box that has the charge factor and the concentration of one box of the series,
+#: and the key of that box of the series: two sizes at the factor that the series uses
+PAIR_SMALL = "scaled_07"
+PAIR_KEY = "c1p1"
 #: the runs that differ only in the size of the box, from which the correction for a finite box
 #: is read
 SIZE_RUNS = ("scaled_small", "scaled", "scaled_large", "scaled_huge")
@@ -118,21 +178,30 @@ SIZE_RUNS = ("scaled_small", "scaled", "scaled_large", "scaled_huge")
 #: scatter is the error that the blocks of one run cannot see
 REPEATS = ("scaled", "scaled_seed2", "scaled_seed3")
 #: the lengths, in picoseconds, at which one run is read to see how its error falls
-LENGTHS = (500.0, 1000.0, 2000.0, 4000.0)
-STAGES = ("simulate", "analyse")
+LENGTHS = (500.0, 1000.0, 2000.0, 4000.0, 10000.0, 20000.0)
+STAGES = ("simulate", "analyse", "cell")
+#: the share of the capacity that the cell may move by, as in the tolerance stage
+CELL_SHARE = 0.05
 
 
 def log(msg: str) -> None:
     print(msg, flush=True)
 
 
+def molality_of(name: str) -> float:
+    """Moles of salt per kilogram of solvent in one run."""
+    return float(RUNS.get(name, {}).get("molality", MOLALITY))
+
+
 def run_dir(name: str, cache: str = CACHE) -> str:
-    return os.path.join(cache, f"{ELECTROLYTE_ID}_{name}")
+    # the same name as Formulation.label() gives, so a box says which electrolyte it holds
+    stem = ELECTROLYTE_ID.rsplit("_m", 1)[0]
+    return os.path.join(cache, f"{stem}_m{molality_of(name):.3f}".replace(".", "p") + f"_{name}")
 
 
-def formulation(temperature: float = ROOM):
+def formulation(temperature: float = ROOM, molality: float = MOLALITY):
     from cmfqsar.electrolyte import Formulation
-    return Formulation(SALT, dict(SOLVENTS), MOLALITY, temperature=temperature)
+    return Formulation(SALT, dict(SOLVENTS), molality, temperature=temperature)
 
 
 def settings_of(name: str):
@@ -152,7 +221,8 @@ def stage_simulate(names: Sequence[str], cache: str = CACHE) -> None:
         s = settings_of(name)
         t0 = time.time()
         done = os.path.isfile(os.path.join(run_dir(name, cache), "run.json"))
-        run = run_transport(formulation(s.temperature), run_dir(name, cache), s, progress=log)
+        run = run_transport(formulation(s.temperature, molality_of(name)), run_dir(name, cache), s,
+                            progress=log)
         log(f"{name}: {run['atoms']} atoms, {run['pairs']} ion pairs, side {run['side']:.2f} A, "
             f"density {run['density']:.3f} g/cm3, {run['molarity']:.3f} mol/L, "
             f"{run['production_ps']:.0f} ps at {run['ns_per_day']:.0f} ns/day"
@@ -187,6 +257,24 @@ def measured_reference(molarity: float, temperature: float) -> Dict[str, float]:
             "transference": RC.electrolyte_value(four[RC.TRANSFERENCE], temperature, c),
             "thermodynamic_factor": RC.electrolyte_value(four[RC.THERMODYNAMIC], temperature, c),
             "source": f"{MEASURED} in PyBaMM: Landesfeind and Gasteiger (2019)"}
+
+
+def second_reference(molarity: float, temperature: float) -> Optional[Dict[str, float]]:
+    """The diffusion coefficient and the conductivity of this electrolyte as Nyman, Behm and
+    Lindbergh (2008) measured them, from the functions PyBaMM ships. None away from 298 K,
+    where that study has no measurement. `inside` says whether the concentration is one the
+    study covered."""
+    if abs(float(temperature) - ROOM) > 1.0:
+        return None
+    import run_cellmodel as RC
+    from cmfqsar import cellmodel as CM
+
+    four = CM.measured_electrolyte(source=SECOND_MEASURED, coldest=None)
+    c = 1000.0 * float(molarity)
+    return {"conductivity": RC.electrolyte_value(four[RC.CONDUCTIVITY], temperature, c),
+            "diffusivity": RC.electrolyte_value(four[RC.DIFFUSIVITY], temperature, c),
+            "inside": bool(SECOND_RANGE[0] <= float(molarity) <= SECOND_RANGE[1]),
+            "source": f"{SECOND_MEASURED} in PyBaMM: Nyman, Behm and Lindbergh (2008)"}
 
 
 def calisol_conductivity() -> Optional[float]:
@@ -227,6 +315,7 @@ def analyse_run(name: str, cache: str = CACHE) -> dict:
            "mean_kinetic_temperature": run["mean_kinetic_temperature"],
            "ns_per_day": run["ns_per_day"], "seconds": run["seconds"],
            "whole": whole, "lengths": lengths, "measured": ref,
+           "second_measured": second_reference(whole["molarity"], float(run["temperature"])),
            "calisol_conductivity": calisol_conductivity(),
            "salt_ideal": whole["salt"], "salt_with_factor": whole["salt"] * factor,
            "ratio_ideal": whole["salt"] / ref["diffusivity"],
@@ -461,6 +550,639 @@ def bracket_lines(whole: dict, rest: dict, limits: Sequence[Dict[str, float]]) -
     return out
 
 
+def _pair(values: Sequence[float], single_error: float = float("nan")) -> List[float]:
+    """The mean of the starts of one box and its standard error. For two starts the standard
+    error of the mean is half their difference. One start has the error given, or none."""
+    v = np.array(values, float)
+    if len(v) > 1:
+        return [float(v.mean()), float(np.std(v, ddof=1) / np.sqrt(len(v)))]
+    return [float(v[0]), float(single_error)]
+
+
+def concentration_study(rows: Sequence[dict],
+                        uncertainty: float = STUDY_UNCERTAINTY) -> Optional[dict]:
+    """The concentration series: the simulated electrolyte against the measured one at every
+    concentration that was run (gate (a) of plan item BT9).
+
+    Uses the runs of :data:`CONCENTRATION_RUNS` among `rows`; returns None when there is none.
+    Every concentration enters with the mean over its starts. `inside` says whether the salt
+    diffusion coefficient, with the measured thermodynamic factor, is within `uncertainty` of
+    the measured one; `inside_with_error` says whether the mean plus or minus two standard
+    errors reaches that band, and is None where one start gives no error. `decided` is True
+    when every concentration of the series was run with at least two starts.
+    """
+    by_run = {r["run"]: r for r in rows}
+    points = []
+    for key, names in CONCENTRATION_RUNS.items():
+        runs = [by_run[n] for n in names if n in by_run]
+        if not runs:
+            continue
+        m = runs[0]["measured"]
+        molarity = float(np.mean([r["molarity"] for r in runs]))
+        # the two starts of one box differ in concentration by less than the last digit
+        # shown, so the measured values of the first start stand for both
+        ratio = _pair([r["ratio_with_factor"] for r in runs])
+        point = {
+            "key": key, "runs": [r["run"] for r in runs], "starts": len(runs),
+            "molality": molality_of(names[0]), "molarity": molarity,
+            "pairs": int(runs[0]["pairs"]),
+            "cation": _pair([r["whole"]["cation"]["d"] for r in runs],
+                            runs[0]["whole"]["cation"]["se"]),
+            "anion": _pair([r["whole"]["anion"]["d"] for r in runs],
+                           runs[0]["whole"]["anion"]["se"]),
+            "exponent": float(np.mean([r["whole"]["cation"]["exponent"] for r in runs])),
+            "salt_ideal": _pair([r["salt_ideal"] for r in runs]),
+            "salt_with_factor": _pair([r["salt_with_factor"] for r in runs]),
+            "ratio_ideal": _pair([r["ratio_ideal"] for r in runs]),
+            "ratio_with_factor": ratio,
+            "conductivity": _pair([r["whole"]["conductivity"]["sigma"] for r in runs],
+                                  runs[0]["whole"]["conductivity"]["se"]),
+            "nernst_einstein": _pair([r["whole"]["nernst_einstein"] for r in runs]),
+            "ionicity": _pair([r["whole"]["ionicity"] for r in runs]),
+            "transport_number": _pair([r["whole"]["transport_number"] for r in runs]),
+            "measured": {k: float(m[k]) for k in ("diffusivity", "conductivity", "transference",
+                                                  "thermodynamic_factor")},
+            "second": runs[0].get("second_measured"),
+        }
+        point["ratio_conductivity"] = point["conductivity"][0] / point["measured"]["conductivity"]
+        point["inside"] = bool(abs(ratio[0] - 1.0) <= uncertainty)
+        point["inside_with_error"] = (
+            bool(ratio[0] - 2.0 * ratio[1] <= 1.0 + uncertainty
+                 and ratio[0] + 2.0 * ratio[1] >= 1.0 - uncertainty)
+            if np.isfinite(ratio[1]) else None)
+        points.append(point)
+    if not points:
+        return None
+    points.sort(key=lambda p: p["molarity"])
+    best = max(points, key=lambda p: p["conductivity"][0])
+    best_measured = max(points, key=lambda p: p["measured"]["conductivity"])
+    complete = len(points) == len(CONCENTRATION_RUNS)
+    return {"points": points, "uncertainty": float(uncertainty), "complete": complete,
+            "decided": complete and all(p["starts"] >= 2 for p in points),
+            "inside": [p["key"] for p in points if p["inside"]],
+            "largest_conductivity": {"simulated": best["molarity"],
+                                     "measured": best_measured["molarity"]},
+            "passes": all(p["inside"] for p in points)}
+
+
+def long_study(rows: Sequence[dict]) -> Optional[List[dict]]:
+    """The long runs of :data:`LONG_RUNS` beside the short runs of the same box.
+
+    For every concentration that has a long run and at least one short run among `rows`: the
+    coefficients and exponents of the long run, read with its own later window, and the ratio of
+    the short runs' mean to it. `overstated` is that ratio for the salt diffusion coefficient: a
+    value above one says by how much a short run overstates. None when no such pair is there.
+    """
+    by_run = {r["run"]: r for r in rows}
+    out = []
+    for key, name in LONG_RUNS.items():
+        short = [by_run[n] for n in CONCENTRATION_RUNS[key] if n in by_run]
+        if name not in by_run or not short:
+            continue
+        long = by_run[name]
+        entry = {"key": key, "run": name, "short_runs": [r["run"] for r in short],
+                 "molarity": float(long["molarity"]),
+                 "length_ps": float(long["whole"]["length_ps"]),
+                 "window_ps": list(long["whole"]["cation"]["window_ps"]),
+                 "short_window_ps": list(short[0]["whole"]["cation"]["window_ps"]),
+                 "ratio_with_factor": float(long["ratio_with_factor"]),
+                 "short_ratio_with_factor": float(np.mean([r["ratio_with_factor"]
+                                                           for r in short])),
+                 "conductivity": dict(long["whole"]["conductivity"]),
+                 "measured_conductivity": float(long["measured"]["conductivity"]),
+                 "species": {}}
+        for sp in _species(long):
+            rec = _species(long)[sp]
+            mean = float(np.mean([_species(r)[sp]["d"] for r in short]))
+            entry["species"][sp] = {
+                "d": float(rec["d"]), "se": float(rec["se"]), "exponent": float(rec["exponent"]),
+                "short_d": mean,
+                "short_exponent": float(np.mean([_species(r)[sp]["exponent"] for r in short])),
+                "short_over_long": mean / float(rec["d"])}
+        entry["overstated"] = entry["short_ratio_with_factor"] / entry["ratio_with_factor"]
+        out.append(entry)
+    return out or None
+
+
+def long_lines(study: Sequence[dict]) -> List[str]:
+    """The section of the table on the long runs."""
+    out: List[str] = []
+    w = out.append
+    label = {"cation": "Cation", "anion": "Anion"}
+    w("## How much a short run overstates")
+    w("")
+    first = study[0]
+    w("A coefficient is fitted between a fortieth and a tenth of the run. In a run of "
+      f"{first['length_ps'] / 5000.0:.0f} ns that window is {first['short_window_ps'][0]:.0f} "
+      f"to {first['short_window_ps'][1]:.0f} ps, and in a run of "
+      f"{first['length_ps'] / 1000.0:.0f} ns it is {first['window_ps'][0]:.0f} to "
+      f"{first['window_ps'][1]:.0f} ps. Where the exponent is below 1 in the earlier window, "
+      "the slope there is steeper than the slope at long times, and the short run gives too "
+      "large a coefficient. The long run is one start; the short value is the mean of the "
+      "short starts of the same box.")
+    w("")
+    w("| Concentration, mol/L | Species | Short runs, m2/s | Exponent | Long run, m2/s | "
+      "Exponent | Short over long |")
+    w("|---:|---|---:|---:|---|---:|---:|")
+    for e in study:
+        for sp, rec in e["species"].items():
+            w(f"| {_f(e['molarity'], 2)} | {label.get(sp, sp)} | {_e(rec['short_d'])} | "
+              f"{_f(rec['short_exponent'])} | {_e(rec['d'])} +/- {_e(rec['se'], 1)} | "
+              f"{_f(rec['exponent'])} | {_f(rec['short_over_long'])} |")
+    w("")
+    w("| Concentration, mol/L | Salt coefficient with the measured thermodynamic factor, "
+      "ratio to the measured: short runs | The same from the long run | Short over long | "
+      "Conductivity of the long run, S/m | Measured, S/m |")
+    w("|---:|---:|---:|---:|---|---:|")
+    for e in study:
+        k = e["conductivity"]
+        w(f"| {_f(e['molarity'], 2)} | {_f(e['short_ratio_with_factor'])} | "
+          f"{_f(e['ratio_with_factor'])} | {_f(e['overstated'])} | "
+          f"{_f(k['sigma'], 3)} +/- {_f(k['se'], 3)} | {_f(e['measured_conductivity'], 3)} |")
+    w("")
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Stage 3: the simulated coefficient of the series in the cell model
+# --------------------------------------------------------------------------- #
+def ratio_function(measured, molarities: Sequence[float], ratios: Sequence[float]):
+    """The measured function of the cell model multiplied by a ratio that depends on the
+    concentration: linear between the concentrations given (in mol/L), and constant below the
+    lowest and above the highest. Returns a function of the concentration (mol/m3) and the
+    temperature, as the cell model reads one."""
+    x = 1000.0 * np.asarray(molarities, float)
+    y = np.asarray(ratios, float)
+    if len(x) < 2 or np.any(np.diff(x) <= 0):
+        raise ValueError("the concentrations have to be at least two and rising")
+
+    def scaled(c_e, T):
+        import pybamm
+        inside = pybamm.minimum(pybamm.maximum(c_e, float(x[0])), float(x[-1]))
+        return measured(c_e, T) * pybamm.Interpolant(x, y, inside, interpolator="linear")
+    return scaled
+
+
+def cell_versions(study: dict, correction: Optional[Sequence[float]],
+                  factors: Optional[dict] = None) -> Dict[str, List[float]]:
+    """The ratios of the series to the measured coefficient, per concentration, in the versions
+    that the cell is run with: as simulated, and with the two ends of the size correction.
+    With `factors`, the result of :func:`length_factors`, the same three once more with the
+    ratios corrected for the length of the run."""
+    ratios = [p["ratio_with_factor"][0] for p in study["points"]]
+    out = {"as simulated": ratios}
+    if correction is not None:
+        lo, hi = correction
+        out["with the smaller correction for the box"] = [r * (1.0 + lo) for r in ratios]
+        out["with the larger correction for the box"] = [r * (1.0 + hi) for r in ratios]
+    if factors is not None:
+        long = [p["corrected"] for p in factors["points"]]
+        out["corrected for the length of the run"] = long
+        if correction is not None:
+            out["corrected for the length, with the smaller correction for the box"] = [
+                r * (1.0 + lo) for r in long]
+            out["corrected for the length, with the larger correction for the box"] = [
+                r * (1.0 + hi) for r in long]
+    return out
+
+
+def stage_cell(results: str = RESULTS) -> Optional[dict]:
+    """Run the reference cell with the simulated salt diffusion coefficient of the series in
+    place of the measured one, at 298 K and the four rates of the stress stage. Writes
+    ``cell.json``; returns None when the series has fewer than two concentrations."""
+    import run_cellmodel as RC
+    from cmfqsar import cellmodel as CM
+
+    rows = read_results(list(RUNS), results)
+    study = concentration_study(rows)
+    if study is None or len(study["points"]) < 2:
+        log("the cell stage needs the concentration series: nothing was run")
+        return None
+    series_names = {n for names in CONCENTRATION_RUNS.values() for n in names}
+    lengths = long_study(rows)
+    versions = cell_versions(study, size_range([r for r in rows if r["run"] not in series_names]),
+                             length_factors(study, lengths) if lengths is not None else None)
+    molarities = [p["molarity"] for p in study["points"]]
+    four = CM.measured_electrolyte(coldest=None)
+    p = CM.published_parameters(RC.BASE)
+    out = {"temperature": ROOM, "model": RC.STRESS_MODEL, "share": CELL_SHARE,
+           "molarities": molarities, "versions": versions, "starts": study["decided"],
+           "rates": []}
+    for rate in RC.STRESS_RATES:
+        common = dict(cycles=1, base=RC.BASE, kind=RC.STRESS_MODEL, cycle=CM.discharge(rate),
+                      temperature=ROOM, parameters=p, details=True)
+        ref = CM.run_cell(four, **common)
+        entry = {"rate": float(rate), "reference": float(ref.final),
+                 "reference_concentration": list(ref.concentration), "runs": {}}
+        for name, ratios in versions.items():
+            changed = dict(four)
+            changed[RC.DIFFUSIVITY] = ratio_function(four[RC.DIFFUSIVITY], molarities, ratios)
+            run = CM.run_cell(changed, **common)
+            usable = bool(run.ok and run.at_cutoff and np.isfinite(run.final))
+            change = float(run.final / ref.final - 1.0) if usable else float("nan")
+            entry["runs"][name] = {"capacity": float(run.final) if usable else float("nan"),
+                                   "usable": usable, "ended": run.termination,
+                                   "change": change,
+                                   "concentration": list(run.concentration),
+                                   "inside": bool(usable and abs(change) <= CELL_SHARE)}
+            log(f"{rate:g}C, {name}: capacity {run.final:.3f} A h against {ref.final:.3f} "
+                f"({100 * change:+.1f} %)")
+        out["rates"].append(entry)
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, "cell.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+def read_cell(results: str = RESULTS) -> Optional[dict]:
+    path = os.path.join(results, "cell.json")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def cell_lines(cell: dict) -> List[str]:
+    """The section of the table on the cell run with the simulated coefficient."""
+    out: List[str] = []
+    w = out.append
+    names = list(cell["versions"])
+    w("## The simulated coefficient in the cell")
+    w("")
+    w("Gate (a) compares two coefficients. This section asks what the difference costs. The "
+      "reference cell is discharged at 298 K with the measured electrolyte, and again with "
+      "the salt diffusion coefficient replaced by the measured function times the ratio of "
+      "the series: linear between the six concentrations, constant below the lowest and above "
+      "the highest. The other three electrolyte functions stay the measured ones. The numbers "
+      "are the change of the discharge capacity; the tolerance stage allows "
+      f"{100 * cell['share']:.0f} %.")
+    w("")
+    w("| Rate | Capacity with the measured coefficient, A h | Lowest and highest "
+      "concentration in the cell, mol/L | "
+      + " | ".join(f"Change {n}" for n in names) + " |")
+    w("|---:|---:|---|" + "---:|" * len(names))
+    for e in cell["rates"]:
+        lo, hi = e["reference_concentration"]
+        cells = []
+        for n in names:
+            r = e["runs"][n]
+            cells.append(f"{100 * r['change']:+.1f} %" if r["usable"]
+                         else f"no usable discharge ({r['ended'] or 'failed'})")
+        w(f"| {e['rate']:g}C | {_f(e['reference'], 3)} | {_f(lo / 1000.0)} to "
+          f"{_f(hi / 1000.0)} | " + " | ".join(cells) + " |")
+    w("")
+    served = {n: [e["rate"] for e in cell["rates"] if e["runs"][n]["inside"]] for n in names}
+    w("Inside the tolerance: " + "; ".join(
+        f"{n}, at {', '.join(f'{x:g}C' for x in served[n])}" if served[n]
+        else f"{n}, at no rate" for n in names) + ".")
+    w("")
+    return out
+
+
+def length_factors(study: dict, lengths: Sequence[dict]) -> Optional[dict]:
+    """The ratios of the series corrected for the length of the run: an estimate.
+
+    `lengths` is the result of :func:`long_study`: at each concentration that has a long run,
+    the factor by which the short runs overstate the salt diffusion coefficient. For the other
+    concentrations the factor is read against the exponent of the cation in the short runs. It
+    is linear in the exponent between the measured points, 1 at an exponent of 1 (a
+    displacement that grows in proportion to the time already has its final slope), and held
+    at the nearest measured value below the lowest measured exponent. Every ratio of `study`
+    is divided by its factor. None when no long run has an exponent below 1.
+    """
+    anchors = sorted((float(e["species"]["cation"]["short_exponent"]), float(e["overstated"]),
+                      e["key"]) for e in lengths)
+    anchors = [a for a in anchors if a[0] < 1.0]
+    if not anchors or len({a[0] for a in anchors}) < len(anchors):
+        return None
+    x = [a[0] for a in anchors] + [1.0]
+    y = [a[1] for a in anchors] + [1.0]
+    band = study["uncertainty"]
+    measured = {a[2] for a in anchors}
+    points = []
+    for p in study["points"]:
+        factor = float(np.interp(p["exponent"], x, y))
+        ratio = float(p["ratio_with_factor"][0])
+        points.append({"key": p["key"], "molarity": p["molarity"], "exponent": p["exponent"],
+                       "factor": factor, "measured": p["key"] in measured, "ratio": ratio,
+                       "corrected": ratio / factor,
+                       "inside": bool(abs(ratio / factor - 1.0) <= band)})
+    return {"anchors": [list(a) for a in anchors], "points": points, "uncertainty": band,
+            "long_exponents": {e["key"]: float(e["species"]["cation"]["exponent"])
+                               for e in lengths}}
+
+
+def length_lines(factors: dict, correction: Optional[Sequence[float]] = None) -> List[str]:
+    """The section of the table on the series corrected for the length of the run. With
+    `correction`, the range of the correction for the size of the box, the corrected ratios are
+    also given with both ends of that range, because the two corrections act in opposite
+    directions."""
+    out: List[str] = []
+    w = out.append
+    points = factors["points"]
+    band = factors["uncertainty"]
+    w("## The series corrected for the length of the run")
+    w("")
+    w("The long runs say by how much a run of 4 ns overstates the salt diffusion coefficient, "
+      f"at {len(factors['anchors'])} of the concentrations. For the other concentrations the "
+      "factor is estimated from the exponent of the cation in the short runs. It is linear in "
+      "the exponent between the measured points, and it is 1 where the exponent is 1, because "
+      "a displacement that grows in proportion to the time already has its final slope. Every "
+      "ratio of the series is divided by its factor. This is an estimate: each long run is one "
+      "start. A long run whose own exponent is still below 1 also overstates, and the "
+      "corrected ratio at that concentration is then an upper limit.")
+    w("")
+    w("| Concentration, mol/L | Exponent of the cation in the short runs | Factor by which the "
+      "short runs overstate | Where the factor comes from | Ratio to the measured, as simulated "
+      f"| Ratio corrected for the length | Within {100 * band:.0f} % of the measured |")
+    w("|---:|---:|---:|---|---:|---:|---|")
+    for p in points:
+        source = "the long run" if p["measured"] else "estimated from the exponent"
+        if p["measured"]:
+            source += f" (its own exponent: {_f(factors['long_exponents'][p['key']])})"
+        w(f"| {_f(p['molarity'], 2)} | {_f(p['exponent'])} | {_f(p['factor'])} | {source} | "
+          f"{_f(p['ratio'])} | {_f(p['corrected'])} | {'yes' if p['inside'] else 'no'} |")
+    w("")
+    inside = [p for p in points if p["inside"]]
+    w(f"With this correction the ratio is within {100 * band:.0f} % of the measured value at "
+      f"{len(inside)} of the {len(points)} concentrations"
+      + (" (" + ", ".join(f"{_f(p['molarity'], 2)} mol/L" for p in inside) + ")"
+         if inside and len(inside) < len(points) else "")
+      + f", and it runs from {_f(min(p['corrected'] for p in points))} to "
+      f"{_f(max(p['corrected'] for p in points))}. None of these ratios is corrected for the "
+      "size of the box.")
+    w("")
+    if correction is not None:
+        lo, hi = correction
+        w("A longer run lowers a coefficient and a larger box raises it, so the two "
+          "corrections act in opposite directions. With both of them:")
+        w("")
+        w("| Concentration, mol/L | Ratio corrected for the length | With the smaller "
+          "correction for the box as well | With the larger correction for the box as well |")
+        w("|---:|---:|---:|---:|")
+        for p in points:
+            w(f"| {_f(p['molarity'], 2)} | {_f(p['corrected'])} | "
+              f"{_f(p['corrected'] * (1.0 + lo))} | {_f(p['corrected'] * (1.0 + hi))} |")
+        w("")
+        count = [sum(abs(p["corrected"] * (1.0 + c) - 1.0) <= band for p in points)
+                 for c in (lo, hi)]
+        w(f"With both corrections the ratio is within {100 * band:.0f} % of the measured value "
+          f"at {count[0]} of the {len(points)} concentrations with the smaller correction for "
+          f"the box, and at {count[1]} with the larger one.")
+        w("")
+    return out
+
+
+def size_pair(rows: Sequence[dict]) -> Optional[dict]:
+    """The two sizes of the box at the charge factor of the series.
+
+    The smaller box is the run :data:`PAIR_SMALL` and the larger one the starts of the series at
+    :data:`PAIR_KEY`. The correction of Yeh and Hummer is the same amount in m2/s for every
+    species, so the mean difference between the two boxes over the species gives a viscosity,
+    and with it what the larger box still lacks. `determined` is False when the larger box is
+    not the faster one, and no correction is then computed. None when one of the two is not
+    among `rows`.
+    """
+    from cmfqsar import transport as T
+    by_run = {r["run"]: r for r in rows}
+    large = [by_run[n] for n in CONCENTRATION_RUNS[PAIR_KEY] if n in by_run]
+    if PAIR_SMALL not in by_run or not large:
+        return None
+    small = by_run[PAIR_SMALL]
+    out = {"small": PAIR_SMALL, "large": [r["run"] for r in large],
+           "small_side": float(small["side"]), "small_pairs": int(small["pairs"]),
+           "large_side": float(np.mean([r["side"] for r in large])),
+           "large_pairs": int(large[0]["pairs"]), "species": {}}
+    for sp, rec in _species(small).items():
+        pair = _pair([_species(r)[sp]["d"] for r in large],
+                     float(_species(large[0])[sp]["se"]))
+        out["species"][sp] = {"small": [float(rec["d"]), float(rec["se"])], "large": pair,
+                              "ratio": pair[0] / float(rec["d"]),
+                              "difference": pair[0] - float(rec["d"])}
+    steps = np.array([v["difference"] for v in out["species"].values()])
+    out["difference"] = float(steps.mean())
+    out["difference_se"] = float(steps.std(ddof=1) / np.sqrt(len(steps))) if len(steps) > 1 \
+        else float("nan")
+    out["determined"] = bool(out["difference"] > 0)
+    if not out["determined"]:
+        return out
+    temperature = float(small["temperature"])
+    # the correction is proportional to one over the viscosity
+    per_unit = (T.yeh_hummer_correction(out["small_side"], 1.0, temperature)
+                - T.yeh_hummer_correction(out["large_side"], 1.0, temperature))
+    out["viscosity"] = float(per_unit / out["difference"])
+    out["remaining"] = T.yeh_hummer_correction(out["large_side"], out["viscosity"], temperature)
+    dp, dm = out["species"]["cation"]["large"][0], out["species"]["anion"]["large"][0]
+    out["share"] = {"cation": out["remaining"] / dp, "anion": out["remaining"] / dm,
+                    "salt": T.salt_diffusivity(dp + out["remaining"], dm + out["remaining"])
+                    / T.salt_diffusivity(dp, dm) - 1.0}
+    return out
+
+
+def pair_lines(pair: dict, correction: Optional[Sequence[float]] = None) -> List[str]:
+    """The section of the table on the two sizes at the charge factor of the series."""
+    out: List[str] = []
+    w = out.append
+    label = {"cation": "Cation", "anion": "Anion"}
+    w("## Two sizes of the box at the charge factor of the series")
+    w("")
+    w("The size runs above were made at a factor of 0.8 on the charges of the ions, and the "
+      f"series uses {SERIES_SETTINGS['ion_charge_scale']:g}. At that factor two sizes exist at "
+      f"the concentration of the reference cell: one run of a box with {pair['small_pairs']} "
+      f"ion pairs (`{pair['small']}`, a side of {_f(pair['small_side'], 1)} A) and "
+      f"{len(pair['large'])} start{'s' if len(pair['large']) != 1 else ''} of the box of the "
+      f"series with {pair['large_pairs']} ion "
+      f"pairs (a side of {_f(pair['large_side'], 1)} A). The correction of Yeh and Hummer "
+      "says that the larger box is faster by the same amount, in m2/s, for every species.")
+    w("")
+    w("| Species | Smaller box, m2/s | Larger box, m2/s | Larger over smaller | Difference, "
+      "m2/s |")
+    w("|---|---|---|---:|---:|")
+    for sp, v in pair["species"].items():
+        large = _e(v["large"][0]) + (f" +/- {_e(v['large'][1], 1)}"
+                                     if np.isfinite(v["large"][1]) else "")
+        w(f"| {label.get(sp, sp)} | {_e(v['small'][0])} +/- {_e(v['small'][1], 1)} | {large} | "
+          f"{_f(v['ratio'])} | {_e(v['difference'])} |")
+    w("")
+    if not pair["determined"]:
+        w("The larger box is not the faster one on average, so the two boxes give no "
+          "correction.")
+        w("")
+        return out
+    share = pair["share"]
+    text = (f"The mean difference is {_e(pair['difference'])} +/- "
+            f"{_e(pair['difference_se'], 1)} m2/s; the error is from the scatter over the "
+            "species. Read as the correction of Yeh and Hummer, this difference is a viscosity "
+            f"of {_f(1000.0 * pair['viscosity'], 1)} mPa s. With that viscosity the box of the "
+            f"series is still too slow by {_e(pair['remaining'])} m2/s, which is "
+            f"{100 * share['cation']:.0f} % of the coefficient of the cation, "
+            f"{100 * share['anion']:.0f} % of that of the anion and "
+            f"{100 * share['salt']:.0f} % of the salt diffusion coefficient.")
+    if correction is not None:
+        lo, hi = correction
+        text += (f" The size runs at a factor of 0.8 gave a range from +{100 * lo:.0f} % to "
+                 f"+{100 * hi:.0f} % for the same box, and this estimate is "
+                 + ("inside" if lo <= share["salt"] <= hi else "outside") + " it.")
+    text += (" The smaller box was run once, so this is an estimate. The range from the size "
+             "runs stays the one that the other sections use.")
+    w(text)
+    w("")
+    return out
+
+
+def size_range(rows: Sequence[dict]) -> Optional[List[float]]:
+    """The share that the correction for the size of the box adds to the salt diffusion
+    coefficient of the largest box, as the range between the two size fits: [low, high]. None
+    when the size runs are not among `rows` or a fit determines nothing."""
+    whole = size_study(rows)
+    if whole is None or not whole.get("determined") or "ratio_with_factor" not in whole:
+        return None
+    rest = size_study(rows, exclude=(whole["runs"][0],))
+    if rest is None or not rest.get("determined") or "ratio_with_factor" not in rest:
+        return None
+    largest = whole["largest"]["ratio_with_factor"]
+    lo, hi = sorted([whole["ratio_with_factor"] / largest - 1.0,
+                     rest["ratio_with_factor"] / largest - 1.0])
+    return [float(lo), float(hi)]
+
+
+def concentration_lines(study: dict, limits: Sequence[Dict[str, float]],
+                        correction: Optional[Sequence[float]] = None) -> List[str]:
+    """The section of the table on the concentration series."""
+    out: List[str] = []
+    w = out.append
+    points = study["points"]
+    band = study["uncertainty"]
+
+    def pm(pair, fmt):
+        return fmt(pair[0]) + (f" +/- {fmt(pair[1])}" if np.isfinite(pair[1]) else "")
+    w("## The range of concentrations")
+    w("")
+    w("The measured study covers salt concentrations from 0.1 to 3.0 mol/L. This series "
+      "simulates the same six concentrations at 298 K with the charges of the ions multiplied "
+      f"by {SERIES_SETTINGS['ion_charge_scale']:g}, in a box of "
+      f"{SERIES_SETTINGS['n_solvent']:,} solvent molecules. Every concentration is run from "
+      "two starts: the box is packed again and given other velocities. Where both starts are "
+      "there, a number is their mean and the error after +/- is the standard error of that "
+      "mean, which for two starts is half their difference. Where one start is there, the "
+      "error is the block error of that run. The measured functions are read at the "
+      "concentration that the box really has.")
+    w("")
+    w("**Self-diffusion and the salt diffusion coefficient.**")
+    w("")
+    w("| Concentration, mol/L | Ion pairs | Starts | Cation, m2/s | Anion, m2/s | Exponent of "
+      "the cation | Measured thermodynamic factor | Salt coefficient with that factor, m2/s | "
+      "Measured salt coefficient, m2/s | Ratio to the measured | Within "
+      f"{100 * band:.0f} % of the measured |")
+    w("|---:|---:|---:|---|---|---:|---:|---|---:|---|---|")
+    for p in points:
+        m = p["measured"]
+        verdict = "yes" if p["inside"] else (
+            "no, but its error reaches it" if p["inside_with_error"] else "no")
+        w(f"| {_f(p['molarity'], 2)} | {p['pairs']} | {p['starts']} | {pm(p['cation'], _e)} | "
+          f"{pm(p['anion'], _e)} | {_f(p['exponent'])} | {_f(m['thermodynamic_factor'])} | "
+          f"{pm(p['salt_with_factor'], _e)} | {_e(m['diffusivity'])} | "
+          f"{pm(p['ratio_with_factor'], _f)} | {verdict} |")
+    w("")
+    w("**What the study says about its own uncertainty.** Landesfeind and Gasteiger give no "
+      "single number for it. Their error bars are the scatter of two cells with two current "
+      "pulses each, and they write that these do not include the systematic error of building "
+      "a cell. They report that a repeat at the end of a temperature cycle was up to 10 % lower "
+      "and call that inside the uncertainty of the measurement. Their fitted function of the "
+      "diffusion coefficient has a coefficient of determination of 0.978 for this electrolyte. "
+      f"Gate (a) is therefore read with {100 * band:.0f} %. The comparison also multiplies by "
+      "their thermodynamic factor, whose fitted function has a coefficient of determination "
+      "of 0.943 and, in their words, the highest scatter of the three electrolytes of the "
+      "study. The last column therefore includes the error of two measured functions.")
+    w("")
+    ratios = [p["ratio_with_factor"][0] for p in points]
+    inside = [p for p in points if p["inside"]]
+    w(f"**Gate (a).** The ratio is within {100 * band:.0f} % of the measured value at "
+      f"{len(inside)} of the {len(points)} concentrations"
+      + (" (" + ", ".join(f"{_f(p['molarity'], 2)} mol/L" for p in inside) + ")"
+         if inside and len(inside) < len(points) else "")
+      + f". Over the series it runs from {_f(min(ratios))} to {_f(max(ratios))}. "
+      + ("The gate is met at every concentration that was run."
+         if study["passes"] else
+         f"The gate is not met. With a band twice as wide, {200 * band:.0f} %, the ratio is "
+         f"inside at {sum(abs(r - 1.0) <= 2.0 * band for r in ratios)} of the "
+         f"{len(points)} concentrations.")
+      + ("" if study["decided"] else
+         " The series is not complete: " + (
+             "not every concentration was run" if not study["complete"]
+             else "not every concentration has its second start") + "."))
+    w("")
+    if correction is not None:
+        lo, hi = correction
+        w("None of these coefficients is corrected for the size of the box. The correction of "
+          "Yeh and Hummer, as a share of a coefficient, is the hydrodynamic radius of the "
+          "species divided by the side of the box, times a constant. It does not contain the "
+          "viscosity, so the share found at one concentration is a fair estimate at the "
+          f"others. The size runs put it between +{100 * lo:.0f} % and +{100 * hi:.0f} % for "
+          "this size of box, at a factor of 0.8 on the charges. With that range the ratios "
+          "become:")
+        w("")
+        w("| Concentration, mol/L | Ratio as simulated | With the smaller correction | With "
+          "the larger correction | Rates at which the cell tolerates the three |")
+        w("|---:|---:|---:|---:|---|")
+        for p in points:
+            r = p["ratio_with_factor"][0]
+            three = [r, r * (1.0 + lo), r * (1.0 + hi)]
+            served = [served_rates(x, limits) for x in three]
+            text = "; ".join((", ".join(f"{x:g}C" for x in sv) if sv else "none")
+                             for sv in served) if limits else "not run"
+            w(f"| {_f(p['molarity'], 2)} | {_f(three[0])} | {_f(three[1])} | {_f(three[2])} | "
+              f"{text} |")
+        w("")
+        if limits:
+            w("The tolerated rates are those of the tolerance stage, which multiplied the "
+              "whole measured function by one number. They are a guide here, because the "
+              "ratio of this series changes with the concentration.")
+            w("")
+    w("**The conductivity, S/m.** The conductivity is the stricter test, because its measured "
+      "values carry an error of 3 % and no thermodynamic factor enters. The first value is "
+      "from the displacement of the total charge.")
+    w("")
+    w("| Concentration, mol/L | From the total charge | Measured | Ratio to the measured | "
+      "Nernst-Einstein value | Ratio of the first to the Nernst-Einstein value | Share of the "
+      "current on the cation if ions moved alone | Measured transference number |")
+    w("|---:|---|---:|---:|---:|---:|---:|---:|")
+    for p in points:
+        m = p["measured"]
+        w(f"| {_f(p['molarity'], 2)} | {pm(p['conductivity'], lambda v: _f(v, 3))} | "
+          f"{_f(m['conductivity'], 3)} | {_f(p['ratio_conductivity'])} | "
+          f"{_f(p['nernst_einstein'][0], 3)} | {_f(p['ionicity'][0])} | "
+          f"{_f(p['transport_number'][0], 3)} | {_f(m['transference'], 3)} |")
+    w("")
+    big = study["largest_conductivity"]
+    w(f"The simulated conductivity is largest at {_f(big['simulated'], 2)} mol/L among the "
+      f"concentrations that were run, and the measured one at {_f(big['measured'], 2)} mol/L.")
+    w("")
+    second = [p for p in points if p.get("second")]
+    if second:
+        w("**A second measurement of the same electrolyte.** Nyman, Behm and Lindbergh (2008) "
+          "measured this electrolyte at 298 K between 0.2 and 2 mol/L, and PyBaMM ships their "
+          "fitted functions in another parameter set. The table gives their diffusion "
+          "coefficient beside that of Landesfeind and Gasteiger. The two functions as shipped "
+          "differ by far more than 10 % at most concentrations. Landesfeind and Gasteiger "
+          "write that the values of Nyman are slightly higher than theirs, which the shipped "
+          "function is not, so the two may not define the coefficient in the same way. This "
+          "program has not read the paper of Nyman, and the difference is recorded here and "
+          "not used as an uncertainty.")
+        w("")
+        w("| Concentration, mol/L | Landesfeind and Gasteiger, m2/s | Nyman and others, m2/s | "
+          "Ratio of the second to the first | Inside the range of the second study | "
+          "Simulated, ratio to the first |")
+        w("|---:|---:|---:|---:|---|---|")
+        for p in second:
+            m, n2 = p["measured"], p["second"]
+            w(f"| {_f(p['molarity'], 2)} | {_e(m['diffusivity'])} | {_e(n2['diffusivity'])} | "
+              f"{_f(n2['diffusivity'] / m['diffusivity'])} | "
+              f"{'yes' if n2['inside'] else 'no'} | {pm(p['ratio_with_factor'], _f)} |")
+        w("")
+    return out
+
+
 def size_study(rows: Sequence[dict], exclude: Sequence[str] = ()) -> Optional[dict]:
     """The coefficients of an infinite box, from the runs that differ only in their size.
 
@@ -671,10 +1393,25 @@ def read_results(names: Sequence[str], results: str = RESULTS) -> List[dict]:
     return rows
 
 
-def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]]) -> List[str]:
+def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
+                 cell: Optional[dict] = None) -> List[str]:
     """The table of this benchmark as lines of Markdown."""
     out: List[str] = []
     w = out.append
+    series_names = {n for names in CONCENTRATION_RUNS.values() for n in names}
+    long_names = set(LONG_RUNS.values())
+    series = [r for r in rows if r["run"] in series_names]
+    longs = [r for r in rows if r["run"] in long_names]
+    rows = [r for r in rows if r["run"] not in series_names | long_names]
+    if not rows:
+        w("# Item BT9: the salt diffusion coefficient of an electrolyte from simulation")
+        w("")
+        if series:
+            out.extend(concentration_lines(concentration_study(series), limits))
+        lengths = long_study(series + longs)
+        if lengths is not None:
+            out.extend(long_lines(lengths))
+        return out
     first = rows[0]
     m = first["measured"]
     w("# Item BT9: the salt diffusion coefficient of an electrolyte from simulation")
@@ -808,6 +1545,29 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]]) -> Li
                         "describe it.")
             out.extend(lines)
             out.extend(bracket_lines(study, rest, limits))
+    if series:
+        w("## The boxes of the concentration series")
+        w("")
+        w("| Run | What it is | Atoms | Ion pairs | Side of the box, A | Density, g/cm3 | "
+          "Concentration, mol/L | Length, ns | Speed, ns/day |")
+        w("|---|---|---:|---:|---:|---:|---:|---:|---:|")
+        for r in sorted(series + longs, key=lambda r: (r["molarity"], r["run"])):
+            w(f"| {r['run']} | {r['label']} | {r['atoms']} | {r['pairs']} | {_f(r['side'])} | "
+              f"{_f(r['density'], 3)} | {_f(r['molarity'], 3)} | "
+              f"{_f(r['whole']['length_ps'] / 1000.0, 1)} | {_f(r['ns_per_day'], 0)} |")
+        w("")
+        out.extend(concentration_lines(concentration_study(series), limits, size_range(rows)))
+        pair = size_pair(list(rows) + series)
+        if pair is not None:
+            out.extend(pair_lines(pair, size_range(rows)))
+    lengths = long_study(series + longs)
+    if lengths is not None:
+        out.extend(long_lines(lengths))
+        factors = length_factors(concentration_study(series), lengths)
+        if factors is not None:
+            out.extend(length_lines(factors, size_range(rows)))
+    if cell is not None:
+        out.extend(cell_lines(cell))
     return out
 
 
@@ -818,7 +1578,7 @@ def report(results: str = RESULTS, names: Optional[Sequence[str]] = None) -> str
         raise SystemExit(f"{results} holds no result: run this benchmark with --stage analyse")
     path = os.path.join(results, "table.md")
     with open(path, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(report_lines(rows, tolerance_limits())) + "\n")
+        fh.write("\n".join(report_lines(rows, tolerance_limits(), read_cell(results))) + "\n")
     return path
 
 
@@ -840,8 +1600,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         if "simulate" in stages:
             stage_simulate(names, args.cache)
         if "analyse" in stages:
+            if args.runs == ",".join(RUNS):
+                # the default is every run; one that was not simulated yet is named and left out
+                there = [n for n in names
+                         if os.path.isfile(os.path.join(run_dir(n, args.cache), "run.json"))]
+                for n in names:
+                    if there and n not in there:
+                        log(f"{n}: not simulated yet, left out")
+                names = there or names
             stage_analyse(names, args.results, args.cache)
-        if "analyse" not in stages:
+        if "cell" in stages:
+            stage_cell(args.results)
+        if "analyse" not in stages and "cell" not in stages:
             return 0
     log(f"the table: {report(args.results)}")
     return 0

@@ -175,3 +175,152 @@ Fitted one species at a time, without the common slope, the same boxes give: cat
 
 Neither fit can be preferred. The fit over all boxes gives hydrodynamic radii of a plausible size and takes its slope from the smallest box, which differs from the others in every quantity. The fit without the smallest box describes its boxes well (a residual of 1.03 against 1.93) and gives radii smaller than an atom, which says that the coefficients of the larger boxes depend on the size less than the correction predicts for a liquid that diffuses this fast. The two are therefore reported as a range. In the base box (`scaled`) the correction adds between 1.10e-11 and 3.98e-11 m2/s to every coefficient, which is 17 % to 61 % of the cation's. The salt diffusion coefficient of an infinite box, with the measured thermodynamic factor, is between 0.77 and 0.96 of the measured value; the largest box without any correction gives 0.71. The cell tolerates the lower end at 1C, 1.5C, 2C and the upper end at 1C, 1.5C, 2C, 2.5C.
 
+## The boxes of the concentration series
+
+| Run | What it is | Atoms | Ion pairs | Side of the box, A | Density, g/cm3 | Concentration, mol/L | Length, ns | Speed, ns/day |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| conc_c0p1_seed2 | 0.092 mol/kg, a second start | 13392 | 9 | 53.49 | 1.086 | 0.098 | 4.0 | 390 |
+| conc_c0p1 | 0.092 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 13392 | 9 | 53.48 | 1.086 | 0.098 | 4.0 | 406 |
+| conc_c0p5_seed2 | 0.47 mol/kg, a second start | 13688 | 46 | 53.87 | 1.122 | 0.488 | 4.0 | 391 |
+| conc_c0p5 | 0.47 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 13688 | 46 | 53.87 | 1.123 | 0.489 | 4.0 | 402 |
+| conc_c1p1_seed2 | 1.11 mol/kg, a second start | 14200 | 110 | 54.52 | 1.182 | 1.127 | 4.0 | 373 |
+| conc_c1p1 | 1.11 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 14200 | 110 | 54.52 | 1.182 | 1.127 | 4.0 | 215 |
+| conc_c1p1_long | 1.11 mol/kg, 20 ns | 14200 | 110 | 54.51 | 1.183 | 1.128 | 20.0 | 376 |
+| conc_c1p5_seed2 | 1.5 mol/kg, a second start | 14504 | 148 | 54.91 | 1.216 | 1.485 | 4.0 | 369 |
+| conc_c1p5 | 1.5 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 14504 | 148 | 54.89 | 1.217 | 1.486 | 4.0 | 397 |
+| conc_c2p0 | 2.07 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 14952 | 204 | 55.52 | 1.259 | 1.979 | 4.0 | 379 |
+| conc_c2p0_seed2 | 2.07 mol/kg, a second start | 14952 | 204 | 55.49 | 1.261 | 1.983 | 4.0 | 368 |
+| conc_c3p0_long | 3.32 mol/kg, 20 ns | 15944 | 328 | 56.85 | 1.343 | 2.965 | 20.0 | 301 |
+| conc_c3p0_seed2 | 3.32 mol/kg, a second start | 15944 | 328 | 56.83 | 1.344 | 2.968 | 4.0 | 364 |
+| conc_c3p0 | 3.32 mol/kg, charges multiplied by 0.7, 1,000 solvent molecules | 15944 | 328 | 56.82 | 1.345 | 2.969 | 4.0 | 370 |
+
+## The range of concentrations
+
+The measured study covers salt concentrations from 0.1 to 3.0 mol/L. This series simulates the same six concentrations at 298 K with the charges of the ions multiplied by 0.7, in a box of 1,000 solvent molecules. Every concentration is run from two starts: the box is packed again and given other velocities. Where both starts are there, a number is their mean and the error after +/- is the standard error of that mean, which for two starts is half their difference. Where one start is there, the error is the block error of that run. The measured functions are read at the concentration that the box really has.
+
+**Self-diffusion and the salt diffusion coefficient.**
+
+| Concentration, mol/L | Ion pairs | Starts | Cation, m2/s | Anion, m2/s | Exponent of the cation | Measured thermodynamic factor | Salt coefficient with that factor, m2/s | Measured salt coefficient, m2/s | Ratio to the measured | Within 10 % of the measured |
+|---:|---:|---:|---|---|---:|---:|---|---:|---|---|
+| 0.10 | 9 | 2 | 2.81e-10 +/- 1.25e-11 | 4.03e-10 +/- 5.96e-11 | 0.96 | 0.54 | 1.79e-10 +/- 1.56e-11 | 5.08e-10 | 0.35 +/- 0.03 | no |
+| 0.49 | 46 | 2 | 1.93e-10 +/- 1.02e-11 | 2.59e-10 +/- 5.50e-12 | 0.91 | 1.35 | 2.97e-10 +/- 6.28e-12 | 3.98e-10 | 0.75 +/- 0.02 | no |
+| 1.13 | 110 | 2 | 1.07e-10 +/- 1.63e-12 | 1.60e-10 +/- 1.54e-12 | 0.84 | 2.37 | 3.05e-10 +/- 1.59e-12 | 2.67e-10 | 1.14 +/- 0.01 | no |
+| 1.49 | 148 | 2 | 7.24e-11 +/- 1.74e-12 | 1.00e-10 +/- 4.79e-12 | 0.78 | 2.92 | 2.46e-10 +/- 8.24e-12 | 2.14e-10 | 1.15 +/- 0.04 | no, but its error reaches it |
+| 1.98 | 204 | 2 | 4.54e-11 +/- 9.82e-13 | 5.88e-11 +/- 9.73e-13 | 0.72 | 3.81 | 1.95e-10 +/- 3.63e-12 | 1.57e-10 | 1.24 +/- 0.02 | no |
+| 2.97 | 328 | 2 | 1.89e-11 +/- 1.43e-12 | 2.19e-11 +/- 1.57e-12 | 0.56 | 6.74 | 1.37e-10 +/- 1.01e-11 | 8.47e-11 | 1.61 +/- 0.12 | no |
+
+**What the study says about its own uncertainty.** Landesfeind and Gasteiger give no single number for it. Their error bars are the scatter of two cells with two current pulses each, and they write that these do not include the systematic error of building a cell. They report that a repeat at the end of a temperature cycle was up to 10 % lower and call that inside the uncertainty of the measurement. Their fitted function of the diffusion coefficient has a coefficient of determination of 0.978 for this electrolyte. Gate (a) is therefore read with 10 %. The comparison also multiplies by their thermodynamic factor, whose fitted function has a coefficient of determination of 0.943 and, in their words, the highest scatter of the three electrolytes of the study. The last column therefore includes the error of two measured functions.
+
+**Gate (a).** The ratio is within 10 % of the measured value at 0 of the 6 concentrations. Over the series it runs from 0.35 to 1.61. The gate is not met. With a band twice as wide, 20 %, the ratio is inside at 2 of the 6 concentrations.
+
+None of these coefficients is corrected for the size of the box. The correction of Yeh and Hummer, as a share of a coefficient, is the hydrodynamic radius of the species divided by the side of the box, times a constant. It does not contain the viscosity, so the share found at one concentration is a fair estimate at the others. The size runs put it between +8 % and +35 % for this size of box, at a factor of 0.8 on the charges. With that range the ratios become:
+
+| Concentration, mol/L | Ratio as simulated | With the smaller correction | With the larger correction | Rates at which the cell tolerates the three |
+|---:|---:|---:|---:|---|
+| 0.10 | 0.35 | 0.38 | 0.48 | 1C; 1C; 1C |
+| 0.49 | 0.75 | 0.81 | 1.01 | 1C, 1.5C, 2C; 1C, 1.5C, 2C; 1C, 1.5C, 2C, 2.5C |
+| 1.13 | 1.14 | 1.24 | 1.54 | 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C |
+| 1.49 | 1.15 | 1.25 | 1.55 | 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C |
+| 1.98 | 1.24 | 1.35 | 1.68 | 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C |
+| 2.97 | 1.61 | 1.75 | 2.17 | 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C; 1C, 1.5C, 2C, 2.5C |
+
+The tolerated rates are those of the tolerance stage, which multiplied the whole measured function by one number. They are a guide here, because the ratio of this series changes with the concentration.
+
+**The conductivity, S/m.** The conductivity is the stricter test, because its measured values carry an error of 3 % and no thermodynamic factor enters. The first value is from the displacement of the total charge.
+
+| Concentration, mol/L | From the total charge | Measured | Ratio to the measured | Nernst-Einstein value | Ratio of the first to the Nernst-Einstein value | Share of the current on the cation if ions moved alone | Measured transference number |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 0.10 | 0.212 +/- 0.008 | 0.253 | 0.84 | 0.251 | 0.85 | 0.414 | 0.373 |
+| 0.49 | 0.741 +/- 0.049 | 0.748 | 0.99 | 0.828 | 0.89 | 0.427 | 0.307 |
+| 1.13 | 0.666 +/- 0.044 | 0.906 | 0.74 | 1.132 | 0.59 | 0.401 | 0.201 |
+| 1.49 | 0.483 +/- 0.080 | 0.815 | 0.59 | 0.964 | 0.50 | 0.419 | 0.152 |
+| 1.98 | 0.612 +/- 0.133 | 0.603 | 1.02 | 0.775 | 0.79 | 0.436 | 0.107 |
+| 2.97 | 0.232 +/- 0.065 | 0.292 | 0.79 | 0.456 | 0.50 | 0.463 | 0.143 |
+
+The simulated conductivity is largest at 0.49 mol/L among the concentrations that were run, and the measured one at 1.13 mol/L.
+
+**A second measurement of the same electrolyte.** Nyman, Behm and Lindbergh (2008) measured this electrolyte at 298 K between 0.2 and 2 mol/L, and PyBaMM ships their fitted functions in another parameter set. The table gives their diffusion coefficient beside that of Landesfeind and Gasteiger. The two functions as shipped differ by far more than 10 % at most concentrations. Landesfeind and Gasteiger write that the values of Nyman are slightly higher than theirs, which the shipped function is not, so the two may not define the coefficient in the same way. This program has not read the paper of Nyman, and the difference is recorded here and not used as an uncertainty.
+
+| Concentration, mol/L | Landesfeind and Gasteiger, m2/s | Nyman and others, m2/s | Ratio of the second to the first | Inside the range of the second study | Simulated, ratio to the first |
+|---:|---:|---:|---:|---|---|
+| 0.10 | 5.08e-10 | 4.48e-10 | 0.88 | no | 0.35 +/- 0.03 |
+| 0.49 | 3.98e-10 | 3.13e-10 | 0.79 | yes | 0.75 +/- 0.02 |
+| 1.13 | 2.67e-10 | 1.50e-10 | 0.56 | yes | 1.14 +/- 0.01 |
+| 1.49 | 2.14e-10 | 9.01e-11 | 0.42 | yes | 1.15 +/- 0.04 |
+| 1.98 | 1.57e-10 | 4.45e-11 | 0.28 | yes | 1.24 +/- 0.02 |
+| 2.97 | 8.47e-11 | 8.21e-11 | 0.97 | no | 1.61 +/- 0.12 |
+
+## Two sizes of the box at the charge factor of the series
+
+The size runs above were made at a factor of 0.8 on the charges of the ions, and the series uses 0.7. At that factor two sizes exist at the concentration of the reference cell: one run of a box with 27 ion pairs (`scaled_07`, a side of 34.3 A) and 2 starts of the box of the series with 110 ion pairs (a side of 54.5 A). The correction of Yeh and Hummer says that the larger box is faster by the same amount, in m2/s, for every species.
+
+| Species | Smaller box, m2/s | Larger box, m2/s | Larger over smaller | Difference, m2/s |
+|---|---|---|---:|---:|
+| Cation | 9.67e-11 +/- 6.4e-12 | 1.07e-10 +/- 1.6e-12 | 1.11 | 1.07e-11 |
+| Anion | 1.35e-10 +/- 6.2e-12 | 1.60e-10 +/- 1.5e-12 | 1.18 | 2.49e-11 |
+| EC | 1.96e-10 +/- 7.5e-12 | 2.25e-10 +/- 3.0e-12 | 1.15 | 2.91e-11 |
+| EMC | 1.87e-10 +/- 7.5e-12 | 2.00e-10 +/- 7.8e-13 | 1.07 | 1.30e-11 |
+
+The mean difference is 1.94e-11 +/- 4.5e-12 m2/s; the error is from the scatter over the species. Read as the correction of Yeh and Hummer, this difference is a viscosity of 3.4 mPa s. With that viscosity the box of the series is still too slow by 3.30e-11 m2/s, which is 31 % of the coefficient of the cation, 21 % of that of the anion and 26 % of the salt diffusion coefficient. The size runs at a factor of 0.8 gave a range from +8 % to +35 % for the same box, and this estimate is inside it. The smaller box was run once, so this is an estimate. The range from the size runs stays the one that the other sections use.
+
+## How much a short run overstates
+
+A coefficient is fitted between a fortieth and a tenth of the run. In a run of 4 ns that window is 100 to 400 ps, and in a run of 20 ns it is 500 to 2000 ps. Where the exponent is below 1 in the earlier window, the slope there is steeper than the slope at long times, and the short run gives too large a coefficient. The long run is one start; the short value is the mean of the short starts of the same box.
+
+| Concentration, mol/L | Species | Short runs, m2/s | Exponent | Long run, m2/s | Exponent | Short over long |
+|---:|---|---:|---:|---|---:|---:|
+| 1.13 | Cation | 1.07e-10 | 0.84 | 1.00e-10 +/- 3.8e-12 | 0.94 | 1.07 |
+| 1.13 | Anion | 1.60e-10 | 0.88 | 1.52e-10 +/- 3.6e-12 | 0.97 | 1.06 |
+| 1.13 | EC | 2.25e-10 | 0.91 | 2.18e-10 +/- 4.2e-12 | 0.97 | 1.03 |
+| 1.13 | EMC | 2.00e-10 | 0.90 | 1.88e-10 +/- 3.6e-12 | 0.96 | 1.06 |
+| 2.97 | Cation | 1.89e-11 | 0.56 | 1.19e-11 +/- 3.7e-13 | 0.71 | 1.59 |
+| 2.97 | Anion | 2.19e-11 | 0.58 | 1.52e-11 +/- 6.1e-13 | 0.76 | 1.45 |
+| 2.97 | EC | 2.77e-11 | 0.63 | 1.99e-11 +/- 6.1e-13 | 0.79 | 1.39 |
+| 2.97 | EMC | 2.69e-11 | 0.63 | 1.66e-11 +/- 7.8e-13 | 0.76 | 1.62 |
+
+| Concentration, mol/L | Salt coefficient with the measured thermodynamic factor, ratio to the measured: short runs | The same from the long run | Short over long | Conductivity of the long run, S/m | Measured, S/m |
+|---:|---:|---:|---:|---|---:|
+| 1.13 | 1.14 | 1.07 | 1.06 | 0.725 +/- 0.212 | 0.906 |
+| 2.97 | 1.61 | 1.06 | 1.53 | 0.169 +/- 0.043 | 0.293 |
+
+## The series corrected for the length of the run
+
+The long runs say by how much a run of 4 ns overstates the salt diffusion coefficient, at 2 of the concentrations. For the other concentrations the factor is estimated from the exponent of the cation in the short runs. It is linear in the exponent between the measured points, and it is 1 where the exponent is 1, because a displacement that grows in proportion to the time already has its final slope. Every ratio of the series is divided by its factor. This is an estimate: each long run is one start. A long run whose own exponent is still below 1 also overstates, and the corrected ratio at that concentration is then an upper limit.
+
+| Concentration, mol/L | Exponent of the cation in the short runs | Factor by which the short runs overstate | Where the factor comes from | Ratio to the measured, as simulated | Ratio corrected for the length | Within 10 % of the measured |
+|---:|---:|---:|---|---:|---:|---|
+| 0.10 | 0.96 | 1.01 | estimated from the exponent | 0.35 | 0.35 | no |
+| 0.49 | 0.91 | 1.04 | estimated from the exponent | 0.75 | 0.72 | no |
+| 1.13 | 0.84 | 1.06 | the long run (its own exponent: 0.94) | 1.14 | 1.07 | yes |
+| 1.49 | 0.78 | 1.17 | estimated from the exponent | 1.15 | 0.98 | yes |
+| 1.98 | 0.72 | 1.26 | estimated from the exponent | 1.24 | 0.99 | yes |
+| 2.97 | 0.56 | 1.53 | the long run (its own exponent: 0.71) | 1.61 | 1.06 | yes |
+
+With this correction the ratio is within 10 % of the measured value at 4 of the 6 concentrations (1.13 mol/L, 1.49 mol/L, 1.98 mol/L, 2.97 mol/L), and it runs from 0.35 to 1.07. None of these ratios is corrected for the size of the box.
+
+A longer run lowers a coefficient and a larger box raises it, so the two corrections act in opposite directions. With both of them:
+
+| Concentration, mol/L | Ratio corrected for the length | With the smaller correction for the box as well | With the larger correction for the box as well |
+|---:|---:|---:|---:|
+| 0.10 | 0.35 | 0.38 | 0.47 |
+| 0.49 | 0.72 | 0.78 | 0.97 |
+| 1.13 | 1.07 | 1.16 | 1.45 |
+| 1.49 | 0.98 | 1.07 | 1.33 |
+| 1.98 | 0.99 | 1.07 | 1.33 |
+| 2.97 | 1.06 | 1.14 | 1.42 |
+
+With both corrections the ratio is within 10 % of the measured value at 2 of the 6 concentrations with the smaller correction for the box, and at 1 with the larger one.
+
+## The simulated coefficient in the cell
+
+Gate (a) compares two coefficients. This section asks what the difference costs. The reference cell is discharged at 298 K with the measured electrolyte, and again with the salt diffusion coefficient replaced by the measured function times the ratio of the series: linear between the six concentrations, constant below the lowest and above the highest. The other three electrolyte functions stay the measured ones. The numbers are the change of the discharge capacity; the tolerance stage allows 5 %.
+
+| Rate | Capacity with the measured coefficient, A h | Lowest and highest concentration in the cell, mol/L | Change as simulated | Change with the smaller correction for the box | Change with the larger correction for the box | Change corrected for the length of the run | Change corrected for the length, with the smaller correction for the box | Change corrected for the length, with the larger correction for the box |
+|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| 1C | 4.987 | 0.66 to 1.64 | +0.0 % | +0.0 % | +0.1 % | -0.0 % | +0.0 % | +0.1 % |
+| 1.5C | 4.899 | 0.49 to 2.12 | +0.0 % | +0.1 % | +0.2 % | -0.0 % | +0.0 % | +0.2 % |
+| 2C | 4.789 | 0.32 to 2.73 | +0.1 % | +0.3 % | +0.6 % | -0.4 % | -0.0 % | +0.5 % |
+| 2.5C | 4.609 | 0.15 to 3.52 | -1.3 % | +0.5 % | +1.9 % | -9.4 % | -2.3 % | +1.4 % |
+
+Inside the tolerance: as simulated, at 1C, 1.5C, 2C, 2.5C; with the smaller correction for the box, at 1C, 1.5C, 2C, 2.5C; with the larger correction for the box, at 1C, 1.5C, 2C, 2.5C; corrected for the length of the run, at 1C, 1.5C, 2C; corrected for the length, with the smaller correction for the box, at 1C, 1.5C, 2C, 2.5C; corrected for the length, with the larger correction for the box, at 1C, 1.5C, 2C, 2.5C.
+

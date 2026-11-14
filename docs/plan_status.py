@@ -63,8 +63,8 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "(11 November 2026); a measured property came with SP5, and a "
                       "set with a structure or a composition beside it is missing"),
     "BT9": ("partly", "the label and its two tests on one electrolyte built and measured "
-                      "14 November 2026; the range of concentrations of gate (a), the 62 "
-                      "formulations and the model are left"),
+                      "14 November 2026; gate (a) measured over the range of concentrations "
+                      "and not met; the 62 formulations and the model are left"),
     "MS8": ("partly", "the chain to the activation energy built and measured 12 November "
                       "2026, with the error carried through; a conductivity and a hop "
                       "simulation are left"),

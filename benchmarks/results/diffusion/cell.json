@@ -1,0 +1,370 @@
+{
+ "temperature": 298.15,
+ "model": "DFN",
+ "share": 0.05,
+ "molarities": [
+  0.09766302009490299,
+  0.4886180684514569,
+  1.1268668768949044,
+  1.4854117648934766,
+  1.9810324953927139,
+  2.968609381408731
+ ],
+ "versions": {
+  "as simulated": [
+   0.3526291464225707,
+   0.7467316439337364,
+   1.1415355983670725,
+   1.1503469685066428,
+   1.243698738435283,
+   1.614448442359155
+  ],
+  "with the smaller correction for the box": [
+   0.38200843273569624,
+   0.8089455675097256,
+   1.236642601067473,
+   1.2461880902348308,
+   1.3473174599574596,
+   1.748956163876338
+  ],
+  "with the larger correction for the box": [
+   0.4750545850306006,
+   1.0059811981992584,
+   1.537852799411188,
+   1.549723292328947,
+   1.675484837496796,
+   2.1749510572763526
+  ],
+  "corrected for the length of the run": [
+   0.34766253695750826,
+   0.7211950588343231,
+   1.0733381268564524,
+   0.9847054638936833,
+   0.9888159366197082,
+   1.0567986987748612
+  ],
+  "corrected for the length, with the smaller correction for the box": [
+   0.3766280303582785,
+   0.7812814026208752,
+   1.162763259349389,
+   1.0667461688420021,
+   1.071199105474727,
+   1.1448458493341034
+  ],
+  "corrected for the length, with the larger correction for the box": [
+   0.4683636729991632,
+   0.9715788467187514,
+   1.4459785971301589,
+   1.3265745338214536,
+   1.3321120764067773,
+   1.423697026750471
+  ]
+ },
+ "starts": true,
+ "rates": [
+  {
+   "rate": 1.0,
+   "reference": 4.986696867004586,
+   "reference_concentration": [
+    659.3105823808489,
+    1642.9859657888878
+   ],
+   "runs": {
+    "as simulated": {
+     "capacity": 4.987612270164405,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.00018356904063621116,
+     "concentration": [
+      664.7151227830079,
+      1570.7363731515907
+     ],
+     "inside": true
+    },
+    "with the smaller correction for the box": {
+     "capacity": 4.988831847021036,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.00042813511095429746,
+     "concentration": [
+      692.26168893989,
+      1515.695719011784
+     ],
+     "inside": true
+    },
+    "with the larger correction for the box": {
+     "capacity": 4.991537847278192,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.0009707789349775453,
+     "concentration": [
+      755.6015993694915,
+      1394.7528452780437
+     ],
+     "inside": true
+    },
+    "corrected for the length of the run": {
+     "capacity": 4.986384551899565,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -6.26296551303751e-05,
+     "concentration": [
+      639.2001417867212,
+      1647.1895256467856
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the smaller correction for the box": {
+     "capacity": 4.987775522878868,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.00021630668617933502,
+     "concentration": [
+      669.5720827328322,
+      1580.2171881799977
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the larger correction for the box": {
+     "capacity": 4.9908170083866334,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.0008262265567633431,
+     "concentration": [
+      738.9378503438885,
+      1435.4216894130118
+     ],
+     "inside": true
+    }
+   }
+  },
+  {
+   "rate": 1.5,
+   "reference": 4.899497139923161,
+   "reference_concentration": [
+    489.18900573969444,
+    2122.5278330581427
+   ],
+   "runs": {
+    "as simulated": {
+     "capacity": 4.901166430974358,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.0003407066079486043,
+     "concentration": [
+      478.22929662773606,
+      1980.1634954145295
+     ],
+     "inside": true
+    },
+    "with the smaller correction for the box": {
+     "capacity": 4.904289359048702,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.0009781042806398244,
+     "concentration": [
+      522.1703556519243,
+      1878.3572302181592
+     ],
+     "inside": true
+    },
+    "with the larger correction for the box": {
+     "capacity": 4.910761986022666,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.002299184136207444,
+     "concentration": [
+      622.8940130193693,
+      1658.5212837915817
+     ],
+     "inside": true
+    },
+    "corrected for the length of the run": {
+     "capacity": 4.897067177051543,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -0.0004959616879490758,
+     "concentration": [
+      430.42708121554426,
+      2171.5169910390878
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the smaller correction for the box": {
+     "capacity": 4.900993240033333,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.00030535789029872973,
+     "concentration": [
+      480.7978680592718,
+      2036.418059895813
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the larger correction for the box": {
+     "capacity": 4.9087833377896635,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.001895336929750302,
+     "concentration": [
+      593.1264372279578,
+      1754.301745108012
+     ],
+     "inside": true
+    }
+   }
+  },
+  {
+   "rate": 2.0,
+   "reference": 4.789404886405533,
+   "reference_concentration": [
+    323.028271660752,
+    2733.5295739119047
+   ],
+   "runs": {
+    "as simulated": {
+     "capacity": 4.792138588308145,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.0005707811236363991,
+     "concentration": [
+      267.3048031094324,
+      2470.012835389671
+     ],
+     "inside": true
+    },
+    "with the smaller correction for the box": {
+     "capacity": 4.801744584489436,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.002576457488262962,
+     "concentration": [
+      336.33824716389074,
+      2309.423372719081
+     ],
+     "inside": true
+    },
+    "with the larger correction for the box": {
+     "capacity": 4.81833880739794,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.006041235117651977,
+     "concentration": [
+      483.71297396341186,
+      1965.9852217622838
+     ],
+     "inside": true
+    },
+    "corrected for the length of the run": {
+     "capacity": 4.772244987513809,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -0.0035828874982842818,
+     "concentration": [
+      177.0294580307877,
+      2876.6591132539775
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the smaller correction for the box": {
+     "capacity": 4.789010459371304,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -8.235408022172486e-05,
+     "concentration": [
+      262.93642895221194,
+      2631.562932183024
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the larger correction for the box": {
+     "capacity": 4.8127963613630005,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.00488400448746007,
+     "concentration": [
+      437.1260140911054,
+      2149.7894088440175
+     ],
+     "inside": true
+    }
+   }
+  },
+  {
+   "rate": 2.5,
+   "reference": 4.6090935646681395,
+   "reference_concentration": [
+    151.40123976004045,
+    3521.2690073436697
+   ],
+   "runs": {
+    "as simulated": {
+     "capacity": 4.548892395828668,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -0.013061390053123345,
+     "concentration": [
+      1.741397219321712,
+      3061.108838659723
+     ],
+     "inside": true
+    },
+    "with the smaller correction for the box": {
+     "capacity": 4.632028542803422,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.004976027892142243,
+     "concentration": [
+      95.2971592763422,
+      2816.5896703840817
+     ],
+     "inside": true
+    },
+    "with the larger correction for the box": {
+     "capacity": 4.694539106639092,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.018538469825379877,
+     "concentration": [
+      330.10340798412057,
+      2314.803301670295
+     ],
+     "inside": true
+    },
+    "corrected for the length of the run": {
+     "capacity": 4.174320119627769,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -0.0943294899398891,
+     "concentration": [
+      -1.932974224100943e-07,
+      3576.656067515724
+     ],
+     "inside": false
+    },
+    "corrected for the length, with the smaller correction for the box": {
+     "capacity": 4.504372258335172,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": -0.022720585916443103,
+     "concentration": [
+      0.28193450692430844,
+      3445.6777765470315
+     ],
+     "inside": true
+    },
+    "corrected for the length, with the larger correction for the box": {
+     "capacity": 4.674536090583182,
+     "usable": true,
+     "ended": "event: Voltage < 2.5 [V] [experiment]",
+     "change": 0.014198567461659595,
+     "concentration": [
+      254.4222983092283,
+      2637.7281663488943
+     ],
+     "inside": true
+    }
+   }
+  }
+ ]
+}
