@@ -6383,7 +6383,7 @@ for.
 
 ### Tutorials
 
-Eleven notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Twelve notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the tenth reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -6400,6 +6400,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `09_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
 | `10_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
 | `11_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `12_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, a leak of the activity through the columns of a file and the limit of the guard against it, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -6848,7 +6849,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         eleven notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twelve notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

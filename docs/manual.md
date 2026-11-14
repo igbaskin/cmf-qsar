@@ -3266,6 +3266,9 @@ are simply never asked, because asking means running four baselines by hand.
 cmf diagnose data.sdf --charges file
 ```
 
+The twelfth tutorial, `docs/tutorials/12_before_you_model.ipynb`, runs the command on four sets
+with four different recommendations and reads one report line by line.
+
 The command answers five questions and prints the numbers behind each.
 
 **Is there anything to model?** The size of the set and the spread of the activity. Twenty
@@ -3318,7 +3321,7 @@ so, names the nearest columns with their correlations, and refuses to recommend 
 This guard is a threshold, and a threshold can be passed. On the 25 pyrazoles of the corrosion
 tables the leaking columns give q² 0.98 and the warning is given. On 17 of those 25 molecules
 the same columns give 0.94, the warning is not given, and the command recommends descriptors
-(a part drawn with seed 3 of NumPy). With five folds in place of ten the whole table gives
+(the twelfth tutorial shows both runs). With five folds in place of ten the whole table gives
 0.946 and passes as well. So the guard is a help and not a proof. When descriptors are
 recommended, or when they score far above every route that describes the molecule, read the
 names of the columns that the route used: a column that was measured on the molecule and not
@@ -15958,7 +15961,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Eleven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twelve notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, molecules adsorbed on a metal surface, read with
@@ -15968,8 +15971,8 @@ with the charge of one ring carbon, the infrared spectra of benzoic acids as the
 read with the kernel of spectra and compared with the position of one band, a series of
 chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
 activity, the hops of a lithium ion in crystals, with the barrier of a hop read from the
-environment of its path, and mixtures, with the amounts of the components read from one
-spectrum. Each runs on the
+environment of its path, mixtures, with the amounts of the components read from one
+spectrum, and the diagnosis of a data set before any model is built. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
