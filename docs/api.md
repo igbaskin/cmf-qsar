@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 125 modules, 247 classes with 814 public methods, and 1292 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 126 modules, 248 classes with 815 public methods, and 1302 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -124,6 +124,7 @@ for.
 | [cmfqsar.reciprocal](#cmfqsarreciprocal) | Reciprocal-space channels of a crystal: the typed structure factors (plan item M6). |
 | [cmfqsar.relax](#cmfqsarrelax) | Relaxation of a molecule under the gradient of its own predicted activity (plan item MS3). |
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
+| [cmfqsar.resolution](#cmfqsarresolution) | A kernel that knows the resolution of its description (plan item MS4). |
 | [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
 | [cmfqsar.scattering](#cmfqsarscattering) | Measured scattering curves as samples: the total, untyped descriptor (plan item M12). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
@@ -15976,6 +15977,114 @@ The whole report as one self-contained HTML document.
 ### `write_report(path: str, model, extra: Optional[Dict]=None, title: Optional[str]=None, spec: Optional[ReportSpec]=None, source: str='', progress=None) -> str`
 
 Write the report to `path` and return the path.
+
+## cmfqsar.resolution
+
+Source: `cmfqsar/resolution.py`
+
+A kernel that knows the resolution of its description (plan item MS4).
+
+Two things live here, and they rest on one fact: a CMF field is a sum of Gaussian functions, and
+the width of each Gaussian is the resolution at which the field describes its atom.
+
+**Several widths in one model.** The field width (`alpha`) is chosen per model, so a model sees
+the structure at one resolution: fine with a narrow Gaussian, coarse with a wide one. A sum of
+the kernels at several widths sees both at once, and it is still a valid kernel. The weights of
+the sum are fitted by the evidence of the Gaussian-process reading of the model
+(`cmfqsar.mixing.evidence_mixing`), the same rule that fits the weights of the field types,
+so no width has to be chosen by hand. `width_kernels` builds the stack of kernels and
+`fit_width_mixture` the weights.
+
+**Beads.** A coarse-grained model replaces a group of atoms by one bead. In CMF terms a bead is
+one Gaussian that stands for the Gaussians of its atoms. Its centre is the centre of the atoms,
+its weight in each field is the sum of their weights, and its width matches the second moment
+of the group: the variance of the bead's Gaussian along each axis is the variance of one atom's
+Gaussian plus the variance of the atom positions about the centre. So the field of a bead has the
+same total weight and the same spread as the field of its atoms; what it loses is the shape
+inside the group, for example the dipole of a carbonyl group, whose charges cancel in the sum.
+
+The kernel of two bead descriptions needs Gaussians of different widths, one per bead, and the
+program has that integral already: it is the radius-scaled overlap of the steric field
+(`b = alpha / R^2`). A bead of per-axis spread `s^2` is therefore given the radius
+`R = sqrt(1 + alpha s^2)` in an ordinary field and `R = sqrt(<R_atom^2> + alpha s^2)` in the
+steric field, and the existing closed-form code computes its kernel. A bead of one atom has
+`s = 0` and gives back the atom's own Gaussian exactly.
+
+`bead_groups` maps atoms to beads by a stated rule (`"united"`: each heavy atom with its
+hydrogens; `"four"`: about four heavy atoms per bead, grown along bonds in the manner of the
+MARTINI force field; `"atoms"`: every atom its own bead, the control); `beads_of`
+builds the beads of one molecule and `bead_kernels` their kernel matrices.
+
+### `class Beads  (dataclass)`
+
+The beads of one molecule: centres, summed weights and the spread of their atoms.
+
+Attributes:
+
+- `name: str`
+- `coords: np.ndarray`
+- `weights: np.ndarray`
+- `spread: np.ndarray`
+- `radius2: np.ndarray`
+- `groups: List[List[int]]`
+
+#### `Beads.n_beads` -> int  (property)
+
+### `cosine_field_kernels(P: AtomTable, specs: Sequence[FieldSpec], Q: Optional[AtomTable]=None) -> np.ndarray`
+
+Per-field kernels (F, nP, nQ), each divided by the square root of its two self-kernels.
+
+### `width_kernels(P: AtomTable, fieldset: FieldSet, alphas: Sequence[float], Q: Optional[AtomTable]=None) -> np.ndarray`
+
+The joint kernel at every width: an array (W, nP, nQ).
+
+At each width the per-field kernels are cosine-normalised and summed over the fields the
+field set enables, which is the joint kernel with equal field weights.
+
+### `fit_width_mixture(stack: np.ndarray, y: np.ndarray, **kw) -> np.ndarray`
+
+Weights of the widths that maximise the evidence, one per width, for `mixed_kernel`.
+
+The prior of `cmfqsar.mixing.evidence_mixing` is centred at equal weights, so a width
+gets a large share only when the evidence asks for it. Extra keywords go to that function.
+
+### `mixed_kernel(stack: np.ndarray, weights: Sequence[float]) -> np.ndarray`
+
+The weighted sum of the kernels of a stack.
+
+### `bead_groups(mf: MoleculeFields, rule: str='four') -> List[List[int]]`
+
+The atoms of each bead, by a stated rule, from the atoms and bonds of one molecule.
+
+`"atoms"` makes every atom a bead. `"united"` makes each heavy atom one bead with the
+hydrogens bonded to it. `"four"` grows beads of up to four bonded heavy atoms: it starts
+from the unassigned heavy atom with the fewest unassigned heavy neighbours (the end of a
+chain first), adds unassigned heavy neighbours breadth first, and gives every hydrogen to
+the bead of its heavy atom. The order is fixed, so one molecule always gives the same beads.
+
+### `beads_of(mf: MoleculeFields, rule: str='four') -> Beads`
+
+The beads of one molecule under a rule (see `bead_groups`).
+
+### `bead_kernels(P: Sequence[Beads], fieldset: FieldSet, alpha: float, Q: Optional[Sequence[Beads]]=None, normalise: bool=True) -> np.ndarray`
+
+Per-field kernels (F, nP, nQ) of two lists of bead descriptions at one width.
+
+Every bead is a Gaussian of its own width, so every field is computed with the
+radius-scaled overlap: ordinary fields with `R^2 = 1 + alpha s^2`, the steric field with
+`R^2 = <R_atom^2> + alpha s^2`. With `normalise` each field is cosine-normalised.
+
+### `bead_joint_kernel(P: Sequence[Beads], fieldset: FieldSet, alpha: float, Q: Optional[Sequence[Beads]]=None) -> np.ndarray`
+
+The joint bead kernel with equal field weights, as `width_kernels` builds it.
+
+### `kernel_correlation(K: np.ndarray, L: np.ndarray) -> float`
+
+Pearson correlation of the off-diagonal entries of two kernels (the reading of EC5).
+
+### `centred_alignment(K: np.ndarray, L: np.ndarray) -> float`
+
+Centred kernel alignment: the cosine of the two kernels after removing the mean row.
 
 ## cmfqsar.restriction
 

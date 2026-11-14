@@ -7183,6 +7183,25 @@ would discard the typed fields and the global kernel that are the method's own.
   coarse-grained bead carry a wide Gaussian and an atom a narrow one. *Gate:* the kernel
   correlation between the all-atom and a bead description of the same structures (the whole-kernel
   criterion of EC5), and no loss of q² on the Sutherland sets against the single width.
+  **Built and measured 15 November 2026.** `cmfqsar/resolution.py`: `width_kernels` stacks the
+  joint kernel at several widths, `fit_width_mixture` fits their weights by the evidence
+  (`mixing.evidence_mixing`), `mixed_kernel` sums them; `bead_groups` maps atoms to beads by a
+  stated rule (`united`: a heavy atom with its hydrogens; `four`: up to four bonded heavy atoms,
+  grown along bonds as in MARTINI), `beads_of` gives each bead the summed weights and the spread
+  of its atoms, and `bead_kernels` computes their kernel through the radius-scaled overlap of the
+  steric field, so a bead of one atom is that atom exactly. `benchmarks/run_resolution.py` on the
+  eight Sutherland series, five folds repeated three times, every choice on the training block.
+  *The width part of the gate is met:* widths weighted by the evidence against one width chosen
+  by the evidence, mean q² difference +0.003, no series with its interval wholly below
+  zero; no gain either, as the per-field widths and the wavelet screen found. *The bead part:*
+  united-atom beads correlate 0.970 to 0.997 with the all-atom kernel at width 1 and
+  their models equal the all-atom ones (mean +0.010); four-atom beads correlate
+  0.632 to 0.909, their electrostatic field alone 0.20 to 0.81, and their
+  models are worse on average (-0.041, interval below zero on COX2).
+  The EC5 rule (0.98 or more: no model differs) held; below 0.98 the models may differ, and
+  for the four-atom beads they did, mostly for the worse. 11 tests in
+  `tests/test_resolution.py`. *Open:* the periodic kernel of M6 with a mixture of widths, which
+  is the symptom the item named; beads for ensembles; a bead that keeps the dipole of its group.
 
 * **MS5. Ensembles as the normal input.** Equation 10.1 makes the kernel of two ensembles exact.
   A trajectory or a sampled shell as the sample, with the single structure as the special case, is
@@ -8739,7 +8758,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 7 | MS4, MS8 (partly) |
+| H. Multiscale modelling | 9 | 8 | MS8 (partly) |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |

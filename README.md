@@ -1465,6 +1465,18 @@ after one structure of the DHFR set was built again; the numbers were 0.49, 0.25
 and +0.022 before. Another seed of the sampler changes them as much, so the last digit is inside
 the sampling error.)
 
+### Several widths in one model, and beads
+
+Plan item MS4 (`cmfqsar/resolution.py`, `benchmarks/run_resolution.py`): the kernels at seven
+field widths summed with weights fitted by the evidence, and a coarse-grained description in which
+a bead is one Gaussian with the summed weights and the spread of its atoms. On the eight
+Sutherland series the width mixture neither gains nor loses against one width (mean q² difference
++0.003, no interval below zero), which was the gate. United-atom beads correlate 0.97 or
+more with the all-atom kernel at width 1 and give the same models; four-atom beads
+correlate 0.63 to 0.91, lose the charge distribution inside a bead, and give worse
+models on average (-0.041). The kernel correlation of item EC5 says which coarsening is
+harmless before a model is built.
+
 ### A map instead of one number: the prediction place by place
 
 A model answers with one number per structure. A coarser model needs a map: a barrier per site, a

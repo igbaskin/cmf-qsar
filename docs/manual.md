@@ -4685,6 +4685,77 @@ knowing, because it says the search is not what decides the accuracy of a CMF mo
 is (see *Alignment*, and the third part of `docs/benchmark.md`). Use `--alpha-search per-field` to
 ask the question of a new series, not as a default.
 
+### Several widths in one model, and beads
+
+A field width describes every atom at one resolution: a narrow Gaussian resolves a substituent,
+a wide one sees only the outline of the molecule. Plan item MS4 asks two things of that
+resolution (`cmfqsar/resolution.py`).
+
+**Several widths at once.** The kernels at several widths can be summed, and the sum is still a
+kernel; it sees fine and coarse structure in one model. The weights of the sum are fitted by the
+evidence, the same rule that fits the weights of the field types, so no width is chosen by hand
+(`width_kernels`, `fit_width_mixture`, `mixed_kernel`).
+
+**Beads.** A coarse-grained model replaces a group of atoms by one bead. Here a bead is one
+Gaussian that stands for its atoms: centred at their centre, with the sum of their weights in each
+field, and wide enough to have the same spread as the group (the variance of the bead along each
+axis is that of one atom's Gaussian plus that of the atom positions). Its kernel needs Gaussians of
+different widths, and the program has that integral already, in the radius-scaled overlap of the
+steric field; a bead of one atom gives back that atom exactly. Two mapping rules are provided:
+`united` (each heavy atom with its hydrogens) and `four` (up to four bonded heavy atoms per bead,
+grown along bonds in the manner of the MARTINI force field).
+
+`benchmarks/run_resolution.py` measures both on the eight Sutherland series, with the five fields,
+equal field weights and five folds repeated three times, every choice made on the training
+block. The single width is chosen from seven (0.05 to 4) by the evidence; its q² is that of the
+same model in the wavelet screen to 4e-16. The differences are q² minus the q² of the reference,
+with the 95 % interval of a paired bootstrap over the molecules.
+
+| Series | q², one width | q², widths weighted by the evidence | Difference from one width | United-atom beads, difference from all atoms | Four-atom beads, difference from all atoms |
+|---|---:|---:|---|---|---|
+| ACE | +0.615 | +0.593 | -0.012 [-0.044, +0.018] | +0.001 [-0.013, +0.016] | +0.029 [-0.034, +0.102] |
+| AChE | +0.517 | +0.555 | +0.028 [-0.032, +0.094] | +0.009 [-0.042, +0.058] | -0.101 [-0.246, +0.022] |
+| BZR | +0.350 | +0.360 | +0.025 [-0.009, +0.065] | +0.010 [-0.037, +0.063] | -0.006 [-0.117, +0.100] |
+| COX2 | +0.516 | +0.542 | +0.030 [-0.006, +0.065] | +0.008 [-0.010, +0.026] | -0.109 [-0.176, -0.043] |
+| DHFR | +0.639 | +0.642 | -0.002 [-0.019, +0.015] | +0.008 [-0.021, +0.040] | -0.062 [-0.120, +0.001] |
+| GPB | +0.567 | +0.550 | -0.012 [-0.048, +0.025] | +0.001 [-0.082, +0.061] | -0.083 [-0.234, +0.056] |
+| THER | +0.389 | +0.376 | -0.019 [-0.048, +0.011] | +0.019 [-0.031, +0.062] | -0.066 [-0.193, +0.047] |
+| THR | +0.563 | +0.558 | -0.011 [-0.034, +0.012] | +0.021 [-0.005, +0.048] | +0.070 [-0.062, +0.192] |
+
+**Several widths: no loss and no gain.** The gate, fixed before the measurement, asked that no
+series have its interval wholly below zero and that the mean difference be not below -0.01. It is
+met: no interval lies below zero, and the mean difference is +0.003. The evidence spreads
+its weight (the largest single weight is 0.17 to 0.49), so it does use
+several widths, and the predictions for the held-out molecules do not change beyond the
+intervals. This is the flat surface of the section
+above once more: one width, five widths per field and seven widths in one kernel predict equally
+well. A Mexican-hat wavelet kernel over four scales gave the same answer on the same series.
+
+**Beads: the kernel correlation says in advance which coarsening is harmless.** United-atom beads
+(25 per molecule against 46 atoms) correlate 0.970 to 0.997 with the
+all-atom kernel at width 1 and 0.939 to 0.995 at width 4, and their models equal the
+all-atom ones on every series (mean +0.010). Four-atom beads (9 per molecule)
+correlate only 0.632 to 0.909 at width 1; their models are worse on average
+(-0.041), with the interval wholly below zero on COX2. Item
+EC5 found that a correlation of 0.98 or more means that no model differs. The united-atom
+beads are at or close to that value and change no model, even at 0.970 on GPB; the four-atom
+beads are far below it and change the models, mostly for the worse. The rule works in one
+direction only: below 0.98 a model may differ, and on ACE and THR the four-atom beads are
+ahead, inside the interval. What a four-atom bead loses is visible field by field: the
+electrostatic field alone correlates 0.20 to 0.81 with the all-atom one at width 1
+(united atoms 0.83 to 0.99), because the charges of a bead nearly cancel and the
+dipole of a group such as a carbonyl disappears. Use the bead kernel to judge a coarse-grained
+description before a model is built on it; a correlation well below 0.98 is a warning that the
+description has changed.
+
+What is not done: the symptom the plan named, that a longer cutoff of the periodic kernel costs
+accuracy (item M6), was not measured with a mixture of widths; and beads are built for single
+structures, not for ensembles.
+
+```bash
+python benchmarks/run_resolution.py     # about 7 minutes; stages widths and beads
+```
+
 ## Validation
 
 - **k-fold cross-validation** (10 by default) gives q² and RMSEcv. Folds are shuffled unless you

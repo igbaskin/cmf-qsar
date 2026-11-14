@@ -591,6 +591,15 @@ def registry() -> List[Benchmark]:
                   needs="xtb", minutes="25",
                   report=lambda: _mod("run_shells").write_table(_r("shells")),
                   tables=["shells/table.md"]),
+        Benchmark("resolution",
+                  "several field widths in one model, their weights fitted by the evidence, "
+                  "against one width; and beads of united atoms and of four heavy atoms "
+                  "against the all-atom kernel, on the Sutherland series (plan item MS4)",
+                  "run_resolution.py", "resolution",
+                  compute=[["--stage", "widths"], ["--stage", "beads"]],
+                  minutes="7",
+                  report=lambda: _mod("run_resolution").write_table(_r("resolution")),
+                  tables=["resolution/table.md"]),
         Benchmark("ensembles",
                   "an ensemble of structures through the general entry: the shells of item "
                   "BT5 written to one file and read back by load_dataset, against BT5's own "

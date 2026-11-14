@@ -1,0 +1,222 @@
+{
+ "set": "COX2",
+ "n": 282,
+ "alphas": [
+  0.05,
+  0.1,
+  0.2,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "beads": {
+  "united": {
+   "beads_per_molecule": 25.925531914893618,
+   "atoms_per_molecule": 40.691489361702125
+  },
+  "four": {
+   "beads_per_molecule": 9.390070921985815,
+   "atoms_per_molecule": 40.691489361702125
+  }
+ },
+ "agreement": {
+  "united": [
+   {
+    "alpha": 0.05,
+    "correlation": 0.9584760487180086,
+    "alignment": 0.9489251942313722,
+    "best_all_atom_alpha": 0.05,
+    "best_correlation": 0.9584760487180086
+   },
+   {
+    "alpha": 0.1,
+    "correlation": 0.9675222081361683,
+    "alignment": 0.9621230299737207,
+    "best_all_atom_alpha": 0.1,
+    "best_correlation": 0.9675222081361683
+   },
+   {
+    "alpha": 0.2,
+    "correlation": 0.9800259530456312,
+    "alignment": 0.9776681577918246,
+    "best_all_atom_alpha": 0.2,
+    "best_correlation": 0.9800259530456312
+   },
+   {
+    "alpha": 0.5,
+    "correlation": 0.9921144269879485,
+    "alignment": 0.9930941150987298,
+    "best_all_atom_alpha": 0.5,
+    "best_correlation": 0.9921144269879485
+   },
+   {
+    "alpha": 1.0,
+    "correlation": 0.9958483952020117,
+    "alignment": 0.9966048208153456,
+    "best_all_atom_alpha": 1.0,
+    "best_correlation": 0.9958483952020117
+   },
+   {
+    "alpha": 2.0,
+    "correlation": 0.9968579153788745,
+    "alignment": 0.9969807792548041,
+    "best_all_atom_alpha": 2.0,
+    "best_correlation": 0.9968579153788745
+   },
+   {
+    "alpha": 4.0,
+    "correlation": 0.9942810778331863,
+    "alignment": 0.9936267218672779,
+    "best_all_atom_alpha": 4.0,
+    "best_correlation": 0.9942810778331863
+   }
+  ],
+  "four": [
+   {
+    "alpha": 0.05,
+    "correlation": 0.7763788200504438,
+    "alignment": 0.7766402171415487,
+    "best_all_atom_alpha": 0.05,
+    "best_correlation": 0.7763788200504438
+   },
+   {
+    "alpha": 0.1,
+    "correlation": 0.782059314862778,
+    "alignment": 0.8145986152260885,
+    "best_all_atom_alpha": 0.5,
+    "best_correlation": 0.7833050569217821
+   },
+   {
+    "alpha": 0.2,
+    "correlation": 0.7946742452839372,
+    "alignment": 0.8194503587773819,
+    "best_all_atom_alpha": 0.5,
+    "best_correlation": 0.8015636122768147
+   },
+   {
+    "alpha": 0.5,
+    "correlation": 0.7834961484751459,
+    "alignment": 0.7620897449416912,
+    "best_all_atom_alpha": 1.0,
+    "best_correlation": 0.7891283096191343
+   },
+   {
+    "alpha": 1.0,
+    "correlation": 0.7520991913922488,
+    "alignment": 0.7215160669832159,
+    "best_all_atom_alpha": 1.0,
+    "best_correlation": 0.7520991913922488
+   },
+   {
+    "alpha": 2.0,
+    "correlation": 0.6994741225640694,
+    "alignment": 0.6802708222759744,
+    "best_all_atom_alpha": 2.0,
+    "best_correlation": 0.6994741225640694
+   },
+   {
+    "alpha": 4.0,
+    "correlation": 0.6456549497098197,
+    "alignment": 0.6498127790053798,
+    "best_all_atom_alpha": 4.0,
+    "best_correlation": 0.6456549497098197
+   }
+  ]
+ },
+ "per_field_at_alpha_1": {
+  "united": {
+   "electrostatic": 0.9357488373145076,
+   "steric": 0.9952052327435987,
+   "hydrophobic": 0.9849326956982436,
+   "hba": 0.9993353824405634,
+   "hbd": 0.9997779378852423
+  },
+  "four": {
+   "electrostatic": 0.2024454741903695,
+   "steric": 0.862586096927414,
+   "hydrophobic": 0.7074815128075892,
+   "hba": 0.6652857689422784,
+   "hbd": 0.991368606562206
+  }
+ },
+ "models": {
+  "atoms": {
+   "q2_mean": 0.5156893755735198,
+   "q2_sd": 0.020897180680458836,
+   "rmse_mean": 0.8102125523341844,
+   "chosen": [
+    2.0,
+    4.0,
+    2.0,
+    4.0,
+    2.0,
+    2.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    2.0,
+    4.0,
+    4.0,
+    2.0,
+    2.0
+   ]
+  },
+  "united": {
+   "q2_mean": 0.5285018555289758,
+   "q2_sd": 0.011992499942940861,
+   "rmse_mean": 0.7995428342202331,
+   "chosen": [
+    2.0,
+    4.0,
+    2.0,
+    4.0,
+    2.0,
+    2.0,
+    4.0,
+    2.0,
+    4.0,
+    4.0,
+    2.0,
+    4.0,
+    4.0,
+    2.0,
+    2.0
+   ],
+   "q2_gain_vs_atoms": {
+    "mean": 0.007639969249187195,
+    "lo": -0.009977129349673017,
+    "hi": 0.02556038506245063
+   }
+  },
+  "four": {
+   "q2_mean": 0.40767280056177957,
+   "q2_sd": 0.0032110899566402964,
+   "rmse_mean": 0.8962237146923807,
+   "chosen": [
+    0.5,
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    1.0,
+    4.0,
+    1.0,
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "q2_gain_vs_atoms": {
+    "mean": -0.10920817656599013,
+    "lo": -0.17581091026603818,
+    "hi": -0.043305408196969694
+   }
+  }
+ },
+ "seconds": 43.70754885673523
+}
