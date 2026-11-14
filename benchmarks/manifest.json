@@ -1,6 +1,6 @@
 {
- "commit": "510cf404aa5a9bd18d6314fc77679d1b71bf0b48",
- "created": "2026-11-14T09:18:39",
+ "commit": "6d151fb00c21604db01447bd6212aff3e15ccd68",
+ "created": "2026-11-14T11:14:56",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -623,16 +623,16 @@
    "sha256": "c471d3a50df9675290c6e0edf49e649fd390f0b815bf2b75a0af95440c667e2f"
   },
   "examples/denmark/README.md": {
-   "bytes": 4216,
-   "sha256": "be5419e9741d9ec698ab33a9c22066952717a3c8814458f2c8c11640cd5e933a"
+   "bytes": 5124,
+   "sha256": "279785f9e6b3cfbba444f61d9af35e05a07a2fbf5da9ccdbe69e4723b1fc0a49"
   },
   "examples/denmark/catalysts.sdf": {
-   "bytes": 360158,
-   "sha256": "82c4a87cdb19c87440bff41885b6e75325b6cfde473831d3541fba10f0a69ad6"
+   "bytes": 360219,
+   "sha256": "68022002e04084f1b6c88ce8bf6e4fcfaf1d96c59f1ffa514b62e4b0d99fa164"
   },
   "examples/denmark/catalysts_sym.sdf": {
-   "bytes": 727371,
-   "sha256": "66210aac727b80ebc4a814300f3fd21ddf33e7b7b7ab8860f57983f95b9dcf7a"
+   "bytes": 727493,
+   "sha256": "bd4500950cce8579be1f324d87f0c962e4a2d7cdaffd6714d22a6e9d9a8bbf6b"
   },
   "examples/denmark/imines.sdf": {
    "bytes": 16466,
@@ -1319,8 +1319,8 @@
    "sha256": "81a6d68b5f8291f7319e63999b5d3aa4280f0a2a4def563cd536591e16546dad"
   },
   "examples/make_denmark_examples.py": {
-   "bytes": 23911,
-   "sha256": "893fd9390d4c4f3406a24e2fc01b9e5634db65b562961d47b9ed0d7ff5161b84"
+   "bytes": 26898,
+   "sha256": "2e3f12af2beb172cabeed05622cd4ba2d157be5331abc0c6494d31d1b3e013ac"
   },
   "examples/make_docked_poses.py": {
    "bytes": 15002,
@@ -2861,10 +2861,10 @@
   "benchmarks/results/cyclodextrin/methyl_beta.json": "7bb7e12423519d391df841c17ae68985fbe6828fb0f961267eb46cf8a716465f",
   "benchmarks/results/cyclodextrin/sbe_beta.json": "0f275b229d6b9a6e80726de62863eae64a3b519343ec0d8214fc893cf7598add",
   "benchmarks/results/cyclodextrin/table.md": "fc0e5abac03ccfb5ba81bb3bc741dcab6af50ebda0d8a6e6931320201da94b16",
-  "benchmarks/results/denmark/cofields.png": "29cdb8c209fbe2d74605359ce3deb70ba9c88f55ff1445e4df6d025970be2044",
-  "benchmarks/results/denmark/cv_scatter.png": "40ea3501da607ed8dc9ca424a06bcb56382c7c16f7e5f3b016dbf4e2b03e5624",
-  "benchmarks/results/denmark/summary.json": "cc6fdb8251ef2d76aeae5b0d6bb355b8c867244c9e4397f00bffd14082f6454b",
-  "benchmarks/results/denmark/table.md": "28eefc0901bff315bc0532b69286261ae03f9f19e25a3a2da6eaedac24424682",
+  "benchmarks/results/denmark/cofields.png": "73c15549dc4591d655a9589171840c895b993e3f337a5aa129555f6c52bff8b0",
+  "benchmarks/results/denmark/cv_scatter.png": "6d4a1317be97937f69ecaa1d582e9aa9da9296b6890e27690491be2fc1a3eb15",
+  "benchmarks/results/denmark/summary.json": "0d97e2563634de1e3177e1b60d71fedeebe17360d146408ad0bb8abfc2997097",
+  "benchmarks/results/denmark/table.md": "474d0650bf3b6fc65f121b727c71cccadd46e5ff9b0d7a396b4b317f68462bbf",
   "benchmarks/results/design/ACE.json": "91be8eaae78a3119d2323fb98240f443c69781686ac2c6ce179d032560ad7e3f",
   "benchmarks/results/design/AChE.json": "50d6b310b1ba018dc632550baa43f21bb6e1b2d4935d8df45b20bd5976809323",
   "benchmarks/results/design/BZR.json": "7dc8f44ce8d4e0be8e18caef41fc572c127aeb2efaff444dbd6651b6731559ec",
