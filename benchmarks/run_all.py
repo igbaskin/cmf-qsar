@@ -329,6 +329,15 @@ def registry() -> List[Benchmark]:
                       _load(_r("denmark/summary.json")), _r("denmark/table.md")),
                   tables=["denmark/table.md"],
                   readme=["A kinetic selectivity as the activity (two tables)"]),
+        Benchmark("buchwald",
+                  "a reaction yield as the activity: 3,955 Buchwald-Hartwig couplings, the aryl "
+                  "halide and the isoxazole additive in the frames of their reacting bonds, "
+                  "against fingerprints, descriptors, names, the invariant kernel and a "
+                  "Gaussian layer on both field kernels",
+                  "run_buchwald.py", "buchwald", compute=[[]], minutes="420",
+                  report=lambda: _mod("run_buchwald").main(["--report"]),
+                  tables=["buchwald/table.md"],
+                  readme=["A reaction yield as the activity (two tables)"]),
         Benchmark("nonlinearity", "the molecule-dependent co-field of the Gaussian layer: its "
                   "spread and the non-linearity index on the Hammett set",
                   "run_nonlinearity.py", "nonlinearity", compute=[[]], minutes="3",

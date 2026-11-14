@@ -3241,6 +3241,67 @@ conformer choice the lowest MMFF structure makes once. And the condition of one 
 here because the screen was designed for it; on a series whose rate-determining step changes,
 the co-field of the mixture means nothing, and a curved Hammett plot is the warning sign.
 
+## A reaction yield as the activity: several components, each in its own frame
+
+The catalyst series above changes one component. A reaction table usually changes several, and
+the sample is then a combination of molecules, not one molecule. The program's measured case is
+the Buchwald-Hartwig screen of Ahneman, Estrada, Lin, Dreher and Doyle (Science 360 (2018)
+186-190): 4-methylaniline coupled with 15 aryl halides under 4 ligands, 3 bases and 22 isoxazole
+additives, in every combination, with 3,955 measured yields. It is the standard benchmark of
+yield prediction, with published splits: ten random 70/30 splits and four splits that each hold
+out five additives.
+
+**Each component that has a reacting bond gets its own frame.** The builder
+(`examples/make_buchwald_examples.py --fetch`) puts each aryl halide with its ipso carbon at the
+origin and its halogen on +x, and each isoxazole with the midpoint of its N-O bond at the origin
+and its nitrogen on +x. Both rings lie in the xy plane. The images that give the same molecule (a
+half turn about the C-X bond, a reflection through the ring) are written as the conformers of an
+ensemble under one name. A component with few members and no shared reacting bond, here the
+ligand and the base, enters by its name.
+
+**The kernel of a reaction is a product over its components.** For reactions r and s,
+K(r, s) = Π over components c of (1 + K_c(c_r, c_s)), where K_c is the kernel of that component:
+a field kernel for a component with a frame, the identity (1 for the same name, 0 otherwise) for
+a component known by name. Expanded, the product has one term for each component and for each
+pair, triple and quadruple of components, so the model can fit any interaction among them. This
+is an ANOVA kernel, and `benchmarks/run_buchwald.py` builds it from the component kernels.
+
+**What it gives** (R², every setting and the ridge chosen inside the training part):
+
+| method | random 70/30 | additive tests 1-4 | each additive held out | each aryl halide held out |
+|---|---:|---:|---:|---:|
+| names only (one-hot, all interactions) | 0.909 | 0.683 | 0.626 | 0.243 |
+| Morgan fingerprints | 0.937 | 0.727 | 0.713 | 0.696 |
+| fields, no frame | 0.909 | 0.670 | 0.657 | 0.724 |
+| fields in the frames | 0.841 | 0.537 | 0.545 | 0.720 |
+| fields in the frames, Gaussian layer | 0.917 | 0.545 | 0.579 | 0.659 |
+| published: Yield-BERT (Schwaller 2021) | 0.951 | 0.73 | not reported | not reported |
+
+A new aryl halide needs a structure: every structure-based description gives 0.70 to 0.72,
+against 0.24 for names. A new additive is hardly helped by fields: fields with no frame differ
+from names by +0.032 [−0.051, +0.128] in a bootstrap over the additives. Fingerprints describe the
+additives best. The frame gained +0.13 on the catalyst series above. Here it loses 0.11 to 0.13
+on new additives and gains nothing on new aryl halides. So the frame of a reacting bond is not
+worth something by itself. It is worth something when the parts of the molecules that change sit
+in places where the frame makes them comparable, as the 3,3' groups of the catalysts do.
+
+**Two lessons for any table of combinations.**
+
+* **A linear field model of a factorial set is a Free-Wilson model.** The 15 aryl halides are
+  every combination of 5 arenes and 3 halogens, and a linear kernel in a frame cannot give a
+  pair of them an effect of its own. The section on second derivatives below explains why, gives
+  the eigenvalue check that shows it, and shows that the Gaussian layer lifts the limit (+0.076
+  on the random splits).
+* **With few groups, a search over many settings costs accuracy.** The frame with a Gaussian
+  layer has 20 combinations of its two settings. On additive test 1 the best of them reaches
+  0.825, but a three-fold split of 17 training additives chose another, which reaches at most
+  0.718. Fingerprints have no setting and lose nothing to the choice. When a split holds out
+  groups and there are only a few of them, prefer a description with fewer settings, or fix the
+  settings on another data set.
+
+`examples/buchwald/README.md` describes the files and `benchmarks/results/buchwald/table.md`
+gives every split, the settings chosen and the co-fields of the linear model.
+
 ## Three tests to run before you build a new field or a new score
 
 The chapter that follows diagnoses a *data set*. This short section diagnoses a *proposal*: a new
@@ -4478,7 +4539,11 @@ linear model are unavailable. What takes the co-field's place is a co-field per 
 derivative of the prediction with respect to the field at that molecule, with the spread of those
 over the training set as a map of where the model is not additive and a non-linearity index per
 field (*The co-field of a nonlinear model: one per molecule*). The similarity decomposition stays
-valid, and the **Shapley tab** decomposes the prediction instead, which is why it exists.
+valid, and the **Shapley tab** decomposes the prediction instead, which is why it exists. On a
+set whose molecules are combinations of a few parts in a grid, the layer is needed for accuracy
+too: there the linear kernel is a Free-Wilson model, which can give no pair of parts an effect
+of its own (the end of *Second derivatives: the pair-interaction field and the interaction
+modes* gives the measured case and the check).
 
 Multiple kernel learning chooses the mixing coefficients $h_f$ rather than leaving them at 1,
 either by coordinate descent on the cross-validated error, by centred kernel alignment
@@ -5750,8 +5815,9 @@ weights of one -- and comparing the product with what the first derivatives give
 changes. Where the product is small against that, the model is additive there for every
 practical purpose, whatever the map looks like.
 
-**Measured** (`benchmarks/run_interactions.py`, `results/interactions/`). No measured set in the
-repository has a known non-additive pair, so the benchmark makes one: 105 para-disubstituted
+**Measured** (`benchmarks/run_interactions.py`, `results/interactions/`). When this benchmark was
+written, no measured set in the repository had a known non-additive pair, so it makes one (the
+Buchwald-Hartwig screen, described after it, is the first measured case): 105 para-disubstituted
 benzenes X-C$_6$H$_4$-Y from 14 substituents, built in the frame of the Hammett example, with an
 additive activity $\sigma_p(X) + \sigma_p(Y)$ and an interacting one that adds
 $1.5\,\sigma_p(X)\,\sigma_p(Y)$, both with 0.02 units of noise; five fields, unnormalised
@@ -5789,6 +5855,37 @@ own curvature, and a reference model of an additive quantity, when one exists, i
 to subtract.
 
 ![The pair-interaction field of the electrostatic field in the ring plane for OCH3-C6H4-NO2, the fixed probe (green ring) on the oxygen of the methoxy group, the nitro group on the far side: the model of the additive activity, the model of the interacting one, and their difference, on one colour scale. The additive model's field is small everywhere; the interacting model's is large, negative over the nitro group and around the probe, positive beyond the methoxy group.](docs/figures/pair_fields.png)
+
+**The first measured case: on a factorial set, a linear field model is a Free-Wilson model.**
+In the Buchwald-Hartwig screen (the section "A reaction yield as the activity"), the 15 aryl
+halides are every combination of 5 arenes and 3 halogens. A field is a sum of atom Gaussians,
+so in a shared frame the field of 4-CF3-phenyl bromide is close to the field of the
+4-CF3-phenyl part plus the field of the bromine. The 15 fields then span about 5 + 3 − 1 = 7
+dimensions, and the linear kernel can express an effect of each arene plus an effect of each
+halogen, and nothing else. A Free-Wilson model is exactly this: one additive contribution for
+each substituent at each position. The linear field model is a Free-Wilson model in three
+dimensions, and it has no second derivative between the two parts to show.
+
+The measured yields do have pair effects. A linear regression of the 15 mean yields on an arene
+part plus a halogen part explains 90.9 % of their variance. The largest departures are
+4-ethylphenyl chloride (mean yield 3.9 %, 11.5 points below the sum of its parts) and
+2-pyridyl chloride (43.5 %, 9.9 points above). The linear frame model cannot fit them.
+
+* **When the limit applies.** The molecules of a role are built from a few parts at fixed
+  places, and the set contains most combinations of them. A congeneric series with one varying
+  position is not affected; two or more positions varied in a grid are.
+* **How to see it.** Compute the eigenvalues of the linear kernel of the molecules and count
+  those above 10⁻³ of the largest. Then project the kernel onto the indicator columns of the
+  parts (one column for each arene, one for each halogen) and give the share of its squared
+  norm that the projection keeps. For the aryl halides: 7 eigenvalues of 15 above 10⁻³, and the
+  projection keeps 99.999 % (`free_wilson_check` in `benchmarks/run_buchwald.py`). A share near
+  one says that the kernel sees only the parts.
+* **What to do.** Use the Gaussian layer. Its kernel, exp(−γ d²) of the distance between two
+  fields, is not linear in the atom contributions, so it can give a pair of parts an effect of
+  its own. On the random splits of the screen it raises R² from 0.841 to 0.917 (+0.076
+  [+0.068, +0.084] over the ten splits). Where the pair itself is held out, as when one aryl
+  halide is held out, nothing can repair it: the effect of an unseen pair cannot be read from its
+  parts, and the layer gains nothing there (−0.061 [−0.130, +0.006]).
 
 ## Shapley values
 

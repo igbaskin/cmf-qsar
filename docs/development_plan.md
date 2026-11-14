@@ -6726,6 +6726,58 @@ What it leaves open, in order:
   interval excludes zero at every width. So the frame is worth a measured and modest part, and
   the sentence "the frame is the result" above overstated it twice: by one faulty molecule and
   by a reference that was not tuned.
+* **PO2. A reaction yield with several components in frames, done 15 November 2026.** The
+  first table in the repository whose sample is a combination of molecules: the Buchwald-Hartwig
+  screen of Ahneman, Estrada, Lin, Dreher and Doyle (Science 360 (2018) 186-190), 4-methylaniline
+  coupled with 15 aryl halides under 4 ligands, 3 bases and 22 isoxazole additives, 3,955
+  measured yields, MIT licence through the Yield-BERT repository (`docs/public_3dqsar_datasets.md`).
+  `examples/make_buchwald_examples.py` puts each aryl halide in the frame of its C-X bond (four
+  images) and each isoxazole in the frame of its N-O bond (two images); ligand and base enter by
+  name. `benchmarks/run_buchwald.py` fits a kernel ridge regression on the ANOVA kernel, the
+  product over the components of (1 + the component kernel), with every setting and the ridge
+  chosen by a three-fold cross-validation inside the training part of the same kind as the
+  outer split. Designs: the ten published random 70/30 splits, the four published splits that
+  hold out five additives each, each additive held out (22 folds) and each aryl halide held out
+  (15 folds), with 1000 bootstraps over the held-out components. Eight descriptions of the two
+  built components: one-hot main effects, one-hot with all interactions, Morgan fingerprints,
+  RDKit descriptors, fields with no frame (the invariant autocorrelation kernel), fields in the
+  frames, and both field kernels under a Gaussian layer.
+  **Measured** (R2; random / additive tests / each additive out / each aryl halide out): names
+  only 0.909 / 0.683 / 0.626 / 0.243; fingerprints 0.937 / 0.727 / 0.713 / 0.696; fields with no
+  frame 0.909 / 0.670 / 0.657 / 0.724; fields in the frames 0.841 / 0.537 / 0.545 / 0.720; fields
+  in the frames with a Gaussian layer 0.917 / 0.545 / 0.579 / 0.659. Published on the same splits:
+  Yield-BERT 0.951 / 0.73, DFT descriptors with a random forest 0.92 / 0.69. **Four findings.**
+  (1) A new aryl halide needs a structure, and fingerprints, descriptors and fields are level at
+  0.70 to 0.72 against 0.24 for names. (2) On a new additive, fields with no frame are not clearly
+  better than names (+0.032 [-0.051, +0.128]); fingerprints are best and reach Yield-BERT on the
+  four published tests. (3) The frame costs on the additives: fields in the frames minus fields
+  with no frame -0.133 (range -0.208 to -0.093) on the additive tests and -0.112 [-0.184, -0.029]
+  with each additive out, and -0.004 [-0.076, +0.063] with each aryl halide out. The +0.13 of
+  PO1 is therefore a property of that series, where the varying groups sit at the same places in
+  the frame, and not of frames in general. (4) **The Free-Wilson limit.** The 15 aryl halides
+  are every combination of 5 arenes and 3 halogens; their linear frame kernel has 7 eigenvalues
+  above 1e-3 of the largest, and 99.999 % of it lies in the span of the arene and halogen
+  indicators (rank 7). A linear field model of a factorial set is a Free-Wilson model in three
+  dimensions and can give no pair of parts an effect, while the mean yields have pair effects
+  (the arene plus halogen regression explains 90.9 % of their variance; 4-ethylphenyl chloride is
+  11.5 points below its parts). The Gaussian layer lifts the limit where the pairs are in the
+  training part (+0.076 [+0.068, +0.084] on the random splits) and gains nothing where the pair
+  is held out (-0.061 [-0.130, +0.006] with each aryl halide out). The manual now has a note on
+  this, with the eigenvalue check, at the end of its section on second derivatives.
+  **The cost of the setting search.** The frame with a Gaussian layer has 20 combinations of its
+  two settings. On additive test 1 the best of them reaches 0.825 with the ridge chosen on the
+  test part, but the search inside the training part (three folds of 17 additives) chose one
+  that reaches at most 0.718. Fingerprints have no setting and lose nothing to the choice. The
+  search chose the edge of the grid on the random splits (attenuation 8, gamma 8); a scan beyond
+  it did not raise R2 on random split 1. The co-field of the linear frame model is largest at the
+  halogen for every field and reads the halogen order; its main effects correlate with the mean
+  yields at r = 0.97 (aryl halides) and 0.95 (additives), and it shows nothing the names do not.
+  Run time: about 7 hours on one process (418 minutes of method time), 2 hours 50 minutes as
+  three processes. README and manual sections *A reaction yield as the activity*. **Open:** a
+  field of the amine, which this screen does not vary; a fixed setting carried over from another
+  set, to remove the search cost on the additive splits; and a second reaction table with a
+  varying position that is not a grid of parts (the Suzuki-Miyaura screen of Perera et al. 2018
+  is the next public one).
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
@@ -8770,14 +8822,14 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
-| H. Physical organic | 8 | 8 | -- |
+| H. Physical organic | 9 | 9 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 8 | MS8 (partly) |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**175 items: 117 finished, 11 partly, 47 open.**
+**176 items: 120 finished, 11 partly, 45 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

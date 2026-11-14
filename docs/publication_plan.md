@@ -330,7 +330,7 @@ What is left of the step is the reading of the 30 tables under rule 4.
 | 16 | **The gap of a benzenoid in a frame given by rule.** On 8,678 polybenzenoid hydrocarbons the HOMO-LUMO gap is topology: ring-centred fields carry it, and they are the one representation that extrapolates to larger molecules | `results/compas/` (`table.md`, `REPORT.md`, `NOTES.md`), `cmfqsar/pbh.py`, `benchmarks/run_compas.py`, manual "A frame by rule" | J. Chem. Inf. Model., J. Phys. Chem. A or Phys. Chem. Chem. Phys. | Results done; the gap to the equivariant networks must be stated |
 | 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample and the rotation about it is averaged in closed form; on DFT barriers a forest on these fields is more accurate than the published structure-to-barrier models, and on bond-valence labels the distance that remains is the fitting method, not the description | `results/hops/`, `litraj/`, `nebdft/`, `rowlength/`, `colweights/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Results done on DFT labels; needs a co-author in solid-state ionics |
 | 18 | **The fourth dimension, measured.** Conformer ensembles, protonation ensembles, a trajectory in the crystal site and the water as a field: none beats one well-posed conformation, and where the pose is unknown the ensemble is worse | README "The verdict on the fourth dimension", `results/protonation/`, `md/`, `solvent/`, `trajectory/`, `examples/md/`, the Hammett ensemble rows | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
-| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the frame adds +0.13 [+0.05, +0.26] in q² to the same fields compared without it | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on one series; a section of paper 2 until the published splits, a substrate field and a second catalytic series are in hand |
+| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the frame adds +0.13 [+0.05, +0.26] in q² to the same fields compared without it | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on two tables: the frame gains on the catalysts and loses on the Buchwald-Hartwig additives (PO2, 15 November 2026), so the claim is now a condition; a section of paper 2 |
 | 21 | **A congeneric series in the crystal sense.** Symmetry averaging turns the overlap kernel into an arrangement kernel: on 5,933 DFT-labelled defect cells per material it reaches 1.9 and 4.4 meV per defect site, extrapolates from two defects to three where the autocorrelation cannot, and its per-defect contributions are the single-defect energies of the set | `results/2dmd/`, `prototypes/`, `threebody/` (the extrapolation rows), `cmfqsar/periodic.py`, `prototypes.py`, `threebody.py` | npj Comput. Mater., Digital Discovery or Chem. Mater. | Results done; needs one split shared with the published networks |
 | 22 | **Fields of electrochemical objects.** An average over a cell or over a liquid belongs to the composition and the energy of one object belongs to its field: the cell voltage and the electrolyte conductivity go to the composition, the reduction potential of a complex and the binding energy of a cation to the fields | `results/battery/`, `ether/`, `solvation/`, `shells/`, `metal/`, `phenazine/`, `cmfqsar/battery.py`, `celldiff.py`, `solvation.py`, `shells.py`, `complexes.py` | J. Chem. Inf. Model., J. Phys. Chem. C or Chem. Mater. | Results done; the targets are computed, which the paper states |
 | 23 | **A spectrum as the sample.** A spectrum is a field on one axis with a closed-form kernel; it predicts a property where the spectrum holds the cause and not otherwise, which a correlation computed before any fit says in advance; it links a structure to its spectrum across two levels of theory; on the standard chemometric tasks it equals PLS, and the gain there comes from the treatment of the data | `results/spectra/`, `spectra_ir/`, `spectra_bridge/`, `spectra_measured/`, `spectra_computed/`, `mixtures/`, `fluorescence/`, `calibration_transfer/`, `cmfqsar/spectrum.py`, `spectrum2d.py`, `kcca.py` | Anal. Chem., J. Chem. Inf. Model. or J. Chemometrics | Results done on computed and measured spectra; no measured spectrum with a measured property yet |
@@ -1091,6 +1091,33 @@ splits, the substrate field and a second series it becomes a paper of its own. T
 are the paper's supplementary material fetched from a public copy, so either paper cites them
 and redistributes nothing.
 
+**The second catalytic table, measured 15 November 2026 (plan item PO2).** The paragraph above
+asks for the frame result to be shown twice. The Buchwald-Hartwig yield screen (Ahneman et al.,
+Science 2018; 3,955 couplings of 15 aryl halides and 22 isoxazole additives under 4 ligands and
+3 bases) is the second test, and the frame does not pass it. Each aryl halide is in the frame of
+its C-X bond and each additive in the frame of its N-O bond, inside an ANOVA kernel over the four
+components, with every setting chosen inside the training part. The frame loses to the same
+fields without a frame on new additives (−0.133 in R² on the four published additive tests,
+−0.112 [−0.184, −0.029] with each additive held out) and is level on new aryl halides (−0.004
+[−0.076, +0.063]). Fingerprints are the best description of the additives (0.727 on the
+published tests, Yield-BERT 0.73) and every structure-based description is level on new aryl
+halides (0.70 to 0.72 against 0.24 for names). The table adds one methods result of its own:
+on a factorial set (5 arenes × 3 halogens) a linear field kernel is a Free-Wilson model, with
+rank 7 of 15, and only a nonlinear layer can fit the pair effects of the yields (+0.076 on the
+random splits). Source material: `results/buchwald/` (`table.md`, `summary.json`),
+`examples/make_buchwald_examples.py`, `benchmarks/run_buchwald.py`, manual section *A reaction
+yield as the activity*.
+
+What this does to the paper. The claim "a reaction centre gives the frame for free, and the frame
+adds accuracy" is now false as a general claim: it held on the catalysts, where the varying
+groups sit at the same places relative to the acid, and failed on the additives, where they
+differ in a few small substituents. The claim that survives is a condition: a frame adds accuracy
+when the parts that change occupy comparable places in it, and the comparison against the
+invariant kernel is the test that says whether they do. That is a fair section of paper 2 with
+both tables, and it is not yet a paper of its own. The Free-Wilson result belongs in the software
+paper (paper 1), beside its attribution under a nonlinear kernel, rather than here. Readiness
+unchanged: a section of paper 2.
+
 ### 21. A congeneric series in the crystal sense: defect arrangements
 
 **The claim in one sentence: averaging the overlap kernel over the symmetry operations of the host
@@ -1552,7 +1579,7 @@ three. If time runs out, the papers that fold into others are 12 (into 8), 13 (i
 | 18 | Nothing | none |
 | 23 | A measured spectrum with a measured property; measured mixtures of known composition; measured peak lists with classes; a co-author in analytical chemistry | weeks, mostly finding the data |
 | 24 | The rest of BT9, BT11 as its input, a co-author in battery modelling | weeks, and a co-author |
-| 20 | The published 600/475 split and the DeepReac catalyst folds; a substrate field aligned on the reacting group; a second catalytic series (the expanded 2,795-reaction set, or a ligand library); the (R)/(S) label from the supplementary material | two to three weeks of runs, or a section of paper 2 now |
+| 20 | The published 600/475 split and the DeepReac catalyst folds; a substrate field aligned on the reacting group; a third catalytic series in which the varying groups sit at comparable places in the frame (the expanded 2,795-reaction set, or a ligand library), since the Buchwald-Hartwig screen (PO2) was the second and the frame lost there; the (R)/(S) label from the supplementary material | two to three weeks of runs, or a section of paper 2 now |
 
 ## Risks
 

@@ -5476,6 +5476,120 @@ python examples/make_denmark_examples.py --fetch
 python benchmarks/run_denmark.py
 ```
 
+### A reaction yield as the activity: the Buchwald-Hartwig screen
+
+The Denmark series changes one component of the reaction, the catalyst. Many reaction tables
+change several components at once. The high-throughput screen of Ahneman, Estrada, Lin, Dreher
+and Doyle (Science 360 (2018) 186-190) coupled 4-methylaniline with 15 aryl halides under 4
+ligands, 3 bases and 22 isoxazole additives, in every combination. Of the 3,960 reactions, 3,955
+have a yield (0 to 100 %, mean 33 %). It is the standard benchmark of yield prediction. Its
+published splits are ten random 70/30 splits and four splits that each hold out five additives,
+and every later paper reports on them.
+
+`examples/make_buchwald_examples.py --fetch` builds the set from the copy in the Yield-BERT
+repository (MIT licence). Two components have a reacting bond that gives a frame:
+
+* **the aryl halide**: the ipso carbon at the origin, the halogen on +x, the ring in the xy plane.
+  A half turn about the C-X bond and a reflection through the ring give the same molecule, so
+  each aryl halide is written as four images under one name.
+* **the additive**: the midpoint of the isoxazole N-O bond at the origin, the nitrogen on +x, the
+  ring in the xy plane, written as itself and its mirror image.
+
+The ligands and the bases have no structure here. With four and three members, a model can only
+tell them apart, and their names already do that.
+
+**The model** (`benchmarks/run_buchwald.py`) is one kernel over reactions: the product over the
+four components of (1 + the kernel of that component). Expanded, this product contains a term
+for every component and for every pair, triple and quadruple of components, so it can fit any
+interaction among them (an ANOVA kernel). Ligand and base enter by name. The aryl halide and the
+additive enter in one of six ways, the rows of the table below. The fit is a kernel ridge
+regression. Every setting and the ridge are chosen inside the training part, by a three-fold
+cross-validation of the same kind as the outer split: random folds for the random splits, folds
+by additive for the additive splits. Two designs are added to the published ones: each additive
+held out in turn (22 folds) and each aryl halide held out in turn (15 folds). Their pooled
+predictions get a 95 % interval from a bootstrap over the held-out components. R², the
+coefficient of determination on the test part:
+
+| method | random 70/30, mean of 10 | additive tests 1-4, mean | each additive held out | each aryl halide held out |
+|---|---:|---:|---:|---:|
+| one-hot, main effects only | 0.700 | 0.589 | 0.535 | 0.194 |
+| one-hot, all interactions (names only) | 0.909 | 0.683 | 0.626 | 0.243 |
+| Morgan fingerprints, Tanimoto kernel | **0.937** | **0.727** | **0.713** | 0.696 |
+| RDKit descriptors of the reacting bond and the molecule | 0.909 | 0.612 | 0.570 | 0.720 |
+| fields, no frame (invariant autocorrelation kernel) | 0.909 | 0.670 | 0.657 | **0.724** |
+| fields in the frame | 0.841 | 0.537 | 0.545 | 0.720 |
+| fields, no frame, Gaussian layer | 0.910 | 0.631 | 0.629 | 0.709 |
+| fields in the frame, Gaussian layer | 0.917 | 0.545 | 0.579 | 0.659 |
+| published: DFT descriptors, random forest (Ahneman 2018) | 0.92 | 0.69 | not reported | not reported |
+| published: Yield-BERT (Schwaller 2021) | 0.951 | 0.73 | not reported | not reported |
+
+The published values are from Table 1 of Schwaller et al., Mach. Learn.: Sci. Technol. 2 (2021)
+015016, on the same splits. Differences in R² between pairs of methods (for the published
+splits: the mean of the paired differences, with the smallest and the largest; for the designs
+that hold out one component: a 95 % bootstrap interval over the held-out components):
+
+| comparison | random 70/30 | additive tests | each additive held out | each aryl halide held out |
+|---|---|---|---|---|
+| fields in the frame minus fields with no frame | −0.068 [−0.079, −0.056] | −0.133 [−0.208, −0.093] | −0.112 [−0.184, −0.029] | −0.004 [−0.076, +0.063] |
+| frame with Gaussian layer minus frame, linear | +0.076 [+0.068, +0.084] | +0.008 [−0.041, +0.048] | +0.033 [−0.028, +0.094] | −0.061 [−0.130, +0.006] |
+| fields, no frame, minus names only | +0.000 [−0.013, +0.008] | −0.013 [−0.131, +0.066] | +0.032 [−0.051, +0.128] | +0.481 [+0.276, +0.725] |
+| fields, no frame, minus fingerprints | −0.028 [−0.036, −0.023] | −0.057 [−0.113, −0.020] | −0.056 [−0.119, +0.007] | +0.028 [−0.081, +0.121] |
+
+Four results:
+
+1. **A new aryl halide needs a structure, and any structure will do.** Names alone give 0.24.
+   Fingerprints, descriptors and fields all give 0.70 to 0.72, and no difference among them is
+   outside its interval.
+2. **A new additive is hardly helped by fields.** Fields with no frame are not clearly better
+   than names alone (+0.032 [−0.051, +0.128]). Fingerprints are the best description of the
+   additives, and on the four published tests they reach the published Yield-BERT (0.727 against
+   0.73) and the published random forest on DFT descriptors (0.69). Fields with no frame reach
+   0.670.
+3. **The frame does not help on this set; on the additives it costs.** The frame of the reacting
+   bond gained +0.13 on the Denmark catalysts. Here it loses 0.11 to 0.13 on new additives and
+   gains nothing on new aryl halides. A likely reason: the isoxazoles differ mostly in small
+   substituents at positions 3, 4 and 5. Superposed on their N-O bond, they give fields that
+   differ in a few places, and 17 to 21 training additives are too few to tell which places
+   matter.
+4. **The linear frame model cannot fit the aryl halides one by one, and the Gaussian layer
+   repairs this.** The 15 aryl halides are every combination of 5 arenes and 3 halogens. A field
+   is a sum of atom Gaussians, so in a shared frame the field of an aryl halide is close to the
+   field of its arene plus the field of its halogen. The linear frame kernel of the 15 has only 7
+   eigenvalues above 10⁻³ of the largest, and 99.999 % of it lies in the span of an arene part
+   plus a halogen part, which has rank 7. A linear model on it is a Free-Wilson model in three
+   dimensions: it can give each arene and each halogen an effect, but no effect to a pair of
+   them. The measured yields have such pair effects: 4-ethylphenyl chloride gives 3.9 %, 11.5
+   points below its arene plus its halogen. The Gaussian layer, exp(−γ d²) on the distance
+   between two fields, is not linear in the atoms. It lifts the limit and gains +0.076 on the
+   random splits, where the pairs are in the training part. It gains nothing where a pair is
+   held out, because the effect of an unseen pair cannot be read from its parts.
+
+**What the setting search costs.** The frame with a Gaussian layer has two settings (the
+attenuation and γ) and 20 combinations of them. On additive test 1 the best of them, with the
+ridge chosen on the test part, reaches 0.825; the search inside the training part chose another
+combination, which reaches at most 0.718. With 17 training additives, a three-fold split by
+additive is too noisy to choose among 20 combinations. Fingerprints have no setting, so they
+lose nothing to this choice. The search chose the edge of the grid on the random splits
+(attenuation 8, γ 8); a scan beyond it (attenuation 12, γ 16) did not raise the R² of random
+split 1 (0.911 to 0.916 against 0.916).
+
+**What the co-field says.** The co-field is defined for the linear frame model only. For the
+aryl halides, the co-field of every field is largest at the halogen. Its most likely reading is
+the order of the halogens, iodide > bromide > chloride, which is the order of the rate of
+oxidative addition. The
+main effects of the model correlate with the mean yields of the components at r = 0.97 for the
+aryl halides and 0.95 for the additives (`benchmarks/results/buchwald/cofields.png`). The
+co-field of a Free-Wilson model is a map of its arene and halogen effects, and this one shows
+nothing that the names of the components do not.
+
+The build takes under a minute and gives the same files on every run. The benchmark takes about
+7 hours on one process; it was run as three processes in parallel in 2 hours 50 minutes.
+
+```bash
+python examples/make_buchwald_examples.py --fetch
+python benchmarks/run_buchwald.py
+```
+
 ### Several endpoints on one kernel: the selectivity co-field
 
 A separation problem is not one property but two. An extractant has an affinity for americium
