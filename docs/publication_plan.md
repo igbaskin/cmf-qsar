@@ -4,7 +4,10 @@
 the development plan's parts B to I, and revised 31 October 2026 after the medicinal-chemistry
 items, the trajectory and hydration-site studies, the cheap quantum stage, the local-kernel
 comparison with SOAP, the COMPAS-1 pilot and the lithium-hop model, and rewritten on 6 November
-2026 so that the periodic capability leads the plan instead of sitting inside one long section. The plan names what each
+2026 so that the periodic capability leads the plan instead of sitting inside one long section.
+It was revised on 14 November 2026 after the spectra, the chain from a model to a battery cell
+model, the electrolyte items and the hop barriers on DFT labels: two new papers (23 and 24) and
+new results for papers 1, 3, 4, 8, 10 and 17. The plan names what each
 paper takes from the repository, what it still needs, which journal it is aimed at, and in which
 order the papers are written. File references point at the material a paper is written from. The
 companion document, `docs/development_plan.md`, says what gets built; this one says what gets
@@ -34,6 +37,111 @@ electrochemistry items move to paper 3, the paper about what decides a model: th
 correlation that says in advance whether a new field can help, the anchored-column result that
 looks like the same test and is a selection effect, and the pose-dependent score that must be
 reported at a pose the method can produce.
+
+## What changed since 6 November
+
+Eight days of work, two new papers, one paper that lost its main limitation, and a set of
+repairs that changed numbers in five others.
+
+* **A spectrum is now a sample (items SP1 to SP6, paper 23).** A spectrum is a field on one axis,
+  and its kernel has a closed form. It predicts a property where the spectrum holds the cause:
+  the computed infrared spectrum of 189 benzoic acids predicts the measured Hammett constant at
+  q² +0.809 with whole substituents held out, +0.111 [+0.023, +0.244] above the five fields
+  (`results/spectra_ir/`). It fails where the spectrum does not hold the cause: an X-ray powder
+  pattern predicts the highest phonon frequency of 1,265 crystals at 294 cm⁻¹ mean absolute
+  error, against 324 for the mean and 98 for the composition (`results/spectra/`). Both outcomes
+  were stated in advance by the *target alignment*, the correlation of the kernel with the
+  products of the targets, which needs no fit. A spectrum also links two calculations of one
+  molecule: the spectrum from one density functional (B97-3c) finds its own acid in a library
+  from another (r2SCAN-3c) in 99.6 % of the queries, against 42 % for the tight-binding method
+  GFN2-xTB, and kernel canonical correlation of structure and spectrum finds the Hammett constant
+  without being given it (`results/spectra_bridge/`). On measured spectra a kernel of the slopes
+  finds the second measured spectrum of the same compound first in 87.6 % among 1,912 compounds
+  (`results/spectra_measured/`); a measured spectrum against a computed library puts the right
+  compound first in 32.3 % of 230 candidates with B97-3c and in 11.3 % with GFN2-xTB, which is a
+  short list and not an identification (`results/spectra_computed/`). On the three standard
+  chemometric tasks the kernel equals PLS (partial least squares regression): the amounts in
+  mixtures (`results/mixtures/`), the classes and quality of honeys and olive oils from
+  fluorescence maps (`results/fluorescence/`), and the transfer of a calibration between
+  near-infrared instruments, where the gain comes from centring each instrument and not from the
+  kernel (`results/calibration_transfer/`).
+* **A vibrational band as a target on an atom (item SP2, paper 10).** On the quantum-optimised
+  geometries of the 189 acids the local field reaches q² 0.976 on the carbonyl band, and a linear
+  regression on the C=O bond length alone reaches 0.973: the optimisation that gives the band also
+  gives the length. On force-field geometries the fields reach the linear regression on the
+  Hammett constant with separate equations for meta and para, and do not pass it
+  (`results/band/`).
+* **The chain from a model to a battery cell model (items MS1, MS8 and MS9; papers 8 and 24).**
+  MS1 gives every prediction a standard deviation in activity units and checks it: on eight
+  Sutherland sets the root mean square of the standardised errors (z rms; 1 is ideal) is 1.02 on
+  the folds and 1.05 on the test sets, and a rule sends the predictions that are too uncertain to
+  a more expensive method (`results/surrogate/`). MS8 carries predicted hop barriers into the
+  activation energy of 13 disordered lithium conductors: the intervals are about 1 eV wide, and
+  the barrier model trained on DFT labels does not carry over to these conductors (correlation
+  +0.09 with their bond-valence barriers, against +0.84 in training) (`results/conductors/`).
+  MS9 hands a battery cell model (PyBaMM, the published Chen 2020 cell) a parameter set with an
+  interval on every predicted parameter. All deviations are calibrated (z rms 0.98 to 1.07), and
+  the gate is not met: the interval of the Bruggeman exponent misses the published capacity
+  curve, and the voltage, not the diffusion, decides most of the spread. The error of the
+  cathode diffusivity is a bias, not a spread: a narrower interval around it closes on the wrong
+  capacity (`results/cellmodel/`). Against two measured electrolytes the predicted conductivity
+  holds the measured capacity in 8 of 8 conditions (CALiSol) and in 6 of 8 (Landesfeind and
+  Gasteiger 2019, all four transport parameters measured). The same scheme with a field model in
+  every channel runs and stays calibrated, and the field models have the larger error in three
+  channels of four (`results/cellmodel_fields/`).
+* **The electrolyte parameters a cell model reads (items BT9 to BT12, paper 24).** A tolerance
+  stage was run first: how far may each parameter move before the capacity moves by 5 %? The salt
+  diffusion coefficient is needed under every condition (the tolerated factor at 298 K is 0.32
+  at 1C to 0.83 at 2.5C on the low side); the transference number and the thermodynamic factor
+  only in cold cells; the activation energy of charge transfer only in cold cells and to about
+  15 kJ/mol. BT9 simulates the electrolyte by molecular dynamics at the six concentrations of the
+  measurement. With the ion charges scaled by 0.7 and the length of the run corrected for, the
+  salt diffusion coefficient is 0.35 to 1.07 of the measured one and within 10 % at 4 of 6
+  concentrations; as simulated it is within 10 % at none, so gate (a) is not met, and yet the
+  cell at 298 K tolerates the simulated values up to 2C (`results/diffusion/`). BT12 collected
+  92 measured activation energies from 16 studies, each read in its own paper. For a carbonate
+  electrolyte the mean per electrode is enough. Across solvents, a linear regression on the
+  computed binding energy of Li⁺ to one solvent molecule gains 7.6 kJ/mol [+0.2, +13.2] over the
+  mean of the series for solvents with one donor atom, and nothing when the two chelating solvents
+  are included. The table cannot separate a field model from that regression, so none was built
+  (`results/charge_transfer/`).
+* **The hop barrier on DFT labels (paper 17).** On the public LiTraj set (1,801 hops, bond-valence
+  labels) the kernel reaches q² +0.600 and a random forest on the same rows +0.742, or +0.844 with
+  the rows before normalisation, against +0.94 published on 96,849 hops: the distance is the
+  fitting method, not the description (`results/litraj/`). On the nebDFT2k set (1,652 hops with
+  DFT barriers) the forest on the invariant field rows reaches 0.212 eV mean absolute error on the
+  published test part, against 0.25 to 0.29 eV for the published models of the same kind and
+  0.40 eV for the M3GNet network; the linear kernel reaches only what the bond-valence barrier
+  alone gives (`results/nebdft/`). Item M15 measured what the cosine normalisation removes:
+  keeping the length of the row gains +0.144 in q² on hop environments and costs 0.043 on a
+  molecular set (`results/rowlength/`, `colweights/`).
+* **Handedness read at the stereocentre (item MC3, paper 4).** 3,834 pairs of enantiomers from
+  ChEMBL, both measured in one assay. A model without handedness channels must give both members
+  the same value, so its share of correctly named eutomers (the more potent member) is exactly
+  50 %. Channels from the stereocentres name the eutomer in 59.1 % [56.3, 61.9] of the 1,144
+  pairs that differ by one log unit or more; channels from the other centres give 51.8 %, which
+  is chance. They do not improve the prediction of the potency itself (`results/enantiomers/`).
+* **Three screens that close questions.** A Mexican-hat wavelet kernel at four scales correlates
+  0.980 to 0.998 with the Gaussian kernel and changes q² by -0.05 to +0.05 (`results/wavelet/`;
+  paper 3, as a third case of the kernel-correlation test). For 657 point mutants of a protein,
+  in the frame of the mutated residue, the field of the surroundings with the difference field
+  reaches q² +0.311 with positions held out, and a count of the atoms around the site with three
+  columns of the substitution reaches +0.300 (`results/mutants/`; paper 10). For microstructures
+  the autocorrelation kernel equals a Gaussian process on principal components from 100 samples
+  on, and on micrographs of ultra-high-carbon steel a pretrained convolutional network wins, 0.87
+  against 0.61 (`results/microstructure/`; supplementary material of paper 14).
+* **Repairs that changed numbers.** SF5 groups had been built wrongly in three places (the
+  Hammett set, a Denmark catalyst and four enantiomer pairs); a new test reads every example
+  structure file (318 files, 31,746 records) and found three causes of wrongly built
+  structures. The frameless route of `cmf diagnose` had searched a parameter it does not have,
+  and its guard against columns that leak the activity was redesigned; its advice now gains
+  +0.058 [-0.048, +0.225] in q² per set, and the gain rests on one set. The evidence of kernels
+  of different scale is now compared with the ridge searched relative to the scale. The
+  corrected numbers are in papers 2, 3, 4, 9 and 20.
+* **Software (paper 1):** 115 modules, 32 subcommands, more than 3,000 tests and 13 tutorials;
+  the newer tutorials cover a substituent constant, a catalyst series, a metal complex, a
+  spectrum as the sample, a mixture, a surface, a hop in a crystal, and the choice of a route
+  before modelling.
 
 ## What changed since 27 October
 
@@ -206,25 +314,27 @@ What is left of the step is the reading of the 30 tables under rule 4.
 |---|---|---|---|---|
 | 1 | **Software paper.** A library, a tool and an application that give every CMF kernel in closed form, with co-fields, their uncertainty, and the checks around a q² | implementation, manual, tutorials, the three reproductions (`docs/benchmark.md` parts 1 and 2), speed and scale (`results/speed/`, `nystrom/`, `lowrank/`, screening in blocks), the supported interface | J. Chem. Inf. Model. (application note) or J. Cheminformatics | Ready to write once item 0 is done |
 | 2 | **Hammett equation as a CMF model.** Substituent constants are a co-field around the ring, and resonance needs whole-molecule charges | `results/hammett/`, README "A field-based Hammett equation" | J. Phys. Org. Chem., J. Org. Chem. or J. Chem. Inf. Model. | Results done; three additions below |
-| 3 | **Alignment, not the kernel, and not the learner or the hyper-parameters either.** On 86 series the superposition decides fifteen times as much as the kernel; the evidence chooses as well as cross-validation; kernel PLS does not beat the ridge; and the part of the field a fingerprint does not contain carries little of the activity | `docs/benchmark.md` part 3, `results/alignment/`, `evidence/`, `perfield/`, `mixing/`, `pharmfields*/`, `kpls/`, `kcca/` | J. Chem. Inf. Model. or J. Comput.-Aided Mol. Des. | Results done; a plain 2D baseline still needed |
-| 4 | **Working without a frame.** The rotation-invariant autocorrelation kernel, the topomer rule and the diagnosis that says which route a series needs | README "Alignment-free, but geometry-aware", "Topomer fields", `results/topomer*/`, `diagnose/`, `chirality/`, `structure/`, `corrosion/` (the frame columns only) | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
+| 3 | **Alignment, not the kernel, and not the learner or the hyper-parameters either.** On 86 series the superposition decides fifteen times as much as the kernel; the evidence chooses as well as cross-validation; kernel PLS does not beat the ridge; and the part of the field a fingerprint does not contain carries little of the activity | `docs/benchmark.md` part 3, `results/alignment/`, `evidence/`, `perfield/`, `mixing/`, `pharmfields*/`, `kpls/`, `kcca/`, `wavelet/` | J. Chem. Inf. Model. or J. Comput.-Aided Mol. Des. | Results done; a plain 2D baseline still needed |
+| 4 | **Working without a frame.** The rotation-invariant autocorrelation kernel, the topomer rule and the diagnosis that says which route a series needs | README "Alignment-free, but geometry-aware", "Topomer fields", `results/topomer*/`, `diagnose/`, `chirality/`, `enantiomers/`, `structure/`, `corrosion/` (the frame columns only) | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
 | 5 | **Quantum-chemical fields in CMF.** They help on about one series in eight, a cheap semi-empirical stage finds which, and what they know about the activity is mostly what shape and charge already contain | `results/xtb/`, `kcca_quantum/`, `corrosion_qm/`, `cdft_kernels/`, `anisotropic/`, `am_eu/` (the quantum rows), Hammett cited from paper 2 | J. Chem. Inf. Model. or J. Comput. Chem. | Results done |
 | 6 | **Corrosion inhibitors: what the literature data can support.** The pooled potency of a scaffold node is reproducible between laboratories (r 0.64) yet no model reaches a third of that ceiling, because the node is a set of series-specific trends with no shared scale; within one protocol fields and frontier-orbital descriptors are level, and a computed adsorption energy predicts nothing of inhibition; the protonation state is one state, not an ensemble | `examples/corrosion_fe110/` (the potency, mixed-model, leave-paper-out, descriptor-baseline, E_ads and reliability rows), `results/corrosion_hcl/`, `protonation/`, `examples/scaffold_tree_export.py` | Corrosion Science or J. Mol. Liq. | Results done on five nodes |
 | 7 | **How much of a co-field is real, and what it can be read for.** The co-field has a closed-form error bar; masked by it, it is a usable pharmacophore, a map of SAR transfer, a bioisostere table and a scaffold-hopping score; a transformation read from it does not transfer between series | `results/cofield_error/`, `query/`, `transfer/`, `cases/`, `bioisostere/`, `maskedmatch/`, `transformfield/`, `kfda/` (the co-field rows), README "Three series, worked through", Shapley and field-difference sections | J. Chem. Inf. Model. | Results done; needs a chemist's judgement of the cases |
-| 8 | **How certain is one prediction.** Conformal intervals keep their coverage, the GP variance does not, no estimate orders the errors well, no classifier beats the base rate on calibration, and molecules without an activity do not help | `results/conformal/`, `errorpred/`, `bound/`, `ranking/`, `klr/`, `lapkrr/`, README "Chance, domain and uncertainty" | J. Chem. Inf. Model. or J. Cheminformatics | Results done |
+| 8 | **How certain is one prediction.** A standard deviation in activity units is calibrated on eight sets, conformal intervals keep their coverage, the GP variance does not, no estimate orders the errors well, no classifier beats the base rate on calibration, and molecules without an activity do not help | `results/conformal/`, `errorpred/`, `bound/`, `ranking/`, `klr/`, `lapkrr/`, `surrogate/` (the Sutherland rows), `cmfqsar/surrogate.py`, README "Chance, domain and uncertainty" | J. Chem. Inf. Model. or J. Cheminformatics | Results done |
 | 9 | **Several endpoints on one kernel: the selectivity co-field.** Selectivity is a difference of co-fields; sharing helps only when the endpoints share molecules unevenly; an anti-target beside the potency costs the potency nothing and the difference co-field says where the two part; an endpoint nobody measured can be predicted from its neighbours | `results/selectivity/`, `multitask/` (method rows), `two_endpoints/`, `tasks/`, `antitarget/`, `designloop/`, `cmfqsar/multitask.py`; the 2003 J. Med. Chem. set and the H3/hERG set | J. Med. Chem. (perspective) or J. Chem. Inf. Model. | Results done |
-| 10 | **A target that belongs to an atom.** The field around a carbon predicts its shift better than its atom-centred count and, with three distances, as well as SOAP; a frame around one atom gives a co-field that reads as a substituent table; the same construction finds a metabolic site beside the count and not instead of it | `results/local/`, `local_cofield/`, `soap_gate/`, `triangles/`, `metabolism/`, `examples/local/`, `cmfqsar/atomtargets.py`, `localenv.py`, `localalign.py`, `triangles.py` | J. Chem. Inf. Model., Magn. Reson. Chem. or J. Org. Chem. | Results done; needs a published shift predictor as the reference point |
+| 10 | **A target that belongs to an atom.** The field around a carbon predicts its shift better than its atom-centred count and, with three distances, as well as SOAP; a frame around one atom gives a co-field that reads as a substituent table; the same construction finds a metabolic site beside the count and not instead of it, and on a vibrational band and on a protein site a bond length or a count matches the field | `results/local/`, `local_cofield/`, `soap_gate/`, `triangles/`, `metabolism/`, `band/`, `mutants/`, `examples/local/`, `cmfqsar/atomtargets.py`, `localenv.py`, `localalign.py`, `triangles.py` | J. Chem. Inf. Model., Magn. Reson. Chem. or J. Org. Chem. | Results done; needs a published shift predictor as the reference point |
 | 11 | **Virtual screening with measured inactives.** One-class field descriptions lose to a fingerprint on LIT-PCBA; the same kernel with the inactives as unlabelled data draws level; four classifiers tie; the posing rule is half of any such figure | `results/screening/`, `fusion/`, `kfda/` and `klr/` (the accuracy rows), `examples/litpcba/`, `cmfqsar/pu.py`, the one-class and GP-classifier sections of the README | J. Chem. Inf. Model. or J. Cheminformatics | Results done; two targets only |
 | 12 | **Which molecule to make next.** A confidence bound finds hits and a variance rule improves the model, and the two are different tasks; the substituent loop ranks held-out groups at ρ +0.4; a plate of ten needs only the cheap filter; and three questions the posterior cannot answer: what to grow a fragment into, whether a ring closure will pay, and which transformation to copy | `results/active/`, `design/`, `guest_design/`, `batch/`, `fraggrow/`, `restriction/`, `cmfqsar/design.py` | J. Chem. Inf. Model. or Mol. Inform. | Results done |
 | 13 | **Host-guest binding without a frame.** Seven cyclodextrin tables, where the invariant kernel beats the alignment, names the group that enters the cavity, and a one-body complementarity score points the wrong way | `results/cyclodextrin/`, `guest_atoms/`, `host_pocket/`, `examples/cyclodextrin/`; the seven-host sharing cited from paper 9 | Phys. Chem. Chem. Phys., J. Phys. Chem. B or J. Incl. Phenom. | Results done |
-| 14 | **Continuous molecular fields of periodic structures.** The field of an infinite solid is the scattering description of it; two kernels follow, one invariant to the choice of cell and one that keeps the co-field inside it, and between them they make a cell, a site, a surface, a migration path and a measured curve into samples | `results/matbench_phonons/`, `periodic_overlap/`, `reciprocal/`, `scattering/`, `sites/`, `threebody/`, `fe110/`, `cmfqsar/periodic.py`, `reciprocal.py`, `scattering.py`, `sites.py`, `threebody.py`, `planealign.py` | Digital Discovery, J. Chem. Theory Comput. or npj Comput. Mater. | Results done; needs two more Matbench tasks and a materials co-author |
-| 15 | **Review.** The CMF series from 2009 to the present, the successor of the 2014 Springer chapter | papers 1 to 22 | WIREs Comput. Mol. Sci. or J. Comput.-Aided Mol. Des. (perspective) | Year 2 |
+| 14 | **Continuous molecular fields of periodic structures.** The field of an infinite solid is the scattering description of it; two kernels follow, one invariant to the choice of cell and one that keeps the co-field inside it, and between them they make a cell, a site, a surface, a migration path and a measured curve into samples | `results/matbench_phonons/`, `periodic_overlap/`, `reciprocal/`, `scattering/`, `sites/`, `threebody/`, `fe110/`, `microstructure/` (supplementary), `cmfqsar/periodic.py`, `reciprocal.py`, `scattering.py`, `sites.py`, `threebody.py`, `planealign.py` | Digital Discovery, J. Chem. Theory Comput. or npj Comput. Mater. | Results done; needs two more Matbench tasks and a materials co-author |
+| 15 | **Review.** The CMF series from 2009 to the present, the successor of the 2014 Springer chapter | papers 1 to 24 | WIREs Comput. Mol. Sci. or J. Comput.-Aided Mol. Des. (perspective) | Year 2 |
 | 16 | **The gap of a benzenoid in a frame given by rule.** On 8,678 polybenzenoid hydrocarbons the HOMO-LUMO gap is topology: ring-centred fields carry it, and they are the one representation that extrapolates to larger molecules | `results/compas/` (`table.md`, `REPORT.md`, `NOTES.md`), `cmfqsar/pbh.py`, `benchmarks/run_compas.py`, manual "A frame by rule" | J. Chem. Inf. Model., J. Phys. Chem. A or Phys. Chem. Chem. Phys. | Results done; the gap to the equivariant networks must be stated |
-| 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample, the rotation about it is averaged in closed form, and the field beats the counts and the geometric descriptors on 1732 hops in 472 oxides | `results/hops/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Labels are bond-valence site energies; needs a DFT-labelled subset |
+| 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample and the rotation about it is averaged in closed form; on DFT barriers a forest on these fields is more accurate than the published structure-to-barrier models, and on bond-valence labels the distance that remains is the fitting method, not the description | `results/hops/`, `litraj/`, `nebdft/`, `rowlength/`, `colweights/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Results done on DFT labels; needs a co-author in solid-state ionics |
 | 18 | **The fourth dimension, measured.** Conformer ensembles, protonation ensembles, a trajectory in the crystal site and the water as a field: none beats one well-posed conformation, and where the pose is unknown the ensemble is worse | README "The verdict on the fourth dimension", `results/protonation/`, `md/`, `solvent/`, `trajectory/`, `examples/md/`, the Hammett ensemble rows | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
 | 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the frame adds +0.13 [+0.05, +0.26] in q² to the same fields compared without it | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on one series; a section of paper 2 until the published splits, a substrate field and a second catalytic series are in hand |
 | 21 | **A congeneric series in the crystal sense.** Symmetry averaging turns the overlap kernel into an arrangement kernel: on 5,933 DFT-labelled defect cells per material it reaches 1.9 and 4.4 meV per defect site, extrapolates from two defects to three where the autocorrelation cannot, and its per-defect contributions are the single-defect energies of the set | `results/2dmd/`, `prototypes/`, `threebody/` (the extrapolation rows), `cmfqsar/periodic.py`, `prototypes.py`, `threebody.py` | npj Comput. Mater., Digital Discovery or Chem. Mater. | Results done; needs one split shared with the published networks |
 | 22 | **Fields of electrochemical objects.** An average over a cell or over a liquid belongs to the composition and the energy of one object belongs to its field: the cell voltage and the electrolyte conductivity go to the composition, the reduction potential of a complex and the binding energy of a cation to the fields | `results/battery/`, `ether/`, `solvation/`, `shells/`, `metal/`, `phenazine/`, `cmfqsar/battery.py`, `celldiff.py`, `solvation.py`, `shells.py`, `complexes.py` | J. Chem. Inf. Model., J. Phys. Chem. C or Chem. Mater. | Results done; the targets are computed, which the paper states |
+| 23 | **A spectrum as the sample.** A spectrum is a field on one axis with a closed-form kernel; it predicts a property where the spectrum holds the cause and not otherwise, which a correlation computed before any fit says in advance; it links a structure to its spectrum across two levels of theory; on the standard chemometric tasks it equals PLS, and the gain there comes from the treatment of the data | `results/spectra/`, `spectra_ir/`, `spectra_bridge/`, `spectra_measured/`, `spectra_computed/`, `mixtures/`, `fluorescence/`, `calibration_transfer/`, `cmfqsar/spectrum.py`, `spectrum2d.py`, `kcca.py` | Anal. Chem., J. Chem. Inf. Model. or J. Chemometrics | Results done on computed and measured spectra; no measured spectrum with a measured property yet |
+| 24 | **From a field model to a battery cell model.** A CMF model hands a cell model a parameter set with a calibrated interval on every parameter, and a tolerance stage run first says which parameters matter; the intervals are calibrated and still too wide where the error is a bias, and only the electrolyte side at room temperature gives a usable cell prediction | `results/surrogate/` (the hop rows), `nebdft/` (the tolerance rule), `conductors/`, `cellmodel/`, `cellmodel_fields/`, `diffusion/`, `charge_transfer/`, `cmfqsar/surrogate.py`, `cellmodel.py`, `transport.py` | J. Electrochem. Soc., Batteries & Supercaps or Digital Discovery | Built and measured; item BT9 is partly done; the exchange-current channel has no field model |
 
 Short communication, written only if a journal asks for a separate note: increments fitted to
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
@@ -391,6 +501,12 @@ to it. On the measured free energy they are -0.057. The conclusion therefore hol
 target and at an honest pose: on a clean metal a slab receptor adds nothing, and the q2 of 0.64
 was the relaxation talking.
 
+The kernel-correlation test has a third case since 7 November: a Mexican-hat wavelet kernel at
+four scales correlates 0.980 to 0.998 with the Gaussian kernel on the Sutherland sets, and the
+cross-validated q² moves by -0.05 to +0.05 (`wavelet/`). The reason is exact: a wavelet
+transform with equal weights on the scales keeps the inner product of two fields, so weighting
+the scales only changes the radial profile, which the Gaussian width already sets.
+
 Before submission: one plain 2D baseline on all 86 sets (ECFP ridge or random forest), since the
 canonical-correlation result covers eight; Wilcoxon signed-rank beside each paired t-test; a
 figure of the paired differences.
@@ -405,6 +521,15 @@ on average and the cut 0.035; where the alignment is automatic the verdict rever
 is the honest limit: the signed three-point channels cannot carry it between molecules, and a
 stereo-centre descriptor can (`results/chirality/`); the five real sets cannot separate the two
 because none holds an enantiomeric pair, so the synthetic experiment is reported as such.
+Since 13 November the limit has a measurement on real pairs (`enantiomers/`): 3,834 pairs of
+enantiomers from ChEMBL, both members measured in one assay, 51 targets. The two members are
+one conformation and its mirror image, so their rows without handedness channels are identical
+and such a model names the eutomer in exactly 50 % of the pairs. This null needs no argument,
+and it found an error in the folds: it first scored 47.9 %, because 260 pairs were split
+between folds. Channels from the stereocentres
+name the eutomer in 59.1 % [56.3, 61.9] of the 1,144 pairs that differ by one log unit or more,
+and channels from the other centres in 51.8 %, which is chance: the handedness is read where it
+is. The channels do not improve the potency itself (median q² -0.018 without them, -0.023 with).
 
 The corrosion series appear here for the frame question only (`results/corrosion/`: aligned,
 topomer, invariant, counts); the cyclodextrin tables for the one line that the invariant kernel
@@ -513,7 +638,15 @@ kernel logistic regression ties the Gaussian-process classifier on accuracy, and
 no classifier beats the base rate, which the reliability table explains (`klr/`); molecules
 without an activity, added through the Laplacian penalty, gain -0.023 in R²pred where the hidden
 activities themselves are worth +0.118, and even the best weight chosen on the test set gains
-nothing (`lapkrr/`). The claim is modest and reliable: the program says how often it is right,
+nothing (`lapkrr/`). Added on 7 November (item MS1): the variance of the Gaussian process is
+turned into a standard deviation in activity units, with the amplitude estimated from the
+data, and checked: on eight Sutherland sets the root mean square of the standardised errors is
+1.02 on the folds and 1.05 on the test sets, 93 % of the test errors lie inside two standard
+deviations, and no correction factor is needed (`surrogate/`). A rule that answers only where
+the standard deviation is below a tolerance answers 61 % of the test molecules at an error of
+0.90 against 1.03 for those it sends on, which is a modest separation, as the error-estimate
+table predicts. The hop rows of the same benchmark belong to paper 24. The claim is modest and
+reliable: the program says how often it is right,
 says it in a way that was checked, and does not pretend that unlabelled molecules are data.
 
 Paper 12 uses the same posterior for acquisition and is the active-learning side of this one;
@@ -566,6 +699,19 @@ site of metabolism (636 molecules, 1301 sites) the local field finds a true site
 two in 71.1% of the molecules against 70.9% for the two-dimensional count, and counting the
 same atom types over distance reaches 73.9%: the field adds beside the count, not instead of it
 (`metabolism/`).
+
+Two further atom and site targets follow the same rule. The carbonyl stretching band of 189
+benzoic acids (`band/`): on the geometries optimised by the same quantum calculation that
+gives the band, the local field reaches q² 0.976, and a linear regression on the C=O bond
+length alone reaches 0.973, because the optimisation that gives the band also gives the
+length. On force-field geometries the fields reach the linear regression on the Hammett
+constant with separate equations for meta and para and do not pass it. A target computed on
+its own optimised geometry must therefore be predicted from a start geometry, with the
+regression on the bond length as a reference. The second is a site in a protein
+(`mutants/`): 657 point mutants at 174 positions, each in the frame of its own residue, so
+that one model covers every site. The field of the surroundings with the difference field
+reaches q² +0.311 with positions held out, and a count of the atoms around the site with three
+columns of the substitution reaches +0.300: the field measures how buried the site is.
 
 Before submission: one published shift predictor on the same molecules (the HOSE-code method
 of nmrshiftdb2 or a graph network) so the 5.5 ppm has a reference point; SOAP is a
@@ -849,13 +995,27 @@ bottleneck; the difference over the counts is +0.16 with an interval of +0.10 to
 (`hops/`). Partial occupancy enters as the exact mean field, which lets the conductor families
 with disordered sites into the set (plan item M2). The co-field along the hop is drawn per field.
 
-The limitation that decides the venue: the labels are bond-valence site-energy barriers, not
-DFT. As it stands this is a method paper on a cheap label; it becomes a materials paper when a
-subset carries nudged-elastic-band barriers (UMA is the cheap route to them, VASP the anchor).
+**The limitation that decided the venue is removed (6 and 12 November 2026).** The labels
+above are bond-valence barriers. Two public sets now place the description against other
+people's models on the same labels. On LiTraj (1,801 hops of 393 structures, bond-valence
+labels, folds that hold out structures) the kernel reaches q² +0.600, and the published models
++0.94 on 96,849 hops. The distance is the fitting method and not the description: a random
+forest on exactly the rows the kernel is built from reaches +0.742, and +0.844 at 0.374 eV when
+it also gets the rows before normalisation (`litraj/`). Item M15 measured what that
+normalisation removes: on hop environments keeping the length of the row gains +0.144
+(`rowlength/`, `colweights/`). On nebDFT2k (1,652 hops of 852 structures with barriers from
+nudged-elastic-band DFT) the forest on the invariant field rows reaches 0.212 eV [0.175, 0.259]
+mean absolute error on the published test part, against 0.25 to 0.29 eV for the published
+structure-to-barrier models and 0.40 eV for the M3GNet network; potentials that run the
+elastic band themselves reach 0.07 to 0.11 eV (`nebdft/`). The linear kernel on the same
+fields reaches only what the bond-valence barrier alone gives, which must be stated beside the
+forest result. An error of 0.21 eV is a factor of about 7,000 in a hop rate at 300 K, so the
+accuracy is that of a screen, and paper 24 shows what it gives when carried into a
+conductor.
 
-Before submission: that DFT-labelled subset; the polarisability field the plan names; a
-co-author from solid-state ionics. If time runs short the hop table joins paper 14 as one of its
-cases.
+Before submission: a description from the relaxed path or with the vacancy, which is the open
+part of the item; the polarisability field the plan names; a co-author from solid-state
+ionics. If time runs short the hop table joins paper 14 as one of its cases.
 
 ### 18. The fourth dimension, measured
 
@@ -1230,6 +1390,122 @@ states in the abstract, and two of the sets carry a stated offset (the reconstru
 of the four targets would make the boundary statement stronger; none was found that is machine
 readable.
 
+### 23. A spectrum as the sample
+
+**The claim in one sentence: a spectrum is a field on one axis, it predicts a property where the
+spectrum holds the cause and nowhere else, and a correlation computed before any fit says which
+case a pair of spectrum and property is.**
+
+The construction is the CMF one with a wavenumber or an angle in place of space: lines are
+Gaussian functions, the kernel of two spectra has a closed form, and the co-spectrum is the
+co-field on the axis (`cmfqsar/spectrum.py`; maps with two axes in `spectrum2d.py`). Four results
+belong in the paper.
+
+**The rule, with a case on each side.** A computed infrared spectrum predicts the measured Hammett
+constant of 189 benzoic acids at q² +0.809 with whole substituents held out, +0.111 [+0.023,
++0.244] above the five fields and +0.067 [+0.015, +0.130] above a linear regression on the
+position of the carbonyl band (`spectra_ir/`). An X-ray or neutron powder pattern predicts the
+highest phonon frequency of 1,265 crystals barely better than the mean (294 and 278 cm⁻¹
+against 324) while the composition reaches 98 (`spectra/`): a diffraction pattern does not name
+the elements, and the masses decide that frequency. The target alignment, which needs no fit,
+gave +0.438 for the infrared spectrum and +0.009 for the powder pattern before either model was
+fitted. The co-spectrum is read by region and out of fold: the O-H and C=O stretching regions
+carry the Hammett constant (+0.82 and +0.79), against +0.20 at most for scrambled constants. Two
+limits must be stated: the spectrum is computed by a density functional on its own optimised
+geometry, so its gain over the five fields is what a quantum calculation knows, and quantum
+charges in the electrostatic field hold the same information (not separated, +0.010).
+
+**A bridge between two levels of theory.** The spectrum from one density functional (B97-3c)
+finds its own acid among the 189 in a library computed with another (r2SCAN-3c) in 99.6 % of the
+queries; with GFN2-xTB as the query it is 42 %, and GFN2-xTB started from the density-functional
+geometries gives 43 %, so the limit is the tight-binding method and not the geometry
+(`spectra_bridge/`). Kernel canonical
+correlation of a structural kernel and the spectrum kernel, given no target, finds as its first
+pair a direction that follows the Hammett constant (r -0.79 on the structure side, -0.83 on the
+spectrum side), carried by the O-H and C=O stretching bands.
+
+**Measured spectra.** Among 2,079 measured infrared spectra of 1,912 compounds (Chemotion,
+CC BY-SA), the kernel of the slopes finds the other spectrum of the same compound first in
+87.6 %, the plain kernel in 59.9 % (`spectra_measured/`): a measured curve has a baseline, and
+the slope removes it.
+A measured query against a computed library of the same 230 small compounds puts the right
+compound first in 32.3 % with B97-3c and in 11.3 % with GFN2-xTB, and among the first ten in 72 %
+and 37 % (`spectra_computed/`). That is a short list and not an identification, and the paper
+says which limit is next: the molecule alone in the gas phase, since compounds with a
+hydrogen-bond donor are found less often (28.9 % against 46.1 % with B97-3c).
+
+**The chemometric tasks, where the kernel equals PLS.** Amounts in four-component mixtures:
+equal to PLS within 0.0001, and a fraction is found by dividing the predicted amounts by their
+sum (`mixtures/`). Fluorescence maps of 104 honeys and 240 olive oils: the kernel Fisher
+discriminant and kernel ridge equal PLS within their intervals, which the kernel correlation of
+0.96 to 1.00 between a smoothed and an unsmoothed map said in advance; on simulated peak lists a
+kernel on the peaks gains 6 to 9 points over bins, and only when the peaks move
+(`fluorescence/`). Calibration transfer between near-infrared instruments (corn and tablets):
+centring each instrument without any standard sample brings the error from 0.9 to 2.7 to 0.33 to
+0.52 of the spread of the property, which is close to piecewise direct standardisation with eight
+standards; the fitted shift and width add nothing (`calibration_transfer/`). These three are
+the negative half of the paper and its control: where the kernel is the linear model of the
+field, it is PLS, and what gains is the treatment of the data.
+
+Before submission: a measured spectrum with a measured property (half (b) of item SP1); measured
+mixtures of known composition (half (b) of SP6); a set of measured peak lists with a class per
+sample (SP4); a co-author from analytical chemistry or chemometrics.
+
+### 24. From a field model to a battery cell model
+
+**The claim in one sentence: a CMF model can hand a physical cell model a parameter set with a
+calibrated interval on every parameter, a tolerance stage run first says which parameters matter,
+and where an error is a bias a calibrated interval is still the wrong answer.**
+
+This is the paper of the multiscale items. Its material is a chain: a prediction with a standard
+deviation in its own units (item MS1), a rule that sends the uncertain predictions to a more
+expensive method, the barrier carried into a conductor (MS8), and a full parameter set for the
+cell model that a battery engineer would run (MS9), with the electrolyte parameters that the
+program does not yet predict as the open items BT9 to BT12.
+
+**The rule on DFT barriers.** On the nebDFT2k hops of paper 17 all four standard deviations are
+calibrated (z rms 0.99 to 1.01). The spread of the trees of the forest orders the errors (rank
+correlation +0.45), the kernel variances barely do (+0.03 to +0.16). Sending 20 % of the hops to
+DFT brings the error of the rest from 0.222 to 0.168 eV; halving it needs 76 % (`nebdft/`, the
+rule). On the 13 disordered conductors the interval of the activation energy is two to three
+times the spread of the barriers, about 1 eV wide, and the model does not carry over to them
+(`conductors/`).
+
+**The cell model.** PyBaMM with the published Chen 2020 cell. Four parameters are predicted: the
+cathode diffusivity from the hop barrier, the voltage of the cathode, the electrolyte conductivity
+from the sampled shells of item BT5, and the Bruggeman exponent from a two-phase field. Every
+deviation is calibrated (z rms 0.98 to 1.07), and the gate is not met: the interval of the
+Bruggeman exponent misses the published capacity curve, and the voltage, not the diffusion,
+takes most of the spread (72.8 % against 27.2 %). The finding a reader can use elsewhere is about
+the tolerance: a first scan found a narrower diffusivity interval "narrow enough" by its width,
+and that interval closed on 0.611 A.h, the wrong capacity. A tolerance must also say whether it
+still holds the published value (`cellmodel/`). The same scheme with a field model in every
+channel runs and is calibrated in every channel, and the field models have the larger error in
+three channels of four (`cellmodel_fields/`); the paper keeps the two claims apart: the scheme is
+implemented with fields throughout, and the usable cell prediction comes from the electrolyte.
+
+**The electrolyte at faster discharge and in the cold.** The predicted conductivity holds the
+measured capacity in 8 of 8 conditions against the CALiSol measurement and in 6 of 8 against
+Landesfeind and Gasteiger (2019), who measured all four transport parameters; it misses in the
+coldest cells, where one activation energy no longer describes the conductivity. With all four
+measured, the Bruggeman miss at 2.5C shrinks from 0.53 to 0.035 A.h, so most of that miss was the
+published electrolyte. The tolerance stage of BT9 to BT12 orders what is missing: the salt
+diffusion coefficient under every condition, the transference number and the thermodynamic
+factor only in the cold, the activation energy of charge transfer only in the cold and to about
+15 kJ/mol. The diffusion coefficient from molecular dynamics, with the ion charges scaled by 0.7,
+is 0.35 to 1.07 of the measured one over 0.1 to 3 mol/L and fails its 10 % gate as simulated; in
+the cell at 298 K the simulated values cost under 5 % of the capacity up to 2C (`diffusion/`). For
+the activation energy of charge transfer, 92 measured values from 16 studies show that the mean
+per electrode is enough in a carbonate electrolyte, and that across solvents a linear regression
+on the binding energy of Li⁺ gains 7.6 kJ/mol [+0.2, +13.2] for one-donor solvents; no field
+model was built, because the table cannot separate one from that regression
+(`charge_transfer/`).
+
+Before submission: the rest of BT9 as the development plan states it; BT11 as an input of BT9;
+a co-author from battery modelling. The paper states in its abstract that the cell is one
+published cell and which predicted channels are trained on computed rather than measured
+targets.
+
 ## Sequence
 
 | Tier | When | Papers | Why these first |
@@ -1240,15 +1516,15 @@ readable.
 | 3 | Months 6 to 9 | 21, 16, 10 | 21 carries the comparison with the networks for 14 and needs one split; the COMPAS pilot, which a collaborating group is waiting for; 10 needs only its reference predictor |
 | 4 | Months 9 to 12 | 22, 7, 8 | 22 closes the materials group with the boundary statement; the co-field read four ways; the posterior |
 | 5 | Months 12 to 15 | 5, 6, 12 | The quantum stage with its share of helped series; the corrosion data paper, now on five nodes; the design questions with their three negatives |
-| 6 | Months 15 to 18 | 13, 18, 11 | Two complete papers that fold into others if needed, and the screening paper once it has five targets |
-| 7 | Year 2 | 17, then 15 and 19 if ND1 and ND2 are measured | 17 needs NEB barriers and a co-author in solid-state ionics; the review comes after tiers 1 to 4 are in print |
+| 6 | Months 15 to 18 | 17, 23, 13 | 17 no longer waits for DFT barriers and needs only its co-author; 23 has results on computed and on measured spectra; 13 is complete |
+| 7 | Year 2 | 18, 11, 24, then 15 and 19 if ND1 and ND2 are measured | 18 and 11 fold into others if needed; 24 waits for the rest of BT9 and a co-author in battery modelling; the review comes after tiers 1 to 4 are in print |
 
-Twenty-one papers in eighteen months is not realistic for one author, and the plan does not
+Twenty-three papers in eighteen months is not realistic for one author, and the plan does not
 assume it is. The tiers are an order of priority, and rule 5 limits the work in progress to
 three. If time runs out, the papers that fold into others are 12 (into 8), 13 (into 4 and 9), 5
 (into 6), 17 (into 14), 21 and 22 (into 14, as the two sections they were until 6 November 2026),
-18 (a short communication) and 11 (a short communication). Papers 1, 2, 3, 4, 9, 10, 14 and 16 do
-not fold into anything.
+24 (into 22 and 8), 18 (a short communication) and 11 (a short communication). Papers 1, 2, 3,
+4, 9, 10, 14, 16 and 23 do not fold into anything.
 
 ## What each paper still needs, in one table
 
@@ -1272,8 +1548,10 @@ not fold into anything.
 | 21 | The published networks' own split, run on our kernel; a materials co-author | days, and a co-author |
 | 22 | Nothing; the computed targets and the two offsets are stated | none |
 | 16 | Skeleton frame, plane-flip kernel, NICS field; the collaborating group's reading | one to two weeks, and the group |
-| 17 | A DFT-labelled subset of hops (NEB), the polarisability field, a co-author in solid-state ionics | weeks, and a co-author |
+| 17 | A description from the relaxed path or with the vacancy, the polarisability field, a co-author in solid-state ionics | one to two weeks, and a co-author |
 | 18 | Nothing | none |
+| 23 | A measured spectrum with a measured property; measured mixtures of known composition; measured peak lists with classes; a co-author in analytical chemistry | weeks, mostly finding the data |
+| 24 | The rest of BT9, BT11 as its input, a co-author in battery modelling | weeks, and a co-author |
 | 20 | The published 600/475 split and the DeepReac catalyst folds; a substrate field aligned on the reacting group; a second catalytic series (the expanded 2,795-reaction set, or a ligand library); the (R)/(S) label from the supplementary material | two to three weeks of runs, or a section of paper 2 now |
 
 ## Risks
@@ -1285,7 +1563,11 @@ not fold into anything.
   masked-match tables to paper 7, the metabolism table to paper 10, the classifier accuracies to
   paper 11 and their calibration to paper 8. Within the materials group: the Matbench tables, the
   scattering curves and the site split to paper 14, the 2DMD tables and the design loop to paper
-  21, the battery and complex tables to paper 22, and the three diagnostics to paper 3.
+  21, the battery and complex tables to paper 22, and the three diagnostics to paper 3. Since
+  14 November: the spectra tables to paper 23, the band and mutant tables to paper 10, the
+  Sutherland rows of the surrogate to paper 8 and its hop rows with the cell model, the
+  conductors and the electrolyte items to paper 24, the LiTraj and nebDFT2k tables to paper 17,
+  the wavelet screen to paper 3, the enantiomer pairs to paper 4.
 * **Novelty of paper 1.** Eight prior publications on the method. The paper opens with what is
   new in the implementation and treats the reproductions as validation.
 * **Negative results.** Papers 5, 8, 11, 12 and 18 are mostly negative. Each carries its positive
@@ -1298,8 +1580,12 @@ not fold into anything.
   leaderboard. Those papers claim extrapolation, reading and cost, not accuracy, and say so in the
   abstract. Paper 21 is the one place where the comparison is close, and it is only close under one
   split, which is why that split is what it needs before submission.
-* **Cheap labels.** Paper 17's barriers are bond-valence site energies. It is not sent as a
-  materials paper until a DFT-labelled subset exists.
+* **Cheap labels, and the learner.** Paper 17 now has DFT labels (nebDFT2k). Its best result
+  is a random forest on the field rows; the linear kernel on the same rows is not better than
+  the bond-valence barrier alone. The paper says so, or a referee will.
+* **A scheme is not a prediction.** Paper 24 shows that the chain runs with calibrated
+  intervals; it does not show that the intervals are useful except on the electrolyte side at
+  room temperature. The two claims stay apart in the abstract.
 * **Small series.** The corrosion sets of 20 to 30 molecules cannot separate differences below
   about 0.1 in q²; every comparison on them is reported with a bootstrap interval. The three
   worked cases of paper 7 are 22 to 33 molecules, and one of them fails its own check, which the
