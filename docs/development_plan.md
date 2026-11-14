@@ -5719,6 +5719,80 @@ concentration was driven, and the stage counts only discharges that ended at the
   out at a time. A field model is worth building only if that regression leaves an error
   inside the series that is clearly above the repeatability of 5 kJ/mol. Still to be read:
   Yamada, Sagane 2009, and the supporting information of Sawayama 2025.
+  *The reference regression, 14 November 2026* (`--stage binding` and `--stage regression` of
+  `benchmarks/run_charge_transfer.py`; `binding.json`, `regression.json` and sections of
+  `table.md` in `benchmarks/results/charge_transfer/`; 28 tests). The regression on the
+  binding energy was run. It describes the solvents that hold the ion with one atom. It fails
+  for the two solvents that wrap the ion. And it leaves almost nothing that a field model of
+  the solvent could be shown to add.
+  *The binding energy.* The binding energy of Li⁺ with one molecule was computed for the 13
+  single solvents, from the complexes that the builder of BT4 makes. GFN2-xTB, the method of
+  BT4, is not accurate enough across classes of solvent: against the 11 values that the papers
+  of the table give, its correlation is 0.80 and the standard deviation of the difference is
+  22 kJ/mol. So ORCA gave the values: the energy with B3LYP-D3 and the def2-TZVPP basis set,
+  at a geometry optimised with B97-3c from the GFN2-xTB complex of lowest energy. Against the
+  same 11 values the correlation is 0.94. It is 0.99, with a standard deviation of the
+  difference of 6.4 kJ/mol, when the one solvent with two ways of binding is left out. That
+  solvent is 2,2,2-trifluoroethyl acetate. Its complex of lowest energy has a contact of the
+  ion with a fluorine atom and binds with 207.5 kJ/mol; the complex with one oxygen atom
+  alone binds with 177.3 kJ/mol, and the value of its paper agrees with the second one. The
+  ORCA build of this machine runs on one core, so the three species of more than 20 atoms
+  keep the GFN2-xTB geometry. On the 11 smaller solvents that changes the binding energy by
+  -1.9 kJ/mol on average and by 5.8 kJ/mol at most. The polyether of Xu 2010 is given with a
+  molar mass of 222 and no formula; it was computed as tetraethylene glycol dimethyl ether.
+  The stage took 31 minutes with eight ORCA processes side by side.
+  *The regression* has one slope for all series and one intercept for each series, so it
+  describes only differences inside a series. Every solvent is held out once, with every
+  mixture that holds it. The reference is the mean of the other values of the series. The
+  error is the mean absolute error of the held-out values. The gain has a 95 % interval from
+  a bootstrap over the held-out solvents (rule 4). The last column exchanges the binding
+  energies at random between the solvents, 2,000 times.
+
+  | Points of the regression | Values | Solvents | Error of the series mean, kJ/mol | Error of the regression, kJ/mol | Gain, 95 % interval | Exchanges that do as well |
+  |---|---:|---:|---:|---:|---|---:|
+  | single solvents | 20 | 13 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
+  | single solvents, without the two that wrap the ion | 18 | 11 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
+  | single solvents and mixtures | 36 | 13 | 11.7 | 14.2 | -2.5 [-6.6, +1.5] | 81.2 % |
+  | the same, without the two that wrap the ion | 34 | 11 | 13.1 | 7.1 | +6.1 [+3.8, +9.1] | 0.1 % |
+  | single solvents, binding energies of the papers | 12 | 8 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
+
+  With all 13 single solvents the regression is no better than the mean of the series. The
+  reason is the two solvents that wrap the ion with several oxygen atoms, diglyme and the
+  polyether. Their binding energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the
+  others, and their activation energies are inside the range of the others. For the polyether
+  the regression predicts 97.5 kJ/mol, and the measured value is 50.2. Without these two the
+  regression is better than the mean. The slope is 0.56 kJ/mol of activation energy per
+  kJ/mol of binding energy, and the correlation inside the series is 0.87. A mixture takes
+  the binding energy of its most strongly binding solvent. The binding energies that the
+  papers give lead to the same result on the 8 solvents that they cover.
+  *What is left for a field model.* The error of the regression, 7 to 10 kJ/mol, is above the
+  repeatability of 5 kJ/mol. But five solvents were held out in two or more series, and the
+  errors for one solvent differ between its series: for DMC the regression is 10 kJ/mol too
+  low in one series and 11 kJ/mol too high in another. A better model of the solvent moves
+  both errors by the same amount. On these 12 values the regression has an error of
+  11.3 kJ/mol, and no model of the solvent alone can have less than 10.4 kJ/mol. With the
+  mixtures the two numbers are 8.3 and 7.5 kJ/mol on 20 values. So a better description of
+  the solvent can gain about 1 kJ/mol where it can be checked, and the interval of rule 4 on
+  a gain is several kJ/mol wide on these labels.
+  *The verdict.* Part (c) of the gate is closed without a field model, because it cannot be
+  met on these labels. Part (d) is not run, because no Gaussian process is fitted. The item
+  gives MS9 two things. For a carbonate electrolyte it gives the mean per electrode with its
+  deviation: 61.7 ± 6.1 kJ/mol for graphite and 68.0 ± 13.0 kJ/mol for layered oxides, in
+  place of 35 and 17.8 kJ/mol. For another solvent that holds the ion with one atom it gives
+  the regression, with a held-out error of 7 to 10 kJ/mol. That is inside the 15 kJ/mol that
+  a cold cell needs; the mean of the series alone has 13 to 18 kJ/mol. The regression must
+  not be used for a solvent that wraps the ion.
+  *A hypothesis that the result suggests, and that is not tested.* The two solvents that wrap
+  the ion and the ester with a fluorine contact are all predicted too high. That is what one
+  expects if the barrier follows the binding of the last atom that leaves the ion, and not
+  the binding energy of the whole molecule. The same values suggested this, so they cannot
+  test it.
+  *Limits.* The binding energy is an electronic energy of one molecule in the gas phase, with
+  no thermal correction and no second solvent molecule. The 13 solvents come from 7 series
+  of 2 to 5 single solvents, on different electrodes and with different salts. The exclusion
+  of the two wrapping solvents was fixed before the regression was run, but for a reason
+  that the regression then confirmed, so the gain of 6 to 8 kJ/mol holds for solvents with
+  one donor atom only. Still to be read: Yamada, Sagane 2009.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -5756,7 +5830,11 @@ carbonate electrolyte the mean is accurate enough and no model is needed. For a 
 classes of solvent the table holds 10 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
-by 16 kJ/mol between them.
+by 16 kJ/mol between them. The regression was run the same day, with binding energies from
+ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 13 to
+18 kJ/mol to 7 to 10 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
+ion. A model of the solvent alone can gain about 1 kJ/mol more, so no field model is built
+and part (c) of the gate is closed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -8519,7 +8597,10 @@ equally blocked.
   of 90 measured values (13 and 14 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
-  binding energy and not enough to separate a field model from it.
+  binding energy and not enough to separate a field model from it. The regression was run:
+  it lowers the held-out error to 7 to 10 kJ/mol for solvents that hold the ion with one
+  atom, it fails for solvents that wrap the ion, and it leaves about 1 kJ/mol for a model of
+  the solvent alone. Part (c) of the gate is closed without a field model.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and

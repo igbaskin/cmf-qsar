@@ -1,0 +1,390 @@
+{
+ "rows": [
+  {
+   "solvent": "DMC",
+   "smiles": "COC(=O)OC",
+   "wraps": false,
+   "atoms": 12,
+   "geometry": "ORCA",
+   "binding": 197.47446131391726,
+   "ways_of_binding": [
+    197.47446131391726
+   ],
+   "binding_at_xtb_geometry": 196.3502648027481,
+   "binding_of_the_same_start": 197.47446131391726,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.775072639525629,
+   "binding_xtb": 235.34635206766944,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "EMC",
+   "smiles": "CCOC(=O)OC",
+   "wraps": false,
+   "atoms": 15,
+   "geometry": "ORCA",
+   "binding": 201.56531460924356,
+   "ways_of_binding": [
+    201.56531460924356
+   ],
+   "binding_at_xtb_geometry": 199.46834053951778,
+   "binding_of_the_same_start": 201.56531460924356,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7695613122639497,
+   "binding_xtb": 243.004908153539,
+   "spread_of_xtb_starts": 3.460396613350137,
+   "in_a_series": true
+  },
+  {
+   "solvent": "EC",
+   "smiles": "C1COC(=O)O1",
+   "wraps": false,
+   "atoms": 10,
+   "geometry": "ORCA",
+   "binding": 220.42837161586044,
+   "ways_of_binding": [
+    220.42837161586044
+   ],
+   "binding_at_xtb_geometry": 218.5810820957681,
+   "binding_of_the_same_start": 220.42837161586044,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7844141003226757,
+   "binding_xtb": 245.81418309763296,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "PC",
+   "smiles": "CC1COC(=O)O1",
+   "wraps": false,
+   "atoms": 13,
+   "geometry": "ORCA",
+   "binding": 226.87263348311978,
+   "ways_of_binding": [
+    226.87263348311978
+   ],
+   "binding_at_xtb_geometry": 224.91657927890412,
+   "binding_of_the_same_start": 226.87263348311978,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7789760479390262,
+   "binding_xtb": 254.1369883057858,
+   "spread_of_xtb_starts": 0.0052509811998749,
+   "in_a_series": true
+  },
+  {
+   "solvent": "FEC",
+   "smiles": "FC1COC(=O)O1",
+   "wraps": false,
+   "atoms": 10,
+   "geometry": "ORCA",
+   "binding": 199.0980013916695,
+   "ways_of_binding": [
+    199.0980013916695
+   ],
+   "binding_at_xtb_geometry": 197.69576333863375,
+   "binding_of_the_same_start": 199.0980013916695,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7986641068342317,
+   "binding_xtb": 217.94460035798951,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "DMSO",
+   "smiles": "CS(=O)C",
+   "wraps": false,
+   "atoms": 10,
+   "geometry": "ORCA",
+   "binding": 250.16383699289642,
+   "ways_of_binding": [
+    250.16383699289642
+   ],
+   "binding_at_xtb_geometry": 248.2526171717035,
+   "binding_of_the_same_start": 250.16383699289642,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7526425232478056,
+   "binding_xtb": 306.8988474424566,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "THF",
+   "smiles": "C1CCOC1",
+   "wraps": false,
+   "atoms": 13,
+   "geometry": "ORCA",
+   "binding": 196.6514209724517,
+   "ways_of_binding": [
+    196.6514209724517
+   ],
+   "binding_at_xtb_geometry": 195.1278031770587,
+   "binding_of_the_same_start": 196.6514209724517,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.827882469973667,
+   "binding_xtb": 208.49283419099703,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "acetonitrile",
+   "smiles": "CC#N",
+   "wraps": false,
+   "atoms": 6,
+   "geometry": "ORCA",
+   "binding": 196.99521215785606,
+   "ways_of_binding": [
+    196.99521215785606
+   ],
+   "binding_at_xtb_geometry": 196.8081609854863,
+   "binding_of_the_same_start": 196.99521215785606,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.931493001796508,
+   "binding_xtb": 209.3251147117997,
+   "spread_of_xtb_starts": 0.00262549059993745,
+   "in_a_series": true
+  },
+  {
+   "solvent": "DMF",
+   "smiles": "CN(C)C=O",
+   "wraps": false,
+   "atoms": 12,
+   "geometry": "ORCA",
+   "binding": 243.58587265048544,
+   "ways_of_binding": [
+    243.58587265048544
+   ],
+   "binding_at_xtb_geometry": 241.77036927173074,
+   "binding_of_the_same_start": 243.58587265048544,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.7617471618517466,
+   "binding_xtb": 280.70170221626216,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "2,2,2-trifluoroethyl acetate",
+   "smiles": "CC(=O)OCC(F)(F)F",
+   "wraps": false,
+   "atoms": 14,
+   "geometry": "ORCA",
+   "binding": 207.50180304235747,
+   "ways_of_binding": [
+    177.3486574122356,
+    207.50180304235747
+   ],
+   "binding_at_xtb_geometry": 201.7467425310547,
+   "binding_of_the_same_start": 207.50180304235747,
+   "donors_at_ion": 2,
+   "nearest_donor": 1.839303157935372,
+   "binding_xtb": 258.9442615979404,
+   "spread_of_xtb_starts": 57.62689322207341,
+   "in_a_series": true
+  },
+  {
+   "solvent": "water",
+   "smiles": "O",
+   "wraps": false,
+   "atoms": 3,
+   "geometry": "ORCA",
+   "binding": 155.4922099811335,
+   "ways_of_binding": [
+    155.4922099811335
+   ],
+   "binding_at_xtb_geometry": 154.08230479718998,
+   "binding_of_the_same_start": 155.4922099811335,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.89046926436861,
+   "binding_xtb": 187.8092192288724,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": true
+  },
+  {
+   "solvent": "diglyme",
+   "smiles": "COCCOCCOC",
+   "wraps": true,
+   "atoms": 23,
+   "geometry": "GFN2-xTB",
+   "binding": 362.967389097649,
+   "ways_of_binding": [
+    362.967389097649
+   ],
+   "binding_at_xtb_geometry": 362.967389097649,
+   "binding_of_the_same_start": null,
+   "donors_at_ion": 3,
+   "nearest_donor": 1.8292713990693124,
+   "binding_xtb": 405.2418489194847,
+   "spread_of_xtb_starts": 85.82203679635043,
+   "in_a_series": true
+  },
+  {
+   "solvent": "poly(ethylene glycol) of molar mass 222",
+   "smiles": "COCCOCCOCCOCCOC",
+   "wraps": true,
+   "atoms": 37,
+   "geometry": "GFN2-xTB",
+   "binding": 488.4187011494308,
+   "ways_of_binding": [
+    488.4187011494308
+   ],
+   "binding_at_xtb_geometry": 488.4187011494308,
+   "binding_of_the_same_start": null,
+   "donors_at_ion": 5,
+   "nearest_donor": 1.9267111285278342,
+   "binding_xtb": 524.3734849826953,
+   "spread_of_xtb_starts": 131.13800458591115,
+   "in_a_series": true
+  },
+  {
+   "solvent": "hexamethylphosphoramide",
+   "smiles": "CN(C)P(=O)(N(C)C)N(C)C",
+   "wraps": false,
+   "atoms": 29,
+   "geometry": "GFN2-xTB",
+   "binding": 268.29094913030303,
+   "ways_of_binding": [
+    268.29094913030303
+   ],
+   "binding_at_xtb_geometry": 268.29094913030303,
+   "binding_of_the_same_start": null,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.6474334610283963,
+   "binding_xtb": 317.295790226156,
+   "spread_of_xtb_starts": 1.8614728367871163,
+   "in_a_series": false
+  }
+ ],
+ "level_geometry": "B97-3c TightSCF",
+ "level_energy": "B3LYP D3BJ def2-TZVPP RIJCOSX def2/J TightSCF",
+ "ion_energy_hartree": -7.27855946404,
+ "starts": 5,
+ "opt_limit": 20,
+ "xtb_geometry_shift": {
+  "n": 11,
+  "mean": -1.9117372928359424,
+  "sd": 1.381218633860894,
+  "largest": 5.755060511302759
+ },
+ "species": 30,
+ "orca_seconds": 13459.682000000004,
+ "check": {
+  "n": 11,
+  "pairs": [
+   {
+    "solvent": "EC",
+    "published": 210.3,
+    "how": "printed",
+    "source": "Yamada2009",
+    "computed": 220.42837161586044,
+    "xtb": 245.81418309763296
+   },
+   {
+    "solvent": "DMC",
+    "published": 185.8,
+    "how": "printed",
+    "source": "Yamada2009",
+    "computed": 197.47446131391726,
+    "xtb": 235.34635206766944
+   },
+   {
+    "solvent": "PC",
+    "published": 217.1,
+    "how": "printed",
+    "source": "Abe2005",
+    "computed": 226.87263348311978,
+    "xtb": 254.1369883057858
+   },
+   {
+    "solvent": "DMSO",
+    "published": 235.5,
+    "how": "printed",
+    "source": "Abe2005",
+    "computed": 250.16383699289642,
+    "xtb": 306.8988474424566
+   },
+   {
+    "solvent": "FEC",
+    "published": 190.3,
+    "how": "printed",
+    "source": "Abe2005",
+    "computed": 199.0980013916695,
+    "xtb": 217.94460035798951
+   },
+   {
+    "solvent": "hexamethylphosphoramide",
+    "published": 273.7,
+    "how": "printed",
+    "source": "Sawayama2025",
+    "computed": 268.29094913030303,
+    "xtb": 317.295790226156
+   },
+   {
+    "solvent": "2,2,2-trifluoroethyl acetate",
+    "published": 161.1,
+    "how": "read from a figure",
+    "source": "Sawayama2025",
+    "computed": 207.50180304235747,
+    "xtb": 258.9442615979404
+   },
+   {
+    "solvent": "THF",
+    "published": 182.5,
+    "how": "read from a figure",
+    "source": "Sawayama2025",
+    "computed": 196.6514209724517,
+    "xtb": 208.49283419099703
+   },
+   {
+    "solvent": "acetonitrile",
+    "published": 185.2,
+    "how": "read from a figure",
+    "source": "Sawayama2025",
+    "computed": 196.99521215785606,
+    "xtb": 209.3251147117997
+   },
+   {
+    "solvent": "PC",
+    "published": 213.7,
+    "how": "read from a figure",
+    "source": "Sawayama2025",
+    "computed": 226.87263348311978,
+    "xtb": 254.1369883057858
+   },
+   {
+    "solvent": "DMF",
+    "published": 243.1,
+    "how": "read from a figure",
+    "source": "Sawayama2025",
+    "computed": 243.58587265048544,
+    "xtb": 280.70170221626216
+   }
+  ],
+  "orca": {
+   "n": 11,
+   "correlation": 0.9364004201120723,
+   "mean_difference": 12.330472384912445,
+   "sd_difference": 12.844833488234789
+  },
+  "xtb": {
+   "n": 11,
+   "correlation": 0.802951007266388,
+   "mean_difference": 44.612514774588675,
+   "sd_difference": 21.994530928212484
+  },
+  "two_ways": [
+   "2,2,2-trifluoroethyl acetate"
+  ],
+  "orca_one_way": {
+   "n": 10,
+   "correlation": 0.9859730688564432,
+   "mean_difference": 8.923339319167942,
+   "sd_difference": 6.43735921838667
+  },
+  "xtb_one_way": {
+   "n": 10,
+   "correlation": 0.9481458410320779,
+   "mean_difference": 39.2893400922535,
+   "sd_difference": 13.826758078567146
+  }
+ }
+}

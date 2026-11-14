@@ -73,6 +73,7 @@ DONOR_SMARTS: Tuple[Tuple[str, str], ...] = (
     ("amine", "[NX3;!$(N=*);!$(N#*)]"),
     ("fluoride", "[F-]"),
     ("fluorine on phosphorus", "[F][#15]"),
+    ("water", "[OX2H2]"),
 )
 
 #: the directions of the donors for each coordination number, as unit vectors.  Two donors are

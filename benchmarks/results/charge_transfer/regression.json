@@ -1,0 +1,1834 @@
+{
+ "variants": {
+  "single": {
+   "n_points": 20,
+   "n_series": 7,
+   "n_solvents": 13,
+   "slope": 0.07304970518440189,
+   "correlation_inside_series": 0.39396358723983205,
+   "sd_y_inside_series": 15.154397920892256,
+   "residual_sd": 14.497556632353408,
+   "held_out": {
+    "n": 20,
+    "mean": {
+     "mae": 16.6093425,
+     "rmse": 21.469489539162023
+    },
+    "regression": {
+     "mae": 17.078743064512786,
+     "rmse": 22.451287278501823
+    }
+   },
+   "gain": {
+    "gain": -0.4694005645127852,
+    "low": -6.832866773098399,
+    "high": 3.345286979304564,
+    "groups": 13
+   },
+   "permutation": {
+    "draws": 2000,
+    "share_not_above": 0.341,
+    "solvents": 13
+   },
+   "between_series": {
+    "n": 12,
+    "electrolytes": [
+     "DMC",
+     "PC",
+     "THF",
+     "acetonitrile",
+     "water"
+    ],
+    "regression_mae": 14.411288025690892,
+    "floor_mae": 11.908367610456722
+   },
+   "per_series": [
+    {
+     "series": "Abe2005: solid electrolyte, no film",
+     "n": 3,
+     "slope": 0.7575887638861185,
+     "range_x": 51.06583560122692,
+     "range_y": 38.400000000000006
+    },
+    {
+     "series": "Chekushkin2021: LiCoO2",
+     "n": 2,
+     "slope": 0.6488165484015559,
+     "range_x": 71.38042350198629,
+     "range_y": 46.312799999999996
+    },
+    {
+     "series": "Chekushkin2021: LiMn2O4",
+     "n": 3,
+     "slope": 0.06809732198817578,
+     "range_x": 207.4751791165155,
+     "range_y": 15.4376
+    },
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "n": 2,
+     "slope": 0.9184244464111665,
+     "range_x": 29.398172169202525,
+     "range_y": 27.0
+    },
+    {
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "n": 5,
+     "slope": 0.33386092038305476,
+     "range_x": 46.93445167803375,
+     "range_y": 29.1
+    },
+    {
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.9521256280835003,
+     "range_x": 18.863057006616884,
+     "range_y": 17.959999999999994
+    },
+    {
+     "series": "Xu2010: lithium titanate, no film",
+     "n": 3,
+     "slope": 0.01650012928823344,
+     "range_x": 291.76728017697906,
+     "range_y": 10.590000000000003
+    }
+   ],
+   "predictions": [
+    {
+     "held_out": "2,2,2-trifluoroethyl acetate",
+     "id": "S25-01",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "2,2,2-trifluoroethyl acetate",
+     "y": 28.5,
+     "mean": 47.35,
+     "regression": 46.73949988615779,
+     "slope": 0.07161727012326104
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-01",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 50.67,
+     "mean": 45.12,
+     "regression": 32.12585318661472,
+     "slope": 0.08957736860350916
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-03",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 37.0,
+     "mean": 64.0,
+     "regression": 61.36658909532992,
+     "slope": 0.08957736860350916
+    },
+    {
+     "held_out": "DMF",
+     "id": "S25-05",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "DMF",
+     "y": 57.6,
+     "mean": 40.075,
+     "regression": 42.56181026852498,
+     "slope": 0.06798166002023887
+    },
+    {
+     "held_out": "DMSO",
+     "id": "A05-01",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "DMSO",
+     "y": 69.9,
+     "mean": 44.4,
+     "regression": 46.87150162156668,
+     "slope": 0.06647660130407045
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-04",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC",
+     "y": 71.1,
+     "mean": 53.14,
+     "regression": 54.48389778990246,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-03",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EMC",
+     "y": 53.14,
+     "mean": 71.1,
+     "regression": 69.75610221009754,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "FEC",
+     "id": "A05-03",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "FEC",
+     "y": 31.5,
+     "mean": 63.6,
+     "regression": 61.07318029919427,
+     "slope": 0.06409956142460647
+    },
+    {
+     "held_out": "PC",
+     "id": "A05-02",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "PC",
+     "y": 57.3,
+     "mean": 50.7,
+     "regression": 50.81389751533088,
+     "slope": 0.050808221099556815
+    },
+    {
+     "held_out": "PC",
+     "id": "I14-01",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "PC",
+     "y": 64.0,
+     "mean": 37.0,
+     "regression": 38.49366883149568,
+     "slope": 0.050808221099556815
+    },
+    {
+     "held_out": "PC",
+     "id": "S25-04",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "PC",
+     "y": 45.7,
+     "mean": 43.050000000000004,
+     "regression": 43.84713304018209,
+     "slope": 0.050808221099556815
+    },
+    {
+     "held_out": "PC",
+     "id": "C21-01",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "PC",
+     "y": 61.7504,
+     "mean": 15.4376,
+     "regression": 19.06431233946892,
+     "slope": 0.050808221099556815
+    },
+    {
+     "held_out": "THF",
+     "id": "X10-07",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "THF",
+     "y": 40.08,
+     "mean": 50.415,
+     "regression": 39.65367307504671,
+     "slope": 0.07355900841753853
+    },
+    {
+     "held_out": "THF",
+     "id": "S25-02",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "THF",
+     "y": 42.4,
+     "mean": 43.875,
+     "regression": 42.25026839094194,
+     "slope": 0.07355900841753853
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "S25-03",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "acetonitrile",
+     "y": 43.7,
+     "mean": 43.550000000000004,
+     "regression": 41.92179430941685,
+     "slope": 0.07517899677674748
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "C21-04",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "acetonitrile",
+     "y": 26.05095,
+     "mean": 27.0158,
+     "regression": 22.337066155841356,
+     "slope": 0.07517899677674748
+    },
+    {
+     "held_out": "diglyme",
+     "id": "C21-05",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "diglyme",
+     "y": 34.7346,
+     "mean": 22.673975,
+     "regression": 36.89141511387919,
+     "slope": 0.07614160273629297
+    },
+    {
+     "held_out": "poly(ethylene glycol) of molar mass 222",
+     "id": "X10-08",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "poly(ethylene glycol) of molar mass 222",
+     "y": 50.16,
+     "mean": 45.375,
+     "regression": 97.53101715263034,
+     "slope": 0.1790114503022428
+    },
+    {
+     "held_out": "water",
+     "id": "C21-02",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "water",
+     "y": 15.4376,
+     "mean": 61.7504,
+     "regression": 58.11216831002315,
+     "slope": 0.05096960078803126
+    },
+    {
+     "held_out": "water",
+     "id": "C21-06",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "water",
+     "y": 19.297,
+     "mean": 30.392775,
+     "regression": 24.04761574727679,
+     "slope": 0.05096960078803126
+    }
+   ],
+   "words": "single solvents only"
+  },
+  "single_no_chelate": {
+   "n_points": 18,
+   "n_series": 7,
+   "n_solvents": 11,
+   "slope": 0.5589891815636177,
+   "correlation_inside_series": 0.8724504111605501,
+   "sd_y_inside_series": 16.161931962094954,
+   "residual_sd": 8.283889758483049,
+   "held_out": {
+    "n": 18,
+    "mean": {
+     "mae": 17.893527777777777,
+     "rmse": 22.489862801425545
+    },
+    "regression": {
+     "mae": 10.30573311530813,
+     "rmse": 11.285941635893431
+    }
+   },
+   "gain": {
+    "gain": 7.587794662469648,
+    "low": 0.2263682057082361,
+    "high": 13.178872342037774,
+    "groups": 11
+   },
+   "permutation": {
+    "draws": 2000,
+    "share_not_above": 0.0,
+    "solvents": 11
+   },
+   "between_series": {
+    "n": 12,
+    "electrolytes": [
+     "DMC",
+     "PC",
+     "THF",
+     "acetonitrile",
+     "water"
+    ],
+    "regression_mae": 11.282098573703216,
+    "floor_mae": 10.360099771529512
+   },
+   "per_series": [
+    {
+     "series": "Abe2005: solid electrolyte, no film",
+     "n": 3,
+     "slope": 0.7575887638861185,
+     "range_x": 51.06583560122692,
+     "range_y": 38.400000000000006
+    },
+    {
+     "series": "Chekushkin2021: LiCoO2",
+     "n": 2,
+     "slope": 0.6488165484015559,
+     "range_x": 71.38042350198629,
+     "range_y": 46.312799999999996
+    },
+    {
+     "series": "Chekushkin2021: LiMn2O4",
+     "n": 2,
+     "slope": 0.16273401069255727,
+     "range_x": 41.50300217672256,
+     "range_y": 6.75395
+    },
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "n": 2,
+     "slope": 0.9184244464111665,
+     "range_x": 29.398172169202525,
+     "range_y": 27.0
+    },
+    {
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "n": 5,
+     "slope": 0.33386092038305476,
+     "range_x": 46.93445167803375,
+     "range_y": 29.1
+    },
+    {
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.9521256280835003,
+     "range_x": 18.863057006616884,
+     "range_y": 17.959999999999994
+    },
+    {
+     "series": "Xu2010: lithium titanate, no film",
+     "n": 2,
+     "slope": 12.86692701009356,
+     "range_x": 0.8230403414655711,
+     "range_y": 10.590000000000003
+    }
+   ],
+   "predictions": [
+    {
+     "held_out": "2,2,2-trifluoroethyl acetate",
+     "id": "S25-01",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "2,2,2-trifluoroethyl acetate",
+     "y": 28.5,
+     "mean": 47.35,
+     "regression": 42.70287054807344,
+     "slope": 0.5451509634646883
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-01",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 50.67,
+     "mean": 40.08,
+     "regression": 40.5200812617147,
+     "slope": 0.5347019332382401
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-03",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 37.0,
+     "mean": 64.0,
+     "regression": 48.280740507456784,
+     "slope": 0.5347019332382401
+    },
+    {
+     "held_out": "DMF",
+     "id": "S25-05",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "DMF",
+     "y": 57.6,
+     "mean": 40.075,
+     "regression": 61.05097505578614,
+     "slope": 0.5734179333597771
+    },
+    {
+     "held_out": "DMSO",
+     "id": "A05-01",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "DMSO",
+     "y": 69.9,
+     "mean": 44.4,
+     "regression": 64.46712196450211,
+     "slope": 0.5397504312818322
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-04",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC",
+     "y": 71.1,
+     "mean": 53.14,
+     "regression": 63.490835567482435,
+     "slope": 0.5487358472092574
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-03",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EMC",
+     "y": 53.14,
+     "mean": 71.1,
+     "regression": 60.74916443251756,
+     "slope": 0.5487358472092574
+    },
+    {
+     "held_out": "FEC",
+     "id": "A05-03",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "FEC",
+     "y": 31.5,
+     "mean": 63.6,
+     "regression": 43.31296068671514,
+     "slope": 0.5146351843665976
+    },
+    {
+     "held_out": "PC",
+     "id": "A05-02",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "PC",
+     "y": 57.3,
+     "mean": 50.7,
+     "regression": 51.768007186957774,
+     "slope": 0.47642431121723694
+    },
+    {
+     "held_out": "PC",
+     "id": "I14-01",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "PC",
+     "y": 64.0,
+     "mean": 37.0,
+     "regression": 51.006003926758055,
+     "slope": 0.47642431121723694
+    },
+    {
+     "held_out": "PC",
+     "id": "S25-04",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "PC",
+     "y": 45.7,
+     "mean": 43.050000000000004,
+     "regression": 50.52464783057642,
+     "slope": 0.47642431121723694
+    },
+    {
+     "held_out": "PC",
+     "id": "C21-01",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "PC",
+     "y": 61.7504,
+     "mean": 15.4376,
+     "regression": 49.44496910132848,
+     "slope": 0.47642431121723694
+    },
+    {
+     "held_out": "THF",
+     "id": "X10-07",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "THF",
+     "y": 40.08,
+     "mean": 50.67,
+     "regression": 50.18652425355327,
+     "slope": 0.5874265477507598
+    },
+    {
+     "held_out": "THF",
+     "id": "S25-02",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "THF",
+     "y": 42.4,
+     "mean": 43.875,
+     "regression": 30.90023999898081,
+     "slope": 0.5874265477507598
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "S25-03",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "acetonitrile",
+     "y": 43.7,
+     "mean": 43.550000000000004,
+     "regression": 29.36291112796971,
+     "slope": 0.6550591947629163
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "C21-04",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "acetonitrile",
+     "y": 26.05095,
+     "mean": 19.297,
+     "regression": 46.48392318612744,
+     "slope": 0.6550591947629163
+    },
+    {
+     "held_out": "water",
+     "id": "C21-02",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "water",
+     "y": 15.4376,
+     "mean": 61.7504,
+     "regression": 19.614300724282543,
+     "slope": 0.5903032961767865
+    },
+    {
+     "held_out": "water",
+     "id": "C21-06",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "water",
+     "y": 19.297,
+     "mean": 26.05095,
+     "regression": 1.5515910138483306,
+     "slope": 0.5903032961767865
+    }
+   ],
+   "words": "single solvents, without the two that wrap the ion"
+  },
+  "mixtures": {
+   "n_points": 36,
+   "n_series": 10,
+   "n_solvents": 13,
+   "slope": 0.06261369302076066,
+   "correlation_inside_series": 0.3335328253799912,
+   "sd_y_inside_series": 11.542551155646361,
+   "residual_sd": 11.097105500275921,
+   "held_out": {
+    "n": 42,
+    "mean": {
+     "mae": 11.699144501133787,
+     "rmse": 15.951896486781859
+    },
+    "regression": {
+     "mae": 14.153677116962884,
+     "rmse": 18.263353021136332
+    }
+   },
+   "gain": {
+    "gain": -2.4545326158290965,
+    "low": -6.56677555680845,
+    "high": 1.4865614954600745,
+    "groups": 13
+   },
+   "permutation": {
+    "draws": 2000,
+    "share_not_above": 0.8125,
+    "solvents": 13
+   },
+   "between_series": {
+    "n": 20,
+    "electrolytes": [
+     "DMC",
+     "EC:DMC",
+     "EC:DMC 1:1",
+     "PC",
+     "THF",
+     "acetonitrile",
+     "water"
+    ],
+    "regression_mae": 12.681448026305496,
+    "floor_mae": 10.161056502819
+   },
+   "per_series": [
+    {
+     "series": "Abe2005: solid electrolyte, no film",
+     "n": 3,
+     "slope": 0.7575887638861185,
+     "range_x": 51.06583560122692,
+     "range_y": 38.400000000000006
+    },
+    {
+     "series": "Chekushkin2021: LiCoO2",
+     "n": 2,
+     "slope": 0.6488165484015559,
+     "range_x": 71.38042350198629,
+     "range_y": 46.312799999999996
+    },
+    {
+     "series": "Chekushkin2021: LiMn2O4",
+     "n": 4,
+     "slope": 0.06616135180828003,
+     "range_x": 207.4751791165155,
+     "range_y": 15.4376
+    },
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "n": 3,
+     "slope": 0.871391046573664,
+     "range_x": 29.398172169202525,
+     "range_y": 27.0
+    },
+    {
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "n": 5,
+     "slope": 0.33386092038305476,
+     "range_x": 46.93445167803375,
+     "range_y": 29.1
+    },
+    {
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "n": 4,
+     "slope": 0.814290069452261,
+     "range_x": 18.863057006616884,
+     "range_y": 17.959999999999994
+    },
+    {
+     "series": "Xu2010: lithium titanate, no film",
+     "n": 8,
+     "slope": 0.0028706305526121226,
+     "range_x": 291.76728017697906,
+     "range_y": 14.86
+    },
+    {
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "n": 3,
+     "slope": 0.7188317712735491,
+     "range_x": 22.953910301943182,
+     "range_y": 18.0
+    },
+    {
+     "series": "Yamada2009: graphite, one film formed with pentafluorostyrene",
+     "n": 2,
+     "slope": 0.1742622475814663,
+     "range_x": 22.953910301943182,
+     "range_y": 4.0
+    },
+    {
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "n": 2,
+     "slope": 0.8277456760119682,
+     "range_x": 22.953910301943182,
+     "range_y": 19.0
+    }
+   ],
+   "predictions": [
+    {
+     "held_out": "2,2,2-trifluoroethyl acetate",
+     "id": "S25-01",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "2,2,2-trifluoroethyl acetate",
+     "y": 28.5,
+     "mean": 47.35,
+     "regression": 46.82709008366967,
+     "slope": 0.06134213553585037
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-01",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 50.67,
+     "mean": 45.12,
+     "regression": 32.045891885016296,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-02",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 20:80",
+     "y": 51.94,
+     "mean": 45.12,
+     "regression": 34.11469558135149,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-03",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 30:70",
+     "y": 52.52,
+     "mean": 45.12,
+     "regression": 34.11469558135149,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-04",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 52.08,
+     "mean": 45.12,
+     "regression": 34.11469558135149,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-05",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 60:40",
+     "y": 50.2,
+     "mean": 45.12,
+     "regression": 34.11469558135149,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-06",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 70:30",
+     "y": 54.94,
+     "mean": 45.12,
+     "regression": 34.11469558135149,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-02",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 54.0,
+     "mean": 64.0,
+     "regression": 63.41918772898536,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-03",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 37.0,
+     "mean": 64.0,
+     "regression": 61.35038403265016,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMC",
+     "id": "C21-03",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "EC:DMC",
+     "y": 28.9455,
+     "mean": 26.69418333333333,
+     "regression": 25.066770448921655,
+     "slope": 0.09012859548205422
+    },
+    {
+     "held_out": "DMF",
+     "id": "S25-05",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "DMF",
+     "y": 57.6,
+     "mean": 40.075,
+     "regression": 42.19769701682855,
+     "slope": 0.05802793592677508
+    },
+    {
+     "held_out": "DMSO",
+     "id": "A05-01",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "DMSO",
+     "y": 69.9,
+     "mean": 44.4,
+     "regression": 46.50858680141639,
+     "slope": 0.05671519002440642
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-01",
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "solvent": "EC:DMC 1:1",
+     "y": 58.0,
+     "mean": 40.0,
+     "regression": 41.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-05",
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "solvent": "EC:DMC 1:9",
+     "y": 55.0,
+     "mean": 40.0,
+     "regression": 41.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-06",
+     "series": "Yamada2009: graphite, one film formed with pentafluorostyrene",
+     "solvent": "EC:DMC 1:1",
+     "y": 56.0,
+     "mean": 52.0,
+     "regression": 53.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-01",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 30:70",
+     "y": 67.75,
+     "mean": 53.14,
+     "regression": 54.48389778990246,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-02",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 20:80",
+     "y": 66.65,
+     "mean": 53.14,
+     "regression": 54.48389778990246,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-04",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC",
+     "y": 71.1,
+     "mean": 53.14,
+     "regression": 54.48389778990246,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-02",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 20:80",
+     "y": 51.94,
+     "mean": 46.97,
+     "regression": 41.71545914930627,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-03",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 30:70",
+     "y": 52.52,
+     "mean": 46.97,
+     "regression": 41.71545914930627,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-04",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 52.08,
+     "mean": 46.97,
+     "regression": 41.71545914930627,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-05",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 60:40",
+     "y": 50.2,
+     "mean": 46.97,
+     "regression": 41.71545914930627,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-06",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 70:30",
+     "y": 54.94,
+     "mean": 46.97,
+     "regression": 41.71545914930627,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "I14-02",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 54.0,
+     "mean": 50.5,
+     "regression": 51.08811464217214,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-01",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC",
+     "y": 51.0,
+     "mean": 32.0,
+     "regression": 33.63535047970113,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EC",
+     "id": "C21-03",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "EC:DMC",
+     "y": 28.9455,
+     "mean": 26.69418333333333,
+     "regression": 25.407744003246584,
+     "slope": 0.07124496254403714
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-01",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 30:70",
+     "y": 67.75,
+     "mean": 71.1,
+     "regression": 71.1,
+     "slope": 0.060567335352264266
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-02",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 20:80",
+     "y": 66.65,
+     "mean": 71.1,
+     "regression": 71.1,
+     "slope": 0.060567335352264266
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-03",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EMC",
+     "y": 53.14,
+     "mean": 71.1,
+     "regression": 69.95751490051136,
+     "slope": 0.060567335352264266
+    },
+    {
+     "held_out": "FEC",
+     "id": "A05-03",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "FEC",
+     "y": 31.5,
+     "mean": 63.6,
+     "regression": 61.44739257987935,
+     "slope": 0.05460666287550668
+    },
+    {
+     "held_out": "PC",
+     "id": "A05-02",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "PC",
+     "y": 57.3,
+     "mean": 50.7,
+     "regression": 50.79964249828932,
+     "slope": 0.04444924078711275
+    },
+    {
+     "held_out": "PC",
+     "id": "I14-01",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "PC",
+     "y": 64.0,
+     "mean": 45.5,
+     "regression": 46.29658449044145,
+     "slope": 0.04444924078711275
+    },
+    {
+     "held_out": "PC",
+     "id": "S25-04",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "PC",
+     "y": 45.7,
+     "mean": 43.050000000000004,
+     "regression": 43.747366640193704,
+     "slope": 0.04444924078711275
+    },
+    {
+     "held_out": "PC",
+     "id": "C21-01",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "PC",
+     "y": 61.7504,
+     "mean": 15.4376,
+     "regression": 18.61040563172587,
+     "slope": 0.04444924078711275
+    },
+    {
+     "held_out": "THF",
+     "id": "X10-07",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "THF",
+     "y": 40.08,
+     "mean": 51.787142857142854,
+     "regression": 48.363361779024316,
+     "slope": 0.05824524758998237
+    },
+    {
+     "held_out": "THF",
+     "id": "S25-02",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "THF",
+     "y": 42.4,
+     "mean": 43.875,
+     "regression": 42.588510460884706,
+     "slope": 0.05824524758998237
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "S25-03",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "acetonitrile",
+     "y": 43.7,
+     "mean": 43.550000000000004,
+     "regression": 42.17572495377308,
+     "slope": 0.06345427968235098
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "C21-04",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "acetonitrile",
+     "y": 26.05095,
+     "mean": 27.65903333333333,
+     "regression": 24.530687972887787,
+     "slope": 0.06345427968235098
+    },
+    {
+     "held_out": "diglyme",
+     "id": "C21-05",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "diglyme",
+     "y": 34.7346,
+     "mean": 24.76448333333333,
+     "regression": 35.76673221201466,
+     "slope": 0.06396825251356561
+    },
+    {
+     "held_out": "poly(ethylene glycol) of molar mass 222",
+     "id": "X10-08",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "poly(ethylene glycol) of molar mass 222",
+     "y": 50.16,
+     "mean": 50.34714285714285,
+     "regression": 103.09656564946226,
+     "slope": 0.19204921889241994
+    },
+    {
+     "held_out": "water",
+     "id": "C21-02",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "water",
+     "y": 15.4376,
+     "mean": 61.7504,
+     "regression": 58.75877440160181,
+     "slope": 0.041911009372407826
+    },
+    {
+     "held_out": "water",
+     "id": "C21-06",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "water",
+     "y": 19.297,
+     "mean": 29.910349999999998,
+     "regression": 25.524861010470936,
+     "slope": 0.041911009372407826
+    }
+   ],
+   "words": "single solvents and mixtures; a mixture takes its strongest solvent"
+  },
+  "mixtures_no_chelate": {
+   "n_points": 34,
+   "n_series": 10,
+   "n_solvents": 11,
+   "slope": 0.486786007740342,
+   "correlation_inside_series": 0.8400237434836861,
+   "sd_y_inside_series": 11.883829353185986,
+   "residual_sd": 6.586240547591936,
+   "held_out": {
+    "n": 40,
+    "mean": {
+     "mae": 13.141072708333335,
+     "rmse": 16.79959881765508
+    },
+    "regression": {
+     "mae": 7.082172571956937,
+     "rmse": 8.749746580109896
+    }
+   },
+   "gain": {
+    "gain": 6.058900136376398,
+    "low": 3.840104789965373,
+    "high": 9.107683671508024,
+    "groups": 11
+   },
+   "permutation": {
+    "draws": 2000,
+    "share_not_above": 0.0005,
+    "solvents": 11
+   },
+   "between_series": {
+    "n": 20,
+    "electrolytes": [
+     "DMC",
+     "EC:DMC",
+     "EC:DMC 1:1",
+     "PC",
+     "THF",
+     "acetonitrile",
+     "water"
+    ],
+    "regression_mae": 8.25317627695576,
+    "floor_mae": 7.5129067420392825
+   },
+   "per_series": [
+    {
+     "series": "Abe2005: solid electrolyte, no film",
+     "n": 3,
+     "slope": 0.7575887638861185,
+     "range_x": 51.06583560122692,
+     "range_y": 38.400000000000006
+    },
+    {
+     "series": "Chekushkin2021: LiCoO2",
+     "n": 2,
+     "slope": 0.6488165484015559,
+     "range_x": 71.38042350198629,
+     "range_y": 46.312799999999996
+    },
+    {
+     "series": "Chekushkin2021: LiMn2O4",
+     "n": 3,
+     "slope": 0.1502198756292417,
+     "range_x": 64.93616163472694,
+     "range_y": 9.648499999999999
+    },
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "n": 3,
+     "slope": 0.871391046573664,
+     "range_x": 29.398172169202525,
+     "range_y": 27.0
+    },
+    {
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "n": 5,
+     "slope": 0.33386092038305476,
+     "range_x": 46.93445167803375,
+     "range_y": 29.1
+    },
+    {
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "n": 4,
+     "slope": 0.814290069452261,
+     "range_x": 18.863057006616884,
+     "range_y": 17.959999999999994
+    },
+    {
+     "series": "Xu2010: lithium titanate, no film",
+     "n": 7,
+     "slope": 0.3033747669757868,
+     "range_x": 23.776950643408753,
+     "range_y": 14.86
+    },
+    {
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "n": 3,
+     "slope": 0.7188317712735491,
+     "range_x": 22.953910301943182,
+     "range_y": 18.0
+    },
+    {
+     "series": "Yamada2009: graphite, one film formed with pentafluorostyrene",
+     "n": 2,
+     "slope": 0.1742622475814663,
+     "range_x": 22.953910301943182,
+     "range_y": 4.0
+    },
+    {
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "n": 2,
+     "slope": 0.8277456760119682,
+     "range_x": 22.953910301943182,
+     "range_y": 19.0
+    }
+   ],
+   "predictions": [
+    {
+     "held_out": "2,2,2-trifluoroethyl acetate",
+     "id": "S25-01",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "2,2,2-trifluoroethyl acetate",
+     "y": 28.5,
+     "mean": 47.35,
+     "regression": 43.28556098225444,
+     "slope": 0.47679602416689526
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-01",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 50.67,
+     "mean": 40.08,
+     "regression": 40.52012434830632,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-02",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 20:80",
+     "y": 51.94,
+     "mean": 40.08,
+     "regression": 52.79482621132184,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-03",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 30:70",
+     "y": 52.52,
+     "mean": 40.08,
+     "regression": 52.79482621132184,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-04",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 52.08,
+     "mean": 40.08,
+     "regression": 52.79482621132184,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-05",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 60:40",
+     "y": 50.2,
+     "mean": 40.08,
+     "regression": 52.79482621132184,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-06",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 70:30",
+     "y": 54.94,
+     "mean": 40.08,
+     "regression": 52.79482621132184,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-02",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 54.0,
+     "mean": 64.0,
+     "regression": 60.55390336080943,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-03",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 37.0,
+     "mean": 64.0,
+     "regression": 48.279201497793906,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMC",
+     "id": "C21-03",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "EC:DMC",
+     "y": 28.9455,
+     "mean": 22.673975,
+     "regression": 46.30191150366708,
+     "slope": 0.5347542837603754
+    },
+    {
+     "held_out": "DMF",
+     "id": "S25-05",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "DMF",
+     "y": 57.6,
+     "mean": 40.075,
+     "regression": 57.915376297199,
+     "slope": 0.4877004134250579
+    },
+    {
+     "held_out": "DMSO",
+     "id": "A05-01",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "DMSO",
+     "y": 69.9,
+     "mean": 44.4,
+     "regression": 61.754295452197816,
+     "slope": 0.46678285363919736
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-01",
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "solvent": "EC:DMC 1:1",
+     "y": 58.0,
+     "mean": 40.0,
+     "regression": 52.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-05",
+     "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
+     "solvent": "EC:DMC 1:9",
+     "y": 55.0,
+     "mean": 40.0,
+     "regression": 52.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "Y09-06",
+     "series": "Yamada2009: graphite, one film formed with pentafluorostyrene",
+     "solvent": "EC:DMC 1:1",
+     "y": 56.0,
+     "mean": 52.0,
+     "regression": 64.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-01",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 30:70",
+     "y": 67.75,
+     "mean": 53.14,
+     "regression": 63.490835567482435,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-02",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 20:80",
+     "y": 66.65,
+     "mean": 53.14,
+     "regression": 63.490835567482435,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X07-04",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC",
+     "y": 71.1,
+     "mean": 53.14,
+     "regression": 63.490835567482435,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-02",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 20:80",
+     "y": 51.94,
+     "mean": 45.375,
+     "regression": 58.19644928583284,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-03",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 30:70",
+     "y": 52.52,
+     "mean": 45.375,
+     "regression": 58.19644928583284,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-04",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 52.08,
+     "mean": 45.375,
+     "regression": 58.19644928583284,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-05",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 60:40",
+     "y": 50.2,
+     "mean": 45.375,
+     "regression": 58.19644928583284,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "X10-06",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "EC:DMC 70:30",
+     "y": 54.94,
+     "mean": 45.375,
+     "regression": 58.19644928583284,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "I14-02",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "EC:DMC 1:1",
+     "y": 54.0,
+     "mean": 50.5,
+     "regression": 55.02971796046662,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "YS09-01",
+     "series": "YamadaSagane2009: solid electrolyte, no film",
+     "solvent": "EC:DMC",
+     "y": 51.0,
+     "mean": 32.0,
+     "regression": 44.59563341630209,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EC",
+     "id": "C21-03",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "EC:DMC",
+     "y": 28.9455,
+     "mean": 22.673975,
+     "regression": 46.9196821385634,
+     "slope": 0.5487358472092573
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-01",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 30:70",
+     "y": 67.75,
+     "mean": 71.1,
+     "regression": 71.1,
+     "slope": 0.47789178115947306
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-02",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EC:EMC 20:80",
+     "y": 66.65,
+     "mean": 71.1,
+     "regression": 71.1,
+     "slope": 0.47789178115947306
+    },
+    {
+     "held_out": "EMC",
+     "id": "X07-03",
+     "series": "Xu2007: graphite, film formed in each electrolyte",
+     "solvent": "EMC",
+     "y": 53.14,
+     "mean": 71.1,
+     "regression": 62.085500088995175,
+     "slope": 0.47789178115947306
+    },
+    {
+     "held_out": "FEC",
+     "id": "A05-03",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "FEC",
+     "y": 31.5,
+     "mean": 63.6,
+     "regression": 45.887514472018786,
+     "slope": 0.44932471981330885
+    },
+    {
+     "held_out": "PC",
+     "id": "A05-02",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "PC",
+     "y": 57.3,
+     "mean": 50.7,
+     "regression": 51.64184882262367,
+     "slope": 0.4201466825962378
+    },
+    {
+     "held_out": "PC",
+     "id": "I14-01",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "PC",
+     "y": 64.0,
+     "mean": 45.5,
+     "regression": 53.02953987829697,
+     "slope": 0.4201466825962378
+    },
+    {
+     "held_out": "PC",
+     "id": "S25-04",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "PC",
+     "y": 45.7,
+     "mean": 43.050000000000004,
+     "regression": 49.64170494798677,
+     "slope": 0.4201466825962378
+    },
+    {
+     "held_out": "PC",
+     "id": "C21-01",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "PC",
+     "y": 61.7504,
+     "mean": 15.4376,
+     "regression": 45.42784813667406,
+     "slope": 0.4201466825962378
+    },
+    {
+     "held_out": "THF",
+     "id": "X10-07",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "THF",
+     "y": 40.08,
+     "mean": 52.05833333333333,
+     "regression": 42.07957474610683,
+     "slope": 0.5001558356690883
+    },
+    {
+     "held_out": "THF",
+     "id": "S25-02",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "THF",
+     "y": 42.4,
+     "mean": 43.875,
+     "regression": 32.82782830549052,
+     "slope": 0.5001558356690883
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "S25-03",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "acetonitrile",
+     "y": 43.7,
+     "mean": 43.550000000000004,
+     "regression": 32.558797728300895,
+     "slope": 0.5074958065406965
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "C21-04",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "acetonitrile",
+     "y": 26.05095,
+     "mean": 24.12125,
+     "regression": 28.706434702299706,
+     "slope": 0.5074958065406965
+    },
+    {
+     "held_out": "water",
+     "id": "C21-02",
+     "series": "Chekushkin2021: LiCoO2",
+     "solvent": "water",
+     "y": 15.4376,
+     "mean": 61.7504,
+     "regression": 24.28577171396919,
+     "slope": 0.5248585879430694
+    },
+    {
+     "held_out": "water",
+     "id": "C21-06",
+     "series": "Chekushkin2021: LiMn2O4",
+     "solvent": "water",
+     "y": 19.297,
+     "mean": 27.498224999999998,
+     "regression": -0.4345296099592133,
+     "slope": 0.5248585879430694
+    }
+   ],
+   "words": "the same, without the two solvents that wrap the ion"
+  },
+  "published": {
+   "n_points": 12,
+   "n_series": 4,
+   "n_solvents": 8,
+   "slope": 0.4556925631532092,
+   "correlation_inside_series": 0.8458341292099246,
+   "sd_y_inside_series": 14.216021111759789,
+   "residual_sd": 8.107080572551201,
+   "held_out": {
+    "n": 12,
+    "mean": {
+     "mae": 15.002500000000003,
+     "rmse": 18.434987003882952
+    },
+    "regression": {
+     "mae": 10.337523764449854,
+     "rmse": 11.310458726481802
+    }
+   },
+   "gain": {
+    "gain": 4.664976235550149,
+    "low": 0.736918621349012,
+    "high": 9.519687767140045,
+    "groups": 8
+   },
+   "permutation": {
+    "draws": 2000,
+    "share_not_above": 0.009,
+    "solvents": 8
+   },
+   "between_series": {
+    "n": 7,
+    "electrolytes": [
+     "DMC",
+     "PC",
+     "THF"
+    ],
+    "regression_mae": 9.580653202633098,
+    "floor_mae": 8.795004863692977
+   },
+   "per_series": [
+    {
+     "series": "Abe2005: solid electrolyte, no film",
+     "n": 3,
+     "slope": 0.8568308710262391,
+     "range_x": 45.19999999999999,
+     "range_y": 38.400000000000006
+    },
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "n": 2,
+     "slope": 0.91216216216216,
+     "range_x": 29.599999999999966,
+     "range_y": 27.0
+    },
+    {
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "n": 5,
+     "slope": 0.30294863804348793,
+     "range_x": 82.0,
+     "range_y": 29.1
+    },
+    {
+     "series": "Xu2010: lithium titanate, no film",
+     "n": 2,
+     "slope": 3.2090909090908886,
+     "range_x": 3.3000000000000114,
+     "range_y": 10.590000000000003
+    }
+   ],
+   "predictions": [
+    {
+     "held_out": "2,2,2-trifluoroethyl acetate",
+     "id": "S25-01",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "2,2,2-trifluoroethyl acetate",
+     "y": 28.5,
+     "mean": 47.35,
+     "regression": 25.853663603331416,
+     "slope": 0.47296669739644864
+    },
+    {
+     "held_out": "DMC",
+     "id": "X10-01",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 50.67,
+     "mean": 40.08,
+     "regression": 41.44541647074245,
+     "slope": 0.4137625668916502
+    },
+    {
+     "held_out": "DMC",
+     "id": "I14-03",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "DMC",
+     "y": 37.0,
+     "mean": 64.0,
+     "regression": 51.752628020007165,
+     "slope": 0.4137625668916502
+    },
+    {
+     "held_out": "DMF",
+     "id": "S25-05",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "DMF",
+     "y": 57.6,
+     "mean": 40.075,
+     "regression": 73.50864555809196,
+     "slope": 0.5860411140769842
+    },
+    {
+     "held_out": "DMSO",
+     "id": "A05-01",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "DMSO",
+     "y": 69.9,
+     "mean": 44.4,
+     "regression": 57.725005252552606,
+     "slope": 0.4081165467856848
+    },
+    {
+     "held_out": "FEC",
+     "id": "A05-03",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "FEC",
+     "y": 31.5,
+     "mean": 63.6,
+     "regression": 50.37323461479958,
+     "slope": 0.3762948900483764
+    },
+    {
+     "held_out": "PC",
+     "id": "A05-02",
+     "series": "Abe2005: solid electrolyte, no film",
+     "solvent": "PC",
+     "y": 57.3,
+     "mean": 50.7,
+     "regression": 51.80046162741915,
+     "slope": 0.44018465096766657
+    },
+    {
+     "held_out": "PC",
+     "id": "I14-01",
+     "series": "Ishihara2014: lithium titanate, no film",
+     "solvent": "PC",
+     "y": 64.0,
+     "mean": 37.0,
+     "regression": 50.029465668642914,
+     "slope": 0.44018465096766657
+    },
+    {
+     "held_out": "PC",
+     "id": "S25-04",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "PC",
+     "y": 45.7,
+     "mean": 43.050000000000004,
+     "regression": 52.92114079794992,
+     "slope": 0.44018465096766657
+    },
+    {
+     "held_out": "THF",
+     "id": "X10-07",
+     "series": "Xu2010: lithium titanate, no film",
+     "solvent": "THF",
+     "y": 40.08,
+     "mean": 50.67,
+     "regression": 49.10975413558304,
+     "slope": 0.4728017770960474
+    },
+    {
+     "held_out": "THF",
+     "id": "S25-02",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "THF",
+     "y": 42.4,
+     "mean": 43.875,
+     "regression": 35.03360676830392,
+     "slope": 0.4728017770960474
+    },
+    {
+     "held_out": "acetonitrile",
+     "id": "S25-03",
+     "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
+     "solvent": "acetonitrile",
+     "y": 43.7,
+     "mean": 43.550000000000004,
+     "regression": 36.31749856204094,
+     "slope": 0.4719413662616022
+    }
+   ],
+   "words": "single solvents, with the binding energies that the papers give"
+  }
+ },
+ "repeatability": 4.9944650110021795,
+ "draws": 2000
+}

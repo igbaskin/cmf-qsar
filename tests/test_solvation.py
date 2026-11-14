@@ -73,6 +73,25 @@ def test_the_lone_pair_of_an_ether_oxygen_points_away_from_both_bonds():
         assert float(np.dot(u, to_neighbour)) < 0.0, "the lone pair points away from every bond"
 
 
+def test_the_oxygen_of_water_is_a_donor_and_takes_the_ion_between_its_hydrogens():
+    """Water has no carbon, so the hydroxyl pattern does not see it (plan item BT12)."""
+    m = _mol("O")
+    assert [kind for _i, kind in S.donor_atoms(m)] == ["water"]
+    c = S.place_shell([Chem.MolFromSmiles("O")], ion="Li")
+    pos = c.mol.GetConformer().GetPositions()
+    o = c.donors[0]
+    hydrogens = [a.GetIdx() for a in c.mol.GetAtomWithIdx(o).GetNeighbors()]
+    assert np.linalg.norm(pos[o] - pos[c.ion_index]) == pytest.approx(S.ION_OXYGEN_DISTANCE["Li"],
+                                                                      abs=1e-6)
+    # the ion is on the side of the oxygen that is away from both hydrogens
+    assert all(np.linalg.norm(pos[h] - pos[c.ion_index]) > 2.4 for h in hydrogens)
+
+
+def test_the_water_pattern_does_not_change_the_donor_of_an_alcohol_or_a_carbonate():
+    assert [kind for _i, kind in S.donor_atoms(_mol("CO"))] == ["hydroxyl"]
+    assert dict(S.donor_atoms(_mol(EC)))[S.best_donor(_mol(EC))] == "carbonyl"
+
+
 def test_a_molecule_with_no_donor_is_refused_by_name():
     with pytest.raises(S.SolvationError, match="no donor atom"):
         S.best_donor(_mol("CCCC"))

@@ -3462,6 +3462,15 @@ cell:
   mixture with ethylene carbonate by 17 kJ/mol in one study and by 1.4 kJ/mol in another. The
   table holds 13 single solvents. That is enough to test a regression on the binding energy
   of Li+ with the solvent, and not enough to show that a field model is better than it.
+- That regression was then run (`--stage binding` and `--stage regression`). The binding
+  energy of Li+ with one molecule of each solvent comes from ORCA, because GFN2-xTB agrees
+  too poorly with the values of the papers (correlation 0.80 against 0.94). With one solvent
+  held out at a time, the regression lowers the error from 17.9 to 10.3 kJ/mol for the 11
+  solvents that hold the ion with one atom (gain 7.6 kJ/mol, 95 % interval 0.2 to 13.2). It
+  gains nothing when the two solvents that wrap the ion with several oxygen atoms are
+  included. On the solvents measured in several series, no model of the solvent alone can
+  have an error below 10.4 kJ/mol where the regression has 11.3. So no field model was built
+  for this target.
 
 ```bash
 python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py; needs pybamm

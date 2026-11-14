@@ -532,10 +532,14 @@ def registry() -> List[Benchmark]:
                   "from the literature (plan item BT12): how well laboratories agree on one "
                   "system, how much the electrolyte changes the value inside one study, and "
                   "what the difference from the constants of the published cell set costs a "
-                  "cold cell; no model is fitted",
+                  "cold cell; then the reference of the item: the binding energy of Li+ with "
+                  "one molecule of each solvent, computed with ORCA from GFN2-xTB geometries, "
+                  "and the regression of the activation energy on it inside the series, with "
+                  "one solvent held out at a time (needs ORCA and xtb)",
                   "run_charge_transfer.py", "charge_transfer",
-                  compute=[[]],
-                  minutes="1",    # examples/charge_transfer, in the repository
+                  compute=[[], ["--stage", "binding"], ["--stage", "regression"]],
+                  needs="orca",
+                  minutes="31",   # examples/charge_transfer, in the repository; ORCA is serial
                   report=lambda: _mod("run_charge_transfer").report(),
                   tables=["charge_transfer/table.md"]),
         Benchmark("battery",

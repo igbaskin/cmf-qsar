@@ -14104,14 +14104,58 @@ one series: dimethyl carbonate (DMC) against its 1:1 mixture with ethylene carbo
 Two laboratories measured this pair on the same electrode material with no film, and their
 results differ by 16 kJ/mol. That is three times the repeatability of the reference system.
 The value of one solvent also moves between the series: propylene carbonate gives 46 to 64
-kJ/mol in four series. So only differences inside a series can be modelled. The 13 single
-solvents are enough to test a regression on the binding energy of Li+ with the solvent, with
-one solvent held out at a time. They are not enough to show that a field model is better than
-that regression.
+kJ/mol in four series. So only differences inside a series can be modelled.
+
+#### The regression of the activation energy on the binding energy of Li+
+
+The hypothesis that the removal of the solvent shell sets the barrier has a version with one
+number: the activation energy rises with the binding energy of Li+ with one molecule of the
+solvent. This regression is the reference that a field model of the solvent would have to be
+better than, and `run_charge_transfer.py` runs it in two stages.
+
+`--stage binding` computes the binding energy for the 13 single solvents of the series. The
+builder of the solvation complexes places the ion at the donor atom of the molecule, and
+GFN2-xTB optimises five starts. ORCA then optimises the complex of lowest energy with B97-3c
+and gives the energy with B3LYP-D3 and the def2-TZVPP basis set. The binding energy is the
+energy of the ion and of the free molecule minus the energy of the complex, in the gas phase.
+GFN2-xTB alone is not accurate enough here: against the 11 binding energies that the papers of
+the table give, its values have a correlation of 0.80, and the values of ORCA 0.94. A species
+of more than 20 atoms keeps the GFN2-xTB geometry, because the ORCA build of this machine runs
+on one core; on the smaller solvents that changes the binding energy by 5.8 kJ/mol at most.
+
+`--stage regression` fits one slope for all series and one intercept for each series. Every
+solvent is held out once, and the regression is compared with the mean of the other values of
+the series. The error is the mean absolute error of the held-out values. The gain has a 95 %
+interval from a bootstrap over the held-out solvents. The last column exchanges the binding
+energies at random between the solvents and gives the share of the exchanges that do as well.
+
+| Points of the regression | Values | Solvents | Error of the series mean, kJ/mol | Error of the regression, kJ/mol | Gain, 95 % interval | Exchanges that do as well |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+| Single solvents | 20 | 13 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
+| Single solvents, without the two that wrap the ion | 18 | 11 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
+| Single solvents and mixtures | 36 | 13 | 11.7 | 14.2 | -2.5 [-6.6, +1.5] | 81.2 % |
+| The same, without the two that wrap the ion | 34 | 11 | 13.1 | 7.1 | +6.1 [+3.8, +9.1] | 0.1 % |
+| Single solvents, binding energies of the papers | 12 | 8 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
+
+Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
+energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the other solvents, and their
+activation energies are not higher than those of the others. With them the regression is no
+better than the mean of the series. Without them it lowers the held-out error by 6 to 8
+kJ/mol, with a slope of 0.56 kJ/mol of activation energy per kJ/mol of binding energy. So the
+regression is a usable estimate for a solvent that holds the ion with one atom, and it must
+not be used for a solvent that wraps the ion.
+
+The error that the regression leaves, 7 to 10 kJ/mol, is above the repeatability of 5 kJ/mol.
+A field model of the solvent cannot be shown to remove it. Five solvents were held out in two
+or more series, and the errors for one solvent differ between its series. On these 12 values
+the regression has an error of 11.3 kJ/mol, and no model that depends on the solvent alone
+can have less than 10.4 kJ/mol. For this reason no field model was built for this target.
 
 ```bash
 python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py
-python benchmarks/run_charge_transfer.py   # the collected activation energies, seconds
+python benchmarks/run_charge_transfer.py                      # the collected activation energies, seconds
+python benchmarks/run_charge_transfer.py --stage binding      # the binding energies, 31 minutes; needs ORCA and xtb
+python benchmarks/run_charge_transfer.py --stage regression   # the regression, seconds
 ```
 
 The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `tolerance`, `exchange`, `finish` -- and each stage
