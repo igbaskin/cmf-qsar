@@ -2163,6 +2163,19 @@ beside the ensemble says when the independent-site assumption has added protons 
 would not carry. The pKa values are Dimorphite-DL's and cannot yet be replaced from the command
 line.
 
+### Any set of structures as one sample
+
+The ensembles above belong to one molecule. A sample is often a set of different structures:
+the solvation shells around an ion, the frames of a mixture, the clusters of a trajectory. Plan
+item MS5 makes such a set the normal input (`cmfqsar/ensembles.py`). Several records of a file
+make one sample (`--ensemble-by KEY`), each with its weight (`--member-weight PROP`), and the
+records may have different atoms; `--conformations ensemble` uses their weighted mean field, and
+the default uses the first record. Until MS5 the reader dropped records with other atoms without
+a message. The gate was that the general path gives the numbers of item BT5 from the same
+shells: it does, exactly, for both shell models, both targets and both splits
+(`benchmarks/run_ensembles.py`). The measurement also found that non-field descriptors were
+dropped from every ensemble; they now travel with it.
+
 ### Increments fitted to the data
 
 The hydrophobic field and the two hydrogen-bond fields are built from one increment per (Sybyl

@@ -1,0 +1,28 @@
+{
+ "electrolytes": 62,
+ "records": 989,
+ "members_per_electrolyte": {
+  "min": 15,
+  "max": 16
+ },
+ "atoms_per_member": {
+  "min": 15,
+  "max": 94
+ },
+ "electrolytes_whose_members_differ_in_atoms": 62,
+ "seconds": {
+  "bt5": {
+   "0.3": 30.105703115463257,
+   "0.5": 34.1905837059021,
+   "1.0": 33.742124795913696,
+   "2.0": 144.71805691719055
+  },
+  "general": {
+   "0.3": 168.85612559318542,
+   "0.5": 180.2946000099182,
+   "1.0": 181.7008409500122,
+   "2.0": 184.7110731601715
+  }
+ },
+ "electrolytes_read_as_packed_ensembles": 62
+}

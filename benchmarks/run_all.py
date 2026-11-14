@@ -183,7 +183,7 @@ def _r(path):
 # replaces had lost the seven benchmarks added to the registry after they were written, and
 # nothing said so.
 REPRODUCE_MINUTES = 30        # the longest a benchmark may register and still join the run
-REPRODUCE_N_GROUPS = 7        # so that a group fits twice over in the time a job is given
+REPRODUCE_N_GROUPS = 8        # so that a group fits twice over in the time a job is given
 REPRODUCE_ALSO = ("hops",)    # longer than the rule allows, and in the run for a reason:
                               # the barriers of a lithium hop are the one measurement this
                               # program has compared with published numbers on the same
@@ -591,6 +591,18 @@ def registry() -> List[Benchmark]:
                   needs="xtb", minutes="25",
                   report=lambda: _mod("run_shells").write_table(_r("shells")),
                   tables=["shells/table.md"]),
+        Benchmark("ensembles",
+                  "an ensemble of structures through the general entry: the shells of item "
+                  "BT5 written to one file and read back by load_dataset, against BT5's own "
+                  "tables and numbers (plan item MS5)",
+                  "run_ensembles.py", "ensembles",
+                  compute=[["--stage", "file"]]
+                  + [["--stage", "kernels", "--path", p, "--alpha", a]
+                     for p in ("bt5", "general") for a in ("0.3", "0.5", "1.0", "2.0")]
+                  + [["--stage", "gate"]],
+                  minutes="25",
+                  report=lambda: _mod("run_ensembles").write_table(_r("ensembles")),
+                  tables=["ensembles/table.md"]),
         Benchmark("diffusion",
                   "the salt diffusion coefficient of the reference cell's electrolyte from "
                   "simulation, against the measured coefficient and conductivity and against "

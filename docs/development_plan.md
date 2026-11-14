@@ -7188,6 +7188,25 @@ would discard the typed fields and the global kernel that are the method's own.
   A trajectory or a sampled shell as the sample, with the single structure as the special case, is
   how temperature enters a static field method; BT5 did it for solvation shells. *Gate:* the
   ensemble path reproduces the BT5 numbers from the same frames through the general entry.
+  **Built and measured 14 November 2026.** `cmfqsar/ensembles.py` makes any weighted set of
+  structures one sample: `ensemble_molecule` keeps members with the same atoms as conformations
+  and packs members with their own atoms side by side in one RDKit molecule, whose properties
+  give each member's size, weight and atom map; `build_fields` gives the mean field of a packed
+  ensemble in the ensemble mode and its first member otherwise. `load_dataset` groups records
+  with `ensemble_by` and reads a weight per record with `member_weight`; until now it dropped
+  records with other atoms without a message. The command line has `--member-weight` on `build`
+  and `predict`, `--ensemble-by` on `predict`, and accepts `--conformer-weighting given`, which
+  the manual already showed and the command line refused. *The gate is met exactly*
+  (`benchmarks/run_ensembles.py`, `benchmarks/results/ensembles/`): the 989 shells of the 62
+  electrolytes, written to one file and read back through the general entry, give tables
+  identical to the last bit to BT5's at all four widths, and every number of BT5's two shell
+  models (both targets, both splits) is reproduced; BT5's own path, run again as the control, is
+  identical to the stored file. The first version moved the numbers by 5e-12, because the weights
+  were divided by their sum twice; they are now divided once. The measurement also found that the
+  fields of every ensemble, conformational ones included, dropped the non-field descriptors; they
+  now travel with the ensemble. 16 tests in `tests/test_ensembles.py`. *Open:* an energy per
+  member for a Boltzmann weighting of members with different atoms; an atom map found
+  automatically for members that share a part.
 
 * **MS6. A fit that scales.** A sparse Gaussian process or the Nyström form of B6 with the scale
   of MS1 attached, so the surrogate level can be trained on the hundred thousand structures of a
@@ -8720,7 +8739,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 9 | 6 | MS4, MS5, MS8 (partly) |
+| H. Multiscale modelling | 9 | 7 | MS4, MS8 (partly) |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |

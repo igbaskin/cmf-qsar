@@ -936,7 +936,7 @@ def combine_members(members: Sequence[MoleculeFields], weights: Sequence[float],
         symbols=symbols, atom_types=types,
         bonds=np.concatenate(bonds, axis=0) if bonds else np.zeros((0, 2), int),
         charges=np.concatenate(charges), molblock=first.molblock,
-        charge_source=first.charge_source)
+        charge_source=first.charge_source, descriptors=first.descriptors)
     out.n_conformers = len(keep)
     out.conformer_weights = np.array([w[i] for i in keep], float)
     out.member_kind = kind
@@ -987,7 +987,7 @@ def ensemble_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> Molecu
         atom_types=list(base.atom_types) * k,
         bonds=np.concatenate(bonds, axis=0) if bonds else np.zeros((0, 2), int),
         charges=np.tile(base.charges, k), molblock=base.molblock,
-        charge_source=base.charge_source)
+        charge_source=base.charge_source, descriptors=base.descriptors)
     out.n_conformers = k
     out.conformer_weights = np.array([weights[i] for i in use], float)
     out.atoms_per_conformer = n
@@ -1000,8 +1000,13 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     """Compute atom coordinates and per-field weights for one molecule.
 
     With ``conformers="ensemble"`` in the field set and a molecule that carries more than one
-    conformation, this returns the ensemble field instead; see :func:`ensemble_fields`.
+    conformation, this returns the ensemble field instead; see :func:`ensemble_fields`.  A
+    molecule that :func:`cmfqsar.ensembles.ensemble_molecule` packed from members with their own
+    atoms gives the mean field of its members in that mode and its first member otherwise.
     """
+    if not _single and mol is not None and mol.HasProp("cmf_member_sizes"):
+        from .ensembles import packed_fields
+        return packed_fields(mol, fieldset, name=name)
     if not _single and (getattr(fieldset, "protonation_ph", None) is not None
                         or getattr(fieldset, "tautomers", "")):
         if (getattr(fieldset, "conformers", "single") == "ensemble"

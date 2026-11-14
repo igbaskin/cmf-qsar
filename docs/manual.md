@@ -7961,6 +7961,91 @@ arbitrarily, and read its numbers as the weaker claim they are. A conformational
 protonation or tautomer ensemble cannot be combined yet: the program refuses rather than build a
 product of members it cannot describe.
 
+## Any set of structures as one sample
+
+The ensembles above belong to one molecule: its conformations, its protonation states, its
+tautomers. The mean-map kernel holds for any set of structures with weights, and a sample is
+often such a set: the solvation shells sampled around an ion, the frames of a mixture, the
+clusters of a trajectory. Plan item MS5 makes that the normal input of the program
+(`cmfqsar/ensembles.py`). A single structure is the special case of an ensemble with one member.
+
+**How a file says it.** Several records make one sample. `--ensemble-by KEY` groups them, by
+title or by a property, and `--member-weight PROP` names the record property that holds each
+record's weight. With `--conformations ensemble` the sample is the weighted mean field of its
+records; without it the first record is used, as before.
+
+```bash
+cmf build shells.sdf --activity ea_298 --ensemble-by electrolyte \
+    --member-weight member_weight --conformations ensemble --save shells.cmf
+cmf predict shells.cmf new.sdf --ensemble-by electrolyte --member-weight member_weight
+```
+
+In Python, `ensemble_molecule(members, weights)` makes one sample from any list of structures,
+and `write_ensembles` writes samples to a file that
+`load_dataset(path, ensemble_by=..., member_weight=...)` reads back.
+
+**The members may have different atoms.** RDKit keeps the conformations of a molecule on one
+atom list, so records with the same atoms in the same order still become conformations. Records
+with atoms of their own are packed side by side into one RDKit molecule, and three molecule
+properties say where each member starts, what weight it has and, when known, its atom map.
+Until item MS5 the reader dropped such records without a message; in the ensemble mode they now
+count.
+
+| Situation | What the program does |
+|---|---|
+| `--member-weight` is given | the weighting is `given`: each record's weight is read from the file, and a record without one is refused |
+| no weights are given | the members count equally |
+| `--conformer-weighting boltzmann` on members with different atoms | refused, because such members carry no energy each |
+| `--max-conformers N` | keeps the N members with the largest weights |
+| a record carries the property `cmf_atom_map` | it says which atom of the first member each atom corresponds to (-1 for none), and atom contributions are summed onto the atoms of the first member |
+| no atom map | the kernel, the prediction and the co-field in space do not change; the atom contributions of members with other atoms are not placed, and `unmapped_share` says how much that is |
+| `--ph` or `--tautomers` with such an ensemble | refused, as for conformations |
+| `cmf mil` with such an ensemble | refused, because a bag of instances is a set of conformations of one molecule |
+
+The members are used in the frame the file gives them. Putting them in one frame is the job of
+whatever produced them; for shells, the cation frame of item BT4 does it.
+
+### The gate: the numbers of item BT5 from the same frames
+
+`benchmarks/run_ensembles.py` writes the 989 shells of the 62 electrolytes of item BT5 into one
+SD file, one record per shell, with the electrolyte's name, the shell's weight and the two
+targets on every record. In all 62 electrolytes the shells differ in their atoms (15 to 94 atoms
+per shell), so they cannot be conformations of one molecule. The script then builds the tables
+of BT5's two shell models at all four field widths twice: by BT5's own code, and through
+`load_dataset(..., ensemble_by="electrolyte", member_weight="member_weight")` with the kernel
+cache switched off. Last, it runs BT5's nested cross-validation on the tables of each path.
+
+| Target | Split | Model | Mean absolute error stored by BT5 | Mean absolute error through the general entry |
+|---|---|---|---:|---:|
+| log10 of the conductivity | random | shells | 0.1147 | 0.1147 |
+| log10 of the conductivity | random | shells-free | 0.1091 | 0.1091 |
+| log10 of the conductivity | by-composition | shells | 0.1130 | 0.1130 |
+| log10 of the conductivity | by-composition | shells-free | 0.1034 | 0.1034 |
+| activation energy, kJ/mol | random | shells | 2.2357 | 2.2357 |
+| activation energy, kJ/mol | random | shells-free | 1.6121 | 1.6121 |
+| activation energy, kJ/mol | by-composition | shells | 2.9028 | 2.9028 |
+| activation energy, kJ/mol | by-composition | shells-free | 1.6845 | 1.6845 |
+
+**The gate is met exactly.** The tables of the two paths are identical to the last bit at every
+width, and so is every number of the eight records: the error of each electrolyte, the width,
+ridge and mixture chosen in each fold, and the summaries. BT5's own path, run again as a control,
+is identical to the stored file too.
+
+The measurement found three faults, all repaired:
+
+* The first version divided the member weights by their sum twice, once in the new code and once
+  in `combine_members`. That changed the last bit of the weights and moved the numbers by up to
+  5e-12. The weights are now divided once.
+* The fields of an ensemble carried no non-field descriptors (`--descriptors`), conformational
+  ensembles included: the mean field kept the fields and dropped the descriptors. They now travel
+  with the ensemble.
+* The trajectory section of this manual shows `--conformer-weighting given`, and the command
+  line refused that value. It is accepted now.
+
+```bash
+python benchmarks/run_ensembles.py     # about 25 minutes; the kernels take one width per step
+```
+
 # Working without an alignment
 
 This chapter is the one to read if your molecules came from SMILES, if your series has several
@@ -16187,7 +16272,7 @@ not every option.
 ## The options of `build`, by group
 
 **Data.** `--activity PROP`, `--activity-file TABLE`, `--test-file FILE`, `--test-fraction F`,
-`--ensemble-by KEY`.
+`--ensemble-by KEY`, `--member-weight PROP`.
 
 **Fields.** `--fields electrostatic,steric,hydrophobic,hba,hbd[,prop:name]`, `--cif`,
 `--cif-scheme sybyl|element|element+aromatic`, `--cif-min N`, `--cif-types LIST`,

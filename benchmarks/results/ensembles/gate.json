@@ -1,0 +1,106 @@
+{
+ "kernels": {
+  "0.3": {
+   "framed_kernel": 0.0,
+   "alignment_free_rows": 0.0
+  },
+  "0.5": {
+   "framed_kernel": 0.0,
+   "alignment_free_rows": 0.0
+  },
+  "1.0": {
+   "framed_kernel": 0.0,
+   "alignment_free_rows": 0.0
+  },
+  "2.0": {
+   "framed_kernel": 0.0,
+   "alignment_free_rows": 0.0
+  }
+ },
+ "readings": [
+  {
+   "target": "log10_k_298",
+   "split": "random",
+   "model": "shells",
+   "stored_mae": 0.11465368028380649,
+   "bt5_mae": 0.11465368028380649,
+   "bt5_difference": 0.0,
+   "general_mae": 0.11465368028380649,
+   "general_difference": 0.0
+  },
+  {
+   "target": "log10_k_298",
+   "split": "random",
+   "model": "shells-free",
+   "stored_mae": 0.10907552312359572,
+   "bt5_mae": 0.10907552312359572,
+   "bt5_difference": 0.0,
+   "general_mae": 0.10907552312359572,
+   "general_difference": 0.0
+  },
+  {
+   "target": "log10_k_298",
+   "split": "by-composition",
+   "model": "shells",
+   "stored_mae": 0.11298269821398721,
+   "bt5_mae": 0.11298269821398721,
+   "bt5_difference": 0.0,
+   "general_mae": 0.11298269821398721,
+   "general_difference": 0.0
+  },
+  {
+   "target": "log10_k_298",
+   "split": "by-composition",
+   "model": "shells-free",
+   "stored_mae": 0.10337516079723005,
+   "bt5_mae": 0.10337516079723005,
+   "bt5_difference": 0.0,
+   "general_mae": 0.10337516079723005,
+   "general_difference": 0.0
+  },
+  {
+   "target": "ea_298",
+   "split": "random",
+   "model": "shells",
+   "stored_mae": 2.2356724259158662,
+   "bt5_mae": 2.2356724259158662,
+   "bt5_difference": 0.0,
+   "general_mae": 2.2356724259158662,
+   "general_difference": 0.0
+  },
+  {
+   "target": "ea_298",
+   "split": "random",
+   "model": "shells-free",
+   "stored_mae": 1.6120861673563478,
+   "bt5_mae": 1.6120861673563478,
+   "bt5_difference": 0.0,
+   "general_mae": 1.6120861673563478,
+   "general_difference": 0.0
+  },
+  {
+   "target": "ea_298",
+   "split": "by-composition",
+   "model": "shells",
+   "stored_mae": 2.9028296041681103,
+   "bt5_mae": 2.9028296041681103,
+   "bt5_difference": 0.0,
+   "general_mae": 2.9028296041681103,
+   "general_difference": 0.0
+  },
+  {
+   "target": "ea_298",
+   "split": "by-composition",
+   "model": "shells-free",
+   "stored_mae": 1.6845053406464288,
+   "bt5_mae": 1.6845053406464288,
+   "bt5_difference": 0.0,
+   "general_mae": 1.6845053406464288,
+   "general_difference": 0.0
+  }
+ ],
+ "largest_difference_control": 0.0,
+ "largest_difference_general": 0.0,
+ "largest_difference_tables": 0.0,
+ "gate_met": true
+}

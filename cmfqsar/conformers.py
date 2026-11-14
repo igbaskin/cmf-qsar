@@ -402,14 +402,24 @@ def generate_for_dataset(mols: Sequence[Chem.Mol], n: int = 10, seed: int = 0,
 
 
 def group_conformers(mols: Sequence[Chem.Mol], names: Sequence[str],
-                     by: str = "name") -> Tuple[List[Chem.Mol], List[str], List[int]]:
-    """Collapse the records of a multi-conformer file into one molecule per compound.
+                     by: str = "name", weight_by: Optional[str] = None
+                     ) -> Tuple[List[Chem.Mol], List[str], List[int]]:
+    """Collapse the records of a multi-record file into one entry per sample (plan item MS5).
 
     ``by="name"`` groups records that share a title, which is how most conformer generators write
-    their output; any other value is read as the name of a property to group by.  The records of
-    a group must have the same atom order, which is the case when they come from one generator.
-    Returns the grouped molecules, their names, and the number of conformations in each.
+    their output; any other value is read as the name of a property to group by.  Records of a
+    group that have the same atoms in the same order become the conformations of one molecule,
+    as before.  A group whose records have different atoms -- solvation shells, frames of a
+    mixture, protonation states written out -- is packed by
+    :func:`cmfqsar.ensembles.ensemble_molecule` instead; until item MS5 such records were
+    dropped without a word.  `weight_by` names a record property that holds each record's weight
+    in the ensemble; the field set uses it with the weighting ``given``.  A record may carry
+    ``cmf_atom_map``, the atom of the first record that each of its atoms corresponds to.
+    Returns the grouped molecules, their names, and the number of members in each.
     """
+    from .ensembles import (RECORD_MAP_PROP, EnsembleError, check_weights, ensemble_molecule,
+                            same_atoms)
+
     order: List[str] = []
     groups: Dict[str, List[int]] = {}
     for i, (m, n) in enumerate(zip(mols, names)):
@@ -422,19 +432,49 @@ def group_conformers(mols: Sequence[Chem.Mol], names: Sequence[str],
         groups[key].append(i)
     out, out_names, counts = [], [], []
     for key in order:
-        idx = groups[key]
-        base = Chem.Mol(mols[idx[0]])
-        n_atoms = base.GetNumAtoms()
-        for j in idx[1:]:
-            other = mols[j]
-            if other.GetNumAtoms() != n_atoms or other.GetNumConformers() == 0:
-                continue
-            for c in other.GetConformers():
-                base.AddConformer(Chem.Conformer(c), assignId=True)
-        out.append(base)
+        recs = [mols[j] for j in groups[key]]
+        recs = [recs[0]] + [r for r in recs[1:] if r.GetNumConformers() > 0]
+        weights = None
+        if weight_by:
+            weights = []
+            for r in recs:
+                if not r.HasProp(weight_by):
+                    raise EnsembleError(f"a record of {key!r} carries no {weight_by!r}, so its "
+                                        f"weight in the ensemble is not known")
+                weights.append(float(r.GetProp(weight_by)))
+        if all(same_atoms(recs[0], r) for r in recs[1:]):
+            base = Chem.Mol(recs[0])
+            for other in recs[1:]:
+                for c in other.GetConformers():
+                    base.AddConformer(Chem.Conformer(c), assignId=True)
+            if weights is not None and len(recs) > 1:
+                if base.GetNumConformers() != len(recs):
+                    raise EnsembleError(f"{key!r}: a record with several conformations cannot "
+                                        f"take one weight per record")
+                check_weights(weights, len(recs))
+                base.SetProp("conformer_weights", ",".join(repr(float(v)) for v in weights))
+            out.append(base)
+            counts.append(base.GetNumConformers())
+        else:
+            maps = None
+            if all(r.HasProp(RECORD_MAP_PROP) for r in recs):
+                maps = [[int(v) for v in r.GetProp(RECORD_MAP_PROP).split()] for r in recs]
+            members = [_first_conformation(r) for r in recs]
+            out.append(ensemble_molecule(members, weights, maps, name=key))
+            counts.append(len(members))
         out_names.append(key)
-        counts.append(base.GetNumConformers())
     return out, out_names, counts
+
+
+def _first_conformation(mol: Chem.Mol) -> Chem.Mol:
+    """The molecule with its first conformation only, which is what one record holds."""
+    if mol.GetNumConformers() <= 1:
+        return Chem.Mol(mol)
+    one = Chem.Mol(mol)
+    keep = Chem.Conformer(mol.GetConformer(0))
+    one.RemoveAllConformers()
+    one.AddConformer(keep, assignId=True)
+    return one
 
 
 def ensemble_summary(mols: Sequence[Chem.Mol], fieldset: FieldSet) -> Dict[str, float]:

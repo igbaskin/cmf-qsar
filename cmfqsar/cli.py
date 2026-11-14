@@ -115,7 +115,8 @@ def _print_block_weights(model):
 
 def _load_dataset(args):
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
-                      ensemble_by=(args.ensemble_by or None))
+                      ensemble_by=(args.ensemble_by or None),
+                      member_weight=(getattr(args, "member_weight", None) or None))
     if args.decoys:
         dec = load_dataset(args.decoys, activity_prop=args.activity, subset="decoy")
         dec.subset = np.array(["decoy"] * len(dec), dtype=object)
@@ -411,7 +412,8 @@ def cmd_build(args):
                          prop_missing=args.prop_missing,
                          cif_scheme=args.cif_scheme, param_scheme=args.param,
                          conformers=args.conformations,
-                         conformer_weighting=args.conformer_weighting,
+                         conformer_weighting=("given" if getattr(args, "member_weight", None)
+                                              else args.conformer_weighting),
                          conformer_kt=args.kt, max_conformers=args.max_conformers,
                          descriptors=[d for d in (args.descriptors or "").split(",") if d],
                          descriptor_h=args.descriptor_h,
@@ -2006,7 +2008,9 @@ def cmd_predict(args):
     if _is_crystal_model(model):
         names, activity, table = _crystal_predict_inputs(args, model)
         return _report_predictions(args, model, extra, names, activity, table)
-    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
+    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
+                      ensemble_by=(args.ensemble_by or None),
+                      member_weight=(args.member_weight or None))
     mf = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
     _check_contract(model, mf, allow=args.allow_mismatch)
     if args.align_variance is not None:
@@ -3366,6 +3370,12 @@ def cmd_mil(args):
     t0 = time.time()
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
                       ensemble_by=(args.ensemble_by or None))
+    from cmfqsar.ensembles import is_packed
+    packed = [n for m, n in zip(ds.mols, ds.names) if is_packed(m)]
+    if packed:
+        raise SystemExit(f"{len(packed)} samples (first: {packed[0]}) group records with "
+                         f"different atoms, and a bag of instances is a set of conformations of "
+                         f"one molecule; use `cmf build --conformations ensemble` for them")
     ok = np.isfinite(ds.activity)
     tr = [int(i) for i in ds.train_indices if ok[i]]
     te = [int(i) for i in ds.test_indices if ok[i]]
@@ -4316,8 +4326,9 @@ def main(argv=None):
                         "the default takes the largest molecule, whose common substructure with "
                         "the others is the most likely to be the scaffold of the series")
     b.add_argument("--conformer-weighting", default="uniform",
-                   choices=["uniform", "boltzmann", "property"],
-                   help="weights of the conformations in the mean field")
+                   choices=["uniform", "boltzmann", "property", "given"],
+                   help="weights of the conformations in the mean field; 'given' reads them "
+                        "from the file (see --member-weight)")
     b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
                    help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
     b.add_argument("--second-endpoint", default=None, metavar="COLUMN",
@@ -4370,8 +4381,14 @@ def main(argv=None):
                    help="use at most the N conformations of each molecule with the largest weights "
                         "(0 = all)")
     b.add_argument("--ensemble-by", default=None, metavar="KEY",
-                   help="group the records of a multi-conformer file into ensembles, by 'name' or "
+                   help="group the records of a multi-record file into ensembles, by 'name' or "
                         "by the named property")
+    b.add_argument("--member-weight", default=None, metavar="PROP",
+                   help="the record property that holds each record's weight in its ensemble "
+                        "(plan item MS5); implies --conformer-weighting given. With "
+                        "--ensemble-by, records of one sample may have different atoms -- "
+                        "solvation shells, frames of a mixture -- and are joined into one mean "
+                        "field in --conformations ensemble")
     b.add_argument("--folds", type=int, default=10)
     b.add_argument("--cv-no-shuffle", action="store_true",
                    help="interleaved folds in file order (molecule i -> fold i mod k) instead of shuffled folds")
@@ -4595,6 +4612,12 @@ def main(argv=None):
                         "('abc' for a crystal, 'ab' for a layer with the vacuum along c, 'a' "
                         "for a chain); without it the files decide. Use the same setting the "
                         "model was fitted with")
+    q.add_argument("--ensemble-by", default=None, metavar="KEY",
+                   help="group the records into ensembles as the model was built with: by "
+                        "'name' or by the named property (plan item MS5)")
+    q.add_argument("--member-weight", default=None, metavar="PROP",
+                   help="the record property that holds each record's weight in its ensemble, "
+                        "as the model was built with")
     q.add_argument("--out", default=None)
     q.add_argument("--align-variance", type=float, nargs="?", const=2.0, default=None, metavar="MAX_RMSD",
                    help="before predicting, align every molecule by minimising the posterior variance "

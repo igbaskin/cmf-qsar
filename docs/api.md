@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1280 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 125 modules, 247 classes with 814 public methods, and 1292 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -65,6 +65,7 @@ for.
 | [cmfqsar.diagnose](#cmfqsardiagnose) | What to ask of a data set before modelling it, and which route it should take. |
 | [cmfqsar.docking](#cmfqsardocking) | Place conformations inside the pocket instead of in the gas phase. |
 | [cmfqsar.electrolyte](#cmfqsarelectrolyte) | Bulk electrolyte simulations, for plan item BT5. |
+| [cmfqsar.ensembles](#cmfqsarensembles) | Ensembles as the normal input: several structures that make one sample (plan item MS5). |
 | [cmfqsar.errorpred](#cmfqsarerrorpred) | Which of the things that claim to know when a prediction is bad actually knows (plan item E5). |
 | [cmfqsar.evidence](#cmfqsarevidence) | Choosing alpha and lambda by the evidence instead of by cross-validation. |
 | [cmfqsar.exposure](#cmfqsarexposure) | Solvent exposure as a weight on the fields: the claim of the surface methods, without a surface. |
@@ -3272,14 +3273,20 @@ common reference molecule of the series instead of relative to the molecule itse
 what the kernel actually compares; the reference is taken - in the pose it arrives in, before
 anything is generated - from `reference_index`, or the largest molecule if that is `None`.
 
-### `group_conformers(mols: Sequence[Chem.Mol], names: Sequence[str], by: str='name') -> Tuple[List[Chem.Mol], List[str], List[int]]`
+### `group_conformers(mols: Sequence[Chem.Mol], names: Sequence[str], by: str='name', weight_by: Optional[str]=None) -> Tuple[List[Chem.Mol], List[str], List[int]]`
 
-Collapse the records of a multi-conformer file into one molecule per compound.
+Collapse the records of a multi-record file into one entry per sample (plan item MS5).
 
 `by="name"` groups records that share a title, which is how most conformer generators write
-their output; any other value is read as the name of a property to group by.  The records of
-a group must have the same atom order, which is the case when they come from one generator.
-Returns the grouped molecules, their names, and the number of conformations in each.
+their output; any other value is read as the name of a property to group by.  Records of a
+group that have the same atoms in the same order become the conformations of one molecule,
+as before.  A group whose records have different atoms -- solvation shells, frames of a
+mixture, protonation states written out -- is packed by
+`cmfqsar.ensembles.ensemble_molecule` instead; until item MS5 such records were
+dropped without a word.  `weight_by` names a record property that holds each record's weight
+in the ensemble; the field set uses it with the weighting `given`.  A record may carry
+`cmf_atom_map`, the atom of the first record that each of its atoms corresponds to.
+Returns the grouped molecules, their names, and the number of members in each.
 
 ### `ensemble_summary(mols: Sequence[Chem.Mol], fieldset: FieldSet) -> Dict[str, float]`
 
@@ -3527,7 +3534,7 @@ Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .xyz, .smi/
 
 SD properties that are numeric for at least `min_fraction` of the molecules.
 
-### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None, atom_activity: Optional[str]=None) -> Dataset`
+### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None, atom_activity: Optional[str]=None, member_weight: Optional[str]=None) -> Dataset`
 
 Load a structure file; activities come from an SD property or from a separate table.
 
@@ -3536,10 +3543,14 @@ molecule name in the first column, the activity in the column whose header menti
 activity (else the second column) and, optionally, a set/subset column (1/"train", 2/"test")
 defining the published train/test split.
 
-`ensemble_by` collapses a multi-conformer file into one molecule per compound, carrying all
-of its conformations: "name" groups records that share a title, anything else is read as the
-name of a property to group by.  The conformations are used only in the ensemble mode of the
-field set; in the default single mode the first one of each compound is used, as before.
+`ensemble_by` collapses a multi-record file into one entry per sample: "name" groups records
+that share a title, anything else is read as the name of a property to group by.  Records of
+one sample with the same atoms become its conformations; records with different atoms (shells,
+frames of a mixture) are packed as one ensemble (plan item MS5, `cmfqsar.ensembles`).
+The members are used only in the ensemble mode of the field set; in the default single mode
+the first record of each sample is used, as before.  `member_weight` names the record
+property that holds each record's weight, which the field set uses with the weighting
+"given".
 
 `atom_activity` names a target that belongs to the atoms rather than to the molecule (plan
 item LP1): the data set then carries the index of the (molecule, atom) pairs that were
@@ -4535,6 +4546,118 @@ reading of the trajectory can report the cost of producing it.
 The templates `cmfqsar.shells` needs to turn a cut-out shell into a molecule.
 
 The same objects the box was packed from, keyed by the residue name the topology carries.
+
+## cmfqsar.ensembles
+
+Source: `cmfqsar/ensembles.py`
+
+Ensembles as the normal input: several structures that make one sample (plan item MS5).
+
+A CMF field is a sum of atom-centred Gaussian functions and the kernel is bilinear in the
+fields, so the weighted mean field of a set of structures is itself a field, and the kernel of
+two such mean fields is the weighted mean of the kernels of their members (equation 10.1 of the
+manual, the mean-map kernel). The program used this in four places, each with its own code: the
+conformations of one molecule, protonation states, tautomers, and the solvation shells of item
+BT5. This module is the one entry for all of them, and for anything else that is a set of
+structures with weights: frames of a trajectory, sampled clusters, the members of a mixture.
+
+The members of one sample may have different atoms. RDKit keeps a molecule's conformations on
+one atom list, so such members cannot be conformations of one molecule. They are packed side by
+side into one RDKit molecule instead, and three molecule properties say where each member
+starts, what weight it has and, when known, which atom of the first member each of its atoms
+corresponds to. `cmfqsar.fields.build_fields` recognises a packed molecule. With
+`conformers="ensemble"` in the field set it builds every member on its own and joins them
+with `cmfqsar.fields.combine_members`; with the default `"single"` it uses the first
+member, so a single structure is the special case of an ensemble with one member.
+
+Members that do share an atom list are kept in the older form, as conformations of one
+molecule, so the two forms give the same field for the same input.
+
+The atom map is needed only to sum a per-atom quantity (an atom contribution, a Shapley value)
+onto the atoms of the first member. The kernel, the prediction and the co-field in space do not
+use it. Without a map, the atoms of a member that has a different atom list are not placed, and
+`cmfqsar.fields.MoleculeFields.unmapped_share` says how much of a per-atom quantity that
+loses.
+
+### `class EnsembleError  — bases: ValueError`
+
+An ensemble that cannot be built or read as it stands.
+
+### `same_atoms(a: Chem.Mol, b: Chem.Mol) -> bool`
+
+True when two structures have the same atoms in the same order (count and elements).
+
+### `check_weights(weights: Optional[Sequence[float]], n: int) -> Optional[np.ndarray]`
+
+The weights as an array, checked: one per member, finite, not negative, not all zero.
+
+### `ensemble_molecule(members: Sequence[Chem.Mol], weights: Optional[Sequence[float]]=None, atom_maps: Optional[Sequence[Optional[Sequence[int]]]]=None, name: Optional[str]=None) -> Chem.Mol`
+
+One RDKit molecule that stands for a weighted set of structures.
+
+Every member must hold exactly one conformation; the coordinates are used as they are, so
+the members must already be in the frame the model compares them in. `weights` need not be
+normalised; without them the members count equally, unless the field set's weighting says
+otherwise. `atom_maps` gives, for each member, the atom of the first member each of its
+atoms corresponds to (-1 for none); `None` for a member means "not known".
+
+Members that all have the same atoms become the conformations of one molecule, with the
+weights in the `conformer_weights` property, which is the form the field set has always
+read. Otherwise the members are packed side by side (see the module text). The molecule
+properties of the first member are kept, so an activity or a name travels with the sample.
+
+### `is_packed(mol: Chem.Mol) -> bool`
+
+True for a molecule that `ensemble_molecule` packed from members with own atoms.
+
+### `member_sizes(mol: Chem.Mol) -> List[int]`
+
+The number of atoms of every member of a packed ensemble.
+
+### `n_members(mol: Chem.Mol) -> int`
+
+How many structures a molecule stands for: members, conformations, or one.
+
+### `members_of(mol: Chem.Mol) -> List[Chem.Mol]`
+
+The members of a packed ensemble, each a molecule of its own, in order.
+
+Each member keeps its atoms in their order, their coordinates and their atom properties, and
+it carries the molecule properties of the sample (an activity, a descriptor), so that
+everything `cmfqsar.fields.build_fields` reads from a molecule is there.
+
+### `stored_weights(mol: Chem.Mol) -> Optional[np.ndarray]`
+
+The member weights a packed ensemble carries, or `None` when it carries none.
+
+### `stored_atom_maps(mol: Chem.Mol) -> Optional[List[np.ndarray]]`
+
+The atom map of every member of a packed ensemble, or `None` when it carries none.
+
+### `member_weights(mol: Chem.Mol, fieldset, normalise: bool=True) -> np.ndarray`
+
+The weights of the members of a packed ensemble under a field set, summing to one.
+
+`uniform` counts the members equally; `given` uses the weights the ensemble carries and
+refuses an ensemble that carries none. A Boltzmann weighting needs an energy per member,
+which a packed ensemble does not carry, so it is refused instead of being replaced by
+another weighting without a word. `max_conformers` keeps the members with the largest
+weights. With `normalise` off the weights are returned as given, which is what
+`cmfqsar.fields.combine_members` takes: it divides by the sum itself, and a second
+division would change the last bit of every weight.
+
+### `packed_fields(mol: Chem.Mol, fieldset, name: str='')`
+
+The field of a packed ensemble under a field set (called by `build_fields`).
+
+### `write_ensembles(path: str, samples: Sequence[Sequence[Chem.Mol]], names: Sequence[str], weights: Optional[Sequence[Sequence[float]]]=None, sample_props: Optional[Sequence[dict]]=None, group_prop: str='sample', weight_prop: str='member_weight') -> int`
+
+Write samples of several structures to one SD file that `load_dataset` reads back.
+
+Every member becomes one record. It carries the sample's name in `group_prop`, its weight in
+`weight_prop` and the sample's own properties (`sample_props`, an activity for example), so
+that `load_dataset(path, ensemble_by=group_prop, member_weight=weight_prop)` gives back one
+entry per sample. Returns the number of records written.
 
 ## cmfqsar.errorpred
 
@@ -5870,7 +5993,9 @@ setting on large series.
 Compute atom coordinates and per-field weights for one molecule.
 
 With `conformers="ensemble"` in the field set and a molecule that carries more than one
-conformation, this returns the ensemble field instead; see `ensemble_fields`.
+conformation, this returns the ensemble field instead; see `ensemble_fields`.  A
+molecule that `cmfqsar.ensembles.ensemble_molecule` packed from members with their own
+atoms gives the mean field of its members in that mode and its first member otherwise.
 
 ## cmfqsar.flexalign
 
