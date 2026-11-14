@@ -112,3 +112,60 @@ def test_the_built_files_are_complete():
     dihedrals = [float(m.GetProp("biaryl_dihedral"))
                  for m in Chem.SDMolSupplier(os.path.join(D.OUT_DIR, "catalysts.sdf"), removeHs=False)]
     assert all(d > 0 for d in dihedrals)
+
+
+SF5_PHENYL = "[c]1ccc(S(F)(F)(F)(F)F)cc1"
+
+
+def _faults(mol):
+    """Bonds outside 0.7 to 1.3 times the sum of the covalent radii, and the closest pair of
+    atoms without a bond when it is below 1.3 A."""
+    from cmfqsar import orca
+
+    out = list(orca.changed_bonds(mol, low=0.7, high=1.3))
+    r = np.array(mol.GetConformer().GetPositions(), float)
+    d = np.linalg.norm(r[:, None, :] - r[None, :, :], axis=2)
+    np.fill_diagonal(d, np.inf)
+    for b in mol.GetBonds():
+        d[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] = d[b.GetEndAtomIdx(), b.GetBeginAtomIdx()] = np.inf
+    if d.min() < 1.3:
+        out.append("contact %.2f" % d.min())
+    return out
+
+
+def test_an_sf5_group_is_built_on_the_conformers_of_a_stand_in():
+    # no force field of RDKit holds the group: UFF moved its fluorines 6 to 8 A from the sulfur
+    cat = D.assemble(Chem.MolFromSmiles(SCAFFOLD_I), Chem.MolFromSmiles(SF5_PHENYL))
+    stand_in, kept = D.sf5_stand_in(Chem.AddHs(cat))
+    assert stand_in.GetNumAtoms() == Chem.AddHs(cat).GetNumAtoms() - 4 == len(kept)
+    assert not any(a.GetSymbol() == "S" for a in stand_in.GetAtoms())
+    mh, energy, tried = D.embed_lowest(cat, n=4, seed=1)
+    assert tried == 4 and np.isfinite(energy)
+    assert "stand-in" in mh.GetProp("force_field")
+    assert 45.0 < D.biaryl_dihedral(mh) < 65.0
+    r = np.array(mh.GetConformer().GetPositions(), float)
+    sulfurs = [a for a in mh.GetAtoms() if a.GetSymbol() == "S"]
+    assert len(sulfurs) == 2
+    for s in sulfurs:
+        for n in s.GetNeighbors():
+            length = float(np.linalg.norm(r[s.GetIdx()] - r[n.GetIdx()]))
+            assert length == pytest.approx(1.59 if n.GetSymbol() == "F" else 1.80, abs=1e-6)
+    assert _faults(mh) == []
+
+
+def test_a_catalyst_without_the_group_has_no_stand_in():
+    cat = Chem.AddHs(D.assemble(Chem.MolFromSmiles(SCAFFOLD_I), Chem.MolFromSmiles(PHENYL)))
+    assert D.sf5_stand_in(cat) == (None, [])
+
+
+@pytest.mark.parametrize("name", ["catalysts.sdf", "catalysts_sym.sdf", "imines.sdf", "thiols.sdf"])
+def test_no_record_of_the_built_files_has_an_impossible_bond(name):
+    # the check that would have found the catalyst with the SF5 groups: every bond length
+    # between 0.7 and 1.3 times the sum of the covalent radii, and no two atoms without a bond
+    # closer than 1.3 A
+    path = os.path.join(D.OUT_DIR, name)
+    if not os.path.isfile(path):
+        pytest.skip("the built files are not present")
+    faults = [(mol.GetProp("_Name"), f) for mol in Chem.SDMolSupplier(path, removeHs=False)
+              for f in _faults(mol)]
+    assert faults == []

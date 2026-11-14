@@ -5263,7 +5263,9 @@ selectivity. It runs from −0.42 to +3.14 kcal/mol (standard deviation 0.70).
 The series fits the method the way the Hammett series does: every catalyst is the same phosphoric
 acid on one of two binaphthyl scaffolds with one substituent at both 3 and 3' positions, so the
 reaction centre gives the frame by construction. `examples/make_denmark_examples.py --fetch`
-assembles each catalyst from the published fragments, keeps the lowest of 30 MMFF conformers,
+assembles each catalyst from the published fragments, keeps the lowest of 30 MMFF conformers
+(for the one catalyst with SF5 groups, which no force field of RDKit holds, the conformers of
+the catalyst with CF3 in their place, and each SF5 group is then built as a regular octahedron),
 reflects every conformer so that all 43 have the same axial configuration (a 2D file does not
 carry it, and ETKDG assigns it at random), and places the phosphorus at the origin with the acid
 oxygens on +z, so that the 3,3'-substituents flank the +z pocket where the imine and the thiol
@@ -5283,17 +5285,17 @@ without a field, with a bootstrap interval over the catalysts, in kcal/mol:
 
 | Held out | Field model, MAD (q²) | Baseline, MAD (q²) | Difference [95 %] | Published |
 |---|---|---|---|---|
-| each catalyst in turn (42 train) | 0.224 (0.82) | endpoint mean 0.458 (0.17) | −0.236 [−0.340, −0.142] | 0.211, 19 catalysts held out, 24 trained |
-| reactions, 10-fold | 0.164 (0.89); 0.148 (0.91) with the substrate covariance | catalyst + endpoint effects 0.183 (0.87) | −0.035 [−0.057, −0.015] | 0.161, new substrate combinations |
-| each substrate combination in turn | 0.158 (0.90) | catalyst + imine + thiol effects 0.186 (0.87) | −0.027 [−0.049, −0.007] | |
-| each imine in turn (5 endpoints) | 0.167 (0.88) | 0.185 (0.87) | −0.018 [−0.039, −0.000] | |
-| each thiol in turn (5 endpoints) | 0.406 (0.53) | 0.399 (0.54) | +0.007 [+0.004, +0.010] | |
+| each catalyst in turn (42 train) | 0.224 (0.82) | endpoint mean 0.458 (0.17) | −0.236 [−0.341, −0.143] | 0.211, 19 catalysts held out, 24 trained |
+| reactions, 10-fold | 0.164 (0.89); 0.149 (0.91) with the substrate covariance | catalyst + endpoint effects 0.183 (0.87) | −0.035 [−0.057, −0.014] | 0.161, new substrate combinations |
+| each substrate combination in turn | 0.158 (0.90) | catalyst + imine + thiol effects 0.186 (0.87) | −0.028 [−0.050, −0.007] | |
+| each imine in turn (5 endpoints) | 0.167 (0.88) | 0.185 (0.87) | −0.018 [−0.039, +0.000] | |
+| each thiol in turn (5 endpoints) | 0.406 (0.53) | 0.399 (0.54) | +0.007 [+0.003, +0.010] | |
 
 The published model (a support-vector regression on the average steric occupancy of the
 catalyst's conformers over a grid and on electronic descriptors, trained on 600 reactions of 24
 catalysts) reached 0.211 kcal/mol on the 19 catalysts it had not seen and 0.161 on new substrate
 combinations of the catalysts it had. The field model, with 42 training catalysts rather than 24,
-reaches 0.224 on a catalyst it has not seen and 0.148 to 0.164 on a reaction of a catalyst it
+reaches 0.224 on a catalyst it has not seen and 0.149 to 0.164 on a reaction of a catalyst it
 has; the first is the same accuracy on a related but not identical split, the second is the
 same accuracy on the same kind of split. The reading that matters is what the frame is worth,
 measured on the catalyst holdout one kernel at a time:
@@ -5301,19 +5303,28 @@ measured on the catalyst holdout one kernel at a time:
 | Kernel | MAD | q² |
 |---|---|---|
 | all five fields | 0.224 | 0.82 |
-| steric alone | 0.249 | 0.76 |
-| hydrophobic alone | 0.289 | 0.63 |
-| electrostatic alone | 0.376 | 0.41 |
-| hydrogen-bond donor alone | 0.490 | 0.19 |
-| the invariant autocorrelation kernel, no frame | 0.419 | 0.26 |
+| steric alone | 0.250 | 0.76 |
+| hydrophobic alone | 0.308 | 0.63 |
+| electrostatic alone | 0.404 | 0.34 |
+| hydrogen-bond acceptor alone | 0.418 | 0.20 |
+| hydrogen-bond donor alone | 0.484 | 0.19 |
+| the invariant autocorrelation kernel, no frame | 0.372 | 0.51 |
 
-The selectivity is steric, as the published descriptor said, and the frame is most of the result:
-the same five fields compared without a frame, through the rotation-invariant kernel that the
-host–guest and crystal sections use, lose three quarters of the explained variance. On the
-Hammett series the frame was beyond doubt and the question was which field; here the frame is
-the claim, and it is measured. The hydrogen-bond acceptor field alone is worse than the mean
-(q² −3.4): every catalyst has the same four oxygens, so its kernel is nearly constant and the ridge
-chosen by the evidence lets it fit noise.
+The selectivity is steric, as the published descriptor said, and the frame is a large part of the
+result: the same five fields compared without a frame, through the rotation-invariant kernel that
+the host–guest and crystal sections use, explain 0.51 of the variance where the frame gives 0.82.
+On the Hammett series the frame was beyond doubt and the question was which field; here the frame
+is the claim, and it is measured.
+
+**What one faulty structure had cost.** Until 14 November 2026 the structure of one catalyst of
+the 43, the one with SF5 groups, was not the molecule: its fluorines lay 6 to 8 Å from the sulfur.
+The model with all five fields did not show it (0.224 and 0.82 before and after the repair). Three
+numbers of the table above did. The invariant kernel gave 0.26, and this text said that the fields
+without a frame lose three quarters of the explained variance; the loss is 0.31 of 0.82. The
+hydrogen-bond acceptor field alone gave −3.4, and this text explained that number by a kernel that
+is nearly constant; the explanation was wrong, and the number came from fluorine atoms far from
+their molecule. The electrostatic field alone gave 0.41. A control run of the present program on
+the old files reproduces the old numbers exactly, so the repair is the only cause.
 
 **What the co-field says** (`benchmarks/results/denmark/cofields.png`, the mean over the 25
 endpoints, drawn in the acid's frame): the steric co-field is positive in two lobes at x ≈ ±4.5 Å

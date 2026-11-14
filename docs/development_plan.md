@@ -6335,6 +6335,16 @@ What it leaves open, in order:
   consistent across the 43 but not known to be (R) or (S); a co-field drawn for a design would
   need the enantiomer stated. EC9's potential-dependent target is not touched: this series has one
   condition.
+  **Measured again 14 November 2026, after one structure was repaired.** The catalyst with SF5
+  groups (`181_i`) had been minimised with UFF, which moved its fluorines 6 to 8 A from the
+  sulfur and opened the biaryl dihedral to 71 degrees. The builder now finds its conformers with
+  CF3 in place of each SF5 group and sets the groups to regular octahedra. A control run of the
+  present program on the old files reproduces the stored summary exactly, so the changes are the
+  repair. The numbers above are those of the first measurement. All five fields: unchanged, MAD
+  0.224 and q2 0.82 on the catalyst holdout. Field by field: electrostatic 0.34 (was 0.41), the
+  hydrogen-bond acceptor field 0.20 (was -3.4), and **the rotation-invariant kernel 0.51 (was
+  0.26)**. So the frame is a large part of the result and not most of it, and the sentence
+  "the frame is the result" above overstated it because of one molecule.
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework

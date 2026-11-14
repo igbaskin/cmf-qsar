@@ -3142,7 +3142,8 @@ diastereomeric transition states, which is the difference of two rate constants.
 **The frame is the reaction centre.** Every catalyst is the same phosphoric acid on one of two
 binaphthyl scaffolds with one substituent at both 3 and 3' positions. The builder
 (`examples/make_denmark_examples.py --fetch`) assembles each catalyst from the published
-fragments, keeps the lowest of 30 MMFF conformers, gives all 43 the same axial configuration
+fragments, keeps the lowest of 30 MMFF conformers (the one catalyst with SF5 groups is built
+by a rule, see below), gives all 43 the same axial configuration
 (a 2D file does not carry it, and the conformer generator assigns it at random), and puts the
 phosphorus at the origin with the acid oxygens on +z, so that the substituents flank the pocket
 in which the substrates meet. The catalyst has a C2 axis along z; both images are written as the
@@ -3159,15 +3160,26 @@ predicts the same thing without a field, in kcal/mol:
 | Held out | Field model, MAD (q²) | Baseline, MAD (q²) | Published |
 |---|---|---|---|
 | each catalyst in turn | 0.224 (0.82) | endpoint mean, 0.458 (0.17) | 0.211 on 19 catalysts held out |
-| reactions, 10-fold | 0.148 to 0.164 (0.89 to 0.91) | additive effects, 0.183 (0.87) | 0.161 on new substrate combinations |
+| reactions, 10-fold | 0.149 to 0.164 (0.89 to 0.91) | additive effects, 0.183 (0.87) | 0.161 on new substrate combinations |
 | each substrate combination in turn | 0.158 (0.90) | additive effects, 0.186 (0.87) | |
 | each thiol in turn | 0.406 (0.53) | additive effects, 0.399 (0.54) | |
 
 The field model is at the published accuracy on both kinds of split the paper reports. What the
 paper could not measure, and this program can, is what the frame is worth: on the catalyst
-holdout the steric field alone gives q² 0.76, the hydrophobic 0.63, the electrostatic 0.41, and
-the same five fields compared without a frame, through the rotation-invariant kernel, 0.26. The
-selectivity is steric, and the frame is most of the result.
+holdout the steric field alone gives q² 0.76, the hydrophobic 0.63, the electrostatic 0.34, and
+the same five fields compared without a frame, through the rotation-invariant kernel, 0.51
+against 0.82 with the frame. The selectivity is steric, and the frame is a large part of the
+result.
+
+One structure of the 43 was faulty until 14 November 2026, and the fault is worth knowing. The
+catalyst with pentafluorosulfanyl groups was minimised with UFF, because MMFF94 has no parameters
+for the group, and UFF moved its fluorines 6 to 8 Å from the sulfur. The model with all five
+fields gave the same score with that structure, 0.82. The comparison without a frame did not: it
+gave 0.26, and this section said that the frame is most of the result. So the score of the full
+model does not show a faulty structure, and a comparison between two descriptions can depend on
+one molecule. The builder now finds the conformers of that catalyst with CF3 in place of each SF5
+group and builds the groups as regular octahedra, and a test checks every bond length of the
+files.
 
 **Reading the co-field.** Averaged over the 25 endpoints and drawn in the acid's frame
 (`benchmarks/results/denmark/cofields.png`), the steric co-field is positive at the 3,3' ipso
