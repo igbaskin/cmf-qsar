@@ -11412,6 +11412,10 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
+The eighth tutorial, `docs/tutorials/08_a_spectrum_as_the_sample.ipynb`, runs the central part
+of this measurement in one minute, with five repeats of the folds in place of ten and without
+the structural descriptions.
+
 **The protocol** is the one of parts 7 and 8 of the previous section: ten repeats of ten folds,
 with whole acids held out and with whole substituents held out. The second kind of folds
 matters more here than there. A spectrum shows the bands of the substituent itself, so with
@@ -15630,13 +15634,14 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Seven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Eight notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, molecules adsorbed on a metal surface, read with
-the surface kernel and compared with a count of the atoms near the metal, and the Hammett
+the surface kernel and compared with a count of the atoms near the metal, the Hammett
 constants of substituted benzenes, read from co-fields in the plane of the ring and compared
-with the charge of one ring carbon. Each runs on the
+with the charge of one ring carbon, and the infrared spectra of benzoic acids as the samples,
+read with the kernel of spectra and compared with the position of one band. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
