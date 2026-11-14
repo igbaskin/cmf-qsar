@@ -12871,6 +12871,11 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
+The tenth tutorial, `docs/tutorials/10_a_hop_in_a_crystal.ipynb`, runs the references and the
+frame-free kernel of this section on the whole public set in a few minutes, reads the stored
+results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
+step with the barriers of the frame-free model.
+
 **The three hosts.** Applied unchanged to the 48 distinct hops of Li3PO4,
 Li3BP2O8 and LiBO2 (`examples/hops/`, bond-valence labels, Bader charges on the atoms but the
 public model's oxidation-state charges for the prediction), the public model gives
@@ -15833,16 +15838,17 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Nine notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Ten notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, molecules adsorbed on a metal surface, read with
 the surface kernel and compared with a count of the atoms near the metal, the Hammett
 constants of substituted benzenes, read from co-fields in the plane of the ring and compared
 with the charge of one ring carbon, the infrared spectra of benzoic acids as the samples,
-read with the kernel of spectra and compared with the position of one band, and a series of
+read with the kernel of spectra and compared with the position of one band, a series of
 chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
-activity. Each runs on the
+activity, and the hops of a lithium ion in crystals, with the barrier of a hop read from the
+environment of its path. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
