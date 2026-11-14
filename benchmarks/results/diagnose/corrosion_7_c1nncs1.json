@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": -0.0888465409242798,
-   "rmse_cv": 1.6763167740243832,
+   "q2": -0.08884654092428024,
+   "rmse_cv": 1.6763167740243834,
    "alpha": 3.5,
    "lam": 1.0,
    "note": ""
@@ -26,9 +26,9 @@
    "route": "invariant",
    "q2": -0.19173736782279627,
    "rmse_cv": 1.7537312124027105,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 5.5,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
@@ -120,37 +120,37 @@
   {
    "code": "frame-vs-counts",
    "level": "warn",
-   "text": "the aligned model is +0.139 in q2 against counts (95% interval -0.309 to +0.475) -- the frame buys nothing over counts",
+   "text": "the aligned model is +0.139 in q2 against counts (95% interval -0.309 to +0.475) -- the frame gains nothing over counts",
    "numbers": {
-    "difference": 0.13932586859338447,
-    "low": -0.3092599871292342,
-    "high": 0.47473491263099715
+    "difference": 0.13932586859338403,
+    "low": -0.30925998712923486,
+    "high": 0.47473491263099776
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is +0.103 in q2 against invariant (95% interval -0.287 to +0.459) -- the frame buys nothing over invariant",
+   "text": "the aligned model is +0.103 in q2 against invariant (95% interval -0.287 to +0.459) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": 0.10289082689851647,
-    "low": -0.2865019638602938,
-    "high": 0.4591611982773078
+    "difference": 0.10289082689851603,
+    "low": -0.2865019638602945,
+    "high": 0.459161198277308
    }
   },
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -1.081 in q2 against descriptors (95% interval -1.559 to -0.900) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "text": "the aligned model is -1.081 in q2 against descriptors (95% interval -1.559 to -0.900) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -1.080812947249911,
-    "low": -1.559373735088863,
-    "high": -0.8998747516075889
+    "difference": -1.0808129472499115,
+    "low": -1.5593737350888635,
+    "high": -0.8998747516075887
    }
   }
  ],
  "recommended": "none",
- "why": "no route reaches q2 0.1 (best aligned at -0.089); the set does not support a model as it stands",
+ "why": "no route reaches q2 0.1 (best aligned at -0.089); the set does not support a model as it is",
  "nested": true,
  "set": "corrosion/7_c1nncs1",
- "seconds": 0.9244511127471924
+ "seconds": 1.0134339332580566
 }

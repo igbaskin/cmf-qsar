@@ -161,3 +161,28 @@ def test_the_frame_test_declines_rather_than_guessing_when_it_cannot_tell():
     big = Chem.MolFromSmiles("c1ccc(cc1)C")
     f2 = _superimposed_finding(moved, big)
     assert f2.level in ("warn", "note") and f2.numbers["core_rmsd"] > 1.0
+
+
+def test_the_frameless_route_has_no_attenuation_and_reports_none():
+    # the field autocorrelation is built from atom weights and distances; until 14 November
+    # 2026 the route chose among six equal kernels and reported the attenuation 0.1
+    from cmfqsar.diagnose import FIELDS, invariant_kernel, invariant_route, route_kernels
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
+
+    mols, names, y = _series()
+    acs = AutocorrelationSpec()
+    kernels = []
+    for alpha in (0.1, 5.0):
+        fs = FieldSet.create(physchem=FIELDS, alpha=alpha)
+        mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+        kernels.append(autocorrelation_kernel(feature_matrix(mf, acs), n_bins=acs.n_bins))
+    assert np.array_equal(kernels[0], kernels[1])
+    K, width = invariant_kernel(mols, names)
+    assert np.allclose(K, kernels[0]) and width == acs.sigma
+    route = invariant_route(mols, names, y, folds=4)
+    assert np.isnan(route.alpha) and np.isfinite(route.lam) and "width" in route.note
+    listed, subset = route_kernels("invariant", mols, names)
+    assert len(listed) == 1 and np.isnan(listed[0][0]) and subset is None
+    assert np.allclose(listed[0][1], K)
+

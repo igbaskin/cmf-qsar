@@ -6,7 +6,7 @@
    "n_train": 17,
    "n_test": 8,
    "held_out": {
-    "aligned": 0.2902166404115748,
+    "aligned": 0.2902166404115737,
     "counts": 0.4485987485441083,
     "invariant": 0.7148886634808991,
     "descriptors": 0.9917352705076891
@@ -19,7 +19,7 @@
    "n_train": 17,
    "n_test": 8,
    "held_out": {
-    "aligned": 0.3818150962061495,
+    "aligned": 0.38181509620614995,
     "counts": 0.161773336918679,
     "invariant": 0.3336459262776542,
     "descriptors": 0.974089366345599
@@ -44,5 +44,5 @@
  ],
  "test_fraction": 0.3,
  "set": "corrosion/13_c1c_nH_nn1",
- "seconds": 3.0539379119873047
+ "seconds": 2.7523486614227295
 }

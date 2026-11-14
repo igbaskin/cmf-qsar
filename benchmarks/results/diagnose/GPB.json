@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.5691383449886103,
-   "rmse_cv": 0.7313425500872579,
+   "q2": 0.5691383449886112,
+   "rmse_cv": 0.7313425500872572,
    "alpha": 5.0,
    "lam": 1.0,
    "note": ""
@@ -26,14 +26,14 @@
    "route": "invariant",
    "q2": 0.46254892770484946,
    "rmse_cv": 0.8168106392421537,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.1,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.54113440769482,
-   "rmse_cv": 0.6278859345153559,
+   "q2": 0.5411344076948199,
+   "rmse_cv": 0.627885934515356,
    "alpha": 5.0,
    "lam": 1.0,
    "note": "60 of 66 molecules can be cut at the framework"
@@ -48,8 +48,8 @@
   },
   "aligned on the 60 cuttable": {
    "route": "aligned (same molecules)",
-   "q2": 0.6056122075128308,
-   "rmse_cv": 0.5821028685065728,
+   "q2": 0.6056122075128305,
+   "rmse_cv": 0.582102868506573,
    "alpha": 5.0,
    "lam": 1.0,
    "note": ""
@@ -88,7 +88,7 @@
   {
    "code": "alpha-edge",
    "level": "warn",
-   "text": "the chosen attenuation 5 is at the top of the grid: the search wanted a value it was not offered, so widen it before believing the model",
+   "text": "the chosen attenuation 5 is at the top of the grid: the search needed a value it was not offered, so widen it before believing the model",
    "numbers": {
     "alpha": 5.0
    }
@@ -96,21 +96,21 @@
   {
    "code": "frame-vs-counts",
    "level": "ok",
-   "text": "the aligned model is +0.275 in q2 against counts (95% interval +0.090 to +0.490) -- the frame beats counts",
+   "text": "the aligned model is +0.275 in q2 against counts (95% interval +0.090 to +0.490) -- the frame does better than counts",
    "numbers": {
-    "difference": 0.2751768080542025,
-    "low": 0.09046345470454593,
-    "high": 0.4900197388076681
+    "difference": 0.2751768080542034,
+    "low": 0.09046345470454475,
+    "high": 0.49001973880766975
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is +0.107 in q2 against invariant (95% interval -0.086 to +0.308) -- the frame buys nothing over invariant",
+   "text": "the aligned model is +0.107 in q2 against invariant (95% interval -0.086 to +0.308) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": 0.10658941728376081,
-    "low": -0.08627862600494045,
-    "high": 0.3081243804592479
+    "difference": 0.1065894172837617,
+    "low": -0.08627862600494066,
+    "high": 0.3081243804592492
    }
   },
   {
@@ -118,20 +118,20 @@
    "level": "warn",
    "text": "the aligned model is +0.064 in q2 against topomer (95% interval -0.118 to +0.250) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": 0.06447779981801083,
-    "low": -0.11761215508948693,
-    "high": 0.250422938742453,
+    "difference": 0.0644777998180106,
+    "low": -0.11761215508948672,
+    "high": 0.2504229387424526,
     "n": 60
    }
   },
   {
    "code": "decoration",
    "level": "ok",
-   "text": "the aligned model is +0.254 in q2 against descriptors (95% interval +0.044 to +0.529) -- the geometry earns its place",
+   "text": "the aligned model is +0.254 in q2 against descriptors (95% interval +0.044 to +0.529) -- the geometry adds something",
    "numbers": {
-    "difference": 0.2542386779246115,
-    "low": 0.04419230892411277,
-    "high": 0.528756408768979
+    "difference": 0.2542386779246124,
+    "low": 0.04419230892411303,
+    "high": 0.5287564087689801
    }
   }
  ],
@@ -139,5 +139,5 @@
  "why": "the frame carries signal and the molecules are superimposed, so a frame exists whoever made it; the several Murcko scaffolds only mean the program could not have built it, not that it is wrong",
  "nested": true,
  "set": "GPB",
- "seconds": 5.978533029556274
+ "seconds": 11.72214961051941
 }

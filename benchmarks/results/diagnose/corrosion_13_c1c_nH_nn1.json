@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.26724624294159616,
-   "rmse_cv": 1.6959147870589768,
+   "q2": 0.2672462429415985,
+   "rmse_cv": 1.6959147870589741,
    "alpha": 0.1,
    "lam": 1.0,
    "note": ""
@@ -26,9 +26,9 @@
    "route": "invariant",
    "q2": 0.4655926950285201,
    "rmse_cv": 1.4483088783238316,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.55,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
@@ -80,7 +80,7 @@
   {
    "code": "alpha-edge",
    "level": "warn",
-   "text": "the chosen attenuation 0.1 is at the bottom of the grid: the search wanted a value it was not offered, so widen it before believing the model",
+   "text": "the chosen attenuation 0.1 is at the bottom of the grid: the search needed a value it was not offered, so widen it before believing the model",
    "numbers": {
     "alpha": 0.1
    }
@@ -128,37 +128,37 @@
   {
    "code": "frame-vs-counts",
    "level": "warn",
-   "text": "the aligned model is +0.202 in q2 against counts (95% interval -0.400 to +1.096) -- the frame buys nothing over counts",
+   "text": "the aligned model is +0.202 in q2 against counts (95% interval -0.400 to +1.096) -- the frame gains nothing over counts",
    "numbers": {
-    "difference": 0.20159788775908338,
-    "low": -0.4000396797172698,
-    "high": 1.0961844060201102
+    "difference": 0.20159788775908571,
+    "low": -0.4000396797172675,
+    "high": 1.096184406020112
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is -0.198 in q2 against invariant (95% interval -0.611 to +0.106) -- the frame buys nothing over invariant",
+   "text": "the aligned model is -0.198 in q2 against invariant (95% interval -0.611 to +0.106) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": -0.19834645208692392,
-    "low": -0.6109204344587159,
-    "high": 0.10582581993912091
+    "difference": -0.1983464520869216,
+    "low": -0.6109204344587128,
+    "high": 0.10582581993912235
    }
   },
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -0.716 in q2 against descriptors (95% interval -1.260 to -0.451) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "text": "the aligned model is -0.716 in q2 against descriptors (95% interval -1.260 to -0.451) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -0.7163277268403235,
-    "low": -1.2598661601532701,
-    "high": -0.45104147194600336
+    "difference": -0.7163277268403212,
+    "low": -1.2598661601532672,
+    "high": -0.4510414719460019
    }
   }
  ],
  "recommended": "invariant",
- "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
+ "why": "the frame gains nothing over invariant, which needs no alignment to curate and cannot be done wrongly",
  "nested": true,
  "set": "corrosion/13_c1c_nH_nn1",
- "seconds": 1.2174570560455322
+ "seconds": 1.1502487659454346
 }

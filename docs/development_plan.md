@@ -787,6 +787,19 @@ can judge it.
   on average; always taking the aligned model names it on 12 and costs 0.201. Per set, the correct
   unit, the advice costs 0.105 less (95 % interval -0.259 to +0.019), better on six of thirteen
   sets and worse on four: insurance against a meaningless frame, not an advantage.
+  **Corrected 14 November 2026**, found while a tutorial on the command was written. (1) In five
+  of the 39 splits the advice was `descriptors` on a corrosion set whose columns read the
+  activity; on the smaller training part the leak scored a little below the 0.95 of the guard,
+  and its held-out score of 0.96 to 0.99 had been counted as a success of the advice. Without
+  those splits: the best route named on 15 of 34, cost 0.109 against 0.136 for always aligning,
+  and per set +0.053 [-0.040, +0.189] in place of +0.105. `advice.md` now gives both counts.
+  The validation was run again for this; its stored results were one day older than the last
+  change of the topomer route, and with all splits the counts are now 20 and 11 (were 21 and 12).
+  (2) The invariant route searched six attenuations that its kernel does not depend on and
+  reported the first as chosen; it now builds one kernel and reports its width, which is not
+  searched. No score of the benchmark changed. **Open, for a decision:** the leak guard is a
+  threshold on q2 and passes on small sets or with five folds; a guard that compares the file's
+  own columns with the computed descriptors would not depend on that threshold.
   **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
   It was never triggered on these 39 splits, so the validation cannot set it.
 * **C7. A chirality descriptor anchored on the stereocentre.** Opened and built 25 October

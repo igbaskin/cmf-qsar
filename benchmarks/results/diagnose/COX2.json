@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.508685389930194,
-   "rmse_cv": 0.8162384099565689,
+   "q2": 0.5086853899301931,
+   "rmse_cv": 0.8162384099565696,
    "alpha": 2.0,
    "lam": 1.0,
    "note": ""
@@ -26,14 +26,14 @@
    "route": "invariant",
    "q2": 0.523314075974396,
    "rmse_cv": 0.803995007927498,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.01,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.01099828841554018,
-   "rmse_cv": 1.270729024549693,
+   "q2": 0.010998288415539847,
+   "rmse_cv": 1.2707290245496932,
    "alpha": 5.0,
    "lam": 1.0,
    "note": "62 of 282 molecules can be cut at the framework"
@@ -48,8 +48,8 @@
   },
   "aligned on the 62 cuttable": {
    "route": "aligned (same molecules)",
-   "q2": 0.26389897631750403,
-   "rmse_cv": 1.0962841595750166,
+   "q2": 0.26389897631751025,
+   "rmse_cv": 1.0962841595750121,
    "alpha": 0.75,
    "lam": 0.1,
    "note": ""
@@ -88,21 +88,21 @@
   {
    "code": "frame-vs-counts",
    "level": "ok",
-   "text": "the aligned model is +0.190 in q2 against counts (95% interval +0.109 to +0.283) -- the frame beats counts",
+   "text": "the aligned model is +0.190 in q2 against counts (95% interval +0.109 to +0.283) -- the frame does better than counts",
    "numbers": {
-    "difference": 0.1895755557111296,
-    "low": 0.10918150391368722,
-    "high": 0.28267961221398885
+    "difference": 0.18957555571112872,
+    "low": 0.10918150391368849,
+    "high": 0.28267961221398863
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is -0.015 in q2 against invariant (95% interval -0.076 to +0.055) -- the frame buys nothing over invariant",
+   "text": "the aligned model is -0.015 in q2 against invariant (95% interval -0.076 to +0.055) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": -0.014628686044202088,
-    "low": -0.07627670561311319,
-    "high": 0.0545709938503543
+    "difference": -0.014628686044202976,
+    "low": -0.0762767056131129,
+    "high": 0.05457099385035535
    }
   },
   {
@@ -110,26 +110,26 @@
    "level": "warn",
    "text": "the aligned model is +0.253 in q2 against topomer (95% interval -0.030 to +0.675) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": 0.25290068790196385,
-    "low": -0.029568057840186818,
-    "high": 0.674882866024647,
+    "difference": 0.2529006879019704,
+    "low": -0.029568057840174185,
+    "high": 0.6748828660247533,
     "n": 62
    }
   },
   {
    "code": "decoration",
    "level": "ok",
-   "text": "the aligned model is +0.342 in q2 against descriptors (95% interval +0.251 to +0.439) -- the geometry earns its place",
+   "text": "the aligned model is +0.342 in q2 against descriptors (95% interval +0.251 to +0.439) -- the geometry adds something",
    "numbers": {
-    "difference": 0.3424469604655396,
-    "low": 0.25074453688334264,
-    "high": 0.43940571120255656
+    "difference": 0.3424469604655387,
+    "low": 0.2507445368833425,
+    "high": 0.43940571120255467
    }
   }
  ],
  "recommended": "invariant",
- "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
+ "why": "the frame gains nothing over invariant, which needs no alignment to curate and cannot be done wrongly",
  "nested": true,
  "set": "COX2",
- "seconds": 32.4660747051239
+ "seconds": 35.816726207733154
 }

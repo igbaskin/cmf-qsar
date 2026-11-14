@@ -124,6 +124,71 @@ def validate(family="all", results=RESULTS, seeds=(0, 1, 2), force=False):
     return rows
 
 
+#: a held-out R2 at or above this from the descriptor route, in a set whose descriptor columns
+#: the diagnosis itself found to be reading the activity in another split, is the leak again
+LEAK_SCORE = 0.95
+
+
+def validation_splits(rows):
+    """One record per split of the validation: the route advised, what it scored on the
+    held-out molecules, the best route and the aligned route, and whether the advice was a
+    leak.
+
+    The descriptor route of a file can read the activity from the file's own columns.  The
+    diagnosis warns of this when the route reaches q2 0.95 on the molecules it is given, and
+    such a route is then left out of the comparison (`unusable`).  On 70 % of a small set the
+    same columns can score a little below 0.95.  Then the warning is not given, descriptors are
+    advised, and the held-out score near 1 is the leak and not a success of the advice.  A
+    split is marked `leak` when descriptors were advised, scored `LEAK_SCORE` or more on the
+    held-out molecules, and the diagnosis found the descriptor route of the same set unusable
+    in another split.
+    """
+    out = []
+    for r in rows:
+        known = any("descriptors" in sp.get("unusable", ()) for sp in r["splits"])
+        for sp in r["splits"]:
+            bad = set(sp.get("unusable", ()))
+            held = {k: v for k, v in sp["held_out"].items() if v == v and k not in bad}
+            if not held:
+                continue
+            best = max(held, key=held.get)
+            adv = sp["advice"] if sp["advice"] in held else "aligned"
+            out.append({"set": r["set"], "seed": sp["seed"], "advised": adv, "got": held[adv],
+                        "best": best, "best_score": held[best],
+                        "aligned": held.get("aligned", float("nan")),
+                        "leak": bool(known and adv == "descriptors"
+                                     and held[adv] >= LEAK_SCORE)})
+    return out
+
+
+def advice_summary(splits, runs=5000, seed=0):
+    """What following the advice was worth over a list of :func:`validation_splits` records.
+
+    The count of splits in which the advised route was the best one and the mean cost against
+    the best route, the same for the rule "always take the aligned model", and the mean over
+    the sets of the advised score minus the aligned score, with a bootstrap interval over the
+    sets (three splits of one set are not three measurements).
+    """
+    if not splits:
+        return {}
+    cost = np.array([s["best_score"] - s["got"] for s in splits])
+    cost_aligned = np.array([s["best_score"] - s["aligned"] for s in splits])
+    per_set = {}
+    for s in splits:
+        per_set.setdefault(s["set"], []).append(s["got"] - s["aligned"])
+    gain = np.array([np.mean(v) for v in per_set.values()])
+    rng = np.random.RandomState(seed)
+    draws = [float(np.mean(rng.choice(gain, len(gain)))) for _ in range(int(runs))]
+    return {"splits": len(splits), "sets": len(gain),
+            "advice_best": int(sum(s["advised"] == s["best"] for s in splits)),
+            "advice_cost": float(cost.mean()), "advice_worst": float(cost.max()),
+            "aligned_best": int(sum(s["best"] == "aligned" for s in splits)),
+            "aligned_cost": float(cost_aligned.mean()),
+            "gain": float(gain.mean()), "gain_low": float(np.percentile(draws, 2.5)),
+            "gain_high": float(np.percentile(draws, 97.5)),
+            "sets_better": int(np.sum(gain > 0.02)), "sets_worse": int(np.sum(gain < -0.02))}
+
+
 def report_validation(rows, results=RESULTS, out=None):
     """How often the advice was the right route, and what it cost when it was not."""
     lines = ["# Following the advice: was it right?", "",
@@ -132,27 +197,36 @@ def report_validation(rows, results=RESULTS, out=None):
              "the rest. `advice` is the route recommended, `best` the route that actually won.",
              "", "| set | split | advised | R2pred advised | best route | R2pred best | cost |",
              "|---|---:|---|---:|---|---:|---:|"]
-    right = total = 0
-    costs = []
-    for r in rows:
-        for sp in r["splits"]:
-            bad = set(sp.get("unusable", ()))
-            held = {k: v for k, v in sp["held_out"].items() if v == v and k not in bad}
-            if not held:
-                continue
-            best = max(held, key=held.get)
-            adv = sp["advice"] if sp["advice"] in held else "aligned"
-            got = held.get(adv, float("nan"))
-            cost = held[best] - got
-            total += 1
-            right += int(adv == best)
-            costs.append(cost)
-            lines.append(f"| {r['set']} | {sp['seed']} | {adv} | {got:+.3f} | {best} | "
-                         f"{held[best]:+.3f} | {cost:+.3f} |")
-    if total:
-        lines += ["", f"The advice named the best route on **{right} of {total}** splits; when it",
-                  f"did not, it cost {np.mean(costs):+.3f} in R2pred on average "
-                  f"(worst {max(costs):+.3f}).", ""]
+    splits = validation_splits(rows)
+    for s in splits:
+        lines.append(f"| {s['set']} | {s['seed']} | {s['advised']}{' (leak)' if s['leak'] else ''} | "
+                     f"{s['got']:+.3f} | {s['best']} | {s['best_score']:+.3f} | "
+                     f"{s['best_score'] - s['got']:+.3f} |")
+    if splits:
+        everything = advice_summary(splits)
+        lines += ["", f"The advice named the best route on **{everything['advice_best']} of "
+                      f"{everything['splits']}** splits; over all splits it cost",
+                  f"{everything['advice_cost']:+.3f} in R2pred on average against the best route "
+                  f"(worst {everything['advice_worst']:+.3f}).", ""]
+        leaks = [s for s in splits if s["leak"]]
+        clean = advice_summary([s for s in splits if not s["leak"]])
+        lines += ["## The same count without the leak", "",
+                  f"In {len(leaks)} of these splits the route advised was `descriptors` in a set "
+                  "whose descriptor columns read the activity: the diagnosis found that out in "
+                  "another split of the same set, and in this one the route scored a little below "
+                  "the 0.95 at which the warning is given. Its held-out score near 1 is the leak, "
+                  "and it is not a success of the advice. They are marked `(leak)` above.", "",
+                  "| | splits | sets | advice names the best route | mean cost of the advice | "
+                  "the aligned model is the best route | mean cost of always aligning | "
+                  "advice minus aligned, mean over the sets [95 %] | sets better / worse |",
+                  "|---|---:|---:|---:|---:|---:|---:|---|---|"]
+        for label, s in (("all splits", everything), ("without the leak splits", clean)):
+            lines.append(f"| {label} | {s['splits']} | {s['sets']} | {s['advice_best']} | "
+                         f"{s['advice_cost']:.3f} | {s['aligned_best']} | {s['aligned_cost']:.3f} | "
+                         f"{s['gain']:+.3f} [{s['gain_low']:+.3f}, {s['gain_high']:+.3f}] | "
+                         f"{s['sets_better']} / {s['sets_worse']} |")
+        lines += ["", "A set counts as better or worse when the mean difference over its splits is "
+                      "more than 0.02 in R2pred.", ""]
     text = chr(10).join(lines) + chr(10)
     path = out or os.path.join(results, "advice.md")
     with open(path, "w") as fh:

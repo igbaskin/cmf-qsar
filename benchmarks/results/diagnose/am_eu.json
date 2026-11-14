@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.6656824165430115,
-   "rmse_cv": 0.24855488356114613,
+   "q2": 0.6656824165429496,
+   "rmse_cv": 0.24855488356116912,
    "alpha": 1.0,
    "lam": 0.01,
    "note": ""
@@ -26,9 +26,9 @@
    "route": "invariant",
    "q2": 0.42269008409224207,
    "rmse_cv": 0.3266233279803599,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.01,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
@@ -88,31 +88,31 @@
   {
    "code": "frame-vs-counts",
    "level": "ok",
-   "text": "the aligned model is +0.758 in q2 against counts (95% interval +0.565 to +0.928) -- the frame beats counts",
+   "text": "the aligned model is +0.758 in q2 against counts (95% interval +0.565 to +0.928) -- the frame does better than counts",
    "numbers": {
-    "difference": 0.758195763384752,
-    "low": 0.5645085558923761,
-    "high": 0.9278990399970225
+    "difference": 0.7581957633846901,
+    "low": 0.5645085558923087,
+    "high": 0.9278990399969795
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is +0.243 in q2 against invariant (95% interval -0.010 to +0.541) -- the frame buys nothing over invariant",
+   "text": "the aligned model is +0.243 in q2 against invariant (95% interval -0.010 to +0.541) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": 0.24299233245076945,
-    "low": -0.009713583540632521,
-    "high": 0.5407146480862111
+    "difference": 0.2429923324507075,
+    "low": -0.009713583540753358,
+    "high": 0.5407146480861426
    }
   },
   {
    "code": "decoration",
    "level": "ok",
-   "text": "the aligned model is +0.563 in q2 against descriptors (95% interval +0.340 to +0.758) -- the geometry earns its place",
+   "text": "the aligned model is +0.563 in q2 against descriptors (95% interval +0.340 to +0.758) -- the geometry adds something",
    "numbers": {
-    "difference": 0.5630417610243502,
-    "low": 0.34037293403989666,
-    "high": 0.7582767274915889
+    "difference": 0.5630417610242883,
+    "low": 0.3403729340398446,
+    "high": 0.7582767274915805
    }
   }
  ],
@@ -120,5 +120,5 @@
  "why": "the frame carries signal and the molecules are superimposed, so a frame exists whoever made it; the several Murcko scaffolds only mean the program could not have built it, not that it is wrong",
  "nested": true,
  "set": "am_eu",
- "seconds": 1.3580539226531982
+ "seconds": 1.2558045387268066
 }

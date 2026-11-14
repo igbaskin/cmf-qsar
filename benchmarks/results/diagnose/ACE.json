@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.6046310578803369,
-   "rmse_cv": 1.4268911871667747,
+   "q2": 0.6046310578803376,
+   "rmse_cv": 1.4268911871667733,
    "alpha": 1.0,
    "lam": 1.0,
    "note": ""
@@ -26,14 +26,14 @@
    "route": "invariant",
    "q2": 0.6769795869944235,
    "rmse_cv": 1.289747112835549,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.1,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.46018597837013764,
-   "rmse_cv": 1.5347127015935975,
+   "q2": 0.4601859783701384,
+   "rmse_cv": 1.5347127015935966,
    "alpha": 0.1,
    "lam": 1.0,
    "note": "50 of 114 molecules can be cut at the framework"
@@ -48,8 +48,8 @@
   },
   "aligned on the 50 cuttable": {
    "route": "aligned (same molecules)",
-   "q2": 0.4181908798706485,
-   "rmse_cv": 1.593291610059104,
+   "q2": 0.4181908798706496,
+   "rmse_cv": 1.5932916100591024,
    "alpha": 1.0,
    "lam": 0.1,
    "note": ""
@@ -88,21 +88,21 @@
   {
    "code": "frame-vs-counts",
    "level": "warn",
-   "text": "the aligned model is -0.056 in q2 against counts (95% interval -0.179 to +0.052) -- the frame buys nothing over counts",
+   "text": "the aligned model is -0.056 in q2 against counts (95% interval -0.179 to +0.052) -- the frame gains nothing over counts",
    "numbers": {
-    "difference": -0.05576842738520882,
-    "low": -0.17889359932530632,
-    "high": 0.05191102176700925
+    "difference": -0.05576842738520815,
+    "low": -0.1788935993253061,
+    "high": 0.05191102176700927
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is -0.072 in q2 against invariant (95% interval -0.202 to +0.020) -- the frame buys nothing over invariant",
+   "text": "the aligned model is -0.072 in q2 against invariant (95% interval -0.202 to +0.020) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": -0.07234852911408662,
-    "low": -0.20208785462465503,
-    "high": 0.020276619241742216
+    "difference": -0.07234852911408596,
+    "low": -0.2020878546246538,
+    "high": 0.020276619241742348
    }
   },
   {
@@ -110,26 +110,26 @@
    "level": "warn",
    "text": "the aligned model is -0.042 in q2 against topomer (95% interval -0.286 to +0.162) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": -0.041995098499489125,
-    "low": -0.28631596859364383,
-    "high": 0.16222027813531356,
+    "difference": -0.04199509849948879,
+    "low": -0.2863159685936406,
+    "high": 0.1622202781353118,
     "n": 50
    }
   },
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -0.040 in q2 against descriptors (95% interval -0.170 to +0.065) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "text": "the aligned model is -0.040 in q2 against descriptors (95% interval -0.170 to +0.065) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -0.039599563707672925,
-    "low": -0.17046630466968907,
-    "high": 0.06503203103552982
+    "difference": -0.03959956370767226,
+    "low": -0.17046630466968807,
+    "high": 0.06503203103553047
    }
   }
  ],
  "recommended": "descriptors",
- "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the point",
+ "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the purpose",
  "nested": true,
  "set": "ACE",
- "seconds": 12.782376050949097
+ "seconds": 22.18234133720398
 }

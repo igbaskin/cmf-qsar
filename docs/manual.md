@@ -3315,13 +3315,34 @@ per-column test can see that, so the outcome is judged as well: a descriptor bas
 q² ≥ 0.95 on a set of this size is not chemistry but the measurement itself, and the command says
 so, names the nearest columns with their correlations, and refuses to recommend descriptors.
 
+This guard is a threshold, and a threshold can be passed. On the 25 pyrazoles of the corrosion
+tables the leaking columns give q² 0.98 and the warning is given. On 17 of those 25 molecules
+the same columns give 0.94, the warning is not given, and the command recommends descriptors
+(a part drawn with seed 3 of NumPy). With five folds in place of ten the whole table gives
+0.946 and passes as well. So the guard is a help and not a proof. When descriptors are
+recommended, or when they score far above every route that describes the molecule, read the
+names of the columns that the route used: a column that was measured on the molecule and not
+computed from its structure may be the activity.
+
 **Searching harder and calling it a better model.** The five routes do not carry the same number
-of hyper-parameters — the field routes search six attenuations and five ridges, the others search
-ridges only — so scoring each at the best point of its own grid biases the comparison toward
-whichever route searched the most. Every route therefore chooses its hyper-parameters inside each
+of hyper-parameters — the aligned and the topomer route search six attenuations and five ridges,
+the others search ridges only — so scoring each at the best point of its own grid biases the
+comparison toward whichever route searched the most. Every route therefore chooses its hyper-parameters inside each
 training fold and is scored outside it. On ACE this costs the aligned model 0.05 and the topomer
 route 0.07 while leaving counts, descriptors and the invariant kernel where they were, which is
 the size and the shape of the bias it removes.
+
+**The invariant route has one setting, and it is not searched.** The field autocorrelation is
+built from the weights of the atoms and the distances between them, so it does not depend on the
+attenuation of the fields: the kernels for two attenuations are equal element by element. Until
+14 November 2026 the route computed the same kernel six times and reported the first value of the
+grid as the attenuation it had chosen; the scores were right and that number meant nothing. The
+setting that this kernel does have is the width of its distance axis. The command runs it at
+0.75 Å and says so in the report. On the 147 benzodiazepine ligands widths of 0.25, 0.5, 0.75 and
+1.5 Å give q² 0.46, 0.38, 0.41 and 0.33, so no width changes the reading there. On a series of
+much larger molecules the width decided a comparison: the catalysts of section *A kinetic
+selectivity as the activity* give 0.48 at 0.75 Å and 0.70 at 0.35 Å. When a recommendation rests
+on the comparison with this route, try other widths with `diagnose.invariant_route(..., width=)`.
 
 ## Reading the answer
 
@@ -3345,22 +3366,39 @@ measures it the only way that matters: hold out 30 % of a set, run the diagnosis
 70 % alone, build the model it recommends, and score that model on the held-out molecules
 against every other route — thirteen sets, three splits each.
 
-The advice named the best of the five routes on **21 of 39 splits**, and averaged over all of
-them the route it chose fell **0.096** in q² short of the best available. Always taking the
-aligned model — the default this command exists to question — names the best route on 12 splits
-and costs 0.201.
-Aggregated per set, which is the correct unit because three splits of one set are not three
-measurements, following the advice costs **0.105 less in q² than always aligning** (95 %
-bootstrap interval −0.259 to +0.019), better on six sets, worse on four, indistinguishable on
-three.
+Five of the 39 splits have to be set apart first. In them the route advised was `descriptors`
+on a corrosion set whose columns read the activity: the part of the set that the diagnosis was
+given was small enough for the leak to pass the guard described above, and on the held-out
+molecules the route scored 0.96 to 0.99 where the aligned model scored 0.24 to 0.40. Until
+14 November 2026 this section counted them as the largest successes of the advice. They are not
+successes, because the activity cannot be used to predict the activity.
+`benchmarks/results/diagnose/advice.md` marks them and gives every number both ways:
+
+| | splits | advice names the best route | mean cost of the advice | the aligned model is the best route | mean cost of always aligning | advice minus aligned, mean over the sets [95 %] |
+|---|---:|---:|---:|---:|---:|---|
+| all splits | 39 | 20 | 0.095 | 11 | 0.200 | +0.105 [−0.020, +0.253] |
+| without the five leak splits | 34 | 15 | 0.109 | 11 | 0.136 | +0.053 [−0.040, +0.189] |
+
+(The first row read 21, 0.096, 12 and 0.201 before. Those numbers were stored on 24 October 2026,
+one day before the topomer route was changed, and the validation was not run again then; with
+the present route one split has another best route.)
+
+The second row is the fair one. The advice named the best of the five routes on **15 of 34
+splits**, and the route it chose fell **0.109** in R² short of the best available. Always taking
+the aligned model — the default this command exists to question — names the best route on 11
+splits and costs 0.136. Aggregated per set, which is the correct unit because three splits of one
+set are not three measurements, following the advice is **0.053 better than always aligning**
+(95 % bootstrap interval −0.040 to +0.189), better on six sets and worse on four.
 
 The shape of that distribution matters more than its mean. The advice is **insurance, not an
-advantage**: where it loses it loses a little — 0.02 to 0.17 on AChE, BZR, THR and the thermolysin
-set, all of them well-aligned series where the aligned model was always going to be right — and
-where it wins it wins a lot, 0.44 to 0.70 on the three corrosion sets, where the automatic frame
-is meaningless and the aligned model collapses. The interval crosses zero, so on thirteen sets
-this is not a proven improvement in the average case. What it is, is insurance against the
-failure described at the start of this chapter, at a price of a few hundredths of q².
+advantage**: where it loses it loses a little — 0.05 to 0.17 on AChE, BZR, THR and the thermolysin
+set, all of them well-aligned series where the aligned model was always going to be right. Where
+it wins a lot, it wins on one set: the benzothiazoles of the corrosion tables, +0.75, where the
+aligned model on an automatic frame falls to R² −1.26 on one split. On the other two corrosion
+sets the gain is +0.15 and +0.03 once the leak splits are left out; it was +0.48 and +0.44 with
+them. The interval crosses zero, so on thirteen sets this is not a proven improvement in the
+average case. What it is, is insurance against the failure described at the start of this
+chapter, and the measured value of that insurance is half of what this section said before.
 
 # Building a model
 

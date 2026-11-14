@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": -0.07234202591558336,
-   "rmse_cv": 1.9773012977731248,
+   "q2": -0.07234202591558425,
+   "rmse_cv": 1.9773012977731257,
    "alpha": 0.4,
    "lam": 0.55,
    "note": ""
@@ -26,9 +26,9 @@
    "route": "invariant",
    "q2": 0.375094268848427,
    "rmse_cv": 1.5094316146060784,
-   "alpha": 0.1,
+   "alpha": NaN,
    "lam": 0.055,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
@@ -121,37 +121,37 @@
   {
    "code": "frame-vs-counts",
    "level": "warn",
-   "text": "the aligned model is -0.059 in q2 against counts (95% interval -0.380 to +0.183) -- the frame buys nothing over counts",
+   "text": "the aligned model is -0.059 in q2 against counts (95% interval -0.380 to +0.183) -- the frame gains nothing over counts",
    "numbers": {
-    "difference": -0.059356812615125154,
-    "low": -0.38042964879390284,
-    "high": 0.18305882841496718
+    "difference": -0.05935681261512604,
+    "low": -0.38042964879390395,
+    "high": 0.18305882841496707
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is -0.447 in q2 against invariant (95% interval -0.883 to -0.029) -- the frame buys nothing over invariant",
+   "text": "the aligned model is -0.447 in q2 against invariant (95% interval -0.883 to -0.029) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": -0.44743629476401037,
-    "low": -0.8826343186867176,
-    "high": -0.02949195473976432
+    "difference": -0.44743629476401126,
+    "low": -0.8826343186867217,
+    "high": -0.02949195473976561
    }
   },
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -1.064 in q2 against descriptors (95% interval -1.556 to -0.925) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "text": "the aligned model is -1.064 in q2 against descriptors (95% interval -1.556 to -0.925) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -1.0641704814202066,
-    "low": -1.5559425760902097,
-    "high": -0.9246134745777179
+    "difference": -1.0641704814202075,
+    "low": -1.5559425760902093,
+    "high": -0.9246134745777184
    }
   }
  ],
  "recommended": "invariant",
- "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
+ "why": "the frame gains nothing over invariant, which needs no alignment to curate and cannot be done wrongly",
  "nested": true,
  "set": "corrosion/161_c1ccc2scnc2c1",
- "seconds": 0.7999627590179443
+ "seconds": 0.8256769180297852
 }

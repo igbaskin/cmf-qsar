@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1278 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1279 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -4142,9 +4142,29 @@ The ordinary model: the five fields in the frame the molecules arrive in.
 
 Atom-type counts: no geometry at all, and no frame to get wrong.
 
-### `invariant_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0, charge_model='gasteiger', param_scheme='rdkit') -> Route`
+### `invariant_kernel(mols, names, charge_model='gasteiger', param_scheme='rdkit', width: Optional[float]=None)`
+
+The kernel of the frameless route and the width of its distance axis, in angstrom.
+
+The field autocorrelation is built from the weights of the atoms and the distances between
+them.  The attenuation of the fields does not enter it: the kernels for two attenuations
+are equal element by element.  Until 14 November 2026 the route computed one kernel for
+every attenuation of the grid, chose among six equal kernels and reported the first value
+of the grid as the attenuation it had chosen.  The scores were right and that number meant
+nothing.  The setting that this kernel does have is the width of its distance axis.  The
+diagnosis leaves it at the default of `cmfqsar.invariant.AutocorrelationSpec`,
+0.75 A, and the route says so in its note.  `width` sets another value, for the width and
+for the step of the axis.  On the benzodiazepine set of the benchmark, widths of 0.25, 0.5
+and 0.75 A give q2 0.46, 0.38 and 0.41; on a series of large molecules a smaller width can
+be much better (the catalyst series of plan item PO1: 0.48 at 0.75 A, 0.70 at 0.35 A).
+
+### `invariant_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0, charge_model='gasteiger', param_scheme='rdkit', width: Optional[float]=None) -> Route`
 
 The field autocorrelation: the geometry kept, the frame not needed.
+
+`alphas` is accepted for the sake of the callers and is not used: this kernel has no
+attenuation (`invariant_kernel`).  `width` is the width of its distance axis; the
+diagnosis does not search it, and this argument is there to try another value by hand.
 
 ### `topomer_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0, charge_model='gasteiger', param_scheme='rdkit') -> Route`
 

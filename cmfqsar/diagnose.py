@@ -246,21 +246,44 @@ def counts_route(mols, names, y, folds=10, seed=0) -> Route:
     return Route("counts", q2, err, float("nan"), lam, pred)
 
 
-def invariant_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0,
-                    charge_model="gasteiger", param_scheme="rdkit") -> Route:
-    """The field autocorrelation: the geometry kept, the frame not needed."""
+def invariant_kernel(mols, names, charge_model="gasteiger", param_scheme="rdkit",
+                     width: Optional[float] = None):
+    """The kernel of the frameless route and the width of its distance axis, in angstrom.
+
+    The field autocorrelation is built from the weights of the atoms and the distances between
+    them.  The attenuation of the fields does not enter it: the kernels for two attenuations
+    are equal element by element.  Until 14 November 2026 the route computed one kernel for
+    every attenuation of the grid, chose among six equal kernels and reported the first value
+    of the grid as the attenuation it had chosen.  The scores were right and that number meant
+    nothing.  The setting that this kernel does have is the width of its distance axis.  The
+    diagnosis leaves it at the default of :class:`cmfqsar.invariant.AutocorrelationSpec`,
+    0.75 A, and the route says so in its note.  `width` sets another value, for the width and
+    for the step of the axis.  On the benzodiazepine set of the benchmark, widths of 0.25, 0.5
+    and 0.75 A give q2 0.46, 0.38 and 0.41; on a series of large molecules a smaller width can
+    be much better (the catalyst series of plan item PO1: 0.48 at 0.75 A, 0.70 at 0.35 A).
+    """
     from .invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
 
-    acs = AutocorrelationSpec()
-    kernels = []
-    for alpha in alphas:
-        fs = FieldSet.create(physchem=FIELDS, alpha=alpha, charge_model=charge_model,
-                             param_scheme=param_scheme)
-        mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
-        kernels.append((alpha, autocorrelation_kernel(feature_matrix(mf, acs),
-                                                      n_bins=acs.n_bins)))
-    q2, err, alpha, lam, pred = _best(kernels, y, folds=folds, seed=seed)
-    return Route("invariant", q2, err, alpha, lam, pred)
+    acs = (AutocorrelationSpec() if width is None
+           else AutocorrelationSpec(step=float(width), sigma=float(width)))
+    fs = FieldSet.create(physchem=FIELDS, charge_model=charge_model, param_scheme=param_scheme)
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    return autocorrelation_kernel(feature_matrix(mf, acs), n_bins=acs.n_bins), float(acs.sigma)
+
+
+def invariant_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0,
+                    charge_model="gasteiger", param_scheme="rdkit",
+                    width: Optional[float] = None) -> Route:
+    """The field autocorrelation: the geometry kept, the frame not needed.
+
+    `alphas` is accepted for the sake of the callers and is not used: this kernel has no
+    attenuation (:func:`invariant_kernel`).  `width` is the width of its distance axis; the
+    diagnosis does not search it, and this argument is there to try another value by hand.
+    """
+    K, width = invariant_kernel(mols, names, charge_model, param_scheme, width)
+    q2, err, _alpha, lam, pred = _best([(float("nan"), K)], y, folds=folds, seed=seed)
+    return Route("invariant", q2, err, float("nan"), lam, pred,
+                 note=f"width of its distance axis {width:g} A, not searched")
 
 
 def topomer_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0,
@@ -503,11 +526,12 @@ def route_kernels(route, mols, names, alphas=ALPHAS, charge_model="gasteiger",
     from .chemotypes import count_kernel
     from .descriptors import (DescriptorScaler, available, computed_names, descriptor_kernel,
                               read_values)
-    from .invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
-
     mols, names = list(mols), list(names)
     if route == "counts":
         return [(float("nan"), count_kernel(mols, names))], None
+    if route == "invariant":
+        # one kernel: the field autocorrelation has no attenuation (see invariant_kernel)
+        return [(float("nan"), invariant_kernel(mols, names, charge_model, param_scheme)[0])], None
     if route == "descriptors":
         want = [w for w in (list(computed_names()) + list(available(mols)))
                 if w != activity_prop]
@@ -549,7 +573,6 @@ def route_kernels(route, mols, names, alphas=ALPHAS, charge_model="gasteiger",
             out.append((alpha, model.joint_kernel(model.prepare_training_kernels(
                 AtomTable.from_molecules([f for f in tf if f is not None])))))
         return out, keep
-    acs = AutocorrelationSpec() if route == "invariant" else None
     out = []
     for alpha in alphas:
         fs = (fieldset.copy() if fieldset is not None
@@ -559,13 +582,9 @@ def route_kernels(route, mols, names, alphas=ALPHAS, charge_model="gasteiger",
             for sp in fs.specs:
                 sp.alpha = alpha
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
-        if route == "invariant":
-            out.append((alpha, autocorrelation_kernel(feature_matrix(mf, acs),
-                                                      n_bins=acs.n_bins)))
-        else:
-            model = CMFModel(fieldset=fs, method="krr", normalize=True)
-            out.append((alpha, model.joint_kernel(
-                model.prepare_training_kernels(AtomTable.from_molecules(mf)))))
+        model = CMFModel(fieldset=fs, method="krr", normalize=True)
+        out.append((alpha, model.joint_kernel(
+            model.prepare_training_kernels(AtomTable.from_molecules(mf)))))
     return out, None
 
 

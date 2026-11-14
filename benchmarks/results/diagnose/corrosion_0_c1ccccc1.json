@@ -8,8 +8,8 @@
  "routes": {
   "aligned": {
    "route": "aligned",
-   "q2": 0.3325048474581772,
-   "rmse_cv": 1.9677957687889571,
+   "q2": 0.3323398867814398,
+   "rmse_cv": 1.9680389082840348,
    "alpha": 5.0,
    "lam": 1.0,
    "note": ""
@@ -24,17 +24,17 @@
   },
   "invariant": {
    "route": "invariant",
-   "q2": 0.34360106594826223,
-   "rmse_cv": 1.9513712309248439,
-   "alpha": 0.1,
+   "q2": 0.31612515766534255,
+   "rmse_cv": 1.991793350500239,
+   "alpha": NaN,
    "lam": 1.0,
-   "note": ""
+   "note": "width of its distance axis 0.75 A, not searched"
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.3792859404612988,
-   "rmse_cv": 1.918934678997521,
-   "alpha": 0.5,
+   "q2": 0.3877954077324681,
+   "rmse_cv": 1.9057357969021795,
+   "alpha": 0.75,
    "lam": 1.0,
    "note": "232 of 244 molecules can be cut at the framework"
   },
@@ -48,8 +48,8 @@
   },
   "aligned on the 232 cuttable": {
    "route": "aligned (same molecules)",
-   "q2": 0.32298582026736233,
-   "rmse_cv": 2.004071826309932,
+   "q2": 0.3107253521258103,
+   "rmse_cv": 2.0221368929765915,
    "alpha": 5.0,
    "lam": 1.0,
    "note": ""
@@ -88,7 +88,7 @@
   {
    "code": "alpha-edge",
    "level": "warn",
-   "text": "the chosen attenuation 5 is at the top of the grid: the search wanted a value it was not offered, so widen it before believing the model",
+   "text": "the chosen attenuation 5 is at the top of the grid: the search needed a value it was not offered, so widen it before believing the model",
    "numbers": {
     "alpha": 5.0
    }
@@ -136,48 +136,48 @@
   {
    "code": "frame-vs-counts",
    "level": "warn",
-   "text": "the aligned model is -0.109 in q2 against counts (95% interval -0.220 to +0.011) -- the frame buys nothing over counts",
+   "text": "the aligned model is -0.109 in q2 against counts (95% interval -0.220 to +0.012) -- the frame gains nothing over counts",
    "numbers": {
-    "difference": -0.10918681358124693,
-    "low": -0.21966802620994408,
-    "high": 0.01122211572342722
+    "difference": -0.10935177425798437,
+    "low": -0.2199351762244352,
+    "high": 0.011583025343567121
    }
   },
   {
    "code": "frame-vs-invariant",
    "level": "warn",
-   "text": "the aligned model is -0.011 in q2 against invariant (95% interval -0.117 to +0.097) -- the frame buys nothing over invariant",
+   "text": "the aligned model is +0.016 in q2 against invariant (95% interval -0.097 to +0.136) -- the frame gains nothing over invariant",
    "numbers": {
-    "difference": -0.01109621849008502,
-    "low": -0.11652758365889371,
-    "high": 0.09680210571653342
+    "difference": 0.016214729116097226,
+    "low": -0.09664702487036728,
+    "high": 0.135889984057414
    }
   },
   {
    "code": "frame-vs-topomer",
    "level": "warn",
-   "text": "the aligned model is -0.056 in q2 against topomer (95% interval -0.177 to +0.061) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "text": "the aligned model is -0.077 in q2 against topomer (95% interval -0.204 to +0.043) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": -0.05630012019393649,
-    "low": -0.17730852184438262,
-    "high": 0.06077525893489332,
+    "difference": -0.0770700556066578,
+    "low": -0.20374679098732307,
+    "high": 0.04313373520302406,
     "n": 232
    }
   },
   {
    "code": "decoration",
    "level": "warn",
-   "text": "the aligned model is -0.633 in q2 against descriptors (95% interval -0.758 to -0.529) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "text": "the aligned model is -0.633 in q2 against descriptors (95% interval -0.758 to -0.530) -- descriptors alone do as well, so the geometry adds nothing on this set",
    "numbers": {
-    "difference": -0.6325701074170219,
-    "low": -0.7582062293641503,
-    "high": -0.52914830698952
+    "difference": -0.6327350680937593,
+    "low": -0.7578723164369151,
+    "high": -0.5295099006963472
    }
   }
  ],
  "recommended": "counts",
- "why": "the frame buys nothing over counts, which needs no alignment to curate and cannot be got wrong",
+ "why": "the frame gains nothing over counts, which needs no alignment to curate and cannot be done wrongly",
  "nested": true,
  "set": "corrosion/0_c1ccccc1",
- "seconds": 191.31907677650452
+ "seconds": 270.29458689689636
 }
