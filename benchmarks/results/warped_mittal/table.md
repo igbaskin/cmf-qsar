@@ -5,7 +5,7 @@
 
 | set | n | skew | gain | q2 plain | q2 warped | coverage GP | coverage conformal | coverage warped | width GP | width conformal | width warped |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| DHFR | 397 | -0.11 | +35.3 | +0.416 | +0.393 | 92% | 91% | 91% | 3.55 | 3.81 | 3.53 |
+| DHFR | 397 | -0.11 | +34.5 | +0.417 | +0.395 | 92% | 92% | 91% | 3.54 | 3.82 | 3.53 |
 | COX2 | 322 | -0.38 | +90.0 | +0.102 | +0.079 | 88% | 89% | 87% | 4.30 | 4.37 | 4.22 |
 | BZR | 163 | -1.00 | +48.7 | +0.329 | +0.308 | 92% | 91% | 90% | 2.96 | 3.22 | 2.90 |
 | HPTP | 135 | +0.03 | +11.3 | +0.281 | +0.271 | 86% | 86% | 86% | 1.63 | 1.62 | 1.61 |
@@ -42,4 +42,4 @@
 | VATP | 23 | -0.55 | +8.7 | +0.055 | -0.215 | 94% | 100% | 86% | 3.65 | 4.49 | 3.08 |
 | STEROIDS | 21 | +0.39 | +24.1 | +0.167 | +0.087 | 77% | 87% | 83% | 2.42 | 2.81 | 2.31 |
 
-Over the 36 sets, the warped process against the plain one (mean difference and its 95 % interval from a paired bootstrap over the sets): q2 -0.045 [-0.084, -0.016]; coverage -1.1% [-2.1%, -0.2%]; width -0.099 [-0.169, -0.042]. Against the conformal interval: coverage -3.1% [-4.6%, -1.8%], width -0.904 [-2.127, -0.243]. The warped interval is closer to the promised 90% than the plain GP's on 7 sets, further on 12, the same on 17. The warp gained +16.3 nats of evidence over the identity on average.
+Over the 36 sets, the warped process against the plain one (mean difference and its 95 % interval from a paired bootstrap over the sets): q2 -0.045 [-0.084, -0.016]; coverage -1.1% [-2.1%, -0.2%]; width -0.099 [-0.169, -0.042]. Against the conformal interval: coverage -3.1% [-4.6%, -1.8%], width -0.905 [-2.127, -0.243]. The warped interval is closer to the promised 90% than the plain GP's on 7 sets, further on 12, the same on 17. The warp gained +16.3 nats of evidence over the identity on average.

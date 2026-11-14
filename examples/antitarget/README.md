@@ -40,7 +40,7 @@ has to be downloaded to use it.
   two assays and the document, the two assay descriptions and standard types, the reference, the
   name of the frame molecule and the size of each molecule's common part with it.
 
-## `h3_candidates.sdf` -- 425 candidates, 16 of them made next
+## `h3_candidates.sdf` -- 427 candidates, 16 of them made next
 
 The pool a design loop would choose from, for plan item MC11. Every other histamine H3 ligand in
 ChEMBL that fits the same frame as the training set: posed the same way, carrying its measured
@@ -56,6 +56,16 @@ file tells a loop trained on `h3_herg.sdf` anything about its second objective.
     python examples/make_antitarget_examples.py --candidates
 
 rebuilds it; `chembl_h3_pool.json` is the download it is built from.
+
+**A salt is built without its counter-ion.** ChEMBL writes a salt as the compound and its
+counter-ion in one SMILES, and 32 of the candidates are deposited that way: 30 hydrochlorides and
+2 oxalates. Only the compound is embedded, and the size and common-substructure rules of the
+selection are applied to the compound alone. Such a record names what was left out in its
+`counter_ions_left_out` column. The file written before 14 November 2026 held 425 candidates. In
+30 of them a chloride was embedded with the compound as a second fragment, and it lay 0.3 to
+1.2 Å from a heavy atom of the compound, which is not a structure of anything. No model score showed it. The
+two oxalates were not in that file, because the oxalic acid was counted in their size and the
+common part then covered 40 % of the atoms instead of 50 %. The other 395 records did not change.
 
 ## What it is used for
 

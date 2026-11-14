@@ -16,7 +16,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 |---|---|---|---|---|---|---|
 | 11-beta-hydroxysteroid dehydrogenase 1 | 26 | 19 | 53.8 % (35 to 71) | 46.2 % (29 to 65) | 61.5 % (43 to 78) | 50.0 % (32 to 68) |
 | PI3-kinase alpha | 139 | 88 | 60.2 % (52 to 68) | 54.9 % (46 to 63) | 57.9 % (49 to 66) | 50.0 % (42 to 58) |
-| PIM1 kinase | 177 | 85 | 50.6 % (43 to 58) | 52.9 % (45 to 60) | 52.9 % (45 to 60) | 50.0 % (43 to 57) |
+| PIM1 kinase | 177 | 85 | 52.9 % (45 to 60) | 52.9 % (45 to 60) | 52.9 % (45 to 60) | 50.0 % (43 to 57) |
 | PPAR gamma | 101 | 65 | 72.0 % (63 to 80) | 70.5 % (61 to 79) | 59.0 % (49 to 68) | 50.0 % (40 to 60) |
 | acetylcholinesterase | 28 | 26 | 46.4 % (30 to 64) | 66.1 % (48 to 81) | 42.9 % (27 to 61) | 50.0 % (33 to 67) |
 | alpha-1A adrenergic receptor | 44 | 32 | 74.4 % (60 to 85) | 76.7 % (62 to 87) | 55.8 % (41 to 70) | 50.0 % (36 to 64) |
@@ -30,7 +30,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | carbonic anhydrase 2 | 58 | 28 | 53.4 % (41 to 66) | 47.4 % (35 to 60) | 51.7 % (39 to 64) | 50.0 % (38 to 62) |
 | coagulation factor Xa | 52 | 40 | 50.0 % (37 to 63) | 64.4 % (51 to 76) | 48.1 % (35 to 61) | 50.0 % (37 to 63) |
 | cyclin-dependent kinase 2 | 44 | 30 | 45.2 % (31 to 60) | 51.2 % (37 to 66) | 42.9 % (29 to 58) | 50.0 % (36 to 64) |
-| cyclooxygenase 2 | 43 | 15 | 58.1 % (43 to 72) | 60.5 % (46 to 74) | 55.8 % (41 to 70) | 50.0 % (36 to 64) |
+| cyclooxygenase 2 | 43 | 15 | 60.5 % (46 to 74) | 60.5 % (46 to 74) | 53.5 % (39 to 67) | 50.0 % (36 to 64) |
 | delta opioid receptor | 32 | 19 | 58.1 % (41 to 74) | 53.2 % (36 to 69) | 48.4 % (32 to 65) | 50.0 % (33 to 67) |
 | dipeptidyl peptidase 4 | 33 | 19 | 60.0 % (42 to 75) | 61.7 % (44 to 77) | 50.0 % (33 to 67) | 50.0 % (33 to 67) |
 | dopamine D2 receptor | 234 | 146 | 47.2 % (41 to 54) | 54.5 % (48 to 61) | 45.9 % (40 to 52) | 50.0 % (44 to 56) |
@@ -42,7 +42,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | glucocorticoid receptor | 20 | 16 | 57.9 % (36 to 77) | 52.6 % (32 to 73) | 57.9 % (36 to 77) | 50.0 % (29 to 71) |
 | hERG potassium channel | 143 | 106 | 47.1 % (39 to 55) | 47.1 % (39 to 55) | 48.5 % (40 to 57) | 50.0 % (42 to 58) |
 | histamine H1 receptor | 30 | 20 | 56.7 % (39 to 73) | 55.0 % (38 to 71) | 50.0 % (33 to 67) | 50.0 % (33 to 67) |
-| histamine H3 receptor | 120 | 67 | 46.2 % (37 to 55) | 52.6 % (44 to 61) | 42.7 % (34 to 52) | 50.0 % (41 to 59) |
+| histamine H3 receptor | 120 | 67 | 45.3 % (37 to 54) | 52.6 % (44 to 61) | 39.3 % (31 to 48) | 50.0 % (41 to 59) |
 | kappa opioid receptor | 100 | 49 | 64.1 % (53 to 74) | 61.5 % (50 to 72) | 57.7 % (47 to 68) | 50.0 % (39 to 61) |
 | monoamine oxidase A | 33 | 17 | 48.4 % (32 to 65) | 48.4 % (32 to 65) | 54.8 % (38 to 71) | 50.0 % (33 to 67) |
 | monoamine oxidase B | 41 | 20 | 50.0 % (35 to 65) | 52.6 % (37 to 68) | 42.1 % (28 to 58) | 50.0 % (35 to 65) |
@@ -65,7 +65,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | serotonin 5-HT7 receptor | 65 | 44 | 33.3 % (23 to 46) | 37.3 % (26 to 50) | 39.7 % (29 to 52) | 50.0 % (38 to 62) |
 | serotonin transporter | 201 | 94 | 50.8 % (44 to 58) | 54.0 % (47 to 61) | 52.8 % (46 to 60) | 50.0 % (43 to 57) |
 | thrombin | 23 | 17 | 50.0 % (31 to 69) | 63.6 % (43 to 80) | 50.0 % (31 to 69) | 50.0 % (31 to 69) |
-| **every target, each fitted on its own** | 3667 | | **51.5 %** (50 to 53) | **55.2 %** (54 to 57) | **49.5 %** (48 to 51) | **50.0 %** (48 to 52) |
+| **every target, each fitted on its own** | 3667 | | **51.6 %** (50 to 53) | **55.2 %** (54 to 57) | **49.3 %** (48 to 51) | **50.0 %** (48 to 52) |
 
 As q2 of the half-difference (at or below zero means the model predicts the difference no better than predicting zero for every pair):
 
@@ -73,7 +73,7 @@ As q2 of the half-difference (at or below zero means the model predicts the diff
 |---|---|---|---|---|
 | 11-beta-hydroxysteroid dehydrogenase 1 | -0.048 | -0.021 | -0.044 | -0.000 |
 | PI3-kinase alpha | +0.009 | +0.090 | -0.037 | -0.000 |
-| PIM1 kinase | -0.024 | +0.109 | -0.001 | -0.000 |
+| PIM1 kinase | -0.025 | +0.110 | -0.001 | -0.000 |
 | PPAR gamma | +0.048 | +0.138 | -0.018 | +0.000 |
 | acetylcholinesterase | -0.137 | +0.459 | -0.007 | +0.000 |
 | alpha-1A adrenergic receptor | +0.115 | +0.231 | -0.182 | +0.000 |
@@ -87,7 +87,7 @@ As q2 of the half-difference (at or below zero means the model predicts the diff
 | carbonic anhydrase 2 | -0.026 | -0.157 | -0.034 | -0.000 |
 | coagulation factor Xa | -0.047 | -0.042 | -0.004 | +0.000 |
 | cyclin-dependent kinase 2 | -0.090 | +0.110 | -0.280 | +0.000 |
-| cyclooxygenase 2 | -0.093 | -0.009 | -0.066 | +0.000 |
+| cyclooxygenase 2 | -0.103 | -0.009 | -0.068 | +0.000 |
 | delta opioid receptor | -0.007 | -0.050 | -0.619 | +0.000 |
 | dipeptidyl peptidase 4 | +0.083 | +0.092 | -0.141 | +0.000 |
 | dopamine D2 receptor | -0.036 | +0.056 | -0.055 | -0.000 |
@@ -131,7 +131,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 |---|---|---|---|---|---|---|
 | 11-beta-hydroxysteroid dehydrogenase 1 | 26 | 19 | 57.7 % (39 to 74) | 50.0 % (32 to 68) | 57.7 % (39 to 74) | 50.0 % (32 to 68) |
 | PI3-kinase alpha | 139 | 88 | 59.4 % (51 to 67) | 54.9 % (46 to 63) | 55.6 % (47 to 64) | 50.0 % (42 to 58) |
-| PIM1 kinase | 177 | 85 | 52.9 % (45 to 60) | 53.4 % (46 to 61) | 52.9 % (45 to 60) | 50.0 % (43 to 57) |
+| PIM1 kinase | 177 | 85 | 52.9 % (45 to 60) | 53.4 % (46 to 61) | 54.0 % (47 to 61) | 50.0 % (43 to 57) |
 | PPAR gamma | 101 | 65 | 67.0 % (57 to 75) | 67.5 % (58 to 76) | 57.0 % (47 to 66) | 50.0 % (40 to 60) |
 | acetylcholinesterase | 28 | 26 | 53.6 % (36 to 70) | 66.1 % (48 to 81) | 46.4 % (30 to 64) | 50.0 % (33 to 67) |
 | alpha-1A adrenergic receptor | 44 | 32 | 72.1 % (57 to 83) | 79.1 % (65 to 89) | 58.1 % (43 to 72) | 50.0 % (36 to 64) |
@@ -145,7 +145,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | carbonic anhydrase 2 | 58 | 28 | 56.9 % (44 to 69) | 50.9 % (38 to 63) | 56.9 % (44 to 69) | 50.0 % (38 to 62) |
 | coagulation factor Xa | 52 | 40 | 51.9 % (39 to 65) | 62.5 % (49 to 74) | 48.1 % (35 to 61) | 50.0 % (37 to 63) |
 | cyclin-dependent kinase 2 | 44 | 30 | 47.6 % (33 to 62) | 60.7 % (46 to 74) | 54.8 % (40 to 69) | 50.0 % (36 to 64) |
-| cyclooxygenase 2 | 43 | 15 | 53.5 % (39 to 67) | 62.8 % (48 to 76) | 55.8 % (41 to 70) | 50.0 % (36 to 64) |
+| cyclooxygenase 2 | 43 | 15 | 58.1 % (43 to 72) | 62.8 % (48 to 76) | 55.8 % (41 to 70) | 50.0 % (36 to 64) |
 | delta opioid receptor | 32 | 19 | 48.4 % (32 to 65) | 56.5 % (39 to 72) | 51.6 % (35 to 68) | 50.0 % (33 to 67) |
 | dipeptidyl peptidase 4 | 33 | 19 | 56.7 % (39 to 73) | 55.0 % (38 to 71) | 43.3 % (27 to 61) | 50.0 % (33 to 67) |
 | dopamine D2 receptor | 234 | 146 | 46.8 % (40 to 53) | 53.2 % (47 to 60) | 43.7 % (37 to 50) | 50.0 % (44 to 56) |
@@ -157,7 +157,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | glucocorticoid receptor | 20 | 16 | 68.4 % (46 to 85) | 57.9 % (36 to 77) | 52.6 % (32 to 73) | 50.0 % (29 to 71) |
 | hERG potassium channel | 143 | 106 | 45.6 % (37 to 54) | 48.5 % (40 to 57) | 48.5 % (40 to 57) | 50.0 % (42 to 58) |
 | histamine H1 receptor | 30 | 20 | 53.3 % (36 to 70) | 51.7 % (35 to 68) | 53.3 % (36 to 70) | 50.0 % (33 to 67) |
-| histamine H3 receptor | 120 | 67 | 43.6 % (35 to 53) | 48.3 % (39 to 57) | 37.6 % (29 to 47) | 50.0 % (41 to 59) |
+| histamine H3 receptor | 120 | 67 | 41.9 % (33 to 51) | 48.3 % (39 to 57) | 40.2 % (32 to 49) | 50.0 % (41 to 59) |
 | kappa opioid receptor | 100 | 49 | 55.1 % (44 to 66) | 59.0 % (48 to 69) | 51.3 % (40 to 62) | 50.0 % (39 to 61) |
 | monoamine oxidase A | 33 | 17 | 45.2 % (29 to 62) | 41.9 % (26 to 59) | 54.8 % (38 to 71) | 50.0 % (33 to 67) |
 | monoamine oxidase B | 41 | 20 | 55.3 % (40 to 70) | 55.3 % (40 to 70) | 44.7 % (30 to 60) | 50.0 % (35 to 65) |
@@ -180,7 +180,7 @@ Every target is fitted on its own. The last row counts the held-out pairs of all
 | serotonin 5-HT7 receptor | 65 | 44 | 34.9 % (24 to 47) | 37.3 % (26 to 50) | 39.7 % (29 to 52) | 50.0 % (38 to 62) |
 | serotonin transporter | 201 | 94 | 45.7 % (39 to 53) | 49.5 % (43 to 56) | 54.3 % (47 to 61) | 50.0 % (43 to 57) |
 | thrombin | 23 | 17 | 40.9 % (23 to 61) | 63.6 % (43 to 80) | 50.0 % (31 to 69) | 50.0 % (31 to 69) |
-| **every target, each fitted on its own** | 3667 | | **51.3 %** (50 to 53) | **53.8 %** (52 to 55) | **49.7 %** (48 to 51) | **50.0 %** (48 to 52) |
+| **every target, each fitted on its own** | 3667 | | **51.3 %** (50 to 53) | **53.8 %** (52 to 55) | **49.8 %** (48 to 51) | **50.0 %** (48 to 52) |
 
 As q2 of the half-difference (at or below zero means the model predicts the difference no better than predicting zero for every pair):
 
@@ -188,7 +188,7 @@ As q2 of the half-difference (at or below zero means the model predicts the diff
 |---|---|---|---|---|
 | 11-beta-hydroxysteroid dehydrogenase 1 | -0.025 | -0.648 | -0.018 | +0.000 |
 | PI3-kinase alpha | +0.015 | +0.091 | -0.015 | +0.000 |
-| PIM1 kinase | -0.047 | +0.129 | +0.005 | +0.000 |
+| PIM1 kinase | -0.048 | +0.129 | +0.005 | +0.000 |
 | PPAR gamma | +0.037 | +0.095 | -0.030 | +0.000 |
 | acetylcholinesterase | -0.025 | +0.408 | -0.018 | -0.000 |
 | alpha-1A adrenergic receptor | +0.065 | +0.219 | +0.003 | -0.000 |
@@ -202,7 +202,7 @@ As q2 of the half-difference (at or below zero means the model predicts the diff
 | carbonic anhydrase 2 | -0.005 | -0.207 | -0.002 | -0.000 |
 | coagulation factor Xa | -0.016 | -0.052 | -0.005 | +0.000 |
 | cyclin-dependent kinase 2 | -0.051 | +0.050 | -0.035 | +0.000 |
-| cyclooxygenase 2 | -0.017 | -0.073 | -0.010 | -0.000 |
+| cyclooxygenase 2 | -0.010 | -0.074 | -0.013 | +0.000 |
 | delta opioid receptor | -0.044 | -0.153 | -0.021 | -0.000 |
 | dipeptidyl peptidase 4 | -0.059 | +0.091 | -0.002 | +0.000 |
 | dopamine D2 receptor | -0.021 | -0.011 | -0.034 | -0.000 |
@@ -214,7 +214,7 @@ As q2 of the half-difference (at or below zero means the model predicts the diff
 | glucocorticoid receptor | -0.031 | -0.116 | -0.162 | +0.000 |
 | hERG potassium channel | -0.003 | -0.007 | -0.000 | -0.000 |
 | histamine H1 receptor | -0.036 | -0.024 | -0.038 | -0.000 |
-| histamine H3 receptor | -0.008 | -0.026 | -0.006 | -0.000 |
+| histamine H3 receptor | -0.010 | -0.026 | -0.006 | +0.000 |
 | kappa opioid receptor | -0.100 | +0.032 | -0.162 | +0.000 |
 | monoamine oxidase A | -0.038 | -0.009 | -0.136 | +0.000 |
 | monoamine oxidase B | -0.088 | -0.968 | -0.008 | +0.000 |
@@ -242,8 +242,8 @@ Among the pairs whose two potencies differ by at least one log unit, with every 
 
 | Fold rule | every centre | stereocentres only | every other centre | no handedness channels |
 |---|---|---|---|---|
-| pairs held out | 57.4 % of 1144 | 60.5 % of 1144 | 53.2 % of 1144 | 50.0 % of 1144 |
-| scaffolds held out | 55.6 % of 1144 | 59.1 % of 1144 | 51.8 % of 1144 | 50.0 % of 1144 |
+| pairs held out | 57.8 % of 1144 | 60.5 % of 1144 | 53.0 % of 1144 | 50.0 % of 1144 |
+| scaffolds held out | 55.8 % of 1144 | 59.1 % of 1144 | 51.8 % of 1144 | 50.0 % of 1144 |
 
 The spread of the difference between the two potencies of a pair is 1.04 log units.
 
@@ -255,7 +255,7 @@ The ordinary question of item C7, on sets that do hold enantiomeric pairs: does 
 |---|---|---|---|
 | 11-beta-hydroxysteroid dehydrogenase 1 | 26 | -0.080 | -0.256 |
 | PI3-kinase alpha | 139 | +0.482 | +0.520 |
-| PIM1 kinase | 177 | -0.033 | -0.032 |
+| PIM1 kinase | 177 | -0.034 | -0.032 |
 | PPAR gamma | 101 | +0.208 | +0.206 |
 | acetylcholinesterase | 28 | +0.228 | +0.239 |
 | alpha-1A adrenergic receptor | 44 | -0.044 | -0.014 |
@@ -269,7 +269,7 @@ The ordinary question of item C7, on sets that do hold enantiomeric pairs: does 
 | carbonic anhydrase 2 | 58 | -0.058 | -0.059 |
 | coagulation factor Xa | 52 | -0.089 | -0.188 |
 | cyclin-dependent kinase 2 | 44 | -0.104 | -0.112 |
-| cyclooxygenase 2 | 43 | +0.039 | -0.117 |
+| cyclooxygenase 2 | 43 | +0.013 | -0.118 |
 | delta opioid receptor | 32 | -0.158 | -0.215 |
 | dipeptidyl peptidase 4 | 33 | -0.094 | +0.011 |
 | dopamine D2 receptor | 234 | +0.163 | +0.128 |
@@ -281,7 +281,7 @@ The ordinary question of item C7, on sets that do hold enantiomeric pairs: does 
 | glucocorticoid receptor | 20 | -0.121 | +0.073 |
 | hERG potassium channel | 143 | +0.190 | +0.156 |
 | histamine H1 receptor | 30 | -0.114 | -0.149 |
-| histamine H3 receptor | 120 | +0.152 | +0.070 |
+| histamine H3 receptor | 120 | +0.222 | +0.078 |
 | kappa opioid receptor | 100 | +0.094 | +0.195 |
 | monoamine oxidase A | 33 | +0.026 | -0.150 |
 | monoamine oxidase B | 41 | -0.371 | -0.136 |

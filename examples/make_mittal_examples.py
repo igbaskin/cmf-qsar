@@ -21,9 +21,15 @@ PLA2: dummy atoms "*") and are not produced.  Nine of the sets (ACE, ACHE, BZR, 
 GPB, THERM, THR, STEROIDS) overlap with ``examples/sutherland`` and ``examples/steroids_cbg.sdf``,
 where the original aligned coordinates are available.
 
+Every built structure is checked (:func:`cmfqsar.orca.geometry_faults`: no bond length outside
+0.7 to 1.3 times the sum of the covalent radii, no two atoms without a bond closer than 1.3 A)
+and embedded again with another seed if it fails; see :func:`embed`.
+
 Usage:  python examples/make_mittal_examples.py --si-dir <folder with the 40 .txt files> [--sets ACE,THR]
+        python examples/make_mittal_examples.py --repair-geometry    # only the records that fail the check
 """
 import argparse
+import io
 import os
 import sys
 import time
@@ -36,6 +42,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 
 from cmfqsar.align import mcs_align  # noqa: E402
+from cmfqsar.orca import geometry_faults  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -122,25 +129,57 @@ def read_set(path):
     return rows
 
 
+#: how many embeddings are tried before the structure is written with its fault
+EMBED_TRIES = 5
+#: the seed of a further try is the seed of the molecule plus a multiple of this number, which
+#: is larger than any set, so that no try repeats the seed of another molecule
+SEED_STEP = 100000
+
+
 def embed(smi, seed):
+    """One ETKDG conformer of the molecule refined with MMFF94, or None.
+
+    The refinement can stop at a stationary point that is not a structure of the molecule.  In
+    ``DHFR_364`` as written before 14 November 2026 the embedding had put the two carbons of a
+    secondary amine on one line with the nitrogen; the force on the hydrogen is then zero by
+    symmetry, and MMFF94 reported convergence with a C-N-C angle of 180 degrees and an N-H
+    length of 1.35 A.  So the structure is checked (:func:`cmfqsar.orca.geometry_faults`) and,
+    if it fails, embedded again with another seed.  A structure that needed this says so in its
+    ``geometry_note`` property; a structure that fails every time is written as it is, with the
+    fault in the same property.
+    """
     mol = Chem.MolFromSmiles(smi)
     if mol is None or any(a.GetAtomicNum() == 0 for a in mol.GetAtoms()):
         return None   # unparsable, or dummy-atom placeholders ("*") in the supplementary SMILES
-    m = Chem.AddHs(mol)
-    p = AllChem.ETKDGv3()
-    p.randomSeed = seed
-    p.useRandomCoords = mol.GetNumHeavyAtoms() > 60   # random initial coordinates are faster for big molecules
-    p.timeout = 60                                     # seconds per molecule
-    if AllChem.EmbedMolecule(m, p) != 0:
-        p.useRandomCoords = True
+    first, first_fault = None, None
+    for attempt in range(EMBED_TRIES):
+        m = Chem.AddHs(mol)
+        p = AllChem.ETKDGv3()
+        p.randomSeed = seed + SEED_STEP * attempt
+        p.useRandomCoords = mol.GetNumHeavyAtoms() > 60   # random initial coordinates are faster for big molecules
+        p.timeout = 60                                     # seconds per molecule
         if AllChem.EmbedMolecule(m, p) != 0:
-            return None
-    try:
-        AllChem.MMFFOptimizeMolecule(m, maxIters=1000 if mol.GetNumHeavyAtoms() <= 60 else 200)
-    except Exception:
-        pass
-    Chem.SanitizeMol(m)   # MMFF set-up alters aromaticity flags in place; restore RDKit's perception
-    return m
+            p.useRandomCoords = True
+            if AllChem.EmbedMolecule(m, p) != 0:
+                if attempt == 0:
+                    return None
+                continue
+        try:
+            AllChem.MMFFOptimizeMolecule(m, maxIters=1000 if mol.GetNumHeavyAtoms() <= 60 else 200)
+        except Exception:
+            pass
+        Chem.SanitizeMol(m)   # MMFF set-up alters aromaticity flags in place; restore RDKit's perception
+        faults = geometry_faults(m)
+        if not faults:
+            if attempt:
+                m.SetProp("geometry_note", f"embedding seed + {SEED_STEP * attempt}; the first "
+                                           f"embedding gave {first_fault}")
+            return m
+        if first is None:
+            first, first_fault = m, ", ".join(faults)
+    first.SetProp("geometry_note", f"no embedding of {EMBED_TRIES} passes the geometry check: "
+                                   f"{first_fault}")
+    return first
 
 
 def build_set(name, rows, out_path, mcs_timeout=2):
@@ -191,6 +230,54 @@ def build_set(name, rows, out_path, mcs_timeout=2):
           f"{sum(1 for n in n_mcs if n < 6)} with MCS < 6, {time.time() - t0:.0f} s -> {out_path}", flush=True)
 
 
+def repair_set(path, mcs_timeout=2):
+    """Build again the records of an existing file that fail the geometry check; returns their
+    names.
+
+    A record carries its SMILES, and its seed follows from the number in its name, so it can be
+    built again without the Supporting Information: embedded by :func:`embed`, superimposed on
+    the reference record of the file as :func:`build_set` does, and given the tags of the old
+    record.  Every other record is copied as text and does not change by one character.
+    """
+    with open(path, newline="") as fh:
+        text = fh.read()
+    eol = "\r\n" if "\r\n" in text else "\n"
+    blocks = [b for b in text.split("$$$$" + eol) if b.strip()]
+    mols = list(Chem.SDMolSupplier(path, removeHs=False))
+    if len(blocks) != len(mols):
+        raise SystemExit(f"{path}: {len(blocks)} text records but {len(mols)} molecules")
+    by_name = {m.GetProp("_Name"): m for m in mols if m is not None}
+    done = []
+    for i, old in enumerate(mols):
+        if old is None or not geometry_faults(old):
+            continue
+        name = old.GetProp("_Name")
+        m = embed(old.GetProp("SMILES"), seed=1000 + int(name.rsplit("_", 1)[1]) - 1)
+        if m is None or geometry_faults(m):
+            print(f"   {name}: still fails the geometry check, left as it was")
+            continue
+        m.SetProp("_Name", name)
+        ref = by_name[old.GetProp("reference")]
+        tags = {k: old.GetProp(k) for k in old.GetPropNames()}
+        if name != ref.GetProp("_Name"):
+            rmsd, n_mcs = mcs_align(m, Chem.Mol(ref), timeout=mcs_timeout)
+            tags["align_mcs_atoms"] = str(n_mcs)
+            tags["align_rmsd"] = "" if not np.isfinite(rmsd) else f"{rmsd:.2f}"
+        for k, v in tags.items():
+            m.SetProp(k, v)
+        buf = io.StringIO()
+        w = Chem.SDWriter(buf)
+        w.write(m)
+        w.close()
+        block = buf.getvalue().replace("\r\n", "\n")
+        blocks[i] = block[:block.rindex("$$$$")].replace("\n", eol)
+        done.append(name)
+    if done:
+        with open(path, "w", newline="") as fh:
+            fh.write("".join(b + "$$$$" + eol for b in blocks))
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--si-dir", default=None)
@@ -198,8 +285,20 @@ def main():
     ap.add_argument("--sets", default=None, help="comma-separated subset of set names")
     ap.add_argument("--mcs-timeout", type=int, default=2)
     ap.add_argument("--annotate-only", action="store_true", help="only (re)write the description tags")
+    ap.add_argument("--repair-geometry", action="store_true",
+                    help="build again the records of the existing files that fail the geometry "
+                         "check, from their SMILES tag; the other records are not touched and "
+                         "--si-dir is not needed")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
+    if a.repair_geometry:
+        wanted = [s.strip().upper() for s in a.sets.split(",")] if a.sets else None
+        for fn in sorted(os.listdir(a.out)):
+            if fn.lower().endswith(".sdf") and (wanted is None or fn[:-4].upper() in wanted):
+                done = repair_set(os.path.join(a.out, fn), mcs_timeout=a.mcs_timeout)
+                if done:
+                    print(f"{fn[:-4]:9s} built again: {', '.join(done)}")
+        return
     if a.annotate_only:
         annotate(a.out)
         return

@@ -338,6 +338,12 @@ lithium-shaped conformer. The binding energies of the three ions correlate (+0.8
 against sodium, +0.85 against magnesium), so the error this causes is not visible in a
 single-ion model; it is a limit on what the selectivity between two ions can be read as.
 
+Three of the complexes (`e0017`, `e0697` and `e0768`) have two hydrogens of one carbon 1.03 Å
+apart; the hydrogens of a methyl or methylene group are 1.75 to 1.8 Å apart. The distributed
+geometries hold the same pairs, so this is a property of the source, and the coordinates are
+kept as they are. The check that finds them is `cmfqsar.orca.geometry_faults`, and the three
+records are listed in `examples/geometry_exceptions.csv`.
+
 ## The simple baselines
 
 The oxygen count and the carbon-to-oxygen ratio are columns of the table because any model of

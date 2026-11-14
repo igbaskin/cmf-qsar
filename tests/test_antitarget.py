@@ -177,3 +177,31 @@ def test_the_series_is_superimposed_and_has_a_basic_nitrogen():
     spread = np.linalg.norm(amines - np.median(amines, axis=0), axis=1)
     assert float(np.median(spread)) < 3.0, \
         "the common part of a superimposed series lands in the same place"
+
+
+# ------------------------------------------------------------ the counter-ion
+
+
+def test_a_salt_is_built_without_its_counter_ion():
+    # ChEMBL writes a hydrochloride as the compound and "Cl" in one SMILES; the candidate file
+    # held 30 such records until 14 November 2026, with the chloride on top of the compound
+    salt = Chem.MolFromSmiles("CN(C)[C@@H]1Cc2ccccc2[C@@H](C2CCCCC2)C1.Cl")
+    compound, left_out = MK.without_counter_ions(salt)
+    assert left_out == "Cl"
+    assert Chem.MolToSmiles(compound) == Chem.MolToSmiles(
+        Chem.MolFromSmiles("CN(C)[C@@H]1Cc2ccccc2[C@@H](C2CCCCC2)C1"))
+    twice = Chem.MolFromSmiles("C[C@@H]1CCCN1CCc1ccc(NC(=O)CN2CCOCC2)cc1.Cl.Cl")
+    compound, left_out = MK.without_counter_ions(twice)
+    assert left_out == "Cl.Cl" and len(Chem.GetMolFrags(compound)) == 1
+    # a record that is one molecule comes back as the same object, so its embedding is unchanged
+    free = Chem.MolFromSmiles("CCN1CCCCC1")
+    assert MK.without_counter_ions(free) == (free, "")
+
+
+@pytest.mark.parametrize("name", ["h3_herg.sdf", "h3_candidates.sdf"])
+def test_every_record_of_the_two_files_is_one_molecule(name):
+    path = os.path.join(os.path.dirname(DATA), name)
+    if not os.path.exists(path):
+        pytest.skip(f"{name} is not built")
+    for m in Chem.SDMolSupplier(path, removeHs=False):
+        assert len(Chem.GetMolFrags(m)) == 1, m.GetProp("_Name")

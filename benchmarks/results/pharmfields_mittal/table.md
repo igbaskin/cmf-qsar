@@ -41,7 +41,7 @@ Indicator fields put a Gaussian of weight one on every atom of one kind. Keyed b
 | HPTP | 135 | +0.400 | +0.408 | +0.367 | +0.476 | **+0.486** | cif |
 | BZR | 163 | +0.361 | +0.416 | +0.341 | **+0.510** | +0.430 | five + cif |
 | COX2 | 322 | +0.248 | +0.239 | +0.226 | **+0.341** | +0.316 | five + cif |
-| DHFR | 397 | +0.490 | **+0.500** | +0.388 | +0.489 | +0.429 | five + pharm |
+| DHFR | 397 | +0.494 | **+0.503** | +0.387 | +0.486 | +0.429 | five + pharm |
 | **mean** | | +0.316 | +0.330 | +0.279 | +0.345 | +0.327 | |
 
 Split at 40 molecules, which is where the Sybyl indicators were found to start helping:
