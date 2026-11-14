@@ -6573,8 +6573,8 @@ for.
 
 ### Tutorials
 
-Fourteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the fourteenth reads the prepared set of the hop benchmark). Each opens in Google Colab from the badge at its top and runs there
+Fifteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the fourteenth reads the prepared set of the hop benchmark, and the fifteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6593,6 +6593,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `12_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
 | `13_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
 | `14_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `15_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7041,7 +7042,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         fourteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         fifteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

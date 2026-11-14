@@ -16193,6 +16193,32 @@ description beats it by +0.011 with single positions held out and by +0.028 with
 the chain, both inside the interval that says nothing. So what the surroundings contribute here is
 burial, and burial is one number.
 
+**A count with a nonlinear model (added 15 November 2026).** The reference above is a linear
+regression, and a field kernel is not linear, so the count was given the same chance.
+`benchmarks/run_mutants.py --sites` needs no built mutant. It reads the wild-type structure and
+the label table of each domain, which the repository holds, and uses all 280 positions, with four
+substitutions of each position, on two draws (1,120 substitutions). The difference field is
+replaced by the three substitution columns, which it equals. Each kernel on columns is a Gaussian
+of the standardised columns, with a width fixed in advance as exp(-d^2 / (2k)), k being the number
+of columns; the widths 0.5 and 2 times as large are reported, and change q2 by 0.011 at most
+(`benchmarks/results/mutants/sites.json`, about 10 minutes).
+
+With positions held out, a Gaussian kernel on one count of atoms and the three columns reaches
+q2 +0.458 on both draws. The linear regression on the burial numbers reaches +0.346 and +0.348, so
+the nonlinear model adds +0.112 (+0.075 to +0.153) and +0.110 (+0.066 to +0.150). The three
+columns alone reach +0.192 and +0.178. The field of the surroundings alone reaches +0.189 and
++0.218. The three columns joined with it reach +0.383 and +0.385, and the count is ahead of that
+joined description by +0.075 (+0.013 to +0.139) and +0.073 (+0.014 to +0.134). With segments held
+out and with domains held out the count is ahead as well, and all six intervals exclude zero.
+Six burial numbers in place of one count gain nothing that the interval shows (+0.014 at most).
+
+So the reading above holds against a linear count only: a field of the surroundings is worth
+less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
+kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
+fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
+among its references. The fifteenth tutorial, `docs/tutorials/15_point_mutants.ipynb`, builds one
+mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
+
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And
 **holding out one position does not hold out its surroundings**, because the surroundings of
@@ -16726,7 +16752,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Fourteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Fifteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -16737,10 +16763,13 @@ potentials of metal complexes, read with fields and compared with the compositio
 complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
-with a count of the atoms near the metal, and the hops of a lithium ion in crystals, with
-the barrier of a hop read from the environment of its path. Each runs on the
+with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
+the barrier of a hop read from the environment of its path, and the change of folding stability
+of point mutants of a protein, read with fields and compared with a count of the atoms around the
+site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
+or in Google Colab from the link at its top. The fifteenth also needs OpenMM and PDBFixer
+(`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 
 ## The stable surface

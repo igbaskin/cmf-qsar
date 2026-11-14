@@ -65,10 +65,25 @@ Before any fit, the correlation of each kernel with the target is reported
 (`run_spectra_ir.target_alignment`), which is the measure item EC5 established: it says whether
 samples a description finds alike have alike targets, and needs no model.
 
+A second stage, from the wild-type structures alone
+---------------------------------------------------
+``--sites`` needs no built mutant.  It reads the wild-type structure and the label table of every
+domain that this repository holds (280 positions, 5,246 substitutions) and asks the question of
+the burial reference again, on every position and without the difference field.  The difference
+field equals the three substitution columns (the first stage), so the columns stand in for it.
+What the stage adds is a nonlinear model for the number of atoms around the site: the reference
+of the first stage is a linear regression, and a field kernel is nonlinear.  Each kernel on
+columns is the Gaussian exp(-d^2 / (2 k)) of the standardised columns, k being their number.
+That width is fixed in advance and not searched, and the stage reports the widths 0.5 and 2 times
+as wide as well.  Only the ridge and the mixing weight are chosen inside the training part.  The
+columns are standardised over all samples, which uses the inputs of held-out samples but never
+their target.  Two draws of four substitutions per position are measured.
+
 Usage
 -----
     python benchmarks/run_mutants.py --prepare             # the fields, once
     python benchmarks/run_mutants.py                       # the measurement
+    python benchmarks/run_mutants.py --sites               # the reference stage (about 6 minutes)
     python benchmarks/run_mutants.py --report
 """
 from __future__ import annotations
@@ -598,6 +613,193 @@ def run(domains=DOMAINS, repeats: int = REPEATS, max_per_position: Optional[int]
 
 
 # --------------------------------------------------------------------------- #
+# A second stage: every position, from the wild type alone
+# --------------------------------------------------------------------------- #
+
+#: the draws of four substitutions per position
+SITE_DRAWS = (0, 1)
+#: the envelope decay of the context kernel in this stage, one of the two the first stage offers
+SITE_RHO = 0.1
+#: how much wider or narrower than the rule the kernel on columns is made, as a check
+SITE_WIDTHS = (0.5, 1.0, 2.0)
+
+
+def site_contexts(domains=DOMAINS, examples: str = EXAMPLES) -> Dict[Tuple[float, str, int], MoleculeFields]:
+    """The surroundings of every measured position of every domain, from the wild-type structure
+    that the repository holds (about two seconds for a domain)."""
+    import tempfile
+    from cmfqsar.fields import FieldSet, build_fields
+    fs = FieldSet.create(charge_model="file")
+    out: Dict[Tuple[float, str, int], MoleculeFields] = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        for d in domains:
+            st = MU.prepare_wild_type(os.path.join(examples, d, d + ".pdb"),
+                                      os.path.join(tmp, d + ".pdb"))
+            mol = MU.protein_of(st)
+            fields = build_fields(mol, fs, name=d)
+            positions = sorted({int(r["position"]) for r in read_table(d)})
+            for rho in CONTEXT_RHOS:
+                for p in positions:
+                    out[(float(rho), d, p)] = MU.site_context(fields, mol, p, float(rho),
+                                                              name=f"{d}:{p}")
+    return out
+
+
+class SiteSamples(Samples):
+    """The samples of the second stage: the label table of every domain, a fixed number of
+    substitutions drawn for each position, and the surroundings from the wild type.  It has
+    no side-chain fields, so the difference field is not available."""
+
+    def __init__(self, contexts, domains=DOMAINS, max_per_position: Optional[int] = MAX_PER_POSITION,
+                 seed: int = 0):
+        self.domain, self.label, self.position, self.mutation, self.y = [], [], [], [], []
+        self.new, self.old = [], []
+        self.contexts = contexts
+        rng = np.random.RandomState(int(seed))
+        for d in domains:
+            by_position: Dict[int, List[dict]] = {}
+            for r in read_table(d):
+                by_position.setdefault(int(r["position"]), []).append(r)
+            for pos in sorted(by_position):
+                rows = by_position[pos]
+                if max_per_position is not None and len(rows) > max_per_position:
+                    take = rng.choice(len(rows), int(max_per_position), replace=False)
+                    rows = [rows[i] for i in sorted(take)]
+                for r in rows:
+                    self.domain.append(d)
+                    self.label.append(r["label"])
+                    self.position.append(pos)
+                    self.mutation.append(MU.Mutation.parse(r["label"]))
+                    self.y.append(float(r["ddG_ML"]))
+        self.y = np.asarray(self.y, float)
+
+
+def position_kernel(contexts, rho: float = SITE_RHO, alpha: float = CONTEXT_ALPHA):
+    """The context kernel over every position that the contexts hold, as (keys, matrix).  It is
+    the slow step of the stage (about a minute and a half), so it is made once for all draws."""
+    keys = sorted({(d, p) for (r, d, p) in contexts if r == float(rho)})
+    return keys, field_kernel([contexts[(float(rho), d, p)] for d, p in keys], alpha)
+
+
+def expand_position_kernel(keys, K: np.ndarray, s: Samples) -> np.ndarray:
+    index = {k: i for i, k in enumerate(keys)}
+    rows = np.array([index[(d, p)] for d, p in zip(s.domain, s.position)], int)
+    return K[np.ix_(rows, rows)]
+
+
+def gaussian_columns(X: np.ndarray, width: float = 1.0) -> np.ndarray:
+    """The Gaussian kernel exp(-d^2 / (2 k w)) of the standardised columns of X, k being their
+    number and w a factor of the width.  Every column has the same weight in the distance."""
+    X = np.asarray(X, float)
+    Z = (X - X.mean(axis=0)) / X.std(axis=0)
+    G = Z @ Z.T
+    g = np.diag(G)
+    D2 = np.add.outer(g, g) - 2.0 * G
+    return np.exp(-D2 / (2.0 * X.shape[1] * float(width)))
+
+
+def burial_count_rows(s: Samples, rho: float = SITE_RHO) -> np.ndarray:
+    """One number for how buried the site is, the count of atoms within the envelope at `rho`,
+    with the three substitution columns."""
+    sub, _names = MU.substitution_features(s.mutation)
+    count = np.array([float(s.contexts[(float(rho), d, p)].n_atoms)
+                      for d, p in zip(s.domain, s.position)])
+    return np.c_[count, sub[:, :3]]
+
+
+SITE_COMPARISONS = (("columns kernel", "three columns"),
+                    ("burial kernel", "columns kernel"),
+                    ("burial kernel", "burial"),
+                    ("burial kernel, all columns", "columns kernel"),
+                    ("burial kernel", "burial kernel, all columns"),
+                    ("context", "burial"),
+                    ("context", "burial kernel"),
+                    ("joined", "columns kernel"),
+                    ("joined", "burial kernel"),
+                    ("joined", "burial kernel, all columns"),
+                    ("burial", "three columns"))
+
+
+def site_rows(s: Samples, K_position: np.ndarray, seeds, holdouts, widths=(1.0,)):
+    """Every description of the second stage under the given hold-outs."""
+    X_sub, _names = MU.substitution_features(s.mutation)
+    X_three = X_sub[:, :3]
+    X_burial = burial_rows(s)
+    X_one = burial_count_rows(s)
+    out = {}
+    for by in holdouts:
+        tg = s.targets(by)
+        n_groups = int(tg.molecule.max()) + 1
+        folds = min(FOLDS, n_groups) if by != "domain" else min(len(set(s.domain)), 4)
+        rows, keep = {}, {}
+
+        def add(name, res, chosen=None):
+            rows[name] = row_of(res, chosen or {}, tg)
+            keep[name] = res
+
+        add("mean", *mean_reference(tg, seeds, folds))
+        add("three columns", *regression(X_three, tg, seeds, "three columns", folds))
+        add("burial", *regression(X_burial, tg, seeds, "burial", folds))
+        add("context", *nested({"context": K_position}, tg, seeds, "context", folds))
+        for w in widths:
+            tag = "" if w == 1.0 else f" at {w} times the width"
+            Kc3 = gaussian_columns(X_three, w)
+            add("columns kernel" + tag, *nested({"columns": Kc3}, tg, seeds, "columns", folds))
+            add("burial kernel" + tag,
+                *nested({"burial": gaussian_columns(X_one, w)}, tg, seeds, "burial kernel", folds))
+            add("burial kernel, all columns" + tag,
+                *nested({"burial": gaussian_columns(X_burial, w)}, tg, seeds,
+                        "burial kernel, all columns", folds))
+            joined = {f"weight {m}": mixed(Kc3, K_position, m) for m in MIXES}
+            add("joined" + tag, *nested(joined, tg, seeds, "joined", folds))
+        table = {f"{a} - {b}": compare(keep[a], keep[b], tg) for a, b in SITE_COMPARISONS}
+        for w in widths:
+            if w == 1.0:
+                continue
+            tag = f" at {w} times the width"
+            for a, b in (("burial kernel", "columns kernel"), ("joined", "burial kernel")):
+                table[f"{a}{tag} - {b}{tag}"] = compare(keep[a + tag], keep[b + tag], tg)
+        out[by] = {"rows": rows, "differences": table, "n_groups": n_groups, "folds": folds}
+    return out
+
+
+def run_sites(domains=DOMAINS, draws=SITE_DRAWS, repeats: int = REPEATS,
+              max_per_position: Optional[int] = MAX_PER_POSITION, results: str = RESULTS,
+              holdouts=("position", "segment", "domain")) -> dict:
+    """The second stage: the burial reference with a nonlinear model, on every position."""
+    os.makedirs(results, exist_ok=True)
+    t0 = time.time()
+    contexts = site_contexts(domains)
+    keys, K_position = position_kernel(contexts)
+    log(f"{len(keys)} positions, contexts and their kernel after {time.time() - t0:.0f} s")
+    seeds = list(range(repeats))
+    out = {"domains": list(domains), "repeats": repeats, "max_per_position": max_per_position,
+           "rho": SITE_RHO, "widths": list(SITE_WIDTHS), "draws": {}}
+    for k, draw in enumerate(draws):
+        s = SiteSamples(contexts, domains, max_per_position, draw)
+        K = expand_position_kernel(keys, K_position, s)
+        log(f"--- draw {draw}: {len(s)} substitutions at {len(set(zip(s.domain, s.position)))} "
+            f"positions, ddG sd {s.y.std():.2f} kcal/mol")
+        # the width check is made on the first draw and on the position hold-out only
+        part = {"n": len(s), "n_positions": len(set(zip(s.domain, s.position))),
+                "sd_y": round(float(s.y.std()), 4),
+                "holdout": site_rows(s, K, seeds, holdouts)}
+        if k == 0:
+            part["width_check"] = site_rows(s, K, seeds, ("position",), widths=SITE_WIDTHS)["position"]
+        out["draws"][str(draw)] = part
+        for by, p in part["holdout"].items():
+            log(f"  {by}s held out: " + ", ".join(
+                f"{n} {r['q2']:+.3f}" for n, r in p["rows"].items()))
+        with open(os.path.join(results, "sites.json"), "w") as fh:
+            json.dump(out, fh, indent=1)
+    out["seconds"] = round(time.time() - t0, 1)
+    with open(os.path.join(results, "sites.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    log(f"written to {os.path.join(results, 'sites.json')} after {out['seconds']:.0f} s")
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # The report
 # --------------------------------------------------------------------------- #
 
@@ -684,8 +886,78 @@ def report(results: str = RESULTS) -> str:
             out.append(f"| {LABEL[name]} | " + " | ".join(cells) + " |")
         out += ["", f"The second draw holds {other['n']} substitutions against "
                     f"{d['n']}. Each cell is the first draw and then the second.", ""]
+    out.append(site_report(results))
     with open(os.path.join(results, "table.md"), "w") as fh:
         fh.write("\n".join(out))
+    return "\n".join(out)
+
+
+SITE_LABEL = {
+    "mean": "the mean of the training part",
+    "three columns": "linear regression on the change of residue volume, hydropathy and charge",
+    "burial": "linear regression on six burial numbers and the three columns",
+    "columns kernel": "Gaussian kernel on the three columns",
+    "burial kernel": "Gaussian kernel on one burial count and the three columns",
+    "burial kernel, all columns": "Gaussian kernel on the six burial numbers and the three columns",
+    "context": "the surroundings of the site as a field kernel",
+    "joined": "Gaussian kernel on the three columns, joined with the field kernel of the surroundings",
+}
+SITE_ORDER = tuple(SITE_LABEL)
+
+
+def site_report(results: str = RESULTS) -> str:
+    path = os.path.join(results, "sites.json")
+    if not os.path.exists(path):
+        return ""
+    with open(path) as fh:
+        d = json.load(fh)
+    first = d["draws"][str(min(int(k) for k in d["draws"]))]
+    out = ["", "## A second stage: every position, from the wild type alone", "",
+           f"The wild-type structure and the label table of each of the {len(d['domains'])} domains "
+           f"give {first['n_positions']} positions. Four substitutions of each position are drawn "
+           f"({first['n']} substitutions, ddG standard deviation {first['sd_y']:.2f} kcal/mol), "
+           f"on two draws. No mutant is built, so the difference field is replaced by the three "
+           f"substitution columns, which it equals in the first stage. A Gaussian kernel on "
+           f"standardised columns has the width exp(-d^2 / (2 k)), k being the number of columns, "
+           f"fixed in advance; the context kernel is at rho {d['rho']}. Only the ridge and the "
+           f"mixing weight are chosen inside the training part.", ""]
+    for key in sorted(d["draws"], key=int):
+        part = d["draws"][key]
+        out += [f"### Draw {key}", "",
+                "| Description | " + " | ".join(f"q2, {by}s held out" for by in part["holdout"]) + " |",
+                "|---|" + "---|" * len(part["holdout"])]
+        for name in SITE_ORDER:
+            cells = [f"{part['holdout'][by]['rows'][name]['q2']:+.3f}" for by in part["holdout"]]
+            out.append(f"| {SITE_LABEL[name]} | " + " | ".join(cells) + " |")
+        out += ["", "Differences in q2, with the 95 % bootstrap interval over the held-out unit:", "",
+                "| Comparison | " + " | ".join(f"{by}s held out" for by in part["holdout"]) + " |",
+                "|---|" + "---|" * len(part["holdout"])]
+        for cmp_key in part["holdout"][next(iter(part["holdout"]))]["differences"]:
+            out.append(f"| {cmp_key} | " + " | ".join(
+                _iv(part["holdout"][by]["differences"][cmp_key]) for by in part["holdout"]) + " |")
+        out.append("")
+    check = first.get("width_check")
+    if check:
+        out += ["### The width of the kernels on columns", "",
+                "The same measurement on the first draw with the position hold-out, at "
+                f"{', '.join(str(w) for w in d['widths'])} times the width of the rule.", "",
+                "| Description | " + " | ".join(f"width x {w}" for w in d["widths"]) + " |",
+                "|---|" + "---|" * len(d["widths"])]
+        for name in ("columns kernel", "burial kernel", "burial kernel, all columns", "joined"):
+            cells = []
+            for w in d["widths"]:
+                tag = "" if w == 1.0 else f" at {w} times the width"
+                cells.append(f"{check['rows'][name + tag]['q2']:+.3f}")
+            out.append(f"| {SITE_LABEL[name]} | " + " | ".join(cells) + " |")
+        out += ["", "| Comparison | " + " | ".join(f"width x {w}" for w in d["widths"]) + " |",
+                "|---|" + "---|" * len(d["widths"])]
+        for a, b in (("burial kernel", "columns kernel"), ("joined", "burial kernel")):
+            cells = []
+            for w in d["widths"]:
+                tag = "" if w == 1.0 else f" at {w} times the width"
+                cells.append(_iv(check["differences"][f"{a}{tag} - {b}{tag}"]))
+            out.append(f"| {a} - {b} | " + " | ".join(cells) + " |")
+        out.append("")
     return "\n".join(out)
 
 
@@ -702,8 +974,15 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=0,
                    help="which substitutions of each position to draw")
     p.add_argument("--out-name", default="mutants", help="the name of the result file")
+    p.add_argument("--sites", action="store_true",
+                   help="the second stage: every position, from the wild type alone")
     p.add_argument("--report", action="store_true")
     a = p.parse_args(argv)
+    if a.sites:
+        run_sites(tuple(a.domains), repeats=a.repeats, max_per_position=a.max_per_position,
+                  holdouts=tuple(a.holdout))
+        print(report())
+        return
     if a.prepare:
         prepare(a.domains, a.shard, a.shards)
         return

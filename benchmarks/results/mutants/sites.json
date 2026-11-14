@@ -1,0 +1,1037 @@
+{
+ "domains": [
+  "1O6X",
+  "1UFM",
+  "2K5N",
+  "3ZGK"
+ ],
+ "repeats": 3,
+ "max_per_position": 4,
+ "rho": 0.1,
+ "widths": [
+  0.5,
+  1.0,
+  2.0
+ ],
+ "draws": {
+  "0": {
+   "n": 1120,
+   "n_positions": 280,
+   "sd_y": 1.2401,
+   "holdout": {
+    "position": {
+     "rows": {
+      "mean": {
+       "q2": -0.0052,
+       "sd": 0.0023,
+       "rmse": 1.2433,
+       "mae": 1.0159,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.192,
+       "sd": 0.006,
+       "rmse": 1.1147,
+       "mae": 0.8987,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.3459,
+       "sd": 0.002,
+       "rmse": 1.0029,
+       "mae": 0.8046,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.1894,
+       "sd": 0.0113,
+       "rmse": 1.1165,
+       "mae": 0.8698,
+       "chosen": {
+        "context": 30
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2472,
+       "sd": 0.007,
+       "rmse": 1.076,
+       "mae": 0.8459,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4582,
+       "sd": 0.0052,
+       "rmse": 0.9128,
+       "mae": 0.6921,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.4719,
+       "sd": 0.0014,
+       "rmse": 0.9012,
+       "mae": 0.6859,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "joined": {
+       "q2": 0.3831,
+       "sd": 0.0037,
+       "rmse": 0.974,
+       "mae": 0.7589,
+       "chosen": {
+        "weight 0.25": 16,
+        "weight 0.5": 14
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0552,
+       0.0268,
+       0.0843
+      ],
+      "burial kernel - columns kernel": [
+       0.2111,
+       0.1488,
+       0.2708
+      ],
+      "burial kernel - burial": [
+       0.1123,
+       0.0746,
+       0.153
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2247,
+       0.1623,
+       0.288
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.0136,
+       -0.0404,
+       0.0123
+      ],
+      "context - burial": [
+       -0.1565,
+       -0.2304,
+       -0.0789
+      ],
+      "context - burial kernel": [
+       -0.2688,
+       -0.3521,
+       -0.1825
+      ],
+      "joined - columns kernel": [
+       0.136,
+       0.0789,
+       0.1919
+      ],
+      "joined - burial kernel": [
+       -0.0751,
+       -0.139,
+       -0.0131
+      ],
+      "joined - burial kernel, all columns": [
+       -0.0887,
+       -0.1506,
+       -0.0293
+      ],
+      "burial - three columns": [
+       0.1539,
+       0.0965,
+       0.2081
+      ]
+     },
+     "n_groups": 280,
+     "folds": 10
+    },
+    "segment": {
+     "rows": {
+      "mean": {
+       "q2": -0.0039,
+       "sd": 0.0027,
+       "rmse": 1.2425,
+       "mae": 1.0146,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.1944,
+       "sd": 0.0035,
+       "rmse": 1.1131,
+       "mae": 0.8983,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.338,
+       "sd": 0.0022,
+       "rmse": 1.0089,
+       "mae": 0.8075,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.1856,
+       "sd": 0.0247,
+       "rmse": 1.1191,
+       "mae": 0.8707,
+       "chosen": {
+        "context": 30
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2461,
+       "sd": 0.0064,
+       "rmse": 1.0767,
+       "mae": 0.85,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4501,
+       "sd": 0.0058,
+       "rmse": 0.9196,
+       "mae": 0.6967,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.464,
+       "sd": 0.0063,
+       "rmse": 0.9079,
+       "mae": 0.6914,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "joined": {
+       "q2": 0.3809,
+       "sd": 0.0078,
+       "rmse": 0.9758,
+       "mae": 0.7574,
+       "chosen": {
+        "weight 0.5": 18,
+        "weight 0.25": 12
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0518,
+       0.0205,
+       0.0846
+      ],
+      "burial kernel - columns kernel": [
+       0.2039,
+       0.1363,
+       0.271
+      ],
+      "burial kernel - burial": [
+       0.112,
+       0.0705,
+       0.1597
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2179,
+       0.1473,
+       0.2868
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.014,
+       -0.0404,
+       0.0125
+      ],
+      "context - burial": [
+       -0.1524,
+       -0.227,
+       -0.0736
+      ],
+      "context - burial kernel": [
+       -0.2644,
+       -0.3413,
+       -0.1887
+      ],
+      "joined - columns kernel": [
+       0.1347,
+       0.0855,
+       0.1794
+      ],
+      "joined - burial kernel": [
+       -0.0692,
+       -0.1392,
+       -0.0047
+      ],
+      "joined - burial kernel, all columns": [
+       -0.0831,
+       -0.1587,
+       -0.0123
+      ],
+      "burial - three columns": [
+       0.1437,
+       0.0841,
+       0.1998
+      ]
+     },
+     "n_groups": 34,
+     "folds": 10
+    },
+    "domain": {
+     "rows": {
+      "mean": {
+       "q2": -0.0194,
+       "sd": 0.0,
+       "rmse": 1.252,
+       "mae": 1.0219,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.1773,
+       "sd": 0.0,
+       "rmse": 1.1248,
+       "mae": 0.908,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.3143,
+       "sd": 0.0,
+       "rmse": 1.0269,
+       "mae": 0.8195,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.1256,
+       "sd": 0.0,
+       "rmse": 1.1596,
+       "mae": 0.8963,
+       "chosen": {
+        "context": 12
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2325,
+       "sd": 0.0,
+       "rmse": 1.0864,
+       "mae": 0.8582,
+       "chosen": {
+        "columns": 12
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4277,
+       "sd": 0.0,
+       "rmse": 0.9381,
+       "mae": 0.7095,
+       "chosen": {
+        "burial": 12
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.4383,
+       "sd": 0.0,
+       "rmse": 0.9294,
+       "mae": 0.7022,
+       "chosen": {
+        "burial": 12
+       }
+      },
+      "joined": {
+       "q2": 0.3345,
+       "sd": 0.0,
+       "rmse": 1.0116,
+       "mae": 0.7797,
+       "chosen": {
+        "weight 0.5": 6,
+        "weight 0.25": 6
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0552,
+       0.0355,
+       0.0759
+      ],
+      "burial kernel - columns kernel": [
+       0.1951,
+       0.1615,
+       0.2276
+      ],
+      "burial kernel - burial": [
+       0.1134,
+       0.0714,
+       0.1866
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2058,
+       0.1569,
+       0.2503
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.0106,
+       -0.0231,
+       0.0045
+      ],
+      "context - burial": [
+       -0.1887,
+       -0.2336,
+       -0.1615
+      ],
+      "context - burial kernel": [
+       -0.3021,
+       -0.3906,
+       -0.2375
+      ],
+      "joined - columns kernel": [
+       0.102,
+       0.0718,
+       0.143
+      ],
+      "joined - burial kernel": [
+       -0.0931,
+       -0.137,
+       -0.0677
+      ],
+      "joined - burial kernel, all columns": [
+       -0.1038,
+       -0.1449,
+       -0.0754
+      ],
+      "burial - three columns": [
+       0.137,
+       0.0151,
+       0.2068
+      ]
+     },
+     "n_groups": 4,
+     "folds": 4
+    }
+   },
+   "width_check": {
+    "rows": {
+     "mean": {
+      "q2": -0.0052,
+      "sd": 0.0023,
+      "rmse": 1.2433,
+      "mae": 1.0159,
+      "chosen": {}
+     },
+     "three columns": {
+      "q2": 0.192,
+      "sd": 0.006,
+      "rmse": 1.1147,
+      "mae": 0.8987,
+      "chosen": {}
+     },
+     "burial": {
+      "q2": 0.3459,
+      "sd": 0.002,
+      "rmse": 1.0029,
+      "mae": 0.8046,
+      "chosen": {}
+     },
+     "context": {
+      "q2": 0.1894,
+      "sd": 0.0113,
+      "rmse": 1.1165,
+      "mae": 0.8698,
+      "chosen": {
+       "context": 30
+      }
+     },
+     "columns kernel at 0.5 times the width": {
+      "q2": 0.2464,
+      "sd": 0.0105,
+      "rmse": 1.0765,
+      "mae": 0.8489,
+      "chosen": {
+       "columns": 30
+      }
+     },
+     "burial kernel at 0.5 times the width": {
+      "q2": 0.4574,
+      "sd": 0.0066,
+      "rmse": 0.9134,
+      "mae": 0.6927,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "burial kernel, all columns at 0.5 times the width": {
+      "q2": 0.4703,
+      "sd": 0.0052,
+      "rmse": 0.9025,
+      "mae": 0.6868,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "joined at 0.5 times the width": {
+      "q2": 0.3806,
+      "sd": 0.006,
+      "rmse": 0.976,
+      "mae": 0.76,
+      "chosen": {
+       "weight 0.25": 9,
+       "weight 0.5": 21
+      }
+     },
+     "columns kernel": {
+      "q2": 0.2472,
+      "sd": 0.007,
+      "rmse": 1.076,
+      "mae": 0.8459,
+      "chosen": {
+       "columns": 30
+      }
+     },
+     "burial kernel": {
+      "q2": 0.4582,
+      "sd": 0.0052,
+      "rmse": 0.9128,
+      "mae": 0.6921,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "burial kernel, all columns": {
+      "q2": 0.4719,
+      "sd": 0.0014,
+      "rmse": 0.9012,
+      "mae": 0.6859,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "joined": {
+      "q2": 0.3831,
+      "sd": 0.0037,
+      "rmse": 0.974,
+      "mae": 0.7589,
+      "chosen": {
+       "weight 0.25": 16,
+       "weight 0.5": 14
+      }
+     },
+     "columns kernel at 2.0 times the width": {
+      "q2": 0.2518,
+      "sd": 0.004,
+      "rmse": 1.0726,
+      "mae": 0.8391,
+      "chosen": {
+       "columns": 30
+      }
+     },
+     "burial kernel at 2.0 times the width": {
+      "q2": 0.4561,
+      "sd": 0.0062,
+      "rmse": 0.9146,
+      "mae": 0.6928,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "burial kernel, all columns at 2.0 times the width": {
+      "q2": 0.4609,
+      "sd": 0.0052,
+      "rmse": 0.9105,
+      "mae": 0.6923,
+      "chosen": {
+       "burial": 30
+      }
+     },
+     "joined at 2.0 times the width": {
+      "q2": 0.3852,
+      "sd": 0.0066,
+      "rmse": 0.9723,
+      "mae": 0.7586,
+      "chosen": {
+       "weight 0.25": 18,
+       "weight 0.5": 12
+      }
+     }
+    },
+    "differences": {
+     "columns kernel - three columns": [
+      0.0552,
+      0.0268,
+      0.0843
+     ],
+     "burial kernel - columns kernel": [
+      0.2111,
+      0.1488,
+      0.2708
+     ],
+     "burial kernel - burial": [
+      0.1123,
+      0.0746,
+      0.153
+     ],
+     "burial kernel, all columns - columns kernel": [
+      0.2247,
+      0.1623,
+      0.288
+     ],
+     "burial kernel - burial kernel, all columns": [
+      -0.0136,
+      -0.0404,
+      0.0123
+     ],
+     "context - burial": [
+      -0.1565,
+      -0.2304,
+      -0.0789
+     ],
+     "context - burial kernel": [
+      -0.2688,
+      -0.3521,
+      -0.1825
+     ],
+     "joined - columns kernel": [
+      0.136,
+      0.0789,
+      0.1919
+     ],
+     "joined - burial kernel": [
+      -0.0751,
+      -0.139,
+      -0.0131
+     ],
+     "joined - burial kernel, all columns": [
+      -0.0887,
+      -0.1506,
+      -0.0293
+     ],
+     "burial - three columns": [
+      0.1539,
+      0.0965,
+      0.2081
+     ],
+     "burial kernel at 0.5 times the width - columns kernel at 0.5 times the width": [
+      0.211,
+      0.1439,
+      0.2745
+     ],
+     "joined at 0.5 times the width - burial kernel at 0.5 times the width": [
+      -0.0769,
+      -0.1413,
+      -0.0123
+     ],
+     "burial kernel at 2.0 times the width - columns kernel at 2.0 times the width": [
+      0.2042,
+      0.1431,
+      0.2636
+     ],
+     "joined at 2.0 times the width - burial kernel at 2.0 times the width": [
+      -0.0708,
+      -0.1322,
+      -0.0099
+     ]
+    },
+    "n_groups": 280,
+    "folds": 10
+   }
+  },
+  "1": {
+   "n": 1120,
+   "n_positions": 280,
+   "sd_y": 1.2552,
+   "holdout": {
+    "position": {
+     "rows": {
+      "mean": {
+       "q2": -0.0047,
+       "sd": 0.003,
+       "rmse": 1.2582,
+       "mae": 1.0396,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.1782,
+       "sd": 0.0039,
+       "rmse": 1.1379,
+       "mae": 0.9257,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.3481,
+       "sd": 0.0052,
+       "rmse": 1.0135,
+       "mae": 0.8228,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.2179,
+       "sd": 0.008,
+       "rmse": 1.1101,
+       "mae": 0.866,
+       "chosen": {
+        "context": 30
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2326,
+       "sd": 0.0047,
+       "rmse": 1.0996,
+       "mae": 0.8651,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4576,
+       "sd": 0.0041,
+       "rmse": 0.9245,
+       "mae": 0.7054,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.4827,
+       "sd": 0.0065,
+       "rmse": 0.9028,
+       "mae": 0.6846,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "joined": {
+       "q2": 0.3848,
+       "sd": 0.0026,
+       "rmse": 0.9846,
+       "mae": 0.7711,
+       "chosen": {
+        "weight 0.5": 13,
+        "weight 0.25": 17
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0544,
+       0.0208,
+       0.0876
+      ],
+      "burial kernel - columns kernel": [
+       0.225,
+       0.1633,
+       0.2905
+      ],
+      "burial kernel - burial": [
+       0.1095,
+       0.0655,
+       0.1502
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2502,
+       0.1852,
+       0.3205
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.0251,
+       -0.0577,
+       0.0035
+      ],
+      "context - burial": [
+       -0.1303,
+       -0.2049,
+       -0.0608
+      ],
+      "context - burial kernel": [
+       -0.2397,
+       -0.3203,
+       -0.1571
+      ],
+      "joined - columns kernel": [
+       0.1522,
+       0.0881,
+       0.2129
+      ],
+      "joined - burial kernel": [
+       -0.0728,
+       -0.134,
+       -0.0137
+      ],
+      "joined - burial kernel, all columns": [
+       -0.098,
+       -0.156,
+       -0.0416
+      ],
+      "burial - three columns": [
+       0.17,
+       0.1121,
+       0.2304
+      ]
+     },
+     "n_groups": 280,
+     "folds": 10
+    },
+    "segment": {
+     "rows": {
+      "mean": {
+       "q2": -0.0038,
+       "sd": 0.0024,
+       "rmse": 1.2576,
+       "mae": 1.0388,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.1805,
+       "sd": 0.0019,
+       "rmse": 1.1363,
+       "mae": 0.9248,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.3334,
+       "sd": 0.0049,
+       "rmse": 1.0248,
+       "mae": 0.8302,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.2014,
+       "sd": 0.0124,
+       "rmse": 1.1217,
+       "mae": 0.8778,
+       "chosen": {
+        "context": 30
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2319,
+       "sd": 0.0055,
+       "rmse": 1.1001,
+       "mae": 0.8687,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4507,
+       "sd": 0.009,
+       "rmse": 0.9303,
+       "mae": 0.7105,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.4783,
+       "sd": 0.0047,
+       "rmse": 0.9067,
+       "mae": 0.6885,
+       "chosen": {
+        "burial": 30
+       }
+      },
+      "joined": {
+       "q2": 0.3821,
+       "sd": 0.0057,
+       "rmse": 0.9867,
+       "mae": 0.773,
+       "chosen": {
+        "weight 0.5": 14,
+        "weight 0.25": 16
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0514,
+       0.0186,
+       0.0837
+      ],
+      "burial kernel - columns kernel": [
+       0.2188,
+       0.1539,
+       0.2875
+      ],
+      "burial kernel - burial": [
+       0.1172,
+       0.0665,
+       0.1677
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2464,
+       0.1821,
+       0.3147
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.0276,
+       -0.064,
+       0.0053
+      ],
+      "context - burial": [
+       -0.132,
+       -0.2052,
+       -0.0574
+      ],
+      "context - burial kernel": [
+       -0.2493,
+       -0.322,
+       -0.1799
+      ],
+      "joined - columns kernel": [
+       0.1502,
+       0.0948,
+       0.2037
+      ],
+      "joined - burial kernel": [
+       -0.0686,
+       -0.1291,
+       -0.0109
+      ],
+      "joined - burial kernel, all columns": [
+       -0.0962,
+       -0.1565,
+       -0.0383
+      ],
+      "burial - three columns": [
+       0.1529,
+       0.0963,
+       0.2128
+      ]
+     },
+     "n_groups": 34,
+     "folds": 10
+    },
+    "domain": {
+     "rows": {
+      "mean": {
+       "q2": -0.0219,
+       "sd": 0.0,
+       "rmse": 1.2689,
+       "mae": 1.0475,
+       "chosen": {}
+      },
+      "three columns": {
+       "q2": 0.1607,
+       "sd": 0.0,
+       "rmse": 1.15,
+       "mae": 0.9342,
+       "chosen": {}
+      },
+      "burial": {
+       "q2": 0.2954,
+       "sd": 0.0,
+       "rmse": 1.0536,
+       "mae": 0.8478,
+       "chosen": {}
+      },
+      "context": {
+       "q2": 0.1558,
+       "sd": 0.0,
+       "rmse": 1.1533,
+       "mae": 0.8946,
+       "chosen": {
+        "context": 12
+       }
+      },
+      "columns kernel": {
+       "q2": 0.2026,
+       "sd": 0.0,
+       "rmse": 1.1209,
+       "mae": 0.8868,
+       "chosen": {
+        "columns": 12
+       }
+      },
+      "burial kernel": {
+       "q2": 0.4189,
+       "sd": 0.0,
+       "rmse": 0.9569,
+       "mae": 0.7271,
+       "chosen": {
+        "burial": 12
+       }
+      },
+      "burial kernel, all columns": {
+       "q2": 0.4344,
+       "sd": 0.0,
+       "rmse": 0.9441,
+       "mae": 0.7108,
+       "chosen": {
+        "burial": 12
+       }
+      },
+      "joined": {
+       "q2": 0.3381,
+       "sd": 0.0,
+       "rmse": 1.0212,
+       "mae": 0.7897,
+       "chosen": {
+        "weight 0.5": 3,
+        "weight 0.25": 9
+       }
+      }
+     },
+     "differences": {
+      "columns kernel - three columns": [
+       0.0419,
+       0.016,
+       0.0793
+      ],
+      "burial kernel - columns kernel": [
+       0.2163,
+       0.1632,
+       0.2616
+      ],
+      "burial kernel - burial": [
+       0.1235,
+       0.0767,
+       0.1923
+      ],
+      "burial kernel, all columns - columns kernel": [
+       0.2317,
+       0.1711,
+       0.2851
+      ],
+      "burial kernel - burial kernel, all columns": [
+       -0.0154,
+       -0.0305,
+       0.0007
+      ],
+      "context - burial": [
+       -0.1397,
+       -0.1889,
+       -0.1115
+      ],
+      "context - burial kernel": [
+       -0.2632,
+       -0.377,
+       -0.1882
+      ],
+      "joined - columns kernel": [
+       0.1355,
+       0.095,
+       0.1663
+      ],
+      "joined - burial kernel": [
+       -0.0808,
+       -0.1439,
+       -0.0406
+      ],
+      "joined - burial kernel, all columns": [
+       -0.0963,
+       -0.1517,
+       -0.0463
+      ],
+      "burial - three columns": [
+       0.1347,
+       0.0057,
+       0.2094
+      ]
+     },
+     "n_groups": 4,
+     "folds": 4
+    }
+   }
+  }
+ },
+ "seconds": 660.2
+}

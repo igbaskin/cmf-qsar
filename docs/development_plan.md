@@ -8220,6 +8220,21 @@ correlation of its whole kernel with the target before any accuracy is measured.
   machine builds about ten a minute whatever way the work is split; no co-field (PP5); and the
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
+
+  **A reference that PP1 left out, added 15 November 2026,** while the fifteenth tutorial was
+  written. The burial reference of PP1 is a linear regression, and the field models are not
+  linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
+  the repository holds (four substitutions of each, two draws, wild-type structures only, the
+  three substitution columns in place of the difference field, Gaussian kernels on standardised
+  columns with a width fixed in advance). A Gaussian kernel on one count of atoms and the three
+  columns reaches q2 +0.458 on both draws with positions held out, against +0.346 and +0.348 for
+  the linear regression and +0.383 and +0.385 for the columns joined with the field of the
+  surroundings. The count is ahead of the joined field by +0.075 (+0.013 to +0.139) and +0.073
+  (+0.014 to +0.134), and with segments and with domains held out all six intervals exclude zero.
+  The field of the surroundings alone reaches +0.189 and +0.218. So "a field of the surroundings
+  is worth a count" holds against a linear count only. Not tested: whether the cosine
+  normalisation of the kernel, which divides out the size of a field and so the count, is the
+  reason. PP3 has to test it.
 * **PP2. Does it carry to a protein the model has not seen?** PP1 leaves exactly one question open,
   and it is the one a user has: the joined description beats the reference inside a protein and
   four domains cannot resolve whether it does so for a new one. The item is the same measurement
@@ -8236,7 +8251,8 @@ correlation of its whole kernel with the target before any accuracy is measured.
   anisotropy of the surroundings in the residue frame (a count has no direction), and the field at
   anchored points of the frame as EC3 builds them. The references are the burial columns of PP1 and
   the solvent-accessible area, which is the quantity a biochemist would reach for and which this
-  item has to add. The held-out unit is the segment or the domain, never the position, for the
+  item has to add, and the Gaussian kernel on one count of atoms that the note at the end of PP1
+  gives, which is ahead of the field of PP1. The held-out unit is the segment or the domain, never the position, for the
   reason PP1 found. Gate: beats both references by more than the interval of rule 4. If it fails,
   this section ends here, and the honest summary is that a field model of a protein's own stability
   is worth a count and a substitution table.

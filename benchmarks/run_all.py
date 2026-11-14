@@ -1171,11 +1171,13 @@ def registry() -> List[Benchmark]:
                   "against the change of residue volume, hydropathy and charge, with whole "
                   "positions and then whole domains held out (the structures are not in the "
                   "repository: make_mutant_examples.py --build writes them with PDBFixer and "
-                  "OpenMM into benchmarks/cache, at about twenty seconds each)",
-                  "run_mutants.py", "mutants", compute=[[]],
+                  "OpenMM into benchmarks/cache, at about twenty seconds each); a second "
+                  "stage, from the wild-type structures alone and on every position, gives the "
+                  "count of atoms around the site a nonlinear model as well",
+                  "run_mutants.py", "mutants", compute=[[], ["--sites"]],
                   prepare=["../examples/make_mutant_examples.py --build",
                            "run_mutants.py --prepare"],
-                  minutes="40",
+                  minutes="50",
                   report=lambda: _mod("run_mutants").report(),
                   tables=["mutants/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
