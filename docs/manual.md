@@ -15233,7 +15233,8 @@ capacity, and the tolerance stage allows 5 %.
 * **Over the range of concentrations the label fails gate (a) of item BT9**, and the cell
   still tolerates it at room temperature up to 2C. A run of 4 ns is long enough near 1 mol/L
   and too short above about 1.5 mol/L, where a label needs 20 ns or more. The twelve boxes
-  of 4 ns took 3.2 hours with their equilibration, and the two runs of 20 ns took 2.9 hours.
+  of 4 ns took 3.7 hours with packing and equilibration, and the two runs of 20 ns took
+  3.0 hours.
 * **What stays open.** The ideal-solution formula with the measured thermodynamic factor is
   not the relation of a concentrated solution, and this program has no prediction of that
   factor (plan item BT11). The correction for the size of the box is a range and not a

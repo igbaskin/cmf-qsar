@@ -5506,9 +5506,10 @@ concentration was driven, and the stage counts only discharges that ended at the
   this electrolyte. They are 0.56 of those of Landesfeind and Gasteiger at 1.13 mol/L and
   0.28 at 1.98 mol/L, although the later paper calls the earlier values slightly higher. The
   paper of Nyman was not read, and the difference is recorded and not used.
-  *The cost.* The twelve boxes of 4 ns took 3.2 hours with their equilibration, about 15
-  minutes each on the card alone (364 to 406 ns/day for 13,400 to 15,900 atoms). The two
-  runs of 20 ns took 2.9 hours. A run of 4 ns is too short above about 1.5 mol/L.
+  *The cost.* The twelve boxes of 4 ns took 3.2 hours of production and 3.7 hours with
+  packing and equilibration, about 17 minutes each on the card alone (364 to 406 ns/day for
+  13,400 to 15,900 atoms). The two runs of 20 ns took 3.0 hours in all. A run of 4 ns is too
+  short above about 1.5 mol/L.
   *What writing it found.* The first run of the cell stage used the 4 ns ratios only and
   said that the cell tolerates the coefficient at all four rates. The long runs lowered the
   ratios at the high concentrations, and without the size correction the cell then loses
