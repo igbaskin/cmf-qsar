@@ -1,6 +1,6 @@
 {
- "commit": "b062b0d39149179896fa0c4eae5d0e84ae7bbb17",
- "created": "2026-11-15T00:27:05",
+ "commit": "11a7bdb33d023c3ca1c173f45519a90904d1e4a5",
+ "created": "2026-11-15T00:39:05",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2543,7 +2543,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3805,6 +3805,23 @@
   "benchmarks/results/reciprocal/pattern.png": "95f4b742f12d405db480ff42019b5a4fc23d72463706ab0e3f1b39534f78f72c",
   "benchmarks/results/reciprocal/resolution.json": "1709a3d01e61af2aad10a143ad1c31a74a607ae437b98b7cfa6705bbebd7fcce",
   "benchmarks/results/reciprocal/table.md": "a9a0f063456fa68187d9f7e8bec73b5a8a1b3719591926e9c8cb8ae3b5f373fd",
+  "benchmarks/results/resolution/beads_ACE.json": "12d3b1617f5c0323abe120e8c76fb4be231eeb2c01890ca9e56c83dc183d9b16",
+  "benchmarks/results/resolution/beads_AChE.json": "68112750cb81e8333b2f0fc791a461801c9e87661149cd662654c734625acd67",
+  "benchmarks/results/resolution/beads_BZR.json": "49c16ec4845fe9db2dd385d6b9d25a424bcc6b79bd5e509ccc6027d359cdab07",
+  "benchmarks/results/resolution/beads_COX2.json": "72dc67c81d22f25a64ec397a33f7f344919a2ac8d48134af40b938b168c4c06a",
+  "benchmarks/results/resolution/beads_DHFR.json": "295c9409165a884f8543fa06e09e40e04f6cf36c5ebc8993493d0c72452b8fc1",
+  "benchmarks/results/resolution/beads_GPB.json": "39ae6d3ce4bf7381eb515092f993e07e40028c62b873bf87b26f0a8e406046e7",
+  "benchmarks/results/resolution/beads_THER.json": "66326a23372de6c1493e282217d8b545f1e4f47d6e3e751ef792d437f923e573",
+  "benchmarks/results/resolution/beads_THR.json": "6aa0c472af8d73ddd974401ebbfdadd8e7224fc91009156dc78f76b8d2cc3116",
+  "benchmarks/results/resolution/table.md": "c776a8f187c896df272e4b4bea78984451eb870f0712e50ca26e7d0ea8bd4124",
+  "benchmarks/results/resolution/widths_ACE.json": "e06fbac7d9f2b0a2d76fae2a11eafae8604201e6cc664677107e833451fa832e",
+  "benchmarks/results/resolution/widths_AChE.json": "41a16c1b9396f8e9eda66e6988325733142a8ee5f2414cbddaef725f55ebd7e5",
+  "benchmarks/results/resolution/widths_BZR.json": "fe244349274740352ca9bcc0a279fbce42e32b3b85173cf4ac677935cc359cc9",
+  "benchmarks/results/resolution/widths_COX2.json": "46f9c88524046fca268611ca4b373394ea567a150e1896bc3edebd1787537610",
+  "benchmarks/results/resolution/widths_DHFR.json": "c894f5f8588ae634197fda1b0c3e9ca643abc57d927117c28af455ae2ce12332",
+  "benchmarks/results/resolution/widths_GPB.json": "72996abf7d42fb521834268626774e2a882dd08fff4e9bddefaf1956495d9b9b",
+  "benchmarks/results/resolution/widths_THER.json": "e556a5145803bf049cf4e9697354d5a2a3a7346f1addf2820c055f972cf2a472",
+  "benchmarks/results/resolution/widths_THR.json": "baa9e0a749a280d58ccf3454d8643074dcace781f5596b89f1633c0e29b0ce58",
   "benchmarks/results/restriction/ACE.json": "7e320b0bc772c2b173718ab4a7b5ba39f3c76988a5345f31e9eb962b33d971be",
   "benchmarks/results/restriction/COX2.json": "1aa8c99713bd353fcce75a4878d4b10d8e2d33f9796a1ae5e1527672effc11b4",
   "benchmarks/results/restriction/DHFR.json": "db49abe62b69a067e3b79011f9aa3ef785f0f02cba81573ac065f7402acad879",
