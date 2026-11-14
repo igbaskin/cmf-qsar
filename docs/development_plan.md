@@ -5629,6 +5629,96 @@ concentration was driven, and the stage counts only discharges that ended at the
   cell is charged. None of these was run. And in three of the four cold conditions a factor of
   100 on the negative electrode lowers the capacity by 0.9 to 3.2 %, where a faster reaction
   was expected to raise it. This was not examined.
+  *The labels, first collection, 13 November 2026* (`examples/charge_transfer/` with its
+  README, `benchmarks/run_charge_transfer.py`, `benchmarks/results/charge_transfer/table.md`,
+  10 tests in `tests/test_charge_transfer.py`). The table holds 57 values from 12 studies. A
+  value is *primary* when it was read in the paper that measured it: 37 values, from three
+  open-access papers (Jow 2018, Keefe 2019, Keefe 2020, all CC BY 4.0) and one open proceedings
+  paper (Doi 2004). It is *secondary* when it was read in a paper that cites it: 20 values,
+  from the review of Jow 2018 and from a table of Keefe 2019. Nothing was written from memory.
+  The eight papers behind the secondary values are behind a paywall and have not been read.
+  *Part (a) of the gate is met.* In carbonate electrolytes with a formed film, the mean is
+  60.0 kJ/mol for graphite (16 values, standard deviation 5.6) and 69.4 kJ/mol for layered
+  oxides (11 values, standard deviation 12.6). The cell set holds 35 and 17.8 kJ/mol, which is
+  25 and 52 kJ/mol lower. With 60 kJ/mol on both electrodes the tolerance stage gives a loss of
+  5.2 to 7.8 % of the capacity in the four cold conditions, so the published constants are
+  outside the 5 % tolerance. The value of 50 to 70 kJ/mol that this entry quoted from memory
+  is confirmed for graphite by the papers that were read.
+  *Part (b) of the gate depends on what is varied.* Five studies measured the reference
+  system, graphite with a formed film in a carbonate electrolyte with ethylene carbonate and
+  no additive. Their values are 55 to 68 kJ/mol, with a standard deviation of 5.2 kJ/mol. That
+  is the repeatability, as an upper estimate, because the studies differ in the salt and in
+  the second solvent. Against it: a change of solvent where there is no film changes the value
+  by 27 kJ/mol on lithium titanate (propylene carbonate 64, EC:DMC 54, dimethyl carbonate 37)
+  and by 38 kJ/mol at a solid electrolyte (DMSO 69.9, propylene carbonate 57.3,
+  fluoroethylene carbonate 31.5). Both are secondary values. An additive changes it by 11
+  kJ/mol on graphite and by 39 kJ/mol on the NCA cathode in one study, where the two highest
+  cathode values are called inaccurate by the paper itself. Cycling lowers the value on
+  graphite by about 10 kJ/mol (0.59 to 0.48 eV in one study). So the solvent is a signal
+  several times larger than the repeatability, and an additive on graphite is not.
+  *What this decides.* For a cell with a carbonate electrolyte the model is not needed: the
+  mean of the collected values for each electrode is known to 6 to 13 kJ/mol, which is inside
+  the 15 kJ/mol the cold cell needs, and it should replace the constants of the cell set. A
+  model of the dependence on the electrolyte has a purpose only across classes of solvent
+  (carbonates, ethers, DMSO, fluorinated solvents, concentrated electrolytes), and for that
+  the table holds seven values measured where there is no film, all of them secondary. Part
+  (c) of the gate cannot be tested on that. *Next:* read the eight cited papers and the two
+  that hold more solvents (Xu 2010; Sawayama 2025, which is open but whose values are in a
+  figure and in its supporting information), then decide whether the number of solvents is
+  enough for part (c). One finding of the literature works against the hypothesis of this
+  item and is recorded as such: in a cell, the two electrodes share one electrolyte and still
+  have different activation energies (graphite about 67 against LiFePO4 33 kJ/mol in one
+  cited study), so the film and the electrode, and not only desolvation, set the barrier.
+  *The labels, second reading, 14 November 2026* (14 tests). The eleven papers that the first
+  collection could not read were supplied as files, and all were read. The table now holds 90
+  values from 16 studies. 88 are primary and 2 are secondary: two values of Yamada, Sagane
+  2009 that a table of Ishihara 2014 cites. Every secondary value of the first collection was
+  checked against its own paper, and two differ from it. For graphite in 1 M LiClO₄ in EC:DMC
+  1:1 the paper of Yamada 2009 gives 58 kJ/mol; the 55 kJ/mol of the review belongs to EC:DMC
+  1:9. For the film formed with vinylene carbonate the paper gives 56 kJ/mol and not 0.60 eV.
+  Four papers print most of their values only inside a figure (Xu 2007, Xu 2010, Abraham 2006,
+  Abraham 2008). One paper does not print them in the article: the five values of Sawayama
+  2025 were read from the image of its figure, to about 1 kJ/mol.
+  *Parts (a) and (b) with the values that were read.* Five studies of the reference system
+  give 56.0 to 68.5 kJ/mol, with a mean of 59.7 and a standard deviation of 5.0 kJ/mol. With a
+  formed film in a carbonate electrolyte the mean is 61.7 kJ/mol for graphite (18 values,
+  standard deviation 6.1) and 68.0 kJ/mol for layered oxides (12 values, standard deviation
+  13.0). That is 26.7 and 50.2 kJ/mol above the constants of the cell set. Part (a) stays met,
+  and the conclusion for a carbonate electrolyte stays: the mean per electrode is inside the
+  15 kJ/mol that a cold cell needs. Part (b) is met for a change of the class of solvent, and
+  now on primary values. A *series* is a set of values of one study that share the electrode
+  and the film and differ in the solvent. Inside a series the solvent changes the value by
+  27 kJ/mol on lithium titanate (Ishihara 2014), by 38 kJ/mol at a solid electrolyte (Abe
+  2005), by 29 kJ/mol on graphite in concentrated electrolytes (Sawayama 2025) and by 15 to
+  18 kJ/mol in four more series. The repeatability is 5 kJ/mol.
+  *Part (c): whether the solvents are enough.* The table holds 10 series with 36 values. They
+  hold 13 single solvents, and 5 of these were measured in two or more series: DMC, propylene
+  carbonate, THF, acetonitrile and water. That is enough to run the test of part (c) once.
+  With each series centred on its own mean, 26 independent differences remain, and holding
+  out one solvent at a time gives 13 groups. It is not enough to separate a field model from
+  the regression on the binding energy, for three reasons that the papers themselves give.
+  First, only one pair of solvents was measured in more than one series, DMC against EC:DMC
+  1:1, and the series do not agree on it. DMC is lower by 17 kJ/mol on a thin film of lithium
+  titanate (Ishihara 2014) and by 18 kJ/mol on graphite with a film formed in EC:DMC (Yamada
+  2009). It is lower by 1.4 kJ/mol on a composite electrode of lithium titanate (Xu 2010) and
+  by 4 kJ/mol on graphite with another film. So two laboratories measured the same pair on
+  the same electrode material with no film, and their results differ by 16 kJ/mol. That is
+  three times the repeatability of the reference system and as large as the effect.
+  Second, the value of one solvent moves between the series as much as the solvents differ
+  inside a series: propylene carbonate gives 46 to 64 kJ/mol in four series, acetonitrile 26
+  and 44 kJ/mol, and DMC 32 to 52 kJ/mol. The electrode, the film and the concentration of
+  the salt set the level, so only differences inside a series can be modelled.
+  Third, the largest series of single solvents (Sawayama 2025, five solvents) is described
+  by its authors with a linear regression on the calculated binding energy of Li⁺ with one
+  solvent molecule. That is the one-number reference of this item. And in the series of
+  Chekushkin 2021 on LiMn₂O₄ the order of the solvents does not follow their solvating
+  strength, as that paper states: water gives the lowest value.
+  *What this decides.* The expectation of this entry stands: part (c) is not likely to be
+  met. If the item is continued, the next step is the reference alone: the regression of the
+  centred values on the binding energy from BT4 for the 13 solvents, with one solvent held
+  out at a time. A field model is worth building only if that regression leaves an error
+  inside the series that is clearly above the repeatability of 5 kJ/mol. Still to be read:
+  Yamada, Sagane 2009, and the supporting information of Sawayama 2025.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -5658,8 +5748,15 @@ density, which is not predicted. Its tolerance stage was run the same day. The d
 capacity tolerates a factor of 10 on the exchange-current density under every condition, so
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
-10 % of BT9. BT12 therefore comes after BT9 and BT11, and its next step is to read the
-measured values from the papers, not to fit a model.
+10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
+November: 90 measured values from 16 studies, 88 of them read in the paper that measured
+them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
+68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
+carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
+classes of solvent the table holds 10 series with 13 single solvents. That is enough to test
+the regression on the binding energy, and not enough to separate a field model from it: the
+one pair of solvents that two laboratories measured on the same electrode material differs
+by 16 kJ/mol between them.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -8418,8 +8515,11 @@ equally blocked.
   diffusion coefficient needs a prediction under every condition and the other two only in
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
-  cold cell needs the activation energy of each electrode to about 15 kJ/mol; its labels have
-  not been collected.
+  cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
+  of 90 measured values (13 and 14 November) says that the constants of the cell set are 27
+  and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
+  electrolyte. The 13 single solvents of the table are enough to test the regression on the
+  binding energy and not enough to separate a field model from it.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and

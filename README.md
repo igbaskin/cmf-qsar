@@ -3450,6 +3450,18 @@ cell:
   17.8 kJ/mol, it loses 5.2 to 7.8 % of its capacity. A cold cell therefore needs each
   activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
   capacity only; the energy, the power and the charging of a cold cell were not run.
+- The measured activation energies were then collected from the literature
+  (`examples/charge_transfer/`, 90 values from 16 studies, each with its paper and the place
+  in it; `benchmarks/run_charge_transfer.py`). 88 of them were read in the paper that
+  measured them. In carbonate electrolytes the mean is 61.7 kJ/mol for graphite and
+  68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Five studies of
+  the same graphite system agree to 5.0 kJ/mol, so the mean per electrode is accurate enough
+  for a cold cell and no model is needed for a carbonate electrolyte. Inside one study a
+  change of solvent changes the value by 15 to 38 kJ/mol. The studies do not agree with each
+  other on it: with no surface film on lithium titanate, dimethyl carbonate is lower than its
+  mixture with ethylene carbonate by 17 kJ/mol in one study and by 1.4 kJ/mol in another. The
+  table holds 13 single solvents. That is enough to test a regression on the binding energy
+  of Li+ with the solvent, and not enough to show that a field model is better than it.
 
 ```bash
 python benchmarks/run_cellmodel.py             # 50 minutes after run_nebdft.py; needs pybamm

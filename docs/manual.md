@@ -14052,8 +14052,66 @@ when a cold cell is charged. None of these was run. And in three of the four col
 factor of 100 on the negative electrode lowers the capacity by 0.9 to 3.2 %, where a faster
 reaction was expected to raise it. This was not examined.
 
+#### The measured activation energies of charge transfer
+
+Plan item BT12 collects the measured activation energies from the literature
+(`examples/charge_transfer/`, 90 values from 16 studies) and
+`benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
+is *primary* when it was read in the paper that measured it (88 values) and *secondary* when
+it was read in a paper that cites it (2 values); the file names the paper and the place for
+every value.
+
+Five studies measured the same reference system: graphite with a formed surface film, in a
+carbonate electrolyte with ethylene carbonate and no additive. Their values are 56.0 to 68.5
+kJ/mol, with a mean of 59.7 and a standard deviation of 5.0 kJ/mol. That spread is the
+repeatability between laboratories, as an upper estimate.
+
+| Electrode, carbonate electrolyte, formed film | Values | Mean, kJ/mol | Standard deviation | Cell set, kJ/mol | Difference |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Negative: graphite | 18 | 61.7 | 6.1 | 35.0 | +26.7 |
+| Positive: layered oxides | 12 | 68.0 | 13.0 | 17.8 | +50.2 |
+
+The constants of the published cell set are far below the measured values. With 60 kJ/mol on
+both electrodes, the stage above gives a loss of 5.2 to 7.8 % of the capacity in the four cold
+conditions. The mean per electrode is accurate enough for a cold cell with a carbonate
+electrolyte, because the cell needs about 15 kJ/mol.
+
+A *series* is a set of values of one study that share the electrode and the surface film and
+differ in the solvent. The table holds 10 series with 36 values and 13 single solvents. Inside
+a series the solvent changes the value by far more than the repeatability. An additive on
+graphite changes it by 11 kJ/mol.
+
+| Series | Solvents | Lowest, kJ/mol | Highest, kJ/mol | Range |
+| --- | ---: | ---: | ---: | ---: |
+| Solid electrolyte, no film (Abe 2005) | 3 | 31.5 | 69.9 | 38.4 |
+| Graphite in concentrated electrolytes (Sawayama 2025) | 5 | 28.5 | 57.6 | 29.1 |
+| Lithium titanate thin film, no film (Ishihara 2014) | 3 | 37.0 | 64.0 | 27.0 |
+| Graphite, one film formed in EC:DMC (Yamada 2009) | 3 | 40.0 | 58.0 | 18.0 |
+| Graphite, film formed in each electrolyte (Xu 2007) | 4 | 53.1 | 71.1 | 18.0 |
+| LiMn2O4 (Chekushkin 2021) | 4 | 19.3 | 34.7 | 15.4 |
+| Lithium titanate composite, no film (Xu 2010) | 8 | 40.1 | 54.9 | 14.9 |
+
+The series do not agree with each other. Only one pair of solvents was measured in more than
+one series: dimethyl carbonate (DMC) against its 1:1 mixture with ethylene carbonate (EC).
+
+| Series | DMC minus EC:DMC 1:1, kJ/mol |
+| --- | ---: |
+| Lithium titanate thin film, no film (Ishihara 2014) | -17.0 |
+| Graphite, one film formed in EC:DMC (Yamada 2009) | -18.0 |
+| Graphite, one film formed with pentafluorostyrene (Yamada 2009) | -4.0 |
+| Lithium titanate composite, no film (Xu 2010) | -1.4 |
+
+Two laboratories measured this pair on the same electrode material with no film, and their
+results differ by 16 kJ/mol. That is three times the repeatability of the reference system.
+The value of one solvent also moves between the series: propylene carbonate gives 46 to 64
+kJ/mol in four series. So only differences inside a series can be modelled. The 13 single
+solvents are enough to test a regression on the binding energy of Li+ with the solvent, with
+one solvent held out at a time. They are not enough to show that a field model is better than
+that regression.
+
 ```bash
 python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py
+python benchmarks/run_charge_transfer.py   # the collected activation energies, seconds
 ```
 
 The run is in stages -- `--stage channels`, `reference`, `sample`, `stress`, `tolerance`, `exchange`, `finish` -- and each stage

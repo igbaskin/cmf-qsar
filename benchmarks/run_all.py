@@ -527,6 +527,17 @@ def registry() -> List[Benchmark]:
                   minutes="54",
                   report=lambda: _mod("run_cellmodel").report(),
                   tables=["cellmodel/table.md"]),
+        Benchmark("charge_transfer",
+                  "measured activation energies of charge transfer at an electrode, collected "
+                  "from the literature (plan item BT12): how well laboratories agree on one "
+                  "system, how much the electrolyte changes the value inside one study, and "
+                  "what the difference from the constants of the published cell set costs a "
+                  "cold cell; no model is fitted",
+                  "run_charge_transfer.py", "charge_transfer",
+                  compute=[[]],
+                  minutes="1",    # examples/charge_transfer, in the repository
+                  report=lambda: _mod("run_charge_transfer").report(),
+                  tables=["charge_transfer/table.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",
