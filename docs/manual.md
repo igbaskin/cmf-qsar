@@ -1803,7 +1803,7 @@ The same series gives two cautions. The first is about what the gain belongs to.
 Hirshfeld charges alone reaches 0.87 and 0.92, and a linear regression on the Hirshfeld charge of
 one ring carbon, the meta carbon for sigma-meta and the para carbon for sigma-para, reaches 0.89
 and 0.86. So the gain belongs to the charges, and on this series a field is not needed to collect
-it; the eighth tutorial makes the comparison. The second caution is about the structures. Until
+it; the seventh tutorial makes the comparison. The second caution is about the structures. Until
 14 November 2026 these two numbers were 0.79 and 0.78, because one record of the 95, the
 pentafluorosulfanyl group, held a structure that is not the molecule: no force field of RDKit
 holds that group, the embedded geometry had S-F distances from 1.19 to 2.49 Ã…, and the quantum
@@ -8543,7 +8543,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The seventh tutorial, `docs/tutorials/07_on_a_surface.ipynb`, makes
+this program adds to it yet. The eighth tutorial, `docs/tutorials/08_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -15993,10 +15993,10 @@ Twelve notebooks under `docs/tutorials/` take the library through the same groun
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
-built, molecules adsorbed on a metal surface, read with
-the surface kernel and compared with a count of the atoms near the metal, the Hammett
-constants of substituted benzenes, read from co-fields in the plane of the ring and compared
-with the charge of one ring carbon, the infrared spectra of benzoic acids as the samples,
+built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
+ring and compared with the charge of one ring carbon, molecules adsorbed on a metal surface,
+read with the surface kernel and compared with a count of the atoms near the metal, the
+infrared spectra of benzoic acids as the samples,
 read with the kernel of spectra and compared with the position of one band, a series of
 chiral catalysts in the frame of their reaction centre, with the enantioselectivity as the
 activity, the hops of a lithium ion in crystals, with the barrier of a hop read from the
