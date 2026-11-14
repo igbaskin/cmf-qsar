@@ -1,6 +1,6 @@
 {
- "commit": "dafc193c64d934b59f5423d6d1e13edf1f705268",
- "created": "2026-11-14T18:22:23",
+ "commit": "20adf001d860193a799fb2c6e7f5a240287ec2ee",
+ "created": "2026-11-14T21:03:25",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3360,8 +3360,8 @@
   "benchmarks/results/metal/cofield.json": "f28ada61c2526cd88222e5a363b873b152b784d9bd7967807459519d1c181753",
   "benchmarks/results/metal/data.json": "d271bb98f61a2b7ce3713d2f3fa9cbf21ced71e3686d06d914a20d04871446ca",
   "benchmarks/results/metal/iron.json": "2ec7d2391367acfa7a665f00a71aa60bfe7350390b6584b790f6b16312eadb62",
-  "benchmarks/results/metal/nickel.json": "ee43456cbf4de3b2bb417490169d8134c9ef63c5f5d04a0b4a1885b059593cae",
-  "benchmarks/results/metal/table.md": "b40773d20744cd42ff5c77a93aa30ee1f36d1a752c825a6f50c860bc4b715009",
+  "benchmarks/results/metal/nickel.json": "ca96403d7d1a04033f3ded1e98ce6bc7da67852f45e5e8ecb83bea660f406460",
+  "benchmarks/results/metal/table.md": "769e592081344539a36fb404777880f75410df7e69dd3871f63f65c404806bf7",
   "benchmarks/results/microstructure/2d51_n400_c10.json": "b540aa0373587c9e0c52e9c616b339c8e134615420563b9f9ab8ba62fb4b0d92",
   "benchmarks/results/microstructure/2d51_n400_c100.json": "969bea51cb001196f2101539ce12b9d846f7c1ec9bb7c4fdf09773e8a2adfcb0",
   "benchmarks/results/microstructure/3d21_n400_c10.json": "42432b2454be47b6d4b8758c9eda932f993801706d80a690ad44f326881f2620",
