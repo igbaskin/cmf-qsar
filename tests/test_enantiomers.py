@@ -271,3 +271,50 @@ def test_the_same_pair_measured_against_two_targets_stays_two_groups():
     assert R.pair_index(d) == [(0, 1), (2, 3)]
     one = {"group": ["t:P", "t:P"], "member": ["first", "first"]}
     assert R.pair_index(one) == []                                # a member missing: no pair
+
+
+# --------------------------------------------------------------------------- #
+# The geometry of a built structure
+# --------------------------------------------------------------------------- #
+def test_an_sf5_group_is_built_as_a_regular_octahedron():
+    # MMFF94 has no parameters for the group, so the files held the raw embedding of four pairs
+    # until 14 November 2026, with two fluorines 1.0 A apart
+    from cmfqsar.orca import geometry_faults
+
+    mol = B.embed("O=C(O)C1=Cc2cc(S(F)(F)(F)(F)F)ccc2O[C@@H]1C(F)(F)F")
+    assert mol is not None and geometry_faults(mol) == []
+    assert "SF5" in mol.GetProp("geometry_note")
+    r = np.array(mol.GetConformer().GetPositions())
+    s = [a for a in mol.GetAtoms() if a.GetSymbol() == "S"][0]
+    f = [n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "F"]
+    c = [n.GetIdx() for n in s.GetNeighbors() if n.GetSymbol() == "C"]
+    assert len(f) == 5 and len(c) == 1
+    assert np.allclose(np.linalg.norm(r[f] - r[s.GetIdx()], axis=1), 1.59, atol=1e-3)
+    assert np.linalg.norm(r[c[0]] - r[s.GetIdx()]) == pytest.approx(1.80, abs=1e-3)
+    between = [np.linalg.norm(r[i] - r[j]) for k, i in enumerate(f) for j in f[k + 1:]]
+    assert min(between) == pytest.approx(1.59 * np.sqrt(2.0), abs=1e-3)     # 90 degrees
+    # the rest of the molecule is refined: the CF3 group on the ring has its usual bond length
+    cf3 = mol.GetSubstructMatch(Chem.MolFromSmarts("[CX4](F)(F)F"))
+    assert np.linalg.norm(r[cf3[0]] - r[cf3[1]]) == pytest.approx(1.34, abs=0.03)
+    # and the configuration of the record is kept
+    assert [code for _i, code in B.cip_codes(mol)] == ["S"]
+
+
+def test_an_embedding_that_fails_the_geometry_check_is_made_again():
+    # with the seed of the builder this molecule comes out with the two carbons of its secondary
+    # amine on one line with the nitrogen, and MMFF94 does not leave that point
+    from cmfqsar.orca import geometry_faults
+
+    smiles = "Cc1nc2cccc(-c3cc4c([nH]3)CCNC4=O)c2nc1N[C@@H](C)C(N)=O"
+    raw = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    params = AllChem.ETKDGv3()
+    params.randomSeed = int(B.SEED) & 0x7FFFFFFF
+    assert AllChem.EmbedMolecule(raw, params) == 0
+    AllChem.MMFFOptimizeMolecule(raw, maxIters=500)
+    assert geometry_faults(raw) != []
+    mol = B.embed(smiles)
+    assert mol is not None and geometry_faults(mol) == []
+    assert mol.GetProp("geometry_note").startswith("embedding seed + 1")
+    # a molecule that passes at once carries no note
+    plain = B.embed(PROPRANOLOL[0])
+    assert not plain.HasProp("geometry_note")

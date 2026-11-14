@@ -1139,6 +1139,66 @@ def changed_bonds(mol: Chem.Mol, coords: Optional[np.ndarray] = None,
     return out
 
 
+#: the limits of :func:`geometry_faults`: the range of a bond length as a multiple of the sum of
+#: the covalent radii, and the shortest distance in angstrom of two atoms without a bond
+STRUCTURE_LIMITS = {"low": 0.7, "high": 1.3, "contact": 1.3}
+
+
+def geometry_faults(mol: Chem.Mol, coords: Optional[np.ndarray] = None,
+                    low: float = STRUCTURE_LIMITS["low"], high: float = STRUCTURE_LIMITS["high"],
+                    contact: float = STRUCTURE_LIMITS["contact"]) -> List[str]:
+    """What is wrong with the coordinates of `mol` as a structure of that molecule; an empty
+    list when nothing is.
+
+    Two tests.  Every bond length has to be between `low` and `high` times the sum of the
+    covalent radii of its two atoms (:func:`bond_length_ratios`); a bond outside the range is
+    listed with its length and that ratio, as ``bond S8-F10 2.46 A (1.52 of the covalent
+    radii)``.  And no two atoms without a bond between them may be closer than `contact`
+    angstrom; the closest such pair is listed as ``no bond H24-F27 0.86 A``.  Two hydrogens on
+    one carbon are 1.75 A apart, so 1.3 A is a distance that no pair of atoms of a real molecule
+    has.
+
+    The use is a check of a built structure before it is written to a file.  A force field
+    without parameters for a group, an embedding that puts a counter-ion on the molecule and an
+    optimisation that stops at a linear nitrogen all pass a model fit unnoticed, and all fail
+    here."""
+    r = np.asarray(mol.GetConformer().GetPositions() if coords is None else coords, float)
+    if len(r) < 2:
+        return []
+    atoms = list(mol.GetAtoms())
+    radius = np.array([_covalent_radius(a.GetAtomicNum()) for a in atoms])
+    d = np.linalg.norm(r[:, None, :] - r[None, :, :], axis=2)
+    bonded = Chem.GetAdjacencyMatrix(mol).astype(bool)
+
+    def label(i: int, j: int) -> str:
+        return f"{atoms[i].GetSymbol()}{i + 1}-{atoms[j].GetSymbol()}{j + 1}"
+
+    out = []
+    first, second = np.nonzero(np.triu(bonded, 1))
+    ratio = d[first, second] / (radius[first] + radius[second])
+    for k in np.flatnonzero((ratio < low) | (ratio > high)):
+        i, j = int(first[k]), int(second[k])
+        out.append(f"bond {label(i, j)} {float(d[i, j]):.2f} A "
+                   f"({float(ratio[k]):.2f} of the covalent radii)")
+    apart = np.where(bonded, np.inf, d)
+    np.fill_diagonal(apart, np.inf)
+    k = int(np.argmin(apart))
+    i, j = divmod(k, len(r))
+    if float(apart[i, j]) < contact:
+        out.append(f"no bond {label(i, j)} {float(apart[i, j]):.2f} A")
+    return out
+
+
+_RADII: Dict[int, float] = {}
+
+
+def _covalent_radius(z: int) -> float:
+    """The covalent radius RDKit gives for the atomic number `z`, kept after the first call."""
+    if z not in _RADII:
+        _RADII[z] = float(Chem.GetPeriodicTable().GetRcovalent(int(z)))
+    return _RADII[z]
+
+
 def bond_from_smarts(mol: Chem.Mol, smarts: str) -> Optional[Tuple[int, int]]:
     """The first two atoms of the first match of `smarts`, as the bond whose stretch is wanted.
 

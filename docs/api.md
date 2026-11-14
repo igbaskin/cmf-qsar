@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1277 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 124 modules, 246 classes with 814 public methods, and 1278 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -12612,6 +12612,24 @@ radii, each as a text such as `S1-F4 2.62`; an empty list when the molecule is w
 The use is a check after a geometry optimisation.  An optimisation that starts from a wrong
 geometry can end in another molecule or in fragments, and its frequencies are then not the
 frequencies of the molecule that was asked for.
+
+### `geometry_faults(mol: Chem.Mol, coords: Optional[np.ndarray]=None, low: float=STRUCTURE_LIMITS['low'], high: float=STRUCTURE_LIMITS['high'], contact: float=STRUCTURE_LIMITS['contact']) -> List[str]`
+
+What is wrong with the coordinates of `mol` as a structure of that molecule; an empty
+list when nothing is.
+
+Two tests.  Every bond length has to be between `low` and `high` times the sum of the
+covalent radii of its two atoms (`bond_length_ratios`); a bond outside the range is
+listed with its length and that ratio, as `bond S8-F10 2.46 A (1.52 of the covalent
+radii)`.  And no two atoms without a bond between them may be closer than `contact`
+angstrom; the closest such pair is listed as `no bond H24-F27 0.86 A`.  Two hydrogens on
+one carbon are 1.75 A apart, so 1.3 A is a distance that no pair of atoms of a real molecule
+has.
+
+The use is a check of a built structure before it is written to a file.  A force field
+without parameters for a group, an embedding that puts a counter-ion on the molecule and an
+optimisation that stops at a linear nitrogen all pass a model fit unnoticed, and all fail
+here.
 
 ### `bond_from_smarts(mol: Chem.Mol, smarts: str) -> Optional[Tuple[int, int]]`
 

@@ -160,6 +160,24 @@ def pair_up(rows):
     return out
 
 
+def without_counter_ions(mol):
+    """The compound alone: the largest fragment of `mol` by heavy atoms, and the SMILES of what
+    was left out (an empty string when the record is one molecule).
+
+    ChEMBL writes a salt as the compound and its counter-ion in one SMILES, for example
+    ``...N(C)C.Cl`` for a hydrochloride.  The counter-ion is not part of the ligand.  If it is
+    embedded with the compound, the two fragments have no bond between them and the embedding
+    places the chloride anywhere, often on top of an atom of the compound.  The file of
+    candidates written before 14 November 2026 held 30 such records, with a chloride 0.3 to
+    1.2 A from a heavy atom of the compound.
+    """
+    parts = Chem.GetMolFrags(mol, asMols=True)
+    if len(parts) < 2:
+        return mol, ""
+    parts = sorted(parts, key=lambda m: (-m.GetNumHeavyAtoms(), Chem.MolToSmiles(m)))
+    return parts[0], ".".join(Chem.MolToSmiles(m) for m in parts[1:])
+
+
 def embed(mol, seed=0xC0FFEE):
     m = Chem.AddHs(mol)
     params = AllChem.ETKDGv3()
@@ -202,10 +220,13 @@ def build(records, seed=0xC0FFEE, verbose=True):
         mol = Chem.MolFromSmiles(records[m]["smiles"])
         if mol is None:
             continue
+        mol, left_out = without_counter_ions(mol)
         got = embed(mol, seed)
         if got is None:
             continue
         got.SetProp("_Name", m)
+        if left_out:
+            got.SetProp("counter_ions_left_out", left_out)
         mols.append(got)
         kept.append(m)
     if verbose:
@@ -303,7 +324,11 @@ def candidates(trained, reference_mol, pool, seed=0xC0FFEE, verbose=True):
         if cid in trained:
             continue
         mol = Chem.MolFromSmiles(rec["smiles"])
-        if mol is None or not 15 <= mol.GetNumHeavyAtoms() <= 45:
+        if mol is None:
+            continue
+        # the size and the common-substructure rules below are applied to the compound alone
+        mol, left_out = without_counter_ions(mol)
+        if not 15 <= mol.GetNumHeavyAtoms() <= 45:
             continue
         res = rdFMCS.FindMCS([mol, reference_mol], timeout=MCS_TIMEOUT,
                              ringMatchesRingOnly=True, completeRingsOnly=False)
@@ -314,6 +339,8 @@ def candidates(trained, reference_mol, pool, seed=0xC0FFEE, verbose=True):
         if got is None:
             continue
         got.SetProp("_Name", cid)
+        if left_out:
+            got.SetProp("counter_ions_left_out", left_out)
         try:
             mcs_align(got, reference_mol, timeout=MCS_TIMEOUT)
         except Exception:

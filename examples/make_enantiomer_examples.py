@@ -70,6 +70,11 @@ from rdkit.Chem import AllChem
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, HERE)
+
+from cmfqsar.orca import geometry_faults  # noqa: E402
+from make_denmark_examples import sf5_stand_in  # noqa: E402
+from make_hammett_examples import regular_sf5  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -84,6 +89,9 @@ ONLY = ("molecule_chembl_id,canonical_smiles,assay_chembl_id,assay_description,"
 #: a target needs this many pairs before a file is written for it
 MIN_PAIRS = 10
 SEED = 0xC0FFEE
+#: how many embeddings are tried, with the seeds SEED, SEED + 1, ..., before a pair is refused
+#: because no structure passes the geometry check
+EMBED_TRIES = 5
 
 #: The targets, named by their UniProt accession so that no ChEMBL identifier is guessed, and
 #: fixed before any count was seen.  They are the large, well measured human single-protein
@@ -405,21 +413,74 @@ def one_assay_per_pair(found):
 # The two structures: one embedding and its reflection
 # --------------------------------------------------------------------------- #
 def embed(smiles, seed=SEED):
+    """One structure of the molecule that passes the geometry check, or None.
+
+    The structure is an ETKDG embedding refined with MMFF94.  Two things can make it a structure
+    that is not the molecule, and neither shows in a model score, so both are handled here.
+
+    * **An SF5 group.**  MMFF94 has no parameters for hexavalent sulfur, so the refinement did
+      nothing and the file held the raw embedding, with S-F lengths from 1.23 to 2.49 A where the
+      group has 1.59 and with two fluorines 1.0 A apart.  The molecule is now embedded and
+      refined with CF3 in place of the group (``make_denmark_examples.sf5_stand_in``) and the
+      group is then set to a regular octahedron (``make_hammett_examples.regular_sf5``).
+    * **A refinement that stops at a wrong stationary point.**  An embedding sometimes puts the
+      two carbons of a secondary amine on one line with the nitrogen.  The force on the
+      hydrogen is then zero by symmetry and MMFF94 reports convergence with a C-N-C angle of
+      180 degrees and an N-H length of 1.34 A.  The structure is checked
+      (:func:`cmfqsar.orca.geometry_faults`) and, if it fails, embedded again with the next
+      seed, up to ``EMBED_TRIES`` times.
+
+    A structure that needed either step says so in its ``geometry_note`` property.  The files
+    written before 14 November 2026 held four SF5 pairs and one pair with a linear nitrogen.
+    """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
     m = Chem.AddHs(mol)
-    params = AllChem.ETKDGv3()
-    params.randomSeed = int(seed) & 0x7FFFFFFF
-    if AllChem.EmbedMolecule(m, params) != 0:
-        return None
-    try:
-        AllChem.MMFFOptimizeMolecule(m, maxIters=500)
-    except Exception:
-        pass
-    # MMFF set-up can change the aromaticity flags in place, so the molecule is read again
-    Chem.SanitizeMol(m)
-    return m
+    stand_in, kept = sf5_stand_in(m)
+    first_fault = None
+    for attempt in range(EMBED_TRIES):
+        work = Chem.Mol(m if stand_in is None else stand_in)
+        params = AllChem.ETKDGv3()
+        params.randomSeed = (int(seed) + attempt) & 0x7FFFFFFF
+        if AllChem.EmbedMolecule(work, params) != 0:
+            if attempt == 0:
+                return None
+            continue
+        try:
+            AllChem.MMFFOptimizeMolecule(work, maxIters=500)
+        except Exception:
+            pass
+        if stand_in is None:
+            out = work
+        else:
+            # the atoms of the stand-in on the atoms of the molecule; the sulfur and the five
+            # fluorines are placed by `regular_sf5`, which reads the ring atoms only
+            out = Chem.Mol(m)
+            pos = np.zeros((m.GetNumAtoms(), 3))
+            pos[kept] = np.array(work.GetConformer().GetPositions(), float)
+            conf = Chem.Conformer(m.GetNumAtoms())
+            for atom, p in enumerate(pos):
+                conf.SetAtomPosition(atom, [float(v) for v in p])
+            out.RemoveAllConformers()
+            out.AddConformer(conf, assignId=True)
+        # MMFF set-up can change the aromaticity flags in place, so the molecule is read again
+        Chem.SanitizeMol(out)
+        notes = []
+        if stand_in is not None:
+            regular_sf5(out)
+            notes.append("refined with CF3 in place of SF5, the SF5 group then set to a "
+                         "regular octahedron")
+        faults = geometry_faults(out)
+        if not faults:
+            if attempt:
+                notes.append(f"embedding seed + {attempt}; the first embedding gave "
+                             f"{first_fault}")
+            if notes:
+                out.SetProp("geometry_note", "; ".join(notes))
+            return out
+        first_fault = first_fault or ", ".join(faults)
+    return None
 
 
 def reflected(mol):
