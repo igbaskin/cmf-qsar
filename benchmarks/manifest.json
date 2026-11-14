@@ -1,6 +1,6 @@
 {
- "commit": "a7fa048138eaabe067caa5018e1e11c79dbb9bda",
- "created": "2026-11-14T12:18:19",
+ "commit": "2ddd81343a7d25e9e53fe2cdfdc7aa83591188a1",
+ "created": "2026-11-14T13:38:24",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2515,7 +2515,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2707,8 +2707,10 @@
   "benchmarks/results/cellmodel/tolerance_exchange_298K_1C.json": "961c04a8bf5271dc69fb704680ca725c32d531db042fb74e626fa603d2966305",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2.5C.json": "86390539a1a95eee0307df54a178092effb93fcf5eaaa49c4984cc4c5d484c01",
   "benchmarks/results/cellmodel/tolerance_exchange_298K_2C.json": "58ed0e01cd32189f39359b29f558b865260a1dd2fbc05a9ba8e4fe2b1222b5e8",
+  "benchmarks/results/charge_transfer/binding.json": "0d47c155b367184a256cfe6bd98bbec1311975bb1e6557ad7d8ca53a5a7286c9",
+  "benchmarks/results/charge_transfer/regression.json": "4c0f72b40d8ef6c81f96f2220acd066e6eb41fba49c43e3eda1592bfa266e5ac",
   "benchmarks/results/charge_transfer/summary.json": "9254053791fa72f24e066f8c3ea8c012310f7160f9792893c178c2764e303c9f",
-  "benchmarks/results/charge_transfer/table.md": "68cfd5b0ef07a43d8322518e0cd64f7c1a3c545b5c5a27a4da82dc5e2fbc73e0",
+  "benchmarks/results/charge_transfer/table.md": "db5fa975420204895ccd0c5695576b9feb7ed67accb4c01bf568ff83fa516265",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
