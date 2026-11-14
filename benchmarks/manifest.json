@@ -1,6 +1,6 @@
 {
- "commit": "fec35047241a364456e13cf3789d26602b739da1",
- "created": "2026-11-13T22:48:43",
+ "commit": "d26eece95a3d4bd0e0d4fb26b9795d01a087cb65",
+ "created": "2026-11-14T03:31:35",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2904,6 +2904,15 @@
   "benchmarks/results/diagnose/corrosion_7_c1nncs1.json": "216bc5a674253413cdebefe033b2907108746bf451b5ada8895866ffa76b8ea6",
   "benchmarks/results/diagnose/corrosion_7_c1nncs1_validate.json": "c064321587a57434c5d93c505b759f75aaaf5ef7f74b1ca23fb03638890922a8",
   "benchmarks/results/diagnose/table.md": "7f913f3c07415747517481e846acb1d7f6072a84fb1ec07a92d549bc06f1fc5d",
+  "benchmarks/results/diffusion/run_full.json": "1efe6bbc2daf604801b992974fabc04a9cb48d8f1afcf34b136bf09bc14164d4",
+  "benchmarks/results/diffusion/run_scaled.json": "c72c960dc5218ba8e519637f62ba3da17cc786ffbda0407975e17305c5188027",
+  "benchmarks/results/diffusion/run_scaled_07.json": "9baf6ad8374fde45d9251b6b6ab474afd892110ef34e4c6f00ae6870cd82fd2f",
+  "benchmarks/results/diffusion/run_scaled_huge.json": "cd17c9161f4266edd7a36ed9b1bad22542c7ceb5817b3cebdcd415dbee4a7ec8",
+  "benchmarks/results/diffusion/run_scaled_large.json": "fcd9b9937aee4f1cdbbba7282b5467ab3b506b1dfbc5136912dee66ec60cadfe",
+  "benchmarks/results/diffusion/run_scaled_seed2.json": "13a9516042d73ff6384497b0fbe60f1d3dfea14d9c73ed3edfbcdbe3db6b0a80",
+  "benchmarks/results/diffusion/run_scaled_seed3.json": "a8c8b40240d0a09d496688674fa68ff1aec929b410e154d9a63fa80ce853893b",
+  "benchmarks/results/diffusion/run_scaled_small.json": "dd58d69fc2cdff5bffa1f2e022c4c021e322575407e1ec5a571f852d9befb203",
+  "benchmarks/results/diffusion/table.md": "39e0ee807d46888080aeae9137f8f43f9457284e0fe4ea2002d12ca22a4fafc9",
   "benchmarks/results/efield/check.json": "bbac59631cfd4f2a674e82c7933c1309a0f672ca68fe595392e82f21838ada36",
   "benchmarks/results/efield/hammett.json": "5852d7e02f1a31e9de2c02eb1893c027f7bb5d04ff114927bc54b3e77725f0c4",
   "benchmarks/results/efield/nickel.json": "bef3237e9997a25ca2009a998708d0189b7151ea2399ceb17d9444602b07a0fc",
