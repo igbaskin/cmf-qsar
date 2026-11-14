@@ -1,6 +1,6 @@
 {
- "commit": "11a7bdb33d023c3ca1c173f45519a90904d1e4a5",
- "created": "2026-11-15T00:39:05",
+ "commit": "9faa578a26551f9960c7f829e1413064eabc2791",
+ "created": "2026-11-15T00:45:06",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -37,6 +37,34 @@
   "examples/benzamides_synthetic.sdf": {
    "bytes": 361709,
    "sha256": "31b67ccb3c96adb53ffe5a6ea3836ae54b04e845cd620936b9033648b76fdc10"
+  },
+  "examples/buchwald/LICENSE.rxn_yields": {
+   "bytes": 1078,
+   "sha256": "4cd19ee3f984c4cf21234b36d941f80fe7cbac61b4a104a558813cd3948857ce"
+  },
+  "examples/buchwald/README.md": {
+   "bytes": 3497,
+   "sha256": "b07ffeac657b972884c8dc5bbb834de51694434629f651356e386b2f93207142"
+  },
+  "examples/buchwald/additives.sdf": {
+   "bytes": 79194,
+   "sha256": "6dfa7f64a67cfb0778b1cb5b3d90b66f4b8b897f3d9636f395c77a17d52bfad3"
+  },
+  "examples/buchwald/aryl_halides.sdf": {
+   "bytes": 83747,
+   "sha256": "9e93b6b66579e4f7f8d4b42cd682665dd08d2933cd3264f974323c6a77fd62ee"
+  },
+  "examples/buchwald/components.csv": {
+   "bytes": 1802,
+   "sha256": "61098f4388debd123947d9df74ea1faf8ac20bb8284f244c2095d9582dfcb547"
+  },
+  "examples/buchwald/reactions.csv": {
+   "bytes": 195762,
+   "sha256": "45ced4318b7b28f6448a30665dd08a7a3a80f466943f7a711f3f38796fa3a34c"
+  },
+  "examples/buchwald/splits.csv": {
+   "bytes": 340644,
+   "sha256": "bf400a41965c28fe7a9af569b96bce48efd15bd1097f8586ca080e2b59d2c1e0"
   },
   "examples/case_studies.py": {
    "bytes": 22633,
@@ -1330,6 +1358,10 @@
    "bytes": 26912,
    "sha256": "f93936b54b36064f6d05d71591b202ca612ce4dcf662c144845e63ecb1b7865f"
   },
+  "examples/make_buchwald_examples.py": {
+   "bytes": 17112,
+   "sha256": "9507fad88044c300fcf79b40a85f9b138797094b1bce3884f4772e004dd55512"
+  },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
    "sha256": "d907e0d56bb8cc513cf00b4f0d28ac8a72fd9b37b9e4c67fc97c7978252fe778"
@@ -2543,7 +2575,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2679,6 +2711,18 @@
   "benchmarks/results/bound/THER.json": "773ee02153406bc1bdd0b2db0231ddf8c6972446907317d1e3d168f3e897abd7",
   "benchmarks/results/bound/THR.json": "026543d4527170544705c0866999b1140bff11712fb076bfd32a31ce94cfd361",
   "benchmarks/results/bound/table.md": "03eb522ca33d7be8af31bfe2b1245ad47606dbd9bd2ddb3b2ee95c88e92b52f3",
+  "benchmarks/results/buchwald/cofields.png": "9f770e9e0ef1488fdc027e3682f83a6578b88454ffa0ddc40731f45de428327e",
+  "benchmarks/results/buchwald/cv_scatter.png": "74e35d92d8f59677e7115d51248634fd0627e618b46ad1d2e7003f8a8ff8fa84",
+  "benchmarks/results/buchwald/method_descriptor.json": "61ef4d14a28e0e9cd732fe42557fbb8fe36b19d0ccfd2fd98fb4d3c5f5e497ee",
+  "benchmarks/results/buchwald/method_fingerprint.json": "94cbe02a3bdca33372b51caf57e2721282f9bac795cce0b4be91a169c6e0cb8f",
+  "benchmarks/results/buchwald/method_frame.json": "b0a646c2b65a8c6c8527e92f628e59c94aef4be952699808353f2372e2beb15c",
+  "benchmarks/results/buchwald/method_frame_gauss.json": "5302517a3e760104c4ba04f78cf05e82995b7e8880b730a8880b35824e83ff41",
+  "benchmarks/results/buchwald/method_invariant.json": "083fbb4b736982fb47a48cced82ddc8ae1464a00ee5b24140aad071063942a3e",
+  "benchmarks/results/buchwald/method_invariant_gauss.json": "8611ee084ab403900267aedb4b2bdcede2c7db00d74b4fb6ea771888dcfe8123",
+  "benchmarks/results/buchwald/method_main.json": "9075fd93e9a7678f2a4fbe3aedc725523264225dc2302812b50639c04947a0fd",
+  "benchmarks/results/buchwald/method_onehot.json": "c6412153a78e8b95fb29daf96d0c962ae29e3b74be1be464ba4873d5206b2176",
+  "benchmarks/results/buchwald/summary.json": "e8ad9b12493927caf1cb42c89569b70409e66444d91a9a03b9c05a57cfeab62d",
+  "benchmarks/results/buchwald/table.md": "4f3c81f5115ccf7323a81f830d0f8dfb3e13e35930dab06d3d37085c16c91a2d",
   "benchmarks/results/calibration_transfer/table.md": "1f70df2ce070ac459e096a690586c4f2707232d720c9214410eaf5149138fe1d",
   "benchmarks/results/calibration_transfer/transfer.json": "8778fd3a933fbfca537edddddf51f70e4647ca0a08655e47a1acf3562b31f978",
   "benchmarks/results/cases/cdk8/cdk8.json": "769bc51b8336995a282281ecaa461e9c6ec4faa9344ce71f0f1bdfb121e2d288",
