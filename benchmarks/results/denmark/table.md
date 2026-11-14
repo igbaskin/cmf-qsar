@@ -23,4 +23,17 @@ Baselines: catalysts: endpoint mean over the training catalysts; reactions: cata
 | hydrophobic | 0.308 | 0.426 | +0.630 | 0.8 | 0.01 | +0.990 |
 | hba | 0.418 | 0.627 | +0.199 | 3 | 0.001 | +0.990 |
 | hbd | 0.484 | 0.630 | +0.192 | 3 | 0.1 | +0.990 |
-| invariant | 0.372 | 0.489 | +0.512 | 0.3 | 0.01 | +0.990 |
+| invariant (no frame; width 0.35 A, see below) | 0.299 | 0.387 | +0.696 | - | 0.01 | +0.980 |
+
+## The same five fields without a frame, width by width
+
+The rotation-invariant kernel (the autocorrelation of the fields) compares two catalysts by the distances between their atoms. It does not depend on the attenuation of the fields. Its own setting is the width along the distance axis; distances are resolved up to 16 A. The ridge and the correlation of the endpoints are chosen by the evidence for every width, and the row of the table above is the width with the highest evidence (0.35 A). The last column is the q2 of the five fields in the frame minus the q2 of this row, with a bootstrap interval over the catalysts.
+
+| Width, A | MAD | RMSE | q2 | lambda | rho | evidence | frame minus this, q2 [95 %] |
+|---|---|---|---|---|---|---|---|
+| 0.15 | 0.268 | 0.352 | +0.747 | 0.01 | +0.980 | -119.3 | +0.077 [+0.017, +0.170] |
+| 0.25 | 0.288 | 0.376 | +0.712 | 0.01 | +0.980 | -116.7 | +0.114 [+0.040, +0.243] |
+| 0.35 | 0.299 | 0.387 | +0.696 | 0.01 | +0.980 | -116.1 | +0.132 [+0.048, +0.264] |
+| 0.5 | 0.318 | 0.413 | +0.652 | 0.01 | +0.980 | -118.0 | +0.180 [+0.059, +0.356] |
+| 0.75 | 0.380 | 0.505 | +0.480 | 0.01 | +0.990 | -127.5 | +0.362 [+0.128, +0.755] |
+| 1.5 | 0.366 | 0.510 | +0.470 | 0.01 | +0.990 | -155.4 | +0.370 [+0.086, +0.900] |

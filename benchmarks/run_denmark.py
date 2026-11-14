@@ -36,6 +36,8 @@ What is measured, each with the baseline that predicts the same thing without a 
 Every number comes with the published comparison where there is one, a bootstrap interval over
 the catalysts for the difference from the baseline, and the field-by-field reading of the
 catalyst holdout (which field carries the selectivity), as the Hammett benchmark does.  The
+same five fields are also compared without a frame, through the rotation-invariant kernel, for
+six widths of that kernel, each with the interval of its difference from the framed model.  The
 co-field of the model, averaged over the endpoints, is drawn in the acid's frame.
 
 Usage
@@ -73,6 +75,11 @@ PHYSCHEM = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHAS = [0.3, 0.5, 0.8, 1.2, 2.0, 3.0]
 LAMS = [1e-3, 1e-2, 0.1, 1.0, 10.0]
 RHOS = [0.0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
+#: the kernel without a frame (the autocorrelation of the fields): the widths tried along its
+#: distance axis, in A, and the longest distance it resolves.  Until 14 November 2026 only the
+#: default width of 0.75 A was run, which is far from the best one on this series.
+AC_WIDTHS = [0.15, 0.25, 0.35, 0.5, 0.75, 1.5]
+AC_D_MAX = 16.0
 IMINES = ["1", "2", "3", "4", "5"]
 THIOLS = ["A", "B", "C", "D", "E"]
 PUBLISHED = {"external catalysts": 0.211, "new substrate combinations": 0.161}
@@ -137,13 +144,15 @@ def load_catalysts(path: str, ensemble: bool):
 
 
 def catalyst_model(mols, names, fields: Sequence[str], alpha: float, ensemble: bool,
-                   source: str = "fields") -> Tuple[np.ndarray, CMFModel, AtomTable]:
+                   source: str = "fields",
+                   ac_sigma: Optional[float] = None) -> Tuple[np.ndarray, CMFModel, AtomTable]:
     fs = FieldSet.create(physchem=list(fields), alpha=alpha,
                          conformers="ensemble" if ensemble else "single")
     mf = [build_fields(m, fs, name=n) for m, n in zip(mols, names)]
     table = AtomTable.from_molecules(mf)
+    extra = {} if ac_sigma is None else {"ac_sigma": float(ac_sigma), "ac_d_max": AC_D_MAX}
     model = CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source=source,
-                     normalize=(source != "fields"))
+                     normalize=(source != "fields"), **extra)
     K = model.training_kernel(table)
     return K, model, table
 
@@ -519,22 +528,42 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     # ---- which field carries it: the catalyst holdout, one field at a time, and no frame
     print("field by field (leave-one-catalyst-out, one correlation)", flush=True)
-    for fname in PHYSCHEM + ["invariant"]:
+    for fname in PHYSCHEM:
         ks = {}
         for alpha in alphas:
-            if fname == "invariant":
-                K, _, _ = catalyst_model(mols, names, PHYSCHEM, alpha, ensemble=not a.single,
-                                         source="autocorrelation")
-            else:
-                K, _, _ = catalyst_model(mols, names, [fname], alpha, ensemble=not a.single)
+            K, _, _ = catalyst_model(mols, names, [fname], alpha, ensemble=not a.single)
             ks[alpha] = K
-            if fname == "invariant":
-                break
         sel = choose_rho(ks, obs, lams)
         p = cv_catalysts(ks[sel["alpha"]], obs, sel["T"], sel["lam"])
         s = scores(y, p)
         results["fields"][fname] = {**s, "alpha": sel["alpha"], "lam": sel["lam"], "rho": sel["rho"]}
         print(report_line(fname, s), flush=True)
+
+    # ---- the same five fields without a frame.  The autocorrelation kernel does not depend on
+    # the attenuation; its own setting is the width along the distance axis, and every width is
+    # reported, so that the comparison with the frame does not rest on one choice of it
+    ks, per_width, held_out = {}, {}, {}
+    for width in AC_WIDTHS:
+        ks[width], _, _ = catalyst_model(mols, names, PHYSCHEM, alphas[0], ensemble=not a.single,
+                                         source="autocorrelation", ac_sigma=width)
+        sel = choose_rho({width: ks[width]}, obs, lams)
+        held_out[width] = cv_catalysts(ks[width], obs, sel["T"], sel["lam"])
+        per_width[width] = {**scores(y, held_out[width]), "lam": sel["lam"], "rho": sel["rho"],
+                            "evidence": sel["evidence"]}
+        print(report_line(f"invariant, width {width:g} A", per_width[width]), flush=True)
+    chosen = max(per_width, key=lambda w: per_width[w]["evidence"])     # by the evidence
+    results["fields"]["invariant"] = {**{k: v for k, v in per_width[chosen].items() if k != "evidence"},
+                                      "alpha": None, "width": float(chosen)}
+    framed = np.array(splits["catalysts"]["models"]["one correlation"]["predicted"])
+    results["invariant"] = {
+        "d_max": AC_D_MAX, "chosen_width": float(chosen),
+        "widths": {f"{w:g}": {**per_width[w],
+                              "frame_minus_this": bootstrap_catalysts(obs, framed, held_out[w],
+                                                                      runs=runs)}
+                   for w in AC_WIDTHS}}
+    b = results["invariant"]["widths"][f"{chosen:g}"]["frame_minus_this"]
+    print(f"    the width with the highest evidence is {chosen:g} A; five fields in the frame minus "
+          f"it: q2 {b['q2_difference']:+.3f} [{b['q2_low']:+.3f}, {b['q2_high']:+.3f}]", flush=True)
 
     # ---- the co-field, averaged over the endpoints, in the acid's frame
     model, table = models[one["alpha"]], tables[one["alpha"]]
@@ -583,8 +612,29 @@ def write_table(res: dict, path: str) -> None:
               "## Which field carries the selectivity (catalysts held out, one correlation)", "",
               "| Kernel | MAD | RMSE | q2 | alpha | lambda | rho |", "|---|---|---|---|---|---|---|"]
     for f, s in res["fields"].items():
-        lines.append(f"| {f} | {s['mad']:.3f} | {s['rmse']:.3f} | {s['q2']:+.3f} | {s['alpha']:g} | "
+        alpha = "-" if s["alpha"] is None else f"{s['alpha']:g}"
+        label = f if "width" not in s else f"{f} (no frame; width {s['width']:g} A, see below)"
+        lines.append(f"| {label} | {s['mad']:.3f} | {s['rmse']:.3f} | {s['q2']:+.3f} | {alpha} | "
                      f"{s['lam']:g} | {s['rho']:+.3f} |")
+    inv = res.get("invariant")
+    if inv:
+        lines += ["", "## The same five fields without a frame, width by width", "",
+                  "The rotation-invariant kernel (the autocorrelation of the fields) compares two "
+                  "catalysts by the distances between their atoms. It does not depend on the "
+                  "attenuation of the fields. Its own setting is the width along the distance "
+                  f"axis; distances are resolved up to {inv['d_max']:g} A. The ridge and the "
+                  "correlation of the endpoints are chosen by the evidence for every width, and "
+                  "the row of the table above is the width with the highest evidence "
+                  f"({inv['chosen_width']:g} A). The last column is the q2 of the five fields in "
+                  "the frame minus the q2 of this row, with a bootstrap interval over the "
+                  "catalysts.", "",
+                  "| Width, A | MAD | RMSE | q2 | lambda | rho | evidence | frame minus this, q2 [95 %] |",
+                  "|---|---|---|---|---|---|---|---|"]
+        for w, s in inv["widths"].items():
+            b = s["frame_minus_this"]
+            lines.append(f"| {w} | {s['mad']:.3f} | {s['rmse']:.3f} | {s['q2']:+.3f} | {s['lam']:g} | "
+                         f"{s['rho']:+.3f} | {s['evidence']:.1f} | {b['q2_difference']:+.3f} "
+                         f"[{b['q2_low']:+.3f}, {b['q2_high']:+.3f}] |")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
 

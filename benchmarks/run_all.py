@@ -324,7 +324,7 @@ def registry() -> List[Benchmark]:
         Benchmark("denmark",
                   "a kinetic selectivity as the activity: 43 chiral phosphoric acids on 25 "
                   "substrate combinations, the frame measured against the invariant kernel",
-                  "run_denmark.py", "denmark", compute=[[]], minutes="5",
+                  "run_denmark.py", "denmark", compute=[[]], minutes="7",
                   report=lambda: _mod("run_denmark").write_table(
                       _load(_r("denmark/summary.json")), _r("denmark/table.md")),
                   tables=["denmark/table.md"],

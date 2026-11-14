@@ -3166,20 +3166,36 @@ predicts the same thing without a field, in kcal/mol:
 
 The field model is at the published accuracy on both kinds of split the paper reports. What the
 paper could not measure, and this program can, is what the frame is worth: on the catalyst
-holdout the steric field alone gives q² 0.76, the hydrophobic 0.63, the electrostatic 0.34, and
-the same five fields compared without a frame, through the rotation-invariant kernel, 0.51
-against 0.82 with the frame. The selectivity is steric, and the frame is a large part of the
-result.
+holdout the steric field alone gives q² 0.76, the hydrophobic 0.63 and the electrostatic 0.34.
+The same five fields compared without a frame, through the rotation-invariant kernel, give 0.70
+where the frame gives 0.82: a difference of +0.13 [+0.05, +0.26] in a bootstrap over the
+catalysts. The selectivity is steric, and the frame adds a part that is measured and is not
+large.
 
-One structure of the 43 was faulty until 14 November 2026, and the fault is worth knowing. The
-catalyst with pentafluorosulfanyl groups was minimised with UFF, because MMFF94 has no parameters
-for the group, and UFF moved its fluorines 6 to 8 Å from the sulfur. The model with all five
-fields gave the same score with that structure, 0.82. The comparison without a frame did not: it
-gave 0.26, and this section said that the frame is most of the result. So the score of the full
-model does not show a faulty structure, and a comparison between two descriptions can depend on
-one molecule. The builder now finds the conformers of that catalyst with CF3 in place of each SF5
-group and builds the groups as regular octahedra, and a test checks every bond length of the
-files.
+The invariant kernel has one setting of its own, the width along its distance axis, and the
+comparison depends on it. `benchmarks/results/denmark/table.md` gives every width:
+
+| Width of the invariant kernel, Å | q² without a frame | the frame minus this [95 %] |
+|---|---|---|
+| 0.15 | 0.75 | +0.08 [+0.02, +0.17] |
+| 0.35, chosen by the evidence | 0.70 | +0.13 [+0.05, +0.26] |
+| 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
+
+The interval excludes zero at every width, so the frame is worth something on this series. How
+much depends on a setting of the kernel it is compared with.
+
+**Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
+2026 this section gave 0.26 for the invariant kernel and said that the frame is most of the
+result. First, one structure of the 43 was not the molecule. The catalyst with
+pentafluorosulfanyl groups had been minimised with UFF, because MMFF94 has no parameters for the
+group, and UFF moved its fluorines 6 to 8 Å from the sulfur. The model with all five fields gave
+the same score with that structure, 0.82; the invariant kernel gave 0.26 with it and gives 0.51
+without it, at the same width. The builder now finds the conformers of that catalyst with CF3 in
+place of each SF5 group and builds the groups as regular octahedra, and a test checks every bond
+length of the files. Second, the invariant kernel had been run at its default width only, while
+the attenuation of the kernels in the frame was chosen from six values. So the score of a full
+model does not show a faulty structure, a comparison between two descriptions can depend on one
+molecule, and a reference has to be given the same search as the model that it is compared with.
 
 **Reading the co-field.** Averaged over the 25 endpoints and drawn in the acid's frame
 (`benchmarks/results/denmark/cofields.png`), the steric co-field is positive at the 3,3' ipso

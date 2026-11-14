@@ -5297,8 +5297,8 @@ catalysts) reached 0.211 kcal/mol on the 19 catalysts it had not seen and 0.161 
 combinations of the catalysts it had. The field model, with 42 training catalysts rather than 24,
 reaches 0.224 on a catalyst it has not seen and 0.149 to 0.164 on a reaction of a catalyst it
 has; the first is the same accuracy on a related but not identical split, the second is the
-same accuracy on the same kind of split. The reading that matters is what the frame is worth,
-measured on the catalyst holdout one kernel at a time:
+same accuracy on the same kind of split. The second reading is which field carries the
+selectivity and what the frame is worth, measured on the catalyst holdout one kernel at a time:
 
 | Kernel | MAD | q² |
 |---|---|---|
@@ -5308,23 +5308,35 @@ measured on the catalyst holdout one kernel at a time:
 | electrostatic alone | 0.404 | 0.34 |
 | hydrogen-bond acceptor alone | 0.418 | 0.20 |
 | hydrogen-bond donor alone | 0.484 | 0.19 |
-| the invariant autocorrelation kernel, no frame | 0.372 | 0.51 |
+| the invariant autocorrelation kernel, no frame (width 0.35 Å) | 0.299 | 0.70 |
 
-The selectivity is steric, as the published descriptor said, and the frame is a large part of the
-result: the same five fields compared without a frame, through the rotation-invariant kernel that
-the host–guest and crystal sections use, explain 0.51 of the variance where the frame gives 0.82.
-On the Hammett series the frame was beyond doubt and the question was which field; here the frame
-is the claim, and it is measured.
+The selectivity is steric, as the published descriptor said. The frame adds to it, and the gain is
+measured: the same five fields compared without a frame, through the rotation-invariant kernel
+that the host–guest and crystal sections use, give q² 0.70 where the frame gives 0.82, a
+difference of +0.13 [+0.05, +0.26] in a bootstrap over the catalysts. The invariant kernel has one
+setting of its own, the width along its distance axis, and its score depends on it: 0.75 at
+0.15 Å, 0.70 at 0.35 Å, which the evidence chooses, and 0.48 at the default of 0.75 Å. The
+interval of the difference excludes zero at every width
+(`benchmarks/results/denmark/table.md`). On the Hammett series the frame was beyond doubt and the
+question was which field; here the worth of the frame is the question, and it is measured.
 
-**What one faulty structure had cost.** Until 14 November 2026 the structure of one catalyst of
-the 43, the one with SF5 groups, was not the molecule: its fluorines lay 6 to 8 Å from the sulfur.
-The model with all five fields did not show it (0.224 and 0.82 before and after the repair). Three
-numbers of the table above did. The invariant kernel gave 0.26, and this text said that the fields
-without a frame lose three quarters of the explained variance; the loss is 0.31 of 0.82. The
-hydrogen-bond acceptor field alone gave −3.4, and this text explained that number by a kernel that
-is nearly constant; the explanation was wrong, and the number came from fluorine atoms far from
-their molecule. The electrostatic field alone gave 0.41. A control run of the present program on
-the old files reproduces the old numbers exactly, so the repair is the only cause.
+**Two faults that had made the frame look worth more.** Until 14 November 2026 this section gave
+0.26 for the invariant kernel and said that the fields without a frame lose three quarters of the
+explained variance. Two things were wrong, and neither showed in the score of the model with all
+five fields, which was 0.224 and 0.82 throughout.
+
+- The structure of one catalyst of the 43, the one with SF5 groups, was not the molecule: its
+  fluorines lay 6 to 8 Å from the sulfur. With the structure repaired the invariant kernel gives
+  0.51 at the same width. The hydrogen-bond acceptor field alone gave −3.4 with that structure,
+  and this text explained the number by a kernel that is nearly constant. The explanation was
+  wrong: the number came from fluorine atoms far from their molecule. The electrostatic field
+  alone gave 0.41.
+- The invariant kernel was run at its default width only, while the kernels in the frame had
+  their attenuation chosen from six values. With its width searched too it gives 0.70.
+
+A control run of the program on the old files reproduces the old numbers exactly, so these two
+are the causes. A reference has to be given the same search as the model that it is compared
+with.
 
 **What the co-field says** (`benchmarks/results/denmark/cofields.png`, the mean over the 25
 endpoints, drawn in the acid's frame): the steric co-field is positive in two lobes at x ≈ ±4.5 Å
@@ -5348,7 +5360,7 @@ nothing. A field of the substrate itself, aligned on its reacting group, is the 
 carry a new thiol, and it is the next measurement.
 
 The build takes 9 minutes (30 conformers of 43 catalysts of up to 93 heavy atoms) and the
-benchmark 4.5 minutes.
+benchmark 7 minutes.
 
 ```bash
 python examples/make_denmark_examples.py --fetch

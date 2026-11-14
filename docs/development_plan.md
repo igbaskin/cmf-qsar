@@ -6342,9 +6342,16 @@ What it leaves open, in order:
   present program on the old files reproduces the stored summary exactly, so the changes are the
   repair. The numbers above are those of the first measurement. All five fields: unchanged, MAD
   0.224 and q2 0.82 on the catalyst holdout. Field by field: electrostatic 0.34 (was 0.41), the
-  hydrogen-bond acceptor field 0.20 (was -3.4), and **the rotation-invariant kernel 0.51 (was
-  0.26)**. So the frame is a large part of the result and not most of it, and the sentence
-  "the frame is the result" above overstated it because of one molecule.
+  hydrogen-bond acceptor field 0.20 (was -3.4), and the rotation-invariant kernel 0.51 (was
+  0.26) at the same width.
+  **The invariant kernel given a search of its own, the same day.** It had been run at its
+  default width of 0.75 A only, while the attenuation of the framed kernels was chosen from six
+  values. `benchmarks/run_denmark.py` now runs six widths, reports each, and takes the one with
+  the highest evidence: q2 0.75 at 0.15 A, **0.70 at 0.35 A (chosen)**, 0.48 at 0.75 A. The five
+  fields in the frame minus the chosen one: **+0.13 [+0.05, +0.26]** over the catalysts, and the
+  interval excludes zero at every width. So the frame is worth a measured and modest part, and
+  the sentence "the frame is the result" above overstated it twice: by one faulty molecule and
+  by a reference that was not tuned.
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
