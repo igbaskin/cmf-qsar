@@ -318,3 +318,47 @@ def test_an_embedding_that_fails_the_geometry_check_is_made_again():
     # a molecule that passes at once carries no note
     plain = B.embed(PROPRANOLOL[0])
     assert not plain.HasProp("geometry_note")
+
+
+# --------------------------------------------------------------------------- #
+# The cheap reference: the configuration code at one centre (item MC3, 14 November 2026)
+# --------------------------------------------------------------------------- #
+def test_the_two_members_of_a_pair_have_opposite_codes_at_the_same_centre():
+    ref = Chem.AddHs(Chem.MolFromSmiles(PROPRANOLOL[0]))
+    assert AllChem.EmbedMolecule(ref, randomSeed=3) == 0
+    mirror = _reflected(ref)
+    a = R.reference_codes(ref, R.stereocentres(ref))
+    b = R.reference_codes(mirror, R.stereocentres(mirror))
+    assert {a["lowest"], b["lowest"]} == {"R", "S"}
+    assert a["lowest"] == a["highest"] and b["lowest"] == b["highest"]     # one stereocentre: no choice
+
+
+def test_a_molecule_without_a_stereocentre_has_no_code():
+    flat = Chem.AddHs(Chem.MolFromSmiles("CCO"))
+    AllChem.EmbedMolecule(flat, randomSeed=3)
+    assert R.reference_codes(flat, set()) == {"lowest": None, "highest": None}
+
+
+def test_the_rule_names_the_preferred_code_and_says_when_it_cannot():
+    assert R.preferred_code({"R": 3, "S": 1}) == "R"
+    assert R.preferred_code({"R": 0, "S": 2}) == "S"
+    assert R.preferred_code({"R": 2, "S": 2}) is None
+    assert R.rule_guess("R", "S", {"R": 3, "S": 1}) == 1.0
+    assert R.rule_guess("S", "R", {"R": 3, "S": 1}) == 0.0
+    assert R.rule_guess("R", "S", {"R": 2, "S": 2}) == 0.5           # a tie in the training pairs
+    assert R.rule_guess(None, "S", {"R": 3, "S": 1}) == 0.5          # no code
+    assert R.rule_guess("R", "R", {"R": 3, "S": 1}) == 0.5           # not opposite codes
+
+
+def test_the_score_of_one_pair_for_the_rule_and_for_the_model():
+    assert R._share_of(1.0, 0.7) == 1.0 and R._share_of(1.0, -0.7) == 0.0
+    assert R._share_of(0.0, -0.7) == 1.0 and R._share_of(0.5, -0.7) == 0.5
+    assert R._model_share(0.4, 1.0) == 1.0 and R._model_share(0.4, -1.0) == 0.0
+    assert R._model_share(0.0, 1.0) == 0.5                           # a forced tie is half a success
+
+
+def test_the_paired_difference_of_two_lists_of_scores():
+    a, b = np.array([1.0, 1.0, 0.0, 1.0]), np.array([0.0, 1.0, 0.0, 0.0])
+    got = R._paired_difference(a, b, draws=200, seed=0)
+    assert got["mean"] == pytest.approx(0.5)
+    assert got["low"] <= got["mean"] <= got["high"]

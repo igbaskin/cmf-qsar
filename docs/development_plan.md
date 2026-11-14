@@ -8374,6 +8374,20 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   exposed it: the blind description scored 47.9 % where it has to score 50.0 %. The configuration
   is now removed before the scaffold is read, and `check_groups` refuses a run in which any pair
   would be split.
+  *A cheap reference, added 14 November 2026,* while the tenth tutorial was written. The channels
+  had been compared with the exact null of 50.0 % only. A rule that learns one bit for each
+  target, whether the R or the S member of a pair was the better one more often among the training
+  pairs, read at one stereocentre, names the better enantiomer in 58.3 % of the 1,144 pairs
+  that differ by a log unit or more when it reads the centre of lowest canonical rank, and in
+  54.8 % when it reads the centre of highest rank, against 59.1 % for the channels. The channels
+  minus the rules: +0.9 points (-2.7 to +4.5) and +4.4 points (+1.1 to +7.6). On the 676 pairs
+  with one stereocentre, where no centre is chosen: +2.7 points (-1.6 to +7.1) and +3.8 points
+  (-0.4 to +8.1). The two agree on the better member in 52 % of the pairs, so they do not read
+  the same thing. The localisation at the stereocentre and the exact null stand; the channels are
+  not shown to read more than a configuration label except on a few targets (beta-2 adrenergic
+  93.6 % against 66.7 %). `run_enantiomers.py --reference` makes the comparison from the saved
+  result in 35 seconds. Whether the rule and the channels together beat each alone was not
+  tried.
   *Open:* the difference inside a pair is predicted as an ordering and not as a quantity, so a
   eudismic ratio is not yet a number this program predicts; the structures are single
   conformations, and a receptor may select different conformations of the two enantiomers, which a

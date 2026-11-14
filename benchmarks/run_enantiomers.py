@@ -38,9 +38,18 @@ atoms that RDKit calls stereocentres of the structure, and every centre except t
 description works the way it claims to, the stereocentres alone should be enough and the rest
 should carry little.
 
+A cheap reference
+-----------------
+The channels are also compared with a rule that learns one bit for each target: whether the R or
+the S member of a pair was the better one more often among the training pairs, read at one
+stereocentre (`configuration_reference`).  It needs no field and no kernel.  It was added on
+14 November 2026, because a share above one half says that something is read, and not that the
+channels read more than a configuration label.
+
 Usage
 -----
     python benchmarks/run_enantiomers.py
+    python benchmarks/run_enantiomers.py --reference     # only the rule, from the saved result
     python benchmarks/run_enantiomers.py --report
 """
 from __future__ import annotations
@@ -457,6 +466,175 @@ def pooled_ranking(rows, part, name, margins=MARGINS):
     return ranking(flat, truth, pairs, margins=margins)
 
 
+# --------------------------------------------------------------------------- #
+# A cheap reference: which configuration a target prefers
+# --------------------------------------------------------------------------- #
+#: The model whose shares the rule is compared with: the headline of this item, the channels read
+#: at the stereocentres, with whole scaffolds held out.
+REFERENCE_MODEL = ("stereocentres only", "scaffolds held out")
+#: The rule reads the configuration code at one stereocentre.  A pair of molecules with one
+#: stereocentre has no other choice.  With several, the centre is chosen by its canonical rank,
+#: and both ends of the ranking are reported, so that the result does not rest on one choice.
+REFERENCE_PICKS = ("lowest", "highest")
+SUBSETS = ("all pairs", "one stereocentre", "two or more stereocentres")
+
+
+def reference_codes(mol, centres):
+    """The configuration code, R or S, at the stereocentre of lowest and of highest canonical rank.
+
+    The rank is taken on the molecule without its configuration, so a pair of mirror images
+    gives the same rank to the same atom in both members, and the two members get opposite
+    codes at it.  A code is ``None`` where RDKit gives none.
+    """
+    none = {pick: None for pick in REFERENCE_PICKS}
+    if not centres:
+        return none
+    flat = Chem.Mol(mol)
+    Chem.RemoveStereochemistry(flat)
+    ranks = list(Chem.CanonicalRankAtoms(flat, breakTies=False))
+    probe = Chem.Mol(mol)
+    try:
+        Chem.AssignStereochemistryFrom3D(probe)
+    except Exception:
+        return none
+    out = {}
+    for pick, choose in (("lowest", min), ("highest", max)):
+        atom = probe.GetAtomWithIdx(choose(centres, key=lambda a: ranks[a]))
+        out[pick] = atom.GetProp("_CIPCode") if atom.HasProp("_CIPCode") else None
+    return out
+
+
+def preferred_code(votes):
+    """The code that was the better enantiomer more often in the training pairs; None for a tie."""
+    if votes.get("R", 0) == votes.get("S", 0):
+        return None
+    return "R" if votes["R"] > votes["S"] else "S"
+
+
+def rule_guess(code, other, votes):
+    """1 if the rule names this member the better one, 0 if it names the other, one half if it cannot.
+
+    It cannot when the training pairs are tied, when a code is missing, or when the two members do
+    not have opposite codes at the chosen centre.
+    """
+    want = preferred_code(votes)
+    if want is None or code not in ("R", "S") or other not in ("R", "S") or code == other:
+        return 0.5
+    return 1.0 if code == want else 0.0
+
+
+def _share_of(guess, difference):
+    """The score of one pair for a guess that the first member is the better one."""
+    if guess == 0.5:
+        return 0.5
+    return guess if difference > 0 else 1.0 - guess
+
+
+def _model_share(predicted, measured):
+    return 0.5 if abs(predicted) <= TIE else float(np.sign(predicted) == np.sign(measured))
+
+
+def _paired_difference(a, b, draws, seed):
+    """The mean of a minus b over pairs, with a 95 % interval from a bootstrap over the pairs."""
+    d = np.asarray(a, float) - np.asarray(b, float)
+    rng = np.random.RandomState(seed)
+    boot = [d[rng.randint(0, len(d), len(d))].mean() for _ in range(draws)]
+    return {"mean": float(d.mean()), "low": float(np.percentile(boot, 2.5)),
+            "high": float(np.percentile(boot, 97.5))}
+
+
+def configuration_reference(sets, rows, folds=FOLDS, seed=SEED, draws=4000):
+    """The ranking of the better enantiomer by a rule that reads one configuration code.
+
+    The model learns what the channels teach it about the difference inside a pair.  The rule
+    learns one bit for each target: whether the R or the S member was the better one more often
+    among the training pairs, read at one stereocentre.  It is scored on the same held-out pairs
+    as the model, with the same folds (whole scaffolds, ten folds), so the two shares are
+    counted on the same pairs.  `rows` is ``difference`` of the saved result: the predictions of
+    the model are read from it and not made again.
+    """
+    by_target = {r["set"]: r for r in rows}
+    first, grouping = REFERENCE_MODEL
+    records = []
+    for d in sets:
+        if d["target"] not in by_target:
+            continue
+        pairs = pair_index(d)
+        model = by_target[d["target"]]["variants"][first][grouping]["differences"]
+        if len(model) != len(pairs):
+            raise SystemExit(f"{d['target']}: the saved result holds {len(model)} held-out pairs "
+                             f"and the data hold {len(pairs)}; run the measurement again")
+        codes = [reference_codes(m, c) for m, c in zip(d["mols"], d["centres"])]
+        groups = scaffold_groups(d["mols"])
+        check_groups(groups, pairs)
+        y = d["y"]
+        for tr, te in group_folds(groups, folds=folds, seed=seed):
+            train, test = set(tr.tolist()), set(te.tolist())
+            votes = {pick: {"R": 0, "S": 0} for pick in REFERENCE_PICKS}
+            for i, j in pairs:
+                if i not in train or abs(y[i] - y[j]) <= TIE:
+                    continue
+                better = i if y[i] > y[j] else j
+                for pick in REFERENCE_PICKS:
+                    if codes[better][pick] in votes[pick]:
+                        votes[pick][codes[better][pick]] += 1
+            for k, (i, j) in enumerate(pairs):
+                if i not in test:
+                    continue
+                diff = float(y[i] - y[j])
+                rec = {"target": d["target"], "difference": diff,
+                       "centres": len(d["centres"][i]),
+                       "model": _model_share(*model[k])}
+                for pick in REFERENCE_PICKS:
+                    rec[pick] = _share_of(rule_guess(codes[i][pick], codes[j][pick], votes[pick]), diff)
+                records.append(rec)
+    out = {"folds": folds, "seed": seed, "model": " / ".join(REFERENCE_MODEL), "pooled": {},
+           "targets": []}
+    names = ("model",) + REFERENCE_PICKS
+    for subset in SUBSETS:
+        chosen = [r for r in records if subset == "all pairs"
+                  or (subset == "one stereocentre" and r["centres"] == 1)
+                  or (subset == "two or more stereocentres" and r["centres"] >= 2)]
+        out["pooled"][subset] = {}
+        for margin in MARGINS:
+            use = [r for r in chosen if abs(r["difference"]) > TIE and abs(r["difference"]) >= margin]
+            if not use:
+                continue
+            got = {k: np.array([r[k] for r in use]) for k in names}
+            cell = {"pairs": len(use)}
+            for k in names:
+                cell[k] = float(got[k].mean())
+                cell[k + " interval"] = wilson(float(got[k].sum()), len(use))
+            for k in REFERENCE_PICKS:
+                cell["model minus " + k] = _paired_difference(got["model"], got[k], draws, seed)
+            cell["agreement of the model and the rule (lowest)"] = float(
+                np.mean((got["model"] > 0.5) == (got["lowest"] > 0.5)))
+            out["pooled"][subset][f"margin {margin:.1f}"] = cell
+    for target in sorted({r["target"] for r in records}):
+        use = [r for r in records if r["target"] == target and abs(r["difference"]) > TIE]
+        if use:
+            out["targets"].append({"target": target, "pairs": len(use),
+                                   **{k: float(np.mean([r[k] for r in use])) for k in names}})
+    out["above one half"] = {k: int(sum(t[k] > 0.5 for t in out["targets"])) for k in names}
+    return out
+
+
+def reference_stage(results=RESULTS, data=DATA, folds=FOLDS, seed=SEED, sets=None):
+    """Run the rule on the saved result and write ``reference.json`` beside it."""
+    path = os.path.join(results, "enantiomers.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} is missing; run the measurement first")
+    with open(path, encoding="utf-8") as fh:
+        stored = json.load(fh)
+    if sets is None:
+        paths = sorted(glob.glob(os.path.join(data, "*.sdf")))
+        sets, _whole = gather(paths)
+    out = configuration_reference(sets, stored["difference"], folds=folds, seed=seed)
+    with open(os.path.join(results, "reference.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
 def potency_run(d, folds=FOLDS, seed=SEED):
     """Question 2: the potency itself, for one target, with whole pairs held out."""
     pairs = pair_index(d)
@@ -519,6 +697,7 @@ def run(results=RESULTS, data=DATA, folds=FOLDS, seed=SEED):
     out["seconds"] = round(time.time() - t0, 1)
     with open(os.path.join(results, "enantiomers.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=1)
+    reference_stage(results=results, data=data, folds=folds, seed=seed, sets=sets)
     return out
 
 
@@ -609,6 +788,43 @@ def report(results=RESULTS):
             L.append(f"| {name} | " + " | ".join(cells) + " |")
         L += ["", f"The spread of the difference between the two potencies of a pair is "
                   f"{overall['spread of the difference']:.2f} log units."]
+    ref_path = os.path.join(results, "reference.json")
+    if rows and os.path.exists(ref_path):
+        with open(ref_path, encoding="utf-8") as fh:
+            ref = json.load(fh)
+        L += ["", "## A cheap reference: which configuration the target prefers", "",
+              "The channels are compared with a rule that learns one bit for each target. The "
+              "training pairs say whether the R or the S member of a pair was the better one "
+              "more often, and the rule names that member in a held-out pair. It reads the "
+              "configuration code at one stereocentre. The two members of a pair have opposite "
+              "codes at the same atom, and the atom is chosen by its canonical rank, which is "
+              "the rank that RDKit gives an atom from its place in the graph of the molecule. "
+              "A molecule with one stereocentre has no other choice. With several, the choice is "
+              "arbitrary, so the centre of lowest rank and the centre of highest rank are both "
+              "given. The folds are those of the model (whole scaffolds), and the shares are "
+              "counted on the same held-out pairs.", "",
+              "| Pairs | Pairs counted | Channels at the stereocentres | Rule, centre of lowest "
+              "rank | Rule, centre of highest rank | Channels minus rule (lowest) | Channels "
+              "minus rule (highest) |", "|---" * 7 + "|"]
+        for subset, cells in ref["pooled"].items():
+            for margin, c in cells.items():
+                label = subset + ("" if margin == "margin 0.0" else
+                                  f", differing by {margin.split()[1]} log units or more")
+                m1, m2 = c["model minus lowest"], c["model minus highest"]
+                L.append(f"| {label} | {c['pairs']} | {c['model'] * 100:.1f} % | "
+                         f"{c['lowest'] * 100:.1f} % | {c['highest'] * 100:.1f} % | "
+                         f"{m1['mean'] * 100:+.1f} points ({m1['low'] * 100:+.1f} to "
+                         f"{m1['high'] * 100:+.1f}) | {m2['mean'] * 100:+.1f} points "
+                         f"({m2['low'] * 100:+.1f} to {m2['high'] * 100:+.1f}) |")
+        a = ref["above one half"]
+        L += ["", f"Of the {len(ref['targets'])} targets, the channels name the better enantiomer "
+                  f"in more than half of the pairs on {a['model']}, the rule with the centre of "
+                  f"lowest rank on {a['lowest']} and the rule with the centre of highest rank "
+                  f"on {a['highest']}. The first three targets of the channels:", "",
+              "| Target | Pairs | Channels | Rule (lowest) | Rule (highest) |", "|---" * 5 + "|"]
+        for t in sorted(ref["targets"], key=lambda t: -t["model"])[:3]:
+            L.append(f"| {t['target'].replace('_', ' ')} | {t['pairs']} | {t['model'] * 100:.1f} % "
+                     f"| {t['lowest'] * 100:.1f} % | {t['highest'] * 100:.1f} % |")
     if d.get("targets"):
         L += ["", "## The potency itself, one target at a time", "",
               "The ordinary question of item C7, on sets that do hold enantiomeric pairs: does "
@@ -631,10 +847,14 @@ def report(results=RESULTS):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("--report", action="store_true", help="write the table from the saved result")
+    ap.add_argument("--reference", action="store_true",
+                    help="run only the rule that reads one configuration code, from the saved result")
     ap.add_argument("--folds", type=int, default=FOLDS)
     ap.add_argument("--seed", type=int, default=SEED)
     args = ap.parse_args()
-    if not args.report:
+    if args.reference:
+        reference_stage(folds=args.folds, seed=args.seed)
+    elif not args.report:
         run(folds=args.folds, seed=args.seed)
     print(report())
 
