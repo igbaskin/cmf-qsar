@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 131 modules, 256 classes with 836 public methods, and 1359 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 132 modules, 257 classes with 838 public methods, and 1364 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -87,6 +87,7 @@ for.
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
 | [cmfqsar.herding](#cmfqsarherding) | Kernel herding: a few molecules that stand for many, chosen from the kernel alone. |
 | [cmfqsar.hops](#cmfqsarhops) | A migration path as the sample: the environment of a hop, its frame and its labels (BT7). |
+| [cmfqsar.hsic](#cmfqsarhsic) | Does the activity depend on the fields, and does it depend on them beyond a reference? |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
 | [cmfqsar.interfaces](#cmfqsarinterfaces) | Reading a fitted model from another program (plan item MS7). |
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
@@ -2145,6 +2146,10 @@ Give every molecule of a structure file a random pose (control for alignment met
 ### `cmd_compare(args)`
 
 Are two sets of molecules drawn from the same population?  A kernel two-sample test.
+
+### `cmd_dependence(args)`
+
+Does the activity depend on the fields, and beyond a reference? (conditional HSIC test)
 
 ### `cmd_pick(args)`
 
@@ -8119,6 +8124,111 @@ The ridge search of `cmfqsar.localenv.choose_lam` on a hop model's kernel.
 
 The environment of every hop in `rows`, turned into its hop frame (one pose, z along the
 hop), which is what the rotation-averaged kernel takes.
+
+## cmfqsar.hsic
+
+Source: `cmfqsar/hsic.py`
+
+Does the activity depend on the fields, and does it depend on them beyond a reference?
+
+The question comes before any model. A field model that beats the mean can still be measuring
+nothing but size, burial or a count of oxygens, and the usual way to find out is to fit a model on
+that number and compare cross-validated errors. This module asks the question directly, with a
+test whose null distribution is exact.
+
+**HSIC** (the Hilbert-Schmidt independence criterion; Gretton, Bousquet, Smola and Schoelkopf,
+ALT 2005) measures the dependence between two variables from two kernel matrices. With K the field
+kernel of n molecules, L a kernel on their activities and H = I - 11'/n the centring matrix
+
+    HSIC = tr(H K H H L H) / n^2.
+
+It is zero when the two are independent and positive otherwise, for a characteristic kernel. With
+the linear kernel on the activity, L = y y', it is ||sum_i (y_i - mean y) phi(x_i)||^2 / n^2: the
+squared norm of the field weighted by the centred activity, which is the covariance of the
+activity with the field. That is the default, because it asks whether the *mean* activity
+depends on the field, which is what a regression model can use.
+
+**The test.** Under independence, permuting the activities over the molecules leaves the joint
+distribution unchanged, so the p-value of the observed HSIC against its permutations is exact for
+any n: (1 + #{permuted >= observed}) / (1 + permutations).
+
+**The conditional test: beyond a reference.** The question "do the fields carry information about
+the activity that the reference z does not" is the conditional independence y _||_ x | z. When z
+takes few values, as a count does, the molecules with equal z form strata. Permuting the
+activities *within* every stratum leaves the joint distribution unchanged under the null, so the
+p-value is again exact (the stratified permutation test). The statistic is HSIC with both
+kernels centred within the strata instead of over the whole set, so that the part of the field and
+of the activity that the stratum already explains is removed and only the dependence inside the
+strata is measured. A molecule alone in its stratum carries no information and is reported.
+
+A continuous reference (logP, a Hammett constant) has no strata. It can be cut into quantile bins,
+and the test is then exact for the binned reference but not for the reference itself: dependence
+of the activity on z inside a bin leaks into the statistic. `benchmarks/run_hsic.py` measured
+the leak at 19 to 22 % false positives at the 5 % level on the Sutherland sets. Passing the
+reference itself as `covariate` repairs it: after every permutation the activity is reduced to its
+residual from a straight line in z fitted within each bin, so the trend of the activity with z
+inside a bin no longer reaches the statistic. That brought the false-positive rate to 5 % or
+below. The test is then approximate, and the result says so.
+
+**The alignment** reported beside the p-value is HSIC divided by sqrt(HSIC(K, K) HSIC(L, L)), the
+centred kernel alignment (Cortes, Mohri and Rostamizadeh, JMLR 2012), in [0, 1]. It is a size of
+effect that does not grow with n, which the p-value does.
+
+### `class HSICResult  (dataclass)`
+
+Attributes:
+
+- `statistic: float`
+- `alignment: float`
+- `p_value: float`
+- `permutations: int`
+- `n: int`
+- `informative: int`
+- `strata: int`
+- `exact: bool`
+- `null_mean: float`
+- `null_sd: float`
+- `kernel_y: str`
+- `partial: bool` = `False`
+
+#### `HSICResult.z` -> float  (property)
+
+#### `HSICResult.describe() -> str`
+
+### `strata_of(z: Sequence, bins: Optional[int]=None, max_levels: Optional[int]=None) -> Tuple[np.ndarray, bool]`
+
+(stratum of every molecule, whether the strata are the exact values of z).
+
+`z` is one value per molecule, or a row of values (a count vector), in which case molecules
+with identical rows share a stratum. Without `bins` the distinct values are the strata, which
+is exact. With `bins`, a one-dimensional z is cut at its quantiles into that many strata,
+which is not exact for z itself. `max_levels` refuses exact strata when z has more distinct
+values than that, because a stratum of one molecule carries no information.
+
+### `centre_within(M: np.ndarray, strata: Optional[Sequence[int]]=None) -> np.ndarray`
+
+H_S M H_S, with H_S the centring within every stratum (over the whole set without strata).
+
+### `hsic(K: np.ndarray, L: np.ndarray, strata: Optional[Sequence[int]]=None) -> float`
+
+HSIC of two kernel matrices, centred over the set or within the strata, divided by n^2.
+
+### `hsic_test(K: np.ndarray, y: Sequence[float], strata: Optional[Sequence[int]]=None, exact: bool=True, kernel_y: str='linear', permutations: int=999, seed: int=0, block: int=256, covariate: Optional[Sequence[float]]=None, degree: int=1) -> HSICResult`
+
+Permutation test of HSIC between the field kernel `K` and the activities `y`.
+
+With `strata` the activities are permuted within the strata and both kernels are centred
+within them: the test of dependence beyond the reference the strata come from. `exact`
+records whether the strata are the reference's own values (see `strata_of`).
+`kernel_y` is `"linear"` (y y', the covariance of the activity with the field; the default)
+or `"gauss"` (a Gaussian of the activity difference, median width, which also sees a
+dependence of the spread). With the linear kernel all permutations are evaluated as one matrix
+product, in blocks of `block`.
+
+`covariate` (with `strata` and the linear kernel) is the continuous reference the strata are
+bins of. After every permutation the activity is replaced by its residual from a polynomial
+of `degree` in the covariate fitted within each stratum, which removes the trend of the
+activity with the reference inside a bin. The test is then approximate.
 
 ## cmfqsar.increments
 

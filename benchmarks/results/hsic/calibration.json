@@ -1,0 +1,821 @@
+{
+ "sets": [
+  {
+   "set": "ACE",
+   "n": 114,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 29,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.075,
+       "residual": 0.0375,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.9125,
+       "residual": 0.7225,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "residual": 0.9925,
+       "model comparison": 0.35,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.0625,
+       "within-bin line": 0.03,
+       "residual": 0.2125,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.81,
+       "within-bin line": 0.81,
+       "residual": 0.88,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.065,
+       "within-bin line": 0.05,
+       "residual": 0.2125,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.785,
+       "within-bin line": 0.83,
+       "residual": 0.8525,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "AChE",
+   "n": 111,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 19,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.045,
+       "residual": 0.1225,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.815,
+       "residual": 0.7375,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "residual": 0.995,
+       "model comparison": 0.175,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 0.995,
+       "conditional": 0.0475,
+       "within-bin line": 0.0,
+       "residual": 0.1025,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.6675,
+       "within-bin line": 0.4625,
+       "residual": 0.86,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "within-bin line": 0.9925,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.995,
+       "conditional": 0.0525,
+       "within-bin line": 0.0,
+       "residual": 0.1025,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.85,
+       "within-bin line": 0.5175,
+       "residual": 0.8525,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.99,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "BZR",
+   "n": 147,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 12,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.065,
+       "residual": 0.09,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 0.9975,
+       "conditional": 0.955,
+       "residual": 0.965,
+       "model comparison": 0.075,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 0.9975,
+       "conditional": 1.0,
+       "residual": 1.0,
+       "model comparison": 0.9,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 0.98,
+       "conditional": 0.0425,
+       "within-bin line": 0.0325,
+       "residual": 0.1775,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 0.4,
+       "conditional": 0.94,
+       "within-bin line": 0.925,
+       "residual": 0.6075,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 0.96,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.98,
+       "conditional": 0.0675,
+       "within-bin line": 0.05,
+       "residual": 0.1775,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 0.3475,
+       "conditional": 0.93,
+       "within-bin line": 0.945,
+       "residual": 0.48,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 0.8475,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 0.995,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "COX2",
+   "n": 282,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.5075,
+       "conditional": 0.0475,
+       "residual": 0.0825,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.16,
+       "within-bin line": 0.0125,
+       "residual": 0.0625,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.995,
+       "residual": 0.9975,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.07,
+       "within-bin line": 0.0225,
+       "residual": 0.0625,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 0.9975,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "DHFR",
+   "n": 361,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 24,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 0.04,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.0025,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.9525,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 0.9925,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 1.0,
+       "within-bin line": 1.0,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "GPB",
+   "n": 66,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 13,
+     "shares": {
+      "0.0": {
+       "plain": 0.7875,
+       "conditional": 0.0375,
+       "residual": 0.1725,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 0.845,
+       "conditional": 0.59,
+       "residual": 0.0925,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 0.955,
+       "conditional": 0.9875,
+       "residual": 0.445,
+       "model comparison": 0.125,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 0.9925,
+       "conditional": 0.05,
+       "within-bin line": 0.0175,
+       "residual": 0.0925,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.5475,
+       "within-bin line": 0.4325,
+       "residual": 0.56,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.975,
+       "within-bin line": 0.945,
+       "residual": 0.975,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.9925,
+       "conditional": 0.0425,
+       "within-bin line": 0.0275,
+       "residual": 0.0925,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.555,
+       "within-bin line": 0.47,
+       "residual": 0.51,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.975,
+       "within-bin line": 0.9375,
+       "residual": 0.9575,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "THER",
+   "n": 76,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 28,
+     "shares": {
+      "0.0": {
+       "plain": 0.9775,
+       "conditional": 0.0425,
+       "residual": 0.1375,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.7075,
+       "residual": 0.705,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "residual": 0.9725,
+       "model comparison": 0.125,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 0.965,
+       "conditional": 0.295,
+       "within-bin line": 0.015,
+       "residual": 0.1375,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.8175,
+       "within-bin line": 0.5325,
+       "residual": 0.7,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "within-bin line": 0.985,
+       "residual": 0.9925,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.965,
+       "conditional": 0.1275,
+       "within-bin line": 0.0225,
+       "residual": 0.1375,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.69,
+       "within-bin line": 0.5475,
+       "residual": 0.695,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "within-bin line": 0.97,
+       "residual": 0.99,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "set": "THR",
+   "n": 88,
+   "references": {
+    "heavy atoms": {
+     "exact": true,
+     "strata": 21,
+     "shares": {
+      "0.0": {
+       "plain": 0.99,
+       "conditional": 0.06,
+       "residual": 0.5625,
+       "model comparison": 0.0,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.7375,
+       "residual": 0.87,
+       "model comparison": 0.075,
+       "replicates": 400,
+       "cv_replicates": 40
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9925,
+       "residual": 0.995,
+       "model comparison": 0.375,
+       "replicates": 400,
+       "cv_replicates": 40
+      }
+     }
+    },
+    "logP, 5 bins": {
+     "exact": false,
+     "strata": 5,
+     "shares": {
+      "0.0": {
+       "plain": 0.9625,
+       "conditional": 0.1225,
+       "within-bin line": 0.0125,
+       "residual": 0.535,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 0.9925,
+       "conditional": 0.7725,
+       "within-bin line": 0.475,
+       "residual": 0.9375,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "within-bin line": 0.98,
+       "residual": 1.0,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    },
+    "logP, 10 bins": {
+     "exact": false,
+     "strata": 10,
+     "shares": {
+      "0.0": {
+       "plain": 0.9625,
+       "conditional": 0.0675,
+       "within-bin line": 0.0175,
+       "residual": 0.535,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.05": {
+       "plain": 1.0,
+       "conditional": 0.6975,
+       "within-bin line": 0.4925,
+       "residual": 0.8675,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      },
+      "0.15": {
+       "plain": 1.0,
+       "conditional": 0.9975,
+       "within-bin line": 0.9825,
+       "residual": 0.9975,
+       "model comparison": null,
+       "replicates": 400,
+       "cv_replicates": 0
+      }
+     }
+    }
+   }
+  }
+ ],
+ "seconds": 721.9
+}

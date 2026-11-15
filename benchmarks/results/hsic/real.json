@@ -1,0 +1,861 @@
+{
+ "sets": [
+  {
+   "set": "ACE",
+   "n": 114,
+   "activity_sd": 2.269287810486048,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.25307997808940974,
+    "z": 18.467650711736564,
+    "strata": 1,
+    "informative": 114,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.012,
+      "alignment": 0.09501296322171118,
+      "z": 3.396978044578123,
+      "strata": 29,
+      "informative": 108,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.11120281822945907,
+      "z": 6.613438376548375,
+      "strata": 1,
+      "informative": 114,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.10618031618062498,
+      "low": 0.020785328797429302,
+      "high": 0.1920372613479883,
+      "positive": true
+     },
+     "reference_alignment": 0.37325905703502665
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.2580852608812121,
+      "z": 18.95514870524578,
+      "strata": 5,
+      "informative": 114,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.25312601564328024,
+      "z": 16.559072301026138,
+      "strata": 5,
+      "informative": 114,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.24331740819736744,
+      "z": 17.72888616018719,
+      "strata": 1,
+      "informative": 114,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.5035809806452343,
+      "low": 0.3351198101118377,
+      "high": 0.6869994741170706,
+      "positive": true
+     },
+     "reference_alignment": 0.20593275475310868
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.2656248383326029,
+      "z": 19.506486628000193,
+      "strata": 10,
+      "informative": 114,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.2574798231384422,
+      "z": 18.338733321891773,
+      "strata": 10,
+      "informative": 114,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.24331740819736744,
+      "z": 17.72888616018719,
+      "strata": 1,
+      "informative": 114,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.5035809806452343,
+      "low": 0.3351198101118377,
+      "high": 0.6869994741170706,
+      "positive": true
+     },
+     "reference_alignment": 0.20593275475310868
+    }
+   }
+  },
+  {
+   "set": "AChE",
+   "n": 111,
+   "activity_sd": 1.2358876411327804,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.13441435570508586,
+    "z": 8.582848096269403,
+    "strata": 1,
+    "informative": 111,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.004,
+      "alignment": 0.10521139828593336,
+      "z": 4.125093673373474,
+      "strata": 19,
+      "informative": 105,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.011,
+      "alignment": 0.07511636659480811,
+      "z": 3.6201189806481984,
+      "strata": 1,
+      "informative": 111,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.28003947773957816,
+      "low": 0.1576425147316636,
+      "high": 0.413684850159163,
+      "positive": true
+     },
+     "reference_alignment": 0.22352942705378148
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.16020728436841486,
+      "z": 9.20479025692126,
+      "strata": 5,
+      "informative": 111,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.16725140027485447,
+      "z": 8.107096174148523,
+      "strata": 5,
+      "informative": 111,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.14143975087189034,
+      "z": 9.06392176735303,
+      "strata": 1,
+      "informative": 111,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.5113596116526965,
+      "low": 0.2919695126464814,
+      "high": 0.7396286888686712,
+      "positive": true
+     },
+     "reference_alignment": 0.26068551083848074
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.15868043415208577,
+      "z": 8.312289834069206,
+      "strata": 10,
+      "informative": 111,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.15389745261187765,
+      "z": 6.1615208132792985,
+      "strata": 10,
+      "informative": 111,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.14143975087189034,
+      "z": 9.06392176735303,
+      "strata": 1,
+      "informative": 111,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.5113596116526965,
+      "low": 0.2919695126464814,
+      "high": 0.7396286888686712,
+      "positive": true
+     },
+     "reference_alignment": 0.26068551083848074
+    }
+   }
+  },
+  {
+   "set": "BZR",
+   "n": 147,
+   "activity_sd": 0.76424071570089,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.09087370031156543,
+    "z": 7.646113605545884,
+    "strata": 1,
+    "informative": 147,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.004,
+      "alignment": 0.07429465506495009,
+      "z": 4.706548385735847,
+      "strata": 12,
+      "informative": 147,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.04,
+      "alignment": 0.03805982559266859,
+      "z": 2.1071154062163173,
+      "strata": 1,
+      "informative": 147,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.2791862035011486,
+      "low": 0.1256134962487387,
+      "high": 0.43465658249754646,
+      "positive": true
+     },
+     "reference_alignment": 0.38254621421825713
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.08447176664647901,
+      "z": 7.444517783680736,
+      "strata": 5,
+      "informative": 147,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.10187133446530366,
+      "z": 8.9237136919732,
+      "strata": 5,
+      "informative": 147,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.004,
+      "alignment": 0.07300847859856918,
+      "z": 5.792415043453487,
+      "strata": 1,
+      "informative": 147,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.32560139865810456,
+      "low": 0.18124182889020063,
+      "high": 0.47953141526974913,
+      "positive": true
+     },
+     "reference_alignment": 0.11311544581265082
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.109252498514577,
+      "z": 9.018776880085577,
+      "strata": 10,
+      "informative": 147,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.10629214314619255,
+      "z": 8.203188230401596,
+      "strata": 10,
+      "informative": 147,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.004,
+      "alignment": 0.07300847859856918,
+      "z": 5.792415043453487,
+      "strata": 1,
+      "informative": 147,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.32560139865810456,
+      "low": 0.18124182889020063,
+      "high": 0.47953141526974913,
+      "positive": true
+     },
+     "reference_alignment": 0.11311544581265082
+    }
+   }
+  },
+  {
+   "set": "COX2",
+   "n": 282,
+   "activity_sd": 1.1644938204448456,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.0998470638248885,
+    "z": 19.801470565782548,
+    "strata": 1,
+    "informative": 282,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.11112407616405463,
+      "z": 18.81134290377717,
+      "strata": 10,
+      "informative": 281,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.10257236500195768,
+      "z": 20.28254752729809,
+      "strata": 1,
+      "informative": 282,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.5446281830912714,
+      "low": 0.4308631046921155,
+      "high": 0.6707813228191235,
+      "positive": true
+     },
+     "reference_alignment": 0.055794076923810644
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.26537787568152077,
+      "z": 51.805971526222514,
+      "strata": 5,
+      "informative": 282,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.28830620448630634,
+      "z": 51.25469729141393,
+      "strata": 5,
+      "informative": 282,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.2131010457716579,
+      "z": 42.17002056988982,
+      "strata": 1,
+      "informative": 282,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.3769793476515839,
+      "low": 0.27953444327805066,
+      "high": 0.47737504217816723,
+      "positive": true
+     },
+     "reference_alignment": 0.2558023132175447
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.2786494873657551,
+      "z": 44.62951035243977,
+      "strata": 10,
+      "informative": 282,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.28334446537983005,
+      "z": 43.073911509272435,
+      "strata": 10,
+      "informative": 282,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.2131010457716579,
+      "z": 42.17002056988982,
+      "strata": 1,
+      "informative": 282,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.3769793476515839,
+      "low": 0.27953444327805066,
+      "high": 0.47737504217816723,
+      "positive": true
+     },
+     "reference_alignment": 0.2558023132175447
+    }
+   }
+  },
+  {
+   "set": "DHFR",
+   "n": 361,
+   "activity_sd": 1.3033902974348488,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.12410194191854532,
+    "z": 30.113948877051076,
+    "strata": 1,
+    "informative": 361,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.12147519831451051,
+      "z": 25.51174207032601,
+      "strata": 24,
+      "informative": 359,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.08435024340100142,
+      "z": 19.71891276282139,
+      "strata": 1,
+      "informative": 361,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.4808175930297617,
+      "low": 0.39202051418440187,
+      "high": 0.5671584703481604,
+      "positive": true
+     },
+     "reference_alignment": 0.2698566936135318
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.13699352210567226,
+      "z": 30.81747374991594,
+      "strata": 5,
+      "informative": 361,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.09429188932988222,
+      "z": 16.373583157732483,
+      "strata": 5,
+      "informative": 361,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.1223964956933036,
+      "z": 29.682683518805593,
+      "strata": 1,
+      "informative": 361,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.48175698312064746,
+      "low": 0.3976633303269743,
+      "high": 0.5788943360831206,
+      "positive": true
+     },
+     "reference_alignment": 0.19275177453856857
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.123362458292535,
+      "z": 22.96950616823079,
+      "strata": 10,
+      "informative": 361,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.09288778459571591,
+      "z": 15.524620880697338,
+      "strata": 10,
+      "informative": 361,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.1223964956933036,
+      "z": 29.682683518805593,
+      "strata": 1,
+      "informative": 361,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.48175698312064746,
+      "low": 0.3976633303269743,
+      "high": 0.5788943360831206,
+      "positive": true
+     },
+     "reference_alignment": 0.19275177453856857
+    }
+   }
+  },
+  {
+   "set": "GPB",
+   "n": 66,
+   "activity_sd": 1.1141711764663094,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.20896014419928155,
+    "z": 8.113230371511133,
+    "strata": 1,
+    "informative": 66,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.21922023357141893,
+      "z": 7.714366277714505,
+      "strata": 13,
+      "informative": 65,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.19915136956742285,
+      "z": 7.595523176292481,
+      "strata": 1,
+      "informative": 66,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.3735715382936384,
+      "low": 0.1640494788899185,
+      "high": 0.6096938748056401,
+      "positive": true
+     },
+     "reference_alignment": 0.2588582659332811
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.002,
+      "alignment": 0.20147082401387317,
+      "z": 6.823122871553385,
+      "strata": 5,
+      "informative": 66,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.002,
+      "alignment": 0.1837885994148764,
+      "z": 5.616041951505352,
+      "strata": 5,
+      "informative": 66,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.20124795193384395,
+      "z": 7.653307981571598,
+      "strata": 1,
+      "informative": 66,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.4811258808025495,
+      "low": 0.209437821807127,
+      "high": 0.7855316802056344,
+      "positive": true
+     },
+     "reference_alignment": 0.29870099678466155
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.20679765819251097,
+      "z": 6.732406767194596,
+      "strata": 10,
+      "informative": 66,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.021,
+      "alignment": 0.15660965201274554,
+      "z": 2.556188672388352,
+      "strata": 10,
+      "informative": 66,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.20124795193384395,
+      "z": 7.653307981571598,
+      "strata": 1,
+      "informative": 66,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.4811258808025495,
+      "low": 0.209437821807127,
+      "high": 0.7855316802056344,
+      "positive": true
+     },
+     "reference_alignment": 0.29870099678466155
+    }
+   }
+  },
+  {
+   "set": "THER",
+   "n": 76,
+   "activity_sd": 2.0141662894142436,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.21953432067812687,
+    "z": 10.793669144980992,
+    "strata": 1,
+    "informative": 76,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.416,
+      "alignment": 0.0519313577870555,
+      "z": 0.0012023395036698623,
+      "strata": 28,
+      "informative": 64,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.01,
+      "alignment": 0.09868525319867553,
+      "z": 3.3825806509885843,
+      "strata": 1,
+      "informative": 76,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.1581528357376414,
+      "low": 0.022591769994547876,
+      "high": 0.29371998510630437,
+      "positive": true
+     },
+     "reference_alignment": 0.3466341740866786
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.1972234436548336,
+      "z": 8.606915427816439,
+      "strata": 5,
+      "informative": 76,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.21126040593449885,
+      "z": 9.119168023244443,
+      "strata": 5,
+      "informative": 76,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.1953987174197283,
+      "z": 9.22221211064671,
+      "strata": 1,
+      "informative": 76,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.40231772124237514,
+      "low": 0.2313458244669837,
+      "high": 0.5854477665904558,
+      "positive": true
+     },
+     "reference_alignment": 0.29670660075721184
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.19526185579783942,
+      "z": 8.226985230478808,
+      "strata": 10,
+      "informative": 76,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.20446138664452676,
+      "z": 7.847088448057613,
+      "strata": 10,
+      "informative": 76,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.1953987174197283,
+      "z": 9.22221211064671,
+      "strata": 1,
+      "informative": 76,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.40231772124237514,
+      "low": 0.2313458244669837,
+      "high": 0.5854477665904558,
+      "positive": true
+     },
+     "reference_alignment": 0.29670660075721184
+    }
+   }
+  },
+  {
+   "set": "THR",
+   "n": 88,
+   "activity_sd": 1.0060339393828037,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.15030181609002077,
+    "z": 7.145702157483555,
+    "strata": 1,
+    "informative": 88,
+    "exact": true
+   },
+   "references": {
+    "heavy atoms": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.18469288574469314,
+      "z": 6.860743358606741,
+      "strata": 21,
+      "informative": 84,
+      "exact": true
+     },
+     "within-bin line": null,
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.15337646324756182,
+      "z": 7.468604085499029,
+      "strata": 1,
+      "informative": 88,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.3236565843845612,
+      "low": 0.16095316593018222,
+      "high": 0.4989655304371987,
+      "positive": true
+     },
+     "reference_alignment": 0.2670656627646103
+    },
+    "logP, 5 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.16942404999459426,
+      "z": 6.423380247920325,
+      "strata": 5,
+      "informative": 88,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.001,
+      "alignment": 0.17607746231046342,
+      "z": 5.919561037019176,
+      "strata": 5,
+      "informative": 88,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.148363169953839,
+      "z": 7.085603293488115,
+      "strata": 1,
+      "informative": 88,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.6366735097072775,
+      "low": 0.3770726721370072,
+      "high": 0.8919915996404104,
+      "positive": true
+     },
+     "reference_alignment": 0.29063300601298886
+    },
+    "logP, 10 bins": {
+     "conditional": {
+      "p_value": 0.001,
+      "alignment": 0.16860354524316254,
+      "z": 5.784450614004933,
+      "strata": 10,
+      "informative": 88,
+      "exact": false
+     },
+     "within-bin line": {
+      "p_value": 0.002,
+      "alignment": 0.1595696113416372,
+      "z": 4.2488957902168325,
+      "strata": 10,
+      "informative": 88,
+      "exact": false
+     },
+     "residual": {
+      "p_value": 0.001,
+      "alignment": 0.148363169953839,
+      "z": 7.085603293488115,
+      "strata": 1,
+      "informative": 88,
+      "exact": true
+     },
+     "model comparison": {
+      "gain_q2": 0.6366735097072775,
+      "low": 0.3770726721370072,
+      "high": 0.8919915996404104,
+      "positive": true
+     },
+     "reference_alignment": 0.29063300601298886
+    }
+   }
+  }
+ ],
+ "seconds": 15.0
+}

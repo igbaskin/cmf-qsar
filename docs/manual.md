@@ -3680,6 +3680,88 @@ of the advice. Leaving the five splits out gave an estimate of +0.053 on 34 spli
 rule of the section *Two things the command protects you from* such a route cannot be advised,
 all 39 splits count, and the measured value is +0.058.
 
+## Beyond a count: the conditional dependence test
+
+The routes above answer "does the field model beat a count" by fitting both and comparing their
+errors. `cmf dependence` asks the same question without fitting anything, and for a count its
+answer has an exact false-positive rate.
+
+```bash
+python cmf_cli.py dependence data.sdf --charges file --given calc:HeavyAtomCount
+python cmf_cli.py dependence data.sdf --charges file --given calc:clogp --bins 5
+```
+
+**The statistic.** HSIC, the Hilbert-Schmidt independence criterion (Gretton et al., ALT 2005),
+measures the dependence between two variables from their kernel matrices. With the field kernel
+$K$, the linear kernel on the activity and both centred, it is the squared norm of the field
+weighted by the centred activity. It is zero when the mean activity does not depend on the
+field. The command reports it as an *alignment* in [0, 1] beside a p-value from 999 permutations
+of the activities. A permutation p-value is exact for any number of molecules.
+
+**Beyond a reference.** With `--given`, the molecules with equal values of the reference form
+strata. The activities are permuted only within a stratum, and both kernels are centred within
+the strata, so that only the dependence inside a stratum counts. If the activity depends on the
+reference alone, permuting it among molecules with the same reference value changes nothing, so
+the test stays exact. The reference can be a property of the file or any computed descriptor,
+`calc:` followed by its RDKit name. A molecule alone in its stratum carries no information, and
+the command says how many molecules share a stratum.
+
+A continuous reference such as logP has no strata, and `--bins` cuts it at its quantiles. Binning
+alone does not work: the activity still depends on the reference inside a bin, and that
+dependence reaches the statistic through the part of the field that sees the reference. So the
+command also removes a straight line in the reference within each bin, after every permutation.
+The test is then approximate, and the output says so.
+
+**Measured** (`benchmarks/run_hsic.py`, `benchmarks/results/hsic/table.md`). On the molecules of
+the eight Sutherland sets, synthetic activities $y = g(z)$ plus noise depend on the reference
+$z$ only, through a curve $g$ that carries half of the variance. A field direction that the
+reference does not explain is then added with 5 or 15 % of the variance. Rejections at the 5 %
+level, 400 replicates per set pooled over the sets; the model comparison is the gain of a model
+on the reference and the fields over a model on the reference, positive when its 95 % interval
+excludes zero, 40 replicates on each of the six sets of at most 150 molecules:
+
+| reference | signal beyond the reference | the test given the reference | the test on the activity minus a straight line in the reference | the model comparison |
+|---|---:|---:|---:|---:|
+| heavy-atom count | none | 5.2 % | 27.6 % | 0.0 % |
+| heavy-atom count | 5 % of the variance | 83.9 % | 76.2 % | 2.5 % |
+| heavy-atom count | 15 % of the variance | 99.7 % | 92.5 % | 34.2 % |
+| logP, 5 bins | none | 1.5 % | 29.0 % | |
+| logP, 5 bins | 5 % of the variance | 69.8 % | 81.8 % | |
+| logP, 10 bins | none | 2.4 % | 29.0 % | |
+| logP, 10 bins | 5 % of the variance | 72.4 % | 78.2 % | |
+
+* **The test is calibrated** at 5.2 % for the count, the value the permutation argument
+  guarantees, and at 1.5 to 2.4 % for the binned logP with the line removed. Binned logP without
+  the line rejected 19 to 22 %, and on DHFR every replicate.
+* **The test without a reference is useless for this question.** It rejected 91 % of the
+  activities that depend on the count alone, because the fields see the size of a molecule.
+  Subtracting a straight line in the reference first, the usual quick repair, still rejects 28 to
+  29 %, because the curve is not a line.
+* **The test is far more sensitive than fitting.** A field signal that carries 5 % of the
+  variance is found 84 % of the time by the test and 2.5 % of the time by the model comparison.
+  At 15 % the figures are 99.7 % and 34 %. The model comparison never gave a false positive. It
+  answers a harder question, whether the signal can be *predicted* on new molecules, and on a
+  hundred molecules a small signal cannot.
+
+On the measured activities, the test and the model comparison agree on 23 of the 24 pairs of a
+set and a reference. The model comparison finds information in the fields beyond both references
+on all eight sets, and the test agrees except on one. On THER, given the heavy-atom count, the test finds nothing
+(p = 0.42) and the model comparison finds a gain of 0.16 in q² [0.02, 0.29]. THER has 76
+molecules in 28 strata, and twelve of them are alone in their stratum. That leaves the test
+little to work with. A count with many values on a small set is the weak case of this test.
+
+**A case with a known answer.** On the 1,048 ethers of item EC7, the field model was found to beat
+a model on the number of oxygens that touch the ion by 0.04 to 0.11 eV. Given that count, the
+test finds information in the fields for all three ions, Li+, Na+ and Mg2+ (p = 0.001, the
+smallest possible with 999 permutations). On the same molecules, with an activity of the contact
+count alone, it rejects 1 of 100 replicates, while the test without the count and the test on the
+straight-line residual reject all 100.
+
+**When to use it.** Before a field model is built, to ask whether the fields could be anything more
+than a count or a property you can name. A small p-value says the fields carry information beyond
+the reference; it does not say that a model will predict it. A large p-value on a small set is
+not evidence that they carry nothing, as THER shows.
+
 # Building a model
 
 ## Choosing the fields

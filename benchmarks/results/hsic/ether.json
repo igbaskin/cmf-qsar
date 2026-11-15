@@ -1,0 +1,138 @@
+{
+ "n": 1050,
+ "ions": {
+  "li": {
+   "label": "Li+",
+   "n": 1048,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.3059410936890857,
+    "z": 262.1368051207697,
+    "strata": 1,
+    "informative": 1048,
+    "exact": true
+   },
+   "contacts at the relaxed ion": {
+    "p_value": 0.001,
+    "alignment": 0.13891343176854307,
+    "z": 109.76483378321173,
+    "strata": 6,
+    "informative": 1048,
+    "exact": true
+   },
+   "oxygens in the formula": {
+    "p_value": 0.001,
+    "alignment": 0.16477072157135988,
+    "z": 124.19220905198928,
+    "strata": 5,
+    "informative": 1048,
+    "exact": true
+   },
+   "stored": {
+    "contacts at the relaxed ion, Gaussian minus fields": {
+     "mean": 0.05225127140523002,
+     "low": 0.0422748768007127,
+     "high": 0.061941847227114974,
+     "excludes_zero": true
+    },
+    "contacts at the relaxed ion, Gaussian minus fields+probe": {
+     "mean": 0.05968835162021815,
+     "low": 0.04996446907251933,
+     "high": 0.06886365420211386,
+     "excludes_zero": true
+    }
+   }
+  },
+  "na": {
+   "label": "Na+",
+   "n": 980,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.20147120406019395,
+    "z": 130.62777840340976,
+    "strata": 1,
+    "informative": 980,
+    "exact": true
+   },
+   "contacts at the relaxed ion": {
+    "p_value": 0.001,
+    "alignment": 0.06815835577194368,
+    "z": 49.460481398394,
+    "strata": 6,
+    "informative": 980,
+    "exact": true
+   },
+   "oxygens in the formula": {
+    "p_value": 0.001,
+    "alignment": 0.08787324497817466,
+    "z": 60.89828010686992,
+    "strata": 5,
+    "informative": 980,
+    "exact": true
+   },
+   "stored": {
+    "contacts at the relaxed ion, Gaussian minus fields": {
+     "mean": 0.04295105712974152,
+     "low": 0.032921999991397305,
+     "high": 0.05305672919062239,
+     "excludes_zero": true
+    },
+    "contacts at the relaxed ion, Gaussian minus fields+probe": {
+     "mean": 0.053183068684126054,
+     "low": 0.043673747546328474,
+     "high": 0.06361937737225988,
+     "excludes_zero": true
+    }
+   }
+  },
+  "mg": {
+   "label": "Mg2+",
+   "n": 982,
+   "plain": {
+    "p_value": 0.001,
+    "alignment": 0.25084619518167955,
+    "z": 166.10250341188384,
+    "strata": 1,
+    "informative": 982,
+    "exact": true
+   },
+   "contacts at the relaxed ion": {
+    "p_value": 0.001,
+    "alignment": 0.15233208558421205,
+    "z": 90.05181260008793,
+    "strata": 6,
+    "informative": 982,
+    "exact": true
+   },
+   "oxygens in the formula": {
+    "p_value": 0.001,
+    "alignment": 0.24570885705562434,
+    "z": 164.72797775925423,
+    "strata": 5,
+    "informative": 982,
+    "exact": true
+   },
+   "stored": {
+    "contacts at the relaxed ion, Gaussian minus fields": {
+     "mean": 0.11315359401354601,
+     "low": 0.09563361025717448,
+     "high": 0.13149239436939497,
+     "excludes_zero": true
+    },
+    "contacts at the relaxed ion, Gaussian minus fields+probe": {
+     "mean": 0.12415678606204461,
+     "low": 0.10620975814508296,
+     "high": 0.1427912016553635,
+     "excludes_zero": true
+    }
+   }
+  }
+ },
+ "calibration": {
+  "plain": 1.0,
+  "conditional": 0.01,
+  "residual": 1.0,
+  "replicates": 100
+ },
+ "seconds": 11.6
+}

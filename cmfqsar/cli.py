@@ -3953,6 +3953,70 @@ def cmd_compare(args):
         print(f"Density ratio of every molecule written to {args.weights}")
 
 
+def cmd_dependence(args):
+    """Does the activity depend on the fields, and beyond a reference? (conditional HSIC test)"""
+    from cmfqsar.descriptors import read_values
+    from cmfqsar.hsic import hsic_test, strata_of
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    z = None
+    if args.given:
+        z = np.array([read_values(m, [args.given])[0] for m in ds.mols], float)
+        keep &= np.isfinite(z)
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [nm for nm, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    if len(y) < 8:
+        raise SystemExit(f"{len(y)} molecules with an activity"
+                         + (f" and a value of {args.given}" if args.given else "")
+                         + ": too few to test anything")
+    if keep.sum() < len(keep):
+        print(f"{int(len(keep) - keep.sum())} molecules left out: no activity"
+              + (f" or no value of {args.given}" if args.given else ""))
+    fs = _fieldset_from(args, mols)
+    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    print(f"{len(y)} molecules; fields {', '.join(s_.label for s_ in fs.specs)}, "
+          f"alpha = {args.alpha:g}; {args.permutations} permutations, "
+          f"{args.kernel_y} kernel on the activity")
+    plain = hsic_test(K, y, kernel_y=args.kernel_y, permutations=args.permutations,
+                      seed=args.seed)
+    print("\nDoes the activity depend on the fields at all?")
+    print("  " + plain.describe())
+    if z is None:
+        return
+    z = z[keep]
+    strata, exact = strata_of(z, bins=args.bins or None)
+    if exact and strata.max() + 1 > len(y) // 2 and not args.bins:
+        print(f"\n{args.given} takes {strata.max() + 1} distinct values on {len(y)} molecules, so "
+              f"most strata hold one molecule. Give --bins to cut it into quantile bins (the "
+              f"test is then approximate), or choose a reference with fewer values.")
+    if not exact and args.kernel_y != "linear":
+        raise SystemExit("a binned reference needs the linear kernel on the activity, which "
+                         "removes a straight line in the reference within each bin")
+    cond = hsic_test(K, y, strata=strata, exact=exact, kernel_y=args.kernel_y,
+                     permutations=args.permutations, seed=args.seed,
+                     covariate=None if exact else z)
+    print(f"\nDoes it depend on the fields beyond {args.given}?")
+    print("  " + cond.describe())
+    if cond.informative < len(y) // 2:
+        print(f"  only {cond.informative} of {len(y)} molecules share a stratum with another; "
+              f"the test has little to work with")
+    if cond.p_value <= 0.05:
+        print(f"  the fields carry information about the activity that {args.given} does not")
+    else:
+        print(f"  no evidence that the fields carry more than {args.given}; a field model may "
+              f"be measuring {args.given} in another form. Absence of evidence is not evidence "
+              f"of absence on a small set.")
+    if not exact:
+        print(f"  {args.given} was cut into {strata.max() + 1} bins and a straight line in it was "
+              f"removed within each bin; the test is approximate (5 % or fewer false positives "
+              f"at the 5 % level in benchmarks/run_hsic.py)")
+
+
 #: `cmf pick` builds the joint kernel over every molecule at once, five n by n matrices of
 #: float64 for the default fields; above this many molecules it refuses instead of filling memory
 PICK_MAX_MOLECULES = 5000
@@ -4974,6 +5038,32 @@ def main(argv=None):
     pk.add_argument("--out", default=None, help="CSV of the chosen molecules, in order")
     pk.add_argument("--sdf-out", default=None, help="SD file of the chosen molecules, in order")
     pk.set_defaults(func=cmd_pick)
+
+    dp = sub.add_parser("dependence", help="does the activity depend on the fields, and beyond a "
+                                           "reference such as a count? (conditional HSIC test)")
+    dp.add_argument("dataset")
+    dp.add_argument("--activity", default=None)
+    dp.add_argument("--given", default=None, metavar="NAME",
+                    help="the reference: a property of the file or a computed descriptor such as "
+                         "calc:HeavyAtomCount or calc:clogp. The activities are permuted within "
+                         "the molecules of equal value, which makes the test exact for a count")
+    dp.add_argument("--bins", type=int, default=0,
+                    help="cut a continuous reference into this many quantile bins and remove a "
+                         "straight line in it within each bin (the test is then approximate)")
+    dp.add_argument("--kernel-y", default="linear", choices=["linear", "gauss"],
+                    help="linear: does the mean activity depend on the fields (default); gauss: "
+                         "any dependence, the spread included")
+    dp.add_argument("--permutations", type=int, default=999)
+    dp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    dp.add_argument("--cif", action="store_true")
+    dp.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
+    dp.add_argument("--cif-min", type=int, default=5)
+    dp.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    dp.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    dp.add_argument("--alpha", type=float, default=0.5)
+    dp.add_argument("--seed", type=int, default=0)
+    dp.set_defaults(func=cmd_dependence)
 
     kc = sub.add_parser("kcca", help="what the field sees that another view does not (kernel "
                                      "canonical correlation analysis)")
