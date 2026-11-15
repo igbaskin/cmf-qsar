@@ -198,3 +198,84 @@ In this table every column has the shift fitted and each instrument centred.
 | tablets | kernel ridge, slopes | 16 | 0.720 | 0.364 | 0.364 | 16.0 |
 | tablets | kernel ridge, slopes | 32 | 1.029 | 0.427 | 0.427 | 32.0 |
 
+## The reference: every spectrum corrected by itself (stage --scatter)
+
+Standard normal variate (SNV) takes the mean of each spectrum off and divides by its standard deviation along the axis. Multiplicative scatter correction (MSC) fits each spectrum as an offset plus a gain times the mean spectrum of the fit on the source instrument, and takes both off. Both are applied to the spectra of the fit and of the test alike, and neither needs a standard or the other test spectra. The splits and folds are those of the benchmark (same seed), so the columns without a correction repeat the numbers above. Every number is an error divided by the standard deviation of the property, averaged over the properties of the set.
+
+### PLS on the plain spectra
+
+| Source to target | As measured | SNV | MSC | Each instrument centred | SNV, then each instrument centred | MSC, then each instrument centred | PDS with 8 standards | Model fitted on the target |
+|---|---|---|---|---|---|---|---|---|
+| corn, m5 to mp5 | 2.791 | 3.165 | 3.033 | 0.513 | 0.576 | 0.564 | 0.541 | 0.440 |
+| corn, m5 to mp6 | 2.846 | 3.235 | 3.125 | 0.543 | 0.610 | 0.593 | 0.570 | 0.454 |
+| corn, mp5 to m5 | 3.521 | 2.584 | 2.790 | 0.585 | 0.666 | 0.673 | 0.544 | 0.120 |
+| corn, mp5 to mp6 | 1.327 | 1.493 | 1.555 | 0.526 | 0.561 | 0.573 | 0.493 | 0.454 |
+| corn, mp6 to m5 | 3.219 | 2.762 | 2.821 | 0.613 | 0.680 | 0.705 | 0.572 | 0.120 |
+| corn, mp6 to mp5 | 1.095 | 1.524 | 1.499 | 0.521 | 0.595 | 0.598 | 0.518 | 0.440 |
+| tablets, 1 to 2 | 1.754 | 2.149 | 1.875 | 0.472 | 0.433 | 0.382 | 0.407 | 0.246 |
+| tablets, 2 to 1 | 3.132 | 1.503 | 2.115 | 0.401 | 0.354 | 0.367 | 0.371 | 0.245 |
+
+Within the source instrument, no instrument changed:
+
+| Instrument | No correction | SNV | MSC |
+|---|---|---|---|
+| corn, m5 | 0.120 | 0.299 | 0.288 |
+| corn, mp5 | 0.440 | 0.500 | 0.502 |
+| corn, mp6 | 0.454 | 0.490 | 0.487 |
+| tablets, 1 | 0.245 | 0.236 | 0.233 |
+| tablets, 2 | 0.246 | 0.238 | 0.239 |
+
+Paired differences, first minus second, of the error averaged over the crossings of a set; a 95 % bootstrap interval over the splits:
+
+| Comparison | corn | tablets |
+|---|---|---|
+| SNV, as measured minus no correction, as measured | -0.006 [-0.145, +0.131] | -0.617 [-1.337, +0.024] |
+| MSC, as measured minus no correction, as measured | +0.004 [-0.129, +0.128] | -0.448 [-1.245, +0.428] |
+| no correction, each instrument centred minus SNV, as measured | -1.910 [-2.000, -1.814] | -1.390 [-2.078, -0.789] |
+| no correction, each instrument centred minus MSC, as measured | -1.920 [-2.011, -1.819] | -1.559 [-2.498, -0.824] |
+| SNV, each instrument centred minus no correction, each instrument centred | +0.064 [+0.050, +0.080] | -0.043 [-0.129, +0.036] |
+| MSC, each instrument centred minus no correction, each instrument centred | +0.067 [+0.049, +0.087] | -0.062 [-0.148, +0.034] |
+| no correction, each instrument centred minus PDS with 8 standards | +0.011 [-0.002, +0.024] | +0.047 [+0.019, +0.079] |
+| SNV, each instrument centred minus PDS with 8 standards | +0.075 [+0.059, +0.092] | +0.004 [-0.094, +0.100] |
+| Within the source: SNV minus no correction | +0.091 [+0.077, +0.105] | -0.009 [-0.012, -0.006] |
+| Within the source: MSC minus no correction | +0.087 [+0.075, +0.101] | -0.009 [-0.012, -0.006] |
+
+### Kernel ridge on the slopes
+
+| Source to target | As measured | SNV | MSC | Each instrument centred | SNV, then each instrument centred | MSC, then each instrument centred | PDS with 8 standards | Model fitted on the target |
+|---|---|---|---|---|---|---|---|---|
+| corn, m5 to mp5 | 2.747 | 2.665 | 2.654 | 0.510 | 0.559 | 0.558 | 0.540 | 0.425 |
+| corn, m5 to mp6 | 2.682 | 2.696 | 2.680 | 0.523 | 0.552 | 0.553 | 0.560 | 0.398 |
+| corn, mp5 to m5 | 2.412 | 2.096 | 2.084 | 0.513 | 0.589 | 0.590 | 0.468 | 0.100 |
+| corn, mp5 to mp6 | 0.988 | 1.080 | 1.084 | 0.492 | 0.540 | 0.541 | 0.446 | 0.398 |
+| corn, mp6 to m5 | 2.636 | 1.990 | 2.000 | 0.518 | 0.603 | 0.611 | 0.456 | 0.100 |
+| corn, mp6 to mp5 | 0.870 | 1.013 | 1.032 | 0.497 | 0.578 | 0.583 | 0.464 | 0.425 |
+| tablets, 1 to 2 | 1.382 | 1.291 | 1.259 | 0.373 | 0.359 | 0.329 | 0.341 | 0.240 |
+| tablets, 2 to 1 | 2.369 | 1.665 | 1.749 | 0.328 | 0.355 | 0.342 | 0.310 | 0.236 |
+
+Within the source instrument, no instrument changed:
+
+| Instrument | No correction | SNV | MSC |
+|---|---|---|---|
+| corn, m5 | 0.100 | 0.269 | 0.268 |
+| corn, mp5 | 0.425 | 0.487 | 0.487 |
+| corn, mp6 | 0.398 | 0.471 | 0.473 |
+| tablets, 1 | 0.236 | 0.230 | 0.230 |
+| tablets, 2 | 0.240 | 0.236 | 0.234 |
+
+Paired differences, first minus second, of the error averaged over the crossings of a set; a 95 % bootstrap interval over the splits:
+
+| Comparison | corn | tablets |
+|---|---|---|
+| SNV, as measured minus no correction, as measured | -0.132 [-0.209, -0.065] | -0.398 [-0.624, -0.192] |
+| MSC, as measured minus no correction, as measured | -0.133 [-0.210, -0.064] | -0.372 [-0.573, -0.182] |
+| no correction, each instrument centred minus SNV, as measured | -1.415 [-1.480, -1.344] | -1.127 [-1.936, -0.545] |
+| no correction, each instrument centred minus MSC, as measured | -1.414 [-1.481, -1.343] | -1.153 [-1.825, -0.622] |
+| SNV, each instrument centred minus no correction, each instrument centred | +0.061 [+0.046, +0.079] | +0.007 [-0.033, +0.065] |
+| MSC, each instrument centred minus no correction, each instrument centred | +0.064 [+0.048, +0.082] | -0.016 [-0.043, +0.014] |
+| no correction, each instrument centred minus PDS with 8 standards | +0.020 [+0.006, +0.034] | +0.025 [+0.004, +0.048] |
+| SNV, each instrument centred minus PDS with 8 standards | +0.081 [+0.062, +0.102] | +0.032 [-0.022, +0.107] |
+| Within the source: SNV minus no correction | +0.101 [+0.088, +0.115] | -0.005 [-0.007, -0.003] |
+| Within the source: MSC minus no correction | +0.102 [+0.089, +0.116] | -0.006 [-0.008, -0.005] |
+
+

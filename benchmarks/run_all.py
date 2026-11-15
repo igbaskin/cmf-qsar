@@ -1161,12 +1161,13 @@ def registry() -> List[Benchmark]:
                   "differs between the instruments; PLS and kernel ridge on the same rows, "
                   "the target read as measured, with each instrument centred, with the shift "
                   "fitted, and with transfer standards (piecewise direct standardisation); "
-                  "a simulated difference in resolution and the matched widths (the two "
+                  "a simulated difference in resolution and the matched widths; a correction of every "
+                  "spectrum by itself (SNV, MSC) as the reference (the two "
                   "sets are not in the repository: prepare_calibration_transfer.py downloads "
                   "6.5 MB into benchmarks/cache)",
-                  "run_calibration_transfer.py", "calibration_transfer", compute=[[]],
+                  "run_calibration_transfer.py", "calibration_transfer", compute=[[], ["--scatter"]],
                   prepare=["prepare_calibration_transfer.py"],
-                  minutes="33",
+                  minutes="36",
                   report=lambda: _mod("run_calibration_transfer").report(),
                   tables=["calibration_transfer/table.md"]),
         Benchmark("fluorescence",

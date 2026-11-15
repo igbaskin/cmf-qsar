@@ -52,11 +52,20 @@ the two mean spectra without a standard (`cmfqsar.spectrum.fit_width`).  This is
 the source instrument itself as the target, where the resolution is the only difference, and
 with another instrument, where the shift is removed and each instrument is centred first.
 
+The reference: every spectrum corrected by itself (--scatter)
+------------------------------------------------------------
+The first step of a chemometric model is often a correction of every spectrum by itself:
+the standard normal variate (SNV) or the multiplicative scatter correction (MSC).  Neither
+needs a standard or the other test spectra.  The stage --scatter asks whether such a
+correction already repairs the crossing, on the splits of the benchmark (about three
+minutes).
+
 Usage
 -----
     python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
     python benchmarks/run_calibration_transfer.py       # the benchmark, then the table
     python benchmarks/run_calibration_transfer.py --report
+    python benchmarks/run_calibration_transfer.py --scatter   # the reference of the tutorial
 """
 from __future__ import annotations
 
@@ -818,11 +827,262 @@ def report(results: str = RESULTS) -> str:
             lines.insert(-2, "")
         for which, s in sets.items():
             lines += _coarser_lines(which, s, same)
+    lines += scatter_section(results)
     lines.append("")
     text = "\n".join(lines)
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text + "\n")
     return text
+
+
+# --------------------------------------------------------------------------- #
+# The stage --scatter: a correction of every spectrum by itself, as the reference
+# --------------------------------------------------------------------------- #
+SCATTER_DIR = RESULTS
+CORRECTIONS = ("none", "SNV", "MSC")
+#: the two pairs of model and rows of the gate: the reference and ours
+SCATTER_CASES = (("pls", "plain"), ("kernel", "slope"))
+TREATMENTS = ("as measured", "each instrument centred")
+
+
+def snv(X: np.ndarray) -> np.ndarray:
+    """Standard normal variate: every spectrum minus its own mean, divided by its own
+    standard deviation along the axis.  It needs no other spectrum."""
+    X = np.asarray(X, float)
+    mu = X.mean(axis=1, keepdims=True)
+    sd = X.std(axis=1, keepdims=True)
+    return (X - mu) / np.where(sd > 0.0, sd, 1.0)
+
+
+def msc(X: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    """Multiplicative scatter correction: every spectrum is fitted as ``a + b * reference`` by
+    least squares and replaced by ``(spectrum - a) / b``.  Here the reference is the mean
+    spectrum of the samples of the fit on the source instrument, so a target spectrum is
+    corrected without any other target spectrum."""
+    X = np.asarray(X, float)
+    r = np.asarray(reference, float)
+    rc = r - r.mean()
+    b = (X - X.mean(axis=1, keepdims=True)) @ rc / float(rc @ rc)
+    a = X.mean(axis=1) - b * r.mean()
+    b = np.where(np.abs(b) > 1e-12, b, 1.0)
+    return (X - a[:, None]) / b[:, None]
+
+
+def corrected(name: str, X: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    if name == "SNV":
+        return snv(X)
+    if name == "MSC":
+        return msc(X, reference)
+    return np.asarray(X, float)
+
+
+def scatter_split(S: np.ndarray, Y: np.ndarray, sd: np.ndarray, x: np.ndarray,
+                  fit_idx: np.ndarray, test_idx: np.ndarray, rng,
+                  n_standards: int = N_STANDARDS, widths: Sequence[float] = WIDTHS) -> dict:
+    """One split of the stage --scatter.  The random numbers are drawn as in
+    :func:`one_split`, so the same seed gives the same splits and folds as the benchmark,
+    and the rows without a correction repeat its numbers.
+
+    Returns errors divided by the standard deviation of the property `sd`, averaged over the
+    properties: ``within[model|form][source][correction]`` and
+    ``crossing[model|form][source->target][correction|treatment]``, with
+    ``none|PDS`` (piecewise direct standardisation with `n_standards` standards) and
+    ``none|fitted on the target`` for comparison."""
+    step = float(x[1] - x[0])
+    folds = [np.sort(f) for f in np.array_split(rng.permutation(len(fit_idx)), FOLDS)]
+    k, P = len(S), Y.shape[1]
+    within: dict = {}
+    crossing: dict = {}
+    fits = {}
+    for a in range(k):
+        reference = S[a][fit_idx].mean(axis=0)
+        for model, form in SCATTER_CASES:
+            case = f"{model}|{form}"
+            for c in CORRECTIONS:
+                Xf = corrected(c, S[a][fit_idx], reference)
+                Xt = corrected(c, S[a][test_idx], reference)
+                errs = []
+                for p in range(P):
+                    f = fitted(Xf, Y[fit_idx, p], step, form, model, folds, widths)
+                    fits[(a, c, case, p)] = (f, Xf)
+                    errs.append(rmse(predict(f, Xt), Y[test_idx, p]) / sd[p])
+                within.setdefault(case, {}).setdefault(str(a), {})[c] = float(np.mean(errs))
+    for a in range(k):
+        reference = S[a][fit_idx].mean(axis=0)
+        for b in range(k):
+            if a == b:
+                continue
+            key = f"{a}->{b}"
+            std = fit_idx[kennard_stone(S[a][fit_idx], n_standards)]
+            loo = pds_leave_one_out(S[a][std], S[b][std])
+            for model, form in SCATTER_CASES:
+                case = f"{model}|{form}"
+                slot = crossing.setdefault(case, {}).setdefault(key, {})
+                for c in CORRECTIONS:
+                    Xt = corrected(c, S[b][test_idx], reference)
+                    errs = {t: [] for t in TREATMENTS}
+                    for p in range(P):
+                        f, Xf = fits[(a, c, case, p)]
+                        y = Y[test_idx, p]
+                        errs[TREATMENTS[0]].append(rmse(predict(f, Xt), y) / sd[p])
+                        errs[TREATMENTS[1]].append(rmse(predict(
+                            f, Xt - Xt.mean(axis=0) + Xf.mean(axis=0)), y) / sd[p])
+                    for t in TREATMENTS:
+                        slot[f"{c}|{t}"] = float(np.mean(errs[t]))
+                pds_err = []
+                for p in range(P):
+                    f, _ = fits[(a, "none", case, p)]
+                    half, rank = pds_chosen(f, Y[std, p], loo)
+                    pds = pds_fit(S[a][std], S[b][std], half, rank)
+                    pds_err.append(rmse(predict(f, pds_apply(pds, S[b][test_idx])),
+                                        Y[test_idx, p]) / sd[p])
+                slot["none|PDS"] = float(np.mean(pds_err))
+                slot["none|fitted on the target"] = within[case][str(b)]["none"]
+    return {"within": within, "crossing": crossing}
+
+
+#: the paired comparisons of the stage, as (first, second): first minus second
+SCATTER_PAIRS = (
+    ("SNV|as measured", "none|as measured"),
+    ("MSC|as measured", "none|as measured"),
+    ("none|each instrument centred", "SNV|as measured"),
+    ("none|each instrument centred", "MSC|as measured"),
+    ("SNV|each instrument centred", "none|each instrument centred"),
+    ("MSC|each instrument centred", "none|each instrument centred"),
+    ("none|each instrument centred", "none|PDS"),
+    ("SNV|each instrument centred", "none|PDS"),
+)
+
+
+def scatter_set(which: str, repeats: int = REPEATS) -> dict:
+    t0 = time.time()
+    d = PREP.load(which)
+    spec = SETS[which]
+    x, S = cut(d, *spec["range"])
+    names = [str(n) for n in d["property_names"]]
+    Y = d["properties"][:, [names.index(p) for p in spec["properties"]]]
+    sd = Y.std(axis=0)
+    n = S.shape[1]
+    rng = np.random.default_rng(SEED)
+    lists: dict = {}
+    for r in range(repeats):
+        order = rng.permutation(n)
+        one = scatter_split(S, Y, sd, x, np.sort(order[:spec["fit"]]),
+                            np.sort(order[spec["fit"]:]), rng)
+        _collect(lists, one)
+        log(f"  scatter, {which}: split {r + 1} of {repeats}, {time.time() - t0:.0f} s")
+    out = {"instruments": [str(i) for i in d["instruments"]], "repeats": repeats,
+           "properties": list(spec["properties"]), "fit": spec["fit"], "test": n - spec["fit"]}
+    out["within"] = _summarise(lists["within"])
+    out["crossing"] = _summarise(lists["crossing"])
+    pairs = {}
+    for case, by_key in lists["crossing"].items():
+        # the error of a split averaged over the crossings, then paired over the splits
+        per_split = {v: np.mean([by_key[key][v] for key in by_key], axis=0)
+                     for v in next(iter(by_key.values()))}
+        pairs[case] = {"mean over the crossings": {v: float(np.mean(e))
+                                                   for v, e in per_split.items()}}
+        for first, second in SCATTER_PAIRS:
+            pairs[case][f"{first} minus {second}"] = M.mean_difference(
+                per_split[first], per_split[second], seed=SEED)
+        within = lists["within"][case]
+        for c in CORRECTIONS[1:]:
+            a = np.mean([within[s][c] for s in within], axis=0)
+            b = np.mean([within[s]["none"] for s in within], axis=0)
+            pairs[case][f"within, {c} minus none"] = M.mean_difference(a, b, seed=SEED)
+    out["pairs"] = pairs
+    out["seconds"] = round(time.time() - t0, 1)
+    return out
+
+
+def scatter_stage(results: str = SCATTER_DIR, repeats: int = REPEATS,
+                  sets: Sequence[str] = tuple(SETS)) -> dict:
+    """The stage --scatter: the reference that corrects every spectrum by itself (SNV, MSC)
+    against each instrument centred and against PDS, on the splits of the benchmark."""
+    out = {"corrections": list(CORRECTIONS), "standards": N_STANDARDS, "seed": SEED,
+           "sets": {which: scatter_set(which, repeats) for which in sets}}
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, "scatter.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+SCATTER_COLUMNS = (("none|as measured", "As measured"),
+                   ("SNV|as measured", "SNV"),
+                   ("MSC|as measured", "MSC"),
+                   ("none|each instrument centred", "Each instrument centred"),
+                   ("SNV|each instrument centred", "SNV, then each instrument centred"),
+                   ("MSC|each instrument centred", "MSC, then each instrument centred"),
+                   ("none|PDS", "PDS with 8 standards"),
+                   ("none|fitted on the target", "Model fitted on the target"))
+
+
+def _pair_label(text: str) -> str:
+    c, t = text.split("|")
+    if t == "PDS":
+        return "PDS with 8 standards"
+    if c == "none":
+        return "no correction, " + t
+    return f"{c}, {t}"
+
+
+def scatter_section(results: str = SCATTER_DIR) -> List[str]:
+    """The section of the table for the stage --scatter, or nothing before it has run."""
+    path = os.path.join(results, "scatter.json")
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        d = json.load(fh)
+    lines = ["",
+             "## The reference: every spectrum corrected by itself (stage --scatter)",
+             "",
+             "Standard normal variate (SNV) takes the mean of each spectrum off and divides by "
+             "its standard deviation along the axis. Multiplicative scatter correction (MSC) "
+             "fits each spectrum as an offset plus a gain times the mean spectrum of the fit "
+             "on the source instrument, and takes both off. Both are applied to the spectra of "
+             "the fit and of the test alike, and neither needs a standard or the other test "
+             "spectra. The splits and folds are those of the benchmark (same seed), so the "
+             "columns without a correction repeat the numbers above. Every number is an error "
+             "divided by the standard deviation of the property, averaged over the properties "
+             "of the set.",
+             ""]
+    for case, title in (("pls|plain", "PLS on the plain spectra"),
+                        ("kernel|slope", "kernel ridge on the slopes")):
+        lines += [f"### {title[0].upper() + title[1:]}", "",
+                  "| Source to target | " + " | ".join(n for _, n in SCATTER_COLUMNS) + " |",
+                  "|---|" + "---|" * len(SCATTER_COLUMNS)]
+        for which, s in d["sets"].items():
+            inst = s["instruments"]
+            for key, node in s["crossing"][case].items():
+                a, b = (int(v) for v in key.split("->"))
+                cells = " | ".join(f"{node[v]['mean']:.3f}" for v, _ in SCATTER_COLUMNS)
+                lines.append(f"| {which}, {inst[a]} to {inst[b]} | {cells} |")
+        lines += ["", "Within the source instrument, no instrument changed:", "",
+                  "| Instrument | No correction | SNV | MSC |", "|---|---|---|---|"]
+        for which, s in d["sets"].items():
+            for a, node in s["within"][case].items():
+                lines.append(f"| {which}, {s['instruments'][int(a)]} | "
+                             + " | ".join(f"{node[c]['mean']:.3f}" for c in CORRECTIONS) + " |")
+        lines += ["", "Paired differences, first minus second, of the error averaged over "
+                      "the crossings of a set; a 95 % bootstrap interval over the splits:", "",
+                  "| Comparison | " + " | ".join(d["sets"]) + " |",
+                  "|---|" + "---|" * len(d["sets"])]
+        keys = [f"{f} minus {g}" for f, g in SCATTER_PAIRS] + [
+            f"within, {c} minus none" for c in CORRECTIONS[1:]]
+        for k in keys:
+            if k.startswith("within"):
+                label = k.replace("within, ", "Within the source: ").replace(
+                    " minus none", " minus no correction")
+            else:
+                f, g = k.split(" minus ")
+                label = f"{_pair_label(f)} minus {_pair_label(g)}"
+            cells = []
+            for which, s in d["sets"].items():
+                v = s["pairs"][case][k]
+                cells.append(f"{v['mean']:+.3f} [{v['low']:+.3f}, {v['high']:+.3f}]")
+            lines.append(f"| {label} | " + " | ".join(cells) + " |")
+        lines.append("")
+    return lines
 
 
 def main(argv=None) -> int:
@@ -832,8 +1092,13 @@ def main(argv=None) -> int:
     ap.add_argument("--repeats", type=int, default=REPEATS)
     ap.add_argument("--sets", nargs="+", default=list(SETS), choices=list(SETS))
     ap.add_argument("--results", default=RESULTS)
+    ap.add_argument("--scatter", action="store_true",
+                    help="only the stage that corrects every spectrum by itself (SNV, MSC), "
+                         "the reference of the tutorial; writes scatter.json")
     a = ap.parse_args(argv)
-    if not a.report:
+    if a.scatter:
+        scatter_stage(a.results, a.repeats, a.sets)
+    elif not a.report:
         run(a.results, a.repeats, a.sets)
     print(report(a.results))
     return 0

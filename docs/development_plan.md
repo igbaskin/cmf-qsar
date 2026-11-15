@@ -3626,7 +3626,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   (R2 1.000) on MoS2 and 54 meV (R2 0.996) on WSe2, where the additive count kernel gives 38;
   the autocorrelation does not extrapolate (R2 -0.02 and +0.06, 1.1 to 1.2 eV per site) and
   the fixed frame reaches R2 0.8.
-  **A pair expansion as the reference, added 15 November 2026,** while the twentieth tutorial was
+  **A pair expansion as the reference, added 15 November 2026,** while the twenty-first tutorial was
   written. Materials science has a standard cheap model for an arrangement of defects on a lattice: one energy
   for each kind of defect and one for each pair of kinds at each neighbour distance, fitted by linear
   regression (a cluster expansion cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns
@@ -8141,6 +8141,25 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   standard in every split.
   *Open:* the gate on a pair of real instruments that differ in resolution; the cost of the
   centring against the number of test samples; the glass standards of the corn file.
+  **A reference that corrects every spectrum by itself, added 15 November 2026,** while the eighteenth
+  tutorial was written.
+  The first step of a chemometric model is often a correction of every spectrum by itself: the
+  standard normal variate (SNV), which takes off the mean of the spectrum and divides by its
+  standard deviation along the axis, or the multiplicative scatter correction (MSC), which takes off
+  an offset and a gain against a reference spectrum. Neither needs a standard.
+  `run_calibration_transfer.py --scatter` (3 minutes) asks whether such a correction already repairs
+  the crossing, on the 20 splits of the benchmark (the same seed, so the columns without a
+  correction repeat the numbers above). It does not. With SNV or MSC the error stays between 1.0 and
+  3.2 times the spread of the property, against 0.9 to 3.5 with no treatment. Centring each
+  instrument is better than SNV by 1.4 to 1.9 for corn and by 1.1 to 1.4 for the tablets (PLS on the
+  plain spectra and kernel ridge on the slopes; every interval is far from zero). The difference
+  between two instruments is one spectrum with a shape along the axis, and an offset and a gain per
+  spectrum cannot remove it. SNV before the centring adds nothing: +0.06 for corn (the interval
+  excludes zero) and a difference not separated from zero for the tablets. Within one instrument SNV
+  raises the error on corn by 0.09 to 0.10, so the level and the scale of a corn spectrum carry
+  information about its properties. Against PDS with 8 standards the centring is +0.011 [-0.002,
+  +0.024] (PLS) and +0.020 [+0.006, +0.034] (kernel ridge) for corn, and +0.047 and +0.025 for the
+  tablets.
 * **SP6. Mixtures and quantification.** Beer–Lambert linearity says that the spectrum of a mixture
   is the sum of the component spectra weighted by their concentrations, so the field of a mixture is
   the weighted sum of the component fields and the identity MS5 rests on applies exactly: the kernel
@@ -8336,7 +8355,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twenty-first tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-second tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

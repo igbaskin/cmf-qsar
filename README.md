@@ -810,7 +810,7 @@ worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random folds the arrang
 little more than which pairs of defects are neighbours, and which of the two extrapolates better
 depends on the material and on two free choices of the reference.
 
-The twentieth tutorial, `docs/tutorials/20_defects_on_a_lattice.ipynb`, fits the counts and the
+The twenty-first tutorial, `docs/tutorials/21_defects_on_a_lattice.ipynb`, fits the counts and the
 arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
 the stored results.
 
@@ -3267,9 +3267,33 @@ property; 20 random splits.
   `spectrum.fit_width` finds the difference from the two mean spectra without a standard,
   correctly in every split. A real pair of instruments that differ in resolution is open.
 
+**A reference that corrects every spectrum by itself (added 15 November 2026).** The first
+step of a chemometric model is often a correction of every spectrum by itself: the standard
+normal variate (SNV), which takes off the mean of the spectrum and divides by its standard
+deviation along the axis, or the multiplicative scatter correction (MSC), which takes off an
+offset and a gain against a reference spectrum. Neither needs a standard.
+`run_calibration_transfer.py --scatter` (3 minutes) asks whether such a correction already
+repairs the crossing, on the 20 splits of the benchmark (the same seed, so the columns
+without a correction repeat the numbers above). It does not. With SNV or MSC the error stays
+between 1.0 and 3.2 times the spread of the property, against 0.9 to 3.5 with no treatment.
+Centring each instrument is better than SNV by 1.4 to 1.9 for corn and by 1.1 to 1.4 for the
+tablets (PLS on the plain spectra and kernel ridge on the slopes; every interval is far from
+zero). The difference between two instruments is one spectrum with a shape along the axis,
+and an offset and a gain per spectrum cannot remove it. SNV before the centring adds
+nothing: +0.06 for corn (the interval excludes zero) and a difference not separated from
+zero for the tablets. Within one instrument SNV raises the error on corn by 0.09 to 0.10, so
+the level and the scale of a corn spectrum carry information about its properties. Against
+PDS with 8 standards the centring is +0.011 [-0.002, +0.024] (PLS) and +0.020 [+0.006,
++0.034] (kernel ridge) for corn, and +0.047 and +0.025 for the tablets.
+
+The eighteenth tutorial, `docs/tutorials/18_another_instrument.ipynb`, takes the difference
+between two corn instruments apart, reads one split live with each treatment, reads the
+twenty splits of the stage, and simulates a difference in resolution.
+
 ```bash
 python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
 python benchmarks/run_calibration_transfer.py       # 33 minutes
+python benchmarks/run_calibration_transfer.py --scatter   # the reference of the tutorial, 3 minutes
 ```
 
 ### Spectra with two axes: fluorescence maps and peak lists
@@ -6716,8 +6740,8 @@ for.
 
 ### Tutorials
 
-Twenty-one notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the nineteenth reads the prepared set of the hop benchmark, the twentieth downloads 5 MB of defect data on its first run, and the twenty-first needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty-two notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, and the twenty-second needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6739,10 +6763,11 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `15_an_ion_and_its_solvent.ipynb` | a cation in an ether: 1,050 ethers with the binding energy of three ions, an ion probe field that finds the ion with no model, fields and probe against counts read from the formula, the oxygens that touch the ion as a stronger reference, and a selectivity that nothing predicts well |
 | `16_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
 | `17_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `18_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `19_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `20_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
-| `21_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `18_another_instrument.ipynb` | a model fitted on one near-infrared spectrometer read on the spectra of another: what differs between two instruments, a correction of every spectrum by itself (SNV, MSC) as the reference, each instrument centred on its own mean spectrum, transfer standards, and a difference in resolution |
+| `19_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `20_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `21_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
+| `22_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7192,7 +7217,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-one notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-two notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```
