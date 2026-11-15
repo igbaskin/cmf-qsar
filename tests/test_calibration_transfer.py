@@ -358,3 +358,64 @@ def test_relative_errors_and_the_counts_of_the_gate():
     assert c == {"cases": 3, "below_pls_as_measured": 2, "within_pds": 1, "below_pds": 1,
                  "above_pds": 1, "above_pds_more_standards": 2,
                  "equal_to_pls_on_the_same_rows": 2}
+
+
+# --------------------------------------------------------------------------- #
+# The stage --scatter: every spectrum corrected by itself, as the reference
+# --------------------------------------------------------------------------- #
+def test_snv_and_msc_take_off_an_offset_and_a_gain():
+    x, S, _ = _made_up(n=12, seed=5)
+    A = S[0]
+    B = 0.3 + 1.7 * A                                   # every spectrum with an offset and a gain
+    z = T.snv(A)
+    assert np.allclose(z.mean(axis=1), 0.0) and np.allclose(z.std(axis=1), 1.0)
+    assert np.allclose(T.snv(B), z)
+    ref = A.mean(axis=0)
+    assert np.allclose(T.msc((0.2 + 1.5 * ref)[None, :], ref), ref[None, :])
+    assert np.allclose(T.msc(B, ref), T.msc(A, ref))
+    assert np.array_equal(T.corrected("none", A, ref), A)
+    assert np.array_equal(T.corrected("SNV", A, ref), z)
+    # neither correction removes a difference that has a shape along the axis
+    shaped = A + 0.2 * np.sin((x - 1100.0) / 150.0)
+    assert not np.allclose(T.snv(shaped), z, atol=1e-3)
+
+
+def test_the_scatter_stage_repeats_the_benchmark_and_writes_its_section(tmp_path, monkeypatch):
+    monkeypatch.setattr(T.PREP, "load", _load)
+    monkeypatch.setitem(T.SETS, "made up", {"properties": ("first",), "fit": 40,
+                                            "range": (1100.0, 1498.0)})
+    out = T.run(str(tmp_path), repeats=2, sets=("made up",), coarser=(16.0,))
+    sc = T.scatter_stage(str(tmp_path), repeats=2, sets=("made up",))
+    s, b = sc["sets"]["made up"], out["sets"]["made up"]
+    sd = b["property_sd"][0]
+    assert s["instruments"] == ["a", "b"] and s["repeats"] == 2
+    # the same seed gives the same splits and folds: the rows without a correction repeat
+    # the numbers of the benchmark
+    for model, form in T.SCATTER_CASES:
+        node = s["crossing"][f"{model}|{form}"]["0->1"]
+        old = b["crossing"]["0->1"]["0"][model][form]
+        assert node["none|as measured"]["mean"] == pytest.approx(old[T.VARIANTS[0]]["mean"] / sd)
+        assert node["none|each instrument centred"]["mean"] == pytest.approx(
+            old[T.VARIANTS[1]]["mean"] / sd)
+        assert node["none|PDS"]["mean"] == pytest.approx(old[T.VARIANTS[5]]["mean"] / sd)
+        assert s["within"][f"{model}|{form}"]["0"]["none"]["mean"] == pytest.approx(
+            b["within"]["0"]["0"][model][form][T.VARIANTS[0]]["mean"] / sd)
+        assert set(node) == {f"{c}|{t}" for c in T.CORRECTIONS for t in T.TREATMENTS} | {
+            "none|PDS", "none|fitted on the target"}
+    # the second instrument adds a baseline with a shape: a correction of every spectrum by
+    # itself does not repair the plain spectra, and centring each instrument does
+    plain = s["crossing"]["pls|plain"]["0->1"]
+    assert plain["SNV|as measured"]["mean"] > 2 * plain["none|each instrument centred"]["mean"]
+    assert plain["MSC|as measured"]["mean"] > 2 * plain["none|each instrument centred"]["mean"]
+    pair = s["pairs"]["pls|plain"]
+    assert set(pair["none|each instrument centred minus SNV|as measured"]) == {
+        "mean", "low", "high"}
+    assert pair["none|each instrument centred minus SNV|as measured"]["high"] < 0
+    assert "within, MSC minus none" in pair
+
+    text = T.report(str(tmp_path))
+    assert "## The reference: every spectrum corrected by itself (stage --scatter)" in text
+    assert "### Kernel ridge on the slopes" in text
+    assert "| made up, a to b |" in text and "| made up, b |" in text
+    assert "| SNV, each instrument centred minus PDS with 8 standards |" in text
+    assert T.scatter_section(str(tmp_path / "nothing")) == []

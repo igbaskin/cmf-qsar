@@ -8930,7 +8930,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The eighteenth tutorial, `docs/tutorials/18_on_a_surface.ipynb`, makes
+this program adds to it yet. The nineteenth tutorial, `docs/tutorials/19_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -9786,7 +9786,7 @@ worse (25 to 144 meV), except 8 Ã… on WSe2 (15.9). So on random folds the arrang
 little more than which pairs of defects are neighbours, and which of the two extrapolates better
 depends on the material and on two free choices of the reference.
 
-The twentieth tutorial, `docs/tutorials/20_defects_on_a_lattice.ipynb`, fits the counts and the
+The twenty-first tutorial, `docs/tutorials/21_defects_on_a_lattice.ipynb`, fits the counts and the
 arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
 the stored results.
 
@@ -12890,6 +12890,7 @@ in the repository (`benchmarks/prepare_calibration_transfer.py`, 6.5 MB).
 ```
 python benchmarks/prepare_calibration_transfer.py   # once: downloads 6.5 MB
 python benchmarks/run_calibration_transfer.py       # 33 minutes
+python benchmarks/run_calibration_transfer.py --scatter   # the reference of the tutorial, 3 minutes
 ```
 
 **Part 1: what differs between the instruments.** Before any model, the two spectra of the
@@ -13063,6 +13064,29 @@ set by the number of samples and can be measured on one instrument. With 8 stand
 both. Where a difference in resolution exists, matched widths repair it in full and need no
 standard to find it; this is shown on simulated instruments only. The same rows serve PLS
 as well as the kernel.
+
+**A reference that corrects every spectrum by itself (added 15 November 2026).** The first
+step of a chemometric model is often a correction of every spectrum by itself: the standard
+normal variate (SNV), which takes off the mean of the spectrum and divides by its standard
+deviation along the axis, or the multiplicative scatter correction (MSC), which takes off an
+offset and a gain against a reference spectrum. Neither needs a standard.
+`run_calibration_transfer.py --scatter` (3 minutes) asks whether such a correction already
+repairs the crossing, on the 20 splits of the benchmark (the same seed, so the columns
+without a correction repeat the numbers above). It does not. With SNV or MSC the error stays
+between 1.0 and 3.2 times the spread of the property, against 0.9 to 3.5 with no treatment.
+Centring each instrument is better than SNV by 1.4 to 1.9 for corn and by 1.1 to 1.4 for the
+tablets (PLS on the plain spectra and kernel ridge on the slopes; every interval is far from
+zero). The difference between two instruments is one spectrum with a shape along the axis,
+and an offset and a gain per spectrum cannot remove it. SNV before the centring adds
+nothing: +0.06 for corn (the interval excludes zero) and a difference not separated from
+zero for the tablets. Within one instrument SNV raises the error on corn by 0.09 to 0.10, so
+the level and the scale of a corn spectrum carry information about its properties. Against
+PDS with 8 standards the centring is +0.011 [-0.002, +0.024] (PLS) and +0.020 [+0.006,
++0.034] (kernel ridge) for corn, and +0.047 and +0.025 for the tablets.
+
+The eighteenth tutorial, `docs/tutorials/18_another_instrument.ipynb`, takes the difference
+between two corn instruments apart, reads one split live with each treatment, reads the
+twenty splits of the stage, and simulates a difference in resolution.
 
 **What is not done.** No pair of real instruments that differ in resolution was tested; the
 plan names Raman spectra at two gratings or powder patterns from two diffractometers. The
@@ -13511,7 +13535,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The nineteenth tutorial, `docs/tutorials/19_a_hop_in_a_crystal.ipynb`, runs the references and the
+The twentieth tutorial, `docs/tutorials/20_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16563,7 +16587,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twenty-first tutorial, `docs/tutorials/21_point_mutants.ipynb`, builds one
+among its references. The twenty-second tutorial, `docs/tutorials/22_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -17099,7 +17123,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-one notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-two notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -17110,13 +17134,13 @@ coupling reactions that combine four molecules, compared with the names of their
 potentials of metal complexes, read with fields and compared with the composition of the
 complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the solvation shells of an electrolyte as one sample with weights, compared with one shell and with the composition, the binding of a cation to an ether, read with an ion probe field and compared with the oxygens that touch the ion, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
-spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
+spectrum, a model of one near-infrared spectrometer read on the spectra of another, compared with a correction of every spectrum by itself, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
 the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The twentieth downloads 5 MB of defect data on its first run, and the twenty-first needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, and the twenty-second needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 
