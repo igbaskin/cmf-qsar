@@ -152,3 +152,66 @@ A start set of 10 candidates, a budget of 100 calls, 5 start sets.
 
 The best candidate of the pool is +0.0480 eV per atom.
 
+## The reference: the same loop with a model that needs no field (stage cheap)
+
+The loop of the two sections above, with the same start sets, the same budget and the same choice of the ridge, but its model is a linear kernel on columns that need no field. **element names**: which element sits on the A site, which on the B site, and how many of the three X sites each anion takes. **defect counts**: how many defects of each kind the cell holds. **pair expansion**: those counts and the pairs of kinds in each shell of host-site distances up to 12 A, the reference of the defect tutorial. **difference fields** is not a cheap model: it is the field kernel of the defect tutorial (the overlap of the fields of the changed sites, averaged over the symmetry of the host, with a Gaussian layer; alpha 1, gamma 1, fixed). The three-body kernel of the sections above describes the whole cell, where a few defects are a small change of a large host signal. The rows of the three-body kernel and of random choice are repeated from the sections above.
+
+| The set | Model | Start | Rule | best found | Rank | beat its start set | reached the best 1 % | calls to reach it | place of the best candidate | rank correlation |
+|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|
+| perovskites | random choice | 25 | random | +0.0880 | 27 of 4000 | 6/10 | 3/10 | 50 | -- |  |
+| perovskites | three-body fields | 25 | greedy | -0.1340 | 1 of 4000 | 7/10 | 8/10 | 16 | 846 | +0.273 |
+| perovskites | three-body fields | 25 | ucb | -0.0620 | 6 of 4000 | 7/10 | 7/10 | 31 | 846 | +0.273 |
+| perovskites | element names | 25 | greedy | -0.2000 | 1 of 4000 | 9/10 | 10/10 | 4 | 656 | +0.371 |
+| perovskites | element names | 25 | ucb | -0.2460 | 1 of 4000 | 9/10 | 10/10 | 10 | 656 | +0.371 |
+| perovskites | random choice | 100 | random | +0.0060 | 14 of 4000 | 5/10 | 6/10 | 37 | -- |  |
+| perovskites | three-body fields | 100 | greedy | -0.1780 | 1 of 4000 | 7/10 | 8/10 | 8 | 227 | +0.530 |
+| perovskites | three-body fields | 100 | ucb | -0.0600 | 9 of 4000 | 7/10 | 8/10 | 36 | 227 | +0.530 |
+| perovskites | element names | 100 | greedy | -0.2260 | 1 of 4000 | 9/10 | 10/10 | 2 | 144 | +0.630 |
+| perovskites | element names | 100 | ucb | -0.2340 | 1 of 4000 | 9/10 | 10/10 | 4 | 144 | +0.630 |
+| MoS2 | random choice | 25 | random | +0.4828 | 10 of 2000 | 7/10 | 7/10 | 46 | -- |  |
+| MoS2 | three-body fields | 25 | greedy | +0.6293 | 37 of 2000 | 7/10 | 0/10 | -- | 929 | +0.865 |
+| MoS2 | three-body fields | 25 | ucb | +0.6294 | 37 of 2000 | 7/10 | 0/10 | -- | 929 | +0.865 |
+| MoS2 | defect counts | 25 | greedy | +0.4515 | 18 of 2000 | 9/10 | 8/10 | 2 | 264 | +0.962 |
+| MoS2 | defect counts | 25 | ucb | +0.4515 | 18 of 2000 | 9/10 | 8/10 | 2 | 264 | +0.962 |
+| MoS2 | pair expansion | 25 | greedy | +0.5425 | 19 of 2000 | 9/10 | 7/10 | 20 | 708 | +0.829 |
+| MoS2 | pair expansion | 25 | ucb | +0.5992 | 37 of 2000 | 9/10 | 4/10 | 25 | 708 | +0.829 |
+| MoS2 | difference fields | 25 | greedy | +0.2268 | 1 of 2000 | 9/10 | 9/10 | 1 | 2 | +0.972 |
+| MoS2 | difference fields | 25 | ucb | +0.2268 | 1 of 2000 | 9/10 | 9/10 | 1 | 2 | +0.972 |
+| MoS2 | random choice | 100 | random | +0.4719 | 5 of 2000 | 4/10 | 6/10 | 38 | -- |  |
+| MoS2 | three-body fields | 100 | greedy | +0.5131 | 10 of 2000 | 1/10 | 0/10 | -- | 894 | +0.871 |
+| MoS2 | three-body fields | 100 | ucb | +0.5131 | 10 of 2000 | 1/10 | 0/10 | -- | 894 | +0.871 |
+| MoS2 | defect counts | 100 | greedy | +0.1667 | 1 of 2000 | 10/10 | 10/10 | 1 | 1 | +0.969 |
+| MoS2 | defect counts | 100 | ucb | +0.1667 | 1 of 2000 | 10/10 | 10/10 | 1 | 1 | +0.969 |
+| MoS2 | pair expansion | 100 | greedy | +0.3398 | 2 of 2000 | 10/10 | 9/10 | 3 | 145 | +0.976 |
+| MoS2 | pair expansion | 100 | ucb | +0.3096 | 1 of 2000 | 10/10 | 9/10 | 4 | 145 | +0.976 |
+| MoS2 | difference fields | 100 | greedy | +0.1667 | 1 of 2000 | 10/10 | 10/10 | 1 | 1 | +0.977 |
+| MoS2 | difference fields | 100 | ucb | +0.1667 | 1 of 2000 | 10/10 | 10/10 | 1 | 1 | +0.977 |
+| WSe2 | random choice | 25 | random | -1.1760 | 14 of 2000 | 8/10 | 6/10 | 31 | -- |  |
+| WSe2 | three-body fields | 25 | greedy | -1.1774 | 1 of 2000 | 10/10 | 10/10 | 28 | 138 | +0.927 |
+| WSe2 | three-body fields | 25 | ucb | -1.1774 | 1 of 2000 | 10/10 | 10/10 | 20 | 138 | +0.927 |
+| WSe2 | defect counts | 25 | greedy | -1.1779 | 1 of 2000 | 10/10 | 10/10 | 4 | 1 | +0.965 |
+| WSe2 | defect counts | 25 | ucb | -1.1779 | 1 of 2000 | 10/10 | 10/10 | 4 | 1 | +0.965 |
+| WSe2 | pair expansion | 25 | greedy | -1.1771 | 6 of 2000 | 10/10 | 9/10 | 8 | 360 | +0.872 |
+| WSe2 | pair expansion | 25 | ucb | -1.1773 | 4 of 2000 | 10/10 | 10/10 | 10 | 360 | +0.872 |
+| WSe2 | difference fields | 25 | greedy | -1.1777 | 1 of 2000 | 9/10 | 10/10 | 13 | 117 | +0.967 |
+| WSe2 | difference fields | 25 | ucb | -1.1777 | 1 of 2000 | 9/10 | 10/10 | 8 | 117 | +0.967 |
+| WSe2 | random choice | 100 | random | -1.1763 | 12 of 2000 | 6/10 | 6/10 | 38 | -- |  |
+| WSe2 | three-body fields | 100 | greedy | -1.1777 | 1 of 2000 | 9/10 | 10/10 | 38 | 59 | +0.933 |
+| WSe2 | three-body fields | 100 | ucb | -1.1777 | 1 of 2000 | 9/10 | 10/10 | 38 | 59 | +0.933 |
+| WSe2 | defect counts | 100 | greedy | -1.1779 | 1 of 2000 | 10/10 | 10/10 | 4 | 1 | +0.968 |
+| WSe2 | defect counts | 100 | ucb | -1.1779 | 1 of 2000 | 10/10 | 10/10 | 4 | 1 | +0.968 |
+| WSe2 | pair expansion | 100 | greedy | -1.1774 | 6 of 2000 | 10/10 | 10/10 | 8 | 177 | +0.971 |
+| WSe2 | pair expansion | 100 | ucb | -1.1774 | 4 of 2000 | 9/10 | 10/10 | 5 | 177 | +0.971 |
+| WSe2 | difference fields | 100 | greedy | -1.1778 | 1 of 2000 | 10/10 | 10/10 | 4 | 108 | +0.976 |
+| WSe2 | difference fields | 100 | ucb | -1.1778 | 1 of 2000 | 10/10 | 10/10 | 4 | 108 | +0.976 |
+
+The closed loop of the section above, with the number of pairs of Au atoms in each of the first 3 shells of neighbours as the model, on the same pool and start sets. The rows of the field kernel and of random choice are repeated from that section.
+
+| Model | Rule | best found (eV per atom) | Rank | found the best of the pool | place of the best candidate | rank correlation |
+|---|---|---:|---:|---:|---:|---:|
+| random choice | random | +0.0497 | 3 of 400 | 1/5 |  |  |
+| two-point fields | greedy | +0.0480 | 1 of 400 | 5/5 |  |  |
+| two-point fields | ucb | +0.0480 | 1 of 400 | 5/5 |  |  |
+| neighbour pairs | greedy | +0.0480 | 1 of 400 | 5/5 | 2 | +0.917 |
+| neighbour pairs | ucb | +0.0480 | 1 of 400 | 5/5 | 2 | +0.917 |
+

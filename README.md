@@ -1022,6 +1022,32 @@ cell take gold (10,518,300 arrangements, a pool of 400 drawn and reduced by symm
 is computed inside the loop at 0.22 s per call, and every rule that uses the model finds the best
 candidate of the pool in 5 of 5 runs against 1 of 5 for random choice.
 
+**A reference that needs no field (added 15 November 2026).** `run_prototypes.py --stage cheap`
+(about 15 minutes) reruns the loop with the same start sets, budgets and choice of the ridge, but
+its model is a linear kernel on columns that need no field: the names of the elements on the A, B
+and X sites of a perovskite (108 columns), the counts of each kind of defect (4 columns), the pair
+expansion of the defect tutorial, and the number of Au-Au pairs in the first three shells of
+neighbours for the closed loop. With the greedy rule the names reach the best one per cent of the
+perovskite pool in 10 of 10 runs, after a median of 4 calls with 25 start cells and 2 calls with
+100, against 8 of 10 runs after 16 and 8 calls for the three-body kernel. On MoS2 the defect
+counts reach it in 8 of 10 and 10 of 10 runs, and with 100 start cells they put the best
+arrangement first (rank correlation +0.97, R² +0.99). On WSe2 every model reaches it in 9 or 10 of
+10 runs, the counts after 4 calls and the three-body kernel after 28 and 38. In the closed loop
+the Au-Au pair counts find the best candidate in 5 of 5 runs, as the fields do. This corrects the
+reading of the MoS2 failure. The best arrangement is one of the four cells with a single defect,
+and the number of defects decides most of the energy (a mean of +2.55, +3.96 and +6.47 eV for one,
+two and three defects). The counts model is a kernel ridge model too, and it finds that cell, so
+the cause is not that a kernel model shrinks an isolated value. The cause is the whole-cell
+kernel, in which a few defects are a small change of a large host signal. The difference-field
+kernel of the defect tutorial (alpha 1, gamma 1, fixed in advance) finds the best MoS2 arrangement
+after a median of one call. On these four pools the loop does not need the fields: the description
+has to see what changes, and the description a chemist writes down without computing anything is
+the reference to beat.
+
+The twenty-second tutorial, `docs/tutorials/22_a_design_loop.ipynb`, runs the loop live on the
+perovskites with the fields, the names of the elements and random choice, reads the stored stages,
+shows what decides the energy of the MoS2 cells, and runs the closed loop with EMT.
+
 ### Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above counts how much field weight sits at each distance from how
@@ -6752,8 +6778,8 @@ for.
 
 ### Tutorials
 
-Twenty-two notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, and the twenty-second needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty-three notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second downloads 4 MB of perovskites, and the twenty-third needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6779,7 +6805,8 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `19_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
 | `20_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
 | `21_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
-| `22_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `22_a_design_loop.ipynb` | a design loop that looks for the best structure with few calculations: a prototype and its symmetry, random choice and the greedy rule on perovskites and on defect series, the same loop on the names of the elements and the counts of the defects as the reference, why a whole-cell kernel fails on one defect pool, and a closed loop with a calculator (downloads 4 MB on its first run) |
+| `23_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7230,7 +7257,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-two notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-three notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

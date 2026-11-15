@@ -3381,7 +3381,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   and it still puts the best candidate at place 894 of 1,900. On WSe2, at +0.93 and +0.88, the best
   candidate is at place 59. The pools differ, not the models: the best one per cent of WSe2 lies
   within 0.002 eV of the best arrangement, while on MoS2 the best arrangement lies 0.41 eV below
-  the rest of the best one per cent, and a kernel ridge model shrinks an isolated value toward the
+  the rest of the best one per cent, and (a reading corrected below) a kernel ridge model shrinks an isolated value toward the
   mean. **For a design loop the number to report is not the accuracy of the model but the place it
   gives the best candidate**, and the rule has to be chosen for the pool.
   **The closed loop.** A third stage computes every value inside the loop: 8 of the 32 sites of an
@@ -3394,6 +3394,28 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   not by how much. The first version of this stage let three elements take four sites, and that
   search was solved by random choice in 3 of 5 runs because the composition carried almost all of
   the energy difference; fixing the composition is what made it a test of the arrangement.
+  **A reference that needs no field, added 15 November 2026,** while the twenty-second tutorial
+  was written.
+  `run_prototypes.py --stage cheap` (about 15 minutes) reruns the loop with the same start sets,
+  budgets and choice of the ridge, but its model is a linear kernel on columns that need no field:
+  the names of the elements on the A, B and X sites of a perovskite (108 columns), the counts of
+  each kind of defect (4 columns), the pair expansion of the defect tutorial, and the number of Au-
+  Au pairs in the first three shells of neighbours for the closed loop. With the greedy rule the
+  names reach the best one per cent of the perovskite pool in 10 of 10 runs, after a median of 4
+  calls with 25 start cells and 2 calls with 100, against 8 of 10 runs after 16 and 8 calls for the
+  three-body kernel. On MoS2 the defect counts reach it in 8 of 10 and 10 of 10 runs, and with 100
+  start cells they put the best arrangement first (rank correlation +0.97, R² +0.99). On WSe2 every
+  model reaches it in 9 or 10 of 10 runs, the counts after 4 calls and the three-body kernel after
+  28 and 38. In the closed loop the Au-Au pair counts find the best candidate in 5 of 5 runs, as the
+  fields do. This corrects the reading of the MoS2 failure. The best arrangement is one of the four
+  cells with a single defect, and the number of defects decides most of the energy (a mean of +2.55,
+  +3.96 and +6.47 eV for one, two and three defects). The counts model is a kernel ridge model too,
+  and it finds that cell, so the cause is not that a kernel model shrinks an isolated value. The
+  cause is the whole-cell kernel, in which a few defects are a small change of a large host signal.
+  The difference-field kernel of the defect tutorial (alpha 1, gamma 1, fixed in advance) finds the
+  best MoS2 arrangement after a median of one call. On these four pools the loop does not need the
+  fields: the description has to see what changes, and the description a chemist writes down without
+  computing anything is the reference to beat.
   **What was built.** `cmfqsar/prototypes.py`. A `Prototype` is a cell plus `SiteClass` groups,
   each with the elements its sites may take; a class with no count is a composition choice (every
   site takes the same element) and a class with a count is an arrangement choice (that many sites
@@ -8373,7 +8395,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twenty-second tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-third tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

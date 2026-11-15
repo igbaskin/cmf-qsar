@@ -10787,7 +10787,7 @@ model at the same accuracy (+0.93 and +0.88) puts the best candidate at place 59
 in the pools and not in the models. On WSe2 the best one per cent of the arrangements lies within
 0.002 eV of the best one, so a rule that lands anywhere in that group has found what the study
 wants. On MoS2 the best arrangement lies 0.41 eV below the boundary of the best one per cent: it is
-an isolated candidate, and a kernel ridge model shrinks an isolated value toward the mean along
+an isolated candidate, and a kernel ridge model shrinks an isolated value toward the mean (a reading that the reference below corrects) along
 with everything else. Two things follow. The number to report for a design loop is not the accuracy
 of the model but the place it gives the best candidate, and that place is measured before the loop
 starts, while the loop refits after every answer -- on the perovskites the best cell starts at
@@ -10811,6 +10811,32 @@ quarter of the pool here, so this stage shows that the loop runs from end to end
 calculator and that using the model is better than not using it; it is too easy a search to say
 by how much. Replacing EMT with a machine-learned potential or with VASP changes the cost of a
 call and nothing else in the loop, and that is the step this item has not measured.
+
+**A reference that needs no field (added 15 November 2026).** `run_prototypes.py --stage cheap`
+(about 15 minutes) reruns the loop with the same start sets, budgets and choice of the ridge, but
+its model is a linear kernel on columns that need no field: the names of the elements on the A, B
+and X sites of a perovskite (108 columns), the counts of each kind of defect (4 columns), the pair
+expansion of the defect tutorial, and the number of Au-Au pairs in the first three shells of
+neighbours for the closed loop. With the greedy rule the names reach the best one per cent of the
+perovskite pool in 10 of 10 runs, after a median of 4 calls with 25 start cells and 2 calls with
+100, against 8 of 10 runs after 16 and 8 calls for the three-body kernel. On MoS2 the defect
+counts reach it in 8 of 10 and 10 of 10 runs, and with 100 start cells they put the best
+arrangement first (rank correlation +0.97, R² +0.99). On WSe2 every model reaches it in 9 or 10 of
+10 runs, the counts after 4 calls and the three-body kernel after 28 and 38. In the closed loop
+the Au-Au pair counts find the best candidate in 5 of 5 runs, as the fields do. This corrects the
+reading of the MoS2 failure. The best arrangement is one of the four cells with a single defect,
+and the number of defects decides most of the energy (a mean of +2.55, +3.96 and +6.47 eV for one,
+two and three defects). The counts model is a kernel ridge model too, and it finds that cell, so
+the cause is not that a kernel model shrinks an isolated value. The cause is the whole-cell
+kernel, in which a few defects are a small change of a large host signal. The difference-field
+kernel of the defect tutorial (alpha 1, gamma 1, fixed in advance) finds the best MoS2 arrangement
+after a median of one call. On these four pools the loop does not need the fields: the description
+has to see what changes, and the description a chemist writes down without computing anything is
+the reference to beat.
+
+The twenty-second tutorial, `docs/tutorials/22_a_design_loop.ipynb`, runs the loop live on the
+perovskites with the fields, the names of the elements and random choice, reads the stored stages,
+shows what decides the energy of the MoS2 cells, and runs the closed loop with EMT.
 
 **The limits.** The generator substitutes on a fixed cell: it does not relax what it proposes, so
 the structure the model sees is the prototype's geometry with other elements on it, and the
@@ -16587,7 +16613,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twenty-second tutorial, `docs/tutorials/22_point_mutants.ipynb`, builds one
+among its references. The twenty-third tutorial, `docs/tutorials/23_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -17123,7 +17149,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-two notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-three notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -17136,11 +17162,11 @@ complex, the better of two enantiomers, read from the handedness of the fields a
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, a model of one near-infrared spectrometer read on the spectra of another, compared with a correction of every spectrum by itself, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
-the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, and the change of folding stability
+the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, and the twenty-second needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second downloads 4 MB of perovskites, and the twenty-third needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 

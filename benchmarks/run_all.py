@@ -960,9 +960,10 @@ def registry() -> List[Benchmark]:
                   "test for which candidates are the same structure, and a loop that proposes, "
                   "computes and refits -- measured on a published pool of perovskites, on the "
                   "2DMD defect series, with the model's ranking ability beside it, and as a "
-                  "closed loop with a calculator",
-                  "run_prototypes.py", "prototypes", compute=[[]],
-                  minutes="60",
+                  "closed loop with a calculator; the same loop with a model that needs no field as the "
+                  "reference (stage cheap)",
+                  "run_prototypes.py", "prototypes", compute=[[], ["--stage", "cheap"]],
+                  minutes="75",
                   report=lambda: _mod("run_prototypes").report(),
                   tables=["prototypes/table.md"]),
         Benchmark("fieldae",
