@@ -1,6 +1,6 @@
 {
- "commit": "99283fd7673c1af9ce5edc3c7ef2cb00d86ee3d4",
- "created": "2026-11-15T11:15:09",
+ "commit": "254560d65183d508f272807cec5b4979b247e140",
+ "created": "2026-11-15T11:45:03",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -4035,7 +4035,15 @@
   "benchmarks/results/surrogate/lowrank_GPB.json": "94b7ffdd2e1b642ab7abcc2b1754ec2182dfeaa753961c863575a9fe1e46e4fc",
   "benchmarks/results/surrogate/lowrank_THER.json": "1c59ff74c125b9adcce387f7ab02fb90d8dfac1f4eee6a6aca9d9d44a97da986",
   "benchmarks/results/surrogate/lowrank_THR.json": "5053ef6e9899aa1498b6b213ff2853acf359fc96d5d96cf26056890d96bb07e3",
-  "benchmarks/results/surrogate/table.md": "4592743ef2273d41196f3ca897ad466c1c9e5a39a527881597be005f8b3d7ab5",
+  "benchmarks/results/surrogate/reference_ACE.json": "3455693b773a0e2535caf58ab87bb88a04eede228c09476d8973e57463fa4844",
+  "benchmarks/results/surrogate/reference_AChE.json": "d4c043c887136694fe91110d88545f9f7a49099932bf78f471565cfbadf643f9",
+  "benchmarks/results/surrogate/reference_BZR.json": "59fa4c352c2172ea515ff56f44a0f29f17fd1b2a77b9b7f888ceaa447b5980a0",
+  "benchmarks/results/surrogate/reference_COX2.json": "252589c13d13254c7e976a85b8d33cd7b6dea3d57b7a03b3fc6c21e084ce1cfe",
+  "benchmarks/results/surrogate/reference_DHFR.json": "7739c6055d0ff85b13dac7206d728fcf2e302194e164b62f1ab1019a6e89dfec",
+  "benchmarks/results/surrogate/reference_GPB.json": "aeefa0e256c41f9688bff1f32af42c965c1e51de360fa28d8c32f3baeb22db59",
+  "benchmarks/results/surrogate/reference_THER.json": "a17c7d51c901332a960fc01a5c6e1db276c8c0d36375bc271fd85f0a8fe87fb4",
+  "benchmarks/results/surrogate/reference_THR.json": "9861a126bfddb447e5adb5d4bb81fb1974825a168b1615e0396e679ad161f3c8",
+  "benchmarks/results/surrogate/table.md": "1e698a867e0c0c2a1af9c02be34f966b98a1c58c10f7cf232df745a3b5df5f5a",
   "benchmarks/results/table.md": "0412a5f8dfee7da0c635bfe37ff03adbcbdbe022e1ba255587dcfaa9cf3abfd7",
   "benchmarks/results/tasks/cold.json": "75a888cae2484d320185a07f3345237cf078a68acc69a5f6b1af4e7c52a0583a",
   "benchmarks/results/tasks/share.json": "e92ea52780763d2c4250caad713852de3e3a5105f9f490834a567a879ebd8ff8",
