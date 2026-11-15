@@ -1,6 +1,6 @@
 {
- "commit": "1ac642da6ec4abfb4ee6d7eaa981cb113603cfec",
- "created": "2026-11-15T14:37:16",
+ "commit": "a894ef40e6c2e4350ef1727a56575ff1b8231b7f",
+ "created": "2026-11-15T14:46:22",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3120,6 +3120,12 @@
   "benchmarks/results/gradient/invariant.json": "9e2bc74df0cbb626a8d3e36719923d8a216cb2614145b7d41ce3b6186eea3ac1",
   "benchmarks/results/gradient/relax.json": "f3ac0a494b2d81be72a4ccb65d29df454c110b07e689bdac223cc5c530092594",
   "benchmarks/results/gradient/table.md": "c5e1d46e952773a69ccfccaec59ee12ff775255412efb229655bd3398eec98d1",
+  "benchmarks/results/gridfields/crystals.json": "094a250dbcaa13802a255ff204bdc903ebc1b36377c74da5cfd9f0b8e2e32e98",
+  "benchmarks/results/gridfields/molecules_12_c1ccoc1.json": "eba1c0918b460ab1134e42b54d61faaf722fc8d55cdc6a3debf50629da2fb191",
+  "benchmarks/results/gridfields/molecules_13_c1c_nH_nn1.json": "a5a35f0cb9e0e3aaaa5298b7625a19cdee0270daf502f1f14ea3c6273dbe7daa",
+  "benchmarks/results/gridfields/molecules_161_c1ccc2scnc2c1.json": "8579ff71aa07468cf84279491b7396f087b5e006c553205f32be987b28744867",
+  "benchmarks/results/gridfields/molecules_7_c1nncs1.json": "c5da44a9dbe0124ddcc04e26ca00024b4ed9a4ebaaabb986f21df2b2754b2f33",
+  "benchmarks/results/gridfields/table.md": "d6ec7fbc1ab6df256e17a9c4f6a403151abf80e0f80cd8fbee600183d7b56c7a",
   "benchmarks/results/guest_atoms/alpha.json": "f91825630aaecf4107354711883450dc0bf06485e02f771189b00e838e0d9411",
   "benchmarks/results/guest_atoms/beta.json": "6f633957188d831f959db257e455e120329a577964ccacd96c8fb57f413effef",
   "benchmarks/results/guest_atoms/gamma.json": "fcc6e94b4a5ca23e8fd5f599e43a6371e78d4e1da6a6b4fe0fbecb84af53d3ab",
