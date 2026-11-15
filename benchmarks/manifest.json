@@ -1,6 +1,6 @@
 {
- "commit": "c4c0f28a286f25742dc0d74175fc86a1b4601dbc",
- "created": "2026-11-15T15:13:14",
+ "commit": "161096436def87e352872713da2dc407b01869f2",
+ "created": "2026-11-15T20:23:57",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2736,7 +2736,8 @@
   "benchmarks/results/buchwald/parts/method_parts_sum.json": "f4b7394407799ba9e8f6b5d6b7576d5d084e106cf3708b525292af6245776e17",
   "benchmarks/results/buchwald/summary.json": "2930412f1f75f1303aa8f88562ea08ae5b85e3a27d698000de114857bf56d846",
   "benchmarks/results/buchwald/table.md": "af4539b5c21ed511f89b4419097f7d60710d51dd43bf48cf00f222de52b0f45b",
-  "benchmarks/results/calibration_transfer/table.md": "1f70df2ce070ac459e096a690586c4f2707232d720c9214410eaf5149138fe1d",
+  "benchmarks/results/calibration_transfer/scatter.json": "098e09171e6d118e56aca655b7844a42cbf1fff5eac7eae2c95e855316729ebd",
+  "benchmarks/results/calibration_transfer/table.md": "b70073f94ecfe8b80a989b454eb99ff73b65d99583f5ed20ed0affdcb7703e31",
   "benchmarks/results/calibration_transfer/transfer.json": "8778fd3a933fbfca537edddddf51f70e4647ca0a08655e47a1acf3562b31f978",
   "benchmarks/results/cases/cdk8/cdk8.json": "769bc51b8336995a282281ecaa461e9c6ec4faa9344ce71f0f1bdfb121e2d288",
   "benchmarks/results/cases/cdk8/cdk8_pharmacophore.csv": "4981d50e71019be143901a8dde0c1f44149af7c395f2a55c6c5bcf996d75f105",
