@@ -3608,7 +3608,29 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   defects and predicting the 1,869 with three, the arrangement kernel gives 4.3 meV per site
   (R2 1.000) on MoS2 and 54 meV (R2 0.996) on WSe2, where the additive count kernel gives 38;
   the autocorrelation does not extrapolate (R2 -0.02 and +0.06, 1.1 to 1.2 eV per site) and
-  the fixed frame reaches R2 0.8. **Gates (b) and (c), the reading:** the per-defect
+  the fixed frame reaches R2 0.8.
+  **A pair expansion as the reference, added 15 November 2026,** while the nineteenth tutorial was
+  written. Materials science has a standard cheap model for an arrangement of defects on a lattice: one energy
+  for each kind of defect and one for each pair of kinds at each neighbour distance, fitted by linear
+  regression (a cluster expansion cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns
+  are counts. Four cut-offs of the pair distance (4, 6, 8 and 12 Å) and two forms are reported: with a
+  fitted constant, and with the constant at zero, which is the formation energy of a cell without
+  defects. The first form was written first; the second was added after the failure of the first was
+  seen, for the reason below, and both are kept. The cells and folds are those of the kernels above,
+  so every difference is paired over the cells. On random folds over all 5,933 cells, with pairs up to
+  12 Å (96 and 87 columns), the pair expansion reaches 2.2 meV per site on MoS2 and 4.7 on WSe2,
+  against 1.9 and 4.4 for the arrangement kernel: the kernel is ahead by 0.2 to 0.3 meV per site
+  (intervals [+0.2, +0.3] in both). The pair expansion is ahead of the periodic autocorrelation (3.0
+  and 6.0). With pairs up to 4 Å it gives 15 and 19 meV. From one and two defects to three, the form
+  decides. With a fitted constant the pair expansion fails (238 to 290 meV per site): in the cells
+  with one or two defects the number of pairs is the number of defects minus one, so the pair terms
+  and the constant can trade, and a cell with three defects pays for the trade. With the constant at
+  zero and pairs up to 12 Å it gives 8.2 meV per site on MoS2, against 4.7 for the arrangement kernel
+  (+3.5 [+3.5, +3.6]), and 14.9 on WSe2, against 37.7 (-22.8 [-23.7, -21.9]), where it is the better
+  model. Shorter cut-offs extrapolate worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random
+  folds the arrangement kernel reads little more than which pairs of defects are neighbours, and which
+  of the two extrapolates better depends on the material and on two free choices of the reference.
+  **Gates (b) and (c), the reading:** the per-defect
   contributions of the symmetry-averaged linear model (rule 3, 400 cells) are one number per
   kind of defect to four decimals, as the symmetry requires, and they are the chemistry the data
   hold. MoS2: a sulfur vacancy 2.59 eV, a molybdenum vacancy 6.98, selenium for sulfur 0.31,
@@ -4192,7 +4214,7 @@ for anything molecular.
   on the iron series it is nearly degenerate for 11 % of the complexes. The matched frame is also
   the one place the phenazine symmetry trap of EC1 reappears, and the search over assignments is
   there for it.
-  *The composition on the nickel series, added 14 November 2026,* while the ninth tutorial was
+  *The composition on the nickel series, added 14 November 2026,* while the eleventh tutorial was
   written. The gate compared the fields with the numbers of the calculation and with the metal
   site, and the composition, the reference of the iron series, had not been run on the nickel
   series. It gives 0.195 V with leave-one-out (R² +0.779) and 0.245 V with five folds against
@@ -4442,6 +4464,22 @@ for anything molecular.
   database is licensed), so that half of the item stays with SC5, which needs the same data and
   the cavity frame; and the targets here are gas-phase one-to-one complexes, not solvation free
   energies.
+  **The oxygens at the ion as a reference, added 15 November 2026,** while the fourteenth tutorial was written.
+  The counts above are read off the formula. A stronger reference reads the complex: the number of
+  oxygens within 2.5 Å of the ion (the gap between the first shell, at 1.8 to 2.4 Å, and the rest),
+  their mean distance, and the sum of 1/d over the oxygens within 3.5 Å, beside the three counts
+  (`run_ether.py --stage contacts`, 14 minutes). They are read at the relaxed ion, which no field
+  model sees, and at the deepest point of the lithium probe field, which uses the molecule alone; the
+  number of contacts agrees at the two places for 89 % of the molecules. Each is fitted with a linear
+  kernel and with a Gaussian kernel whose width is chosen inside each fold. The contacts beat the
+  counts: on lithium with random folds the Gaussian contact model gives 0.177 eV against 0.296 for the
+  counts (0.240 for the counts with a Gaussian kernel). They do not reach the fields. The closest
+  contact model is behind the fields by 0.043 to 0.126 eV over the three ions and both fold designs,
+  and every interval excludes zero (lithium, random folds: +0.052 [+0.042, +0.062]). So the fields
+  read more than how many oxygens touch the ion and how far they are. With one oxygen count held out,
+  a Gaussian kernel on these few columns extrapolates badly (the counts give 0.433 eV with it against
+  0.284 with the linear kernel), so there the linear contact model is the fair reference: 0.206 eV
+  against 0.186 for the fields on lithium, +0.076 [+0.063, +0.087] paired.
 
 **Large (a month or more each)**
 
@@ -6793,7 +6831,7 @@ What it leaves open, in order:
   yields at r = 0.97 (aryl halides) and 0.95 (additives), and it shows nothing the names do not.
   Run time: about 7 hours on one process (418 minutes of method time), 2 hours 50 minutes as
   three processes. README and manual sections *A reaction yield as the activity*.
-  **The names of the parts, added 15 November 2026,** while the ninth tutorial was written. The 15
+  **The names of the parts, added 15 November 2026,** while the tenth tutorial was written. The 15
   aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl halide has its
   arene and its halogen in the training part. An aryl halide described by those two names only, with
   the additive by name, gives 0.700 (the names added) and 0.708 (with their product) when each aryl
@@ -7161,7 +7199,19 @@ would discard the typed fields and the global kernel that are the method's own.
   is calibrated again and orders the hops poorly (rank correlation with the absolute error
   +0.11 to +0.16), where the spread of the trees of a random forest reaches +0.45: the
   errors there grow with the barrier, and the deviation of a Gaussian process with one
-  noise level cannot say that. *Open:* a deviation that depends on the predicted value; a
+  noise level cannot say that.
+  **A constant deviation as the reference, added 15 November 2026,** while the seventh tutorial was written.
+  The deviation is calibrated on average, and its rank correlation with the error is only +0.14, so
+  the question is what it adds to a deviation that is the same for every structure. The reference
+  gives every held-out structure the cross-validated RMSE of the training part. Both are scored by the
+  negative log density that they give to the measured activities (nats per structure, smaller is
+  better). The deviation of the model is ahead by +0.034 [+0.005, +0.061] (bootstrap over the 8 sets)
+  and on 6 of the 8 sets; ACE and THER lose by 0.023 each. The held-out structures cut into thirds by
+  their deviation have a root mean square of z of 1.06, 1.07 and 1.03 for the lowest, the middle and
+  the highest third, and an RMSE of 0.85, 0.87 and 1.06 as the mean deviation goes from 0.70 to 0.80
+  to 1.03. So the deviation is calibrated within each third, and it orders the errors, mildly. `python
+  benchmarks/run_surrogate.py --reference` makes the table in under a minute.
+  *Open:* a deviation that depends on the predicted value; a
   series where the kernel misses a part of the chemistry, which is where
   the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
   `cmfqsar/lowrank.py` without the scale -- closed by MS6 on 9 November 2026.
@@ -7306,7 +7356,24 @@ would discard the typed fields and the global kernel that are the method's own.
   identical to the stored file. The first version moved the numbers by 5e-12, because the weights
   were divided by their sum twice; they are now divided once. The measurement also found that the
   fields of every ensemble, conformational ones included, dropped the non-field descriptors; they
-  now travel with the ensemble. 16 tests in `tests/test_ensembles.py`. *Open:* an energy per
+  now travel with the ensemble. 16 tests in `tests/test_ensembles.py`.
+  **What the ensemble is worth, added 15 November 2026,** while the thirteenth tutorial was written.
+  The gate says that the general path equals BT5's path. It does not say what keeping 16 shells gives.
+  Stage `members` of `run_ensembles.py` (14 minutes) reads the same shells through the general path
+  with the alignment-free model of BT5 and the same folds, and keeps the 1, 2, 4, 8 or 16 members of
+  largest weight, or all 16 with equal weights. On the activation energy the single heaviest shell has
+  a mean absolute error of 2.05 kJ/mol with random folds and 2.15 with folds by composition, and the
+  16 shells 1.61 and 1.68. The gain is +0.45 [+0.07, +0.86] and +0.47 [+0.09, +0.85]. It is small with
+  4 shells (+0.12 and +0.12, with intervals that contain zero) and clear of zero from 8 shells (+0.41
+  and +0.49). Equal weights give 1.61 and 1.71, so the given weights add nothing. On the log10 of the
+  conductivity the shells add nothing over one shell: every gain is within 0.021 and every interval
+  contains zero. The composition (the molality with the solvent fractions) is clearly below every
+  shell model on the conductivity (the 16 shells minus the composition: -0.047 [-0.066, -0.029] and
+  -0.029 [-0.047, -0.010]). On the activation energy the 16 shells are behind it by -0.24 [-0.57,
+  +0.11] and -0.25 [-0.59, +0.12], which the interval does not separate from zero. So the ensemble is
+  worth keeping for the activation energy, and the shells are worth no more than the composition on
+  either target. The control, the 16 given members against the stored records of BT5, differs by 0.
+  *Open:* an energy per
   member for a Boltzmann weighting of members with different atoms; an atom map found
   automatically for members that share a part.
 
@@ -8252,7 +8319,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the sixteenth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twentieth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the
@@ -8492,7 +8559,7 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   exposed it: the blind description scored 47.9 % where it has to score 50.0 %. The configuration
   is now removed before the scaffold is read, and `check_groups` refuses a run in which any pair
   would be split.
-  *A cheap reference, added 14 November 2026,* while the tenth tutorial was written. The channels
+  *A cheap reference, added 14 November 2026,* while the twelfth tutorial was written. The channels
   had been compared with the exact null of 50.0 % only. A rule that learns one bit for each
   target, whether the R or the S member of a pair was the better one more often among the training
   pairs, read at one stereocentre, names the better enantiomer in 58.3 % of the 1,144 pairs

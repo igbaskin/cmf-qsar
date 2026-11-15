@@ -160,3 +160,127 @@ One kernel, the covariance between the endpoints as named. The descriptor covari
 
 Mg2+ is refused: the charge is the same in both ions that remain, so the design matrix of the mean has two identical rows and the mean of the removed ion is not a quantity the data determine. A divalent ion cannot be predicted from two monovalent ones.
 
+## The oxygens at the ion as a reference
+
+Contacts: the oxygens within 2.5 A of the ion, their mean distance (the nearest oxygen when none is that close) and the sum of 1/d over the oxygens within 3.5 A, beside the three counts of stage 2. At the relaxed ion the description reads the position the data carry, which no field model sees; at the probe minimum it reads the deepest point of the lithium probe field and nothing else. The number of contacts is the same at the two places for 89% of the molecules. The Gaussian kernels choose their width inside each fold. The fields, the probe and the counts are the stored models of stage 2 on the same folds.
+
+### Li+, random (1048 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.296 | +0.431 |
+| fields (stage 2) | 0.124 | +0.894 |
+| probe (stage 2) | 0.140 | +0.884 |
+| fields+probe (stage 2) | 0.117 | +0.910 |
+| counts, Gaussian | 0.240 +/- 0.023 | +0.635 |
+| contacts at the relaxed ion | 0.208 +/- 0.017 | +0.771 |
+| contacts at the relaxed ion, Gaussian | 0.177 +/- 0.010 | +0.845 |
+| contacts at the probe minimum, Gaussian | 0.194 +/- 0.008 | +0.810 |
+
+* contacts at the relaxed ion, Gaussian minus counts: -0.119 eV [-0.139, -0.100], excludes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.052 eV [+0.042, +0.062], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.037 eV [+0.027, +0.046], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: -0.102 eV [-0.121, -0.085], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.069 eV [+0.059, +0.080], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.054 eV [+0.045, +0.063], excludes zero.
+
+### Li+, one oxygen count held out (1048 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.284 | +0.415 |
+| fields (stage 2) | 0.186 | +0.864 |
+| probe (stage 2) | 0.177 | +0.857 |
+| fields+probe (stage 2) | 0.129 | +0.896 |
+| counts, Gaussian | 0.433 +/- 0.197 | +0.134 |
+| contacts at the relaxed ion | 0.206 +/- 0.044 | +0.734 |
+| contacts at the relaxed ion, Gaussian | 0.266 +/- 0.120 | +0.611 |
+| contacts at the probe minimum, Gaussian | 0.232 +/- 0.053 | +0.767 |
+
+* contacts at the relaxed ion, Gaussian minus counts: -0.018 eV [-0.041, +0.005], includes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.130 eV [+0.115, +0.145], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.127 eV [+0.113, +0.142], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: -0.082 eV [-0.101, -0.065], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.066 eV [+0.054, +0.077], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.063 eV [+0.052, +0.073], excludes zero.
+
+### Na+, random (980 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.279 | +0.442 |
+| fields (stage 2) | 0.181 | +0.688 |
+| probe (stage 2) | 0.193 | +0.664 |
+| fields+probe (stage 2) | 0.171 | +0.706 |
+| counts, Gaussian | 0.258 +/- 0.018 | +0.509 |
+| contacts at the relaxed ion | 0.254 +/- 0.010 | +0.539 |
+| contacts at the relaxed ion, Gaussian | 0.224 +/- 0.016 | +0.602 |
+| contacts at the probe minimum, Gaussian | 0.224 +/- 0.015 | +0.624 |
+
+* contacts at the relaxed ion, Gaussian minus counts: -0.055 eV [-0.069, -0.041], excludes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.043 eV [+0.033, +0.053], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.031 eV [+0.021, +0.043], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: -0.055 eV [-0.068, -0.042], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.043 eV [+0.032, +0.052], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.031 eV [+0.021, +0.041], excludes zero.
+
+### Na+, one oxygen count held out (980 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.291 | +0.429 |
+| fields (stage 2) | 0.248 | +0.658 |
+| probe (stage 2) | 0.243 | +0.591 |
+| fields+probe (stage 2) | 0.204 | +0.677 |
+| counts, Gaussian | 0.440 +/- 0.198 | +0.036 |
+| contacts at the relaxed ion | 0.285 +/- 0.031 | +0.506 |
+| contacts at the relaxed ion, Gaussian | 0.346 +/- 0.200 | +0.170 |
+| contacts at the probe minimum, Gaussian | 0.413 +/- 0.302 | -0.166 |
+
+* contacts at the relaxed ion, Gaussian minus counts: +0.086 eV [+0.066, +0.107], excludes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.169 eV [+0.148, +0.190], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.147 eV [+0.128, +0.167], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: +0.144 eV [+0.115, +0.173], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.227 eV [+0.200, +0.254], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.204 eV [+0.177, +0.232], excludes zero.
+
+### Mg2+, random (982 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.505 | +0.726 |
+| fields (stage 2) | 0.266 | +0.853 |
+| probe (stage 2) | 0.321 | +0.821 |
+| fields+probe (stage 2) | 0.254 | +0.856 |
+| counts, Gaussian | 0.428 +/- 0.024 | +0.787 |
+| contacts at the relaxed ion | 0.418 +/- 0.017 | +0.779 |
+| contacts at the relaxed ion, Gaussian | 0.379 +/- 0.013 | +0.812 |
+| contacts at the probe minimum, Gaussian | 0.400 +/- 0.029 | +0.806 |
+
+* contacts at the relaxed ion, Gaussian minus counts: -0.126 eV [-0.149, -0.104], excludes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.113 eV [+0.096, +0.131], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.058 eV [+0.039, +0.077], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: -0.104 eV [-0.127, -0.082], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.135 eV [+0.116, +0.155], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.080 eV [+0.059, +0.100], excludes zero.
+
+### Mg2+, one oxygen count held out (982 molecules)
+
+| Model | MAE (eV) | R2 |
+|---|---|---|
+| counts (stage 2) | 0.571 | +0.718 |
+| fields (stage 2) | 0.366 | +0.821 |
+| probe (stage 2) | 0.474 | +0.789 |
+| fields+probe (stage 2) | 0.279 | +0.823 |
+| counts, Gaussian | 0.600 +/- 0.178 | +0.716 |
+| contacts at the relaxed ion | 0.476 +/- 0.087 | +0.754 |
+| contacts at the relaxed ion, Gaussian | 0.502 +/- 0.105 | +0.749 |
+| contacts at the probe minimum, Gaussian | 0.686 +/- 0.307 | +0.690 |
+
+* contacts at the relaxed ion, Gaussian minus counts: -0.039 eV [-0.070, -0.008], excludes zero.
+* contacts at the relaxed ion, Gaussian minus fields: +0.162 eV [+0.140, +0.185], excludes zero.
+* contacts at the relaxed ion, Gaussian minus probe: +0.078 eV [+0.049, +0.107], excludes zero.
+* contacts at the probe minimum, Gaussian minus counts: +0.056 eV [+0.021, +0.089], excludes zero.
+* contacts at the probe minimum, Gaussian minus fields: +0.257 eV [+0.231, +0.284], excludes zero.
+* contacts at the probe minimum, Gaussian minus probe: +0.173 eV [+0.141, +0.206], excludes zero.
+

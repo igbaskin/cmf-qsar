@@ -74,3 +74,67 @@ def test_the_geometry_reader_admits_numpy_and_refuses_everything_else():
     bad = pickle.dumps({"x": os.getcwd})
     with pytest.raises(pickle.UnpicklingError, match="refuses"):
         M._ArraysOnly(io.BytesIO(bad)).load()
+
+
+def _bench():
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "benchmarks"))
+    import run_ether as E
+    return E
+
+
+def _placed(smiles="COCCOCCOC", seed=5):
+    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    p = AllChem.ETKDGv3()
+    p.randomSeed = seed
+    AllChem.EmbedMolecule(mol, p)
+    return mol
+
+
+def test_contact_features_count_the_oxygens():
+    E = _bench()
+    mol = _placed()
+    pos = mol.GetConformer().GetPositions()
+    oxygens = [a.GetIdx() for a in mol.GetAtoms() if a.GetSymbol() == "O"]
+    # an ion put 2.0 A from the first oxygen, along a direction away from the molecule's centre
+    out = pos[oxygens[0]] - pos.mean(axis=0)
+    ion = pos[oxygens[0]] + 2.0 * out / np.linalg.norm(out)
+    n, mean_d, inv = E.contact_features(mol, ion)
+    d = np.array([np.linalg.norm(pos[i] - ion) for i in oxygens])
+    assert n == float(np.sum(d < E.CONTACT_CUT)) and n >= 1
+    assert np.isclose(mean_d, d[d < E.CONTACT_CUT].mean())
+    assert np.isclose(inv, np.sum(1.0 / d[d < E.CONTACT_REACH]))
+    # far from every oxygen: no contact, and the mean distance falls back to the nearest oxygen
+    far = pos.mean(axis=0) + np.array([50.0, 0.0, 0.0])
+    n0, m0, i0 = E.contact_features(mol, far)
+    assert n0 == 0.0 and i0 == 0.0
+    assert np.isclose(m0, min(np.linalg.norm(pos[i] - far) for i in oxygens))
+
+
+def test_gaussian_nested_fits_a_smooth_function_and_reports_paired_errors():
+    E = _bench()
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(120, 2))
+    y = np.sin(X[:, 0]) + 0.3 * X[:, 1] ** 2 + rng.normal(scale=0.05, size=120)
+    folds = E.random_folds(len(y))
+    rec = E.gaussian_nested(X, y, folds)
+    assert rec["n"] == 120 and len(rec["abs_errors"]) == 120
+    assert rec["r2_pooled"] > 0.8                       # a Gaussian kernel follows a smooth nonlinear target
+    assert all(f["gamma"] in E.GAMMAS and f["lam"] in E.LAMS for f in rec["per_fold"])
+    lin = E.nested("counts", {}, (), y, folds, X)
+    assert rec["mae_mean"] < lin["mae_mean"]            # and does better than the linear kernel on it
+
+
+def test_contacts_section_reads_a_result():
+    E = _bench()
+    rec = {"mae_mean": 0.2, "mae_sd": 0.01, "r2_pooled": 0.5}
+    stored = {b: {"mae_mean": 0.1, "r2_pooled": 0.9} for b in ("counts", "fields", "probe", "fields+probe")}
+    iv = {"mean": 0.05, "low": 0.04, "high": 0.06, "excludes_zero": True}
+    design = {"models": {m: rec for m in E.CONTACT_MODELS}, "stored": stored,
+              "paired": {f"{m} minus {b}": iv for m in E.CONTACT_MODELS for b in ("counts", "fields", "probe", "fields+probe")}}
+    c = {"cut": 2.5, "reach": 3.5, "models": list(E.CONTACT_MODELS), "agreement": {"same_count": 0.9},
+         "ions": {ion: {"n": 10, "designs": {"random": design, "one oxygen count held out": design}} for ion in E.ION_ORDER}}
+    text = "\n".join(E.contacts_section(c))
+    assert "## The oxygens at the ion as a reference" in text and "90%" in text
+    assert "contacts at the probe minimum, Gaussian minus fields: +0.050 eV [+0.040, +0.060], excludes zero." in text
+    assert text.count("### ") == 6
+

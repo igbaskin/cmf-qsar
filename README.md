@@ -788,6 +788,32 @@ contributions of the linear model (decomposition rule 3) are one number per kind
 four decimals, and match the single-defect cells of the set to 0.2 eV: a sulfur vacancy in MoS2
 costs 2.59 eV against 2.65 measured, a molybdenum vacancy 6.98 against 7.12.
 
+**A pair expansion as the reference (added 15 November 2026).** Materials science has a standard
+cheap model for an arrangement of defects on a lattice: one energy for each kind of defect and one
+for each pair of kinds at each neighbour distance, fitted by linear regression (a cluster expansion
+cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns are counts. Four cut-offs of
+the pair distance (4, 6, 8 and 12 Å) and two forms are reported: with a fitted constant, and with
+the constant at zero, which is the formation energy of a cell without defects. The first form was
+written first; the second was added after the failure of the first was seen, for the reason below,
+and both are kept. The cells and folds are those of the kernels above, so every difference is paired
+over the cells. On random folds over all 5,933 cells, with pairs up to 12 Å (96 and 87 columns), the
+pair expansion reaches 2.2 meV per site on MoS2 and 4.7 on WSe2, against 1.9 and 4.4 for the
+arrangement kernel: the kernel is ahead by 0.2 to 0.3 meV per site (intervals [+0.2, +0.3] in both).
+The pair expansion is ahead of the periodic autocorrelation (3.0 and 6.0). With pairs up to 4 Å it
+gives 15 and 19 meV. From one and two defects to three, the form decides. With a fitted constant the
+pair expansion fails (238 to 290 meV per site): in the cells with one or two defects the number of
+pairs is the number of defects minus one, so the pair terms and the constant can trade, and a cell
+with three defects pays for the trade. With the constant at zero and pairs up to 12 Å it gives 8.2
+meV per site on MoS2, against 4.7 for the arrangement kernel (+3.5 [+3.5, +3.6]), and 14.9 on WSe2,
+against 37.7 (-22.8 [-23.7, -21.9]), where it is the better model. Shorter cut-offs extrapolate
+worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random folds the arrangement kernel reads
+little more than which pairs of defects are neighbours, and which of the two extrapolates better
+depends on the material and on two free choices of the reference.
+
+The nineteenth tutorial, `docs/tutorials/19_defects_on_a_lattice.ipynb`, fits the counts and the
+arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
+the stored results.
+
 ### Crystals: the periodic autocorrelation
 
 The autocorrelation above is the real-space counterpart of a reciprocal-space object. Averaged over
@@ -2203,6 +2229,26 @@ shells: it does, exactly, for both shell models, both targets and both splits
 (`benchmarks/run_ensembles.py`). The measurement also found that non-field descriptors were
 dropped from every ensemble; they now travel with it.
 
+**What the ensemble is worth (added 15 November 2026).** The gate says that the general path equals
+BT5's path. It does not say what keeping 16 shells gives. Stage `members` of `run_ensembles.py` (14
+minutes) reads the same shells through the general path with the alignment-free model of BT5 and the
+same folds, and keeps the 1, 2, 4, 8 or 16 members of largest weight, or all 16 with equal weights.
+On the activation energy the single heaviest shell has a mean absolute error of 2.05 kJ/mol with
+random folds and 2.15 with folds by composition, and the 16 shells 1.61 and 1.68. The gain is +0.45
+[+0.07, +0.86] and +0.47 [+0.09, +0.85]. It is small with 4 shells (+0.12 and +0.12, with intervals
+that contain zero) and clear of zero from 8 shells (+0.41 and +0.49). Equal weights give 1.61 and
+1.71, so the given weights add nothing. On the log10 of the conductivity the shells add nothing over
+one shell: every gain is within 0.021 and every interval contains zero. The composition (the
+molality with the solvent fractions) is clearly below every shell model on the conductivity (the 16
+shells minus the composition: -0.047 [-0.066, -0.029] and -0.029 [-0.047, -0.010]). On the
+activation energy the 16 shells are behind it by -0.24 [-0.57, +0.11] and -0.25 [-0.59, +0.12],
+which the interval does not separate from zero. So the ensemble is worth keeping for the activation
+energy, and the shells are worth no more than the composition on either target. The control, the 16
+given members against the stored records of BT5, differs by 0.
+
+The thirteenth tutorial, `docs/tutorials/13_an_ensemble_of_structures.ipynb`, reads the file, checks
+the mean field against the mean of the kernels, and runs the gate and these variants.
+
 ### Increments fitted to the data
 
 The hydrophobic field and the two hydrogen-bond fields are built from one increment per (Sybyl
@@ -2665,6 +2711,22 @@ missed the exact one by 1 % on ACE; and the self-kernel it kept for the variance
 field as one, inflating the deviation of exactly those molecules. Both are repaired and tested, and
 `cmf build --low-rank --calibration`, which used to pass over the calibration without a word,
 reports it.
+
+### The standard deviation against a constant one
+
+**A constant deviation as the reference (added 15 November 2026).** The deviation is calibrated on
+average, and its rank correlation with the error is only +0.14, so the question is what it adds to a
+deviation that is the same for every structure. The reference gives every held-out structure the
+cross-validated RMSE of the training part. Both are scored by the negative log density that they
+give to the measured activities (nats per structure, smaller is better). The deviation of the model
+is ahead by +0.034 [+0.005, +0.061] (bootstrap over the 8 sets) and on 6 of the 8 sets; ACE and THER
+lose by 0.023 each. The held-out structures cut into thirds by their deviation have a root mean
+square of z of 1.06, 1.07 and 1.03 for the lowest, the middle and the highest third, and an RMSE of
+0.85, 0.87 and 1.06 as the mean deviation goes from 0.70 to 0.80 to 1.03. So the deviation is
+calibrated within each third, and it orders the errors, mildly. `python benchmarks/run_surrogate.py
+--reference` makes the table in under a minute.
+
+The seventh tutorial, `docs/tutorials/07_the_model_as_a_fast_level.ipynb`, fits three of the sets, checks the calibration before any test set exists, runs the tolerance rule and this comparison, and reads the hop sample and the low-rank path from the stored results.
 
 ### The model as a component: reading it from another program
 
@@ -4928,6 +4990,26 @@ charge. An ion removed entirely cannot be predicted: magnesium is refused by con
 the mean of an endpoint is a linear function of the charge and two monovalent ions do not
 determine it at +2.
 
+**The oxygens at the ion as a reference (added 15 November 2026).** The counts above are read off
+the formula. A stronger reference reads the complex: the number of oxygens within 2.5 Å of the ion
+(the gap between the first shell, at 1.8 to 2.4 Å, and the rest), their mean distance, and the sum
+of 1/d over the oxygens within 3.5 Å, beside the three counts (`run_ether.py --stage contacts`, 14
+minutes). They are read at the relaxed ion, which no field model sees, and at the deepest point of
+the lithium probe field, which uses the molecule alone; the number of contacts agrees at the two
+places for 89 % of the molecules. Each is fitted with a linear kernel and with a Gaussian kernel
+whose width is chosen inside each fold. The contacts beat the counts: on lithium with random folds
+the Gaussian contact model gives 0.177 eV against 0.296 for the counts (0.240 for the counts with a
+Gaussian kernel). They do not reach the fields. The closest contact model is behind the fields by
+0.043 to 0.126 eV over the three ions and both fold designs, and every interval excludes zero
+(lithium, random folds: +0.052 [+0.042, +0.062]). So the fields read more than how many oxygens
+touch the ion and how far they are. With one oxygen count held out, a Gaussian kernel on these few
+columns extrapolates badly (the counts give 0.433 eV with it against 0.284 with the linear kernel),
+so there the linear contact model is the fair reference: 0.206 eV against 0.186 for the fields on
+lithium, +0.076 [+0.063, +0.087] paired.
+
+The fourteenth tutorial, `docs/tutorials/14_an_ion_and_its_solvent.ipynb`, finds the ion with the
+probe, computes the contacts, and reads these fits and the selectivity from the stored results.
+
 ### The ion with its shell: a solvation complex
 
 For an electrolyte the object that carries the property is the complex, not the solvent molecule.
@@ -5276,7 +5358,7 @@ charge at its periphery (NO2, CF3, SO2R) raises the constant and a donor that do
 lowers it. This is the learned form of Topsom's electrostatic model of the field effect. The two
 maps differ in sharpness, and that difference is not chemistry: the cross-validation chose an
 attenuation of 3 for σ_m and of 0.5 for σ_p, and the score changes little over the whole range of
-attenuations (the seventh tutorial prints it). The para model has the larger errors, and they are
+attenuations (the eighth tutorial prints it). The para model has the larger errors, and they are
 the resonance cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2
 are predicted far too high (N(CH3)2: −0.31 for a tabulated −0.83) and the nitroso group far too low
 (0.33 for 0.91). Its largest single error is C(CF3)3 (1.17 for 0.55). For σ_m the worst cases are
@@ -5305,7 +5387,7 @@ ten minutes for the set six at a time), q²:
 
 σ_m gains 0.16 in q² and σ_p gains 0.21, and the gain is where it was predicted to be. On five sets
 of folds a bootstrap over the substituents puts the two gains at +0.13 [+0.07, +0.22] and
-+0.19 [+0.12, +0.29] (the seventh tutorial), so both are resolved. The donors that the Gasteiger
++0.19 [+0.12, +0.29] (the eighth tutorial), so both are resolved. The donors that the Gasteiger
 model missed are closer (N(CH3)2 −0.50 for −0.83, NH2 −0.49 for −0.66, nitroso 0.66 for 0.91).
 
 Two readings of this table are new.
@@ -5315,7 +5397,7 @@ Two readings of this table are new.
 - **One number does as well as the field.** A linear regression on the Hirshfeld charge of the meta
   carbon predicts σ_m with a q² of 0.89, and one on the charge of the para carbon predicts σ_p
   with 0.86. The five fields minus that one number are −0.00 [−0.04, +0.03] and
-  +0.05 [−0.00, +0.12]. `docs/tutorials/07_a_substituent_constant.ipynb` makes the comparison
+  +0.05 [−0.00, +0.12]. `docs/tutorials/08_a_substituent_constant.ipynb` makes the comparison
   for every ring carbon. So the field model with quantum charges is to be given credit for finding
   where to read, and not for predicting better than the charge of one carbon atom.
 
@@ -5636,7 +5718,7 @@ aryl halides and 0.95 for the additives (`benchmarks/results/buchwald/cofields.p
 co-field of a Free-Wilson model is a map of its arene and halogen effects, and this one shows
 nothing that the names of the components do not.
 
-The ninth tutorial, `docs/tutorials/09_a_reaction_yield.ipynb`, runs the kernel of a combination,
+The tenth tutorial, `docs/tutorials/10_a_reaction_yield.ipynb`, runs the kernel of a combination,
 the fits on new additives and on new arenes, and the names of the parts as the reference.
 
 The build takes under a minute and gives the same files on every run. The benchmark takes about
@@ -6613,8 +6695,8 @@ for.
 
 ### Tutorials
 
-Sixteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the fifteenth reads the prepared set of the hop benchmark, and the sixteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth reads the prepared set of the hop benchmark, the nineteenth downloads 5 MB of defect data on its first run, and the twentieth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6625,16 +6707,20 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
 | `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, and what the ranking is worth against 100 presumed inactives |
 | `06_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
-| `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
-| `08_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
-| `09_a_reaction_yield.ipynb` | a sample made of several molecules: the Buchwald-Hartwig screen (3,955 yields from 15 aryl halides, 4 ligands, 3 bases and 22 additives), the kernel of a combination, the frame that costs on new additives, and the names of the parts of an aryl halide as the reference that a structure has to beat |
-| `10_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
-| `11_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
-| `12_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `13_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `14_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `15_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `16_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `07_the_model_as_a_fast_level.ipynb` | a standard deviation in the units of the activity: how it is built, whether it is calibrated before any test set exists, a tolerance rule that sends doubtful structures to a fine level, a constant deviation as the reference, and a crystal property where the rule earns more |
+| `08_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
+| `09_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
+| `10_a_reaction_yield.ipynb` | a sample made of several molecules: the Buchwald-Hartwig screen (3,955 yields from 15 aryl halides, 4 ligands, 3 bases and 22 additives), the kernel of a combination, the frame that costs on new additives, and the names of the parts of an aryl halide as the reference that a structure has to beat |
+| `11_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
+| `12_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
+| `13_an_ensemble_of_structures.ipynb` | a sample made of several structures: 62 electrolytes, each described by the solvation shells of one simulation, read from one file with weights, the exact equality of the mean field with the mean of the shell kernels, the numbers of item BT5 from the general entry, and what the ensemble is worth against one shell and against equal weights |
+| `14_an_ion_and_its_solvent.ipynb` | a cation in an ether: 1,050 ethers with the binding energy of three ions, an ion probe field that finds the ion with no model, fields and probe against counts read from the formula, the oxygens that touch the ion as a stronger reference, and a selectivity that nothing predicts well |
+| `15_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
+| `16_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `17_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `18_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `19_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
+| `20_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7084,7 +7170,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         sixteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

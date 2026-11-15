@@ -588,10 +588,11 @@ def registry() -> List[Benchmark]:
                   tables=["battery/table.md"]),
         Benchmark("ether",
                   "an ion probe field: where it puts the ion, and the binding energy and the "
-                  "selectivity of three cations on 1,050 ethers",
+                  "selectivity of three cations on 1,050 ethers, against the oxygens that touch the ion",
                   "run_ether.py", "ether",
-                  compute=[["--stage", "probe"], ["--stage", "bind"], ["--stage", "select"]],
-                  minutes="60",
+                  compute=[["--stage", "probe"], ["--stage", "bind"], ["--stage", "select"],
+                           ["--stage", "contacts"]],
+                  minutes="75",
                   report=lambda: _mod("run_ether").write_table(_r("ether")),
                   tables=["ether/table.md"]),
         Benchmark("solvation",
@@ -626,13 +627,14 @@ def registry() -> List[Benchmark]:
         Benchmark("ensembles",
                   "an ensemble of structures through the general entry: the shells of item "
                   "BT5 written to one file and read back by load_dataset, against BT5's own "
-                  "tables and numbers (plan item MS5)",
+                  "tables and numbers (plan item MS5), and what the ensemble is worth against "
+                  "one shell, fewer shells and equal weights",
                   "run_ensembles.py", "ensembles",
                   compute=[["--stage", "file"]]
                   + [["--stage", "kernels", "--path", p, "--alpha", a]
                      for p in ("bt5", "general") for a in ("0.3", "0.5", "1.0", "2.0")]
-                  + [["--stage", "gate"]],
-                  minutes="25",
+                  + [["--stage", "gate"], ["--stage", "members"]],
+                  minutes="40",
                   report=lambda: _mod("run_ensembles").write_table(_r("ensembles")),
                   tables=["ensembles/table.md"]),
         Benchmark("diffusion",
@@ -816,8 +818,9 @@ def registry() -> List[Benchmark]:
                   "2,000 point-defect configurations each of MoS2 and WSe2 from the 2DMD set "
                   "(downloads 5 MB into benchmarks/cache on the first run; needs Numba for the "
                   "symmetry average at this size)",
-                  "run_2dmd.py", "2dmd", compute=[["--limit", "2000", "--engine", "numba"]],
-                  minutes="120",
+                  "run_2dmd.py", "2dmd", compute=[["--limit", "2000", "--engine", "numba"],
+                                                  ["--stage", "pairs"]],
+                  minutes="122",
                   report=lambda: _mod("run_2dmd").report(),
                   tables=["2dmd/table.md"]),
         Benchmark("sites",
@@ -1213,9 +1216,10 @@ def registry() -> List[Benchmark]:
                   tables=["warped_mittal/table.md"]),
         Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
                   "a tolerance rule does: the model as the fast level of a hierarchy, and the "
-                  "same deviation on the low-rank path that never builds the n by n kernel",
-                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"], ["--low-rank"]],
-                  minutes="15",
+                  "same deviation on the low-rank path that never builds the n by n kernel, and "
+                  "against a constant deviation",
+                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"], ["--low-rank"], ["--reference"]],
+                  minutes="16",
                   report=lambda: _write_table(
                       "surrogate", _mod("run_surrogate").report_all(_r("surrogate"))),
                   tables=["surrogate/table.md"]),

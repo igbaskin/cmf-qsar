@@ -47,6 +47,20 @@ autocorrelation by more than the paired bootstrap interval; (b, c) the model nam
 each kind of defect; (d) trained on the cells with one and two defects, it predicts the cells
 with three, which is the extrapolation a dopant study makes.
 
+**A pair expansion as the reference** (``--stage pairs``, added 15 November 2026). Materials
+science has a standard cheap model for an arrangement of defects on a lattice: one energy for
+each kind of defect, plus one for each pair of kinds at each neighbour distance, fitted by linear
+regression (a cluster expansion cut at pairs). Its columns are counts: the defects of each kind,
+and the pairs of each two kinds in each shell of host-site distances up to a cut-off. Four
+cut-offs are reported, 4, 6, 8 and 12 A, because the choice is free and nothing here chooses it.
+The ridge is chosen inside each fold. Two forms: with a fitted constant, and with the constant fixed at zero, which is what a formation
+energy is for a cell without defects. The two differ where it matters: in the cells with one and
+two defects the number of pairs is the number of defects minus one, so with a fitted constant the
+pair terms and the kind terms can trade a constant, and a cell with three defects pays for the
+trade. The folds and the cells are those of the kernel models,
+whose stored predictions give paired differences, on the random folds and on the extrapolation
+from one and two defects to three.
+
 The published errors on this set are the reference: with the test split of Kazeev et al.
 (npj Computational Materials 9, 113 (2023)), the formation energy per defect site of MoS2 is
 predicted to an MAE of 2.6 meV by their sparse graph network, 12 meV by gradient boosting on
@@ -64,6 +78,7 @@ Usage
     python benchmarks/run_2dmd.py --material MoS2 --limit 500
     python benchmarks/run_2dmd.py --stage fit --kernels counts arrangement
     python benchmarks/run_2dmd.py --stage reading          # the per-defect contributions
+    python benchmarks/run_2dmd.py --stage pairs           # the pair expansion, from the stored fits
     python benchmarks/run_2dmd.py --report
 """
 from __future__ import annotations
@@ -695,6 +710,185 @@ def _interval(y, pa, pb, n_defects):
                           float(np.quantile(diffs, 0.975))))
 
 
+# --------------------------------------------------------------------------- #
+# A pair expansion as the reference
+# --------------------------------------------------------------------------- #
+
+PAIR_CUTOFFS = (4.0, 6.0, 8.0, 12.0)
+PAIR_LAMS = (1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 0.1, 1.0)
+PAIR_FORMS = ("with a constant", "constant zero")
+PAIR_SIZES = (2000, 5933)
+
+
+def defect_changes(prep: dict, rec: dict) -> list:
+    """The changed sites of a cell with their kind: '-Mo' for a vacancy of Mo, '+W' for a W on a
+    site of the host."""
+    host = prep["host_symbols"]
+    return ([(int(s), "-" + host[int(s)]) for s in rec["removed"]]
+            + [(int(k), "+" + s) for s, k in rec["added"]])
+
+
+def site_distances(prep: dict) -> np.ndarray:
+    A = np.asarray(prep["cell"], float)
+    frac = np.asarray(prep["host_frac"], float)
+    d = frac[:, None, :] - frac[None, :, :]
+    d -= np.round(d)
+    return np.linalg.norm(d @ A, axis=2)
+
+
+def pair_features(prep: dict, recs: list, cutoff: float):
+    """Counts of each kind of defect and of each pair of kinds in each shell of host-site distances
+    shorter than `cutoff` (the minimum image in the supercell); pairs further apart are counted
+    by kinds alone. Returns the matrix, its column names and the shell distances."""
+    dist = site_distances(prep)
+    shells = np.unique(np.round(dist[(dist > 0.1) & (dist < cutoff)], 2))
+    rows = []
+    for r in recs:
+        ch = defect_changes(prep, r)
+        f = {}
+        for _, c in ch:
+            f["n " + c] = f.get("n " + c, 0) + 1
+        for i in range(len(ch)):
+            for j in range(i + 1, len(ch)):
+                dd = round(float(dist[ch[i][0], ch[j][0]]), 2)
+                a, b = sorted((ch[i][1], ch[j][1]))
+                shell = f"{shells[int(np.argmin(np.abs(shells - dd)))]:.2f} A" if dd < cutoff else "far"
+                key = f"pair {a} {b} {shell}"
+                f[key] = f.get(key, 0) + 1
+        rows.append(f)
+    keys = sorted({k for f in rows for k in f})
+    X = np.array([[f.get(k, 0) for k in keys] for f in rows], float)
+    return X, keys, shells.tolist()
+
+
+def pair_ridge(X_tr, y_tr, X_te, lam, form="with a constant"):
+    """Ridge regression on the count columns. With a constant the columns are centred and scaled
+    and the mean is the constant; with the constant at zero they are only scaled."""
+    if form == "constant zero":
+        sd = np.sqrt(np.mean(X_tr ** 2, axis=0))
+        sd = np.where(sd > 0, sd, 1.0)
+        A, B = X_tr / sd, X_te / sd
+        w = np.linalg.solve(A.T @ A + lam * len(y_tr) * np.eye(A.shape[1]), A.T @ y_tr)
+        return B @ w
+    mu, sd = X_tr.mean(axis=0), X_tr.std(axis=0)
+    sd = np.where(sd > 0, sd, 1.0)
+    A, B = (X_tr - mu) / sd, (X_te - mu) / sd
+    ym = float(y_tr.mean())
+    w = np.linalg.solve(A.T @ A + lam * len(y_tr) * np.eye(A.shape[1]), A.T @ (y_tr - ym))
+    return B @ w + ym
+
+
+def pair_evaluate(X: np.ndarray, y: np.ndarray, n_defects: np.ndarray, splits,
+                  form: str = "with a constant") -> dict:
+    """Out-of-fold predictions of the linear pair expansion, the ridge chosen by five inner folds."""
+    pred = np.full(len(y), np.nan)
+    lams = []
+    for tr, te in splits:
+        best = None
+        for lam in PAIR_LAMS:
+            err = 0.0
+            for itr, ite in folds(len(tr)):
+                p = pair_ridge(X[tr][itr], y[tr][itr], X[tr][ite], lam, form)
+                err += float(np.sum((p - y[tr][ite]) ** 2))
+            if best is None or err < best[0]:
+                best = (err, lam)
+        lams.append(best[1])
+        pred[te] = pair_ridge(X[tr], y[tr], X[te], best[1], form)
+    ok = np.isfinite(pred)
+    e = np.abs(pred[ok] - y[ok])
+    return {"r2": float(r2_score(y[ok], pred[ok])), "mae": float(np.mean(e)),
+            "mae_site": float(np.mean(e / n_defects[ok])), "lams": lams, "predictions": pred.tolist()}
+
+
+def pairs_stage(materials, sizes=PAIR_SIZES) -> dict:
+    """The pair expansion at four cut-offs, on the cells and folds of the stored kernel fits."""
+    fits = jload(result("fit.json"))
+    out = {"cutoffs": list(PAIR_CUTOFFS), "lams": list(PAIR_LAMS), "forms": list(PAIR_FORMS), "runs": {}}
+    for material in materials:
+        prep = prepare(material)
+        for n in sizes:
+            recs = pick(prep, n)
+            n = len(recs)
+            y = np.array([r[TARGET] for r in recs], float)
+            nd = np.array([r["n_defects"] for r in recs], float)
+            few = nd <= 2
+            extra = [(np.where(few)[0], np.where(~few)[0])]
+            stored = {k: fits.get(f"{material} | {k} | {n}") for k in KERNELS}
+            if stored["arrangement"] is None:
+                log(f"{material}, {n} cells: no stored kernel fit, skipped")
+                continue
+            if not np.allclose(stored["arrangement"]["y"], y):
+                raise ValueError(f"{material}, {n} cells: the stored fit holds other cells")
+            run = {"n": n, "cutoffs": {}, "stored": {}}
+            for k, s in stored.items():
+                if s is not None:
+                    run["stored"][k] = {"mae_site": s["mae_site"], "r2": s["r2"],
+                                        "extrapolation_mae_site": s["extrapolation"]["mae_site"],
+                                        "extrapolation_r2": s["extrapolation"]["r2"]}
+            for form in PAIR_FORMS:
+              for cutoff in PAIR_CUTOFFS:
+                X, keys, shells = pair_features(prep, recs, cutoff)
+                rnd = pair_evaluate(X, y, nd, folds(n), form)
+                ext = pair_evaluate(X, y, nd, extra, form)
+                cols_unseen = int(np.sum((X[few].sum(axis=0) == 0) & (X[~few].sum(axis=0) > 0)))
+                rec = {"form": form, "cutoff": cutoff, "columns": len(keys), "shells": shells,
+                       "random": rnd, "extrapolation": ext,
+                       "columns_absent_from_one_and_two": cols_unseen, "paired": {}}
+                for k, s in stored.items():
+                    if s is None:
+                        continue
+                    _r2, mae = _interval(y, rnd["predictions"], s["predictions"], nd)
+                    rec["paired"][f"random: pairs - {k}"] = {"diff": 1000 * mae[0], "low": 1000 * mae[1],
+                                                             "high": 1000 * mae[2]}
+                    te = ~few
+                    pe = np.asarray(ext["predictions"])[te]
+                    ps = np.asarray(s["extrapolation"]["predictions"])[te]
+                    _r2, mae = _interval(y[te], pe, ps, nd[te])
+                    rec["paired"][f"extrapolation: pairs - {k}"] = {"diff": 1000 * mae[0], "low": 1000 * mae[1],
+                                                                    "high": 1000 * mae[2]}
+                run["cutoffs"][f"{form} | {cutoff:g}"] = rec
+                log(f"{material}, {n} cells, pairs within {cutoff:g} A, {form} ({len(keys)} columns): "
+                    f"{1000 * rnd['mae_site']:.1f} meV per site on random folds, "
+                    f"{1000 * ext['mae_site']:.1f} from one and two defects to three")
+            out["runs"][f"{material} | {n}"] = run
+    jdump(out, result("pairs.json"))
+    return out
+
+
+def pairs_section(p: dict) -> list:
+    lines = ["## A pair expansion as the reference", "",
+             "One energy for each kind of defect and one for each pair of kinds in each shell of "
+             "host-site distances up to the cut-off, fitted by linear regression with the ridge "
+             "chosen inside each fold (a cluster expansion cut at pairs), with a fitted constant or "
+             "with the constant at zero, the formation energy of a cell without defects. The cells and folds are those of "
+             "the kernel models above, so the differences are paired over the cells (bootstrap, 95 %, "
+             "MAE per site in meV, negative when the pair expansion has the smaller error).", ""]
+    for key, run in p["runs"].items():
+        s = run["stored"]
+        lines += [f"### {key} cells", "",
+                  "| model | columns | MAE per site, meV | R2 | from one and two defects to three, meV | R2 there |",
+                  "|---|---:|---:|---:|---:|---:|"]
+        for k in KERNELS:
+            if k in s:
+                lines.append(f"| {k} kernel (stored) | | {1000 * s[k]['mae_site']:.1f} | {s[k]['r2']:+.4f} | "
+                             f"{1000 * s[k]['extrapolation_mae_site']:.1f} | {s[k]['extrapolation_r2']:+.3f} |")
+        for c, rec in run["cutoffs"].items():
+            lines.append(f"| pairs within {rec['cutoff']:g} A, {rec['form']} | {rec['columns']} | {1000 * rec['random']['mae_site']:.1f} | "
+                         f"{rec['random']['r2']:+.4f} | {1000 * rec['extrapolation']['mae_site']:.1f} | "
+                         f"{rec['extrapolation']['r2']:+.3f} |")
+        lines += ["", "| pair expansion | minus | random folds | from one and two defects to three |",
+                  "|---|---|---|---|"]
+        for c, rec in run["cutoffs"].items():
+            for k in ("arrangement", "autocorrelation", "counts"):
+                a = rec["paired"].get(f"random: pairs - {k}")
+                b = rec["paired"].get(f"extrapolation: pairs - {k}")
+                if a and b:
+                    lines.append(f"| within {rec['cutoff']:g} A, {rec['form']} | {k} | {a['diff']:+.1f} [{a['low']:+.1f}, {a['high']:+.1f}] | "
+                                 f"{b['diff']:+.1f} [{b['low']:+.1f}, {b['high']:+.1f}] |")
+        lines.append("")
+    return lines
+
+
 def report(out: str = "") -> str:
     fits = jload(result("fit.json")) if os.path.isfile(result("fit.json")) else {}
     read = jload(result("reading.json")) if os.path.isfile(result("reading.json")) else {}
@@ -782,6 +976,8 @@ def report(out: str = "") -> str:
             for t, v in sorted(rd["kinds"].items()):
                 lines.append(f"| {t} | {v['n']} | {v['mean']:+.3f} | {v['sd']:.4f} |")
             lines.append("")
+    if os.path.isfile(result("pairs.json")):
+        lines += pairs_section(jload(result("pairs.json")))
     lines += ["## Context: the published errors on this set", "",
               "Kazeev et al. 2023, their own test split (not these folds), MAE of the formation "
               "energy per site in meV: MoS2 -- sparse graph network 2.6, gradient boosting on "
@@ -798,7 +994,7 @@ def report(out: str = "") -> str:
 def main():
     global ALPHAS, GAMMAS, AC_SIGMAS
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", choices=("prepare", "fit", "reading"), default=None)
+    ap.add_argument("--stage", choices=("prepare", "fit", "reading", "pairs"), default=None)
     ap.add_argument("--material", nargs="+", default=list(MATERIALS))
     ap.add_argument("--kernels", nargs="+", default=list(KERNELS))
     ap.add_argument("--limit", type=int, default=LIMIT)
@@ -833,6 +1029,8 @@ def main():
                 force=args.force)
         elif stage == "reading":
             reading(args.material, alpha=args.alpha, force=args.force)
+        elif stage == "pairs":
+            pairs_stage(args.material)
     report()
     return 0
 

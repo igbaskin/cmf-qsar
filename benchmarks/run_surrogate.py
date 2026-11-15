@@ -31,9 +31,21 @@ Three questions, per split.
    of them, where the model is an approximation and its deviation has to stay calibrated on its
    own terms.  The gate is the root mean square of z within 0.1 of the exact path's.
 
+5. **Is the deviation worth more than a constant one?** (added 15 November 2026).  A deviation
+   that is right on average can still say nothing about which structure is the doubtful one: the
+   rank correlation of the deviation with the error is +0.14 on these sets.  The reference is
+   the deviation a user has without any model of it, the cross-validated RMSE of the training
+   part, the same for every structure.  Both are scored by the negative log density that each
+   gives to the measured activities of the held-out structures (a proper scoring rule, in nats
+   per structure, smaller is better), and by the root mean square of z and the share inside two
+   deviations.  The held-out structures are also cut into three equal groups by their deviation,
+   and z is read in each group: a deviation that orders the errors has the same root mean square
+   of z in all three.
+
 Usage
 -----
     python benchmarks/run_surrogate.py
+    python benchmarks/run_surrogate.py --reference         # item 5, from the same splits
     python benchmarks/run_surrogate.py --sets ACE GPB --repeats 3
     python benchmarks/run_surrogate.py --low-rank          # item MS6, reading the stored splits
     python benchmarks/run_surrogate.py --report
@@ -67,6 +79,47 @@ RESULTS = os.path.join(HERE, "results", "surrogate")
 BUDGET = 0.25           # the share of structures a fine level is assumed to afford
 
 
+def prepare_set(name, data=DATA):
+    """The activities, the fields of every molecule and the kernels of one Sutherland set."""
+    ds = load_dataset(os.path.join(data, f"{name}.sdf"))
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [n for n, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    print(f"=== {name}: {len(y)} molecules", flush=True)
+    fs = FieldSet.create(physchem=FIELDS, alpha=1.0, charge_model="file")
+    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+    table = AtomTable.from_molecules(mf)
+    return y, mf, _kernels(table)
+
+
+def fit_split(mf, y, cache, rep):
+    """One random 70/30 split: alpha and lambda by the evidence on the training part, the fit, the
+    calibration on its folds, and the held-out predictions with their deviation."""
+    n = len(y)
+    rng = np.random.RandomState(rep)
+    order = rng.permutation(n)
+    n_te = max(5, int(round(0.3 * n)))
+    te, tr = np.sort(order[:n_te]), np.sort(order[n_te:])
+    alpha, lam = _choose(cache, y[tr], tr)
+
+    model = _model(alpha)
+    model.params["lam"] = lam
+    train = AtomTable.from_molecules([mf[i] for i in tr])
+    Kf, sd = cache[alpha]
+    model.set_training_kernels(train, Kf[:, tr][:, :, tr],
+                               None if sd is None else sd[:, tr])
+    model.fit(train, y[tr], cv_folds=10, cv_seed=rep, reuse_kernels=True)
+    folds = model.calibration(folds=10, seed=rep)
+    rmse_cv = float(model.stats.rmse_cv)
+
+    test = AtomTable.from_molecules([mf[i] for i in te])
+    pred, sd_te = model.predict_with_sd(test)
+    return {"tr": tr, "te": te, "alpha": alpha, "lam": lam, "model": model, "folds": folds,
+            "rmse_cv": rmse_cv, "pred": pred, "sd": sd_te}
+
+
 def run_set(name, repeats=5, force=False, data=DATA, results=RESULTS):
     os.makedirs(results, exist_ok=True)
     out_path = os.path.join(results, f"{name}.json")
@@ -74,39 +127,14 @@ def run_set(name, repeats=5, force=False, data=DATA, results=RESULTS):
         print(f"{name}: already done")
         return json.load(open(out_path))
     t0 = time.time()
-    ds = load_dataset(os.path.join(data, f"{name}.sdf"))
-    y = np.asarray(ds.activity, float)
-    keep = np.isfinite(y)
-    mols = [m for m, k in zip(ds.mols, keep) if k]
-    names = [n for n, k in zip(ds.names, keep) if k]
-    y = y[keep]
+    y, mf, cache = prepare_set(name, data)
     n = len(y)
-    print(f"=== {name}: {n} molecules", flush=True)
-    fs = FieldSet.create(physchem=FIELDS, alpha=1.0, charge_model="file")
-    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
-    table = AtomTable.from_molecules(mf)
-    cache = _kernels(table)
 
     rows = []
     for rep in range(repeats):
-        rng = np.random.RandomState(rep)
-        order = rng.permutation(n)
-        n_te = max(5, int(round(0.3 * n)))
-        te, tr = np.sort(order[:n_te]), np.sort(order[n_te:])
-        alpha, lam = _choose(cache, y[tr], tr)
-
-        model = _model(alpha)
-        model.params["lam"] = lam
-        train = AtomTable.from_molecules([mf[i] for i in tr])
-        Kf, sd = cache[alpha]
-        model.set_training_kernels(train, Kf[:, tr][:, :, tr],
-                                   None if sd is None else sd[:, tr])
-        model.fit(train, y[tr], cv_folds=10, cv_seed=rep, reuse_kernels=True)
-        folds = model.calibration(folds=10, seed=rep)
-        rmse_cv = float(model.stats.rmse_cv)
-
-        test = AtomTable.from_molecules([mf[i] for i in te])
-        pred, sd_te = model.predict_with_sd(test)
+        s = fit_split(mf, y, cache, rep)
+        tr, te, alpha, lam, model = s["tr"], s["te"], s["alpha"], s["lam"], s["model"]
+        folds, rmse_cv, pred, sd_te = s["folds"], s["rmse_cv"], s["pred"], s["sd"]
         held = Calibration.of(y[te], pred, sd_te)
         corrected = Calibration.of(y[te], pred, sd_te * folds.factor)
         rule = Handoff.of(sd_te, rmse_cv, y=y[te], mean=pred)
@@ -147,7 +175,7 @@ def report(results=RESULTS):
     import glob
 
     files = sorted(f for f in glob.glob(os.path.join(results, "*.json"))
-                   if not os.path.basename(f).startswith(("litraj", "lowrank")))
+                   if not os.path.basename(f).startswith(("litraj", "lowrank", "reference")))
     if not files:
         return "No surrogate results yet; run `python benchmarks/run_surrogate.py`."
     data = [json.load(open(f)) for f in files]
@@ -198,6 +226,120 @@ def report(results=RESULTS):
     m2 = {k: float(np.nanmean(v)) for k, v in acc2.items()}
     lines.append(f"| **mean** | {m2['tol']:.3f} | {m2['ans']:.0%} | **{m2['ra']:.3f}** | "
                  f"**{m2['rd']:.3f}** | **{m2['ba']:.3f}** | **{m2['bd']:.3f}** |")
+    return "\n".join(lines)
+
+
+# ------------------------------------------------------------------ 5. the constant deviation
+
+BINS = 3
+HALF_LOG_2PI = 0.5 * float(np.log(2.0 * np.pi))
+
+
+def nlpd(err, sd):
+    """The mean negative log density, in nats per structure, that a Gaussian of deviation `sd`
+    (one number or one per structure) gives to the errors `err`."""
+    err = np.asarray(err, float)
+    sd = np.broadcast_to(np.asarray(sd, float), err.shape)
+    return float(np.mean(HALF_LOG_2PI + np.log(sd) + 0.5 * (err / sd) ** 2))
+
+
+def score_split(err, sd, constant):
+    """The scores of the model's deviation and of the constant one, and the bins of the deviation."""
+    z = err / sd
+    zc = err / constant
+    order = np.argsort(sd, kind="stable")
+    groups = np.array_split(order, BINS)
+    bins = [{"n": int(len(g)), "sum_sd": float(sd[g].sum()), "sum_err2": float((err[g] ** 2).sum()),
+             "sum_z2": float((z[g] ** 2).sum())} for g in groups]
+    return {"model": {"nlpd": nlpd(err, sd), "z_rms": float(np.sqrt(np.mean(z ** 2))),
+                      "inside_2sd": float(np.mean(np.abs(z) <= 2.0))},
+            "constant": {"sd": float(constant), "nlpd": nlpd(err, constant),
+                         "z_rms": float(np.sqrt(np.mean(zc ** 2))),
+                         "inside_2sd": float(np.mean(np.abs(zc) <= 2.0))},
+            "bins": bins}
+
+
+def run_reference(name, repeats=5, force=False, data=DATA, results=RESULTS):
+    """The same splits as run_set, scored against a constant deviation and read in bins of sd."""
+    os.makedirs(results, exist_ok=True)
+    out_path = os.path.join(results, f"reference_{name}.json")
+    if os.path.exists(out_path) and not force:
+        print(f"{name}: already done")
+        return json.load(open(out_path))
+    t0 = time.time()
+    y, mf, cache = prepare_set(name, data)
+    rows = []
+    for rep in range(repeats):
+        s = fit_split(mf, y, cache, rep)
+        err = y[s["te"]] - s["pred"]
+        row = score_split(err, s["sd"], s["rmse_cv"])
+        row["repeat"] = rep
+        row["n_test"] = int(len(err))
+        rows.append(row)
+        print(f"  split {rep}: nlpd {row['model']['nlpd']:.3f} against {row['constant']['nlpd']:.3f} "
+              f"for the constant {row['constant']['sd']:.3f}", flush=True)
+    out = {"set": name, "n": int(len(y)), "repeats": repeats, "bins": BINS, "rows": rows,
+           "seconds": time.time() - t0}
+    json.dump(out, open(out_path, "w"), indent=1)
+    print(f"  {time.time() - t0:.0f} s")
+    return out
+
+
+def paired_over_sets(values, seed=0, draws=2000):
+    """The mean of one value per set, with a 95 % interval from a bootstrap over the sets."""
+    v = np.asarray(values, float)
+    rng = np.random.default_rng(seed)
+    boot = np.array([v[rng.integers(0, len(v), len(v))].mean() for _ in range(draws)])
+    lo, hi = np.percentile(boot, [2.5, 97.5])
+    return {"mean": float(v.mean()), "low": float(lo), "high": float(hi)}
+
+
+def report_reference(results=RESULTS) -> str:
+    import glob
+
+    files = sorted(glob.glob(os.path.join(results, "reference_*.json")))
+    if not files:
+        return ""
+    data = [json.load(open(f)) for f in files]
+    data.sort(key=lambda d: -d["n"])
+    lines = ["", "## A constant deviation as the reference, and the calibration in bins of the deviation", "",
+             f"The same {len(data)} sets and {data[0]['repeats']} splits. The reference gives every held-out "
+             "structure the cross-validated RMSE of the training part as its deviation. The score is the "
+             "negative log density that a Gaussian of that deviation gives to the measured activity, in "
+             "nats per structure (smaller is better; it rewards a deviation that is right and one that "
+             "is small where the model is right). The gain is the constant's score minus the model's, "
+             "so a positive gain means that the deviation of the model is worth more.", "",
+             "| set | n | score of the model | score of the constant | gain | z rms, model | z rms, constant | inside 2 sd, model | inside 2 sd, constant |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    gains, acc = [], {k: [] for k in ("m", "c", "zm", "zc", "im", "ic")}
+    for d in data:
+        r = d["rows"]
+        v = {"m": np.mean([x["model"]["nlpd"] for x in r]), "c": np.mean([x["constant"]["nlpd"] for x in r]),
+             "zm": np.mean([x["model"]["z_rms"] for x in r]), "zc": np.mean([x["constant"]["z_rms"] for x in r]),
+             "im": np.mean([x["model"]["inside_2sd"] for x in r]), "ic": np.mean([x["constant"]["inside_2sd"] for x in r])}
+        for k, val in v.items():
+            acc[k].append(val)
+        gains.append(v["c"] - v["m"])
+        lines.append(f"| {d['set']} | {d['n']} | {v['m']:.3f} | {v['c']:.3f} | {v['c'] - v['m']:+.3f} | "
+                     f"{v['zm']:.2f} | {v['zc']:.2f} | {v['im']:.0%} | {v['ic']:.0%} |")
+    iv = paired_over_sets(gains)
+    m = {k: float(np.mean(v)) for k, v in acc.items()}
+    lines.append(f"| **mean** |  | {m['m']:.3f} | {m['c']:.3f} | **{iv['mean']:+.3f}** | {m['zm']:.2f} | "
+                 f"{m['zc']:.2f} | {m['im']:.0%} | {m['ic']:.0%} |")
+    lines += ["", f"The mean gain is {iv['mean']:+.3f} nats per structure, with a 95 % interval of "
+              f"[{iv['low']:+.3f}, {iv['high']:+.3f}] from a bootstrap over the {len(data)} sets; "
+              f"the model's deviation is ahead on {sum(g > 0 for g in gains)} of {len(gains)} sets.", "",
+              "The held-out structures of every split, cut into three equal groups by their deviation "
+              "(lowest, middle, highest), pooled over the sets and the splits. A deviation that orders the "
+              "errors has the same z rms in all three groups.", "",
+              "| group | structures | mean deviation | RMSE | z rms |", "|---|---:|---:|---:|---:|"]
+    names = ["lowest third of the deviation", "middle third", "highest third"]
+    for b in range(BINS):
+        n = sum(x["bins"][b]["n"] for d in data for x in d["rows"])
+        sd = sum(x["bins"][b]["sum_sd"] for d in data for x in d["rows"]) / n
+        e2 = sum(x["bins"][b]["sum_err2"] for d in data for x in d["rows"]) / n
+        z2 = sum(x["bins"][b]["sum_z2"] for d in data for x in d["rows"]) / n
+        lines.append(f"| {names[b]} | {n} | {sd:.3f} | {np.sqrt(e2):.3f} | {np.sqrt(z2):.2f} |")
     return "\n".join(lines)
 
 
@@ -486,7 +628,8 @@ def report_lowrank(results=RESULTS) -> str:
 
 def report_all(results=RESULTS) -> str:
     """The text of `table.md`: the three reports of this script, one after the other."""
-    return report(results) + "\n" + report_hops(results) + "\n" + report_lowrank(results)
+    return (report(results) + "\n" + report_hops(results) + "\n" + report_lowrank(results)
+            + "\n" + report_reference(results))
 
 
 def main():
@@ -497,6 +640,8 @@ def main():
                     help="the LiTraj hop sample instead of the Sutherland sets")
     ap.add_argument("--low-rank", action="store_true",
                     help="the low-rank path on the stored splits of the Sutherland sets (item MS6)")
+    ap.add_argument("--reference", action="store_true",
+                    help="a constant deviation as the reference, and the bins of the deviation (item 5)")
     ap.add_argument("--max-structures", type=int, default=0,
                     help="with --hops, a quick look on this many structures, under its own file")
     ap.add_argument("--force", action="store_true")
@@ -504,6 +649,9 @@ def main():
     args = ap.parse_args()
     if args.hops and not args.report:
         run_hops(max_structures=args.max_structures, force=args.force)
+    elif args.reference and not args.report:
+        for name in args.sets:
+            run_reference(name, repeats=args.repeats, force=args.force)
     elif args.low_rank and not args.report:
         for name in args.sets:
             run_lowrank(name, force=args.force)
