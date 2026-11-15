@@ -103,6 +103,7 @@ class Benchmark:
     compute: List[List[str]] = field(default_factory=list)   # argument lists, run in order
     needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | "xtb"
                                                  # | "pybamm" (not in requirements-lock.txt)
+                                                 # | "vasp" (VASP and ORCA grids in the cache)
                                                  # | None: a file or a program the machine
                                                  # may not have
     minutes: str = "?"                           # what a full run costs on the author's machine
@@ -917,6 +918,20 @@ def registry() -> List[Benchmark]:
                   minutes="120",
                   report=lambda: _mod("run_microstructure").report(),
                   tables=["microstructure/table.md"]),
+        Benchmark("gridfields",
+                  "fields from DFT on a grid: the density, ELF and potential of a VASP "
+                  "calculation of each perovskite cell of item M4, and the density and "
+                  "potential of four ORCA molecular series, as an overlap kernel on a shared "
+                  "grid and a radial correlation, against the same grids fitted with "
+                  "Gaussians on the atoms (plan item M9)",
+                  "run_gridfields.py", "gridfields",
+                  compute=[["--stage", "crystals"], ["--stage", "molecules"]],
+                  needs="vasp", minutes="40",
+                  prepare=["run_gridfields.py --stage cells, then grid_dft_wsl.py inside "
+                           "WSL, then --stage collect, --stage widefit and --stage cubes "
+                           "(VASP and ORCA)"],
+                  report=lambda: _mod("run_gridfields").report(),
+                  tables=["gridfields/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

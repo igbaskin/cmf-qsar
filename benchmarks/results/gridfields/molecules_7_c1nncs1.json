@@ -1,0 +1,146 @@
+{
+ "box": [
+  131,
+  65,
+  57
+ ],
+ "comparisons": [
+  {
+   "above_zero": false,
+   "against": "fields overlap",
+   "below_zero": false,
+   "hi": 0.2925784355122804,
+   "lo": -0.1057754306939991,
+   "mean": 0.07711958898527449,
+   "model": "grid overlap"
+  },
+  {
+   "above_zero": true,
+   "against": "fields radial",
+   "below_zero": false,
+   "hi": 1.0076767335847145,
+   "lo": 0.03082110307124777,
+   "mean": 0.32113606891825697,
+   "model": "grid radial"
+  },
+  {
+   "above_zero": false,
+   "against": "fitted grid overlap",
+   "below_zero": false,
+   "hi": 0.0339772829248285,
+   "lo": -0.002854360428881852,
+   "mean": 0.010811821129494747,
+   "model": "grid overlap"
+  },
+  {
+   "above_zero": false,
+   "against": "fitted grid radial",
+   "below_zero": false,
+   "hi": 0.256627655423245,
+   "lo": -0.05416016566148422,
+   "mean": 0.05686493488774724,
+   "model": "grid radial"
+  }
+ ],
+ "fit_error_mean": {
+  "density": 0.21803650865234941,
+  "potential": 0.6414107131221649
+ },
+ "kernel_correlations": {
+  "grid / fields overlap": 0.6206586440088796,
+  "grid / fitted overlap": 0.9868343080738883
+ },
+ "models": {
+  "fields overlap": {
+   "chosen": {
+    "alpha 0.3, ridge 1": 1,
+    "alpha 1, ridge 10": 1,
+    "alpha 10, ridge 10": 2,
+    "alpha 20, ridge 1": 1,
+    "alpha 20, ridge 10": 4,
+    "alpha 5, ridge 10": 6
+   },
+   "q2_mean": -0.27520724912770006,
+   "q2_sd": 0.061611227172415135,
+   "rmse_mean": 1.8135869995549596
+  },
+  "fields radial": {
+   "chosen": {
+    "sigma 0.5, ridge 0.1": 2,
+    "sigma 0.5, ridge 1": 1,
+    "sigma 0.5, ridge 10": 2,
+    "sigma 0.5, ridge 1e-08": 2,
+    "sigma 0.75, ridge 0.1": 1,
+    "sigma 0.75, ridge 1": 2,
+    "sigma 1, ridge 0.1": 1,
+    "sigma 1, ridge 1": 1,
+    "sigma 1, ridge 10": 3
+   },
+   "q2_mean": -0.5624321061650014,
+   "q2_sd": 0.19359176834390987,
+   "rmse_mean": 2.004171721861982
+  },
+  "fitted grid overlap": {
+   "chosen": {
+    "ridge 1": 5,
+    "ridge 10": 10
+   },
+   "q2_mean": -0.16989252634945493,
+   "q2_sd": 0.02147221752555989,
+   "rmse_mean": 1.7375100612808787
+  },
+  "fitted grid radial": {
+   "chosen": {
+    "sigma 0.5, ridge 1": 1,
+    "sigma 0.5, ridge 10": 2,
+    "sigma 1, ridge 1": 7,
+    "sigma 1, ridge 10": 5
+   },
+   "q2_mean": -0.2252534335772199,
+   "q2_sd": 0.03058576309909833,
+   "rmse_mean": 1.7780833174753579
+  },
+  "grid density overlap": {
+   "chosen": {
+    "ridge 1": 2,
+    "ridge 10": 12,
+    "ridge 1e-08": 1
+   },
+   "q2_mean": -0.1970763095266986,
+   "q2_sd": 0.09221358955331763,
+   "rmse_mean": 1.756381088036984
+  },
+  "grid overlap": {
+   "chosen": {
+    "ridge 1": 4,
+    "ridge 10": 11
+   },
+   "q2_mean": -0.15858771489755216,
+   "q2_sd": 0.024042061234265142,
+   "rmse_mean": 1.7290746187771255
+  },
+  "grid potential overlap": {
+   "chosen": {
+    "ridge 1": 3,
+    "ridge 10": 12
+   },
+   "q2_mean": -0.18166052746008346,
+   "q2_sd": 0.06176341446866682,
+   "rmse_mean": 1.7456991883434838
+  },
+  "grid radial": {
+   "chosen": {
+    "sigma 0.5, ridge 1": 2,
+    "sigma 0.5, ridge 10": 2,
+    "sigma 1, ridge 1": 4,
+    "sigma 1, ridge 10": 7
+   },
+   "q2_mean": -0.16491229397465967,
+   "q2_sd": 0.0400612483598056,
+   "rmse_mean": 1.733622246416088
+  }
+ },
+ "molecules": 29,
+ "seconds": 58.3,
+ "set": "7_c1nncs1"
+}

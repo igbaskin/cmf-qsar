@@ -1027,6 +1027,21 @@ meV per site, +0.954 and 198). Mixing the two kernels fails with the two-point o
 weight is chosen inside the training fold on a random split, where both descriptions look nearly
 perfect.
 
+### Fields from DFT on a grid
+
+Plan item M9 (`cmfqsar/gridfields.py`, `benchmarks/run_gridfields.py`): the electron density, the
+electron localisation function and the electrostatic potential of a DFT calculation used as the
+fields themselves, with readers for VASP files (CHGCAR, ELFCAR, LOCPOT) and cube files, the
+overlap kernel on a shared grid and a radial correlation for structures without a frame. Rule 3
+allows a grid kernel only if it beats the same grid fitted with Gaussians on the atoms. On
+1462 perovskite cells of item M4, each given one static VASP calculation, the grid overlap
+kernel on one lattice reaches R² +0.825 (four atom-centred fields
++0.424, element counts +0.362) and beats its fit by
++0.216, and by +0.069 [+0.045, +0.100]
+against a richer fit with seven widths. Without a frame the grid loses to its fit and to the
+fields, and on four molecular series it gains nothing. The grid needs a DFT calculation per
+structure, so this says what the grid holds, not that it is a cheap predictor.
+
 ### A measured curve as the sample: no structure needed
 
 A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no
@@ -7032,6 +7047,7 @@ cmfqsar/sites.py        a site of a periodic cell as the sample: the split of th
 cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed structure factors, the resolution reading, the identity with the real-space sum
 cmfqsar/prototypes.py   inverse design on prototypes: a candidate generator over a prototype cell, a test for which candidates are the same structure, an oracle and the loop
 cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
+cmfqsar/gridfields.py   fields from DFT on a grid: readers for VASP volumetric files and cube files, the overlap kernel on a shared grid, the radial correlation, the atom-centred fit
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
 cmfqsar/spectrum.py     a spectrum as a one-dimensional field: sticks and measured curves, the kernel of two spectra, the co-spectrum, readers for ORCA infrared spectra and calculated powder patterns
 cmfqsar/battery.py      insertion electrodes: the pairs of a lithiation ladder from public formation energies, the average voltage between two steps, and the families of hosts

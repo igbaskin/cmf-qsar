@@ -10464,6 +10464,140 @@ radial grid is coarse and the cutoff short -- four to five angstrom, against the
 descriptor reaches cheaply. The two are complements and not alternatives, which is what the
 measurement says as well.
 
+## Fields from DFT on a grid
+
+Everywhere else in this program a field is a sum of Gaussians on the atoms, and its kernels are
+integrals in closed form. A DFT calculation gives the fields themselves, as values on a grid: the
+electron density, the electron localisation function (ELF, a number between 0 and 1 that is high
+where electron pairs are localised) and the electrostatic potential. Plan item M9 takes those grids
+as the fields, without fitting anything to them (`cmfqsar/gridfields.py`).
+
+Rule 3 of the plan keeps the kernel in closed form and allows grids for measurement and display
+only. It rests on the conceptual-DFT study, which found that the exact grid kernel of a Fukui
+function predicted no better than the same function fitted with Gaussians on the atoms. M9 is the
+one exception the plan allows, and only if a grid kernel beats that fitted one by more than the
+interval. This section reports that measurement.
+
+**What the module provides.** `GridField` holds a 3D array of values, the box the grid divides, its
+origin, whether the box repeats (a crystal cell) or not (a molecule), and the atoms. Two readers:
+`read_cube` for Gaussian cube files (the output of `orca_plot` and of the co-field export), and
+`read_vasp_grid` for the volumetric files of VASP -- CHGCAR, CHG, AECCAR and PARCHG (density),
+ELFCAR (ELF) and LOCPOT (potential), compressed with gzip or not, including the second grid of a
+spin-polarised run. A VASP density is stored times the cell volume; the reader divides it out, so a
+density comes back in electrons per cubic angstrom and integrates to the electron count.
+`resample_fractional` puts a crystal's grid on any number of points of its cell (by its Fourier
+series), and `on_common_box` puts a molecule's grid on a shared box. The two kernels the item names:
+
+* **A shared frame.** `grid_overlap_kernel` is the overlap integral of two grids on the same
+  points, the exact form of the overlap kernel the program otherwise computes in closed form.
+* **No frame.** `radial_correlations` is the radial autocorrelation of a field, and the radial
+  cross-correlation of two fields: the product of the field at one point and at a second point at
+  distance r, integrated over all such pairs. It is computed with the fast Fourier transform, does
+  not change when the structure is moved or turned, and for a crystal is taken per unit volume, so
+  a supercell gives the same values. Its blocks are laid out like the field autocorrelation of
+  `cmfqsar.invariant`, so the same kernel applies.
+
+`fit_atom_gaussians` fits a grid with Gaussians of a few shared widths on every atom and its
+periodic images. The fitted grid, given to the same two kernels, is the "fitted atom-centred one"
+of the plan: everything the grid holds except what Gaussians on the atoms cannot reproduce.
+20 tests check, among other things, that a written CHGCAR reads back exactly, that the grid overlap
+of two Gaussians equals the closed-form value to 1e-6, that the radial profile of one Gaussian
+follows its analytic curve, and that a supercell, a rotation and a shift change no radial channel.
+
+**The measurement** (`benchmarks/run_gridfields.py`). *Crystals*: the 1,500 ABO3 perovskite cells
+of item M4, formation energy of the cell (Castelli et al. 2012). Each cell had one static PBE
+calculation in VASP with the same settings (450 eV, 6 x 6 x 6 k-points, no spin polarisation, no
+relaxation; `benchmarks/grid_dft_wsl.py`, about 20 seconds per cell). 1462 cells converged;
+the 38 that did not are almost all cells with iron, manganese, cobalt, nickel, chromium or
+rhenium, which need spin polarisation, and they are left out of every model. The grids are put on
+24 x 24 x 24 points of each cell. *Molecules*: the four corrosion-inhibitor series that have ORCA
+single points (20 to 29 molecules), with the density (without its cores) and the potential
+(outside the molecule) of the neutral molecule from `orca_plot`. In both parts: five folds repeated
+three times, the setting and the ridge chosen by the evidence on the training block, and a 95 %
+paired bootstrap interval for each difference.
+
+**The gate** is grid minus fitted grid, on each frame. Beside it, two questions that do not decide
+it: whether the grid predicts better than the program's own atom-centred fields, and whether it
+knows more than which elements a cell holds (a kernel on the element counts). This reading of the
+gate was settled after a trial of the pipeline on the first 144 cells; both comparisons are
+reported in full.
+
+| Crystal kernel | Frame | R² (1462 cells) |
+|---|---|---:|
+| grid: density, ELF and potential | one lattice | +0.825 |
+| grid fitted on the atoms, seven widths | one lattice | +0.754 |
+| grid fitted on the atoms, three widths | one lattice | +0.615 |
+| the four atom-centred fields of M4 | one lattice | +0.424 |
+| the four fields and the grid, summed | one lattice | +0.815 |
+| grid: ELF alone | one lattice | +0.646 |
+| grid: potential alone | one lattice | +0.644 |
+| grid: density alone | one lattice | +0.513 |
+| element counts only | none (element counts) | +0.362 |
+| the four atom-centred fields of M4 | none (radial) | +0.443 |
+| grid fitted on the atoms, three widths | none (radial) | +0.398 |
+| grid: density, ELF and potential | none (radial) | +0.345 |
+| grid fitted on the atoms, seven widths | none (radial) | +0.345 |
+| the four fields and the grid, summed | none (radial) | +0.543 |
+
+| Difference of R², crystals | Mean [95 % interval] |
+|---|---|
+| grid minus its fit with three widths, one lattice (the gate) | +0.216 [+0.182, +0.248] |
+| grid minus its fit with seven widths, one lattice | +0.069 [+0.045, +0.100] |
+| grid minus its fit with three widths, no frame (the gate) | -0.055 [-0.072, -0.037] |
+| grid minus its fit with seven widths, no frame | +0.000 [-0.004, +0.005] |
+| grid minus the four fields, one lattice | +0.409 [+0.365, +0.457] |
+| grid minus the four fields, no frame | -0.105 [-0.153, -0.055] |
+| grid minus the element counts | +0.472 [+0.433, +0.510] |
+
+**On one lattice the gate is met, and the margin depends on the fit.** The grid overlap kernel is
+the best of the kernels compared here, R² +0.825
+against +0.424 for the four fields and +0.362 for the element
+counts alone. Against its own fit with three widths it gains +0.216, with the whole
+interval above zero. That fit leaves 21% of the ELF and 20% of the
+potential unexplained, so the check was repeated with seven widths, which leaves 13%
+and 7%. The fitted kernel then reaches R² +0.754, and the
+grid still gains +0.069, again with the whole interval above zero. Two thirds of
+the first margin was the weakness of the fit; the rest is in the part of the grid that Gaussians
+on the atoms do not reproduce. A fit with functions between the atoms might close it, and was not
+tried. Of the three grids alone, the ELF (+0.646) and the potential
+(+0.644) each predict better than the four fields; the density
+(+0.513) is the weakest.
+
+**Without a frame the grid loses.** The radial kernel of the grid reaches R²
++0.345, below its three-width fit (+0.398) and below the
+four fields (+0.443), and the seven-width fit gives the grid's value exactly
+(+0.000). A radial profile averages over every direction, and what the overlap
+kernel uses on one lattice does not survive that average.
+
+**The molecules show no gain.** q² of each kernel and the differences, per series:
+
+| Series | Molecules | Grid overlap | Fitted grid overlap | Fields overlap | Grid minus fitted grid, overlap | Grid minus fitted grid, radial | Grid minus fields, overlap |
+|---|---:|---:|---:|---:|---|---|---|
+| 7_c1nncs1 | 29 | -0.159 | -0.170 | -0.275 | +0.011 [-0.003, +0.034] | +0.057 [-0.054, +0.257] | +0.077 [-0.106, +0.293] |
+| 12_c1ccoc1 | 27 | -0.097 | +0.058 | -0.133 | -0.152 [-0.303, -0.062] | +0.010 [-0.054, +0.051] | +0.000 [-0.327, +0.597] |
+| 13_c1c_nH_nn1 | 25 | +0.600 | +0.607 | +0.602 | -0.004 [-0.052, +0.049] | +0.112 [-0.088, +0.385] | +0.005 [-0.235, +0.186] |
+| 161_c1ccc2scnc2c1 | 20 | +0.562 | +0.635 | +0.580 | -0.069 [-0.215, +0.035] | -0.073 [-0.240, +0.086] | -0.058 [-0.270, +0.131] |
+
+No interval of grid minus fitted grid lies above zero, and on `12_c1ccoc1` the grid overlap is
+worse than its fit. On `7_c1nncs1` no kernel predicts better than the mean, so its differences say
+nothing. Against the five atom-centred fields the grid is level on every series. This repeats the
+conceptual-DFT study on two more fields and four series.
+
+**What the result is worth.** A grid needs one DFT calculation per structure, and here the target
+is itself a DFT formation energy (from a different code and settings), which is only reference
+energies away from that calculation. So the crystal result says what the grid representation
+holds, not that it is a cheap predictor of a formation energy. It earns rule 3's exception in one
+case: crystals on one lattice, with an interval that stays above zero against a fit with seven
+widths. The module is not connected to `CMFModel`; a model hook for the grid overlap kernel, and a
+fit with functions between the atoms, are open.
+
+```bash
+python benchmarks/run_gridfields.py --stage crystals --stage molecules   # about 40 minutes
+```
+
+The grids themselves need VASP and ORCA: `--stage cells`, then `grid_dft_wsl.py` inside WSL (about
+two hours with four workers), then `--stage collect`, `--stage widefit` and `--stage cubes`.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

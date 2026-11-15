@@ -3212,6 +3212,24 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   display; this item is the one place the plan allows an exception, and only if the grid kernel
   beats the fitted atom-centred one by more than the interval, which the conceptual-DFT study
   says it may not.
+  **Built and measured 15 November 2026.** `cmfqsar/gridfields.py`: `GridField`, `read_cube`,
+  `read_vasp_grid` (CHGCAR, CHG, AECCAR, PARCHG, ELFCAR, LOCPOT, gzip, the second block of a
+  spin-polarised run, the density divided by the volume), `write_vasp_grid`, `resample_fractional`
+  (Fourier), `on_common_box`, `grid_overlap_kernel`, `radial_correlations` (FFT, per unit volume
+  for a crystal, blocks of `invariant.field_pairs`) and `fit_atom_gaussians` (periodic images
+  summed). 20 tests in `tests/test_gridfields.py`. `benchmarks/run_gridfields.py` with
+  `benchmarks/grid_dft_wsl.py`: one static PBE calculation in VASP for each of M4's 1,500
+  perovskite cells (1462 converged; the 38 others need spin polarisation), and the
+  density and potential of the four corrosion series from `orca_plot`. *The gate, read as grid
+  minus the same grid fitted with Gaussians on the atoms (the comparison rule 3 rests on; settled
+  after a trial on 144 cells), is met on one lattice:* +0.216 [+0.182, +0.248]
+  against a three-width fit and +0.069 [+0.045, +0.100] against a seven-width fit,
+  with R² +0.825 for the grid, +0.424 for the four fields of
+  M4 and +0.362 for the element counts. *It is not met without a frame*
+  (-0.055 [-0.072, -0.037]), *nor on any of the four molecular series* (one,
+  `12_c1ccoc1`, goes the other way). The grid needs one DFT calculation per structure. *Open:* a
+  model hook for the grid overlap kernel (the module is not connected to `CMFModel`); a fit with
+  functions between the atoms, which might close the last 0.07.
 * **M10. Three-body and chirality for solids.** The two-body kernel cannot separate homometric
   structures or enantiomorphs. Typed angle channels, or a periodic analogue of the signed-volume
   block of `chirality` in `cmfqsar/invariant.py`, remove the deficiency at the cost of a cubic sum per
@@ -8864,7 +8882,7 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 15 | 12 | M7, M8, M9 |
+| H. Materials and periodicity | 15 | 13 | M7, M8 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
@@ -8877,7 +8895,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 120 finished, 11 partly, 45 open.**
+**176 items: 122 finished, 10 partly, 44 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -8902,7 +8920,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** M7 and M8, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

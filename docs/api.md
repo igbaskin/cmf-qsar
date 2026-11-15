@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 127 modules, 248 classes with 815 public methods, and 1309 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 128 modules, 251 classes with 824 public methods, and 1325 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -82,6 +82,7 @@ for.
 | [cmfqsar.gntk](#cmfqsargntk) | The graph neural tangent kernel of the bond graph, as a kernel view (plan item ND7). |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
 | [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
+| [cmfqsar.gridfields](#cmfqsargridfields) | Fields on a grid, read from DFT output, and two kernels on them (plan item M9). |
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
 | [cmfqsar.hops](#cmfqsarhops) | A migration path as the sample: the environment of a hop, its frame and its labels (BT7). |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
@@ -7036,6 +7037,245 @@ gradient, taken at the atom's own position and smoothed by the atom's own Gaussi
 over the fields.  `prediction_gradient` is the form to use on a molecule, because it
 also carries the normalisation and the nonlinear layer; this one is the form to use at a point
 where no atom is yet.
+
+## cmfqsar.gridfields
+
+Source: `cmfqsar/gridfields.py`
+
+Fields on a grid, read from DFT output, and two kernels on them (plan item M9).
+
+Everywhere else in the program a field is a sum of Gaussians on the atoms, and its kernels are
+closed-form integrals. A DFT calculation gives the fields themselves, as values on a grid: the
+electron density, the electron localisation function (ELF, a number between 0 and 1 that is high
+where electron pairs are localised) and the electrostatic potential. This module takes those grids
+as the fields, without fitting anything to them.
+
+**The representation.** A `GridField` is a 3D array of values, the three edge vectors of
+the box the grid divides evenly, the origin, whether the box repeats (a crystal cell) or not (a
+molecule in a box), and the atoms. Point `(i, j, k)` of an `n1 x n2 x n3` grid lies at
+`origin + (i/n1) a + (j/n2) b + (k/n3) c`, so the volume of one grid cell is the box volume
+divided by the number of points, in both cases.
+
+**Readers.** `read_cube` reads a Gaussian cube (the format of `orca_plot` and of the
+co-field writer in `cmfqsar.cofields`); `read_vasp_grid` reads the volumetric files of
+VASP: `CHGCAR`, `CHG`, `AECCAR0/2` and `PARCHG` (density), `ELFCAR` (ELF) and `LOCPOT`
+(potential), compressed with gzip or not. Units on return: density in electrons per cubic
+angstrom (VASP stores the density times the cell volume, and the reader divides it out), the
+potential as the file has it (eV for VASP, hartree per electron for a cube), ELF without unit.
+
+**Two kernels, as the plan names them.**
+
+* *A shared frame*: `grid_overlap_kernel` is the overlap integral of two fields sampled on
+  the same points, `K_AB = sum_g F_A(g) F_B(g) dV`. It is the exact form of the overlap kernel
+  the rest of the program computes in closed form, and it needs the structures in one frame: a
+  common Cartesian box for aligned molecules (`on_common_box`), a common fractional grid
+  for crystals on one lattice (`resample_fractional`).
+* *No frame*: `radial_correlations` is the radial autocorrelation of a field, and the radial
+  cross-correlation of two fields, `A_fg(r) = integral of C_fg(t) over the sphere |t| = r`, with
+  `C_fg(t) = integral of F_f(x) F_g(x + t) dx`. It is computed with the fast Fourier transform,
+  and the sphere is smoothed with a Gaussian window of width `sigma` around each radius. It
+  does not change when the structure is moved or turned, and for a crystal it is taken per unit
+  volume, so a supercell gives the same profile. It is the grid analogue of the field
+  autocorrelation of `cmfqsar.invariant` and of
+  `cmfqsar.periodic.periodic_autocorrelation`,
+  laid out in the same blocks (the pairs of `cmfqsar.invariant.field_pairs`), so the kernel
+  of those modules (`cmfqsar.invariant.autocorrelation_kernel`) applies unchanged.
+
+**The fitted comparison.** `fit_atom_gaussians` fits a grid field with Gaussians of a few
+shared widths on every atom (and its periodic images), and returns the fitted field on the same
+grid. Feeding the fitted grid to the same kernel shows what the grid holds that atom-centred
+Gaussians cannot carry, as `cmfqsar.cdft` did for the Fukui functions.
+
+**Rule 3 and this module.** The plan keeps the kernel in closed form and allows grids for
+measurement and display only. This item is the one exception it allows, and only if a grid kernel
+beats the fitted atom-centred one by more than the interval. `benchmarks/run_gridfields.py` makes
+that measurement; the module is not connected to `cmfqsar.model.CMFModel`.
+
+### `class GridField  (dataclass)`
+
+One field on a regular grid, with the box it divides and the atoms it belongs to.
+
+Attributes:
+
+- `values: np.ndarray`
+- `cell: np.ndarray`
+- `origin: np.ndarray` = `field(default_factory=lambda: np.zeros(3))`
+- `periodic: bool` = `True`
+- `symbols: List[str]` = `field(default_factory=list)`
+- `positions: np.ndarray` = `field(default_factory=lambda: np.zeros((0, 3)))`
+- `kind: str` = `'other'`
+- `name: str` = `''`
+
+#### `GridField.shape` -> Tuple[int, int, int]  (property)
+
+#### `GridField.volume` -> float  (property)
+
+#### `GridField.dV` -> float  (property)
+
+The volume of one grid cell, in cubic angstrom.
+
+#### `GridField.steps` -> np.ndarray  (property)
+
+(3, 3) the vector from one grid point to the next along each axis.
+
+#### `GridField.points() -> np.ndarray`
+
+(N, 3) Cartesian coordinates of every grid point, in the order of `values.ravel()`.
+
+#### `GridField.integral() -> float`
+
+The integral of the field over the box.
+
+#### `GridField.with_values(values: np.ndarray, kind: Optional[str]=None) -> 'GridField'`
+
+The same grid and atoms with other values (for example a windowed or fitted field).
+
+### `class RadialSpec  (dataclass)`
+
+The distance channels of `radial_correlations`: centres 0, step, ..., r_max.
+
+Attributes:
+
+- `r_max: float` = `8.0`
+- `step: float` = `0.5`
+- `sigma: float` = `0.5`
+
+#### `RadialSpec.centres` -> np.ndarray  (property)
+
+#### `RadialSpec.n_bins` -> int  (property)
+
+### `class RadialHistogram  (dataclass)`
+
+The fine histogram of the correlations of one structure, before the Gaussian windows.
+
+`hist[p, b]` sums `C_fg(t) dV` over the displacements `t` whose length falls in bin
+`b` of width `_HIST_STEP`, for pair `p`; `radial_profiles` turns it into the
+channels of any `RadialSpec` whose windows end inside `reach`. Computing it once and
+reading several specs from it is what makes a choice of width cheap.
+
+Attributes:
+
+- `hist: np.ndarray`
+- `pairs: List[Tuple[int, int]]`
+- `reach: float`
+- `volume: Optional[float]`
+
+### `read_cube(path: str, kind: str='density', name: str='') -> GridField`
+
+A Gaussian cube as a `GridField`, lengths in angstrom.
+
+`kind` says what the cube holds, because the format does not: `"density"` converts electrons
+per cubic bohr to electrons per cubic angstrom, any other kind keeps the values as written
+(a potential from `orca_plot` is in hartree per electron). A cube does not repeat, so the
+field is not periodic; its box is the grid's own, one step longer than the last point along
+each axis.
+
+### `vasp_kind(path: str) -> str`
+
+The kind of a VASP volumetric file, from its name (`CHGCAR.gz` is a density).
+
+### `read_vasp_grid(path: str, kind: Optional[str]=None, block: int=0, name: str='') -> GridField`
+
+A VASP volumetric file (CHGCAR, CHG, AECCAR, PARCHG, ELFCAR, LOCPOT) as a GridField.
+
+The file holds a POSCAR, a blank line, the grid size and then the values, with the first
+index running fastest. A density is stored times the cell volume; this reader divides it out,
+so the result is in electrons per cubic angstrom and integrates to the electron count. A
+spin-polarised run stores a second grid of the same size after the first (the magnetisation
+density for a CHGCAR, the ELF of the second spin for an ELFCAR); `block` = 1 returns it. The
+file may be compressed with gzip. The kind is taken from the file name unless given.
+
+### `write_vasp_grid(grid: GridField, path: str) -> None`
+
+Write a periodic GridField in the CHGCAR layout (the density times the volume).
+
+Meant for tests and for exchange with VASP tools such as a Bader program; the inverse of
+`read_vasp_grid` for one block.
+
+### `fourier_resample(values: np.ndarray, shape: Sequence[int]) -> np.ndarray`
+
+A periodic grid on another number of points, by cutting or padding its Fourier series.
+
+Exact for a field that has no frequency above the smaller grid's limit; going to fewer points
+removes the high frequencies first, so the coarse grid is not aliased. The mean is kept.
+
+### `resample_fractional(grid: GridField, shape: Sequence[int]) -> GridField`
+
+A periodic field on an `n1 x n2 x n3` grid of its own cell (see `fourier_resample`).
+
+Two crystals given the same lattice and resampled to the same shape share their grid points,
+which is the shared frame of `grid_overlap_kernel`.
+
+### `common_box(grids: Sequence[GridField], pad: float=0.0, spacing: float=0.25) -> Tuple[np.ndarray, np.ndarray]`
+
+(origin, shape) of an axis-aligned box that holds every grid's box, plus `pad` angstrom.
+
+### `on_common_box(grid: GridField, origin: np.ndarray, shape: Sequence[int], spacing: float=0.25) -> GridField`
+
+A field interpolated onto an axis-aligned box of the given origin, shape and spacing.
+
+Linear interpolation; points outside the field's own box get zero, which is right for a
+molecule in vacuum and wrong for a crystal, so a periodic grid is refused.
+
+### `grid_overlap_kernel(A: Sequence[GridField], B: Optional[Sequence[GridField]]=None, normalize: bool=True) -> np.ndarray`
+
+`K[i, j] = sum_g F_Bi(g) F_Aj(g) dV` for fields that share their grid points.
+
+Rows are the fields of `B` (the training fields `A` when `B` is not given), columns those of
+`A`, as in the rest of the program. With `normalize` the kernel is cosine-normalised, which
+removes the volume of a grid cell and makes the diagonal one.
+
+### `radial_histogram(grids: Sequence[GridField], reach: float=10.0, pairs: Optional[Sequence[Tuple[int, int]]]=None, centre: Optional[Sequence[bool]]=None) -> RadialHistogram`
+
+The correlations of several fields of one structure, binned by displacement length.
+
+`C_fg(t) = sum_x F_f(x) F_g(x + t) dV` is computed for every pair with the fast Fourier
+transform. For a periodic structure `x` runs over one cell and every lattice image of a
+displacement counts; a molecule is padded with zeros so that no displacement wraps round.
+`grids` are the fields of one structure on one grid; `pairs` defaults to
+`cmfqsar.invariant.field_pairs`; `centre` subtracts the mean of a field first, which a
+potential needs (its mean is set by convention, not by the structure).
+
+### `radial_profiles(h: RadialHistogram, spec: RadialSpec) -> np.ndarray`
+
+The channels of `spec` read from a histogram, flattened `(pairs * n_bins,)`.
+
+`A_fg(r_k) = sum_t C_fg(t) g(|t| - r_k) dV` with `g` a normalised Gaussian of width
+`spec.sigma`. A cross pair is counted both ways round, as
+`cmfqsar.invariant.autocorrelation` counts it, and a crystal's channels are divided by
+its cell volume, so a supercell gives the same profile.
+
+### `radial_correlations(grids: Sequence[GridField], spec: RadialSpec=RadialSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None, centre: Optional[Sequence[bool]]=None) -> np.ndarray`
+
+The radial auto- and cross-correlations of several fields of one structure, flattened.
+
+`radial_histogram` followed by `radial_profiles`; see those for the definitions.
+It does not change when the structure is moved or turned. Returns
+`(len(pairs) * spec.n_bins,)` in the block order of `cmfqsar.invariant.field_pairs`.
+
+### `radial_block_sizes(spec: RadialSpec, n_fields: int) -> List[int]`
+
+Column counts of the blocks of `radial_correlations`, one per pair of fields.
+
+### `radial_channel_labels(names: Sequence[str], spec: RadialSpec) -> List[str]`
+
+`density x elf @ 1.5 A` and so on, in the column order of `radial_correlations`.
+
+### `fit_atom_gaussians(grid: GridField, widths: Sequence[float]=(8.0, 2.0, 0.5), ridge: float=1e-06, centre: bool=False, reach: Optional[float]=None) -> Tuple[GridField, np.ndarray, float]`
+
+The best fit of a grid field by Gaussians of shared widths on every atom.
+
+`F(r) ~ sum_a sum_t c_at exp(-beta_t |r - R_a|^2 / 2)`, with the periodic images of every
+atom summed in for a crystal; `widths` are the `beta_t` in inverse square angstrom, and a
+small ridge (relative to the mean diagonal of the normal matrix) keeps two nearly equal
+columns from cancelling. `centre` fits the field minus its mean, as for a potential.
+
+Returns the fitted field on the same grid, the coefficients `(atoms, widths)`, and the
+relative error `|F - fit| / |F|` in the norm the overlap kernel uses.
+
+### `summary(grid: GridField) -> Dict[str, object]`
+
+A few numbers that say what a grid is: shape, box volume, range and integral.
 
 ## cmfqsar.gtm
 
