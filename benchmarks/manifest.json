@@ -1,6 +1,6 @@
 {
- "commit": "a894ef40e6c2e4350ef1727a56575ff1b8231b7f",
- "created": "2026-11-15T14:46:22",
+ "commit": "c4c0f28a286f25742dc0d74175fc86a1b4601dbc",
+ "created": "2026-11-15T15:13:14",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3720,6 +3720,7 @@
   "benchmarks/results/poses/pfkfb3_flex_r20.json": "cca514bd6b63d0438db0b25f8449ebfa0f4fb1fee75cc3d94b8681df002d5726",
   "benchmarks/results/poses/pfkfb3_frame.json": "31836edf01c80acbddce257cfbb86f5873c3d7f677e894ae00b19a4822bd34ff",
   "benchmarks/results/poses/pfkfb3_r20.json": "2b53926db81d96bec2ad3a010edae2d13616fab0f83359be5c20e750ab2703fb",
+  "benchmarks/results/poses/posefree/posefree.json": "63cd0095e866ebdaea0d1581d2a530969832f257e4383c5b4d306e41d17bc69e",
   "benchmarks/results/poses/ptp1b.json": "a8eb3ecfab7a4288ba17415f4572687b46e9f573be90ceab843775aff5663989",
   "benchmarks/results/poses/ptp1b_fg.json": "828dc1e13062baf85393428a8f14be314dc9e1561e703b1c300ecf2ea3d10499",
   "benchmarks/results/poses/ptp1b_flex.json": "64ccfe0e0da57629b40a06098c2277569bb5a989202701ac9360bc3db9b69820",
@@ -3742,7 +3743,7 @@
   "benchmarks/results/poses/syk_flex_r20.json": "36f2bf12c23548d189d3f43056caf86527b1e33288b1d5bd4794d8c9a9c13000",
   "benchmarks/results/poses/syk_frame.json": "18e37aea71b37fd0452365eafee3b741de5e841ecfa29b761161e91fc7662c62",
   "benchmarks/results/poses/syk_r20.json": "9c8f18db31f951c4ce57fa7d2bf44d9a72a6a2f8acc524074c34292aae7bc091",
-  "benchmarks/results/poses/table.md": "a1d61d6e8a4f995d72c80d606388f96a13f58a1c6bb9e5a3064561a30dea942c",
+  "benchmarks/results/poses/table.md": "663320b8e839420955cc8a1c3fa45dd2bbd6bf4242b5aae96bed18f5be00b5ee",
   "benchmarks/results/poses/thrombin.json": "9af7538ffcd5aab094306d607fd0fe1121b6e7b64a4de4fa3ae73b0b8bb4e589",
   "benchmarks/results/poses/thrombin_fg.json": "71a635716fe103253cba6d74a64edafd6400c661a85fb682b7dbc8e9be5c04f5",
   "benchmarks/results/poses/thrombin_flex.json": "d5631785b5162653ccafea77b342a93932021d8173bb64f40007ef750400ebfd",
