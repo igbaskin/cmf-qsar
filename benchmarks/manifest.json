@@ -1,6 +1,6 @@
 {
- "commit": "92202cd3110bcc0fc1a4e8ecc04c17a8f8d747fd",
- "created": "2026-11-15T13:52:07",
+ "commit": "1ac642da6ec4abfb4ee6d7eaa981cb113603cfec",
+ "created": "2026-11-15T14:37:16",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2596,8 +2596,9 @@
  "python": "3.13.14",
  "results": {
   "benchmarks/results/2dmd/fit.json": "84f31659764fe27b5c37d667ca28805606e38b87c7069a54ecd8eefe84e53392",
+  "benchmarks/results/2dmd/pairs.json": "4626d9d57b65608de8423c362ca5eae2dde84b6e96ea72c521f4d83269aeec0d",
   "benchmarks/results/2dmd/reading.json": "6b49f13d28c5da10d655cfbb7085ecbf56bbf645b4eb53c47d1d2800cd1e9ca4",
-  "benchmarks/results/2dmd/table.md": "c522d7be7963e0e4c7be35d9ebe4d064c65271bcfed660e490609ff7f8e1098d",
+  "benchmarks/results/2dmd/table.md": "2e1b93b31c50d7d1369b627c86ef9bbd4af529b16b96d126d6ef7506acb9e0e3",
   "benchmarks/results/ACE_default.json": "ebbb7e0c1a551dffeb5abb0c4443a08a894413189fdcbf524c8a22ec2b9fa0f8",
   "benchmarks/results/ACE_paper-nobias.json": "35e5a7edd4f8571f9d741e4e562b1db17af1415e3ce4fa671566142674d29b5c",
   "benchmarks/results/ACE_paper.json": "a5fc16935f1453df1d9737b5d817e5220575b437f65dae5da528b6928d547694",
