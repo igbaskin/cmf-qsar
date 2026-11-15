@@ -788,6 +788,32 @@ contributions of the linear model (decomposition rule 3) are one number per kind
 four decimals, and match the single-defect cells of the set to 0.2 eV: a sulfur vacancy in MoS2
 costs 2.59 eV against 2.65 measured, a molybdenum vacancy 6.98 against 7.12.
 
+**A pair expansion as the reference (added 15 November 2026).** Materials science has a standard
+cheap model for an arrangement of defects on a lattice: one energy for each kind of defect and one
+for each pair of kinds at each neighbour distance, fitted by linear regression (a cluster expansion
+cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns are counts. Four cut-offs of
+the pair distance (4, 6, 8 and 12 Å) and two forms are reported: with a fitted constant, and with
+the constant at zero, which is the formation energy of a cell without defects. The first form was
+written first; the second was added after the failure of the first was seen, for the reason below,
+and both are kept. The cells and folds are those of the kernels above, so every difference is paired
+over the cells. On random folds over all 5,933 cells, with pairs up to 12 Å (96 and 87 columns), the
+pair expansion reaches 2.2 meV per site on MoS2 and 4.7 on WSe2, against 1.9 and 4.4 for the
+arrangement kernel: the kernel is ahead by 0.2 to 0.3 meV per site (intervals [+0.2, +0.3] in both).
+The pair expansion is ahead of the periodic autocorrelation (3.0 and 6.0). With pairs up to 4 Å it
+gives 15 and 19 meV. From one and two defects to three, the form decides. With a fitted constant the
+pair expansion fails (238 to 290 meV per site): in the cells with one or two defects the number of
+pairs is the number of defects minus one, so the pair terms and the constant can trade, and a cell
+with three defects pays for the trade. With the constant at zero and pairs up to 12 Å it gives 8.2
+meV per site on MoS2, against 4.7 for the arrangement kernel (+3.5 [+3.5, +3.6]), and 14.9 on WSe2,
+against 37.7 (-22.8 [-23.7, -21.9]), where it is the better model. Shorter cut-offs extrapolate
+worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random folds the arrangement kernel reads
+little more than which pairs of defects are neighbours, and which of the two extrapolates better
+depends on the material and on two free choices of the reference.
+
+The nineteenth tutorial, `docs/tutorials/19_defects_on_a_lattice.ipynb`, fits the counts and the
+arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
+the stored results.
+
 ### Crystals: the periodic autocorrelation
 
 The autocorrelation above is the real-space counterpart of a reciprocal-space object. Averaged over
@@ -6654,8 +6680,8 @@ for.
 
 ### Tutorials
 
-Nineteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the eighteenth reads the prepared set of the hop benchmark, and the nineteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth reads the prepared set of the hop benchmark, the nineteenth downloads 5 MB of defect data on its first run, and the twentieth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6678,7 +6704,8 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `16_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
 | `17_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
 | `18_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `19_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `19_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
+| `20_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7127,7 +7154,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         nineteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

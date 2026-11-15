@@ -3590,7 +3590,29 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   defects and predicting the 1,869 with three, the arrangement kernel gives 4.3 meV per site
   (R2 1.000) on MoS2 and 54 meV (R2 0.996) on WSe2, where the additive count kernel gives 38;
   the autocorrelation does not extrapolate (R2 -0.02 and +0.06, 1.1 to 1.2 eV per site) and
-  the fixed frame reaches R2 0.8. **Gates (b) and (c), the reading:** the per-defect
+  the fixed frame reaches R2 0.8.
+  **A pair expansion as the reference, added 15 November 2026,** while the nineteenth tutorial was
+  written. Materials science has a standard cheap model for an arrangement of defects on a lattice: one energy
+  for each kind of defect and one for each pair of kinds at each neighbour distance, fitted by linear
+  regression (a cluster expansion cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns
+  are counts. Four cut-offs of the pair distance (4, 6, 8 and 12 Å) and two forms are reported: with a
+  fitted constant, and with the constant at zero, which is the formation energy of a cell without
+  defects. The first form was written first; the second was added after the failure of the first was
+  seen, for the reason below, and both are kept. The cells and folds are those of the kernels above,
+  so every difference is paired over the cells. On random folds over all 5,933 cells, with pairs up to
+  12 Å (96 and 87 columns), the pair expansion reaches 2.2 meV per site on MoS2 and 4.7 on WSe2,
+  against 1.9 and 4.4 for the arrangement kernel: the kernel is ahead by 0.2 to 0.3 meV per site
+  (intervals [+0.2, +0.3] in both). The pair expansion is ahead of the periodic autocorrelation (3.0
+  and 6.0). With pairs up to 4 Å it gives 15 and 19 meV. From one and two defects to three, the form
+  decides. With a fitted constant the pair expansion fails (238 to 290 meV per site): in the cells
+  with one or two defects the number of pairs is the number of defects minus one, so the pair terms
+  and the constant can trade, and a cell with three defects pays for the trade. With the constant at
+  zero and pairs up to 12 Å it gives 8.2 meV per site on MoS2, against 4.7 for the arrangement kernel
+  (+3.5 [+3.5, +3.6]), and 14.9 on WSe2, against 37.7 (-22.8 [-23.7, -21.9]), where it is the better
+  model. Shorter cut-offs extrapolate worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random
+  folds the arrangement kernel reads little more than which pairs of defects are neighbours, and which
+  of the two extrapolates better depends on the material and on two free choices of the reference.
+  **Gates (b) and (c), the reading:** the per-defect
   contributions of the symmetry-averaged linear model (rule 3, 400 cells) are one number per
   kind of defect to four decimals, as the symmetry requires, and they are the chemistry the data
   hold. MoS2: a sulfur vacancy 2.59 eV, a molybdenum vacancy 6.98, selenium for sulfur 0.31,
@@ -8279,7 +8301,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the nineteenth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twentieth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

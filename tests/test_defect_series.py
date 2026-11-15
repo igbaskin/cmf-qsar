@@ -438,3 +438,74 @@ def test_the_test_side_self_overlaps_are_the_periodic_ones(host, hostf, fieldset
     # vacancies get one prediction, as they do for the linear kernel
     pred = model.predict(table)
     assert np.ptp(pred[:4]) < 1e-6
+
+
+def _bench2dmd():
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "benchmarks"))
+    import run_2dmd as R
+    return R
+
+
+def _toy_prep(n=4, a=3.0):
+    """A square lattice of n x n Mo sites with spacing a: the host of the pair-expansion tests."""
+    frac = [[i / n, j / n, 0.0] for i in range(n) for j in range(n)]
+    return {"material": "toy", "cell": [[n * a, 0, 0], [0, n * a, 0], [0, 0, 20.0]],
+            "host_frac": frac, "host_symbols": ["Mo"] * (n * n)}
+
+
+def test_pair_features_count_kinds_and_shells():
+    R = _bench2dmd()
+    prep = _toy_prep()
+    recs = [{"removed": [0], "added": []},                     # one vacancy
+            {"removed": [0, 1], "added": []},                  # two vacancies, nearest neighbours (3 A)
+            {"removed": [0], "added": [["W", 5]]}]             # a vacancy and a W, diagonal (4.24 A)
+    X, keys, shells = R.pair_features(prep, recs, 5.0)
+    col = {k: i for i, k in enumerate(keys)}
+    assert shells == [3.0, 4.24]
+    assert X[0, col["n -Mo"]] == 1 and X[0].sum() == 1
+    assert X[1, col["n -Mo"]] == 2 and X[1, col["pair -Mo -Mo 3.00 A"]] == 1
+    assert X[2, col["n +W"]] == 1 and X[2, col["pair +W -Mo 4.24 A"]] == 1
+    # beyond the cut-off a pair is counted by its kinds alone
+    X2, keys2, _ = R.pair_features(prep, recs, 3.5)
+    assert "pair +W -Mo far" in keys2
+
+
+def test_with_one_or_two_defects_the_pairs_are_the_defects_minus_one():
+    """The identity that lets a fitted constant trade with the pair terms."""
+    R = _bench2dmd()
+    prep = _toy_prep()
+    recs = [{"removed": [0], "added": []}, {"removed": [0, 6], "added": []}, {"removed": [3], "added": [["W", 9]]}]
+    X, keys, _ = R.pair_features(prep, recs, 5.0)
+    n_kind = X[:, [i for i, k in enumerate(keys) if k.startswith("n ")]].sum(axis=1)
+    n_pair = X[:, [i for i, k in enumerate(keys) if k.startswith("pair ")]].sum(axis=1)
+    assert np.allclose(n_pair, n_kind - 1)
+
+
+def test_pair_ridge_without_a_constant_predicts_zero_for_no_defect():
+    R = _bench2dmd()
+    rng = np.random.default_rng(1)
+    X = rng.integers(0, 3, size=(40, 5)).astype(float)
+    w = np.array([1.0, 2.0, -0.5, 0.3, 0.0])
+    y = X @ w
+    p = R.pair_ridge(X, y, np.zeros((1, 5)), 1e-8, "constant zero")
+    assert abs(p[0]) < 1e-6
+    p2 = R.pair_ridge(X, y, X[:3], 1e-8, "constant zero")
+    assert np.allclose(p2, y[:3], atol=1e-4)
+    assert set(R.PAIR_FORMS) == {"with a constant", "constant zero"}
+
+
+def test_pair_evaluate_recovers_an_additive_pair_energy():
+    R = _bench2dmd()
+    prep = _toy_prep(n=6)
+    rng = np.random.default_rng(2)
+    recs = []
+    for _ in range(150):
+        sites = rng.choice(36, size=rng.integers(1, 4), replace=False)
+        recs.append({"removed": [int(s) for s in sites], "added": []})
+    X, keys, _ = R.pair_features(prep, recs, 7.0)
+    w = rng.normal(size=X.shape[1])
+    y = X @ w
+    nd = X[:, [i for i, k in enumerate(keys) if k.startswith("n ")]].sum(axis=1)
+    out = R.pair_evaluate(X, y, nd, R.folds(len(y)), "constant zero")
+    assert out["mae_site"] < 1e-3 and len(out["predictions"]) == 150
+

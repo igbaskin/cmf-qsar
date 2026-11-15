@@ -817,8 +817,9 @@ def registry() -> List[Benchmark]:
                   "2,000 point-defect configurations each of MoS2 and WSe2 from the 2DMD set "
                   "(downloads 5 MB into benchmarks/cache on the first run; needs Numba for the "
                   "symmetry average at this size)",
-                  "run_2dmd.py", "2dmd", compute=[["--limit", "2000", "--engine", "numba"]],
-                  minutes="120",
+                  "run_2dmd.py", "2dmd", compute=[["--limit", "2000", "--engine", "numba"],
+                                                  ["--stage", "pairs"]],
+                  minutes="122",
                   report=lambda: _mod("run_2dmd").report(),
                   tables=["2dmd/table.md"]),
         Benchmark("sites",

@@ -9743,6 +9743,32 @@ cells with one or two defects and predicting those with three (1,869 in the 2,00
 38 on WSe2, where the additive count kernel gives 38 on both; the autocorrelation does not
 extrapolate at all (R² near zero), and the fixed frame reaches R² 0.6 to 0.8.
 
+**A pair expansion as the reference (added 15 November 2026).** Materials science has a standard
+cheap model for an arrangement of defects on a lattice: one energy for each kind of defect and one
+for each pair of kinds at each neighbour distance, fitted by linear regression (a cluster expansion
+cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns are counts. Four cut-offs of
+the pair distance (4, 6, 8 and 12 Å) and two forms are reported: with a fitted constant, and with
+the constant at zero, which is the formation energy of a cell without defects. The first form was
+written first; the second was added after the failure of the first was seen, for the reason below,
+and both are kept. The cells and folds are those of the kernels above, so every difference is paired
+over the cells. On random folds over all 5,933 cells, with pairs up to 12 Å (96 and 87 columns), the
+pair expansion reaches 2.2 meV per site on MoS2 and 4.7 on WSe2, against 1.9 and 4.4 for the
+arrangement kernel: the kernel is ahead by 0.2 to 0.3 meV per site (intervals [+0.2, +0.3] in both).
+The pair expansion is ahead of the periodic autocorrelation (3.0 and 6.0). With pairs up to 4 Å it
+gives 15 and 19 meV. From one and two defects to three, the form decides. With a fitted constant the
+pair expansion fails (238 to 290 meV per site): in the cells with one or two defects the number of
+pairs is the number of defects minus one, so the pair terms and the constant can trade, and a cell
+with three defects pays for the trade. With the constant at zero and pairs up to 12 Å it gives 8.2
+meV per site on MoS2, against 4.7 for the arrangement kernel (+3.5 [+3.5, +3.6]), and 14.9 on WSe2,
+against 37.7 (-22.8 [-23.7, -21.9]), where it is the better model. Shorter cut-offs extrapolate
+worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random folds the arrangement kernel reads
+little more than which pairs of defects are neighbours, and which of the two extrapolates better
+depends on the material and on two free choices of the reference.
+
+The nineteenth tutorial, `docs/tutorials/19_defects_on_a_lattice.ipynb`, fits the counts and the
+arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
+the stored results.
+
 **What each kind of defect costs.** The per-defect contributions of the symmetry-averaged linear
 model (rule 3) are one number per kind of defect, the same to four decimals in every cell, as the
 symmetry requires -- and they are the chemistry the data hold. In MoS2 a sulfur vacancy costs
@@ -16292,7 +16318,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The nineteenth tutorial, `docs/tutorials/19_point_mutants.ipynb`, builds one
+among its references. The twentieth tutorial, `docs/tutorials/20_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -16828,7 +16854,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Nineteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -16841,11 +16867,11 @@ complex, the better of two enantiomers, read from the handedness of the fields a
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
-the barrier of a hop read from the environment of its path, and the change of folding stability
+the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The fifteenth also needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The nineteenth downloads 5 MB of defect data on its first run, and the twentieth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 
