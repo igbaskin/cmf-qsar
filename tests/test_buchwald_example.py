@@ -130,3 +130,54 @@ def test_published_splits_and_the_anova_kernel():
     groups = [set(data.index["additive"][train[f]]) for f in folds]
     assert sum(len(f) for f in folds) == len(train)
     assert not (groups[0] & groups[1]) and not (groups[0] & groups[2]) and not (groups[1] & groups[2])
+
+
+@pytest.mark.skipif(not BUILT, reason="examples/buchwald has not been built")
+def test_arene_designs_hold_out_all_three_halides_together():
+    data = B.Reactions()
+    assert data.arenes == ["2-pyridyl", "3-pyridyl", "4-CF3-phenyl", "4-Et-phenyl", "4-MeO-phenyl"]
+    folds = B.arene_designs(data)["one arene out"]
+    assert len(folds) == 5
+    seen = np.zeros(data.n, int)
+    for name, mask in folds:
+        arenes = {data.labels["aryl_halide"][i].rsplit("-", 1)[0] for i in data.index["aryl_halide"][mask]}
+        assert arenes == {name}                      # one arene, with all its halides, in each test part
+        halogens = {data.labels["aryl_halide"][i].rsplit("-", 1)[1] for i in data.index["aryl_halide"][mask]}
+        assert halogens == {"Cl", "Br", "I"}
+        seen += mask
+    assert (seen == 1).all()                         # every reaction is held out exactly once
+    # the inner folds of the new design never split an arene
+    train = np.where(~folds[0][1])[0]
+    parts = B.inner_folds(data, train, "arene", 0)
+    groups = [set(data.index["arene"][train[f]]) for f in parts]
+    assert sum(len(f) for f in parts) == len(train)
+    assert not (groups[0] & groups[1]) and not (groups[0] & groups[2]) and not (groups[1] & groups[2])
+
+
+@pytest.mark.skipif(not BUILT, reason="examples/buchwald has not been built")
+def test_parts_kernels_and_what_a_new_arene_can_use():
+    data = B.Reactions()
+    lab = data.labels["aryl_halide"]
+    arene = np.array([l.rsplit("-", 1)[0] for l in lab])
+    halogen = np.array([l.rsplit("-", 1)[1] for l in lab])
+    Ks = B.parts_kernel(data, "parts_sum")
+    Kp = B.parts_kernel(data, "parts_product")
+    # the added form is a Free-Wilson model in three dimensions: 5 arenes + 3 halogens - 1
+    assert np.linalg.matrix_rank(Ks) == 7
+    # with the product it is the identity kernel of the aryl halide plus the two parts
+    assert np.linalg.matrix_rank(Kp) == 15
+    same_arene = (arene[:, None] == arene[None, :]).astype(float)
+    same_halogen = (halogen[:, None] == halogen[None, :]).astype(float)
+    assert np.allclose(Ks, same_arene + same_halogen)
+    assert np.allclose(Kp, same_arene + same_halogen + same_arene * same_halogen)
+    # a member of a new arene shares nothing with the training part but its halogen, in both forms
+    new = arene == "2-pyridyl"
+    for K in (Ks, Kp):
+        cross = K[np.ix_(new, ~new)]
+        assert np.allclose(cross, same_halogen[np.ix_(new, ~new)])
+    # the stage uses the additive by name: the kernels of the parts method are identities elsewhere
+    comps = B.component_kernels(data, "parts_product", {})
+    assert np.allclose(comps["additive"], np.eye(22))
+    assert np.allclose(comps["aryl_halide"], Kp)
+    assert np.allclose(comps["ligand"], np.eye(4)) and np.allclose(comps["base"], np.eye(3))
+

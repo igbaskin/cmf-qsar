@@ -99,6 +99,82 @@ A field is a sum of atom Gaussians, so in a shared frame the field of a molecule
 
 The 15 aryl halides are every combination of 5 arenes and 3 halogens; 99.9991 % of their kernel lies in the span of an arene part plus a halogen part, which has rank 7. A linear model on this kernel is a Free-Wilson model in three dimensions: it can give each arene and each halogen an effect and cannot give a pair of them one. The Gaussian layer is not linear in the atom contributions, which is why it lifts the limit.
 
+## The names of the parts as a reference for a new aryl halide
+
+The 15 aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl halide has its arene and its halogen in the training part with other partners. The reference describes each aryl halide by the names of those two parts and the additive by name; it reads no structure. Two forms, both reported: the two names added, and with their product as well.
+
+R² of the pooled out-of-fold predictions:
+
+| method | each aryl halide out | each arene out |
+|---|---:|---:|
+| one-hot, main effects | +0.194 | +0.160 |
+| one-hot, all interactions | +0.243 | +0.198 |
+| Morgan fingerprints | +0.696 | +0.491 |
+| RDKit descriptors | +0.720 | +0.309 |
+| fields, no frame | +0.724 | +0.409 |
+| fields in the frame | +0.720 | -0.201 |
+| fields, no frame, Gaussian layer | +0.709 | +0.442 |
+| fields in the frame, Gaussian layer | +0.659 | +0.485 |
+| aryl halide by the names of its parts, added | +0.700 | +0.446 |
+| aryl halide by the names of its parts, with their product | +0.708 | +0.441 |
+| control: fingerprints of the aryl halide, additive by name | +0.696 | |
+
+R² inside each held-out arene (all three halides together, three halides of 22 additives and 12 ligand and base pairs):
+
+| method | 2-pyridyl | 3-pyridyl | 4-CF3-phenyl | 4-Et-phenyl | 4-MeO-phenyl |
+|---|---:|---:|---:|---:|---:|
+| one-hot, main effects | -0.186 | +0.287 | -0.430 | +0.212 | -0.477 |
+| one-hot, all interactions | -0.152 | +0.325 | -0.332 | +0.262 | -0.434 |
+| Morgan fingerprints | +0.031 | +0.563 | +0.124 | +0.684 | +0.247 |
+| RDKit descriptors | +0.149 | +0.478 | -1.010 | +0.303 | -0.003 |
+| fields, no frame | -0.280 | +0.561 | -0.089 | +0.721 | +0.124 |
+| fields in the frame | +0.559 | -2.886 | +0.362 | +0.603 | +0.523 |
+| fields, no frame, Gaussian layer | -0.063 | +0.547 | +0.027 | +0.646 | +0.149 |
+| fields in the frame, Gaussian layer | -0.416 | +0.592 | +0.582 | +0.662 | +0.745 |
+| aryl halide by the names of its parts, added | -0.288 | +0.672 | -0.013 | +0.752 | +0.120 |
+| aryl halide by the names of its parts, with their product | -0.228 | +0.629 | +0.132 | +0.689 | +0.112 |
+
+Difference in R² against the names of the parts, with a 95% interval from 1000 bootstrap samples of the held-out aryl halides (15) or arenes (5):
+
+| design | method | minus | difference in R² | interval |
+|---|---|---|---:|---|
+| one arene out | one-hot, main effects | aryl halide by the names of its parts, added | -0.286 | [-0.513, -0.053] |
+| one aryl halide out | one-hot, main effects | aryl halide by the names of its parts, added | -0.505 | [-0.742, -0.294] |
+| one arene out | one-hot, all interactions | aryl halide by the names of its parts, added | -0.248 | [-0.464, -0.019] |
+| one aryl halide out | one-hot, all interactions | aryl halide by the names of its parts, added | -0.456 | [-0.708, -0.232] |
+| one arene out | Morgan fingerprints | aryl halide by the names of its parts, added | +0.045 | [-0.073, +0.194] |
+| one aryl halide out | Morgan fingerprints | aryl halide by the names of its parts, added | -0.004 | [-0.126, +0.127] |
+| one arene out | RDKit descriptors | aryl halide by the names of its parts, added | -0.136 | [-0.471, +0.176] |
+| one aryl halide out | RDKit descriptors | aryl halide by the names of its parts, added | +0.021 | [-0.101, +0.127] |
+| one arene out | fields, no frame | aryl halide by the names of its parts, added | -0.037 | [-0.081, -0.001] |
+| one aryl halide out | fields, no frame | aryl halide by the names of its parts, added | +0.024 | [-0.050, +0.094] |
+| one arene out | fields in the frame | aryl halide by the names of its parts, added | -0.647 | [-2.300, +0.498] |
+| one aryl halide out | fields in the frame | aryl halide by the names of its parts, added | +0.021 | [-0.063, +0.110] |
+| one arene out | fields, no frame, Gaussian layer | aryl halide by the names of its parts, added | -0.003 | [-0.100, +0.125] |
+| one aryl halide out | fields, no frame, Gaussian layer | aryl halide by the names of its parts, added | +0.009 | [-0.099, +0.118] |
+| one arene out | fields in the frame, Gaussian layer | aryl halide by the names of its parts, added | +0.040 | [-0.093, +0.327] |
+| one aryl halide out | fields in the frame, Gaussian layer | aryl halide by the names of its parts, added | -0.041 | [-0.085, +0.004] |
+| one aryl halide out | control: fingerprints of the aryl halide, additive by name | aryl halide by the names of its parts, added | -0.004 | [-0.126, +0.127] |
+| one arene out | one-hot, main effects | aryl halide by the names of its parts, with their product | -0.281 | [-0.510, -0.090] |
+| one aryl halide out | one-hot, main effects | aryl halide by the names of its parts, with their product | -0.514 | [-0.747, -0.304] |
+| one arene out | one-hot, all interactions | aryl halide by the names of its parts, with their product | -0.243 | [-0.456, -0.064] |
+| one aryl halide out | one-hot, all interactions | aryl halide by the names of its parts, with their product | -0.465 | [-0.716, -0.241] |
+| one arene out | Morgan fingerprints | aryl halide by the names of its parts, with their product | +0.050 | [-0.039, +0.161] |
+| one aryl halide out | Morgan fingerprints | aryl halide by the names of its parts, with their product | -0.013 | [-0.132, +0.119] |
+| one arene out | RDKit descriptors | aryl halide by the names of its parts, with their product | -0.132 | [-0.458, +0.137] |
+| one aryl halide out | RDKit descriptors | aryl halide by the names of its parts, with their product | +0.012 | [-0.109, +0.115] |
+| one arene out | fields, no frame | aryl halide by the names of its parts, with their product | -0.032 | [-0.086, +0.006] |
+| one aryl halide out | fields, no frame | aryl halide by the names of its parts, with their product | +0.016 | [-0.051, +0.080] |
+| one arene out | fields in the frame | aryl halide by the names of its parts, with their product | -0.643 | [-2.259, +0.441] |
+| one aryl halide out | fields in the frame | aryl halide by the names of its parts, with their product | +0.012 | [-0.084, +0.102] |
+| one arene out | fields, no frame, Gaussian layer | aryl halide by the names of its parts, with their product | +0.001 | [-0.071, +0.090] |
+| one aryl halide out | fields, no frame, Gaussian layer | aryl halide by the names of its parts, with their product | +0.000 | [-0.093, +0.095] |
+| one arene out | fields in the frame, Gaussian layer | aryl halide by the names of its parts, with their product | +0.044 | [-0.083, +0.333] |
+| one aryl halide out | fields in the frame, Gaussian layer | aryl halide by the names of its parts, with their product | -0.049 | [-0.106, +0.002] |
+| one aryl halide out | control: fingerprints of the aryl halide, additive by name | aryl halide by the names of its parts, with their product | -0.012 | [-0.132, +0.120] |
+
+Control: fingerprints for the aryl halide with the additive by name minus fingerprints for both: +0.000, so the additive by name does not change what the reference is compared with.
+
 ## What the selection chose
 
 * one-hot, main effects, random: none, ridge 1 (6); none, ridge 0.316 (2); none, ridge 0.1 (1); none, ridge 3.16 (1)

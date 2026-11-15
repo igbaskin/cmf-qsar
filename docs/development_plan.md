@@ -6747,8 +6747,9 @@ What it leaves open, in order:
   frame 0.909 / 0.670 / 0.657 / 0.724; fields in the frames 0.841 / 0.537 / 0.545 / 0.720; fields
   in the frames with a Gaussian layer 0.917 / 0.545 / 0.579 / 0.659. Published on the same splits:
   Yield-BERT 0.951 / 0.73, DFT descriptors with a random forest 0.92 / 0.69. **Four findings.**
-  (1) A new aryl halide needs a structure, and fingerprints, descriptors and fields are level at
-  0.70 to 0.72 against 0.24 for names. (2) On a new additive, fields with no frame are not clearly
+  (1) A new aryl halide needs the names of its parts, and fingerprints, descriptors and fields are
+  level with them at 0.66 to 0.72 (the name of the whole aryl halide gives 0.24; see the note on the
+  names of the parts below). (2) On a new additive, fields with no frame are not clearly
   better than names (+0.032 [-0.051, +0.128]); fingerprints are best and reach Yield-BERT on the
   four published tests. (3) The frame costs on the additives: fields in the frames minus fields
   with no frame -0.133 (range -0.208 to -0.093) on the additive tests and -0.112 [-0.184, -0.029]
@@ -6773,7 +6774,19 @@ What it leaves open, in order:
   halogen for every field and reads the halogen order; its main effects correlate with the mean
   yields at r = 0.97 (aryl halides) and 0.95 (additives), and it shows nothing the names do not.
   Run time: about 7 hours on one process (418 minutes of method time), 2 hours 50 minutes as
-  three processes. README and manual sections *A reaction yield as the activity*. **Open:** a
+  three processes. README and manual sections *A reaction yield as the activity*.
+  **The names of the parts, added 15 November 2026,** while the ninth tutorial was written. The 15
+  aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl halide has its
+  arene and its halogen in the training part. An aryl halide described by those two names only, with
+  the additive by name, gives 0.700 (the names added) and 0.708 (with their product) when each aryl
+  halide is held out, level with fingerprints 0.696, descriptors 0.720 and fields 0.659 to 0.724;
+  every difference has an interval that contains zero, so finding (1) is corrected: a new aryl halide
+  needs the names of its parts, not a structure. With each arene held out (all three halides together,
+  five folds, new design) the parts give 0.446 against 0.198 for names, fingerprints 0.491, fields
+  with no frame 0.409, fields in the frames with the Gaussian layer 0.485 and the linear frame -0.201;
+  no structure is shown to add to the name of the halogen, and five arenes cannot show a gain of 0.05.
+  `run_buchwald.py --parts` makes it in 24 minutes.
+  **Open:** a
   field of the amine, which this screen does not vary; a fixed setting carried over from another
   set, to remove the search cost on the additive splits; and a second reaction table with a
   varying position that is not a grid of parts (the Suzuki-Miyaura screen of Perera et al. 2018

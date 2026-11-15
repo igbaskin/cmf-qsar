@@ -5556,9 +5556,11 @@ that hold out one component: a 95 % bootstrap interval over the held-out compone
 
 Four results:
 
-1. **A new aryl halide needs a structure, and any structure will do.** Names alone give 0.24.
-   Fingerprints, descriptors and fields all give 0.70 to 0.72, and no difference among them is
-   outside its interval.
+1. **A new aryl halide needs the names of its parts, and a structure adds nothing to them.**
+   The name of the whole aryl halide gives 0.24. The names of its arene and its halogen, added,
+   give 0.70 (0.71 with their product), and fingerprints, descriptors and fields give 0.66 to
+   0.72. Every difference from the names of the parts has an interval that contains zero (read
+   the reference below, added 15 November 2026).
 2. **A new additive is hardly helped by fields.** Fields with no frame are not clearly better
    than names alone (+0.032 [−0.051, +0.128]). Fingerprints are the best description of the
    additives, and on the four published tests they reach the published Yield-BERT (0.727 against
@@ -5583,6 +5585,24 @@ Four results:
    random splits, where the pairs are in the training part. It gains nothing where a pair is
    held out, because the effect of an unseen pair cannot be read from its parts.
 
+**The names of the parts as a reference (added 15 November 2026).** The 15 aryl halides are every
+combination of 5 arenes and 3 halogens, so a held-out aryl halide has its arene and its halogen in
+the training part with other partners. `parts_kernel` in `benchmarks/run_buchwald.py` describes each
+one by those two names only (an identity kernel for the arene plus one for the halogen, and a second
+form with their product), with the additive by name. With each aryl halide held out it gives 0.700
+and 0.708, level with fingerprints (0.696), descriptors (0.720) and fields (0.659 to 0.724). No
+difference from the parts has an interval that excludes zero. A control, fingerprints of the aryl
+halide with the additive by name, gives 0.696, so the additive by name does not matter. The earlier
+reading, that a new aryl halide needs a structure, was too strong: it needs the names of its parts.
+A design that holds out all three halides of one arene together is the one where a structure could
+matter, because the arene is then new (five folds, `run_buchwald.py --parts`, 24 minutes). There the
+parts reach 0.446 (0.441 with the product) against 0.198 for names. Fingerprints reach 0.491
+(+0.045, -0.073 to +0.194 against the parts), fields with no frame 0.409 (-0.037, -0.081 to -0.001,
+slightly below the parts), fields in the frames with the Gaussian layer 0.485 (+0.040, -0.093 to
++0.327), and the linear frame model -0.201, with -2.886 inside 3-pyridyl. No structure is shown to
+add to the name of the halogen. With five arenes, two of them pyridyls, the design cannot show a
+gain of 0.05.
+
 **What the setting search costs.** The frame with a Gaussian layer has two settings (the
 attenuation and γ) and 20 combinations of them. On additive test 1 the best of them, with the
 ridge chosen on the test part, reaches 0.825; the search inside the training part chose another
@@ -5601,8 +5621,13 @@ aryl halides and 0.95 for the additives (`benchmarks/results/buchwald/cofields.p
 co-field of a Free-Wilson model is a map of its arene and halogen effects, and this one shows
 nothing that the names of the components do not.
 
+The ninth tutorial, `docs/tutorials/09_a_reaction_yield.ipynb`, runs the kernel of a combination,
+the fits on new additives and on new arenes, and the names of the parts as the reference.
+
 The build takes under a minute and gives the same files on every run. The benchmark takes about
-7 hours on one process; it was run as three processes in parallel in 2 hours 50 minutes.
+7 hours on one process; it was run as three processes in parallel in 2 hours 50 minutes. The
+names of the parts and the design with each arene out take 24 minutes more
+(`python benchmarks/run_buchwald.py --parts`).
 
 ```bash
 python examples/make_buchwald_examples.py --fetch
@@ -6573,8 +6598,8 @@ for.
 
 ### Tutorials
 
-Fifteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the fourteenth reads the prepared set of the hop benchmark, and the fifteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Sixteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the fifteenth reads the prepared set of the hop benchmark, and the sixteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6587,13 +6612,14 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `06_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
 | `07_a_substituent_constant.ipynb` | the Hammett constants of 95 substituted benzenes in a frame given by a rule: which field carries a constant, the co-field in the plane of the ring, quantum charges from the file as a field, and the charge of one ring carbon as the reference |
 | `08_a_catalyst_series.ipynb` | a kinetic property: the enantioselectivity of 43 chiral phosphoric acids in the frame of their reaction centre, which field carries it, counts of atoms as the reference (none predicts it), what the frame adds over the same fields without a frame, the steric co-field as a map of where bulk helps, and a check of the bond lengths before the model |
-| `09_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
-| `10_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
-| `11_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `12_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `13_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `14_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `15_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `09_a_reaction_yield.ipynb` | a sample made of several molecules: the Buchwald-Hartwig screen (3,955 yields from 15 aryl halides, 4 ligands, 3 bases and 22 additives), the kernel of a combination, the frame that costs on new additives, and the names of the parts of an aryl halide as the reference that a structure has to beat |
+| `10_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
+| `11_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
+| `12_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
+| `13_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `14_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `15_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `16_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7042,7 +7068,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         fifteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         sixteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

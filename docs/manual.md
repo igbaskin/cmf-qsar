@@ -2700,7 +2700,7 @@ Both targets are computed, not measured, so both say how well a representation o
 that one calculation produced. `benchmarks/run_metal.py` measures them with five outer folds and
 ten inner folds. The iron series is measured twice: with five random folds, and with five folds
 built from the first coordination spheres, so that no sphere in a test fold was seen in training.
-The ninth tutorial, `docs/tutorials/09_a_metal_complex.ipynb`, runs the three checks of this
+The tenth tutorial, `docs/tutorials/10_a_metal_complex.ipynb`, runs the three checks of this
 chapter, both frames and both series.
 
 ### The iron series: the field beats the composition, and the frame decides everything
@@ -3277,13 +3277,32 @@ is an ANOVA kernel, and `benchmarks/run_buchwald.py` builds it from the componen
 | fields in the frames, Gaussian layer | 0.917 | 0.545 | 0.579 | 0.659 |
 | published: Yield-BERT (Schwaller 2021) | 0.951 | 0.73 | not reported | not reported |
 
-A new aryl halide needs a structure: every structure-based description gives 0.70 to 0.72,
-against 0.24 for names. A new additive is hardly helped by fields: fields with no frame differ
+A new aryl halide needs the names of its parts, and a structure adds nothing to them: the names of
+the arene and the halogen give 0.70, and every structure-based description gives 0.66 to 0.72,
+against 0.24 for the name of the whole aryl halide. A new additive is hardly helped by fields: fields with no frame differ
 from names by +0.032 [âˆ’0.051, +0.128] in a bootstrap over the additives. Fingerprints describe the
 additives best. The frame gained +0.13 on the catalyst series above. Here it loses 0.11 to 0.13
 on new additives and gains nothing on new aryl halides. So the frame of a reacting bond is not
 worth something by itself. It is worth something when the parts of the molecules that change sit
 in places where the frame makes them comparable, as the 3,3' groups of the catalysts do.
+
+**The names of the parts as a reference (added 15 November 2026).** The 15 aryl halides are every
+combination of 5 arenes and 3 halogens, so a held-out aryl halide has its arene and its halogen in
+the training part with other partners. `parts_kernel` in `benchmarks/run_buchwald.py` describes each
+one by those two names only (an identity kernel for the arene plus one for the halogen, and a second
+form with their product), with the additive by name. With each aryl halide held out it gives 0.700
+and 0.708, level with fingerprints (0.696), descriptors (0.720) and fields (0.659 to 0.724). No
+difference from the parts has an interval that excludes zero. A control, fingerprints of the aryl
+halide with the additive by name, gives 0.696, so the additive by name does not matter. The earlier
+reading, that a new aryl halide needs a structure, was too strong: it needs the names of its parts.
+A design that holds out all three halides of one arene together is the one where a structure could
+matter, because the arene is then new (five folds, `run_buchwald.py --parts`, 24 minutes). There the
+parts reach 0.446 (0.441 with the product) against 0.198 for names. Fingerprints reach 0.491
+(+0.045, -0.073 to +0.194 against the parts), fields with no frame 0.409 (-0.037, -0.081 to -0.001,
+slightly below the parts), fields in the frames with the Gaussian layer 0.485 (+0.040, -0.093 to
++0.327), and the linear frame model -0.201, with -2.886 inside 3-pyridyl. No structure is shown to
+add to the name of the halogen. With five arenes, two of them pyridyls, the design cannot show a
+gain of 0.05.
 
 **Two lessons for any table of combinations.**
 
@@ -3300,7 +3319,9 @@ in places where the frame makes them comparable, as the 3,3' groups of the catal
   settings on another data set.
 
 `examples/buchwald/README.md` describes the files and `benchmarks/results/buchwald/table.md`
-gives every split, the settings chosen and the co-fields of the linear model.
+gives every split, the settings chosen and the co-fields of the linear model. The ninth tutorial,
+`docs/tutorials/09_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
+additives and on new arenes, and the names of the parts as the reference.
 
 ## Three tests to run before you build a new field or a new score
 
@@ -8512,7 +8533,7 @@ So the channels are **not shown to read more than a configuration label**. The p
 the rule is inside the noise, or depends on which centre the rule reads. What stands is the
 exact null, the localisation at the stereocentre, and a few targets, beta-2 above all, on which
 the channels are far ahead of the rule. Whether the two together beat each alone was not tried.
-The tenth tutorial, `docs/tutorials/10_enantiomer_pairs.ipynb`, runs the exact null, the check of
+The eleventh tutorial, `docs/tutorials/11_enantiomer_pairs.ipynb`, runs the exact null, the check of
 split pairs, a live fit of two targets and this comparison.
 
 **What this does not show.** The potencies are taken as ChEMBL standardises them, and a pair
@@ -8853,7 +8874,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The thirteenth tutorial, `docs/tutorials/13_on_a_surface.ipynb`, makes
+this program adds to it yet. The fourteenth tutorial, `docs/tutorials/14_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11841,7 +11862,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The eleventh tutorial, `docs/tutorials/11_a_spectrum_as_the_sample.ipynb`, runs the central part
+The twelfth tutorial, `docs/tutorials/12_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12602,7 +12623,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The twelfth tutorial, `docs/tutorials/12_a_mixture.ipynb`, runs the case of the computed
+The thirteenth tutorial, `docs/tutorials/13_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13274,7 +13295,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The fourteenth tutorial, `docs/tutorials/14_a_hop_in_a_crystal.ipynb`, runs the references and the
+The fifteenth tutorial, `docs/tutorials/15_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16758,7 +16779,8 @@ that say how far a prediction can be trusted, two endpoints with their selectivi
 a library against a model of one series, the diagnosis of a data set before any model is
 built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
-frame of their reaction centre, with the enantioselectivity as the activity, the redox
+frame of their reaction centre, with the enantioselectivity as the activity, the yields of
+coupling reactions that combine four molecules, compared with the names of their parts, the redox
 potentials of metal complexes, read with fields and compared with the composition of the
 complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one

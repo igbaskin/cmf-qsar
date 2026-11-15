@@ -1,0 +1,483 @@
+{
+ "labels": {
+  "main": "one-hot, main effects",
+  "onehot": "one-hot, all interactions",
+  "fingerprint": "Morgan fingerprints",
+  "descriptor": "RDKit descriptors",
+  "invariant": "fields, no frame",
+  "frame": "fields in the frame",
+  "invariant_gauss": "fields, no frame, Gaussian layer",
+  "frame_gauss": "fields in the frame, Gaussian layer",
+  "parts_sum": "aryl halide by the names of its parts, added",
+  "parts_product": "aryl halide by the names of its parts, with their product",
+  "fp_aryl": "control: fingerprints of the aryl halide, additive by name"
+ },
+ "new": {
+  "main": {
+   "r2": 0.15974075180644431,
+   "rmse": 25.013498824111135,
+   "per_arene": {
+    "2-pyridyl": -0.1859587023550311,
+    "3-pyridyl": 0.28651393973806283,
+    "4-CF3-phenyl": -0.43029346775101507,
+    "4-Et-phenyl": 0.2120350948450751,
+    "4-MeO-phenyl": -0.47663002564683477
+   },
+   "settings": [
+    {},
+    {},
+    {},
+    {},
+    {}
+   ]
+  },
+  "onehot": {
+   "r2": 0.19786309423020665,
+   "rmse": 24.439484582181414,
+   "per_arene": {
+    "2-pyridyl": -0.15243354878318027,
+    "3-pyridyl": 0.32524960461086194,
+    "4-CF3-phenyl": -0.3323182512738705,
+    "4-Et-phenyl": 0.26170241798269267,
+    "4-MeO-phenyl": -0.43411010043297105
+   },
+   "settings": [
+    {},
+    {},
+    {},
+    {},
+    {}
+   ]
+  },
+  "fingerprint": {
+   "r2": 0.4906834087248745,
+   "rmse": 19.474293242378526,
+   "per_arene": {
+    "2-pyridyl": 0.031183295030673297,
+    "3-pyridyl": 0.562508355354545,
+    "4-CF3-phenyl": 0.12381609303898289,
+    "4-Et-phenyl": 0.6838491142658903,
+    "4-MeO-phenyl": 0.24713521825710083
+   },
+   "settings": [
+    {},
+    {},
+    {},
+    {},
+    {}
+   ]
+  },
+  "descriptor": {
+   "r2": 0.30924233595247663,
+   "rmse": 22.679352409922515,
+   "per_arene": {
+    "2-pyridyl": 0.14868569129799736,
+    "3-pyridyl": 0.4778438935429987,
+    "4-CF3-phenyl": -1.00966132066022,
+    "4-Et-phenyl": 0.3030828587131187,
+    "4-MeO-phenyl": -0.003224425740242731
+   },
+   "settings": [
+    {
+     "factor": 0.5
+    },
+    {
+     "factor": 0.5
+    },
+    {
+     "factor": 1.0
+    },
+    {
+     "factor": 1.0
+    },
+    {
+     "factor": 1.0
+    }
+   ]
+  },
+  "invariant": {
+   "r2": 0.40904770290446246,
+   "rmse": 20.977030321631254,
+   "per_arene": {
+    "2-pyridyl": -0.2798897750527072,
+    "3-pyridyl": 0.5606686127121536,
+    "4-CF3-phenyl": -0.08902152345759351,
+    "4-Et-phenyl": 0.7208789180970807,
+    "4-MeO-phenyl": 0.1235031783728675
+   },
+   "settings": [
+    {
+     "width": 0.15
+    },
+    {
+     "width": 0.07
+    },
+    {
+     "width": 0.07
+    },
+    {
+     "width": 0.07
+    },
+    {
+     "width": 0.07
+    }
+   ]
+  },
+  "frame": {
+   "r2": -0.2014022250007652,
+   "rmse": 29.90969671914929,
+   "per_arene": {
+    "2-pyridyl": 0.5589476144626497,
+    "3-pyridyl": -2.88621558460715,
+    "4-CF3-phenyl": 0.3617485511599611,
+    "4-Et-phenyl": 0.6029232120080008,
+    "4-MeO-phenyl": 0.5229773887147042
+   },
+   "settings": [
+    {
+     "alpha": 0.8,
+     "cosine": false
+    },
+    {
+     "alpha": 0.8,
+     "cosine": false
+    },
+    {
+     "alpha": 0.8,
+     "cosine": false
+    },
+    {
+     "alpha": 0.8,
+     "cosine": false
+    },
+    {
+     "alpha": 0.8,
+     "cosine": false
+    }
+   ]
+  },
+  "invariant_gauss": {
+   "r2": 0.4424368453544236,
+   "rmse": 20.375807393075984,
+   "per_arene": {
+    "2-pyridyl": -0.06323130201189064,
+    "3-pyridyl": 0.5470638816444267,
+    "4-CF3-phenyl": 0.02713409121575827,
+    "4-Et-phenyl": 0.6455392973416114,
+    "4-MeO-phenyl": 0.1489519973252269
+   },
+   "settings": [
+    {
+     "width": 0.1,
+     "gamma": 0.5
+    },
+    {
+     "width": 0.1,
+     "gamma": 0.5
+    },
+    {
+     "width": 0.1,
+     "gamma": 0.5
+    },
+    {
+     "width": 0.1,
+     "gamma": 0.5
+    },
+    {
+     "width": 0.1,
+     "gamma": 0.5
+    }
+   ]
+  },
+  "frame_gauss": {
+   "r2": 0.48548966620092016,
+   "rmse": 19.573335683340776,
+   "per_arene": {
+    "2-pyridyl": -0.4157968780558168,
+    "3-pyridyl": 0.5923419686686715,
+    "4-CF3-phenyl": 0.5822002921153975,
+    "4-Et-phenyl": 0.6624532546603978,
+    "4-MeO-phenyl": 0.7450571665415244
+   },
+   "settings": [
+    {
+     "alpha": 8.0,
+     "gamma": 0.5
+    },
+    {
+     "alpha": 0.8,
+     "gamma": 0.5
+    },
+    {
+     "alpha": 0.8,
+     "gamma": 0.5
+    },
+    {
+     "alpha": 0.8,
+     "gamma": 0.5
+    },
+    {
+     "alpha": 0.8,
+     "gamma": 0.5
+    }
+   ]
+  },
+  "parts_sum": {
+   "r2": 0.44568798730972936,
+   "rmse": 20.316315035864847,
+   "per_arene": {
+    "2-pyridyl": -0.2878168853916412,
+    "3-pyridyl": 0.6721514628870084,
+    "4-CF3-phenyl": -0.012864711862194733,
+    "4-Et-phenyl": 0.752384006596606,
+    "4-MeO-phenyl": 0.12004408244555864
+   },
+   "settings": [
+    {},
+    {},
+    {},
+    {},
+    {}
+   ]
+  },
+  "parts_product": {
+   "r2": 0.4411331769328576,
+   "rmse": 20.399614371082645,
+   "per_arene": {
+    "2-pyridyl": -0.2281075256820464,
+    "3-pyridyl": 0.6289190525409927,
+    "4-CF3-phenyl": 0.13194837094026346,
+    "4-Et-phenyl": 0.6891231457836651,
+    "4-MeO-phenyl": 0.11169567607142217
+   },
+   "settings": [
+    {},
+    {},
+    {},
+    {},
+    {}
+   ]
+  }
+ },
+ "halide": {
+  "parts_sum": {
+   "r2": 0.6995199701134707,
+   "rmse": 14.958071343408822
+  },
+  "parts_product": {
+   "r2": 0.7081633533064096,
+   "rmse": 14.74136523981595
+  },
+  "fp_aryl": {
+   "r2": 0.6958219939671277,
+   "rmse": 15.049833585618883
+  },
+  "main": {
+   "r2": 0.19442215639811034,
+   "rmse": 24.49184768491883
+  },
+  "onehot": {
+   "r2": 0.2430868035573419,
+   "rmse": 23.740553051750634
+  },
+  "fingerprint": {
+   "r2": 0.6956360994115645,
+   "rmse": 15.054431641294736
+  },
+  "descriptor": {
+   "r2": 0.7202358599962642,
+   "rmse": 14.43323944173681
+  },
+  "invariant": {
+   "r2": 0.7237471495079171,
+   "rmse": 14.342378429986953
+  },
+  "frame": {
+   "r2": 0.7201907944441728,
+   "rmse": 14.434401877551577
+  },
+  "invariant_gauss": {
+   "r2": 0.7085750360785219,
+   "rmse": 14.730964030902888
+  },
+  "frame_gauss": {
+   "r2": 0.6587470495059963,
+   "rmse": 15.940649066676546
+  }
+ },
+ "differences": {
+  "one arene out: main - parts_sum": {
+   "diff": -0.28594723550328505,
+   "low": -0.5130550993187893,
+   "high": -0.05276986555480845
+  },
+  "one aryl halide out: main - parts_sum": {
+   "diff": -0.5050978137153603,
+   "low": -0.7424417293815042,
+   "high": -0.29447315095480725
+  },
+  "one arene out: onehot - parts_sum": {
+   "diff": -0.2478248930795227,
+   "low": -0.46432917869498846,
+   "high": -0.019476072552117585
+  },
+  "one aryl halide out: onehot - parts_sum": {
+   "diff": -0.45643316655612876,
+   "low": -0.708307048084664,
+   "high": -0.23214579755392947
+  },
+  "one arene out: fingerprint - parts_sum": {
+   "diff": 0.04499542141514512,
+   "low": -0.07277605294332679,
+   "high": 0.19360009389017319
+  },
+  "one aryl halide out: fingerprint - parts_sum": {
+   "diff": -0.0038838707019062113,
+   "low": -0.12619762408947788,
+   "high": 0.12720565189720648
+  },
+  "one arene out: descriptor - parts_sum": {
+   "diff": -0.13644565135725273,
+   "low": -0.4712788574756003,
+   "high": 0.17570433314988296
+  },
+  "one aryl halide out: descriptor - parts_sum": {
+   "diff": 0.020715889882793492,
+   "low": -0.10107607672765291,
+   "high": 0.12748921813915032
+  },
+  "one arene out: invariant - parts_sum": {
+   "diff": -0.0366402844052669,
+   "low": -0.0810871324421445,
+   "high": -0.0006717959917115629
+  },
+  "one aryl halide out: invariant - parts_sum": {
+   "diff": 0.024227179394446408,
+   "low": -0.04977336319989369,
+   "high": 0.09416795534697803
+  },
+  "one arene out: frame - parts_sum": {
+   "diff": -0.6470902123104946,
+   "low": -2.2999130486501715,
+   "high": 0.4980708390426404
+  },
+  "one aryl halide out: frame - parts_sum": {
+   "diff": 0.02067082433070211,
+   "low": -0.06289802868238606,
+   "high": 0.11004280414930648
+  },
+  "one arene out: invariant_gauss - parts_sum": {
+   "diff": -0.0032511419553057364,
+   "low": -0.1003639285257083,
+   "high": 0.12474889680540646
+  },
+  "one aryl halide out: invariant_gauss - parts_sum": {
+   "diff": 0.009055065965051234,
+   "low": -0.09853926970852166,
+   "high": 0.1180295994999241
+  },
+  "one arene out: frame_gauss - parts_sum": {
+   "diff": 0.039801678891190795,
+   "low": -0.09346091878114737,
+   "high": 0.3272051598572374
+  },
+  "one aryl halide out: frame_gauss - parts_sum": {
+   "diff": -0.040772920607474394,
+   "low": -0.08516228560192787,
+   "high": 0.0039311650586708845
+  },
+  "one aryl halide out: fp_aryl - parts_sum": {
+   "diff": -0.0036979761463429295,
+   "low": -0.12597879750671884,
+   "high": 0.12729345414608323
+  },
+  "one arene out: main - parts_product": {
+   "diff": -0.28139242512641327,
+   "low": -0.5100268089664993,
+   "high": -0.08982590137048052
+  },
+  "one aryl halide out: main - parts_product": {
+   "diff": -0.5137411969082992,
+   "low": -0.7471385477289696,
+   "high": -0.3043209496710647
+  },
+  "one arene out: onehot - parts_product": {
+   "diff": -0.24327008270265094,
+   "low": -0.4555143376307923,
+   "high": -0.0639176761195479
+  },
+  "one aryl halide out: onehot - parts_product": {
+   "diff": -0.46507654974906765,
+   "low": -0.7163318186998318,
+   "high": -0.24097229318405297
+  },
+  "one arene out: fingerprint - parts_product": {
+   "diff": 0.0495502317920169,
+   "low": -0.03907086415265804,
+   "high": 0.16122987895302893
+  },
+  "one aryl halide out: fingerprint - parts_product": {
+   "diff": -0.012527253894845103,
+   "low": -0.1318067638438475,
+   "high": 0.11939550567272705
+  },
+  "one arene out: descriptor - parts_product": {
+   "diff": -0.13189084098038095,
+   "low": -0.4584680877189018,
+   "high": 0.136841761087395
+  },
+  "one aryl halide out: descriptor - parts_product": {
+   "diff": 0.0120725066898546,
+   "low": -0.10914060935973735,
+   "high": 0.11538686821904112
+  },
+  "one arene out: invariant - parts_product": {
+   "diff": -0.03208547402839512,
+   "low": -0.08643918847279021,
+   "high": 0.006242042614440724
+  },
+  "one aryl halide out: invariant - parts_product": {
+   "diff": 0.015583796201507516,
+   "low": -0.0511429073852518,
+   "high": 0.079807739179329
+  },
+  "one arene out: frame - parts_product": {
+   "diff": -0.6425354019336228,
+   "low": -2.2587446244062273,
+   "high": 0.44127712203963654
+  },
+  "one aryl halide out: frame - parts_product": {
+   "diff": 0.012027441137763217,
+   "low": -0.08424319702101049,
+   "high": 0.1017950910865024
+  },
+  "one arene out: invariant_gauss - parts_product": {
+   "diff": 0.00130366842156604,
+   "low": -0.07149133717944922,
+   "high": 0.08971128458094545
+  },
+  "one aryl halide out: invariant_gauss - parts_product": {
+   "diff": 0.00041168277211234283,
+   "low": -0.09299266123846853,
+   "high": 0.09497308008127703
+  },
+  "one arene out: frame_gauss - parts_product": {
+   "diff": 0.04435648926806257,
+   "low": -0.0830384870035614,
+   "high": 0.33312043862737284
+  },
+  "one aryl halide out: frame_gauss - parts_product": {
+   "diff": -0.049416303800413286,
+   "low": -0.10605355697297761,
+   "high": 0.002260169370721781
+  },
+  "one aryl halide out: fp_aryl - parts_product": {
+   "diff": -0.012341359339281821,
+   "low": -0.1316226700415051,
+   "high": 0.11952337537000347
+  },
+  "one aryl halide out: fp_aryl - fingerprint": {
+   "diff": 0.00018589455556328183
+  }
+ }
+}

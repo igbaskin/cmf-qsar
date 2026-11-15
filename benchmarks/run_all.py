@@ -333,8 +333,9 @@ def registry() -> List[Benchmark]:
                   "a reaction yield as the activity: 3,955 Buchwald-Hartwig couplings, the aryl "
                   "halide and the isoxazole additive in the frames of their reacting bonds, "
                   "against fingerprints, descriptors, names, the invariant kernel and a "
-                  "Gaussian layer on both field kernels",
-                  "run_buchwald.py", "buchwald", compute=[[]], minutes="420",
+                  "Gaussian layer on both field kernels, and against the names of the parts "
+                  "of the aryl halide, also with each arene held out",
+                  "run_buchwald.py", "buchwald", compute=[[], ["--parts"]], minutes="445",
                   report=lambda: _mod("run_buchwald").main(["--report"]),
                   tables=["buchwald/table.md"],
                   readme=["A reaction yield as the activity (two tables)"]),

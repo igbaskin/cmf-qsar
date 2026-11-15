@@ -43,6 +43,18 @@ a three-fold cross-validation of the same kind as the split (random folds for th
 splits, whole additives for the additive splits, whole aryl halides for the aryl halide
 splits), so no method sees the reactions it is scored on.
 
+**The names of the parts (added 15 November 2026).** The 15 aryl halides are every combination of
+5 arenes and 3 halogens, so a held-out aryl halide is not unknown: its arene and its halogen
+are in the training part with other partners. The reference that says what a structure adds
+over that is the aryl halide described by the names of its two parts, with an identity kernel
+for the arene and one for the halogen. Two forms are given and both are reported: the two
+added (a linear model in the parts) and with their product as well. The additive enters by
+name. Two designs: each aryl halide out (15 folds, compared with the stored methods), and each
+arene out (5 folds, all three halides of an arene together), where the arene is new and only a
+structure can tell it from the others. ``--parts`` runs it; the folds of the new design are
+chosen inside the training part by whole arenes, as the other designs choose by whole
+additives or aryl halides.
+
 **The splits.** The ten random 70/30 splits and the four additive splits published with the
 data and used by every later paper; leave one additive out over all 22; leave one aryl halide
 out over all 15. The score is R^2, the coefficient of determination on the test part, as the
@@ -59,6 +71,7 @@ Usage
     python benchmarks/run_buchwald.py                  # every method that has no stored result, then the table
     python benchmarks/run_buchwald.py --methods frame  # one method again
     python benchmarks/run_buchwald.py --report         # the table and figures from the stored results
+    python benchmarks/run_buchwald.py --parts          # the names of the parts and the arene-out design
     python benchmarks/run_buchwald.py --quick          # a few folds of every design, to a scratch directory
 """
 from __future__ import annotations
@@ -120,6 +133,12 @@ METHODS: Dict[str, Tuple[str, str, List[dict]]] = {
 }
 ORDER = ["main", "onehot", "fingerprint", "descriptor", "invariant", "frame", "invariant_gauss",
          "frame_gauss"]
+#: the aryl halide by the names of its arene and its halogen (the additive by name), the same two
+#: with their product, and a control: fingerprints of the aryl halide with the additive by name
+PARTS = ["parts_sum", "parts_product"]
+METHODS["parts_sum"] = ("aryl halide by the names of its parts, added", "anova", [{}])
+METHODS["parts_product"] = ("aryl halide by the names of its parts, with their product", "anova", [{}])
+METHODS["fp_aryl"] = ("control: fingerprints of the aryl halide, additive by name", "anova", [{}])
 #: the method the others are compared with, and the methods it is compared with
 TESTED = "frame_gauss"          # the method the plan item tests: the frame with a Gaussian layer
 REFERENCES = ["main", "onehot", "fingerprint", "descriptor", "invariant", "frame", "invariant_gauss"]
@@ -151,6 +170,10 @@ class Reactions:
         self.labels = {role: [c["label"] for c in comps if c["role"] == role] for role in ROLES}
         self.smiles = {role: {c["label"]: c["smiles"] for c in comps if c["role"] == role} for role in ROLES}
         self.index = {role: np.array([self.labels[role].index(r[role]) for r in rows]) for role in ROLES}
+        # the arene of every aryl halide ("4-Et-phenyl" of "4-Et-phenyl-Br"): a grouping of the reactions
+        self.arenes = sorted({l.rsplit("-", 1)[0] for l in self.labels["aryl_halide"]})
+        self.index["arene"] = np.array([self.arenes.index(self.labels["aryl_halide"][i].rsplit("-", 1)[0])
+                                        for i in self.index["aryl_halide"]])
         if [s["reaction"] for s in splits] != self.ids:
             raise ValueError("splits.csv and reactions.csv list different reactions")
         self.published = {k: np.array([s[k] == "test" for s in splits])
@@ -174,7 +197,9 @@ def designs(data: Reactions, quick: bool = False) -> Dict[str, List[Tuple[str, n
 
 
 INNER_GROUP = {"random": None, "additive tests": "additive", "one additive out": "additive",
-               "one aryl halide out": "aryl_halide"}
+               "one aryl halide out": "aryl_halide", "one arene out": "arene"}
+#: the designs scored on the pooled predictions of all folds
+POOLED = ("one additive out", "one aryl halide out", "one arene out")
 
 
 def inner_folds(data: Reactions, train: np.ndarray, group: Optional[str], seed: int) -> List[np.ndarray]:
@@ -189,6 +214,22 @@ def inner_folds(data: Reactions, train: np.ndarray, group: Optional[str], seed: 
 
 
 # ----------------------------------------------------------------------------- component kernels
+
+
+def arene_designs(data: Reactions) -> Dict[str, List[Tuple[str, np.ndarray]]]:
+    """Each arene out: the three halides of an arene are held out together."""
+    return {"one arene out": [(a, data.index["arene"] == i) for i, a in enumerate(data.arenes)]}
+
+
+def parts_kernel(data: Reactions, method: str) -> np.ndarray:
+    """The aryl halides by the names of their parts: an identity kernel over the arene plus one over
+    the halogen (``parts_sum``), and with the product of the two as well (``parts_product``)."""
+    lab = data.labels["aryl_halide"]
+    arene = np.array([l.rsplit("-", 1)[0] for l in lab])
+    halogen = np.array([l.rsplit("-", 1)[1] for l in lab])
+    Ka = (arene[:, None] == arene[None, :]).astype(float)
+    Kh = (halogen[:, None] == halogen[None, :]).astype(float)
+    return Ka + Kh if method == "parts_sum" else Ka + Kh + Ka * Kh
 
 
 def scaled(K: np.ndarray) -> np.ndarray:
@@ -281,7 +322,13 @@ def descriptor_kernel(data: Reactions, role: str, factor: float) -> np.ndarray:
 def component_kernels(data: Reactions, method: str, setting: dict) -> Dict[str, np.ndarray]:
     out = {role: np.eye(len(data.labels[role])) for role in ROLES}
     for role in BUILT:
-        if method == "fingerprint":
+        if method in PARTS:
+            if role == "aryl_halide":
+                out[role] = parts_kernel(data, method)
+        elif method == "fp_aryl":
+            if role == "aryl_halide":
+                out[role] = fingerprint_kernel(data, role)
+        elif method == "fingerprint":
             out[role] = fingerprint_kernel(data, role)
         elif method == "descriptor":
             out[role] = descriptor_kernel(data, role, setting["factor"])
@@ -359,7 +406,7 @@ def run_method(data: Reactions, method: str, folds: Dict[str, List[Tuple[str, np
                             "r2": r2_score(data.y[test], p), "rmse": rmse(data.y[test], p),
                             "predicted": p.tolist(), "test": test.tolist()})
         res["designs"][d] = {"folds": entries}
-        if d in ("one additive out", "one aryl halide out"):
+        if d in POOLED:
             res["designs"][d]["pooled"] = pooled.tolist()
             ok = np.isfinite(pooled)          # every reaction in a full run; a few folds with --quick
             res["designs"][d]["r2"] = r2_score(data.y[ok], pooled[ok])
@@ -617,6 +664,10 @@ def report(data: Reactions, results: Dict[str, dict], out_dir: str, log=print) -
                 "diff": float(diff.mean()), "low": float(diff.min()), "high": float(diff.max()),
                 "per_fold": diff.tolist()}
     summary["free_wilson"] = free_wilson_check(data)
+    parts_path = os.path.join(out_dir, "parts.json")
+    if os.path.exists(parts_path):
+        with open(parts_path, encoding="utf-8") as fh:
+            summary["parts"] = json.load(fh)
     # the co-field of the linear frame model (the Gaussian layer has none), at the setting the
     # leave-one-additive-out design chose most
     if "frame" in results and "one additive out" in results["frame"]["designs"]:
@@ -722,6 +773,8 @@ def write_table(summary: dict, data: Reactions, path: str) -> None:
               f"model on this kernel is a Free-Wilson model in three dimensions: it can give each arene "
               f"and each halogen an effect and cannot give a pair of them one. The Gaussian layer is "
               f"not linear in the atom contributions, which is why it lifts the limit."]
+    if "parts" in summary:
+        L += parts_section(summary["parts"], ms)
     L += ["", "## What the selection chose", ""]
     for m, e in ms.items():
         for d in ("random", "additive tests", "one additive out", "one aryl halide out"):
@@ -763,6 +816,132 @@ def write_table(summary: dict, data: Reactions, path: str) -> None:
         fh.write("\n".join(L) + "\n")
 
 
+# ----------------------------------------------------------------------------- the names of the parts
+
+PARTS_DIR = os.path.join(OUT_DIR, "parts")
+NEW = "one arene out"
+HALIDE = "one aryl halide out"
+
+
+def per_group_r2(data: Reactions, group: str, pooled: np.ndarray) -> Dict[str, float]:
+    """R^2 of the pooled predictions inside every held-out group."""
+    out = {}
+    names = data.arenes if group == "arene" else data.labels[group]
+    for i, name in enumerate(names):
+        m = data.index[group] == i
+        out[name] = r2_score(data.y[m], pooled[m])
+    return out
+
+
+def parts_stage(data: Reactions, out_dir: str = PARTS_DIR, main_dir: str = OUT_DIR, log=print) -> dict:
+    """Every method on the design with each arene out, and the names of the parts also on the design
+    with each aryl halide out, compared with the stored methods there."""
+    os.makedirs(out_dir, exist_ok=True)
+    folds_new = arene_designs(data)
+    folds_halide = {HALIDE: designs(data)[HALIDE]}
+    methods = ORDER + PARTS + ["fp_aryl"]
+    results: Dict[str, dict] = {}
+    for m in methods:
+        path = os.path.join(out_dir, f"method_{m}.json")
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                results[m] = json.load(fh)
+            continue
+        folds = {}
+        if m != "fp_aryl":
+            folds.update(folds_new)
+        if m in PARTS or m == "fp_aryl":
+            folds.update(folds_halide)
+        log(f"== {METHODS[m][0]} ({time.strftime('%Y-%m-%d %H:%M')})")
+        results[m] = run_method(data, m, folds, log=log)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(results[m], fh)
+    stored: Dict[str, dict] = {}
+    for m in ORDER:
+        with open(os.path.join(main_dir, f"method_{m}.json"), encoding="utf-8") as fh:
+            stored[m] = json.load(fh)
+    labels = {m: METHODS[m][0] for m in methods}
+    summary: dict = {"labels": labels, "new": {}, "halide": {}, "differences": {}}
+    for m in methods:
+        if NEW in results[m]["designs"]:
+            p = np.array(results[m]["designs"][NEW]["pooled"])
+            summary["new"][m] = {"r2": results[m]["designs"][NEW]["r2"],
+                                 "rmse": results[m]["designs"][NEW]["rmse"],
+                                 "per_arene": per_group_r2(data, "arene", p),
+                                 "settings": [e["setting"] for e in results[m]["designs"][NEW]["folds"]]}
+    for m in PARTS + ["fp_aryl"]:
+        p = np.array(results[m]["designs"][HALIDE]["pooled"])
+        summary["halide"][m] = {"r2": results[m]["designs"][HALIDE]["r2"],
+                                "rmse": results[m]["designs"][HALIDE]["rmse"]}
+    for m in ORDER:
+        p = np.array(stored[m]["designs"][HALIDE]["pooled"])
+        summary["halide"][m] = {"r2": stored[m]["designs"][HALIDE]["r2"],
+                                "rmse": stored[m]["designs"][HALIDE]["rmse"]}
+    # differences: every method minus the names of the parts, bootstrap over the held-out groups
+    for ref in PARTS:
+        pr_new = np.array(results[ref]["designs"][NEW]["pooled"])
+        pr_hal = np.array(results[ref]["designs"][HALIDE]["pooled"])
+        for m in ORDER:
+            a = np.array(results[m]["designs"][NEW]["pooled"])
+            summary["differences"][f"{NEW}: {m} - {ref}"] = bootstrap_difference(data, "arene", a, pr_new)
+            b = np.array(stored[m]["designs"][HALIDE]["pooled"])
+            summary["differences"][f"{HALIDE}: {m} - {ref}"] = bootstrap_difference(data, "aryl_halide", b, pr_hal)
+        for m in ("fp_aryl",):
+            a = np.array(results[m]["designs"][HALIDE]["pooled"])
+            summary["differences"][f"{HALIDE}: {m} - {ref}"] = bootstrap_difference(data, "aryl_halide", a, pr_hal)
+    # the control: fingerprints with the additive by name against fingerprints for both
+    a = np.array(results["fp_aryl"]["designs"][HALIDE]["pooled"])
+    b = np.array(stored["fingerprint"]["designs"][HALIDE]["pooled"])
+    summary["differences"][f"{HALIDE}: fp_aryl - fingerprint"] = {"diff": float(r2_score(data.y, a) - r2_score(data.y, b))}
+    with open(os.path.join(os.path.dirname(out_dir), "parts.json"), "w", encoding="utf-8") as fh:
+        json.dump(summary, fh, indent=1)
+    return summary
+
+
+def parts_section(p: dict, ms: dict) -> List[str]:
+    """Lines of the table for the stage of the names of the parts."""
+    lab = p["labels"]
+
+    def name(m):
+        return lab.get(m) or ms[m]["label"]
+
+    L = ["", "## The names of the parts as a reference for a new aryl halide", "",
+         "The 15 aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl "
+         "halide has its arene and its halogen in the training part with other partners. The reference "
+         "describes each aryl halide by the names of those two parts and the additive by name; it reads "
+         "no structure. Two forms, both reported: the two names added, and with their product as well.", "",
+         "R² of the pooled out-of-fold predictions:", "",
+         "| method | each aryl halide out | each arene out |", "|---|---:|---:|"]
+    order = ORDER + PARTS + ["fp_aryl"]
+    for m in order:
+        h = p["halide"].get(m)
+        n = p["new"].get(m)
+        L.append(f"| {name(m)} | {h['r2']:+.3f} |" if h else f"| {name(m)} | |")
+        L[-1] += f" {n['r2']:+.3f} |" if n else " |"
+    L += ["", "R² inside each held-out arene (all three halides together, three halides of 22 additives "
+          "and 12 ligand and base pairs):", "",
+          "| method | " + " | ".join(next(iter(p["new"].values()))["per_arene"]) + " |",
+          "|---|" + "---:|" * len(next(iter(p["new"].values()))["per_arene"])]
+    for m in order:
+        if m in p["new"]:
+            L.append(f"| {name(m)} | " + " | ".join(f"{v:+.3f}" for v in p["new"][m]["per_arene"].values()) + " |")
+    L += ["", "Difference in R² against the names of the parts, with a 95% interval from 1000 bootstrap "
+          "samples of the held-out aryl halides (15) or arenes (5):", "",
+          "| design | method | minus | difference in R² | interval |", "|---|---|---|---:|---|"]
+    for k, v in p["differences"].items():
+        if "low" not in v:
+            continue
+        d, pair = k.split(": ")
+        a, b = pair.split(" - ")
+        L.append(f"| {d} | {name(a)} | {name(b)} | {v['diff']:+.3f} | [{v['low']:+.3f}, {v['high']:+.3f}] |")
+    c = p["differences"].get(f"{HALIDE}: fp_aryl - fingerprint")
+    if c:
+        L += ["", f"Control: fingerprints for the aryl halide with the additive by name minus fingerprints "
+              f"for both: {c['diff']:+.3f}, so the additive by name does not change what the reference "
+              "is compared with."]
+    return L
+
+
 # ----------------------------------------------------------------------------- main
 
 
@@ -772,6 +951,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     help="methods to run again (default: every method without a stored result)")
     ap.add_argument("--report", action="store_true", help="only the table and figures from stored results")
     ap.add_argument("--quick", action="store_true", help="a few folds of every design, to a scratch directory")
+    ap.add_argument("--parts", action="store_true",
+                    help="the names of the parts and the design with each arene out, then the table")
     ap.add_argument("--out-dir", default=None)
     args = ap.parse_args(argv)
     out_dir = args.out_dir or (os.path.join(OUT_DIR, "quick") if args.quick else OUT_DIR)
@@ -784,6 +965,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         log_fh.flush()
 
     data = Reactions()
+    if args.parts:
+        parts_stage(data, log=log)
+        args.report = True
     folds = designs(data, quick=args.quick)
     results: Dict[str, dict] = {}
     for m in ORDER:
