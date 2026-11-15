@@ -1,6 +1,6 @@
 {
- "commit": "161096436def87e352872713da2dc407b01869f2",
- "created": "2026-11-15T20:23:57",
+ "commit": "9ce46e74b8ffe017bc83e3c772375e396d802a04",
+ "created": "2026-11-15T20:39:00",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2575,7 +2575,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3100,6 +3100,9 @@
   "benchmarks/results/fluorescence/table.md": "0b53d202b20d262fbc3f93e9ac92d1cb0a4bc92c34e6b171a1d6afca28579cf8",
   "benchmarks/results/fraggrow/summary.json": "8d99bbbc257fcbd5ed0216b0faac859adc95f02da58b8b7887491ee32d5787a3",
   "benchmarks/results/fraggrow/table.md": "adad7ffcbb3153bbdd664b0aa2f11f204d563faa280e417772344119147e1279",
+  "benchmarks/results/frameworks/limit.json": "47149021f2f96e2e1b017b1d507a1dfaa1a96e82208633c31831ef79517e3b36",
+  "benchmarks/results/frameworks/table.md": "580ca52d66269fce40bfb5a5d66c76bd14bcdc364622b983e3ac744b7bd8f944",
+  "benchmarks/results/frameworks/zeolites.json": "cfad7bcf276fcff42c23c73d39766d862b9b47f52e078a06dabdb54661318efe",
   "benchmarks/results/fusion/AChE.json": "660a373dc2c2b96bdf311a2953b897fc4e57e3f0270cc68059a27d43aa0ac036",
   "benchmarks/results/fusion/BZR.json": "9be8d8baf8c7027e0a4f24bf3911d859d0ca7250736c3207cb37bb8e8726e989",
   "benchmarks/results/fusion/COX2.json": "6b6199d3adb99e278ff0b1a1909dcea2ef7385e7a43384a741dc9e52a6b82f42",
