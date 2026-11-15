@@ -5113,6 +5113,133 @@ calibrated test does and the permutation construction guarantees. All twenty-eig
 *different* targets, where there is everything to find: **100 % are called significant, median
 z = +171**. The test is calibrated where there is nothing and saturated where there is.
 
+## A few molecules that stand for many: kernel herding
+
+The mean field of a set of molecules is its kernel mean embedding, and the MMD of the two-sample
+test is the distance between two of them. The same distance says how well a *subset* stands for
+the whole set. **Kernel herding** (Chen, Welling and Smola, UAI 2010) builds a subset with a small
+distance one molecule at a time. With $\mu(x)$ the mean kernel value of $x$ against the whole set,
+and $x_1$ to $x_t$ the molecules chosen so far, the next molecule is
+
+$$
+x_{t+1} = \arg\max_x \; \mu(x) - \frac{1}{t+1} \sum_{s \leq t} K(x, x_s) .
+$$
+<!-- #eq:herding -->
+
+The first term pulls towards molecules typical of the set, the second pushes away from those
+already chosen. Adding $K(x, x)/2$ to the sum makes every step the exact greedy minimisation of the
+MMD (`--method greedy`). For the cosine-normalised kernel of `cmf pick` the two rules are the same,
+because $K(x, x)$ is constant. For a kernel whose diagonal varies they are not, and the greedy rule
+is the right one (see the shells below).
+
+```bash
+python cmf_cli.py pick library.sdf --n 20 --charges file --out picks.csv
+python cmf_cli.py pick library.sdf --n 10 --made measured.sdf
+```
+
+The command prints the molecules in the order chosen, the MMD of the first $t$ after each one,
+and the MMD of 200 random choices of the same size for comparison. `--sdf-out` writes the chosen
+molecules in that order. `--made` counts molecules already made or measured as chosen, so herding
+continues from them. `--method` also offers the
+references below, and `--kernel gauss` uses a Gaussian of the field distance, which compares
+whole distributions and not only mean fields. The module is `cmfqsar.herding`; its
+`quadrature_weights` gives the chosen molecules weights that bring their weighted mean field
+closer still, which is what an ensemble needs.
+
+### What herding is worth, measured
+
+`benchmarks/run_herding.py` compares herding with four references in three places where the
+program chooses a subset. The references are **max-min** (furthest-first diversity picking, the
+classical design), **k-medoids** in field space, **pivoted Cholesky** (always the molecule least
+explained by those chosen, the usual choice of landmarks) and random choice.
+
+**Which molecules to measure first.** Each Sutherland set is split ten times into a pool (70 %)
+and a test set (30 %). From the pool, m molecules are chosen without looking at the activity, a
+model is fitted on them alone, and it predicts the test set. "RMSE minus random" is averaged over
+the eight sets, with a 95 % bootstrap interval over the sets; negative is better.
+
+| m | rule | MMD² to the pool | R²pred | RMSE minus random |
+|---:|---|---:|---:|---:|
+| 10 | herding | 0.026 | +0.12 | -0.013 [-0.075, +0.051] |
+| 10 | max-min | 0.206 | +0.16 | +0.056 [-0.010, +0.137] |
+| 10 | k-medoids | 0.060 | +0.09 | -0.014 [-0.086, +0.057] |
+| 10 | random | 0.099 | +0.08 | |
+| 20 | herding | 0.008 | +0.14 | +0.026 [+0.003, +0.051] |
+| 20 | max-min | 0.093 | +0.25 | +0.008 [-0.051, +0.068] |
+| 20 | k-medoids | 0.044 | +0.23 | -0.039 [-0.096, +0.016] |
+| 20 | random | 0.041 | +0.19 | |
+| 40 | herding | 0.002 | +0.38 | -0.039 [-0.059, -0.022] |
+| 40 | max-min | 0.029 | +0.39 | -0.036 [-0.073, -0.003] |
+| 40 | k-medoids | 0.020 | +0.40 | -0.057 [-0.085, -0.028] |
+| 40 | random | 0.014 | +0.33 | |
+
+The model on the whole pool reaches R²pred +0.48. Pivoted Cholesky and herding on the Gaussian
+kernel are in `benchmarks/results/herding/table.md`; neither changes the picture.
+
+* **Herding does what it promises.** Its subsets are 4 to 7 times closer to the pool, in MMD², than
+  random subsets of the same size.
+* **A representative subset is not a better training set.** At 10 and 20 molecules no rule beats
+  random choice by more than the spread between the sets. At 20 molecules herding is even slightly
+  worse. At 40 molecules herding, max-min and k-medoids beat random choice by 0.04 to 0.06 in
+  RMSE, and k-medoids gains the most.
+* **Max-min matches herding** at 40 molecules although its subsets are more than ten times
+  further from the pool. Covering the edges of the set matters as much as matching its centre.
+
+**Which molecules to use as Nyström landmarks.** The kernel of each whole set is replaced by its
+Nyström approximation on m landmark molecules chosen on that kernel. The error is the Frobenius
+norm of the difference, relative to the kernel; q² is from 10-fold cross-validation on the
+approximation, against +0.57 for the exact kernel.
+
+| landmarks | rule | relative error of the kernel | q² |
+|---:|---|---:|---:|
+| 10 | herding | 0.048 | +0.36 |
+| 10 | herding, Gaussian kernel | 0.044 | +0.40 |
+| 10 | k-medoids | 0.040 | +0.41 |
+| 10 | pivoted Cholesky | 0.091 | +0.27 |
+| 10 | random | 0.074 | +0.35 |
+| 20 | herding | 0.026 | +0.46 |
+| 20 | herding, Gaussian kernel | 0.025 | +0.50 |
+| 20 | k-medoids | 0.020 | +0.47 |
+| 20 | pivoted Cholesky | 0.039 | +0.43 |
+| 20 | random | 0.040 | +0.45 |
+
+Herding and k-medoids approximate the kernel 30 to 50 % better than random landmarks. The model
+gains at most 0.05 in q², and at 40 landmarks every rule is within 0.03 to 0.07 of the exact
+kernel. Pivoted Cholesky is the worst rule here: it takes the outliers first. The low-rank path
+keeps random landmarks, because herding and k-medoids need the n by n kernel that the low-rank
+path exists to avoid, and the gain does not justify it.
+
+**Which solvation shells to keep.** Each of the 62 electrolytes of item BT5 is the weighted mean
+of 15 or 16 solvation shells. The shells are chosen on the framed field kernel of the shells of
+one electrolyte, with the given weights as the target, and weighted by `quadrature_weights`. The
+distance is that of the kept shells' mean field from the mean field of all shells, relative to its
+size, averaged over the electrolytes.
+
+| shells kept | the heaviest | herding, fitted weights | greedy, fitted weights | random |
+|---:|---:|---:|---:|---:|
+| 1 | 0.407 | 0.516 | 0.398 | 0.615 |
+| 2 | 0.272 | 0.292 | 0.242 | 0.476 |
+| 4 | 0.165 | 0.160 | 0.139 | 0.316 |
+| 8 | 0.065 | 0.071 | 0.062 | 0.192 |
+
+The shells differ in size, 15 to 94 atoms, so $K(x, x)$ varies and plain herding is not the
+right rule. It loses even to the single heaviest shell, while the greedy rule is closest at every
+size. The alignment-free model of BT5, run on the kept shells with the nested cross-validation of
+`benchmarks/run_ensembles.py`, gives a mean absolute error on the activation energy, random folds,
+of 1.94 kJ/mol with the 4 heaviest shells, 2.05 with the 4 greedy ones, 2.19 to 2.35 with three
+random draws of 4, and 1.61 with all 16. On the activation energy, kept shells chosen by herding
+or greedily beat random ones, but not the heaviest ones: the given weights are uneven, and the heaviest shells already
+carry most of the mean field. The full table, both targets and both splits, is in
+`benchmarks/results/herding/table.md`. A control run of the 4 heaviest shells reproduces the
+stored records of item MS5 to 4e-13.
+
+**When to use it.** `cmf pick` gives the most representative molecules of a library, and the
+MMD says how representative they are. That is the right tool when the subset itself is the
+product: a first round of measurements that should look like the library, or a few members that
+should stand for an ensemble with equal weights, such as the frames of a trajectory. It is not a
+way to make a model more accurate. With 40 molecules, herding, max-min and k-medoids beat random
+choice by a little; with fewer, nothing does.
+
 ## How certain is that number?
 
 A difference of 0.02 in q² is quoted all over the benchmarks in this repository. Some of those

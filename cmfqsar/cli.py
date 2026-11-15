@@ -3953,6 +3953,78 @@ def cmd_compare(args):
         print(f"Density ratio of every molecule written to {args.weights}")
 
 
+#: `cmf pick` builds the joint kernel over every molecule at once, five n by n matrices of
+#: float64 for the default fields; above this many molecules it refuses instead of filling memory
+PICK_MAX_MOLECULES = 5000
+
+
+def cmd_pick(args):
+    """A few molecules that stand for a library: kernel herding and its references."""
+    from cmfqsar.herding import METHODS, herd, mmd2_subset, pick
+
+    ds = load_dataset(args.dataset)
+    made = load_dataset(args.made) if args.made else None
+    mols = list(ds.mols) + (list(made.mols) if made else [])
+    names = list(ds.names) + (list(made.names) if made else [])
+    n_lib, n = len(ds), len(mols)
+    if n > PICK_MAX_MOLECULES:
+        raise SystemExit(f"{n} molecules: the kernel would need about "
+                         f"{5 * 8 * n * n / 1e9:.1f} GB. Pick from a random part of the library, "
+                         f"at most {PICK_MAX_MOLECULES} molecules")
+    if not 0 < args.n <= n_lib:
+        raise SystemExit(f"--n must lie between 1 and the {n_lib} molecules of the library")
+    if made and args.method not in ("herding", "greedy"):
+        raise SystemExit("--made continues a herding run; the other rules do not take it")
+    fs = _fieldset_from(args, mols)
+    print(f"{n_lib} molecules in the library"
+          + (f", {len(made)} already made" if made else "")
+          + f"; fields {', '.join(s_.label for s_ in fs.specs)}, alpha = {args.alpha:g}")
+    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    if args.kernel == "gauss":
+        from cmfqsar.herding import distance2_matrix
+        D2 = distance2_matrix(K)
+        off = D2[np.triu_indices(n, 1)]
+        K = np.exp(-D2 / max(float(np.median(off[off > 1e-12])) if np.any(off > 1e-12)
+                             else 1.0, 1e-300))
+    target = np.r_[np.ones(n_lib), np.zeros(n - n_lib)]
+    if args.method in ("herding", "greedy"):
+        chosen = herd(K, args.n, weights=target, method=args.method,
+                      first=np.arange(n_lib, n) if made else None)
+    else:
+        chosen = pick(K[:n_lib, :n_lib], args.n, method=args.method, seed=args.seed)
+    K_lib = K[:n_lib, :n_lib]
+    steps = [mmd2_subset(K_lib, chosen[:t + 1]) for t in range(len(chosen))]
+    rng = np.random.RandomState(args.seed)
+    rand = [mmd2_subset(K_lib, rng.choice(n_lib, args.n, replace=False)) for _ in range(200)]
+    print(f"\n{args.n} molecules by {args.method} ({', '.join(METHODS)} are available):")
+    for t, j in enumerate(chosen):
+        print(f"  {t + 1:4d}. {names[j]:34s} MMD^2 of the first {t + 1}: {steps[t]:.5f}")
+    print(f"\nMMD^2 between the {args.n} chosen and the library: {steps[-1]:.5f}; random "
+          f"choices of {args.n} give a median of {np.median(rand):.5f} "
+          f"(5 to 95 %: {np.percentile(rand, 5):.5f} to {np.percentile(rand, 95):.5f})")
+    if made:
+        print("  (the MMD^2 values are of the new molecules alone; the herding rule counted the "
+              "molecules already made as chosen)")
+    if args.out:
+        import csv as _csv
+        with open(args.out, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["rank", "name", "mmd2_of_the_first"])
+            for t, j in enumerate(chosen):
+                wr.writerow([t + 1, names[j], f"{steps[t]:.6g}"])
+        print(f"Written to {args.out}")
+    if args.sdf_out:
+        from rdkit import Chem
+        with Chem.SDWriter(args.sdf_out) as w:
+            for t, j in enumerate(chosen):
+                m = Chem.Mol(mols[j])
+                m.SetProp("pick_rank", str(t + 1))
+                w.write(m)
+        print(f"The chosen molecules, in order, written to {args.sdf_out}")
+
+
 def cmd_cluster(args):
     """Cluster a set by the field kernel itself, and compare that with its scaffolds."""
     from cmfqsar.chemotypes import chemotype_labels
@@ -4872,6 +4944,36 @@ def main(argv=None):
     cl.add_argument("--seed", type=int, default=0)
     cl.add_argument("--out", default=None, help="CSV of the cluster of every molecule")
     cl.set_defaults(func=cmd_cluster)
+
+    pk = sub.add_parser("pick", help="a few molecules that stand for a library (kernel herding)")
+    pk.add_argument("dataset", help="the library to choose from")
+    pk.add_argument("--n", type=int, required=True, help="how many molecules to choose")
+    pk.add_argument("--method", default="herding",
+                    choices=["herding", "greedy", "maxmin", "kmedoids", "pivoted_cholesky",
+                             "random"],
+                    help="herding: the subset whose mean field is closest to the library's "
+                         "(Chen, Welling and Smola 2010); greedy: the same with the exact greedy "
+                         "step; maxmin: furthest-first diversity picking; kmedoids: the medoids "
+                         "of k clusters in field space; pivoted_cholesky: always the molecule "
+                         "least explained by those chosen; random")
+    pk.add_argument("--kernel", default="linear", choices=["linear", "gauss"],
+                    help="linear: the joint field kernel, so the mean field is matched; gauss: a "
+                         "Gaussian of the field distance, which matches the whole distribution")
+    pk.add_argument("--made", default=None,
+                    help="a file of molecules already made or measured; herding continues from "
+                         "them and does not choose molecules like them again")
+    pk.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    pk.add_argument("--cif", action="store_true")
+    pk.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
+    pk.add_argument("--cif-min", type=int, default=5)
+    pk.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    pk.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    pk.add_argument("--alpha", type=float, default=0.5)
+    pk.add_argument("--seed", type=int, default=0, help="for random choice and its reference")
+    pk.add_argument("--out", default=None, help="CSV of the chosen molecules, in order")
+    pk.add_argument("--sdf-out", default=None, help="SD file of the chosen molecules, in order")
+    pk.set_defaults(func=cmd_pick)
 
     kc = sub.add_parser("kcca", help="what the field sees that another view does not (kernel "
                                      "canonical correlation analysis)")

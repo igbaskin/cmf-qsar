@@ -1274,6 +1274,16 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_conformal").report(_r("conformal")),
                   tables=["conformal/table.md"]),
+        Benchmark("herding", "kernel herding against max-min, k-medoids, pivoted Cholesky and "
+                  "random choice: which molecules to measure first, which to use as Nystroem "
+                  "landmarks, and which solvation shells of an ensemble to keep",
+                  "run_herding.py", "herding", compute=[[]],
+                  # the shell stage reads the SD file that run_ensembles.py --stage file writes
+                  # into benchmarks/cache; that stage also rewrites results/ensembles/file.json
+                  prepare=["run_ensembles.py --stage file"],
+                  minutes="4",         # measured: 61 s, 43 s and 110 s for the three stages
+                  report=lambda: _mod("run_herding").report(_r("herding")),
+                  tables=["herding/table.md"]),
         Benchmark("shift", "covariate shift: do density-ratio weights repair the conformal "
                   "intervals and the fit when the test molecules differ from the training ones",
                   "run_shift.py", "shift", compute=[["--repeats", "20"]],
