@@ -2079,6 +2079,80 @@ def cmd_predict(args):
                                AtomTable.from_molecules(mf))
 
 
+#: below this share of the training set as the effective size of the weights, `predict --shift`
+#: warns that the library hardly overlaps the training set.  In benchmarks/run_shift.py the
+#: hold-out of one neighbourhood gave 6 % on average and every shift with overlap 36 % or more.
+SHIFT_MIN_ESS = 0.10
+
+
+def _model_blocks(model, table):
+    """(train-train, library-train, library-library) field kernels on the model's own scale.
+
+    A fresh model object fitted to the library would compute its own field scale from the
+    library's mean self-overlap, which differs from the training set's whenever the fields are
+    scaled; the three blocks would then not form one kernel, the matrix assembled from them is
+    not positive semidefinite, and a distance computed from it is wrong.  These three come from
+    the model's own field kernels, normalisation and scale.  Non-field descriptors are left out
+    of all three, so the blocks agree with each other.
+    """
+    if not model.uses_fields:
+        raise SystemExit("this needs the overlap kernel among the library molecules; the model "
+                         f"uses the '{model.kernel_source}' kernel")
+    K_train_f = model.K_fields_train
+    if K_train_f is None:
+        K_train_f = model._field_kernels(model.train, model.train, model.self_diag,
+                                         model.self_diag)
+    d_lib = model._self_kernels(table) if model.normalize else None
+    K_train = model.joint_kernel(K_train_f)
+    K_cross = model.joint_kernel(model._field_kernels(table, model.train, d_lib,
+                                                      model.self_diag))
+    K_lib = model.joint_kernel(model._field_kernels(table, table, d_lib, d_lib))
+    return K_train, K_cross, K_lib
+
+
+def _shifted_intervals(model, table, conf, names, yp, seed=0):
+    """Weighted conformal intervals for a library unlike the training set (`predict --shift`).
+
+    The stored out-of-fold errors are weighted by how typical each training molecule is of the
+    molecules being predicted, w(x) = p_library(x) / p_train(x), from a kernel logistic regression
+    that tells the two sets apart (:mod:`cmfqsar.shift`).  A molecule that no training molecule
+    resembles gets an infinite interval: there is no evidence about its error.
+    """
+    from cmfqsar.shift import shifted_conformal
+
+    if conf is None:
+        raise SystemExit("--shift weights the model's calibration, and this model carries none; "
+                         "build it with --conformal")
+    if model.is_low_rank:
+        raise SystemExit("--shift needs the kernel among the training molecules, which a "
+                         "low-rank model does not keep")
+    if len(names) < 2:
+        raise SystemExit("--shift estimates how the predicted molecules differ from the training "
+                         "set, which needs at least two of them")
+    K_train, K_cross, K_lib = _model_blocks(model, table)
+    try:
+        rule, ratio, w_lib, diff = shifted_conformal(conf, K_train, K_cross, K_lib, seed=seed)
+    except ValueError as exc:
+        raise SystemExit(f"--shift: {exc}")
+    lo, hi = rule.interval(yp, w_lib, diff)
+    n_inf = int(np.sum(~np.isfinite(hi - lo)))
+    print()
+    print(f"Weighted conformal (--shift): {rule.describe()} of {len(rule.weights)}")
+    print("  " + ratio.describe())
+    print(f"  {n_inf} of {len(names)} molecules get no finite interval: the training set holds "
+          f"too little like them to say how large their error is")
+    if rule.ess < SHIFT_MIN_ESS * len(rule.weights):
+        print(f"  warning: the weights are worth only {rule.ess:.1f} of {len(rule.weights)} "
+              f"training molecules, so the library hardly overlaps the training set. In "
+              f"benchmarks/run_shift.py such a library got 79-85 % coverage from the finite "
+              f"weighted intervals at 90 %; the normalised interval (build "
+              f"--conformal-normalise) kept 92.5 % there")
+    for n, v, a, b, w in zip(names, yp, lo, hi, w_lib):
+        span = f"[{a:7.3f}, {b:7.3f}]" if np.isfinite(b - a) else "[   -inf,    inf]"
+        print(f"{n:30s} {v:8.3f}   {span}   weight {w:.3g}")
+    return (lo, hi), {"shift_weight": w_lib}
+
+
 def _report_predictions(args, model, extra, names, activity, table):
     """Predict `table`, print the predictions and write the CSV: the tail of `predict`.
 
@@ -2171,8 +2245,14 @@ def _report_predictions(args, model, extra, names, activity, table):
             print(f"Conformal: {conf.describe()}")
             for n, v, a, b in zip(names, yp, lo, hi):
                 print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
+    shift_cols = None
+    if getattr(args, "shift", False):
+        bounds, shift_cols = _shifted_intervals(model, table, conf, names, yp,
+                                                seed=getattr(args, "seed", 0) or 0)
     if args.out:
         extra_columns = {}
+        if shift_cols:
+            extra_columns.update(shift_cols)
         if yp2 is not None:
             extra_columns.update({second["names"][1]: yp2, "difference": sel})
         if sd_cols:
@@ -3811,9 +3891,8 @@ def cmd_compare(args):
               f"fields {', '.join(s_.label for s_ in fs.specs)}")
         mf = [build_fields(m, fs, n) for m, n in zip(ds_a.mols, ds_a.names)]
         table = AtomTable.from_molecules(mf)
-        probe = CMFModel(fieldset=fs, method="krr", normalize=model.normalize)
-        Kyy = probe.joint_kernel(probe.prepare_training_kernels(table))
-        K, mask = assemble(model._linear_train_kernel(), model.test_kernel(table), Kyy)
+        # all three blocks on the model's own field scale, so that they form one kernel
+        K, mask = assemble(*_model_blocks(model, table))
         train_names = list(extra.get("train_names")
                            or getattr(model.train, "names", None) or [])
         if len(train_names) != model.train.n_mol:
@@ -3852,6 +3931,26 @@ def cmd_compare(args):
             for i, nm in enumerate(names):
                 wr.writerow([nm, label_a if mask[i] else label_b, f"{w[i]:.6f}"])
         print(f"Witness written to {args.out}")
+    if args.weights:
+        from cmfqsar.shift import classifier_ratio, distance2, effective_size
+
+        d = np.diag(K)
+        ratio = classifier_ratio(distance2(K, d, d), ~mask, seed=args.seed)
+        n_a = int(mask.sum())
+        print(f"\nWeights that make {label_a} look like {label_b}:")
+        print("  " + ratio.describe())
+        print(f"  effective size {effective_size(ratio.w_train):.1f} of {n_a}: the weighted set "
+              f"carries as much information as that many equally weighted molecules")
+        w_all = np.empty(len(mask))
+        w_all[mask] = ratio.w_train
+        w_all[~mask] = ratio.w_library
+        import csv as _csv
+        with open(args.weights, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["name", "set", "density_ratio"])
+            for i, nm in enumerate(names):
+                wr.writerow([nm, label_a if mask[i] else label_b, f"{w_all[i]:.6g}"])
+        print(f"Density ratio of every molecule written to {args.weights}")
 
 
 def cmd_cluster(args):
@@ -4666,6 +4765,12 @@ def main(argv=None):
     q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="report the model's calibrated interval at this level instead of the "
                         "one it was calibrated at; the model must carry a calibration")
+    q.add_argument("--shift", action="store_true",
+                   help="weight the model's calibration errors by how typical each training "
+                        "molecule is of the molecules being predicted (weighted conformal "
+                        "prediction under covariate shift). Use it when the library differs from "
+                        "the training set; a molecule unlike every training molecule gets an "
+                        "infinite interval. Needs a model built with --conformal")
     q.add_argument("--sd", action="store_true",
                    help="print the predictive standard deviation of every structure in the units "
                         "of the activity (the GP variance put on the scale of the fit's noise) "
@@ -4740,6 +4845,11 @@ def main(argv=None):
     cp.add_argument("--seed", type=int, default=0)
     cp.add_argument("--top", type=int, default=8, help="molecules listed at each end")
     cp.add_argument("--out", default=None, help="CSV of the witness value of every molecule")
+    cp.add_argument("--weights", default=None, metavar="CSV",
+                    help="estimate the density ratio p_second(x) / p_first(x) by kernel logistic "
+                         "regression and write it for every molecule. On the first set (the "
+                         "training set with --model) these are the weights that make it look "
+                         "like the second")
     cp.set_defaults(func=cmd_compare)
 
     cl = sub.add_parser("cluster", help="cluster a set by its field kernel (spectral clustering)")

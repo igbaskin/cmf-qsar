@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 129 modules, 252 classes with 826 public methods, and 1335 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 130 modules, 256 classes with 836 public methods, and 1349 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -133,6 +133,7 @@ for.
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
 | [cmfqsar.shells](#cmfqsarshells) | Solvation shells cut from a bulk electrolyte trajectory (plan item BT5). |
+| [cmfqsar.shift](#cmfqsarshift) | Covariate shift: weights that make a training set look like a library, and what to do with them. |
 | [cmfqsar.sitemap](#cmfqsarsitemap) | A spatially resolved prediction: one number per atom, site or region (plan item MS2). |
 | [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
 | [cmfqsar.slab](#cmfqsarslab) | A metal slab as the receptor (plan item EC6). |
@@ -17432,6 +17433,281 @@ in it, so it is a setting rather than a constant.
 ### `block_error(shells: Sequence[Shell], templates: Dict[str, Chem.Mol], fieldset: FieldSet, *, n_blocks: int=5, sample: int=200, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS) -> float`
 
 The block-averaged error of the mean field alone; see `convergence`.
+
+## cmfqsar.shift
+
+Source: `cmfqsar/shift.py`
+
+Covariate shift: weights that make a training set look like a library, and what to do with them.
+
+The two-sample test of `cmfqsar.mmd` says whether a library of molecules comes from the same
+population as the training set.  When it does not, the test gives no remedy.  This module gives
+three, all computed from the kernel matrix the program already has.
+
+**The setting.**  *Covariate shift* means that the molecules of the library are distributed
+differently from the training molecules, while the activity of a given molecule follows the same
+rule in both.  Written with densities: p_lib(x) differs from p_train(x), and p(y | x) is the same.
+The quantity that repairs everything is the *density ratio*
+
+    w(x) = p_lib(x) / p_train(x).
+
+A training molecule with a large w is typical of the library and rare in the training set, so it
+should count more.  Every method below estimates w from kernel values only.
+
+**Two ways to estimate the ratio.**
+
+`kmm`
+    Kernel mean matching (Huang, Smola, Gretton, Borgwardt and Schoelkopf, NIPS 2006).  Choose one
+    weight per training molecule so that the weighted mean of their feature maps is as close as
+    possible to the mean feature map of the library.  The mean feature map is the *kernel mean
+    embedding* of a set; for the linear CMF kernel it is the mean field.  The weights are bounded
+    by `B` and their mean is kept near one.  It gives weights at the training molecules only.
+
+`ulsif`
+    Unconstrained least-squares importance fitting (Kanamori, Hido and Sugiyama, JMLR 10 (2009)
+    1391).  The ratio is written as a sum of kernel functions centred on library molecules,
+    w(x) = sum_l theta_l k(x, c_l), and theta is the least-squares fit of the true ratio, which
+    has a closed form.  It gives a weight at *any* molecule, which is what the weighted conformal
+    interval needs: a weight for the molecule being predicted as well as for the calibration ones.
+
+`klr`
+    A probabilistic classifier (Bickel, Brueckner and Scheffer, JMLR 10 (2009) 2137).  Kernel
+    logistic regression learns p(library | x) from the two sets; by Bayes' rule
+    w(x) = exp(f(x)) n_train / n_library, where f is the latent function.  On the Sutherland sets
+    it recovers a known ratio better than uLSIF (`benchmarks/run_shift.py`), because the
+    logistic loss is not dominated by the few molecules with the largest weights.
+
+Both need a kernel that can tell distributions apart, not only their means.  The linear field
+kernel matches mean fields only; the default is therefore a Gaussian of the field distance,
+k(x, x') = exp(-gamma |f_x - f_x'|^2), where |f_x - f_x'|^2 = K(x, x) + K(x', x') - 2 K(x, x') is
+computed from the CMF kernel itself.  This is the "Gaussian layer" of the model, used here on the
+two sets instead of on the activities.
+
+**What the weights are used for.**
+
+* *Weighted fitting.*  Kernel ridge regression that minimises sum_i w_i (y_i - f(x_i))^2 plus the
+  usual penalty.  It is the same bordered system as Eq. 12 of the 2013 paper with the ridge of
+  molecule i divided by w_i.  Weighted fitting helps only when the model cannot fit the activity
+  everywhere at once; with a flexible kernel it often changes little.  The benchmark measures it.
+* *Weighted conformal intervals* (Tibshirani, Barber, Candes and Ramdas, NeurIPS 2019).  The
+  ordinary conformal quantile treats every calibration error as equally likely to resemble the
+  error of a new molecule.  Under shift, errors of calibration molecules that look like the new
+  molecule are more relevant.  The weighted rule takes the quantile of the calibration errors
+  weighted by w, with an extra point at infinity that carries the weight of the new molecule.
+  With the true ratio the coverage guarantee holds again.  A new molecule far from every
+  calibration molecule gets an infinite interval, which is the correct answer: there is no
+  evidence about its error.
+* *Diagnostics.*  The effective sample size (sum w)^2 / sum w^2 says how many training molecules
+  the weighted set is worth.  The weighted MMD says how much of the shift the weights removed.
+
+### `class KMMResult  (dataclass)`
+
+Attributes:
+
+- `weights: np.ndarray`
+- `mmd2_before: float`
+- `mmd2_after: float`
+- `ess: float`
+- `iterations: int`
+- `bound: float`
+
+#### `KMMResult.describe() -> str`
+
+### `class DensityRatio  (dataclass)`
+
+w(x) = sum_l theta_l exp(-gamma d^2(x, c_l)), fitted by uLSIF.
+
+`evaluate` takes the squared field distances from the molecules to the centres, in the column
+order of `centres` (indices into the library the ratio was fitted on).
+
+Attributes:
+
+- `theta: np.ndarray`
+- `gamma: float`
+- `lam: float`
+- `centres: np.ndarray`
+- `score: float`
+- `grid: Tuple` = `field(default=(), repr=False)`
+
+#### `DensityRatio.evaluate(D2_to_centres: np.ndarray) -> np.ndarray`
+
+#### `DensityRatio.describe() -> str`
+
+### `class ClassifierRatio  (dataclass)`
+
+w(x) = exp(f(x)) n_train / n_library from kernel logistic regression, with cross-fitting.
+
+`w_train` and `w_library` are the out-of-fold values at the molecules the classifier was fitted
+on; `evaluate` gives w at new molecules from the fit on all of them.
+
+Attributes:
+
+- `w_train: np.ndarray`
+- `w_library: np.ndarray`
+- `gamma: float`
+- `gamma_factor: float`
+- `lam: float`
+- `log_loss: float`
+- `at_edge: bool`
+- `prior: float`
+- `coef: np.ndarray` = `field(repr=False, default=None)`
+- `bias: float` = `1.0`
+- `grid: Tuple` = `field(default=(), repr=False)`
+
+#### `ClassifierRatio.evaluate(D2_to_fitted: np.ndarray) -> np.ndarray`
+
+w at new molecules, from their squared field distances to every fitted molecule.
+
+#### `ClassifierRatio.describe() -> str`
+
+### `class WeightedConformal  (dataclass)`
+
+A conformal rule whose calibration errors are weighted by the density ratio.
+
+`weights` are w(x) at the calibration molecules; the weight of each predicted molecule is given
+to `interval`.  `difficulty` and `beta` give the normalised form, as in
+`cmfqsar.conformal.Conformal`.
+
+Attributes:
+
+- `level: float`
+- `residuals: np.ndarray`
+- `weights: np.ndarray`
+- `kind: str` = `'cv'`
+- `difficulty: Optional[np.ndarray]` = `None`
+- `beta: float` = `1.0`
+
+#### `WeightedConformal.scores` -> np.ndarray  (property)
+
+#### `WeightedConformal.ess` -> float  (property)
+
+#### `WeightedConformal.half_width(w_new: Sequence[float], difficulty: Optional[Sequence[float]]=None) -> np.ndarray`
+
+#### `WeightedConformal.interval(y_pred: Sequence[float], w_new: Sequence[float], difficulty: Optional[Sequence[float]]=None) -> Tuple[np.ndarray, np.ndarray]`
+
+#### `WeightedConformal.describe() -> str`
+
+### `distance2(Kxy: np.ndarray, dx: Sequence[float], dy: Sequence[float]) -> np.ndarray`
+
+Squared field distance |f_x - f_y|^2 = K(x, x) + K(y, y) - 2 K(x, y), never negative.
+
+### `median_gamma(D2: np.ndarray) -> float`
+
+1 / median of the positive squared distances: the usual starting width of a Gaussian.
+
+### `gaussian_layer(D2: np.ndarray, gamma: float) -> np.ndarray`
+
+exp(-gamma d^2): a kernel on molecules that compares whole distributions, not only means.
+
+### `effective_size(w: Sequence[float]) -> float`
+
+(sum w)^2 / sum w^2: how many equally weighted molecules the weighted set is worth.
+
+### `weighted_mmd2(K_tr: np.ndarray, K_tr_te: np.ndarray, K_te: np.ndarray, w: Optional[Sequence[float]]=None) -> float`
+
+Squared distance between the w-weighted mean embedding of the training set and the library's.
+
+With w = 1 it is the biased MMD^2 of `cmfqsar.mmd.mmd2`.  The weights are rescaled to a
+mean of one, so only their shape matters.
+
+### `kmm(K_tr: np.ndarray, K_tr_te: np.ndarray, K_te: Optional[np.ndarray]=None, bound: float=10.0, eps: Optional[float]=None, max_iter: int=5000, tol: float=1e-09) -> KMMResult`
+
+Weights on the training molecules whose weighted mean embedding matches the library's.
+
+Solves the quadratic programme of Huang et al. (2006)
+
+    minimise   1/2 b' K b - kappa' b,    kappa_i = (n / m) sum_j K(x_i, x'_j)
+    subject to 0 <= b_i <= bound,  |sum_i b_i - n| <= n eps
+
+by accelerated projected gradient (FISTA), with the exact projection onto the box and the band
+on the sum.  `K_tr` is the n x n kernel of the training molecules, `K_tr_te` the n x m kernel
+between them and the library.  `eps` defaults to (sqrt(n) - 1) / sqrt(n), the value the paper
+recommends.  `K_te` is needed only for the MMD values that are reported.
+
+### `ulsif(D2_tr_te: np.ndarray, D2_te_te: np.ndarray, centres: int=100, gamma_factors: Sequence[float]=(0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0), lams: Sequence[float]=(0.001, 0.01, 0.1, 1.0), folds: int=5, seed: int=0) -> DensityRatio`
+
+Fit w(x) = p_library(x) / p_train(x) from squared field distances.
+
+`D2_tr_te` holds the squared distances from every training molecule to every library molecule,
+`D2_te_te` those among the library molecules.  The centres are at most `centres` library
+molecules chosen at random.  The width gamma (as multiples of the median heuristic) and the
+ridge lambda are chosen by `folds`-fold cross-validation of the uLSIF criterion, with both sets
+split into folds; the criterion is what the fit minimises, so this chooses the setting that
+estimates the ratio best on molecules it did not see.
+
+### `ulsif_crossfit(D2_tr_te: np.ndarray, D2_te_te: np.ndarray, folds: int=5, seed: int=0, centres: int=100, **kwargs) -> Tuple[DensityRatio, np.ndarray, np.ndarray]`
+
+The ratio, and its values at the training and library molecules by cross-fitting.
+
+A library molecule is one of the centres of the fitted ratio, so its own kernel function adds
+to its weight: evaluated at the molecules it was fitted on, the ratio is too large at the
+library molecules and too small at the training ones.  In a weighted conformal interval that
+bias makes the new molecule look heavier than every calibration molecule and gives infinite
+intervals even when there is no shift at all.  Cross-fitting removes it.  Both sets are split
+into `folds` folds; the weights of fold f come from a ratio fitted, with the width and ridge
+chosen once on all molecules, on the other folds only.
+
+Returns (ratio fitted on everything, w at each training molecule, w at each library molecule).
+The first is for molecules that took no part in the fit.
+
+### `classifier_ratio(D2: np.ndarray, is_library: Sequence[bool], gamma_factors: Sequence[float]=(1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2, 1.0, 2.0, 4.0, 8.0), lams: Sequence[float]=(0.001, 0.01, 0.1, 1.0, 10.0), folds: int=5, seed: int=0, bias: float=1.0) -> ClassifierRatio`
+
+Fit w(x) = p_library(x) / p_train(x) by kernel logistic regression on both sets.
+
+`D2` holds the squared field distances among all molecules, training and library together, and
+`is_library` marks the library.  The kernel is exp(-gamma d^2) + `bias`; the constant plays the
+part of an intercept, which the Laplace step of `cmfqsar.gpc.klr_fit` does not have.
+The width (as multiples of the median heuristic) and the ridge are chosen by the
+cross-validated log-loss with folds stratified over the two sets.  The out-of-fold latent
+values at the chosen setting are the cross-fitted weights, so no molecule's weight comes from a
+classifier that saw it.
+
+### `weighted_krr_fit(K: np.ndarray, y: Sequence[float], w: Sequence[float], lam: float, fit_bias: bool=True) -> Tuple[np.ndarray, float]`
+
+Kernel ridge regression minimising sum_i w_i (y_i - f(x_i))^2 + lam |f|^2.
+
+The solution is the bordered system of `cmfqsar.model.krr_fit` with the ridge of molecule
+i equal to lam / w_i, after the weights are rescaled to a mean of one so that lam keeps its
+meaning.  A molecule with weight zero has an infinite ridge, so its coefficient is zero; it is
+removed from the system rather than given a ridge of 1e300.  With all weights equal this is
+exactly `krr_fit`.
+
+### `weighted_cv_predict(K: np.ndarray, y: Sequence[float], w: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True) -> np.ndarray`
+
+Out-of-fold predictions of weighted kernel ridge regression, on the folds of `cv_predict`.
+
+The importance-weighted cross-validation error of Sugiyama, Krauledat and Mueller (JMLR 8
+(2007) 985) is then sum_i w_i (y_i - p_i)^2 / sum_i w_i over these predictions; it is the
+estimate of the error on the library, not on the training set, and is what a ridge for the
+weighted fit should be chosen by.
+
+### `weighted_quantile(scores: Sequence[float], w_cal: Sequence[float], w_new: Sequence[float], level: float) -> np.ndarray`
+
+The weighted conformal quantile of Tibshirani et al. (2019), one per new molecule.
+
+For a new molecule with weight w_new the calibration score i carries the probability
+w_i / (sum_j w_j + w_new) and a point at +infinity carries w_new / (sum_j w_j + w_new).  The
+quantile is the smallest score whose cumulative probability reaches `level`; it is infinite
+when the finite scores together carry less than `level`.  With all weights equal this is the
+ordinary rule ceil((n + 1) level) of `cmfqsar.conformal.Conformal`.
+
+### `shifted_conformal(conformal, K_train: np.ndarray, K_lib_train: np.ndarray, K_lib: np.ndarray, seed: int=0)`
+
+Weight a model's stored calibration by the density ratio of a library to its training set.
+
+`conformal` is the `cmfqsar.conformal.Conformal` a model carries (out-of-fold errors,
+one per training molecule, in training order).  The three kernel blocks are the model's own
+linear kernel: among the training molecules, from the library to them, and among the library
+molecules.  The ratio is the classifier's, cross-fitted, so neither a training molecule nor a
+library molecule is weighted by a classifier that saw it.
+
+Returns (the weighted rule, the ratio, the weight of every library molecule, the difficulty of
+every library molecule or None).  The interval of library molecule j is then
+`rule.interval(y_pred, w_library, difficulty)`.
+
+### `weighted_calibrate(y_true: Sequence[float], y_pred: Sequence[float], weights: Sequence[float], level: float=0.9, difficulty: Optional[Sequence[float]]=None, beta: float=1.0, kind: str='cv') -> WeightedConformal`
+
+Calibrate on out-of-sample predictions, each error weighted by w at its molecule.
 
 ## cmfqsar.sitemap
 

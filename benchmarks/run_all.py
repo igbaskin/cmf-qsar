@@ -1274,6 +1274,12 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_conformal").report(_r("conformal")),
                   tables=["conformal/table.md"]),
+        Benchmark("shift", "covariate shift: do density-ratio weights repair the conformal "
+                  "intervals and the fit when the test molecules differ from the training ones",
+                  "run_shift.py", "shift", compute=[["--repeats", "20"]],
+                  minutes="25",        # measured: 24, of which COX2 and DHFR take 11 each
+                  report=lambda: _mod("run_shift").report(_r("shift")),
+                  tables=["shift/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],
                   minutes="15",

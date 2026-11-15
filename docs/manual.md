@@ -4980,6 +4980,10 @@ both ends and `--out` writes the whole column. On the Sutherland benzodiazepine 
 COX2 one, the witness names nordazepam and delorazepam as the most typical benzodiazepines and the
 COX2 sulphonamides as the least — without being told that there are two targets.
 
+When the test finds a difference, `--weights ratio.csv` writes the density ratio of every
+molecule: how typical of the second set each molecule is, relative to the first. It is what the
+weighted conformal interval uses, below.
+
 ### Is the test any good?
 
 A test is useless unless it is calibrated as well as powerful, and `benchmarks/run_structure.py`
@@ -5070,6 +5074,138 @@ reachable rather than returning its widest error and calling it an interval.
 
 Regression only: conformal classification produces prediction *sets* rather than intervals, and is
 not implemented.
+
+### When the library is unlike the training set: weighted intervals
+
+The guarantee of the conformal interval needs the new molecule and the calibration molecules to
+be exchangeable. A screening library usually breaks that. If it holds more molecules of a kind
+the model finds hard, the errors on the library are larger than the calibration errors, and the
+interval covers less than it promises. The two-sample test above can say that the library is
+different. The weighted interval is what to do about it.
+
+**Covariate shift** is the case where the molecules of the library are distributed differently
+from the training molecules, while the activity of a given molecule follows the same rule in both.
+Everything is then repaired by the **density ratio** $w(x) = p_{library}(x) /
+p_{train}(x)$. A training molecule with a large $w$ is typical of the library and rare in the
+training set. Tibshirani, Barber, Candès and Ramdas (NeurIPS 2019) showed that the conformal
+guarantee holds again if each calibration error is weighted by $w$ at its molecule, and a point at
+infinity carries the weight of the new molecule:
+
+$$
+q(x) = \min \left\{ s :\; \sum_{i:\, s_i \leq s} \frac{w(x_i)}{\sum_j w(x_j) + w(x)} \geq 1 - \alpha \right\} .
+$$
+<!-- #eq:weighted-conformal -->
+
+With all weights equal this is the rule of the previous section. A new molecule that no
+calibration molecule resembles carries so much weight that $q(x)$ is infinite. That answer is
+correct: the training set holds no evidence about the error of such a molecule.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --conformal 0.9 --save model.cmf
+python cmf_cli.py predict model.cmf library.sdf --shift --out predictions.csv
+python cmf_cli.py compare library.sdf --model model.cmf --weights ratio.csv
+```
+
+`--shift` estimates $w$ from the model's own kernel and the library, and prints the weighted
+interval and the weight of every molecule. The CSV gets a `shift_weight` column, and an infinite
+interval is written as empty `lower` and `upper` cells. `compare --weights` writes the ratio of
+every molecule of both sets without fitting anything. The module is `cmfqsar.shift`.
+
+**How the ratio is estimated.** A kernel logistic regression learns to tell library molecules from
+training molecules. By Bayes' rule $w(x) = e^{f(x)} n_{train} / n_{library}$, where
+$f$ is the latent function (Bickel, Brückner and Scheffer, JMLR 2009). The kernel is a Gaussian of
+the field distance, $\exp(-\gamma |f_x - f_{x'}|^2)$, computed from the CMF kernel
+itself. A Gaussian can tell whole distributions apart, while the linear field kernel compares only
+their mean fields. The width and the ridge are chosen by the cross-validated log-loss. Every
+weight is **cross-fitted**: it comes from a classifier fitted without that molecule's fold. A
+weight evaluated on the molecules the ratio was fitted on is too large at the library molecules,
+because each of them adds its own kernel function to its weight. In a first trial on one set,
+before the weights were cross-fitted, that bias gave 21 % infinite intervals with no shift at all.
+
+The module also has two estimators taken from the kernel mean embedding literature. **Kernel mean
+matching** (Huang et al., NIPS 2006) chooses one weight per training molecule so that the weighted
+mean feature map of the training set matches the library's; for the linear CMF kernel that mean
+feature map is the mean field. **uLSIF** (Kanamori, Hido and Sugiyama, JMLR 2009) fits the ratio as
+a sum of kernel functions by least squares. Both were measured and both recover the ratio less
+well than the classifier (below). Kernel mean matching gives no weight for a new molecule, so it
+cannot serve the interval at all.
+
+### What the weights do, measured
+
+`benchmarks/run_shift.py` makes shifted splits of the eight Sutherland sets. Every molecule goes
+to the test part with a probability that depends on its structure only: on its score on the first
+principal component of the field kernel (`pc1`), or on its number of heavy atoms (`size`), with
+strength 1 or 2. Because the choice depends on the structure only, the activity follows the same
+rule in both parts, so this is covariate shift by construction. The true ratio of every split is
+known, which gives an **oracle**: the same rules with the true weights. A control with no shift and
+a hold-out of the 30 % of molecules nearest to one molecule (`neighbours`, no overlap at the edge,
+no oracle) complete the six scenarios. There are 20 splits per set and scenario. The model is kernel
+ridge regression with alpha and lambda chosen on the training part.
+
+Coverage at 90 %:
+
+| scenario | present rule | normalised rule | weighted rule | weighted rule: no finite interval | weighted rule: finite intervals only |
+|---|---:|---:|---:|---:|---:|
+| no shift | 89.7 % | 93.6 % | 90.0 % | 0 % | 90.0 % |
+| pc1, strength 1 | 87.8 % | 92.9 % | 89.7 % | 3 % | 89.4 % |
+| pc1, strength 2 | 86.1 % | 93.0 % | 91.2 % | 15 % | 89.7 % |
+| size, strength 1 | 89.3 % | 93.4 % | 90.9 % | 2 % | 90.7 % |
+| size, strength 2 | 86.3 % | 92.1 % | 90.9 % | 12 % | 89.7 % |
+| neighbours | 81.5 % | 92.5 % | 96.4 % | 78 % | 83.8 % |
+
+Mean width of the finite 90 % intervals, in standard deviations of the activity:
+
+| scenario | present rule | normalised rule | weighted rule |
+|---|---:|---:|---:|
+| no shift | 2.29 | 2.94 | 2.32 |
+| pc1, strength 1 | 2.24 | 2.96 | 2.40 |
+| pc1, strength 2 | 2.23 | 3.29 | 2.43 |
+| size, strength 1 | 2.30 | 3.08 | 2.45 |
+| size, strength 2 | 2.25 | 3.25 | 2.64 |
+| neighbours | 2.31 | 3.73 | 2.17 |
+
+The "present rule" is the out-of-fold interval of the previous section, and the "normalised rule"
+is the same with `--conformal-normalise`. The "weighted rule" is the present rule with its errors
+weighted by the classifier's ratio, which is what `--shift` uses. The whole table, with 80 and 95 %, the split
+calibration, uLSIF and the oracle, is `benchmarks/results/shift/table.md`.
+
+* **A structural shift costs the present rule up to four points** of coverage at 90 %, and eight
+  points on the neighbourhood hold-out.
+* **The weighted interval brings the coverage back** to between 89.7 and 91.2 % under every shift
+  with overlap. On the molecules that get a finite interval it covers 89.4 to 90.7 %. Its finite
+  intervals are 19 to 26 % narrower than the normalised rule's, which also covers but does so by
+  over-covering everywhere, 93.6 % even with no shift. The price is that 2 to 15 % of the
+  molecules get no finite interval.
+* **The implementation checks out against the oracle.** Split calibration weighted by the true
+  ratio, the version with an exact guarantee, covers 92.2 to 95.4 % at 90 % in every oracle
+  scenario.
+* **With no overlap the weights cannot help.** On the neighbourhood hold-out 78 % of the weighted
+  intervals are infinite, and the finite ones cover only 83.8 %. The normalised rule keeps 92.5 %.
+  The effective size of the weights, $(\sum w)^2 / \sum w^2$, separates the two cases: it averaged
+  6 % of the training set on the neighbourhood hold-out and 36 % or more under every other shift.
+  `predict --shift` warns below 10 % and names the normalised rule.
+* **The classifier recovers the ratio best.** Its rank correlation with the true weights is 0.54
+  to 0.82 over the four shifted scenarios with a true ratio, against 0.41 to 0.59 for kernel mean matching and 0.20
+  to 0.60 for uLSIF. uLSIF-weighted intervals under-cover under every shift with overlap. Kernel
+  mean matching
+  reduced the weighted MMD to 37 % of its value even where there was no shift, so it fits the
+  sample, not the distribution.
+
+**Weighting the fit does not help.** Weighted kernel ridge regression minimises
+$\sum_i w_i (y_i - f(x_i))^2$ plus the usual ridge, with the ridge chosen by importance-weighted
+cross-validation (Sugiyama, Krauledat and Müller, JMLR 2007). In the five scenarios with a true
+ratio, its RMSE on the test part differs from the plain fit's by -0.011 to +0.014 with the
+classifier's weights, and by -0.014 to +0.017 with the *true* weights. On the neighbourhood
+hold-out the classifier's weights make it worse by 0.077. Weighting a fit is known to help when the model cannot fit the activity
+everywhere at once; kernel ridge regression can, and the weights only add variance. So `--shift`
+weights the interval and leaves the model as it was fitted.
+
+**What writing it found.** `compare --model` built the kernel among the library molecules with a
+fresh model object, which scales each field by the library's own mean self-overlap. The model
+scales by the training set's. With field scaling on, the default of `build`, the assembled matrix
+mixed two scales: it was not one kernel, and the MMD and the witness were computed from it. All
+three blocks now come from the model's own field kernels and scale; the test feeds the training
+set back as the library and requires the three blocks to be identical.
 
 ### When the scale of the activity is the problem: a warped process
 
