@@ -1,6 +1,6 @@
 {
- "commit": "315233db38bd61f8268bb478a560b625c277686d",
- "created": "2026-11-15T09:50:41",
+ "commit": "99283fd7673c1af9ce5edc3c7ef2cb00d86ee3d4",
+ "created": "2026-11-15T11:15:09",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3051,7 +3051,8 @@
   "benchmarks/results/enantiomers/table.md": "61ffd74a15b2e6065c22c38467de9e2eeca4b8f4910a7043db7ce2022f91bc59",
   "benchmarks/results/ensembles/file.json": "50a689d46808ac45be598f4f00fdfca0df471f90a409004c5710b9be7c932711",
   "benchmarks/results/ensembles/gate.json": "2e46820ab37faeb0783e04b98465df9ad1c7679803cff1b8ec7e8242f11f19a7",
-  "benchmarks/results/ensembles/table.md": "18219747100b13de972ef06c41feb5e41d9887891c90caab192d0e98424e44eb",
+  "benchmarks/results/ensembles/members.json": "d98754d2a78999ab9c435a57359d01eedd0f8f30f299a1bcf257225565e06909",
+  "benchmarks/results/ensembles/table.md": "959b208402ed1b54e112cf2f514739a6aa3db12649a0b154b3916de9c45960e7",
   "benchmarks/results/errorpred/ACE.json": "8f8bed378f2c755499083b93071295110de02aa97493ca9f0188827fa5b5a425",
   "benchmarks/results/errorpred/AChE.json": "b868fb0c20ef82c84a44d76308630f570f0f6ae473f6d34fad7bc12090254ed4",
   "benchmarks/results/errorpred/BZR.json": "2b265ac6a5b1fcccd8747292918a4041ef4ea63c76d9b25b9c9a1e555a4412e3",
