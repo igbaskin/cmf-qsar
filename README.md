@@ -4949,6 +4949,26 @@ charge. An ion removed entirely cannot be predicted: magnesium is refused by con
 the mean of an endpoint is a linear function of the charge and two monovalent ions do not
 determine it at +2.
 
+**The oxygens at the ion as a reference (added 15 November 2026).** The counts above are read off
+the formula. A stronger reference reads the complex: the number of oxygens within 2.5 Å of the ion
+(the gap between the first shell, at 1.8 to 2.4 Å, and the rest), their mean distance, and the sum
+of 1/d over the oxygens within 3.5 Å, beside the three counts (`run_ether.py --stage contacts`, 14
+minutes). They are read at the relaxed ion, which no field model sees, and at the deepest point of
+the lithium probe field, which uses the molecule alone; the number of contacts agrees at the two
+places for 89 % of the molecules. Each is fitted with a linear kernel and with a Gaussian kernel
+whose width is chosen inside each fold. The contacts beat the counts: on lithium with random folds
+the Gaussian contact model gives 0.177 eV against 0.296 for the counts (0.240 for the counts with a
+Gaussian kernel). They do not reach the fields. The closest contact model is behind the fields by
+0.043 to 0.126 eV over the three ions and both fold designs, and every interval excludes zero
+(lithium, random folds: +0.052 [+0.042, +0.062]). So the fields read more than how many oxygens
+touch the ion and how far they are. With one oxygen count held out, a Gaussian kernel on these few
+columns extrapolates badly (the counts give 0.433 eV with it against 0.284 with the linear kernel),
+so there the linear contact model is the fair reference: 0.206 eV against 0.186 for the fields on
+lithium, +0.076 [+0.063, +0.087] paired.
+
+The fourteenth tutorial, `docs/tutorials/14_an_ion_and_its_solvent.ipynb`, finds the ion with the
+probe, computes the contacts, and reads these fits and the selectivity from the stored results.
+
 ### The ion with its shell: a solvation complex
 
 For an electrolyte the object that carries the property is the complex, not the solvent molecule.
@@ -6634,8 +6654,8 @@ for.
 
 ### Tutorials
 
-Eighteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the seventeenth reads the prepared set of the hop benchmark, and the eighteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Nineteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth reads the prepared set of the hop benchmark, and the nineteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6653,11 +6673,12 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `11_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
 | `12_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
 | `13_an_ensemble_of_structures.ipynb` | a sample made of several structures: 62 electrolytes, each described by the solvation shells of one simulation, read from one file with weights, the exact equality of the mean field with the mean of the shell kernels, the numbers of item BT5 from the general entry, and what the ensemble is worth against one shell and against equal weights |
-| `14_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `15_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `16_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `17_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `18_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `14_an_ion_and_its_solvent.ipynb` | a cation in an ether: 1,050 ethers with the binding energy of three ions, an ion probe field that finds the ion with no model, fields and probe against counts read from the formula, the oxygens that touch the ion as a stronger reference, and a selectivity that nothing predicts well |
+| `15_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
+| `16_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `17_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `18_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `19_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7106,7 +7127,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         eighteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         nineteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

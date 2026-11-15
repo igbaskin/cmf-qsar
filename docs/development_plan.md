@@ -4424,6 +4424,22 @@ for anything molecular.
   database is licensed), so that half of the item stays with SC5, which needs the same data and
   the cavity frame; and the targets here are gas-phase one-to-one complexes, not solvation free
   energies.
+  **The oxygens at the ion as a reference, added 15 November 2026,** while the fourteenth tutorial was written.
+  The counts above are read off the formula. A stronger reference reads the complex: the number of
+  oxygens within 2.5 Å of the ion (the gap between the first shell, at 1.8 to 2.4 Å, and the rest),
+  their mean distance, and the sum of 1/d over the oxygens within 3.5 Å, beside the three counts
+  (`run_ether.py --stage contacts`, 14 minutes). They are read at the relaxed ion, which no field
+  model sees, and at the deepest point of the lithium probe field, which uses the molecule alone; the
+  number of contacts agrees at the two places for 89 % of the molecules. Each is fitted with a linear
+  kernel and with a Gaussian kernel whose width is chosen inside each fold. The contacts beat the
+  counts: on lithium with random folds the Gaussian contact model gives 0.177 eV against 0.296 for the
+  counts (0.240 for the counts with a Gaussian kernel). They do not reach the fields. The closest
+  contact model is behind the fields by 0.043 to 0.126 eV over the three ions and both fold designs,
+  and every interval excludes zero (lithium, random folds: +0.052 [+0.042, +0.062]). So the fields
+  read more than how many oxygens touch the ion and how far they are. With one oxygen count held out,
+  a Gaussian kernel on these few columns extrapolates badly (the counts give 0.433 eV with it against
+  0.284 with the linear kernel), so there the linear contact model is the fair reference: 0.206 eV
+  against 0.186 for the fields on lithium, +0.076 [+0.063, +0.087] paired.
 
 **Large (a month or more each)**
 
@@ -8263,7 +8279,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the eighteenth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the nineteenth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

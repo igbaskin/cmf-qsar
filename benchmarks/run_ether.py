@@ -42,6 +42,16 @@ ions as three endpoints of one kernel, their covariance taken from descriptors o
 (radius, charge, polarisability), and each ion in turn removed **entirely** and predicted from
 the other two.
 
+**4. The oxygens that touch the ion** (``--stage contacts``, added 15 November 2026).  The counts
+of stage 2 are read off the formula. A stronger reference reads the complex: how many oxygens sit
+within 2.5 A of the ion (the gap between the first shell, 1.8 to 2.4 A, and the rest), how far
+they are on average, and the sum of 1/d over the oxygens within 3.5 A. Two places for the ion:
+the relaxed position the data carry, which no field model sees, and the deepest point of the
+lithium probe field, which uses nothing but the molecule. Each is fitted with a linear kernel and
+with a Gaussian kernel whose width is chosen inside each fold, beside the counts with a Gaussian
+kernel, so that the references get the nonlinear fit the fields have. The fields, the probe and
+the counts are read from the stored stage 2 on the same folds, so every difference is paired.
+
 What the frame is, and what it costs
 ------------------------------------
 There is none.  A glyme has no scaffold to superimpose, so every kernel here is the
@@ -53,6 +63,7 @@ Usage
 -----
     python benchmarks/run_ether.py                      # every stage, then the table
     python benchmarks/run_ether.py --stage probe
+    python benchmarks/run_ether.py --stage contacts     # after bind: the oxygens at the ion
     python benchmarks/run_ether.py --stage bind --limit 200
     python benchmarks/run_ether.py --report
 """
@@ -599,6 +610,150 @@ def select_stage(mols, names, rows, feats):
 # ----------------------------------------------------------------------------------- the report
 
 
+# --------------------------------------------------------------- stage 4: the oxygens at the ion
+
+#: an oxygen within this distance of the ion touches it: the gap between the first shell (1.8 to
+#: 2.4 A) and the rest of the oxygens, read from the distances and not from the energies
+CONTACT_CUT = 2.5
+#: the oxygens within this distance enter the sum of 1/d
+CONTACT_REACH = 3.5
+GAMMAS = (0.03, 0.1, 0.3, 1.0, 3.0)
+CONTACT_MODELS = ("counts, Gaussian", "contacts at the relaxed ion", "contacts at the relaxed ion, Gaussian",
+                  "contacts at the probe minimum, Gaussian")
+
+
+def contact_features(mol, ion):
+    """How many oxygens touch the ion, how far they are on average (the nearest oxygen when none
+    touches it), and the sum of 1/d over the oxygens within reach."""
+    pos = mol.GetConformer().GetPositions()
+    d = np.array([np.linalg.norm(pos[a.GetIdx()] - ion) for a in mol.GetAtoms() if a.GetSymbol() == "O"])
+    touch = d < CONTACT_CUT
+    mean_d = float(d[touch].mean()) if touch.any() else float(d.min())
+    return [float(touch.sum()), mean_d, float(np.sum(1.0 / d[d < CONTACT_REACH]))]
+
+
+def gaussian_kernel_of(A, B, gamma):
+    d2 = ((B[:, None, :] - A[None, :, :]) ** 2).sum(-1)
+    return np.exp(-gamma / A.shape[1] * d2)
+
+
+def gaussian_nested(X, y, folds, label=""):
+    """Out-of-fold predictions of a Gaussian kernel on a few standardised columns, the width and
+    the ridge chosen inside each fold as for every other model of this script."""
+    pred = np.full(len(y), np.nan)
+    per_fold = []
+    t0 = time.time()
+    for k, (tr, te) in enumerate(folds):
+        A = standardise(X[tr])
+        B = standardise(X[tr], X[te])
+        best = None
+        for g in GAMMAS:
+            K_tr = gaussian_kernel_of(A, A, g)
+            for lam in LAMS:
+                p = cv_predict(K_tr, y[tr], "krr", {"lam": lam}, folds=INNER, seed=SEED)
+                err = rmse(y[tr], p)
+                if best is None or err < best[0]:
+                    best = (err, g, lam)
+        _err, g, lam = best
+        learner = _Learner("krr", {"lam": lam}, True).fit(gaussian_kernel_of(A, A, g), y[tr])
+        pred[te] = learner.predict(gaussian_kernel_of(A, B, g))
+        per_fold.append({"fold": k, "gamma": g, "lam": lam, "n_test": int(len(te)),
+                         "mae": float(np.mean(np.abs(pred[te] - y[te])))})
+    maes = np.array([f["mae"] for f in per_fold])
+    rec = {"n": int(len(y)), "mae_mean": float(maes.mean()), "mae_sd": float(maes.std(ddof=0)),
+           "r2_pooled": float(r2_score(y, pred)), "per_fold": per_fold, "elapsed_s": time.time() - t0,
+           "abs_errors": [float(v) for v in np.abs(pred - y)]}
+    print(f"    {label}MAE {rec['mae_mean']:.3f} +/- {rec['mae_sd']:.3f} eV, R2 {rec['r2_pooled']:+.3f} "
+          f"({rec['elapsed_s']:.0f} s)", flush=True)
+    return rec
+
+
+def contacts_stage(mols, names, rows, bind):
+    """The contact description at two places of the ion, against the stored models of stage 2."""
+    t0 = time.time()
+    points = []
+    for i, (m, n) in enumerate(zip(mols, names)):
+        points.append(deepest_point(m, n, "lithium")[0])
+        if (i + 1) % 200 == 0:
+            print(f"    probe minima {i + 1}/{len(mols)} ({time.time() - t0:.0f} s)", flush=True)
+    relaxed = np.array([contact_features(m, ion_position(r)) for m, r in zip(mols, rows)])
+    at_probe = np.array([contact_features(m, p) for m, p in zip(mols, points)])
+    counts, _none = count_features(mols, rows, with_homo=False)
+    o_count = np.array([float(r["o_count"]) for r in rows])
+    out = {"cut": CONTACT_CUT, "reach": CONTACT_REACH, "gammas": list(GAMMAS),
+           "models": list(CONTACT_MODELS), "names": list(names),
+           "probe_points": [[float(v) for v in p] for p in points],
+           "contacts_relaxed": relaxed.tolist(), "contacts_probe": at_probe.tolist(),
+           "agreement": {"same_count": float(np.mean(relaxed[:, 0] == at_probe[:, 0])),
+                         "no_contact_relaxed": int(np.sum(relaxed[:, 0] == 0)),
+                         "no_contact_probe": int(np.sum(at_probe[:, 0] == 0))},
+           "ions": {}}
+    print(f"  contact counts agree at the relaxed ion and at the probe minimum for "
+          f"{out['agreement']['same_count']:.0%} of the molecules", flush=True)
+    for ion in ION_ORDER:
+        probe_name, prop, label = IONS[ion]
+        y_all = target(rows, prop)
+        ok = np.where(np.isfinite(y_all))[0]
+        y = y_all[ok]
+        designs = {"random": random_folds(len(ok)),
+                   "one oxygen count held out": grouped_folds(o_count[ok])}
+        rec = {"n": int(len(ok)), "designs": {}}
+        for design, folds in designs.items():
+            print(f"  {label}, {design}", flush=True)
+            got = {"counts, Gaussian": gaussian_nested(counts[ok], y, folds, "counts, Gaussian      "),
+                   "contacts at the relaxed ion": nested("counts", {}, (), y, folds,
+                                                         np.column_stack([counts, relaxed])[ok],
+                                                         label="contacts, linear "),
+                   "contacts at the relaxed ion, Gaussian": gaussian_nested(
+                       np.column_stack([counts, relaxed])[ok], y, folds, "contacts, Gaussian    "),
+                   "contacts at the probe minimum, Gaussian": gaussian_nested(
+                       np.column_stack([counts, at_probe])[ok], y, folds, "at the probe, Gaussian")}
+            stored = bind["ions"][ion]["designs"][design]["models"]
+            pairs = {}
+            for a in CONTACT_MODELS:
+                for b in ("counts", "fields", "probe", "fields+probe"):
+                    # negative: the first model has the smaller error
+                    pairs[f"{a} minus {b}"] = paired_interval(got[a]["abs_errors"], stored[b]["abs_errors"])
+            rec["designs"][design] = {"models": got, "paired": pairs,
+                                      "stored": {b: {"mae_mean": stored[b]["mae_mean"],
+                                                     "r2_pooled": stored[b]["r2_pooled"]}
+                                                 for b in ("counts", "fields", "probe", "fields+probe")}}
+        out["ions"][ion] = rec
+    out["elapsed_s"] = time.time() - t0
+    return out
+
+
+def contacts_section(c):
+    """Lines of the table for stage 4."""
+    a = c["agreement"]
+    out = ["## The oxygens at the ion as a reference", "",
+           f"Contacts: the oxygens within {c['cut']} A of the ion, their mean distance (the nearest oxygen "
+           f"when none is that close) and the sum of 1/d over the oxygens within {c['reach']} A, beside "
+           "the three counts of stage 2. At the relaxed ion the description reads the position the data "
+           "carry, which no field model sees; at the probe minimum it reads the deepest point of the "
+           "lithium probe field and nothing else. The number of contacts is the same at the two places "
+           f"for {a['same_count']:.0%} of the molecules. The Gaussian kernels choose their width inside each "
+           "fold. The fields, the probe and the counts are the stored models of stage 2 on the same folds.", ""]
+    for ion in ION_ORDER:
+        rec = c["ions"][ion]
+        for design, d in rec["designs"].items():
+            out += [f"### {IONS[ion][2]}, {design} ({rec['n']} molecules)", "",
+                    "| Model | MAE (eV) | R2 |", "|---|---|---|"]
+            for b in ("counts", "fields", "probe", "fields+probe"):
+                s = d["stored"][b]
+                out.append(f"| {b} (stage 2) | {s['mae_mean']:.3f} | {s['r2_pooled']:+.3f} |")
+            for m in c["models"]:
+                out.append(_row(m, d["models"][m]))
+            out.append("")
+            for m in ("contacts at the relaxed ion, Gaussian", "contacts at the probe minimum, Gaussian"):
+                for b in ("counts", "fields", "probe"):
+                    iv = d["paired"][f"{m} minus {b}"]
+                    out.append(f"* {m} minus {b}: {iv['mean']:+.3f} eV [{iv['low']:+.3f}, {iv['high']:+.3f}]"
+                               f"{', excludes zero' if iv['excludes_zero'] else ', includes zero'}.")
+            out.append("")
+    return out
+
+
 def _row(name, rec):
     return (f"| {name} | {rec['mae_mean']:.3f} +/- {rec['mae_sd']:.3f} | "
             f"{rec['r2_pooled']:+.3f} |")
@@ -709,6 +864,9 @@ def write_table(path=None):
                 why = str(h["refused"]).rstrip(".")
                 out += ["", f"{IONS[ion][2]} is refused: {why}."]
         out.append("")
+    contacts_json = os.path.join(path, "contacts.json")
+    if os.path.exists(contacts_json):
+        out += contacts_section(json.load(open(contacts_json, encoding="utf-8")))
     text = "\n".join(out) + "\n"
     os.makedirs(path, exist_ok=True)
     with open(os.path.join(path, "table.md"), "w", encoding="utf-8", newline="\n") as fh:
@@ -718,7 +876,7 @@ def write_table(path=None):
 
 def main():
     ap = argparse.ArgumentParser(description="A cation probe on ether binding energies (EC7).")
-    ap.add_argument("--stage", choices=("probe", "bind", "select", "all"), default="all")
+    ap.add_argument("--stage", choices=("probe", "bind", "select", "contacts", "all"), default="all")
     ap.add_argument("--limit", type=int, default=0,
                     help="use only this many molecules, for a quick check")
     ap.add_argument("--report", action="store_true", help="only rebuild the table")
@@ -732,6 +890,17 @@ def main():
     mols, names, rows = load(args.limit)
     print(f"{len(mols)} molecules from {relative_path(SDF, ROOT)}", flush=True)
     stages = ("probe", "bind", "select") if args.stage == "all" else (args.stage,)
+
+    if args.stage == "contacts":
+        bind_json = os.path.join(RESULTS, "bind.json")
+        if not os.path.exists(bind_json):
+            raise SystemExit("stage contacts reads the stored stage bind; run --stage bind first")
+        print("stage contacts: the oxygens at the ion as a reference", flush=True)
+        out = contacts_stage(mols, names, rows, json.load(open(bind_json, encoding="utf-8")))
+        json.dump(out, open(os.path.join(RESULTS, "contacts.json"), "w", encoding="utf-8"), indent=1)
+        write_table()
+        print(f"wrote {os.path.join(RESULTS, 'table.md')}")
+        return 0
 
     feats = None
     if "bind" in stages or "select" in stages:

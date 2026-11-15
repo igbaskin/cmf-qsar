@@ -8909,7 +8909,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a q�
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The sixteenth tutorial, `docs/tutorials/16_on_a_surface.ipynb`, makes
+this program adds to it yet. The seventeenth tutorial, `docs/tutorials/17_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11897,7 +11897,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The fourteenth tutorial, `docs/tutorials/14_a_spectrum_as_the_sample.ipynb`, runs the central part
+The fifteenth tutorial, `docs/tutorials/15_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12658,7 +12658,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The fifteenth tutorial, `docs/tutorials/15_a_mixture.ipynb`, runs the case of the computed
+The sixteenth tutorial, `docs/tutorials/16_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13330,7 +13330,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The seventeenth tutorial, `docs/tutorials/17_a_hop_in_a_crystal.ipynb`, runs the references and the
+The eighteenth tutorial, `docs/tutorials/18_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -15031,6 +15031,26 @@ surrounded by four or five molecules. And the published model of this set is a n
 potential trained by active learning, which is a different object from a kernel on a field: the
 comparison made here is against the formula and against the electrostatic field, not against it.
 
+**The oxygens at the ion as a reference (added 15 November 2026).** The counts above are read off
+the formula. A stronger reference reads the complex: the number of oxygens within 2.5 Å of the ion
+(the gap between the first shell, at 1.8 to 2.4 Å, and the rest), their mean distance, and the sum
+of 1/d over the oxygens within 3.5 Å, beside the three counts (`run_ether.py --stage contacts`, 14
+minutes). They are read at the relaxed ion, which no field model sees, and at the deepest point of
+the lithium probe field, which uses the molecule alone; the number of contacts agrees at the two
+places for 89 % of the molecules. Each is fitted with a linear kernel and with a Gaussian kernel
+whose width is chosen inside each fold. The contacts beat the counts: on lithium with random folds
+the Gaussian contact model gives 0.177 eV against 0.296 for the counts (0.240 for the counts with a
+Gaussian kernel). They do not reach the fields. The closest contact model is behind the fields by
+0.043 to 0.126 eV over the three ions and both fold designs, and every interval excludes zero
+(lithium, random folds: +0.052 [+0.042, +0.062]). So the fields read more than how many oxygens
+touch the ion and how far they are. With one oxygen count held out, a Gaussian kernel on these few
+columns extrapolates badly (the counts give 0.433 eV with it against 0.284 with the linear kernel),
+so there the linear contact model is the fair reference: 0.206 eV against 0.186 for the fields on
+lithium, +0.076 [+0.063, +0.087] paired.
+
+The fourteenth tutorial, `docs/tutorials/14_an_ion_and_its_solvent.ipynb`, finds the ion with the
+probe, computes the contacts, and reads these fits and the selectivity from the stored results.
+
 ## The ion with its shell as the molecule: a solvation complex
 
 The section above models the solvent molecule. For almost every property of an electrolyte the
@@ -16272,7 +16292,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The eighteenth tutorial, `docs/tutorials/18_point_mutants.ipynb`, builds one
+among its references. The nineteenth tutorial, `docs/tutorials/19_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -16808,7 +16828,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Eighteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Nineteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -16817,7 +16837,7 @@ ring and compared with the charge of one ring carbon, a series of chiral catalys
 frame of their reaction centre, with the enantioselectivity as the activity, the yields of
 coupling reactions that combine four molecules, compared with the names of their parts, the redox
 potentials of metal complexes, read with fields and compared with the composition of the
-complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the solvation shells of an electrolyte as one sample with weights, compared with one shell and with the composition, the infrared spectra of benzoic acids as the samples, read with the kernel of
+complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the solvation shells of an electrolyte as one sample with weights, compared with one shell and with the composition, the binding of a cation to an ether, read with an ion probe field and compared with the oxygens that touch the ion, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
