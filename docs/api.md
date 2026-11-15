@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 128 modules, 251 classes with 824 public methods, and 1325 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 129 modules, 252 classes with 826 public methods, and 1335 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -78,6 +78,7 @@ for.
 | [cmfqsar.flexalign](#cmfqsarflexalign) | Flexible alignment by confidence: the rigid-body search of 2019, with the torsions. |
 | [cmfqsar.fluctuation](#cmfqsarfluctuation) | The variance of a field across the frames of an ensemble (plan item D10). |
 | [cmfqsar.fraggrow](#cmfqsarfraggrow) | Growing a bound fragment into the gap the pocket leaves (plan item MC7). |
+| [cmfqsar.frameworks](#cmfqsarframeworks) | Rigid porous hosts as pockets: zeolites, MOFs and other frameworks read from CIF (plan item M7). |
 | [cmfqsar.fusion](#cmfqsarfusion) | Data fusion: one score from the similarities to several known actives. |
 | [cmfqsar.gntk](#cmfqsargntk) | The graph neural tangent kernel of the bond graph, as a kernel view (plan item ND7). |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
@@ -6470,6 +6471,165 @@ Every group of the library placed on one vector, best first.
 ### `rank_of(candidates: Sequence[Candidate], smiles: str) -> Optional[int]`
 
 Where one group came in the enumeration, counting from one.
+
+## cmfqsar.frameworks
+
+Source: `cmfqsar/frameworks.py`
+
+Rigid porous hosts as pockets: zeolites, MOFs and other frameworks read from CIF (plan item M7).
+
+`cmfqsar.protein` and `cmfqsar.complementarity` treat a protein, or a finite host such as a
+cyclodextrin, as a pocket: a finite set of atoms whose fields are built with the same
+parameters as the guests, so that complementarity, the interaction profile and the rigid-body
+placement of `cmfqsar.docking` all work on it. A framework differs in two ways. It repeats, so the
+atoms around a pore come from several periodic images of the cell. And it has no residues, so a
+profile resolved by residue has nothing to resolve by.
+
+This module removes both differences and changes nothing else:
+
+* `find_pores` maps the free distance -- the distance from a point to the nearest atom's
+  surface -- over the cell, with every periodic image counted, and returns its local maxima as
+  pores: a centre (the middle of a cage, or the widest point of a channel), a radius (the
+  largest sphere that fits there) and an axis (the longest direction of the free space around
+  the centre). The centre and the axis are the pore-centred frame a guest is posed in, as
+  `cavity_frame` gives it for a macrocycle.
+* `framework_pocket` cuts the atoms of every image within a radius of a point into a finite
+  `cmfqsar.protein.Protein`. The atoms of the image that holds the point come first and in
+  the order of the structure, so for a host that is one molecule in a large box the pocket is the
+  host itself, atom for atom. Its "residues" are framework atom types (`atom_types`: the
+  element and the number of bonded neighbours, so a bridging oxygen and a terminal one differ), or
+  the units a caller gives, so every per-residue table of the pocket code becomes a table per
+  atom type.
+* `framework_pocket_fields` builds the pocket's fields with the guests' field set. The
+  charges of an inorganic framework come from `cmfqsar.periodic.crystal_charges` on the
+  periodic structure (formal oxidation states, or electronegativity differences), not from a
+  molecular charge scheme that has no parameters for silicon or zinc in a framework.
+
+The rest is the ligand path: `complementarity`, `interaction_profile`, `dock_coords` and
+`series_scores` take the pocket as they take a protein pocket.
+
+The limit the plan asks for: a cyclodextrin alone in a cubic box is a framework whose images are
+far apart. Once the box is larger than the host plus the radius of the cut, the pocket is the
+finite host atom for atom and every score is the finite host's score;
+`benchmarks/run_frameworks.py` measures where that happens and what the images do before it.
+
+### `class Pore  (dataclass)`
+
+A local maximum of the free distance: where a guest goes, and which way the pore runs.
+
+The centre is the middle of a cage or the widest point of a channel, and the radius is the
+largest sphere that fits there. The axis is the longest direction of the free space around
+the centre, and `anisotropy` (the longest spread of that space over its shortest) tells a
+channel from a cage.
+
+Attributes:
+
+- `centre: np.ndarray`
+- `radius: float`
+- `axis: np.ndarray`
+- `anisotropy: float` = `1.0`
+- `fractional: np.ndarray` = `field(default_factory=lambda: np.zeros(3))`
+
+#### `Pore.diameter` -> float  (property)
+
+#### `Pore.kind` -> str  (property)
+
+`channel` when the free space is at least twice as long one way, else `cage`.
+
+### `read_framework(path: str, index: int=0)`
+
+A framework structure from a CIF (or any file ASE reads), as an ASE `Atoms`.
+
+Only an ordered structure is accepted: a pore needs every atom at one place, and a site
+shared by two species has no single radius or charge.
+
+### `boxed_host(positions: np.ndarray, symbols: Sequence[str], box: float)`
+
+A finite host in a cubic box of side `box`, at its own coordinates (no shift, no wrap).
+
+Keeping the coordinates means the image that holds the host is the host itself, number for
+number, which is what makes the large-box limit exact rather than close.
+
+### `periodic_bonds(atoms, tolerance: float=BOND_TOLERANCE) -> List[Tuple[int, int, Tuple]]`
+
+Every bond of the periodic structure as (i, j, image of j), from covalent radii.
+
+A bond is two covalent radii plus `tolerance`, the rule the PDB reader of the pocket code
+uses. Hydrogen-hydrogen pairs are never bonds.
+
+### `atom_types(atoms, tolerance: float=BOND_TOLERANCE) -> List[str]`
+
+A framework atom type for every atom: the element and its number of bonded neighbours.
+
+`O2` is an oxygen with two neighbours (the bridging oxygen of a zeolite), `Si4` a
+tetrahedral silicon, `Zn4` a zinc with four, `C3` a carbon with three. The number counts
+neighbours across the cell boundary, so it is a property of the framework and not of the cell
+the file happened to use.
+
+### `free_distance(atoms, points: np.ndarray, radii: Optional[Dict[str, float]]=None, neighbours: int=12) -> np.ndarray`
+
+Distance from each point to the nearest atom's van der Waals surface, every image counted.
+
+Negative inside an atom. `radii` overrides the radii of `VDW` by element; a radius of
+zero puts the surface at the nucleus, and an element given a negative radius is left out
+(for a zeolite, whose silicon sits inside a tetrahedron of oxygens, the oxygens alone define
+the pores, which is how pore sizes of zeolites are usually quoted).
+
+### `find_pores(atoms, spacing: float=0.3, min_radius: float=1.0, axis_reach: float=6.0, probe: float=1.0, radii: Optional[Dict[str, float]]=None, merge: float=1.0) -> List[Pore]`
+
+The pores of a framework: the local maxima of the free distance over one cell.
+
+The free distance (`free_distance`) is evaluated on a grid over the cell. A grid point
+is a maximum when none of its 26 neighbours (across the cell boundary as well) is larger;
+each maximum is then refined by a local maximisation of the exact function. A maximum
+smaller than `min_radius` is a gap between atoms, not a pore, and maxima closer than `merge`
+angstrom, counting periodic images, are one pore. The axis is the longest principal
+direction of the free space within `axis_reach` of the centre (the points whose free
+distance exceeds `probe`). Returned largest first.
+
+A macrocycle such as a cyclodextrin has no maximum in its cavity when it stands alone: the
+cavity opens on both sides, so the free distance keeps growing along its axis. Its frame
+comes from its units (`cmfqsar.protein.cavity_frame`), not from here.
+
+### `nearest_pore(pores: Sequence[Pore], point: np.ndarray, atoms) -> Pore`
+
+The pore whose centre, in any periodic image, is nearest `point`.
+
+### `framework_pocket(atoms, centre: np.ndarray, radius: float=12.0, units: Optional[Sequence[int]]=None, unit_name: str=FRAMEWORK_RESNAME, types: Optional[Sequence[str]]=None, name: str='', whole_molecules: bool=False) -> Protein`
+
+Every atom of every image within `radius` of `centre`, as a finite pocket.
+
+The atoms of the image nearest the centre come first and in the order of the structure; the
+other images follow in order of distance. The "residues" are the framework atom types of
+`atom_types` (or `types`): every type is one residue, named `FWK1`, `FWK2`, ...,
+and `pocket.type_names` maps the residue number back to the type, so a per-residue profile
+is a profile per atom type. With `units` (an integer per atom, such as the sugars of a
+cyclodextrin) the residues are those units instead, named as a molecule file names them. An
+atom keeps its index in the structure as `source_index` and its image as `source_image`.
+
+`whole_molecules` keeps every atom of a molecule that has any atom inside the radius, with
+the molecule unwrapped across the cell boundary. That is right for a crystal of discrete
+molecules and impossible for a covalent framework, whose one molecule is infinite, so it is
+refused there.
+
+### `framework_pocket_fields(pocket: Protein, fieldset, atoms=None, charges: str='gasteiger', add_hydrogens: bool=False)`
+
+The pocket's fields with the guests' field set, and charges that suit the framework.
+
+`charges` is `"gasteiger"` for an organic host (the guests' own scheme, through the
+pocket path of `cmfqsar.complementarity`), or `"oxidation"`, `"electronegativity"`,
+`"dft"` or `"file"` for an inorganic framework, in which case the charges of
+`cmfqsar.periodic.crystal_charges` on `atoms` are put on the pocket atoms they came
+from. Hydrogens are not added by default: a framework file carries the ones it has, and
+hydrogens on the atoms cut at the edge of the pocket would be donors that are not there.
+
+### `type_profile(profile, pocket: Protein) -> Dict[str, Dict[str, float]]`
+
+An interaction profile of the pocket code, keyed by framework atom type.
+
+`profile` is the `cmfqsar.complementarity.InteractionProfile` of a guest against a
+pocket from `framework_pocket`, whose residues are the atom types; this gives them
+their names back. A pocket cut with `units` keeps its unit labels.
 
 ## cmfqsar.fusion
 

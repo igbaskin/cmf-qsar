@@ -117,14 +117,14 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 133 benchmarks and 119.9 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 134 benchmarks and 120.2 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
 needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
 exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
-this program has compared with published numbers on the same labels. The rule gives **78 of the
-133 benchmarks, 19.4 hours in all**, and `reproduce_groups()` splits them into **eight groups of
+this program has compared with published numbers on the same labels. The rule gives **79 of the
+134 benchmarks, 19.7 hours in all**, and `reproduce_groups()` splits them into **eight groups of
 about 2 hours 30 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
 There were seven groups until item MS5 (14 November 2026) added 25 minutes and the largest
 group no longer fitted twice. Its stage `members` (15 November 2026) took `ensembles` to 40

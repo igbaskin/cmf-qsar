@@ -2803,6 +2803,18 @@ driven by the water that leaves the cavity, and an overlap between the guest's f
 host's has no term for the solvent it displaces. The score is a check on a pose — does this
 molecule fit, does it clash — and not an affinity.
 
+### A porous framework as a pocket
+
+Plan item M7 (`cmfqsar/frameworks.py`, `benchmarks/run_frameworks.py`): a zeolite or a MOF read
+from CIF, its pores found as the maxima of the free distance over the cell with every periodic
+image counted, and the images around a pore cut into a finite pocket whose residues are framework
+atom types, so that complementarity, the interaction profile and docking run on it as on a
+protein. The gate was that the cyclodextrin example is reproduced as a limit: each host alone in a
+periodic box gives every guest's score exactly (to 1e-12) once the box is
+21 A or more, and the docked poses of
+117 guests are the same. On three IZA zeolites (LTA, FAU, MFI) the largest sphere that
+fits is reproduced to 0.004 A of the published values with an oxygen radius of 1.32 A.
+
 ### A target that belongs to an atom
 
 A field is built from a property every atom has; a **target** of that shape is a different object,
@@ -7179,6 +7191,7 @@ cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process
 cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
+cmfqsar/frameworks.py   porous frameworks as pockets: pores from the free distance, the periodic images cut into a pocket, profiles by framework atom type
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)
 examples/               synthetic benchmark and its generator
 benchmarks/run_all.py   one entry point: list, compute, rebuild every table, write and check the manifest

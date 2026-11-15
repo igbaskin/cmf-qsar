@@ -16397,6 +16397,96 @@ displaces, and this measurement is the clearest statement of that the repository
 nothing else here has a thousand ligands in one pocket to say it with. Read the score as a check
 on a pose -- does this molecule fit, does it clash -- and not as an affinity.
 
+## A porous framework as a pocket
+
+A zeolite or a metal-organic framework (MOF) is a rigid host, as a cyclodextrin is, but it
+repeats: the atoms around one pore come from several periodic images of the cell, and it has no
+residues to resolve a profile by. Plan item M7 (`cmfqsar/frameworks.py`) removes both
+differences and leaves the rest of the pocket code as it is.
+
+**Pores.** `find_pores` maps the free distance over the cell: the distance from a point to the
+nearest atom's surface, with every periodic image counted. Its local maxima are the pores. Each
+has a centre (the middle of a cage, or the widest point of a channel), a radius (the largest
+sphere that fits there) and an axis (the longest direction of the free space around the centre).
+The centre and the axis are the frame a guest is posed in, as `cavity_frame` gives it for a
+macrocycle. A pore is called a channel when that free space is at least twice as long one way as
+the other ways. `free_distance` takes radii by element, and an element given a negative radius is
+left out, which is how the silicon of a zeolite, inside its tetrahedron of oxygens, is usually
+treated.
+
+**The pocket.** `framework_pocket` cuts every atom of every image within a radius of a point
+(12 A by default) into a finite pocket in the form the pocket code reads. The atoms of the image
+nearest the point come first and in the order of the file, so a host that is one molecule in a
+large box gives a pocket that is the host atom for atom. Its "residues" are framework atom types
+(`atom_types`: the element and the number of bonded neighbours across the cell boundary, so the
+bridging oxygen of a zeolite is `O2` and its silicon `Si4`), and `type_profile` gives the
+interaction profile by those types. `framework_pocket_fields` builds the pocket's fields with the
+guests' field set; for an inorganic framework the charges come from `crystal_charges` on the
+periodic structure, since the guests' charge scheme has no parameters for silicon or zinc in a
+framework. From there `complementarity`, `interaction_profile` and `dock_coords` take the pocket
+as they take a protein. 12 tests, on frameworks built in code: a cubic cage whose radius is known
+exactly, a square channel, a covalent network and a crystal of molecules split by the cell
+boundary.
+
+**The gate: the finite host as the limit** (`benchmarks/run_frameworks.py`). Each cyclodextrin
+of the host table is put alone in a cubic box at its own coordinates, which is a framework whose
+images are one box length apart. The pocket is cut at 12 A from the cavity centre, and every
+guest of the table is posed in the cavity frame of the host's sugars, as in the host benchmark.
+The difference is the largest, over the guests, of the complementarity score through the periodic
+route minus the score against the finite host.
+
+| Host | Atoms | Guests | Image atoms in the pocket and the largest score difference, smallest box | The same in the last box with images inside the cut | Every score the finite host's (to 1e-12) from a box of |
+|---|---:|---:|---|---|---:|
+| alpha | 126 | 827 | 14 in a box of 18 A: 0.0064 | 2 in a box of 19 A: 2.2e-03 | 20 A |
+| beta | 147 | 1162 | 34 in a box of 18 A: 0.0141 | 2 in a box of 20 A: 1.8e-04 | 21 A |
+| gamma | 168 | 292 | 48 in a box of 18 A: 0.0149 | 2 in a box of 20 A: 2.7e-05 | 21 A |
+
+From that box on, every score is the finite host's, which is the gate. The rigid-body placement
+follows: 117 beta-cyclodextrin guests (every tenth) placed by `dock_coords` in a box of
+32 A end in the same poses as in the finite host (largest difference
+0.0 A) with the same scores; in the box of 18 A, where
+images are inside the cut, the scores after placement differ by up to
+0.049. So nothing in the periodic route changes a number
+except the images themselves, and they stop mattering once they are farther than the cut.
+
+The cavity of a cyclodextrin is not a pore in the sense of `find_pores`: alone in a box, it opens
+on both sides, so the free distance keeps growing along its axis and has no maximum inside. Its
+frame comes from its sugars. A ring opening of this kind, the window between two cages of a
+zeolite, is a saddle of the free distance, and finding saddles was tried and is not offered: on a
+cyclodextrin, whose cavity is lined by many hydrogens at nearly the same distance, the saddle
+moved by up to 2 A depending on how the minimum over atoms was smoothed.
+
+**Three real frameworks.** The pore finder on three structures of the IZA Structure Commission
+database (LTA, FAU and MFI, pure silica as the database gives them; fetched by the script, not
+kept in the repository), against the largest sphere that can be included as the database's
+framework pages give it:
+
+| Framework | Atoms | Published, A | Found, oxygen radius 1.32 A | Found, oxygen radius 1.52 A | Next pores found, oxygen radius 1.32 A |
+|---|---:|---:|---:|---:|---|
+| LTA | 72 | 11.05 | 11.051 | 10.651 | 6.24 A cage |
+| FAU | 576 | 11.24 | 11.239 | 10.839 | 5.76 A cage |
+| MFI | 288 | 6.36 | 6.356 | 5.956 | 5.31 A channel; 5.14 A channel |
+
+With an oxygen radius of 1.32 A the three published values are reproduced to 0.004 A; the
+pages do not state the radius they use, and this is the one that reproduces them. With the van der
+Waals radius of oxygen (1.52 A) every sphere is 0.40 A smaller. The second pores are the sodalite
+cages of LTA and FAU and the channels of MFI.
+
+Four small guests (methane, benzene, methanol, carbon dioxide) were then posed at the largest
+pore of each framework, placed by `dock_coords`, scored, and resolved by atom type; the profile
+by type adds up to the complementarity terms exactly. This shows that the ligand path runs on a
+framework; it is not a measurement, since no property was predicted. It also shows a limit of the
+fields as they stand: the largest entry of every profile is the steric overlap with `Si4`, because
+the steric field gives silicon its van der Waals radius as if it were exposed, while in a zeolite
+it sits inside its oxygens.
+
+What is open: a measured property in a framework, which is item NT10 (gas uptake) and item SC8
+(drug loading); windows as a second kind of pore; and field parameters for framework atoms.
+
+```bash
+python benchmarks/run_frameworks.py --stage limit --stage zeolites   # about 17 minutes
+```
+
 ## Docking
 
 *Tools → Dock into the pocket…* places the conformations of a molecule in the site by rigid-body

@@ -3213,6 +3213,24 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   pore-centred frame. Once in, guest uptake and selectivity follow the ligand path, residue
   profiles becoming framework-atom profiles. The cyclodextrin example (`examples/cyclodextrin`)
   is the finite host that the periodic one must reproduce as a limit.
+  **Built and measured 15 November 2026.** `cmfqsar/frameworks.py`: `read_framework`,
+  `boxed_host`, `periodic_bonds`, `atom_types` (element and neighbour count across the boundary),
+  `free_distance` (every image, radii by element, an element left out with a negative radius),
+  `find_pores` (maxima of the free distance, refined, with an axis and a cage or channel label),
+  `framework_pocket` (the images within a radius as a finite pocket, the home image first and in
+  file order; residues are atom types or given units; `whole_molecules` for a crystal of
+  molecules), `framework_pocket_fields` (charges from `crystal_charges` for an inorganic
+  framework) and `type_profile`. 12 tests in `tests/test_frameworks.py`.
+  `benchmarks/run_frameworks.py`. *The gate is met:* each cyclodextrin alone in a cubic box, cut
+  at 12 A from the cavity centre, gives every guest's complementarity score exactly (1e-12) from a
+  box of 20 A (alpha), 21 A (beta) and
+  21 A (gamma), and up to 0.015 different while images are inside the
+  cut; 117 docked beta guests end in the same poses in a 32 A box. On the IZA
+  frameworks LTA, FAU and MFI the largest included sphere is reproduced to 0.004 A with an
+  oxygen radius of 1.32 A. The cavity of a lone macrocycle is a saddle of the free distance, not a
+  maximum, so its frame comes from its units; saddle finding was tried and dropped as unstable.
+  *Open:* windows as a second kind of pore; field parameters for framework atoms (the steric
+  field treats a zeolite's silicon as exposed); a measured property, which is NT10 and SC8.
 * **M8. Molecules inside crystals.** Molecular crystals, co-crystals and MOF linkers want the five
   classical fields for the molecule and the periodic kernel for the packing. The missing piece is
   bond and charge perception for molecules extracted from a periodic cell (connectivity across the
@@ -8966,7 +8984,7 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 15 | 13 | M7, M8 |
+| H. Materials and periodicity | 15 | 14 | M8 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
@@ -8979,7 +8997,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 122 finished, 10 partly, 44 open.**
+**176 items: 123 finished, 10 partly, 43 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9004,7 +9022,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** M7 and M8, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** M8, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

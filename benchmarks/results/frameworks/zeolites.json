@@ -1,0 +1,646 @@
+{
+ "frameworks": [
+  {
+   "atoms": 72,
+   "cell": [
+    11.919,
+    11.919,
+    11.919,
+    90.0,
+    90.0,
+    90.0
+   ],
+   "code": "LTA",
+   "found": {
+    "1.32": {
+     "distinct": [
+      {
+       "anisotropy": 1.0,
+       "diameter": 11.051,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 1.0,
+       "diameter": 6.243,
+       "kind": "cage"
+      }
+     ],
+     "largest": 11.0507081806459,
+     "pores": 2
+    },
+    "1.52": {
+     "distinct": [
+      {
+       "anisotropy": 1.0,
+       "diameter": 10.651,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 1.0,
+       "diameter": 5.843,
+       "kind": "cage"
+      }
+     ],
+     "largest": 10.6507081806459,
+     "pores": 2
+    }
+   },
+   "guests": [
+    {
+     "burial": 0.098185965638521,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.01433362376550016,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.019284185424181595,
+       "hydrophobic": -0.0017412501459526805
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.0838523418730208,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.014089601848118763,
+       "hydrophobic": -0.0030484603988803123
+      }
+     },
+     "clashes": 0,
+     "guest": "methane",
+     "moved": 3.0568553158690412,
+     "profile_sum_error": 0.0,
+     "score": 0.0002024365156149243,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.00519458357606284,
+      "hydrophobic": -0.004789710544832991
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.13666557528897721,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.021005629147039632,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.03257396665039234,
+       "hydrophobic": -0.0037317325450781035
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.1156599461419376,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.024014919236724656,
+       "hydrophobic": -0.006951311811820103
+      }
+     },
+     "clashes": 0,
+     "guest": "benzene",
+     "moved": 3.650829922348639,
+     "profile_sum_error": 0.0,
+     "score": -0.0010619984716152718,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.008559047413667663,
+      "hydrophobic": -0.010683044356898206
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.1040507741666874,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.015621406843438133,
+       "donor to acceptor": 0.03594260455391362,
+       "electrostatic": 0.0024734483894250496,
+       "hydrophobic": 0.006082108435827234
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.08842936732324927,
+       "donor to acceptor": 0.0,
+       "electrostatic": -0.006568387335828628,
+       "hydrophobic": 0.014116724724761815
+      }
+     },
+     "clashes": 0,
+     "guest": "methanol",
+     "moved": 3.1874167025727957,
+     "profile_sum_error": 0.0,
+     "score": 0.017348832922699706,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": 0.03594260455391364,
+      "electrostatic": -0.004094938946403578,
+      "hydrophobic": 0.020198833160589055
+     },
+     "undefined_terms": [
+      "acceptor to donor"
+     ]
+    },
+    {
+     "burial": 0.10470536145677224,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.015696936028649872,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.03169178209732205,
+       "hydrophobic": 0.002364391879201522
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.08900842542812235,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.0285453505428106,
+       "hydrophobic": 0.004981280689794791
+      }
+     },
+     "clashes": 0,
+     "guest": "carbon dioxide",
+     "moved": 3.7014871597368884,
+     "profile_sum_error": 0.0,
+     "score": 0.0020996205072424433,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": -0.003146431554511426,
+      "hydrophobic": 0.007345672568996312
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    }
+   ],
+   "largest_pore": {
+    "diameter": 11.0507081806459,
+    "fractional": [
+     0.5,
+     0.5,
+     0.5
+    ],
+    "kind": "cage"
+   },
+   "pocket_atoms": 336,
+   "published_included": 11.05,
+   "seconds": 1.8,
+   "types": [
+    "O2",
+    "Si4"
+   ]
+  },
+  {
+   "atoms": 576,
+   "cell": [
+    24.345,
+    24.345,
+    24.345,
+    90.0,
+    90.0,
+    90.0
+   ],
+   "code": "FAU",
+   "found": {
+    "1.32": {
+     "distinct": [
+      {
+       "anisotropy": 1.0,
+       "diameter": 11.239,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 1.0,
+       "diameter": 5.759,
+       "kind": "cage"
+      }
+     ],
+     "largest": 11.238688814650866,
+     "pores": 16
+    },
+    "1.52": {
+     "distinct": [
+      {
+       "anisotropy": 1.0,
+       "diameter": 10.839,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 1.0,
+       "diameter": 5.359,
+       "kind": "cage"
+      }
+     ],
+     "largest": 10.838688814650865,
+     "pores": 16
+    }
+   },
+   "guests": [
+    {
+     "burial": 0.07665858153994312,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.011208013364912436,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.017798203492290693,
+       "hydrophobic": -0.001251093794564308
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.06545056817503069,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.01223930630405507,
+       "hydrophobic": -0.0020093663511679964
+      }
+     },
+     "clashes": 0,
+     "guest": "methane",
+     "moved": 3.33878155075202,
+     "profile_sum_error": 0.0,
+     "score": 0.0011492185212516573,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.00555889718823562,
+      "hydrophobic": -0.0032604601457323053
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.10850694690718181,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.01688835763649096,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.05353755559072592,
+       "hydrophobic": -0.004101789624544287
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.09161858927069079,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.04393546143392715,
+       "hydrophobic": -0.008029095160471362
+      }
+     },
+     "clashes": 0,
+     "guest": "benzene",
+     "moved": 3.6981684493309235,
+     "profile_sum_error": 0.0,
+     "score": -0.001264395314108449,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.009602094156798755,
+      "hydrophobic": -0.012130884785015653
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.08187801007409477,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.012285356133727351,
+       "donor to acceptor": 0.026946138318583637,
+       "electrostatic": 0.009491496567959033,
+       "hydrophobic": 0.0041009659389811826
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.06959265394036747,
+       "donor to acceptor": 0.0,
+       "electrostatic": -0.007272860763239495,
+       "hydrophobic": 0.0077868316883889415
+      }
+     },
+     "clashes": 0,
+     "guest": "methanol",
+     "moved": 3.3405480585349707,
+     "profile_sum_error": 0.0,
+     "score": 0.013684190583557763,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": 0.026946138318583626,
+      "electrostatic": 0.0022186358047195376,
+      "hydrophobic": 0.011887797627370127
+     },
+     "undefined_terms": [
+      "acceptor to donor"
+     ]
+    },
+    {
+     "burial": 0.08288611082569439,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.012521889346306506,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.029896323131598505,
+       "hydrophobic": 0.0017019430648699029
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.07036422147938788,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.023678093362625798,
+       "hydrophobic": 0.003155738542154611
+      }
+     },
+     "clashes": 0,
+     "guest": "carbon dioxide",
+     "moved": 3.366569762616788,
+     "profile_sum_error": 0.0,
+     "score": -0.0006802740809740966,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": -0.006218229768972707,
+      "hydrophobic": 0.004857681607024514
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    }
+   ],
+   "largest_pore": {
+    "diameter": 11.238688814650866,
+    "fractional": [
+     0.375000028974967,
+     0.3750000079271733,
+     0.37500002473121913
+    ],
+    "kind": "cage"
+   },
+   "pocket_atoms": 324,
+   "published_included": 11.24,
+   "seconds": 4.6,
+   "types": [
+    "O2",
+    "Si4"
+   ]
+  },
+  {
+   "atoms": 288,
+   "cell": [
+    20.09,
+    19.738,
+    13.142,
+    90.0,
+    90.0,
+    90.0
+   ],
+   "code": "MFI",
+   "found": {
+    "1.32": {
+     "distinct": [
+      {
+       "anisotropy": 1.35,
+       "diameter": 6.356,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 2.92,
+       "diameter": 5.311,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.18,
+       "diameter": 5.143,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.03,
+       "diameter": 4.885,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 1.91,
+       "diameter": 4.849,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 2.71,
+       "diameter": 4.826,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.24,
+       "diameter": 4.702,
+       "kind": "channel"
+      }
+     ],
+     "largest": 6.355645651782359,
+     "pores": 25
+    },
+    "1.52": {
+     "distinct": [
+      {
+       "anisotropy": 1.41,
+       "diameter": 5.956,
+       "kind": "cage"
+      },
+      {
+       "anisotropy": 3.51,
+       "diameter": 4.911,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.33,
+       "diameter": 4.743,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.16,
+       "diameter": 4.485,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 3.0,
+       "diameter": 4.426,
+       "kind": "channel"
+      },
+      {
+       "anisotropy": 2.57,
+       "diameter": 4.302,
+       "kind": "channel"
+      }
+     ],
+     "largest": 5.955645651782359,
+     "pores": 25
+    }
+   },
+   "guests": [
+    {
+     "burial": 0.13656819440754137,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.022315242819987174,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.03818092593394299,
+       "hydrophobic": -0.006036536323033467
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.11425295158755414,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.03299927675291722,
+       "hydrophobic": -0.011662129257473727
+      }
+     },
+     "clashes": 0,
+     "guest": "methane",
+     "moved": 3.3293172179146375,
+     "profile_sum_error": 0.0,
+     "score": -0.00625850819974071,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.005181649181025769,
+      "hydrophobic": -0.01769866558050719
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.1589129947237085,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.025784087380313212,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.0886066485400003,
+       "hydrophobic": -0.00888748884085155
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.1331289073433953,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.0788713297857445,
+       "hydrophobic": -0.017281472968631605
+      }
+     },
+     "clashes": 0,
+     "guest": "benzene",
+     "moved": 1.919862966067902,
+     "profile_sum_error": 0.0,
+     "score": -0.008216821527613653,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": 0.009735318754255836,
+      "hydrophobic": -0.026168961809483145
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    },
+    {
+     "burial": 0.14040905687241104,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.023056593997476862,
+       "donor to acceptor": 0.05122416058897641,
+       "electrostatic": 0.05770840786792638,
+       "hydrophobic": 0.006199671519726516
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.11735246287493423,
+       "donor to acceptor": 0.0,
+       "electrostatic": -0.05896289934121445,
+       "hydrophobic": 0.014087492907677305
+      }
+     },
+     "clashes": 0,
+     "guest": "methanol",
+     "moved": 3.434216315376881,
+     "profile_sum_error": 0.0,
+     "score": 0.023418944514364052,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": 0.0512241605889764,
+      "electrostatic": -0.001254491473288054,
+      "hydrophobic": 0.020287164427403817
+     },
+     "undefined_terms": [
+      "acceptor to donor"
+     ]
+    },
+    {
+     "burial": 0.14445965557903265,
+     "by_type": {
+      "O2": {
+       "acceptor to donor": NaN,
+       "burial": 0.024062529003327823,
+       "donor to acceptor": NaN,
+       "electrostatic": -0.03883728965481641,
+       "hydrophobic": 0.006857334649561424
+      },
+      "Si4": {
+       "acceptor to donor": NaN,
+       "burial": 0.1203971265757049,
+       "donor to acceptor": NaN,
+       "electrostatic": 0.03301811231179478,
+       "hydrophobic": 0.013201311445907749
+      }
+     },
+     "clashes": 0,
+     "guest": "carbon dioxide",
+     "moved": 2.3689955439570274,
+     "profile_sum_error": 0.0,
+     "score": 0.007119734376223754,
+     "terms": {
+      "acceptor to donor": NaN,
+      "donor to acceptor": NaN,
+      "electrostatic": -0.005819177343021664,
+      "hydrophobic": 0.020058646095469174
+     },
+     "undefined_terms": [
+      "acceptor to donor",
+      "donor to acceptor"
+     ]
+    }
+   ],
+   "largest_pore": {
+    "diameter": 6.355645651782359,
+    "fractional": [
+     0.982259925432488,
+     0.24999994079624147,
+     0.5363659200480775
+    ],
+    "kind": "cage"
+   },
+   "pocket_atoms": 416,
+   "published_included": 6.36,
+   "seconds": 5.8,
+   "types": [
+    "O2",
+    "Si4"
+   ]
+  }
+ ]
+}

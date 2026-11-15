@@ -385,6 +385,17 @@ def registry() -> List[Benchmark]:
                   report=lambda: _write_table(
                       "host_pocket", _mod("run_host_pocket").report(_r("host_pocket"))),
                   tables=["host_pocket/table.md"]),
+        Benchmark("frameworks",
+                  "rigid porous hosts as pockets: each cyclodextrin alone in a periodic box "
+                  "against the finite host, every guest scored and a tenth of them docked, "
+                  "and the pores of three IZA zeolites against their published sizes "
+                  "(plan item M7; the zeolite files are fetched from the IZA site)",
+                  "run_frameworks.py", "frameworks",
+                  compute=[["--stage", "limit"], ["--stage", "zeolites"]],
+                  prepare=["run_frameworks.py --stage fetch"],
+                  minutes="17",
+                  report=lambda: _mod("run_frameworks").report(),
+                  tables=["frameworks/table.md"]),
         Benchmark("guest_design",
                   "does a model with no frame name the group worth making next",
                   "run_guest_design.py", "guest_design", compute=[[]],
