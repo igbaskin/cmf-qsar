@@ -1,6 +1,6 @@
 {
- "commit": "67506dce2a9238104ee28baedcd81a6b4ae2335c",
- "created": "2026-11-15T22:27:04",
+ "commit": "71193b6469f97dd6525ac1546ff02a82ee395e90",
+ "created": "2026-11-15T23:12:01",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3161,6 +3161,10 @@
   "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "67c4075afa973a2051f38fb669430893cdd28992d8fb91ce6dae582c6520a8c7",
   "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "e18198306a793aeb765067c52445d4cdeb5cc676abafcfe415af0f892c0eca8a",
   "benchmarks/results/hammett/table.md": "1ff394fbb71c2bff39075d570668cc9bbbc9b2482462d3091d8c1c0e1037e68f",
+  "benchmarks/results/herding/landmarks.json": "74a9edaf01b0dbb1625acd3a4748955e567a3506908d6be7acc2ed657cbb7fff",
+  "benchmarks/results/herding/members.json": "a3cf9b02042afbcea48e4f78cee960c6bcb2976a9797f1651a3dfa291d98ef17",
+  "benchmarks/results/herding/subsets.json": "1b77f2e02d8c8608061b90dbc825013342f3f024a95dcb1a8caa661af679bdcb",
+  "benchmarks/results/herding/table.md": "c732080e28551526c1eb89789163f59369264d6e723b255f7a2ebb7f79337865",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
   "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",
