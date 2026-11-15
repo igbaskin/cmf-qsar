@@ -1,6 +1,6 @@
 {
- "commit": "1a82af5fca7ac761309ea2bc9649355e7cc77a26",
- "created": "2026-11-16T00:06:13",
+ "commit": "6a8cee3dca914b37d412a1ebfe1eedfbd51e0556",
+ "created": "2026-11-16T00:34:18",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3181,6 +3181,10 @@
   "benchmarks/results/host_pocket/beta.json": "f7b76adb515241408fe237ad95507b09071d6dbd1cc786455ef1484cc4a2d1cb",
   "benchmarks/results/host_pocket/gamma.json": "b0a3b62310603e04566a59c4fa55060ae30acff0e81189fdf6c60d02b5706a38",
   "benchmarks/results/host_pocket/table.md": "997275d5c6471b86637711c1699b2068e8b382dc2ada8bc9eee86a57b3184684",
+  "benchmarks/results/hsic/calibration.json": "fac3df95ce33c611746f5e6b5085527f56f23bef1aae88b208084b812a4c4998",
+  "benchmarks/results/hsic/ether.json": "c510b3608e09651e07ed59eb49f7af3d6f357c1455c4a05f629075b29c79a1a8",
+  "benchmarks/results/hsic/real.json": "7f78b9cd95208277c9600608ed081c25e6c8979b268727b91ed8796bfb50ad41",
+  "benchmarks/results/hsic/table.md": "06dcbdde08e1503c56a949c592d7d18796eb4757471874b6ddde9c4d69d11151",
   "benchmarks/results/increments/ACE.json": "832e17ecb1e62cc780c2e5540c40cab3b149c203efe2eee6a93d3ba75157eaa7",
   "benchmarks/results/increments/AChE.json": "ed6e9824f97688601a78fe56857203bb1476c81292b863eedf95d3b815a870e5",
   "benchmarks/results/increments/BZR.json": "c20bd9be1e877c0280ef9bc675efe1e57d2cc383db5e35a6835ce96eb99d9809",
