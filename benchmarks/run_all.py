@@ -1311,7 +1311,7 @@ def registry() -> List[Benchmark]:
                   tables=["fe110/table.md"],
                   readme=["Posed by rule: the surface frame without the slab"]),
         Benchmark("bound", "ranking by a confidence bound against ranking by the prediction",
-                  "run_bound.py", "bound", compute=[[]], minutes="15",
+                  "run_bound.py", "bound", compute=[[], ["--reference"]], minutes="16",
                   report=lambda: _mod("run_bound").report(_r("bound/table.md")),
                   tables=["bound/table.md"],
                   readme=["Ranking by a bound rather than by the prediction"]),

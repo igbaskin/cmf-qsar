@@ -343,6 +343,21 @@ larger searches in parts C and E.
   1706 MB (3.0x) and the streamed one 232 ->
   237 MB (1.02x), which is the claim of the item: the memory does not
   grow with the file. The cost is 33 % of wall clock.
+  **A reference for the bound, added 15 November 2026,** while the fifth tutorial was extended.
+  `run_bound.py --reference` (half a minute) ranks with the distance of a molecule to its nearest
+  training molecule in the feature space in place of the posterior standard deviation, rescaled to
+  the same mean over the held-out part. It is the one-number version of the uncertainty. The random
+  split is repeated with five seeds, and the differences get 95 % bootstrap intervals over the eight
+  sets. The bound with two deviations raises BEDROC by +0.024 [+0.003, +0.048] (random folds) and
+  +0.027 [+0.006, +0.051] (chemotype folds) over the prediction. The distance raises it by +0.037
+  [+0.014, +0.070] and +0.011 [-0.029, +0.054]. Deviation minus distance is -0.013 [-0.028, +0.000]
+  with random folds and +0.016 [-0.017, +0.053] with chemotype folds, so the two cannot be
+  separated, and their rank correlation over a held-out part is +0.78 and +0.74. On the thrombin
+  library of the fifth tutorial the distance ranks better than the bound (BEDROC 0.764 against
+  0.685). What the bound adds is a penalty for being far from the training set; the posterior
+  deviation is one way to state it and the distance, which needs no fit, another. The numbers of the
+  table above come from one random split; with five seeds the prediction has a BEDROC of 0.920 and
+  the bound with two deviations 0.944.
   **One fix that came out of it**: the GP posterior variance factorised the training kernel on
   every call, so a streamed run did it once per block and alignment by confidence once per pose.
   It is cached on the model now (`_variance_factor`), keyed on the matrix so a realignment or

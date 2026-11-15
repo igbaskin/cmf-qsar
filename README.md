@@ -3982,6 +3982,25 @@ acts on the differences within a ranked list rather than on their level, so a un
 part gives it less to work with, not more. The gain is real in both regimes and larger where the
 spread is larger, which is the rule the numbers actually support.
 
+**A reference: the distance to the training set (added 15 November 2026).** `run_bound.py
+--reference` (half a minute) ranks with the distance of a molecule to its nearest training
+molecule in the feature space in place of the posterior standard deviation, rescaled to the same
+mean over the held-out part. It is the one-number version of the uncertainty. The random split is
+repeated with five seeds, and the differences get 95 % bootstrap intervals over the eight sets.
+The bound with two deviations raises BEDROC by +0.024 [+0.003, +0.048] (random folds) and +0.027
+[+0.006, +0.051] (chemotype folds) over the prediction. The distance raises it by +0.037 [+0.014,
++0.070] and +0.011 [-0.029, +0.054]. Deviation minus distance is -0.013 [-0.028, +0.000] with
+random folds and +0.016 [-0.017, +0.053] with chemotype folds, so the two cannot be separated, and
+their rank correlation over a held-out part is +0.78 and +0.74. On the thrombin library of the
+fifth tutorial the distance ranks better than the bound (BEDROC 0.764 against 0.685). What the
+bound adds is a penalty for being far from the training set; the posterior deviation is one way to
+state it and the distance, which needs no fit, another. The numbers of the table above come from
+one random split; with five seeds the prediction has a BEDROC of 0.920 and the bound with two
+deviations 0.944.
+
+The fifth tutorial, `docs/tutorials/05_screening.ipynb`, compares the two on its thrombin library
+and runs the comparison on the eight sets.
+
 ```bash
 python cmf_cli.py predict thrombin.cmf library.sdf --rank-bound 1
 python cmf_cli.py predict ic50.cmf library.sdf --rank-bound 1 --smaller-is-better
@@ -6788,7 +6807,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `02_no_alignment.ipynb` | a SMILES table with no common frame: the rotation-invariant kernel, per-atom contributions, predicting new molecules |
 | `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
-| `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, and what the ranking is worth against 100 presumed inactives |
+| `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, what the ranking is worth against 100 presumed inactives, and the distance to the nearest training molecule as the reference of the bound, on eight sets |
 | `06_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
 | `07_the_model_as_a_fast_level.ipynb` | a standard deviation in the units of the activity: how it is built, whether it is calibrated before any test set exists, a tolerance rule that sends doubtful structures to a fine level, a constant deviation as the reference, and a crystal property where the rule earns more |
 | `08_recovering_a_pose.ipynb` | a pose that the model has to find: the protocol that judges an alignment against crystal poses, a flexible search that recovers the pose of a new molecule, and a model that needs no pose as the reference |

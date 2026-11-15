@@ -7384,6 +7384,25 @@ point estimate cannot be told from a real prediction. Screen the thrombin series
 cyclooxygenase model and every molecule comes back at the training mean with a spread four times
 the residual error — which is the model saying, correctly, that it has nothing to contribute.
 
+**A reference: the distance to the training set (added 15 November 2026).** `run_bound.py
+--reference` (half a minute) ranks with the distance of a molecule to its nearest training
+molecule in the feature space in place of the posterior standard deviation, rescaled to the same
+mean over the held-out part. It is the one-number version of the uncertainty. The random split is
+repeated with five seeds, and the differences get 95 % bootstrap intervals over the eight sets.
+The bound with two deviations raises BEDROC by +0.024 [+0.003, +0.048] (random folds) and +0.027
+[+0.006, +0.051] (chemotype folds) over the prediction. The distance raises it by +0.037 [+0.014,
++0.070] and +0.011 [-0.029, +0.054]. Deviation minus distance is -0.013 [-0.028, +0.000] with
+random folds and +0.016 [-0.017, +0.053] with chemotype folds, so the two cannot be separated, and
+their rank correlation over a held-out part is +0.78 and +0.74. On the thrombin library of the
+fifth tutorial the distance ranks better than the bound (BEDROC 0.764 against 0.685). What the
+bound adds is a penalty for being far from the training set; the posterior deviation is one way to
+state it and the distance, which needs no fit, another. The numbers of the table above come from
+one random split; with five seeds the prediction has a BEDROC of 0.920 and the bound with two
+deviations 0.944.
+
+The fifth tutorial, `docs/tutorials/05_screening.ipynb`, compares the two on its thrombin library
+and runs the comparison on the eight sets.
+
 **What it does not do.** It does not invent poses. A field kernel compares molecules in one frame,
 so the library has to be in the training set's frame already, or `--pose` has to be given, which
 places each molecule by maximising its field similarity to the training molecules. That is the
