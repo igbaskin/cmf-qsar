@@ -543,6 +543,126 @@ The findings appear in the log of the application and on the console of the comm
 each marked `[refuse]`, `[warn]` or `[note]`. A model file written by a newer version of the
 program than the one reading it is not opened.
 
+## A field is a kernel mean embedding
+
+The literature on kernel methods has a name for what a CMF field is: a *kernel mean embedding*.
+Knowing the name links the method to results that were proved there. This section states the
+link, what it explains, what it adds, and what it does not add. The unit test
+`tests/test_mean_embedding.py` checks every identity below on the program's own functions.
+
+**The embedding.** A *measure*, in this section, is a list of points with a weight on each. The
+atoms of a molecule with their weights in one field are such a list. When weights can be
+negative, as partial charges are, it is a *signed measure*. Given a kernel $g$ on points, the
+*kernel mean embedding* of a measure is the function
+
+$$
+\hat{\mu}(\cdot) \;=\; \sum_l\, w_l\, g(\cdot,\, \mathbf{r}_l)
+$$
+<!-- #eq:mean-embedding -->
+
+which is the sum of the kernel centred on every point, times the weight of the point [31, Eq. (2)]
+(there with equal weights). With $g$ the Gaussian of the atoms, this is Eq. (#eq:field): the field
+$X_f$ of a molecule is the kernel mean embedding of its atoms with their weights in field $f$.
+
+**The overlap kernel is the inner product of two embeddings.** By Eq. (#eq:kernel) the overlap
+of two fields is a double sum over pairs of atoms of one function of two points:
+
+$$
+K_f(A,B) \;=\; \sum_{l \in A}\, \sum_{m \in B}\, w_{lf}\, w_{mf}\; \kappa(\mathbf{r}_l, \mathbf{r}_m), \qquad \kappa(\mathbf{r}, \mathbf{r}') \;=\; \left(\dfrac{\pi}{\alpha}\right)^{3/2} \exp\!\left(-\dfrac{\alpha}{4}\, |\mathbf{r} - \mathbf{r}'|^2\right)
+$$
+<!-- #eq:set-kernel -->
+
+Here κ is the overlap integral of the Gaussians of two atoms. It is a kernel on points,
+and the double sum of a kernel over all pairs of points of two sets is the *set kernel* of
+multiple-instance learning [32]. It is also the inner product of the two mean embeddings in the
+RKHS of κ [31, Eq. (29)], where weights per point are allowed. So the space of fields, with
+the overlap integral as the inner product, is a copy of the RKHS of κ. The Gaussian of
+κ has half the exponent of the Gaussian of one atom ($\alpha/4$ against $\alpha/2$), so it
+reaches $\sqrt{2}$ times further. The steric field, with a width per atom, fits the same picture:
+the width is one more coordinate of each point, and the pair term of Eq. (#eq:overlap) is the
+kernel on these extended points. It is still the integral of a product of two Gaussians, and so
+still an inner product. The joint kernel of Eq. (#eq:joint) joins one embedding per field type.
+
+| term of kernel mean embeddings | the same thing in CMF |
+|---|---|
+| a measure: points with weights | the atoms of a molecule with their weights in one field |
+| the base kernel on points | κ, the overlap of the Gaussians of two atoms |
+| the mean embedding of a measure | the field $X_f$ of the molecule |
+| the inner product of two embeddings (set kernel) | the overlap kernel $K_f(A,B)$ without normalisation |
+| the distance between two embeddings | the field distance of Eq. (#eq:feature-distance) without normalisation |
+| the embedding of a mixture of measures | the mean field of an ensemble; the spectrum of a mixture |
+| the maximum mean discrepancy (MMD) between two samples | the two-sample test of `cmf compare` |
+| the witness function of the MMD | the difference of the mean fields of two sets, read through the kernel |
+| a second kernel on the embeddings | the Gaussian layer of *Nonlinear kernel layers and multiple kernel learning* |
+| distribution regression | a model whose sample is an ensemble of structures |
+
+**What the link explains.** Several results of this manual, which were measured or derived one
+by one, are the same fact.
+
+1. *Mixtures and ensembles.* The embedding is linear in the measure. The mean field of an
+   ensemble is therefore the embedding of the mixture of its members, and the kernel of two mean
+   fields is the mean of the kernels of their members. The fourteenth tutorial shows this to
+   rounding error. The spectrum of a mixture is the sum of the spectra of its components for the
+   same reason, which is what the seventeenth tutorial uses.
+2. *Distances and the two-sample test.* The field distance between two molecules is the MMD
+   between their weighted atoms. The test of *Is the whole library inside? The two-sample test*
+   works one level higher. A set of molecules has a mean field, which is the embedding of the
+   set. The MMD² of two sets, in the form with the self-similarities kept, is the squared length
+   of the difference of the two mean fields. The witness of a molecule is the overlap of its field
+   with that difference field. The unit test checks both.
+3. *The invariant kernels embed a different measure.* The autocorrelation $\Phi_{fg}(d)$ of
+   *Working without an alignment* is the embedding, by a Gaussian on a line, of the distances
+   between pairs of atoms, each pair weighted by $w_{lf} w_{mg}$, sampled at the channel
+   distances. A broadened spectrum is the embedding of its stick spectrum on the axis of the
+   spectrum. That the autocorrelation cannot tell a molecule from its mirror image is a
+   property of the measure it embeds: the list of pair distances is the same for both.
+
+**What the theory adds.**
+
+1. *The field determines the weighted atoms.* For a Gaussian kernel on $\mathbb{R}^d$ the
+   embedding of finite signed measures is one-to-one: two different measures have different
+   embeddings [33, Section 3.1 and Proposition 2]. So, in one frame, two molecules have the same
+   field only if their atoms carry the same weights at the same places, where atoms at one
+   place count with their summed weight. The field loses nothing of the weighted atoms. It does
+   lose what the weights do not carry, such as which atom is bonded to which. One-to-one does not
+   mean easy to invert. A field at a small α is smooth, and recovering the atoms from it means
+   undoing a broadening, which amplifies small errors. That is the task of the decoder of
+   pseudo-atoms. The autocorrelation is not one-to-one on molecules, because the list of pair
+   distances is already the same for a mirror image.
+2. *Signed measures are covered.* Most of the theory of kernel mean embeddings is stated for
+   probability distributions [34]. CMF needs the signed case. The charges of a neutral molecule
+   sum to zero, so its electrostatic field embeds a measure with a total weight of zero, which no
+   probability distribution has. The statement in item 1 covers finite signed measures [33], and
+   such a field still has a length.
+3. *What normalisation removes.* For a probability distribution the total weight is fixed at
+   one. CMF does not fix it: three times the weights give three times the raw kernel. Cosine
+   normalisation divides by the length of the embedding and so removes the scale of the weights
+   exactly. A normalised kernel therefore cannot answer a question about *how much*: an amount,
+   a count, a size. The seventeenth tutorial shows the cosine form failing for amounts for this
+   reason. Where the question is how much, use the raw kernel or put a count among the
+   references.
+4. *A Gaussian layer is a kernel on embeddings, and an ensemble is distribution regression.* The
+   Gaussian layer is $\exp(-\gamma\, d^2(A,B))$, a Gaussian of the distance between two
+   embeddings. Kernels of this form on mean embeddings are listed in [35, Table 1], and kernel
+   ridge regression with them is the *distribution regression* of [35]. When the sample is an
+   ensemble (conformations, solvation shells), each sample is a distribution over structures
+   that is seen only through a finite number of members; [35] calls this *two-stage sampling*.
+   With the CMF kernel as the kernel on structures and member weights that are not negative and
+   sum to one, an ensemble is such a distribution. The paper proves that ridge regression on mean
+   embeddings is consistent in this setting, under conditions, and that the number of members per
+   sample has to grow with the number of training samples to keep the best rate of learning
+   [35, Theorem 5]. The conditions have not been checked for the kernels of this program, so the
+   result is a guide and not a guarantee.
+
+**What the link does not add.**
+
+- *No accuracy.* No kernel of the program changes. The section gives names and theorems, not a
+  new model.
+- *Nothing new about the mathematics.* Molecules compared by the overlap of Gaussians on their
+  atoms, and descriptors of materials built from smoothed densities of atoms such as SOAP [36],
+  use the same construction. What CMF adds to the embedding is the chemistry in the weights,
+  the common frame, and the reading of the weight vector of a model as a co-field.
+
 # Installation and first run
 
 ## Where the program lives
@@ -3560,6 +3680,88 @@ of the advice. Leaving the five splits out gave an estimate of +0.053 on 34 spli
 rule of the section *Two things the command protects you from* such a route cannot be advised,
 all 39 splits count, and the measured value is +0.058.
 
+## Beyond a count: the conditional dependence test
+
+The routes above answer "does the field model beat a count" by fitting both and comparing their
+errors. `cmf dependence` asks the same question without fitting anything, and for a count its
+answer has an exact false-positive rate.
+
+```bash
+python cmf_cli.py dependence data.sdf --charges file --given calc:HeavyAtomCount
+python cmf_cli.py dependence data.sdf --charges file --given calc:clogp --bins 5
+```
+
+**The statistic.** HSIC, the Hilbert-Schmidt independence criterion (Gretton et al., ALT 2005),
+measures the dependence between two variables from their kernel matrices. With the field kernel
+$K$, the linear kernel on the activity and both centred, it is the squared norm of the field
+weighted by the centred activity. It is zero when the mean activity does not depend on the
+field. The command reports it as an *alignment* in [0, 1] beside a p-value from 999 permutations
+of the activities. A permutation p-value is exact for any number of molecules.
+
+**Beyond a reference.** With `--given`, the molecules with equal values of the reference form
+strata. The activities are permuted only within a stratum, and both kernels are centred within
+the strata, so that only the dependence inside a stratum counts. If the activity depends on the
+reference alone, permuting it among molecules with the same reference value changes nothing, so
+the test stays exact. The reference can be a property of the file or any computed descriptor,
+`calc:` followed by its RDKit name. A molecule alone in its stratum carries no information, and
+the command says how many molecules share a stratum.
+
+A continuous reference such as logP has no strata, and `--bins` cuts it at its quantiles. Binning
+alone does not work: the activity still depends on the reference inside a bin, and that
+dependence reaches the statistic through the part of the field that sees the reference. So the
+command also removes a straight line in the reference within each bin, after every permutation.
+The test is then approximate, and the output says so.
+
+**Measured** (`benchmarks/run_hsic.py`, `benchmarks/results/hsic/table.md`). On the molecules of
+the eight Sutherland sets, synthetic activities $y = g(z)$ plus noise depend on the reference
+$z$ only, through a curve $g$ that carries half of the variance. A field direction that the
+reference does not explain is then added with 5 or 15 % of the variance. Rejections at the 5 %
+level, 400 replicates per set pooled over the sets; the model comparison is the gain of a model
+on the reference and the fields over a model on the reference, positive when its 95 % interval
+excludes zero, 40 replicates on each of the six sets of at most 150 molecules:
+
+| reference | signal beyond the reference | the test given the reference | the test on the activity minus a straight line in the reference | the model comparison |
+|---|---:|---:|---:|---:|
+| heavy-atom count | none | 5.2 % | 27.6 % | 0.0 % |
+| heavy-atom count | 5 % of the variance | 83.9 % | 76.2 % | 2.5 % |
+| heavy-atom count | 15 % of the variance | 99.7 % | 92.5 % | 34.2 % |
+| logP, 5 bins | none | 1.5 % | 29.0 % | |
+| logP, 5 bins | 5 % of the variance | 69.8 % | 81.8 % | |
+| logP, 10 bins | none | 2.4 % | 29.0 % | |
+| logP, 10 bins | 5 % of the variance | 72.4 % | 78.2 % | |
+
+* **The test is calibrated** at 5.2 % for the count, the value the permutation argument
+  guarantees, and at 1.5 to 2.4 % for the binned logP with the line removed. Binned logP without
+  the line rejected 19 to 22 %, and on DHFR every replicate.
+* **The test without a reference is useless for this question.** It rejected 91 % of the
+  activities that depend on the count alone, because the fields see the size of a molecule.
+  Subtracting a straight line in the reference first, the usual quick repair, still rejects 28 to
+  29 %, because the curve is not a line.
+* **The test is far more sensitive than fitting.** A field signal that carries 5 % of the
+  variance is found 84 % of the time by the test and 2.5 % of the time by the model comparison.
+  At 15 % the figures are 99.7 % and 34 %. The model comparison never gave a false positive. It
+  answers a harder question, whether the signal can be *predicted* on new molecules, and on a
+  hundred molecules a small signal cannot.
+
+On the measured activities, the test and the model comparison agree on 23 of the 24 pairs of a
+set and a reference. The model comparison finds information in the fields beyond both references
+on all eight sets, and the test agrees except on one. On THER, given the heavy-atom count, the test finds nothing
+(p = 0.42) and the model comparison finds a gain of 0.16 in q² [0.02, 0.29]. THER has 76
+molecules in 28 strata, and twelve of them are alone in their stratum. That leaves the test
+little to work with. A count with many values on a small set is the weak case of this test.
+
+**A case with a known answer.** On the 1,048 ethers of item EC7, the field model was found to beat
+a model on the number of oxygens that touch the ion by 0.04 to 0.11 eV. Given that count, the
+test finds information in the fields for all three ions, Li+, Na+ and Mg2+ (p = 0.001, the
+smallest possible with 999 permutations). On the same molecules, with an activity of the contact
+count alone, it rejects 1 of 100 replicates, while the test without the count and the test on the
+straight-line residual reject all 100.
+
+**When to use it.** Before a field model is built, to ask whether the fields could be anything more
+than a count or a property you can name. A small p-value says the fields carry information beyond
+the reference; it does not say that a model will predict it. A large p-value on a small set is
+not evidence that they carry nothing, as THER shows.
+
 # Building a model
 
 ## Choosing the fields
@@ -4948,7 +5150,7 @@ exercise an extrapolation? — and averaging a per-molecule verdict does not ans
 have identical nearest-neighbour similarities and still occupy different regions.
 
 Every set of molecules has a **mean field**, the mean of its feature maps, which for CMF is itself
-a function of space. The maximum mean discrepancy [23] is the
+a function of space (*A field is a kernel mean embedding* gives the general form). The maximum mean discrepancy [23] is the
 distance between two of them:
 
 $$
@@ -4980,6 +5182,10 @@ both ends and `--out` writes the whole column. On the Sutherland benzodiazepine 
 COX2 one, the witness names nordazepam and delorazepam as the most typical benzodiazepines and the
 COX2 sulphonamides as the least — without being told that there are two targets.
 
+When the test finds a difference, `--weights ratio.csv` writes the density ratio of every
+molecule: how typical of the second set each molecule is, relative to the first. It is what the
+weighted conformal interval uses, below.
+
 ### Is the test any good?
 
 A test is useless unless it is calibrated as well as powerful, and `benchmarks/run_structure.py`
@@ -4988,6 +5194,133 @@ is nothing to find: **5.6 % are called significant at the 5 % level**, which is 
 calibrated test does and the permutation construction guarantees. All twenty-eight pairs of
 *different* targets, where there is everything to find: **100 % are called significant, median
 z = +171**. The test is calibrated where there is nothing and saturated where there is.
+
+## A few molecules that stand for many: kernel herding
+
+The mean field of a set of molecules is its kernel mean embedding, and the MMD of the two-sample
+test is the distance between two of them. The same distance says how well a *subset* stands for
+the whole set. **Kernel herding** (Chen, Welling and Smola, UAI 2010) builds a subset with a small
+distance one molecule at a time. With $\mu(x)$ the mean kernel value of $x$ against the whole set,
+and $x_1$ to $x_t$ the molecules chosen so far, the next molecule is
+
+$$
+x_{t+1} = \arg\max_x \; \mu(x) - \frac{1}{t+1} \sum_{s \leq t} K(x, x_s) .
+$$
+<!-- #eq:herding -->
+
+The first term pulls towards molecules typical of the set, the second pushes away from those
+already chosen. Adding $K(x, x)/2$ to the sum makes every step the exact greedy minimisation of the
+MMD (`--method greedy`). For the cosine-normalised kernel of `cmf pick` the two rules are the same,
+because $K(x, x)$ is constant. For a kernel whose diagonal varies they are not, and the greedy rule
+is the right one (see the shells below).
+
+```bash
+python cmf_cli.py pick library.sdf --n 20 --charges file --out picks.csv
+python cmf_cli.py pick library.sdf --n 10 --made measured.sdf
+```
+
+The command prints the molecules in the order chosen, the MMD of the first $t$ after each one,
+and the MMD of 200 random choices of the same size for comparison. `--sdf-out` writes the chosen
+molecules in that order. `--made` counts molecules already made or measured as chosen, so herding
+continues from them. `--method` also offers the
+references below, and `--kernel gauss` uses a Gaussian of the field distance, which compares
+whole distributions and not only mean fields. The module is `cmfqsar.herding`; its
+`quadrature_weights` gives the chosen molecules weights that bring their weighted mean field
+closer still, which is what an ensemble needs.
+
+### What herding is worth, measured
+
+`benchmarks/run_herding.py` compares herding with four references in three places where the
+program chooses a subset. The references are **max-min** (furthest-first diversity picking, the
+classical design), **k-medoids** in field space, **pivoted Cholesky** (always the molecule least
+explained by those chosen, the usual choice of landmarks) and random choice.
+
+**Which molecules to measure first.** Each Sutherland set is split ten times into a pool (70 %)
+and a test set (30 %). From the pool, m molecules are chosen without looking at the activity, a
+model is fitted on them alone, and it predicts the test set. "RMSE minus random" is averaged over
+the eight sets, with a 95 % bootstrap interval over the sets; negative is better.
+
+| m | rule | MMD² to the pool | R²pred | RMSE minus random |
+|---:|---|---:|---:|---:|
+| 10 | herding | 0.026 | +0.12 | -0.013 [-0.075, +0.051] |
+| 10 | max-min | 0.206 | +0.16 | +0.056 [-0.010, +0.137] |
+| 10 | k-medoids | 0.060 | +0.09 | -0.014 [-0.086, +0.057] |
+| 10 | random | 0.099 | +0.08 | |
+| 20 | herding | 0.008 | +0.14 | +0.026 [+0.003, +0.051] |
+| 20 | max-min | 0.093 | +0.25 | +0.008 [-0.051, +0.068] |
+| 20 | k-medoids | 0.044 | +0.23 | -0.039 [-0.096, +0.016] |
+| 20 | random | 0.041 | +0.19 | |
+| 40 | herding | 0.002 | +0.38 | -0.039 [-0.059, -0.022] |
+| 40 | max-min | 0.029 | +0.39 | -0.036 [-0.073, -0.003] |
+| 40 | k-medoids | 0.020 | +0.40 | -0.057 [-0.085, -0.028] |
+| 40 | random | 0.014 | +0.33 | |
+
+The model on the whole pool reaches R²pred +0.48. Pivoted Cholesky and herding on the Gaussian
+kernel are in `benchmarks/results/herding/table.md`; neither changes the picture.
+
+* **Herding does what it promises.** Its subsets are 4 to 7 times closer to the pool, in MMD², than
+  random subsets of the same size.
+* **A representative subset is not a better training set.** At 10 and 20 molecules no rule beats
+  random choice by more than the spread between the sets. At 20 molecules herding is even slightly
+  worse. At 40 molecules herding, max-min and k-medoids beat random choice by 0.04 to 0.06 in
+  RMSE, and k-medoids gains the most.
+* **Max-min matches herding** at 40 molecules although its subsets are more than ten times
+  further from the pool. Covering the edges of the set matters as much as matching its centre.
+
+**Which molecules to use as Nyström landmarks.** The kernel of each whole set is replaced by its
+Nyström approximation on m landmark molecules chosen on that kernel. The error is the Frobenius
+norm of the difference, relative to the kernel; q² is from 10-fold cross-validation on the
+approximation, against +0.57 for the exact kernel.
+
+| landmarks | rule | relative error of the kernel | q² |
+|---:|---|---:|---:|
+| 10 | herding | 0.048 | +0.36 |
+| 10 | herding, Gaussian kernel | 0.044 | +0.40 |
+| 10 | k-medoids | 0.040 | +0.41 |
+| 10 | pivoted Cholesky | 0.091 | +0.27 |
+| 10 | random | 0.074 | +0.35 |
+| 20 | herding | 0.026 | +0.46 |
+| 20 | herding, Gaussian kernel | 0.025 | +0.50 |
+| 20 | k-medoids | 0.020 | +0.47 |
+| 20 | pivoted Cholesky | 0.039 | +0.43 |
+| 20 | random | 0.040 | +0.45 |
+
+Herding and k-medoids approximate the kernel 30 to 50 % better than random landmarks. The model
+gains at most 0.05 in q², and at 40 landmarks every rule is within 0.03 to 0.07 of the exact
+kernel. Pivoted Cholesky is the worst rule here: it takes the outliers first. The low-rank path
+keeps random landmarks, because herding and k-medoids need the n by n kernel that the low-rank
+path exists to avoid, and the gain does not justify it.
+
+**Which solvation shells to keep.** Each of the 62 electrolytes of item BT5 is the weighted mean
+of 15 or 16 solvation shells. The shells are chosen on the framed field kernel of the shells of
+one electrolyte, with the given weights as the target, and weighted by `quadrature_weights`. The
+distance is that of the kept shells' mean field from the mean field of all shells, relative to its
+size, averaged over the electrolytes.
+
+| shells kept | the heaviest | herding, fitted weights | greedy, fitted weights | random |
+|---:|---:|---:|---:|---:|
+| 1 | 0.407 | 0.516 | 0.398 | 0.615 |
+| 2 | 0.272 | 0.292 | 0.242 | 0.476 |
+| 4 | 0.165 | 0.160 | 0.139 | 0.316 |
+| 8 | 0.065 | 0.071 | 0.062 | 0.192 |
+
+The shells differ in size, 15 to 94 atoms, so $K(x, x)$ varies and plain herding is not the
+right rule. It loses even to the single heaviest shell, while the greedy rule is closest at every
+size. The alignment-free model of BT5, run on the kept shells with the nested cross-validation of
+`benchmarks/run_ensembles.py`, gives a mean absolute error on the activation energy, random folds,
+of 1.94 kJ/mol with the 4 heaviest shells, 2.05 with the 4 greedy ones, 2.19 to 2.35 with three
+random draws of 4, and 1.61 with all 16. On the activation energy, kept shells chosen by herding
+or greedily beat random ones, but not the heaviest ones: the given weights are uneven, and the heaviest shells already
+carry most of the mean field. The full table, both targets and both splits, is in
+`benchmarks/results/herding/table.md`. A control run of the 4 heaviest shells reproduces the
+stored records of item MS5 to 4e-13.
+
+**When to use it.** `cmf pick` gives the most representative molecules of a library, and the
+MMD says how representative they are. That is the right tool when the subset itself is the
+product: a first round of measurements that should look like the library, or a few members that
+should stand for an ensemble with equal weights, such as the frames of a trajectory. It is not a
+way to make a model more accurate. With 40 molecules, herding, max-min and k-medoids beat random
+choice by a little; with fewer, nothing does.
 
 ## How certain is that number?
 
@@ -5070,6 +5403,138 @@ reachable rather than returning its widest error and calling it an interval.
 
 Regression only: conformal classification produces prediction *sets* rather than intervals, and is
 not implemented.
+
+### When the library is unlike the training set: weighted intervals
+
+The guarantee of the conformal interval needs the new molecule and the calibration molecules to
+be exchangeable. A screening library usually breaks that. If it holds more molecules of a kind
+the model finds hard, the errors on the library are larger than the calibration errors, and the
+interval covers less than it promises. The two-sample test above can say that the library is
+different. The weighted interval is what to do about it.
+
+**Covariate shift** is the case where the molecules of the library are distributed differently
+from the training molecules, while the activity of a given molecule follows the same rule in both.
+Everything is then repaired by the **density ratio** $w(x) = p_{library}(x) /
+p_{train}(x)$. A training molecule with a large $w$ is typical of the library and rare in the
+training set. Tibshirani, Barber, Candès and Ramdas (NeurIPS 2019) showed that the conformal
+guarantee holds again if each calibration error is weighted by $w$ at its molecule, and a point at
+infinity carries the weight of the new molecule:
+
+$$
+q(x) = \min \left\{ s :\; \sum_{i:\, s_i \leq s} \frac{w(x_i)}{\sum_j w(x_j) + w(x)} \geq 1 - \alpha \right\} .
+$$
+<!-- #eq:weighted-conformal -->
+
+With all weights equal this is the rule of the previous section. A new molecule that no
+calibration molecule resembles carries so much weight that $q(x)$ is infinite. That answer is
+correct: the training set holds no evidence about the error of such a molecule.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --conformal 0.9 --save model.cmf
+python cmf_cli.py predict model.cmf library.sdf --shift --out predictions.csv
+python cmf_cli.py compare library.sdf --model model.cmf --weights ratio.csv
+```
+
+`--shift` estimates $w$ from the model's own kernel and the library, and prints the weighted
+interval and the weight of every molecule. The CSV gets a `shift_weight` column, and an infinite
+interval is written as empty `lower` and `upper` cells. `compare --weights` writes the ratio of
+every molecule of both sets without fitting anything. The module is `cmfqsar.shift`.
+
+**How the ratio is estimated.** A kernel logistic regression learns to tell library molecules from
+training molecules. By Bayes' rule $w(x) = e^{f(x)} n_{train} / n_{library}$, where
+$f$ is the latent function (Bickel, Brückner and Scheffer, JMLR 2009). The kernel is a Gaussian of
+the field distance, $\exp(-\gamma |f_x - f_{x'}|^2)$, computed from the CMF kernel
+itself. A Gaussian can tell whole distributions apart, while the linear field kernel compares only
+their mean fields. The width and the ridge are chosen by the cross-validated log-loss. Every
+weight is **cross-fitted**: it comes from a classifier fitted without that molecule's fold. A
+weight evaluated on the molecules the ratio was fitted on is too large at the library molecules,
+because each of them adds its own kernel function to its weight. In a first trial on one set,
+before the weights were cross-fitted, that bias gave 21 % infinite intervals with no shift at all.
+
+The module also has two estimators taken from the kernel mean embedding literature. **Kernel mean
+matching** (Huang et al., NIPS 2006) chooses one weight per training molecule so that the weighted
+mean feature map of the training set matches the library's; for the linear CMF kernel that mean
+feature map is the mean field. **uLSIF** (Kanamori, Hido and Sugiyama, JMLR 2009) fits the ratio as
+a sum of kernel functions by least squares. Both were measured and both recover the ratio less
+well than the classifier (below). Kernel mean matching gives no weight for a new molecule, so it
+cannot serve the interval at all.
+
+### What the weights do, measured
+
+`benchmarks/run_shift.py` makes shifted splits of the eight Sutherland sets. Every molecule goes
+to the test part with a probability that depends on its structure only: on its score on the first
+principal component of the field kernel (`pc1`), or on its number of heavy atoms (`size`), with
+strength 1 or 2. Because the choice depends on the structure only, the activity follows the same
+rule in both parts, so this is covariate shift by construction. The true ratio of every split is
+known, which gives an **oracle**: the same rules with the true weights. A control with no shift and
+a hold-out of the 30 % of molecules nearest to one molecule (`neighbours`, no overlap at the edge,
+no oracle) complete the six scenarios. There are 20 splits per set and scenario. The model is kernel
+ridge regression with alpha and lambda chosen on the training part.
+
+Coverage at 90 %:
+
+| scenario | present rule | normalised rule | weighted rule | weighted rule: no finite interval | weighted rule: finite intervals only |
+|---|---:|---:|---:|---:|---:|
+| no shift | 89.7 % | 93.6 % | 90.0 % | 0 % | 90.0 % |
+| pc1, strength 1 | 87.8 % | 92.9 % | 89.7 % | 3 % | 89.4 % |
+| pc1, strength 2 | 86.1 % | 93.0 % | 91.2 % | 15 % | 89.7 % |
+| size, strength 1 | 89.3 % | 93.4 % | 90.9 % | 2 % | 90.7 % |
+| size, strength 2 | 86.3 % | 92.1 % | 90.9 % | 12 % | 89.7 % |
+| neighbours | 81.5 % | 92.5 % | 96.4 % | 78 % | 83.8 % |
+
+Mean width of the finite 90 % intervals, in standard deviations of the activity:
+
+| scenario | present rule | normalised rule | weighted rule |
+|---|---:|---:|---:|
+| no shift | 2.29 | 2.94 | 2.32 |
+| pc1, strength 1 | 2.24 | 2.96 | 2.40 |
+| pc1, strength 2 | 2.23 | 3.29 | 2.43 |
+| size, strength 1 | 2.30 | 3.08 | 2.45 |
+| size, strength 2 | 2.25 | 3.25 | 2.64 |
+| neighbours | 2.31 | 3.73 | 2.17 |
+
+The "present rule" is the out-of-fold interval of the previous section, and the "normalised rule"
+is the same with `--conformal-normalise`. The "weighted rule" is the present rule with its errors
+weighted by the classifier's ratio, which is what `--shift` uses. The whole table, with 80 and 95 %, the split
+calibration, uLSIF and the oracle, is `benchmarks/results/shift/table.md`.
+
+* **A structural shift costs the present rule up to four points** of coverage at 90 %, and eight
+  points on the neighbourhood hold-out.
+* **The weighted interval brings the coverage back** to between 89.7 and 91.2 % under every shift
+  with overlap. On the molecules that get a finite interval it covers 89.4 to 90.7 %. Its finite
+  intervals are 19 to 26 % narrower than the normalised rule's, which also covers but does so by
+  over-covering everywhere, 93.6 % even with no shift. The price is that 2 to 15 % of the
+  molecules get no finite interval.
+* **The implementation checks out against the oracle.** Split calibration weighted by the true
+  ratio, the version with an exact guarantee, covers 92.2 to 95.4 % at 90 % in every oracle
+  scenario.
+* **With no overlap the weights cannot help.** On the neighbourhood hold-out 78 % of the weighted
+  intervals are infinite, and the finite ones cover only 83.8 %. The normalised rule keeps 92.5 %.
+  The effective size of the weights, $(\sum w)^2 / \sum w^2$, separates the two cases: it averaged
+  6 % of the training set on the neighbourhood hold-out and 36 % or more under every other shift.
+  `predict --shift` warns below 10 % and names the normalised rule.
+* **The classifier recovers the ratio best.** Its rank correlation with the true weights is 0.54
+  to 0.82 over the four shifted scenarios with a true ratio, against 0.41 to 0.59 for kernel mean matching and 0.20
+  to 0.60 for uLSIF. uLSIF-weighted intervals under-cover under every shift with overlap. Kernel
+  mean matching
+  reduced the weighted MMD to 37 % of its value even where there was no shift, so it fits the
+  sample, not the distribution.
+
+**Weighting the fit does not help.** Weighted kernel ridge regression minimises
+$\sum_i w_i (y_i - f(x_i))^2$ plus the usual ridge, with the ridge chosen by importance-weighted
+cross-validation (Sugiyama, Krauledat and Müller, JMLR 2007). In the five scenarios with a true
+ratio, its RMSE on the test part differs from the plain fit's by -0.011 to +0.014 with the
+classifier's weights, and by -0.014 to +0.017 with the *true* weights. On the neighbourhood
+hold-out the classifier's weights make it worse by 0.077. Weighting a fit is known to help when the model cannot fit the activity
+everywhere at once; kernel ridge regression can, and the weights only add variance. So `--shift`
+weights the interval and leaves the model as it was fitted.
+
+**What writing it found.** `compare --model` built the kernel among the library molecules with a
+fresh model object, which scales each field by the library's own mean self-overlap. The model
+scales by the training set's. With field scaling on, the default of `build`, the assembled matrix
+mixed two scales: it was not one kernel, and the MMD and the witness were computed from it. All
+three blocks now come from the model's own field kernels and scale; the test feeds the training
+set back as the library and requires the three blocks to be identical.
 
 ### When the scale of the activity is the problem: a warped process
 
@@ -7000,6 +7465,25 @@ molecules unlike the training set, a kernel method answers the training mean for
 point estimate cannot be told from a real prediction. Screen the thrombin series against a
 cyclooxygenase model and every molecule comes back at the training mean with a spread four times
 the residual error — which is the model saying, correctly, that it has nothing to contribute.
+
+**A reference: the distance to the training set (added 15 November 2026).** `run_bound.py
+--reference` (half a minute) ranks with the distance of a molecule to its nearest training
+molecule in the feature space in place of the posterior standard deviation, rescaled to the same
+mean over the held-out part. It is the one-number version of the uncertainty. The random split is
+repeated with five seeds, and the differences get 95 % bootstrap intervals over the eight sets.
+The bound with two deviations raises BEDROC by +0.024 [+0.003, +0.048] (random folds) and +0.027
+[+0.006, +0.051] (chemotype folds) over the prediction. The distance raises it by +0.037 [+0.014,
++0.070] and +0.011 [-0.029, +0.054]. Deviation minus distance is -0.013 [-0.028, +0.000] with
+random folds and +0.016 [-0.017, +0.053] with chemotype folds, so the two cannot be separated, and
+their rank correlation over a held-out part is +0.78 and +0.74. On the thrombin library of the
+fifth tutorial the distance ranks better than the bound (BEDROC 0.764 against 0.685). What the
+bound adds is a penalty for being far from the training set; the posterior deviation is one way to
+state it and the distance, which needs no fit, another. The numbers of the table above come from
+one random split; with five seeds the prediction has a BEDROC of 0.920 and the bound with two
+deviations 0.944.
+
+The fifth tutorial, `docs/tutorials/05_screening.ipynb`, compares the two on its thrombin library
+and runs the comparison on the eight sets.
 
 **What it does not do.** It does not invent poses. A field kernel compares molecules in one frame,
 so the library has to be in the training set's frame already, or `--pose` has to be given, which
@@ -10864,7 +11348,7 @@ model at the same accuracy (+0.93 and +0.88) puts the best candidate at place 59
 in the pools and not in the models. On WSe2 the best one per cent of the arrangements lies within
 0.002 eV of the best one, so a rule that lands anywhere in that group has found what the study
 wants. On MoS2 the best arrangement lies 0.41 eV below the boundary of the best one per cent: it is
-an isolated candidate, and a kernel ridge model shrinks an isolated value toward the mean along
+an isolated candidate, and a kernel ridge model shrinks an isolated value toward the mean (a reading that the reference below corrects) along
 with everything else. Two things follow. The number to report for a design loop is not the accuracy
 of the model but the place it gives the best candidate, and that place is measured before the loop
 starts, while the loop refits after every answer -- on the perovskites the best cell starts at
@@ -10888,6 +11372,32 @@ quarter of the pool here, so this stage shows that the loop runs from end to end
 calculator and that using the model is better than not using it; it is too easy a search to say
 by how much. Replacing EMT with a machine-learned potential or with VASP changes the cost of a
 call and nothing else in the loop, and that is the step this item has not measured.
+
+**A reference that needs no field (added 15 November 2026).** `run_prototypes.py --stage cheap`
+(about 15 minutes) reruns the loop with the same start sets, budgets and choice of the ridge, but
+its model is a linear kernel on columns that need no field: the names of the elements on the A, B
+and X sites of a perovskite (108 columns), the counts of each kind of defect (4 columns), the pair
+expansion of the defect tutorial, and the number of Au-Au pairs in the first three shells of
+neighbours for the closed loop. With the greedy rule the names reach the best one per cent of the
+perovskite pool in 10 of 10 runs, after a median of 4 calls with 25 start cells and 2 calls with
+100, against 8 of 10 runs after 16 and 8 calls for the three-body kernel. On MoS2 the defect
+counts reach it in 8 of 10 and 10 of 10 runs, and with 100 start cells they put the best
+arrangement first (rank correlation +0.97, R² +0.99). On WSe2 every model reaches it in 9 or 10 of
+10 runs, the counts after 4 calls and the three-body kernel after 28 and 38. In the closed loop
+the Au-Au pair counts find the best candidate in 5 of 5 runs, as the fields do. This corrects the
+reading of the MoS2 failure. The best arrangement is one of the four cells with a single defect,
+and the number of defects decides most of the energy (a mean of +2.55, +3.96 and +6.47 eV for one,
+two and three defects). The counts model is a kernel ridge model too, and it finds that cell, so
+the cause is not that a kernel model shrinks an isolated value. The cause is the whole-cell
+kernel, in which a few defects are a small change of a large host signal. The difference-field
+kernel of the defect tutorial (alpha 1, gamma 1, fixed in advance) finds the best MoS2 arrangement
+after a median of one call. On these four pools the loop does not need the fields: the description
+has to see what changes, and the description a chemist writes down without computing anything is
+the reference to beat.
+
+The twenty-second tutorial, `docs/tutorials/22_a_design_loop.ipynb`, runs the loop live on the
+perovskites with the fields, the names of the elements and random choice, reads the stored stages,
+shows what decides the energy of the MoS2 cells, and runs the closed loop with EMT.
 
 **The limits.** The generator substitutes on a fixed cell: it does not relax what it proposes, so
 the structure the model sees is the prototype's geometry with other elements on it, and the
@@ -14810,7 +15320,7 @@ happens.
 
 **What the cheapest reference of each item costs.** Each of the three plan items names a value
 that needs no new data. For the diffusion coefficient it is the Nernst-Einstein value from the
-measured conductivity $\kappa$ and the transference number $t$ of the published set, which is
+measured conductivity κ and the transference number $t$ of the published set, which is
 the coefficient of an ideal solution of fully dissociated ions
 (`cmfqsar.cellmodel.nernst_einstein_diffusivity`):
 
@@ -16664,7 +17174,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twenty-second tutorial, `docs/tutorials/22_point_mutants.ipynb`, builds one
+among its references. The twenty-third tutorial, `docs/tutorials/23_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -17200,7 +17710,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-two notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-three notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -17213,11 +17723,11 @@ complex, the better of two enantiomers, read from the handedness of the fields a
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, a model of one near-infrared spectrometer read on the spectra of another, compared with a correction of every spectrum by itself, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
-the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, and the change of folding stability
+the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, and the twenty-second needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second downloads 4 MB of perovskites, and the twenty-third needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 
@@ -17682,6 +18192,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **joint kernel**, $K(A,B)$ | the sum of the normalised, scaled field kernels with their mixing coefficients: the single similarity the learner sees. *Mixing the fields* |
 | **Kabsch superposition** | the least-squares rotation and translation that best superimposes two sets of matched points. It is the second half of an MCS alignment -- the substructure search finds the correspondence, this places the molecule -- and the pose benchmark measures how far the result lands from the crystal pose. *Alignment*; *Judging an alignment, and aligning flexibly* |
 | **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no single co-field, because the prediction is no longer linear in the fields; a local co-field per molecule remains. *Nonlinear kernel layers and multiple kernel learning* |
+| **kernel mean embedding** | the function that a list of weighted points gives under a kernel: the kernel centred on every point, times the weight of the point, summed. A CMF field is the kernel mean embedding of the atoms of a molecule with their weights. *A field is a kernel mean embedding* |
 | **kernel trick** | replacing every inner product of two feature vectors by a kernel value, so that a linear model in the feature space is fitted and applied without building a feature vector. *Why a kernel is enough* |
 | **local co-field** | the derivative of a layered model's prediction with respect to the normalised field, taken at one molecule: the co-field of the linear model tangent to it there. For the linear kernel it is the ordinary co-field for every molecule. *The co-field of a nonlinear model: one per molecule* |
 | **non-linearity index** | the share of the mean squared norm of the local co-fields of the training molecules that their spread around the mean makes up: 0 for a linear model, 1 when they have nothing in common. *The co-field of a nonlinear model: one per molecule* |
@@ -17833,3 +18344,21 @@ Appl.* **1971**, *33*, 82–95.
 
 [30] Aronszajn, N. Theory of reproducing kernels. *Trans. Am. Math. Soc.* **1950**, *68*,
 337–404. doi:10.1090/S0002-9947-1950-0051437-7
+
+[31] Smola, A.; Gretton, A.; Song, L.; Schölkopf, B. A Hilbert space embedding for distributions.
+In *Algorithmic Learning Theory (ALT 2007)*; Springer: Berlin, 2007.
+
+[32] Gärtner, T.; Flach, P. A.; Kowalczyk, A.; Smola, A. J. Multi-instance kernels. In
+*Proceedings of the 19th International Conference on Machine Learning (ICML 2002)*; 2002.
+
+[33] Sriperumbudur, B. K.; Fukumizu, K.; Lanckriet, G. R. G. Universality, characteristic kernels
+and RKHS embedding of measures. *J. Mach. Learn. Res.* **2011**, *12*, 2389–2410.
+
+[34] Muandet, K.; Fukumizu, K.; Sriperumbudur, B.; Schölkopf, B. Kernel mean embedding of
+distributions: a review and beyond. *Found. Trends Mach. Learn.* **2017**, *10*, 1–141.
+
+[35] Szabó, Z.; Sriperumbudur, B. K.; Póczos, B.; Gretton, A. Learning theory for distribution
+regression. *J. Mach. Learn. Res.* **2016**, *17*, 1–40.
+
+[36] Bartók, A. P.; Kondor, R.; Csányi, G. On representing chemical environments. *Phys. Rev. B*
+**2013**, *87*, 184115.

@@ -1,0 +1,6627 @@
+{
+ "seeds": 5,
+ "betas": [
+  1.0,
+  2.0
+ ],
+ "alpha": 0.5,
+ "lam": 0.1,
+ "summary": {
+  "random": {
+   "sets": [
+    "COX2",
+    "DHFR",
+    "BZR",
+    "AChE",
+    "THR",
+    "ACE",
+    "GPB",
+    "THER"
+   ],
+   "folds": 200,
+   "mean": {
+    "prediction": {
+     "bedroc": 0.9198222846795837,
+     "auc": 0.8634650759227349
+    },
+    "standard deviation, beta 1": {
+     "bedroc": 0.937642116852202,
+     "auc": 0.8701523994094629
+    },
+    "nearest distance, beta 1": {
+     "bedroc": 0.944189677070568,
+     "auc": 0.8661591327465779
+    },
+    "standard deviation, beta 2": {
+     "bedroc": 0.9439580931516355,
+     "auc": 0.8676964445533166
+    },
+    "nearest distance, beta 2": {
+     "bedroc": 0.9566456692565778,
+     "auc": 0.8622793347042967
+    }
+   },
+   "sd_vs_distance": 0.7833096981176395,
+   "pairs": {
+    "standard deviation, beta 2 minus prediction": {
+     "bedroc": {
+      "mean": 0.024135808472051754,
+      "low": 0.0031717368343169294,
+      "high": 0.04798742563592104,
+      "ahead": 7,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.004231368630581739,
+      "low": -0.00472057954876734,
+      "high": 0.011788740230220264,
+      "ahead": 6,
+      "n_sets": 8
+     }
+    },
+    "nearest distance, beta 2 minus prediction": {
+     "bedroc": {
+      "mean": 0.03682338457699402,
+      "low": 0.014173139526416093,
+      "high": 0.0699016832637239,
+      "ahead": 8,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": -0.0011857412184381882,
+      "low": -0.011922944237531919,
+      "high": 0.008196973266725594,
+      "ahead": 5,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 2 minus nearest distance, beta 2": {
+     "bedroc": {
+      "mean": -0.01268757610494227,
+      "low": -0.027872104304426767,
+      "high": 0.0004536903806902279,
+      "ahead": 3,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.005417109849019927,
+      "low": 0.0017128633478236282,
+      "high": 0.00867446949565591,
+      "ahead": 6,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 1 minus prediction": {
+     "bedroc": {
+      "mean": 0.01781983217261826,
+      "low": 0.006977046504685086,
+      "high": 0.030370028375001124,
+      "ahead": 8,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.006687323486727889,
+      "low": 0.0003589914626004812,
+      "high": 0.012824524162327112,
+      "ahead": 6,
+      "n_sets": 8
+     }
+    },
+    "nearest distance, beta 1 minus prediction": {
+     "bedroc": {
+      "mean": 0.02436739239098426,
+      "low": 0.010601771670551305,
+      "high": 0.04185683119878284,
+      "ahead": 8,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.0026940568238429663,
+      "low": -0.004141836916855601,
+      "high": 0.008477851866803263,
+      "ahead": 6,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 1 minus nearest distance, beta 1": {
+     "bedroc": {
+      "mean": -0.006547560218366,
+      "low": -0.013556147285619751,
+      "high": -0.0007329037320893821,
+      "ahead": 2,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.003993266662884923,
+      "low": 0.0015068961737005392,
+      "high": 0.006260384961029419,
+      "ahead": 7,
+      "n_sets": 8
+     }
+    }
+   }
+  },
+  "chemotype": {
+   "sets": [
+    "COX2",
+    "DHFR",
+    "BZR",
+    "AChE",
+    "THR",
+    "ACE",
+    "GPB",
+    "THER"
+   ],
+   "folds": 50,
+   "mean": {
+    "prediction": {
+     "bedroc": 0.740630889714862,
+     "auc": 0.7324986718003048
+    },
+    "standard deviation, beta 1": {
+     "bedroc": 0.7703851676004466,
+     "auc": 0.7394438901003921
+    },
+    "nearest distance, beta 1": {
+     "bedroc": 0.753766660630162,
+     "auc": 0.7387013752776022
+    },
+    "standard deviation, beta 2": {
+     "bedroc": 0.7672745780502339,
+     "auc": 0.7437800399061257
+    },
+    "nearest distance, beta 2": {
+     "bedroc": 0.7516308365859845,
+     "auc": 0.7442240593540843
+    }
+   },
+   "sd_vs_distance": 0.7447355283203922,
+   "pairs": {
+    "standard deviation, beta 2 minus prediction": {
+     "bedroc": {
+      "mean": 0.026643688335371937,
+      "low": 0.005723085133317892,
+      "high": 0.051204461357357255,
+      "ahead": 6,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.011281368105820894,
+      "low": -0.017934305546810296,
+      "high": 0.040721837913155236,
+      "ahead": 5,
+      "n_sets": 8
+     }
+    },
+    "nearest distance, beta 2 minus prediction": {
+     "bedroc": {
+      "mean": 0.010999946871122518,
+      "low": -0.029466378982144225,
+      "high": 0.053747062444976464,
+      "ahead": 5,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.011725387553779457,
+      "low": -0.01894906858246002,
+      "high": 0.042063307342850104,
+      "ahead": 4,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 2 minus nearest distance, beta 2": {
+     "bedroc": {
+      "mean": 0.01564374146424942,
+      "low": -0.0167001336645237,
+      "high": 0.05347119846101138,
+      "ahead": 5,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": -0.00044401944795856296,
+      "low": -0.013675771813426475,
+      "high": 0.01308345762463289,
+      "ahead": 4,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 1 minus prediction": {
+     "bedroc": {
+      "mean": 0.02975427788558458,
+      "low": 0.0044314310967532525,
+      "high": 0.05815046174229286,
+      "ahead": 6,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.006945218300087347,
+      "low": -0.003509464811436608,
+      "high": 0.018588197701498232,
+      "ahead": 5,
+      "n_sets": 8
+     }
+    },
+    "nearest distance, beta 1 minus prediction": {
+     "bedroc": {
+      "mean": 0.013135770915299959,
+      "low": -0.003928741642884126,
+      "high": 0.03777973895699499,
+      "ahead": 5,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.006202703477297261,
+      "low": -0.00622537411624753,
+      "high": 0.019576311886874885,
+      "ahead": 4,
+      "n_sets": 8
+     }
+    },
+    "standard deviation, beta 1 minus nearest distance, beta 1": {
+     "bedroc": {
+      "mean": 0.01661850697028462,
+      "low": -0.006796530214637118,
+      "high": 0.04857196722560597,
+      "ahead": 5,
+      "n_sets": 8
+     },
+     "auc": {
+      "mean": 0.0007425148227900857,
+      "low": -0.006788485974980799,
+      "high": 0.007429905796412337,
+      "ahead": 5,
+      "n_sets": 8
+     }
+    }
+   }
+  }
+ },
+ "sets": {
+  "COX2": {
+   "set": "COX2",
+   "n": 282,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6476536168006223,
+      "relative_sd_spread": 0.3883918280625032,
+      "prediction": {
+       "bedroc": 0.7741620445245645,
+       "auc": 0.8446969696969697
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8380909460996621,
+       "auc": 0.8396464646464646
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8761905861096755,
+       "auc": 0.8383838383838383
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8809099431530055,
+       "auc": 0.8320707070707071
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8603739955105628,
+       "auc": 0.8308080808080808
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6046149857402127,
+      "relative_sd_spread": 0.49371860647490856,
+      "prediction": {
+       "bedroc": 0.9666623823447973,
+       "auc": 0.874074074074074
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.978455906650759,
+       "auc": 0.8876543209876543
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9742420231951711,
+       "auc": 0.8765432098765432
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9784981864534124,
+       "auc": 0.9037037037037037
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9749148614597913,
+       "auc": 0.8950617283950617
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.732194121667806,
+      "relative_sd_spread": 0.571102497121132,
+      "prediction": {
+       "bedroc": 0.9954795742241886,
+       "auc": 0.929757343550447
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9990987524296991,
+       "auc": 0.938697318007663
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.998308277481934,
+       "auc": 0.9386973180076629
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996255839454806,
+       "auc": 0.9399744572158365
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9993109293028453,
+       "auc": 0.9476372924648787
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.6546821599453178,
+      "relative_sd_spread": 0.49369138864248946,
+      "prediction": {
+       "bedroc": 0.9745244227272071,
+       "auc": 0.8748387096774195
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9751341082748065,
+       "auc": 0.8761290322580645
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9751315989688334,
+       "auc": 0.8748387096774193
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9645700764178611,
+       "auc": 0.8774193548387097
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9751453604174525,
+       "auc": 0.8683870967741935
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.7003417634996583,
+      "relative_sd_spread": 0.7729684753124375,
+      "prediction": {
+       "bedroc": 0.998129989231291,
+       "auc": 0.8671775223499363
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9990526891569055,
+       "auc": 0.9042145593869731
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9989036483957912,
+       "auc": 0.8927203065134101
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9992180749414661,
+       "auc": 0.9144316730523627
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9986813205166878,
+       "auc": 0.9042145593869731
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.5431034482758621,
+      "relative_sd_spread": 0.46149064891240954,
+      "prediction": {
+       "bedroc": 0.996697213357355,
+       "auc": 0.9040404040404042
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.999532856973983,
+       "auc": 0.9141414141414141
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9983097304354067,
+       "auc": 0.9015151515151516
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996757256386753,
+       "auc": 0.9242424242424242
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9990468151411115,
+       "auc": 0.9002525252525253
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6601633393829403,
+      "relative_sd_spread": 0.8700480132719816,
+      "prediction": {
+       "bedroc": 0.9671776428980365,
+       "auc": 0.8792207792207792
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9790160927909286,
+       "auc": 0.8909090909090909
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9758194293798379,
+       "auc": 0.8883116883116884
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9865678523679694,
+       "auc": 0.8844155844155844
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9700688286024812,
+       "auc": 0.887012987012987
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.789336978810663,
+      "relative_sd_spread": 0.6576361582903285,
+      "prediction": {
+       "bedroc": 0.9645016749558796,
+       "auc": 0.8991060025542784
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9646515111525452,
+       "auc": 0.9157088122605365
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9495250728124487,
+       "auc": 0.9093231162196679
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.949560039560536,
+       "auc": 0.9259259259259259
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.964660268841171,
+       "auc": 0.9246487867177523
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.8060833902939166,
+      "relative_sd_spread": 0.49687474937192777,
+      "prediction": {
+       "bedroc": 0.9752298160178972,
+       "auc": 0.8775510204081632
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996468614861921,
+       "auc": 0.8925170068027211
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9978297030419788,
+       "auc": 0.8789115646258503
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998899522990293,
+       "auc": 0.9034013605442177
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996179032148834,
+       "auc": 0.8802721088435375
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.6624060150375941,
+      "relative_sd_spread": 0.6672317520860572,
+      "prediction": {
+       "bedroc": 0.9824766606281508,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9824764820852615,
+       "auc": 0.8476190476190477
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9826849720126885,
+       "auc": 0.85578231292517
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9773489234800362,
+       "auc": 0.8394557823129253
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9694206638293447,
+       "auc": 0.8530612244897959
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.660292973813845,
+      "relative_sd_spread": 0.3635135048955154,
+      "prediction": {
+       "bedroc": 0.9994566085335825,
+       "auc": 0.8823529411764706
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9992804499212853,
+       "auc": 0.877237851662404
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9987328895522186,
+       "auc": 0.870843989769821
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9986188608324011,
+       "auc": 0.8657289002557543
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9980661295893701,
+       "auc": 0.8542199488491049
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6990536686543947,
+      "relative_sd_spread": 0.43468726865778795,
+      "prediction": {
+       "bedroc": 0.8922454981050264,
+       "auc": 0.8964646464646464
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8921542624405471,
+       "auc": 0.8926767676767676
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.892264859777604,
+       "auc": 0.8939393939393939
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8922150326152005,
+       "auc": 0.8813131313131313
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.893168111349647,
+       "auc": 0.8914141414141414
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.7315105946684894,
+      "relative_sd_spread": 0.7782083144699057,
+      "prediction": {
+       "bedroc": 0.9520262482736701,
+       "auc": 0.8448717948717949
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.957826035074685,
+       "auc": 0.8551282051282051
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9321107413760408,
+       "auc": 0.8423076923076923
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9577957202849586,
+       "auc": 0.8538461538461538
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.940662038681102,
+       "auc": 0.8371794871794872
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.6829118250170882,
+      "relative_sd_spread": 0.4477858390209288,
+      "prediction": {
+       "bedroc": 0.9996924817528381,
+       "auc": 0.9361430395913155
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9997816287516629,
+       "auc": 0.9476372924648787
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999741002487305,
+       "auc": 0.9476372924648787
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996706878892749,
+       "auc": 0.9501915708812261
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997251219318861,
+       "auc": 0.9501915708812262
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.7099111414900888,
+      "relative_sd_spread": 0.5678397618722438,
+      "prediction": {
+       "bedroc": 0.9957056656103461,
+       "auc": 0.8932806324110671
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9949393668397251,
+       "auc": 0.8919631093544137
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9939762954130318,
+       "auc": 0.8827404479578392
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9958382706254427,
+       "auc": 0.8853754940711462
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9917255001118909,
+       "auc": 0.8748353096179182
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.8074280528908478,
+      "relative_sd_spread": 0.6285786343468575,
+      "prediction": {
+       "bedroc": 0.9872673107830975,
+       "auc": 0.8883374689826303
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9745703523323861,
+       "auc": 0.892059553349876
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9873824715449406,
+       "auc": 0.8945409429280398
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9745748564085907,
+       "auc": 0.892059553349876
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9873752270911326,
+       "auc": 0.8870967741935483
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6138838475499093,
+      "relative_sd_spread": 0.42292119173751286,
+      "prediction": {
+       "bedroc": 0.9656953798615001,
+       "auc": 0.945012787723785
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9782864449681392,
+       "auc": 0.9437340153452686
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9783769145241807,
+       "auc": 0.9437340153452685
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9825632215603077,
+       "auc": 0.9360613810741688
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9755619794130379,
+       "auc": 0.9398976982097186
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.6233082706766917,
+      "relative_sd_spread": 0.5438662699725931,
+      "prediction": {
+       "bedroc": 0.9949323745923585,
+       "auc": 0.8227040816326531
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9959359777928866,
+       "auc": 0.8392857142857143
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9948596056989176,
+       "auc": 0.8367346938775511
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9966191058919994,
+       "auc": 0.840561224489796
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9938053898365623,
+       "auc": 0.8392857142857142
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.7695146958304854,
+      "relative_sd_spread": 0.5065197679729697,
+      "prediction": {
+       "bedroc": 0.8500079282263135,
+       "auc": 0.8646232439335888
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8511016604358885,
+       "auc": 0.8773946360153257
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8471796096450904,
+       "auc": 0.8569604086845466
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8510794060360469,
+       "auc": 0.8786717752234994
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8427801501381897,
+       "auc": 0.8454661558109835
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.5014354066985647,
+      "relative_sd_spread": 0.7945476857010028,
+      "prediction": {
+       "bedroc": 0.991088329206641,
+       "auc": 0.8991060025542783
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9904625514949065,
+       "auc": 0.8939974457215836
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9873411585339692,
+       "auc": 0.8991060025542783
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9868610879129964,
+       "auc": 0.8901660280970626
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9870448484819397,
+       "auc": 0.8991060025542784
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.6689136634690175,
+      "relative_sd_spread": 0.41295743946228547,
+      "prediction": {
+       "bedroc": 0.940831876184835,
+       "auc": 0.8580246913580247
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9392112099123366,
+       "auc": 0.8555555555555556
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9398337535812968,
+       "auc": 0.8604938271604938
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9444705643334372,
+       "auc": 0.8506172839506172
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9426263605037543,
+       "auc": 0.8530864197530864
+      }
+     },
+     {
+      "n_test": 57,
+      "sd_vs_distance": 0.7726212081928961,
+      "relative_sd_spread": 0.522277310347,
+      "prediction": {
+       "bedroc": 0.9350278170527919,
+       "auc": 0.8617283950617284
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9433720983237637,
+       "auc": 0.8802469135802469
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9409301644235091,
+       "auc": 0.874074074074074
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.945557349711128,
+       "auc": 0.8901234567901235
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9210657213310838,
+       "auc": 0.8802469135802469
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.6362952836637048,
+      "relative_sd_spread": 0.4020743422460325,
+      "prediction": {
+       "bedroc": 0.9974318549528984,
+       "auc": 0.9375
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9962880681051974,
+       "auc": 0.9361979166666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9963008072260262,
+       "auc": 0.9361979166666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.99484556841323,
+       "auc": 0.9283854166666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9957373018883756,
+       "auc": 0.9296875
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.745727956254272,
+      "relative_sd_spread": 0.6316339735276116,
+      "prediction": {
+       "bedroc": 0.99633200080069,
+       "auc": 0.9083870967741936
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9937818879496991,
+       "auc": 0.9187096774193549
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.987624695535299,
+       "auc": 0.9096774193548387
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9875614200070628,
+       "auc": 0.9161290322580645
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9873845218163406,
+       "auc": 0.9096774193548387
+      }
+     },
+     {
+      "n_test": 56,
+      "sd_vs_distance": 0.5931647300068353,
+      "relative_sd_spread": 0.8458224456184513,
+      "prediction": {
+       "bedroc": 0.9993032339587057,
+       "auc": 0.9029374201787995
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9993202042888606,
+       "auc": 0.909323116219668
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9987635662354588,
+       "auc": 0.9029374201787994
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9993250714029521,
+       "auc": 0.9080459770114943
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9975493763854022,
+       "auc": 0.8901660280970626
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 61,
+      "sd_vs_distance": 0.8956636700158644,
+      "relative_sd_spread": 0.6880710193722179,
+      "prediction": {
+       "bedroc": 0.9790508292989866,
+       "auc": 0.8344086021505376
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.990937561302152,
+       "auc": 0.8903225806451613
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9933947691715539,
+       "auc": 0.8870967741935484
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9945536223134387,
+       "auc": 0.8935483870967742
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9899168312923923,
+       "auc": 0.889247311827957
+      }
+     },
+     {
+      "n_test": 51,
+      "sd_vs_distance": 0.7691402714932126,
+      "relative_sd_spread": 0.851884332853137,
+      "prediction": {
+       "bedroc": 0.8211858974915257,
+       "auc": 0.8977272727272727
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9112806012876767,
+       "auc": 0.9136363636363636
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.879026367090421,
+       "auc": 0.9
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9709650793292022,
+       "auc": 0.9431818181818182
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9632394259005249,
+       "auc": 0.9181818181818182
+      }
+     },
+     {
+      "n_test": 24,
+      "sd_vs_distance": 0.6417391304347826,
+      "relative_sd_spread": 0.4539370867520958,
+      "prediction": {
+       "bedroc": 0.9982807072199673,
+       "auc": 0.8487394957983193
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9982036403725365,
+       "auc": 0.8403361344537814
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9991425067759336,
+       "auc": 0.8487394957983192
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9983142003337959,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996608707193113,
+       "auc": 0.865546218487395
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.9298245614035088,
+      "relative_sd_spread": 0.4780269812580851,
+      "prediction": {
+       "bedroc": 0.6816657623223995,
+       "auc": 0.5844155844155844
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.6961659538190207,
+       "auc": 0.5584415584415584
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.6984859983285286,
+       "auc": 0.6103896103896104
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.746446675859813,
+       "auc": 0.5714285714285714
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.767792881191187,
+       "auc": 0.6103896103896104
+      }
+     },
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.5147058823529412,
+      "relative_sd_spread": 0.11830006823818891,
+      "prediction": {
+       "bedroc": 0.9999999513935023,
+       "auc": 0.9642857142857143
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999999513935023,
+       "auc": 0.9642857142857143
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999997122790927,
+       "auc": 0.8571428571428572
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.999999781740156,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.999997122790927,
+       "auc": 0.8571428571428572
+      }
+     },
+     {
+      "n_test": 8,
+      "sd_vs_distance": 0.6904761904761906,
+      "relative_sd_spread": 0.13619160364737085,
+      "prediction": {
+       "bedroc": 0.999999719207664,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.999999719207664,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999999719207664,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.999999719207664,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.999999719207664,
+       "auc": 0.8571428571428571
+      }
+     },
+     {
+      "n_test": 6,
+      "sd_vs_distance": 0.2,
+      "relative_sd_spread": 0.04577765292384193,
+      "prediction": {
+       "bedroc": -2.0816681711721685e-17,
+       "auc": 0.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": -2.0816681711721685e-17,
+       "auc": 0.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": -2.0816681711721685e-17,
+       "auc": 0.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": -2.0816681711721685e-17,
+       "auc": 0.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": -2.0816681711721685e-17,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 1.0,
+      "relative_sd_spread": 0.03661798584570841,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 52,
+      "sd_vs_distance": 0.6766840262955689,
+      "relative_sd_spread": 0.44794366475740466,
+      "prediction": {
+       "bedroc": 0.7034798006592138,
+       "auc": 0.7377777777777778
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7286157164586167,
+       "auc": 0.7496296296296296
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7184733881283191,
+       "auc": 0.7525925925925927
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7426035822947259,
+       "auc": 0.7481481481481481
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7251606557266863,
+       "auc": 0.7614814814814814
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "DHFR": {
+   "set": "DHFR",
+   "n": 361,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 73,
+      "sd_vs_distance": 0.5575404171294583,
+      "relative_sd_spread": 0.4480744883638173,
+      "prediction": {
+       "bedroc": 0.9980567870045522,
+       "auc": 0.9512012012012012
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9991704097550811,
+       "auc": 0.9542042042042043
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9989973912403612,
+       "auc": 0.9534534534534534
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9993081453414999,
+       "auc": 0.9534534534534536
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.999374655338989,
+       "auc": 0.960960960960961
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.7157695028619205,
+      "relative_sd_spread": 0.49282991268140447,
+      "prediction": {
+       "bedroc": 0.8128754481864031,
+       "auc": 0.842013888888889
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8110018214161124,
+       "auc": 0.8298611111111112
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8552429386340663,
+       "auc": 0.8350694444444444
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8890271192541067,
+       "auc": 0.8246527777777778
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9141095882922881,
+       "auc": 0.8255208333333334
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.5640877226831308,
+      "relative_sd_spread": 0.4302844209223012,
+      "prediction": {
+       "bedroc": 0.9159984701011192,
+       "auc": 0.924468922108576
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9369714188612858,
+       "auc": 0.9276160503540519
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9147325854680274,
+       "auc": 0.9244689221085759
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9369291370100584,
+       "auc": 0.9276160503540518
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9341409317345492,
+       "auc": 0.928402832415421
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6832593735931571,
+      "relative_sd_spread": 0.42735780136330287,
+      "prediction": {
+       "bedroc": 0.9979985612977673,
+       "auc": 0.9588189588189587
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9992318404527184,
+       "auc": 0.9603729603729604
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.998911853390616,
+       "auc": 0.9595959595959596
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9994160876884651,
+       "auc": 0.9634809634809636
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.998929551661705,
+       "auc": 0.9588189588189588
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6304263939803203,
+      "relative_sd_spread": 0.5012541662078676,
+      "prediction": {
+       "bedroc": 0.9733547805933258,
+       "auc": 0.8965250965250965
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.992750652234691,
+       "auc": 0.9088803088803089
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9734113982476965,
+       "auc": 0.901930501930502
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9981033338358948,
+       "auc": 0.9181467181467181
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9798703721317249,
+       "auc": 0.905019305019305
+      }
+     },
+     {
+      "n_test": 73,
+      "sd_vs_distance": 0.5860483771442677,
+      "relative_sd_spread": 0.6424873281436192,
+      "prediction": {
+       "bedroc": 0.8930254274423177,
+       "auc": 0.8917293233082707
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9965375709286785,
+       "auc": 0.9037593984962407
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9779700020672121,
+       "auc": 0.8969924812030076
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.997135223653656,
+       "auc": 0.8969924812030075
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9961852109169012,
+       "auc": 0.9037593984962405
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.5285548909897744,
+      "relative_sd_spread": 0.44552881960577645,
+      "prediction": {
+       "bedroc": 0.9989374426472775,
+       "auc": 0.9444444444444444
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9994682904415825,
+       "auc": 0.9544753086419753
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9982463025260649,
+       "auc": 0.9490740740740742
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9993397505309276,
+       "auc": 0.9521604938271604
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9989435337815301,
+       "auc": 0.9521604938271605
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.7385683966814588,
+      "relative_sd_spread": 0.4959527305894451,
+      "prediction": {
+       "bedroc": 0.962294674875775,
+       "auc": 0.91996891996892
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9924021192606549,
+       "auc": 0.9238539238539238
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9815994167173048,
+       "auc": 0.9230769230769231
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9967927936320886,
+       "auc": 0.9308469308469309
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9894108220929204,
+       "auc": 0.9215229215229215
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.5375908418547818,
+      "relative_sd_spread": 0.38605412662732247,
+      "prediction": {
+       "bedroc": 0.9160430468614034,
+       "auc": 0.8976190476190476
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8914568027397612,
+       "auc": 0.8984126984126984
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9163341914771717,
+       "auc": 0.8952380952380953
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8586183564131418,
+       "auc": 0.8984126984126984
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.93569478604633,
+       "auc": 0.8928571428571429
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6085921924239502,
+      "relative_sd_spread": 0.4164953122818953,
+      "prediction": {
+       "bedroc": 0.936918144014285,
+       "auc": 0.8777089783281734
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9778907171966962,
+       "auc": 0.8854489164086687
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9766028923163202,
+       "auc": 0.8893188854489165
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9929263087564535,
+       "auc": 0.8808049535603716
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9879893304770548,
+       "auc": 0.8939628482972136
+      }
+     },
+     {
+      "n_test": 73,
+      "sd_vs_distance": 0.5451993088979391,
+      "relative_sd_spread": 0.3546451961380057,
+      "prediction": {
+       "bedroc": 0.9945621577463951,
+       "auc": 0.9368421052631579
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9956261318225339,
+       "auc": 0.9383458646616541
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9943232059809902,
+       "auc": 0.9390977443609023
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9973443953690568,
+       "auc": 0.9458646616541353
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9943693609193922,
+       "auc": 0.9428571428571428
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6754132098527238,
+      "relative_sd_spread": 0.4323369820382078,
+      "prediction": {
+       "bedroc": 0.8607861390933483,
+       "auc": 0.9389961389961391
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9394721638789398,
+       "auc": 0.9389961389961391
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9200777020685313,
+       "auc": 0.9374517374517375
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9912683863777085,
+       "auc": 0.9382239382239383
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9736410120642321,
+       "auc": 0.9405405405405406
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6462795035050487,
+      "relative_sd_spread": 0.49705905953695173,
+      "prediction": {
+       "bedroc": 0.9184129894707718,
+       "auc": 0.8753869969040248
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9197016896005072,
+       "auc": 0.8831269349845202
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9196924754791973,
+       "auc": 0.8854489164086687
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.919788994853376,
+       "auc": 0.8831269349845201
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.964984569700422,
+       "auc": 0.8947368421052632
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.744227924625378,
+      "relative_sd_spread": 0.4571077764046499,
+      "prediction": {
+       "bedroc": 0.9852813776145581,
+       "auc": 0.8714285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.981510786089938,
+       "auc": 0.8611111111111112
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9850619769333211,
+       "auc": 0.8634920634920635
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9808748201624217,
+       "auc": 0.8555555555555555
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9797632255631035,
+       "auc": 0.8587301587301588
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.7405620940253393,
+      "relative_sd_spread": 0.6042775932177572,
+      "prediction": {
+       "bedroc": 0.9995413365112917,
+       "auc": 0.9515625
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998666545210217,
+       "auc": 0.95234375
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997717550580195,
+       "auc": 0.95390625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998367326198959,
+       "auc": 0.9421875
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999034737099015,
+       "auc": 0.9546875
+      }
+     },
+     {
+      "n_test": 73,
+      "sd_vs_distance": 0.6908552388004444,
+      "relative_sd_spread": 0.44247523921051823,
+      "prediction": {
+       "bedroc": 0.9907176597664457,
+       "auc": 0.9338345864661655
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9927881501365379,
+       "auc": 0.9323308270676691
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9965834287795837,
+       "auc": 0.9360902255639098
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9952263032291361,
+       "auc": 0.9263157894736842
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9963945718956883,
+       "auc": 0.9285714285714286
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.40417390185864044,
+      "relative_sd_spread": 0.49704687734047387,
+      "prediction": {
+       "bedroc": 0.9997929145804829,
+       "auc": 0.9347319347319347
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9997928024062738,
+       "auc": 0.9409479409479409
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997603996490697,
+       "auc": 0.9401709401709402
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998262837767524,
+       "auc": 0.9425019425019424
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996920171481812,
+       "auc": 0.9355089355089355
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.7138722747443567,
+      "relative_sd_spread": 0.5207897366061975,
+      "prediction": {
+       "bedroc": 0.9994431660156112,
+       "auc": 0.923611111111111
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9995000358289522,
+       "auc": 0.9243827160493827
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9995314455296223,
+       "auc": 0.9266975308641976
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996600854839145,
+       "auc": 0.9166666666666666
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9995418635571023,
+       "auc": 0.9251543209876544
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.5439899672004631,
+      "relative_sd_spread": 0.409722712676791,
+      "prediction": {
+       "bedroc": 0.8130086356176712,
+       "auc": 0.9238171611868485
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8320481975727008,
+       "auc": 0.9198075380914195
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.846423076341506,
+       "auc": 0.9278267842822775
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8762546994825885,
+       "auc": 0.9109863672814755
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8447516831316554,
+       "auc": 0.9246190858059342
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.525403562930092,
+      "relative_sd_spread": 0.4208940849953328,
+      "prediction": {
+       "bedroc": 0.8149378368848986,
+       "auc": 0.86328125
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8935150722387287,
+       "auc": 0.8695312499999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.859130361008779,
+       "auc": 0.8640625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9534364970165654,
+       "auc": 0.8796875
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9191380145530175,
+       "auc": 0.8671875
+      }
+     },
+     {
+      "n_test": 73,
+      "sd_vs_distance": 0.5702517586079231,
+      "relative_sd_spread": 0.47144862593215314,
+      "prediction": {
+       "bedroc": 0.9994924978854599,
+       "auc": 0.9112781954887217
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9995089624093779,
+       "auc": 0.9060150375939849
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9993778914659915,
+       "auc": 0.9037593984962407
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9994156239132482,
+       "auc": 0.9030075187969925
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9993845631387767,
+       "auc": 0.8962406015037594
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.749758826934208,
+      "relative_sd_spread": 0.5099491208642447,
+      "prediction": {
+       "bedroc": 0.937436124154999,
+       "auc": 0.8564554931836407
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9494093814025039,
+       "auc": 0.8724939855653568
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.948051457355263,
+       "auc": 0.8773055332798717
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9496558127969517,
+       "auc": 0.8748997594226142
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9509103017889186,
+       "auc": 0.8861267040898155
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.5353720496494951,
+      "relative_sd_spread": 0.3456714797254887,
+      "prediction": {
+       "bedroc": 0.9998524433805778,
+       "auc": 0.9798761609907121
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9997876051204083,
+       "auc": 0.9791021671826625
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997990057368834,
+       "auc": 0.9767801857585139
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997226739776076,
+       "auc": 0.978328173374613
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997898094368203,
+       "auc": 0.9775541795665634
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.7018136214547561,
+      "relative_sd_spread": 0.4764942408778225,
+      "prediction": {
+       "bedroc": 0.633858126459488,
+       "auc": 0.8552631578947367
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.6423391810833338,
+       "auc": 0.8668730650154799
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.6949568503770137,
+       "auc": 0.8606811145510836
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7519467045856751,
+       "auc": 0.8691950464396284
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7424745568603086,
+       "auc": 0.8606811145510835
+      }
+     },
+     {
+      "n_test": 72,
+      "sd_vs_distance": 0.6075953437520099,
+      "relative_sd_spread": 0.4968366224095391,
+      "prediction": {
+       "bedroc": 0.9787058834761156,
+       "auc": 0.8717545239968528
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9874569135705027,
+       "auc": 0.8701809598741148
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9825941906656205,
+       "auc": 0.8693941778127457
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9953104852191896,
+       "auc": 0.8717545239968529
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9904099905570886,
+       "auc": 0.8686073957513769
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 38,
+      "sd_vs_distance": 0.5640660903818798,
+      "relative_sd_spread": 0.40230002653094193,
+      "prediction": {
+       "bedroc": 0.9999983690617366,
+       "auc": 0.7083333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999991412763903,
+       "auc": 0.75
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999988655957123,
+       "auc": 0.7222222222222222
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999996684014262,
+       "auc": 0.7916666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999988655957123,
+       "auc": 0.7222222222222222
+      }
+     },
+     {
+      "n_test": 20,
+      "sd_vs_distance": 0.9203007518796992,
+      "relative_sd_spread": 0.7016481889793954,
+      "prediction": {
+       "bedroc": 0.9975808991864917,
+       "auc": 0.71
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9677373920638179,
+       "auc": 0.6699999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.997595350723394,
+       "auc": 0.69
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.6637196691816913,
+       "auc": 0.33999999999999997
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7656558641768346,
+       "auc": 0.6399999999999999
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.4142857142857142,
+      "relative_sd_spread": 0.19409081175322296,
+      "prediction": {
+       "bedroc": 0.9999996856140861,
+       "auc": 0.9230769230769231
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999996856140861,
+       "auc": 0.9230769230769231
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999996856140861,
+       "auc": 0.9230769230769231
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999996856140861,
+       "auc": 0.9230769230769231
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999996856140861,
+       "auc": 0.9230769230769231
+      }
+     },
+     {
+      "n_test": 12,
+      "sd_vs_distance": 0.7202797202797203,
+      "relative_sd_spread": 0.36510963549855774,
+      "prediction": {
+       "bedroc": 0.9643260171762031,
+       "auc": 0.18181818181818182
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9643260171762031,
+       "auc": 0.18181818181818182
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9643260171762031,
+       "auc": 0.18181818181818182
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9932620638401422,
+       "auc": 0.2727272727272727
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.1102230246251565e-16,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 12,
+      "sd_vs_distance": 0.21678321678321683,
+      "relative_sd_spread": 0.17506658921581994,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 12,
+      "sd_vs_distance": 0.4055944055944056,
+      "relative_sd_spread": 0.13772970504512352,
+      "prediction": {
+       "bedroc": 0.9998052300916987,
+       "auc": 0.8857142857142857
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998052300916987,
+       "auc": 0.8857142857142857
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9998052300916987,
+       "auc": 0.8857142857142857
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999634140263772,
+       "auc": 0.9142857142857143
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998052300916987,
+       "auc": 0.8857142857142857
+      }
+     },
+     {
+      "n_test": 12,
+      "sd_vs_distance": 0.3636363636363637,
+      "relative_sd_spread": 0.1476133361131319,
+      "prediction": {
+       "bedroc": 0.817860782328824,
+       "auc": 0.7142857142857142
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8170232790605255,
+       "auc": 0.6857142857142857
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.817860782328824,
+       "auc": 0.7142857142857142
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8170232790605255,
+       "auc": 0.6857142857142857
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8180189662635025,
+       "auc": 0.7428571428571429
+      }
+     },
+     {
+      "n_test": 11,
+      "sd_vs_distance": 0.5818181818181819,
+      "relative_sd_spread": 0.15779960579481206,
+      "prediction": {
+       "bedroc": 0.999905603885174,
+       "auc": 0.8333333333333334
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999056587855816,
+       "auc": 0.8666666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999905603885174,
+       "auc": 0.8333333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999056587855816,
+       "auc": 0.8666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999056587855816,
+       "auc": 0.8666666666666667
+      }
+     },
+     {
+      "n_test": 8,
+      "sd_vs_distance": 0.5714285714285715,
+      "relative_sd_spread": 0.19386528296769218,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.7999999999999999,
+      "relative_sd_spread": 0.037703497501251945,
+      "prediction": {
+       "bedroc": 0.9932623568421743,
+       "auc": 0.3333333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9932623568421743,
+       "auc": 0.3333333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9932623568421743,
+       "auc": 0.3333333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9932623568421743,
+       "auc": 0.3333333333333333
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9932623568421743,
+       "auc": 0.3333333333333333
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.39999999999999997,
+      "relative_sd_spread": 0.1613953847456387,
+      "prediction": {
+       "bedroc": 0.006737643157825642,
+       "auc": 0.6666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.006737643157825642,
+       "auc": 0.6666666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.006737643157825642,
+       "auc": 0.6666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.006737643157825642,
+       "auc": 0.6666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.006737643157825642,
+       "auc": 0.6666666666666667
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.7999999999999999,
+      "relative_sd_spread": 0.07044654630087605,
+      "prediction": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.7999999999999999,
+      "relative_sd_spread": 0.08213092926590537,
+      "prediction": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 5.293955920339377e-23,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": -0.6000000000000001,
+      "relative_sd_spread": 0.13291635735748014,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 81,
+      "sd_vs_distance": 0.7508807588075881,
+      "relative_sd_spread": 0.4016520936564322,
+      "prediction": {
+       "bedroc": 0.5908094833925576,
+       "auc": 0.8049180327868852
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.611740041772135,
+       "auc": 0.7909836065573771
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.5904079517591493,
+       "auc": 0.792622950819672
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.6406823194746969,
+       "auc": 0.7680327868852459
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.5946128418186267,
+       "auc": 0.7762295081967213
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "BZR": {
+   "set": "BZR",
+   "n": 147,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.5839822024471636,
+      "relative_sd_spread": 0.5195183348904575,
+      "prediction": {
+       "bedroc": 0.7500896209028055,
+       "auc": 0.8657407407407407
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9910614828837603,
+       "auc": 0.8703703703703702
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.982585856338613,
+       "auc": 0.861111111111111
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997515848420636,
+       "auc": 0.8935185185185185
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9986183344746771,
+       "auc": 0.861111111111111
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.7802002224694105,
+      "relative_sd_spread": 0.5442865183982557,
+      "prediction": {
+       "bedroc": 0.8705416364342312,
+       "auc": 0.915
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9331806574053926,
+       "auc": 0.9199999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9652694394474577,
+       "auc": 0.93
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9292141973910955,
+       "auc": 0.89
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9882221816052191,
+       "auc": 0.905
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7147783251231525,
+      "relative_sd_spread": 0.6223797787445976,
+      "prediction": {
+       "bedroc": 0.9911362611335296,
+       "auc": 0.7666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9971876667393734,
+       "auc": 0.8333333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9971828046928007,
+       "auc": 0.8095238095238095
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9981615625389434,
+       "auc": 0.8761904761904762
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9983418123948762,
+       "auc": 0.861904761904762
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7300492610837437,
+      "relative_sd_spread": 0.5591673564127959,
+      "prediction": {
+       "bedroc": 0.9826322505654466,
+       "auc": 0.8523809523809524
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9957664195447938,
+       "auc": 0.9142857142857143
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9959531134259281,
+       "auc": 0.9285714285714286
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9959810167550811,
+       "auc": 0.9428571428571428
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9959950172241472,
+       "auc": 0.9571428571428572
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7871921182266007,
+      "relative_sd_spread": 0.5425214646347929,
+      "prediction": {
+       "bedroc": 0.5615120426230459,
+       "auc": 0.7009803921568627
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.5928700769006267,
+       "auc": 0.6862745098039216
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.5928779945405244,
+       "auc": 0.6813725490196078
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.5928520950750379,
+       "auc": 0.6764705882352942
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.6829878948935568,
+       "auc": 0.6911764705882353
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.7410456062291434,
+      "relative_sd_spread": 0.5498824586089908,
+      "prediction": {
+       "bedroc": 0.9975758976951694,
+       "auc": 0.8280542986425339
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.997534514354024,
+       "auc": 0.8235294117647058
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9975749537672096,
+       "auc": 0.8190045248868778
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9952342613324354,
+       "auc": 0.8235294117647058
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9975022937008462,
+       "auc": 0.7873303167420814
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.7993325917686318,
+      "relative_sd_spread": 0.6471320827214158,
+      "prediction": {
+       "bedroc": 0.5068231393858155,
+       "auc": 0.895
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.5085762655351256,
+       "auc": 0.91
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.502542935990022,
+       "auc": 0.9
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.5086170957715124,
+       "auc": 0.915
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7402958610154567,
+       "auc": 0.9
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7226600985221673,
+      "relative_sd_spread": 0.5704254146971253,
+      "prediction": {
+       "bedroc": 0.9878154256002342,
+       "auc": 0.8238095238095238
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9945195542090968,
+       "auc": 0.8476190476190476
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.975731459078347,
+       "auc": 0.8238095238095238
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9908756039946044,
+       "auc": 0.8428571428571429
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9791773861032135,
+       "auc": 0.8285714285714286
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.8231527093596057,
+      "relative_sd_spread": 0.419950926917667,
+      "prediction": {
+       "bedroc": 0.9368949665530447,
+       "auc": 0.8383838383838382
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8744786706238609,
+       "auc": 0.8636363636363635
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8744757782087051,
+       "auc": 0.8585858585858586
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8744688972134089,
+       "auc": 0.8737373737373737
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8744628785391791,
+       "auc": 0.8636363636363636
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.5325123152709358,
+      "relative_sd_spread": 0.4672933346861898,
+      "prediction": {
+       "bedroc": 0.9880521269423125,
+       "auc": 0.8714285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.990971663537917,
+       "auc": 0.861904761904762
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.991016272754565,
+       "auc": 0.861904761904762
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9986539555467465,
+       "auc": 0.8571428571428572
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9914549671354402,
+       "auc": 0.819047619047619
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.6582869855394883,
+      "relative_sd_spread": 0.4523550999535373,
+      "prediction": {
+       "bedroc": 0.972627254193183,
+       "auc": 0.6785714285714286
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9802749303166567,
+       "auc": 0.7098214285714286
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9887408783730045,
+       "auc": 0.7008928571428572
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9930575938587437,
+       "auc": 0.7098214285714286
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9887842464880107,
+       "auc": 0.71875
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.6262513904338153,
+      "relative_sd_spread": 0.40446900778497247,
+      "prediction": {
+       "bedroc": 0.9999992226123781,
+       "auc": 0.9659090909090909
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999992155549794,
+       "auc": 0.9602272727272728
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999996008758868,
+       "auc": 0.9659090909090909
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999961152379816,
+       "auc": 0.9147727272727274
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999989161551409,
+       "auc": 0.9488636363636364
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.72807881773399,
+      "relative_sd_spread": 0.5187342614641608,
+      "prediction": {
+       "bedroc": 0.7497976246664305,
+       "auc": 0.8173076923076923
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7499243001013876,
+       "auc": 0.8653846153846154
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7498609002973115,
+       "auc": 0.8269230769230769
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7496924904848591,
+       "auc": 0.8557692307692307
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7495334078802274,
+       "auc": 0.8076923076923077
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7472906403940884,
+      "relative_sd_spread": 0.6610700823329955,
+      "prediction": {
+       "bedroc": 0.9905748102596624,
+       "auc": 0.9473684210526316
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.997527646500033,
+       "auc": 0.9631578947368422
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9942886210349478,
+       "auc": 0.9473684210526316
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9960390122661595,
+       "auc": 0.9631578947368422
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9868349256206951,
+       "auc": 0.9263157894736842
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.6694581280788175,
+      "relative_sd_spread": 0.5760337437340354,
+      "prediction": {
+       "bedroc": 0.9332925923670385,
+       "auc": 0.8787878787878788
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.93528153226117,
+       "auc": 0.898989898989899
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9352812782518065,
+       "auc": 0.8939393939393939
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8707781069019146,
+       "auc": 0.9141414141414141
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8667994598840696,
+       "auc": 0.8838383838383839
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.8064516129032258,
+      "relative_sd_spread": 0.4206190711407683,
+      "prediction": {
+       "bedroc": 0.5040010333722595,
+       "auc": 0.8235294117647058
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.5044182824042452,
+       "auc": 0.8597285067873303
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.4957391149281238,
+       "auc": 0.8506787330316742
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.47929195543757636,
+       "auc": 0.8552036199095022
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.447193083696847,
+       "auc": 0.832579185520362
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.6511679644048943,
+      "relative_sd_spread": 0.5787502647573532,
+      "prediction": {
+       "bedroc": 0.9995599307125637,
+       "auc": 0.9066666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.998675756241778,
+       "auc": 0.888888888888889
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9995640259180707,
+       "auc": 0.8977777777777778
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9985345968581719,
+       "auc": 0.8711111111111112
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9994228735584252,
+       "auc": 0.8844444444444445
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.5645320197044333,
+      "relative_sd_spread": 0.5591899693827324,
+      "prediction": {
+       "bedroc": 0.9325616651707022,
+       "auc": 0.7980769230769231
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8721896167199881,
+       "auc": 0.8125
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8732974356312397,
+       "auc": 0.8221153846153846
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8660295753208667,
+       "auc": 0.7884615384615385
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8732319861942928,
+       "auc": 0.8269230769230769
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.673399014778325,
+      "relative_sd_spread": 0.5133432803335153,
+      "prediction": {
+       "bedroc": 0.9984738975340083,
+       "auc": 0.8627450980392157
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999140491331351,
+       "auc": 0.9215686274509803
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9998414949385896,
+       "auc": 0.911764705882353
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999541826279179,
+       "auc": 0.946078431372549
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998596245886817,
+       "auc": 0.9460784313725491
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.6256157635467978,
+      "relative_sd_spread": 0.6750773768949957,
+      "prediction": {
+       "bedroc": 0.8742864348690733,
+       "auc": 0.8509615384615384
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8742816685885544,
+       "auc": 0.8365384615384616
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.874028427841031,
+       "auc": 0.8173076923076923
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7494552611755199,
+       "auc": 0.8221153846153846
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.995490907420267,
+       "auc": 0.8269230769230769
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.5768631813125694,
+      "relative_sd_spread": 0.4037395710133637,
+      "prediction": {
+       "bedroc": 0.999998866850891,
+       "auc": 0.9894179894179893
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999992648667932,
+       "auc": 0.9788359788359788
+      }
+     },
+     {
+      "n_test": 30,
+      "sd_vs_distance": 0.7050055617352614,
+      "relative_sd_spread": 0.6130043094031966,
+      "prediction": {
+       "bedroc": 0.9908369855433565,
+       "auc": 0.8506787330316742
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9992554850726695,
+       "auc": 0.8687782805429864
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9994971443015825,
+       "auc": 0.8552036199095023
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9993160400023243,
+       "auc": 0.8597285067873303
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9971694635806747,
+       "auc": 0.8235294117647058
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.6640394088669949,
+      "relative_sd_spread": 0.541612323072335,
+      "prediction": {
+       "bedroc": 0.985302830082736,
+       "auc": 0.7575757575757577
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9722223481489554,
+       "auc": 0.7878787878787878
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.979160179665862,
+       "auc": 0.7828282828282829
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9748353671626084,
+       "auc": 0.7929292929292929
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9807729829180372,
+       "auc": 0.7929292929292928
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.740886699507389,
+      "relative_sd_spread": 0.5957138419097887,
+      "prediction": {
+       "bedroc": 0.8507597292655223,
+       "auc": 0.7761904761904761
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8419727018779201,
+       "auc": 0.8095238095238095
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9034788688624658,
+       "auc": 0.8047619047619048
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.6869846094638847,
+       "auc": 0.8285714285714285
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8114598691163153,
+       "auc": 0.8142857142857143
+      }
+     },
+     {
+      "n_test": 29,
+      "sd_vs_distance": 0.7113300492610837,
+      "relative_sd_spread": 0.5797113153284892,
+      "prediction": {
+       "bedroc": 0.9320669891966139,
+       "auc": 0.8722222222222222
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8668506477662391,
+       "auc": 0.8833333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9264839166099583,
+       "auc": 0.8666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.49303158310894624,
+       "auc": 0.8722222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9282241060668613,
+       "auc": 0.8722222222222222
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 60,
+      "sd_vs_distance": 0.874353987218672,
+      "relative_sd_spread": 0.7016567971600653,
+      "prediction": {
+       "bedroc": 0.22417649651454866,
+       "auc": 0.7484472049689441
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.43790924884659255,
+       "auc": 0.8152173913043478
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.6184708760488384,
+       "auc": 0.8167701863354038
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7808651067610705,
+       "auc": 0.796583850931677
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.6963098962915335,
+       "auc": 0.7934782608695652
+      }
+     },
+     {
+      "n_test": 19,
+      "sd_vs_distance": 0.9192982456140351,
+      "relative_sd_spread": 0.31315324179577164,
+      "prediction": {
+       "bedroc": 0.9710945130327118,
+       "auc": 0.7291666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9171804819523124,
+       "auc": 0.7083333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7627070160468499,
+       "auc": 0.6875000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.32011255240413533,
+       "auc": 0.6666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.32011255240413533,
+       "auc": 0.6666666666666667
+      }
+     },
+     {
+      "n_test": 8,
+      "sd_vs_distance": 0.7619047619047621,
+      "relative_sd_spread": 0.3702877050481867,
+      "prediction": {
+       "bedroc": 0.9241803337449516,
+       "auc": 0.625
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9241803337449516,
+       "auc": 0.625
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9241803337449516,
+       "auc": 0.625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9185057802779605,
+       "auc": 0.625
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9241803337449516,
+       "auc": 0.625
+      }
+     },
+     {
+      "n_test": 8,
+      "sd_vs_distance": 0.7380952380952381,
+      "relative_sd_spread": 0.31082447377688827,
+      "prediction": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 6,
+      "sd_vs_distance": 0.3714285714285715,
+      "relative_sd_spread": 0.26081353800836343,
+      "prediction": {
+       "bedroc": -2.710505431213761e-20,
+       "auc": 0.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": -2.710505431213761e-20,
+       "auc": 0.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": -2.710505431213761e-20,
+       "auc": 0.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.03436069908877017,
+       "auc": 0.22222222222222224
+      },
+      "nearest distance, beta 2": {
+       "bedroc": -2.710505431213761e-20,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 6,
+      "sd_vs_distance": 0.6,
+      "relative_sd_spread": 0.3930844348533667,
+      "prediction": {
+       "bedroc": 0.9656393009112298,
+       "auc": 0.7777777777777779
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9656393009112298,
+       "auc": 0.7777777777777779
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.03563021102656794,
+       "auc": 0.6666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9656393009112298,
+       "auc": 0.7777777777777779
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.03563021102656794,
+       "auc": 0.6666666666666667
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.39999999999999997,
+      "relative_sd_spread": 0.008846517146780551,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.5640880858272164,
+      "relative_sd_spread": 0.4200716646078613,
+      "prediction": {
+       "bedroc": 0.3629556602676335,
+       "auc": 0.8611111111111112
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9609505745298248,
+       "auc": 0.9444444444444444
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9603195992732746,
+       "auc": 0.9305555555555556
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9015106628123445,
+       "auc": 0.9305555555555556
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.966403912057905,
+       "auc": 0.9722222222222222
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "AChE": {
+   "set": "AChE",
+   "n": 111,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8517786561264822,
+      "relative_sd_spread": 0.5059397178077887,
+      "prediction": {
+       "bedroc": 0.855368489794807,
+       "auc": 0.865079365079365
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8902161623505257,
+       "auc": 0.8809523809523809
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8904080796518861,
+       "auc": 0.8333333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8966140432456514,
+       "auc": 0.8571428571428572
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8966033916595526,
+       "auc": 0.8412698412698413
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8746470920383964,
+      "relative_sd_spread": 0.7091585490107745,
+      "prediction": {
+       "bedroc": 0.8848806653864507,
+       "auc": 0.825
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9841271609210936,
+       "auc": 0.8999999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9779639839593295,
+       "auc": 0.8833333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9994864021304166,
+       "auc": 0.9333333333333333
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9973506007652733,
+       "auc": 0.9333333333333333
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7741389045736872,
+      "relative_sd_spread": 0.4679436976886061,
+      "prediction": {
+       "bedroc": 0.9842351273556775,
+       "auc": 0.838095238095238
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9995807573596931,
+       "auc": 0.8857142857142857
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9936465220900893,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9995746517826813,
+       "auc": 0.8857142857142857
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9840722394331165,
+       "auc": 0.7999999999999999
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.6544325239977415,
+      "relative_sd_spread": 0.5449376958720706,
+      "prediction": {
+       "bedroc": 0.9973849192299529,
+       "auc": 0.9090909090909091
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9989164372205112,
+       "auc": 0.9256198347107438
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9974569601219371,
+       "auc": 0.9504132231404958
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997971976151303,
+       "auc": 0.9586776859504132
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998600886694116,
+       "auc": 0.9834710743801652
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8610954263128179,
+      "relative_sd_spread": 0.555562152270264,
+      "prediction": {
+       "bedroc": 0.9448118180681037,
+       "auc": 0.7851239669421487
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8873359886610299,
+       "auc": 0.8016528925619835
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8872956362543977,
+       "auc": 0.7851239669421488
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8967296501861203,
+       "auc": 0.7851239669421488
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8873343316087383,
+       "auc": 0.7768595041322315
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8725296442687748,
+      "relative_sd_spread": 0.5252788918038398,
+      "prediction": {
+       "bedroc": 0.8589001113272137,
+       "auc": 0.8947368421052633
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8979574207194606,
+       "auc": 0.9473684210526315
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8979574207194606,
+       "auc": 0.9473684210526315
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9636212750759727,
+       "auc": 0.9736842105263158
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9743655415588485,
+       "auc": 0.986842105263158
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7289666854884248,
+      "relative_sd_spread": 0.568138010050498,
+      "prediction": {
+       "bedroc": 0.661586101046908,
+       "auc": 0.811965811965812
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8640665560458692,
+       "auc": 0.8547008547008548
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7200910313066475,
+       "auc": 0.829059829059829
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9006724774555027,
+       "auc": 0.8888888888888888
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.896803036579593,
+       "auc": 0.8803418803418803
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8735177865612649,
+      "relative_sd_spread": 0.4836153522732165,
+      "prediction": {
+       "bedroc": 0.9999893475528476,
+       "auc": 0.9619047619047619
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999882871438615,
+       "auc": 0.9523809523809523
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999957082321418,
+       "auc": 0.9619047619047618
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999874463148803,
+       "auc": 0.9142857142857144
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.999985655139741,
+       "auc": 0.9428571428571428
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.821569734613213,
+      "relative_sd_spread": 0.43827703256832445,
+      "prediction": {
+       "bedroc": 0.993638928875574,
+       "auc": 0.838095238095238
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9936227140270653,
+       "auc": 0.8285714285714285
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9936226446790712,
+       "auc": 0.819047619047619
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9974155342866362,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9936398807403218,
+       "auc": 0.8190476190476191
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8339920948616601,
+      "relative_sd_spread": 0.5768677949037212,
+      "prediction": {
+       "bedroc": 0.9994456438298529,
+       "auc": 0.9090909090909091
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9987648321683055,
+       "auc": 0.8677685950413223
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9985181115056254,
+       "auc": 0.8512396694214877
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9987393221261813,
+       "auc": 0.8347107438016529
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9969693185850311,
+       "auc": 0.8099173553719008
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.5266798418972332,
+      "relative_sd_spread": 0.3948881332697808,
+      "prediction": {
+       "bedroc": 0.9999033020823879,
+       "auc": 0.9523809523809524
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999057754462327,
+       "auc": 0.9682539682539681
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997710338897451,
+       "auc": 0.9603174603174602
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997710338897451,
+       "auc": 0.9603174603174602
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9968525871309171,
+       "auc": 0.9365079365079365
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9322416713721063,
+      "relative_sd_spread": 0.5622605795677793,
+      "prediction": {
+       "bedroc": 0.8894521509169473,
+       "auc": 0.8854166666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9607835513203601,
+       "auc": 0.875
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9842015638340109,
+       "auc": 0.8958333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9936349629734275,
+       "auc": 0.8958333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9936614708324675,
+       "auc": 0.9375
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9209486166007905,
+      "relative_sd_spread": 0.5775796045464173,
+      "prediction": {
+       "bedroc": 0.9970305059470431,
+       "auc": 0.8392857142857143
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9974421461868759,
+       "auc": 0.9017857142857142
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9974446035364566,
+       "auc": 0.9017857142857142
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998293035217559,
+       "auc": 0.9107142857142857
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9995817870032014,
+       "auc": 0.9107142857142857
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8249576510446077,
+      "relative_sd_spread": 0.5111958715446523,
+      "prediction": {
+       "bedroc": 0.9998332585653181,
+       "auc": 0.9416666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998336851130396,
+       "auc": 0.95
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9998332585653181,
+       "auc": 0.9416666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.999586136906816,
+       "auc": 0.9416666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998336851130396,
+       "auc": 0.95
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7820440429136083,
+      "relative_sd_spread": 0.629850726452169,
+      "prediction": {
+       "bedroc": 0.6625009084399427,
+       "auc": 0.8333333333333334
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.16223870863623496,
+       "auc": 0.7916666666666666
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.6624740839577912,
+       "auc": 0.7916666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.3058782617923061,
+       "auc": 0.7666666666666668
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.6623114556000113,
+       "auc": 0.7583333333333333
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.874505928853755,
+      "relative_sd_spread": 0.8151610713160544,
+      "prediction": {
+       "bedroc": 0.8977171615486026,
+       "auc": 0.7946428571428572
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999958430315405,
+       "auc": 0.9196428571428572
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999799911706981,
+       "auc": 0.8928571428571429
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999899308452049,
+       "auc": 0.9017857142857143
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999762604350906,
+       "auc": 0.9017857142857143
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7108977978543197,
+      "relative_sd_spread": 0.4394529298537094,
+      "prediction": {
+       "bedroc": 0.9030263622820183,
+       "auc": 0.8547008547008548
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9608739491810052,
+       "auc": 0.8461538461538461
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9607731399484779,
+       "auc": 0.8290598290598291
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9609024416134789,
+       "auc": 0.811965811965812
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9607731399484779,
+       "auc": 0.8290598290598291
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9333709768492378,
+      "relative_sd_spread": 0.5595728507302955,
+      "prediction": {
+       "bedroc": 0.9026470174195331,
+       "auc": 0.8632478632478633
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9027060256270338,
+       "auc": 0.888888888888889
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9026496456397892,
+       "auc": 0.8717948717948718
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9839264359171745,
+       "auc": 0.9145299145299145
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9605562407462768,
+       "auc": 0.888888888888889
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.743647656691135,
+      "relative_sd_spread": 0.5399188951929154,
+      "prediction": {
+       "bedroc": 0.9842768598689735,
+       "auc": 0.9338842975206612
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9936652990171633,
+       "auc": 0.9338842975206612
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9936652990171633,
+       "auc": 0.9338842975206612
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.997447810284234,
+       "auc": 0.9338842975206612
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9989728061414777,
+       "auc": 0.9421487603305785
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9017504234895539,
+      "relative_sd_spread": 0.4932264006715393,
+      "prediction": {
+       "bedroc": 0.9968970412122832,
+       "auc": 0.9553571428571428
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9974716151667711,
+       "auc": 0.9553571428571429
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9974716151667711,
+       "auc": 0.9553571428571429
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9937243842849516,
+       "auc": 0.9553571428571428
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9936614550678549,
+       "auc": 0.9285714285714285
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8675889328063242,
+      "relative_sd_spread": 0.5632397971486373,
+      "prediction": {
+       "bedroc": 0.9986771232460075,
+       "auc": 0.8916666666666666
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999027602673044,
+       "auc": 0.925
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999592340929077,
+       "auc": 0.9166666666666666
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999829175953533,
+       "auc": 0.9249999999999999
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999911003217264,
+       "auc": 0.925
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8836815358554491,
+      "relative_sd_spread": 0.4899981267423097,
+      "prediction": {
+       "bedroc": 0.9025624800241713,
+       "auc": 0.8583333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9972901165023788,
+       "auc": 0.8916666666666666
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9838785539956646,
+       "auc": 0.8833333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9841027923969686,
+       "auc": 0.8583333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9964281375367268,
+       "auc": 0.875
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.8904573687182383,
+      "relative_sd_spread": 0.5452319279647921,
+      "prediction": {
+       "bedroc": 0.9842000712153415,
+       "auc": 0.8666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9995629989538451,
+       "auc": 0.9166666666666666
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9974196526783915,
+       "auc": 0.875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999168043318561,
+       "auc": 0.9416666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9995290980836669,
+       "auc": 0.8999999999999999
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7718802936194241,
+      "relative_sd_spread": 0.6134609535884881,
+      "prediction": {
+       "bedroc": 0.7523336260311283,
+       "auc": 0.8214285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7562636873852863,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.897085439100708,
+       "auc": 0.875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7571488790247457,
+       "auc": 0.8928571428571429
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8970919651917075,
+       "auc": 0.8839285714285714
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.7933370976849238,
+      "relative_sd_spread": 0.47862449856543166,
+      "prediction": {
+       "bedroc": 0.9016205234979173,
+       "auc": 0.7777777777777778
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7517504008241627,
+       "auc": 0.7264957264957265
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7432157086819907,
+       "auc": 0.7350427350427351
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.733392962291161,
+       "auc": 0.5811965811965811
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7335268042895585,
+       "auc": 0.5982905982905983
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 20,
+      "sd_vs_distance": 0.8887218045112781,
+      "relative_sd_spread": 0.3172243224228224,
+      "prediction": {
+       "bedroc": 0.7311394691647366,
+       "auc": 0.71875
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8813847738636522,
+       "auc": 0.75
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.6759841166013761,
+       "auc": 0.65625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.6562952930443393,
+       "auc": 0.6875
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.6455216137664719,
+       "auc": 0.609375
+      }
+     },
+     {
+      "n_test": 9,
+      "sd_vs_distance": 0.8666666666666667,
+      "relative_sd_spread": 0.404418166640472,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999986971073571,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999985559154569,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999986971073571,
+       "auc": 0.9285714285714286
+      }
+     },
+     {
+      "n_test": 7,
+      "sd_vs_distance": 0.8214285714285715,
+      "relative_sd_spread": 0.21802779184817975,
+      "prediction": {
+       "bedroc": 0.9429342080939239,
+       "auc": 0.6666666666666666
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9429245398786629,
+       "auc": 0.5833333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9429245398786629,
+       "auc": 0.5833333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.942756199737042,
+       "auc": 0.5
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.942756199737042,
+       "auc": 0.5
+      }
+     },
+     {
+      "n_test": 4,
+      "sd_vs_distance": 0.6000000000000001,
+      "relative_sd_spread": 0.11918307047284842,
+      "prediction": {
+       "bedroc": 0.0,
+       "auc": 0.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.0,
+       "auc": 0.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.0,
+       "auc": 0.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.0,
+       "auc": 0.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.0,
+       "auc": 0.0
+      }
+     },
+     {
+      "n_test": 52,
+      "sd_vs_distance": 0.8978058567403738,
+      "relative_sd_spread": 0.5043288327218203,
+      "prediction": {
+       "bedroc": 0.8149544366073844,
+       "auc": 0.765625
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8666021394094348,
+       "auc": 0.7899305555555556
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8483263311730845,
+       "auc": 0.7916666666666666
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8838072019966738,
+       "auc": 0.765625
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8517197573133028,
+       "auc": 0.7743055555555556
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "THR": {
+   "set": "THR",
+   "n": 88,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.9525283797729618,
+      "relative_sd_spread": 0.6013363489577813,
+      "prediction": {
+       "bedroc": 0.999637536770218,
+       "auc": 0.9135802469135803
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996308110255038,
+       "auc": 0.9012345679012346
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9996308110255038,
+       "auc": 0.9012345679012346
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9990638536154034,
+       "auc": 0.8765432098765432
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996308110255038,
+       "auc": 0.9012345679012346
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.7853457172342622,
+      "relative_sd_spread": 0.4690254463347184,
+      "prediction": {
+       "bedroc": 0.9990573678048612,
+       "auc": 0.8765432098765432
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.996563821861333,
+       "auc": 0.8641975308641976
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9759860536915071,
+       "auc": 0.8641975308641976
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9965039720057267,
+       "auc": 0.8641975308641976
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9263968628980591,
+       "auc": 0.8271604938271606
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.5727554179566564,
+      "relative_sd_spread": 0.2533739506376934,
+      "prediction": {
+       "bedroc": 0.3212183669591429,
+       "auc": 0.6785714285714286
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7765477121987903,
+       "auc": 0.6964285714285714
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.32121156190793804,
+       "auc": 0.6607142857142857
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9757820808533878,
+       "auc": 0.7321428571428572
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9756918081327148,
+       "auc": 0.6785714285714286
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.7475490196078433,
+      "relative_sd_spread": 0.40339585460362803,
+      "prediction": {
+       "bedroc": 0.7867233975919166,
+       "auc": 0.9090909090909091
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7867233975919166,
+       "auc": 0.9090909090909091
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7867233975919166,
+       "auc": 0.9090909090909091
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7853884786530019,
+       "auc": 0.8939393939393939
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.933024941960571,
+       "auc": 0.9090909090909091
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.7769607843137256,
+      "relative_sd_spread": 0.3907768897312047,
+      "prediction": {
+       "bedroc": 0.9280337095820012,
+       "auc": 0.8428571428571427
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9735328173829645,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9735328173829645,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9779740837931481,
+       "auc": 0.8714285714285714
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9779740837931481,
+       "auc": 0.8714285714285714
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8802889576883385,
+      "relative_sd_spread": 0.5251604497782734,
+      "prediction": {
+       "bedroc": 0.9974066749037456,
+       "auc": 0.9
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9974074038046435,
+       "auc": 0.9125000000000001
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9974096180100636,
+       "auc": 0.925
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9974096180100636,
+       "auc": 0.925
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9974096180100636,
+       "auc": 0.925
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.9133126934984519,
+      "relative_sd_spread": 0.49877003465144937,
+      "prediction": {
+       "bedroc": 0.7958215274569946,
+       "auc": 0.9555555555555556
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9494323833792297,
+       "auc": 0.9777777777777777
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9494323833792297,
+       "auc": 0.9777777777777777
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9494323833792297,
+       "auc": 0.9777777777777777
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9273059659252781,
+       "auc": 0.9333333333333333
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.7894736842105263,
+      "relative_sd_spread": 0.4314392225523646,
+      "prediction": {
+       "bedroc": 0.9999968133706002,
+       "auc": 0.9583333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999968133706002,
+       "auc": 0.9583333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999968133706002,
+       "auc": 0.9583333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999674077460915,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999052702790047,
+       "auc": 0.9027777777777778
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.875,
+      "relative_sd_spread": 0.4232195224752059,
+      "prediction": {
+       "bedroc": 0.9795173354628163,
+       "auc": 0.7115384615384616
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9936889136731761,
+       "auc": 0.7884615384615384
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9795344153356372,
+       "auc": 0.7692307692307692
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9936888797409031,
+       "auc": 0.7692307692307692
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9936888797409031,
+       "auc": 0.7692307692307692
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.7254901960784315,
+      "relative_sd_spread": 0.4434340810717926,
+      "prediction": {
+       "bedroc": 0.09486610098166372,
+       "auc": 0.6527777777777778
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.24251778579574437,
+       "auc": 0.6666666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7209278091157038,
+       "auc": 0.6944444444444444
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7209325661739979,
+       "auc": 0.7083333333333333
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7209277000597774,
+       "auc": 0.6805555555555556
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.9195046439628484,
+      "relative_sd_spread": 0.5900894264539918,
+      "prediction": {
+       "bedroc": 0.9970371180730913,
+       "auc": 0.7625
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9970371095131499,
+       "auc": 0.75
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9970371180730913,
+       "auc": 0.7625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.998776249780719,
+       "auc": 0.7625
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.996275094005276,
+       "auc": 0.725
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8142414860681115,
+      "relative_sd_spread": 0.3563380532689644,
+      "prediction": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999999999999998,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999992683817527,
+       "auc": 0.9846153846153847
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8328173374613003,
+      "relative_sd_spread": 0.4199571913522577,
+      "prediction": {
+       "bedroc": 0.7788939635914939,
+       "auc": 0.85
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7789560313672675,
+       "auc": 0.8625
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7791513027842615,
+       "auc": 0.8875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9265435885053166,
+       "auc": 0.8749999999999999
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9761585036715131,
+       "auc": 0.9375
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.7769607843137256,
+      "relative_sd_spread": 0.34973821440408,
+      "prediction": {
+       "bedroc": 0.9918740442541853,
+       "auc": 0.8472222222222222
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.979592421767793,
+       "auc": 0.875
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9791799432967669,
+       "auc": 0.8472222222222223
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9795412474964078,
+       "auc": 0.8472222222222223
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9336372119594971,
+       "auc": 0.8055555555555556
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.6004901960784315,
+      "relative_sd_spread": 0.4388012731146823,
+      "prediction": {
+       "bedroc": 0.9340545403601931,
+       "auc": 0.8666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9796635672998805,
+       "auc": 0.85
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9796635672998805,
+       "auc": 0.85
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9796635672998805,
+       "auc": 0.85
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9796635672998805,
+       "auc": 0.85
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.7502579979360166,
+      "relative_sd_spread": 0.5306806593849759,
+      "prediction": {
+       "bedroc": 0.2564351018288167,
+       "auc": 0.7283950617283951
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7064557964562301,
+       "auc": 0.7283950617283951
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7064557964562301,
+       "auc": 0.7283950617283951
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.30520074084653614,
+       "auc": 0.7160493827160495
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.903306211447962,
+       "auc": 0.7407407407407407
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8968008255933952,
+      "relative_sd_spread": 0.4747336751037443,
+      "prediction": {
+       "bedroc": 0.9974134431762582,
+       "auc": 0.9305555555555556
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9760695963521641,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9760695963521641,
+       "auc": 0.9166666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9761317338192509,
+       "auc": 0.9305555555555556
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9760695963521641,
+       "auc": 0.9166666666666667
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8080495356037152,
+      "relative_sd_spread": 0.45635932076358265,
+      "prediction": {
+       "bedroc": 0.927210506071244,
+       "auc": 0.8271604938271605
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9759785990911334,
+       "auc": 0.8395061728395061
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9759785990911334,
+       "auc": 0.8395061728395061
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9971358073706567,
+       "auc": 0.8641975308641975
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9918509055337897,
+       "auc": 0.8518518518518519
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.8455882352941178,
+      "relative_sd_spread": 0.5127454492641736,
+      "prediction": {
+       "bedroc": 0.9994106538047453,
+       "auc": 0.9444444444444444
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998219853940251,
+       "auc": 0.9583333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9998219853940251,
+       "auc": 0.9583333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.999244700329084,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.999244700329084,
+       "auc": 0.9166666666666667
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.8014705882352942,
+      "relative_sd_spread": 0.41375662145498815,
+      "prediction": {
+       "bedroc": 0.9999773294599137,
+       "auc": 0.8666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999814133047682,
+       "auc": 0.9
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999773294599137,
+       "auc": 0.8666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999777934186878,
+       "auc": 0.9
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997600817087962,
+       "auc": 0.8333333333333334
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.826625386996904,
+      "relative_sd_spread": 0.3905873423816816,
+      "prediction": {
+       "bedroc": 0.9920950277967385,
+       "auc": 0.8923076923076924
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9920918328748962,
+       "auc": 0.8461538461538461
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9920918328748962,
+       "auc": 0.8461538461538461
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.992091753590873,
+       "auc": 0.8307692307692308
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9706719353334262,
+       "auc": 0.8153846153846154
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.87203302373581,
+      "relative_sd_spread": 0.35137405253890164,
+      "prediction": {
+       "bedroc": 0.9918209840597313,
+       "auc": 0.6666666666666666
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9757548202026923,
+       "auc": 0.6805555555555556
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9965457292346417,
+       "auc": 0.6944444444444445
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9759443068803633,
+       "auc": 0.7083333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9759465235719509,
+       "auc": 0.7222222222222222
+      }
+     },
+     {
+      "n_test": 18,
+      "sd_vs_distance": 0.8596491228070176,
+      "relative_sd_spread": 0.5093334269751314,
+      "prediction": {
+       "bedroc": 0.32113340989904127,
+       "auc": 0.7375
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.3209448646442137,
+       "auc": 0.725
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.3209448646442137,
+       "auc": 0.725
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9168366756279716,
+       "auc": 0.725
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7686830947399991,
+       "auc": 0.7125
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.8333333333333335,
+      "relative_sd_spread": 0.4077889546900576,
+      "prediction": {
+       "bedroc": 0.30825744332844995,
+       "auc": 0.8472222222222222
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.30825744332844995,
+       "auc": 0.8472222222222222
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9341923111279004,
+       "auc": 0.875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.30825744332844995,
+       "auc": 0.8472222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9937118798262831,
+       "auc": 0.9027777777777778
+      }
+     },
+     {
+      "n_test": 17,
+      "sd_vs_distance": 0.732843137254902,
+      "relative_sd_spread": 0.41119442457888994,
+      "prediction": {
+       "bedroc": 0.999228791981645,
+       "auc": 0.8857142857142857
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9997659061597328,
+       "auc": 0.8999999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9980045912362522,
+       "auc": 0.8428571428571427
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998009522259645,
+       "auc": 0.8857142857142857
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9993507864474195,
+       "auc": 0.8714285714285714
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.7411764705882353,
+      "relative_sd_spread": 0.3857600651216072,
+      "prediction": {
+       "bedroc": 0.7938055269197108,
+       "auc": 0.6666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.939659969560262,
+       "auc": 0.6666666666666666
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9396830855115013,
+       "auc": 0.6825396825396826
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9396830855115013,
+       "auc": 0.6825396825396826
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9397637681091137,
+       "auc": 0.6984126984126984
+      }
+     },
+     {
+      "n_test": 10,
+      "sd_vs_distance": 0.9030303030303028,
+      "relative_sd_spread": 0.27810539620797764,
+      "prediction": {
+       "bedroc": 0.9838677360907109,
+       "auc": 0.625
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9838677360907109,
+       "auc": 0.625
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9838677360907109,
+       "auc": 0.625
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9838677360907109,
+       "auc": 0.625
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9838677360907109,
+       "auc": 0.625
+      }
+     },
+     {
+      "n_test": 7,
+      "sd_vs_distance": 0.642857142857143,
+      "relative_sd_spread": 0.3915291124679648,
+      "prediction": {
+       "bedroc": 0.9970689105987565,
+       "auc": 0.9166666666666666
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9970689105987565,
+       "auc": 0.9166666666666666
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9970689105987565,
+       "auc": 0.9166666666666666
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9970689105987565,
+       "auc": 0.9166666666666666
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9970689105987565,
+       "auc": 0.9166666666666666
+      }
+     },
+     {
+      "n_test": 36,
+      "sd_vs_distance": 0.9191763191763193,
+      "relative_sd_spread": 0.4608150839968947,
+      "prediction": {
+       "bedroc": 0.7529807010880698,
+       "auc": 0.8603896103896104
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9715339491331687,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9707709670412729,
+       "auc": 0.8474025974025974
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9810840860052156,
+       "auc": 0.8311688311688312
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9916247573858173,
+       "auc": 0.8214285714285714
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "ACE": {
+   "set": "ACE",
+   "n": 114,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8814229249011858,
+      "relative_sd_spread": 0.4008072106956933,
+      "prediction": {
+       "bedroc": 0.9783494385843977,
+       "auc": 0.7727272727272727
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9887934543684535,
+       "auc": 0.8106060606060606
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9887915837418269,
+       "auc": 0.7954545454545454
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.988000116293376,
+       "auc": 0.7651515151515151
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9880177944562175,
+       "auc": 0.7348484848484849
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8962450592885376,
+      "relative_sd_spread": 0.5242150009618234,
+      "prediction": {
+       "bedroc": 0.999775260688675,
+       "auc": 0.9696969696969696
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999198792342967,
+       "auc": 0.9848484848484849
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999198792342967,
+       "auc": 0.9848484848484849
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999099611678415,
+       "auc": 0.9772727272727272
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998862979179797,
+       "auc": 0.9696969696969696
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8764822134387351,
+      "relative_sd_spread": 0.5201886153890758,
+      "prediction": {
+       "bedroc": 0.9999859238094457,
+       "auc": 0.9846153846153847
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999859238094457,
+       "auc": 0.9846153846153847
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999841813324222,
+       "auc": 0.9769230769230769
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999859238094457,
+       "auc": 0.9846153846153847
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999457096650215,
+       "auc": 0.9461538461538461
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9545454545454547,
+      "relative_sd_spread": 0.5197516036723057,
+      "prediction": {
+       "bedroc": 0.8969248974234278,
+       "auc": 0.9206349206349207
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9966253354037686,
+       "auc": 0.9603174603174603
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9966253354037686,
+       "auc": 0.9603174603174603
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9593450028232637,
+      "relative_sd_spread": 0.37557435629018593,
+      "prediction": {
+       "bedroc": 0.9936451689360506,
+       "auc": 0.9083333333333334
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9842491625074006,
+       "auc": 0.875
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9842491233736161,
+       "auc": 0.8583333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9842426009782279,
+       "auc": 0.85
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.960922754077706,
+       "auc": 0.8333333333333333
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9515810276679842,
+      "relative_sd_spread": 0.5725160222786484,
+      "prediction": {
+       "bedroc": 0.3905494250766554,
+       "auc": 0.7045454545454546
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7453432856824408,
+       "auc": 0.7121212121212122
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8886048471777441,
+       "auc": 0.7272727272727273
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.956444653413649,
+       "auc": 0.7803030303030303
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9564419284923679,
+       "auc": 0.7651515151515151
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9268774703557312,
+      "relative_sd_spread": 0.49053427345419576,
+      "prediction": {
+       "bedroc": 0.99244629024861,
+       "auc": 0.8888888888888888
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.982027648755272,
+       "auc": 0.873015873015873
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9820230559878017,
+       "auc": 0.8492063492063492
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9820131348968018,
+       "auc": 0.8412698412698413
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9820230559878017,
+       "auc": 0.8492063492063492
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9565217391304348,
+      "relative_sd_spread": 0.47247893758637344,
+      "prediction": {
+       "bedroc": 0.9994497254167388,
+       "auc": 0.9545454545454546
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9994472528069236,
+       "auc": 0.9393939393939394
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9994472528069236,
+       "auc": 0.9393939393939394
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9994468184359085,
+       "auc": 0.9242424242424242
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997681429412031,
+       "auc": 0.9242424242424241
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9288537549407114,
+      "relative_sd_spread": 0.46148366919198863,
+      "prediction": {
+       "bedroc": 0.9821678481703117,
+       "auc": 0.9538461538461539
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9821678481703117,
+       "auc": 0.9538461538461539
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9925824055206959,
+       "auc": 0.9615384615384616
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9925824055206959,
+       "auc": 0.9615384615384616
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9925824055206959,
+       "auc": 0.9615384615384616
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9051383399209487,
+      "relative_sd_spread": 0.3819093411926079,
+      "prediction": {
+       "bedroc": 0.9907865235105409,
+       "auc": 0.8416666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9907702652631929,
+       "auc": 0.825
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.981374887337915,
+       "auc": 0.7999999999999999
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9813347051617838,
+       "auc": 0.7916666666666666
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9827535051248921,
+       "auc": 0.7833333333333333
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9298418972332017,
+      "relative_sd_spread": 0.4725752072229086,
+      "prediction": {
+       "bedroc": 0.40923321454607997,
+       "auc": 0.8839285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9503893830681437,
+       "auc": 0.9196428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9399529722238036,
+       "auc": 0.9107142857142857
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.940721410591283,
+       "auc": 0.9196428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9405298361288295,
+       "auc": 0.9017857142857143
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9249011857707511,
+      "relative_sd_spread": 0.4016505809028439,
+      "prediction": {
+       "bedroc": 0.999717662712466,
+       "auc": 0.8615384615384616
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998523739848029,
+       "auc": 0.8692307692307693
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9998523739848029,
+       "auc": 0.8692307692307693
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9998859485451381,
+       "auc": 0.876923076923077
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9998859485451381,
+       "auc": 0.876923076923077
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9229249011857708,
+      "relative_sd_spread": 0.4816561741519303,
+      "prediction": {
+       "bedroc": 0.9968574518643877,
+       "auc": 0.9461538461538461
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9968574518643877,
+       "auc": 0.9461538461538461
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9968574518643877,
+       "auc": 0.9461538461538461
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9968532945349953,
+       "auc": 0.9384615384615385
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9968532945349953,
+       "auc": 0.9384615384615385
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8666007905138341,
+      "relative_sd_spread": 0.4732981525520882,
+      "prediction": {
+       "bedroc": 0.996296371553982,
+       "auc": 0.8095238095238095
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9919302978565541,
+       "auc": 0.8015873015873015
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.991163611808006,
+       "auc": 0.8095238095238094
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9911631998483635,
+       "auc": 0.8015873015873015
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9893332310430256,
+       "auc": 0.7936507936507936
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.917560700169396,
+      "relative_sd_spread": 0.424758312410312,
+      "prediction": {
+       "bedroc": 0.9999989395910145,
+       "auc": 0.9904761904761905
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999989395910145,
+       "auc": 0.9904761904761905
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999963075868941,
+       "auc": 0.980952380952381
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999963075868941,
+       "auc": 0.980952380952381
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999938818327798,
+       "auc": 0.9047619047619048
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9268774703557312,
+      "relative_sd_spread": 0.45029789205556614,
+      "prediction": {
+       "bedroc": 0.9999604855597969,
+       "auc": 0.9666666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999604855597969,
+       "auc": 0.9666666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999604855597969,
+       "auc": 0.9666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999604855597969,
+       "auc": 0.9666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999604855597969,
+       "auc": 0.9666666666666667
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9347826086956521,
+      "relative_sd_spread": 0.4768351239275879,
+      "prediction": {
+       "bedroc": 0.9523576793706954,
+       "auc": 0.8230769230769232
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9772054935985827,
+       "auc": 0.8307692307692308
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9775241187110839,
+       "auc": 0.8153846153846154
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9879386760614681,
+       "auc": 0.823076923076923
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9782908196949278,
+       "auc": 0.8153846153846154
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8636363636363636,
+      "relative_sd_spread": 0.4701991211315185,
+      "prediction": {
+       "bedroc": 0.9998497638118886,
+       "auc": 0.9076923076923077
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9998493294060686,
+       "auc": 0.8923076923076924
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997145643590859,
+       "auc": 0.8769230769230769
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997145643590859,
+       "auc": 0.8769230769230769
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996580797806941,
+       "auc": 0.8615384615384616
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9011857707509882,
+      "relative_sd_spread": 0.40647999933913886,
+      "prediction": {
+       "bedroc": 0.9552996791145918,
+       "auc": 0.8303571428571428
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9404890163431517,
+       "auc": 0.8125
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.895891540181374,
+       "auc": 0.8125
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9509254232197284,
+       "auc": 0.8125
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8977249367587148,
+       "auc": 0.8214285714285714
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9457933370976851,
+      "relative_sd_spread": 0.4929459142621498,
+      "prediction": {
+       "bedroc": 0.999983810990139,
+       "auc": 0.9916666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999436288140079,
+       "auc": 0.9833333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999436288140079,
+       "auc": 0.9833333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999371064186197,
+       "auc": 0.9750000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999371064186197,
+       "auc": 0.9750000000000001
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8814229249011858,
+      "relative_sd_spread": 0.4764205620446519,
+      "prediction": {
+       "bedroc": 0.9820158448600474,
+       "auc": 0.8939393939393939
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9986235930756816,
+       "auc": 0.9090909090909091
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9993903071497294,
+       "auc": 0.909090909090909
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9994467421286086,
+       "auc": 0.9090909090909091
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996879996385369,
+       "auc": 0.9015151515151515
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8547430830039526,
+      "relative_sd_spread": 0.40469482444452065,
+      "prediction": {
+       "bedroc": 0.9570861988611196,
+       "auc": 0.7692307692307692
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.956974412957041,
+       "auc": 0.7538461538461539
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9569503134052896,
+       "auc": 0.7307692307692307
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9815003887523399,
+       "auc": 0.7384615384615385
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9569502011468933,
+       "auc": 0.6923076923076923
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.8567193675889329,
+      "relative_sd_spread": 0.40496129288811694,
+      "prediction": {
+       "bedroc": 0.988335518672367,
+       "auc": 0.8416666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9883354328456722,
+       "auc": 0.8166666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9882789270097317,
+       "auc": 0.8083333333333335
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9882453129897629,
+       "auc": 0.7833333333333333
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9881063366708254,
+       "auc": 0.7666666666666666
+      }
+     },
+     {
+      "n_test": 23,
+      "sd_vs_distance": 0.9328063241106721,
+      "relative_sd_spread": 0.5402292509718806,
+      "prediction": {
+       "bedroc": 0.9912235749433161,
+       "auc": 0.9166666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9912235749433161,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9912235749433161,
+       "auc": 0.9166666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9955883175991803,
+       "auc": 0.9242424242424243
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9912235749433161,
+       "auc": 0.9166666666666667
+      }
+     },
+     {
+      "n_test": 22,
+      "sd_vs_distance": 0.9164313946922643,
+      "relative_sd_spread": 0.43507838065981475,
+      "prediction": {
+       "bedroc": 0.9999995716760759,
+       "auc": 0.9895833333333334
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999985085482186,
+       "auc": 0.9791666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999985085482186,
+       "auc": 0.9791666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999958697956832,
+       "auc": 0.96875
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999958697956832,
+       "auc": 0.96875
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 19,
+      "sd_vs_distance": 0.9315789473684211,
+      "relative_sd_spread": 0.5507605806216369,
+      "prediction": {
+       "bedroc": 0.0006308575915161148,
+       "auc": 0.6111111111111112
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.005178918495603744,
+       "auc": 0.7222222222222222
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.0018075322984212334,
+       "auc": 0.6666666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.04251514685992785,
+       "auc": 0.8333333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.04251514685992785,
+       "auc": 0.8333333333333334
+      }
+     },
+     {
+      "n_test": 8,
+      "sd_vs_distance": 0.261904761904762,
+      "relative_sd_spread": 0.08784726218798637,
+      "prediction": {
+       "bedroc": 0.0066959716051562665,
+       "auc": 0.5333333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.0066959716051562665,
+       "auc": 0.5333333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.006734245442110529,
+       "auc": 0.6
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.006734245442110529,
+       "auc": 0.6
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.006734245442110529,
+       "auc": 0.6
+      }
+     },
+     {
+      "n_test": 51,
+      "sd_vs_distance": 0.9776470588235294,
+      "relative_sd_spread": 0.3741921408873354,
+      "prediction": {
+       "bedroc": 0.9999999962663998,
+       "auc": 0.9861111111111112
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999999984946194,
+       "auc": 0.9930555555555556
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999999929682563,
+       "auc": 0.9791666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999999701649528,
+       "auc": 0.9583333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999999488959416,
+       "auc": 0.923611111111111
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "GPB": {
+   "set": "GPB",
+   "n": 66,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 14,
+      "sd_vs_distance": 0.7758241758241758,
+      "relative_sd_spread": 0.37227473313980575,
+      "prediction": {
+       "bedroc": 0.9973826999391889,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9968994023682176,
+       "auc": 0.8163265306122449
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9973826999391889,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9969256518378109,
+       "auc": 0.8367346938775511
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9973826999391889,
+       "auc": 0.8571428571428571
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8846153846153846,
+      "relative_sd_spread": 0.3803453472519732,
+      "prediction": {
+       "bedroc": 0.9983315950982383,
+       "auc": 0.8809523809523809
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9983309969589684,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9983309969589684,
+       "auc": 0.8571428571428571
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9922259985571804,
+       "auc": 0.7857142857142857
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9983308685317845,
+       "auc": 0.8333333333333334
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.9175824175824175,
+      "relative_sd_spread": 0.46889228526605864,
+      "prediction": {
+       "bedroc": 0.8236725946483965,
+       "auc": 0.6666666666666666
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9980494023041796,
+       "auc": 0.7857142857142857
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9980494023041796,
+       "auc": 0.7857142857142857
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996416188256673,
+       "auc": 0.8333333333333334
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996416188256673,
+       "auc": 0.8333333333333334
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8516483516483516,
+      "relative_sd_spread": 0.351639137696275,
+      "prediction": {
+       "bedroc": 0.9617060000217389,
+       "auc": 0.47619047619047616
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9901389404599239,
+       "auc": 0.5238095238095237
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9616931538772412,
+       "auc": 0.4761904761904762
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9901415978182364,
+       "auc": 0.5238095238095238
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9616931538772412,
+       "auc": 0.4761904761904762
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.7637362637362637,
+      "relative_sd_spread": 0.2620143958699719,
+      "prediction": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996581333240498,
+       "auc": 0.9523809523809523
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9997185613471463,
+       "auc": 0.9761904761904763
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996417748276021,
+       "auc": 0.8809523809523809
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996423729668722,
+       "auc": 0.9047619047619048
+      }
+     },
+     {
+      "n_test": 14,
+      "sd_vs_distance": 0.5956043956043956,
+      "relative_sd_spread": 0.29896591529520483,
+      "prediction": {
+       "bedroc": 0.9889397549286681,
+       "auc": 0.75
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9870586582588304,
+       "auc": 0.75
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9889660072737346,
+       "auc": 0.7708333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9895326494917962,
+       "auc": 0.8125
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9890755513235181,
+       "auc": 0.7916666666666667
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.901098901098901,
+      "relative_sd_spread": 0.4849342421211016,
+      "prediction": {
+       "bedroc": 0.9996416464004184,
+       "auc": 0.8571428571428572
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999230850532722,
+       "auc": 0.8809523809523809
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999230850532722,
+       "auc": 0.8809523809523809
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999230574785211,
+       "auc": 0.8571428571428571
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999230850532722,
+       "auc": 0.8809523809523809
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8516483516483516,
+      "relative_sd_spread": 0.31043043485271776,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.7802197802197801,
+      "relative_sd_spread": 0.3527193941409238,
+      "prediction": {
+       "bedroc": 0.9995647110700947,
+       "auc": 0.75
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996257305182257,
+       "auc": 0.775
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9996251321744023,
+       "auc": 0.75
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9922075742293066,
+       "auc": 0.7250000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996251321744023,
+       "auc": 0.75
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.5604395604395606,
+      "relative_sd_spread": 0.29184949384664804,
+      "prediction": {
+       "bedroc": 0.9999836359092151,
+       "auc": 0.925
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999836359092151,
+       "auc": 0.925
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999836359092151,
+       "auc": 0.925
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999836359092151,
+       "auc": 0.925
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999836359092151,
+       "auc": 0.925
+      }
+     },
+     {
+      "n_test": 14,
+      "sd_vs_distance": 0.8857142857142857,
+      "relative_sd_spread": 0.5192282826354505,
+      "prediction": {
+       "bedroc": 0.9968904335644594,
+       "auc": 0.6874999999999999
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9968907948961381,
+       "auc": 0.7083333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9968907948961381,
+       "auc": 0.7083333333333334
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9970344111858563,
+       "auc": 0.8125
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9968907948961381,
+       "auc": 0.7083333333333334
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.7252747252747254,
+      "relative_sd_spread": 0.33267492391466347,
+      "prediction": {
+       "bedroc": 0.9922233675604494,
+       "auc": 0.8
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9922233675604494,
+       "auc": 0.8
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9922233675604494,
+       "auc": 0.8
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9922233675604494,
+       "auc": 0.8
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9922233675604494,
+       "auc": 0.8
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.9175824175824175,
+      "relative_sd_spread": 0.41031641668500424,
+      "prediction": {
+       "bedroc": 0.829642282474909,
+       "auc": 0.5499999999999999
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9905543645074103,
+       "auc": 0.65
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9918649922967397,
+       "auc": 0.65
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.991868404962934,
+       "auc": 0.7250000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9983145043850723,
+       "auc": 0.75
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8901098901098902,
+      "relative_sd_spread": 0.42197878561419033,
+      "prediction": {
+       "bedroc": 0.9999100797408509,
+       "auc": 0.8500000000000001
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996285448405964,
+       "auc": 0.825
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9996415238493683,
+       "auc": 0.8500000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996285448405964,
+       "auc": 0.825
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999100797408509,
+       "auc": 0.8500000000000001
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8901098901098902,
+      "relative_sd_spread": 0.40864598309478,
+      "prediction": {
+       "bedroc": 1.0000000000000004,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0000000000000004,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0000000000000004,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.993882877563767,
+       "auc": 0.9722222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0000000000000004,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 14,
+      "sd_vs_distance": 0.9164835164835166,
+      "relative_sd_spread": 0.38577638116865115,
+      "prediction": {
+       "bedroc": 0.999963518442465,
+       "auc": 0.825
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999903017256205,
+       "auc": 0.9
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999902148628844,
+       "auc": 0.875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999918141542258,
+       "auc": 0.925
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999981251163123,
+       "auc": 0.95
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.22527472527472525,
+      "relative_sd_spread": 0.27466612168110915,
+      "prediction": {
+       "bedroc": 0.992210360967496,
+       "auc": 0.75
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.992210360967496,
+       "auc": 0.75
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.992210360967496,
+       "auc": 0.75
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9637203556756514,
+       "auc": 0.7222222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.992210360967496,
+       "auc": 0.75
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8681318681318682,
+      "relative_sd_spread": 0.4326337717027679,
+      "prediction": {
+       "bedroc": 0.9922139080148444,
+       "auc": 0.8611111111111112
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.992287458260696,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.992287458260696,
+       "auc": 0.9166666666666667
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.993882877563767,
+       "auc": 0.9722222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9922269086851868,
+       "auc": 0.8888888888888888
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.5989010989010989,
+      "relative_sd_spread": 0.27187196121498647,
+      "prediction": {
+       "bedroc": 1.0000000000000004,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996581333240497,
+       "auc": 0.9523809523809524
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999395719769036,
+       "auc": 0.9761904761904763
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9995847307292718,
+       "auc": 0.9047619047619049
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996581333240497,
+       "auc": 0.9523809523809524
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.901098901098901,
+      "relative_sd_spread": 0.43882301997179546,
+      "prediction": {
+       "bedroc": 0.9983304261873187,
+       "auc": 0.8500000000000001
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9983304261873187,
+       "auc": 0.8500000000000001
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9983304261873187,
+       "auc": 0.8500000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9983304261873187,
+       "auc": 0.8500000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9983310245311424,
+       "auc": 0.875
+      }
+     },
+     {
+      "n_test": 14,
+      "sd_vs_distance": 0.7186813186813187,
+      "relative_sd_spread": 0.41732777637330015,
+      "prediction": {
+       "bedroc": 0.9999572940404219,
+       "auc": 0.7999999999999999
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9999572940404219,
+       "auc": 0.7999999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9999572940404219,
+       "auc": 0.7999999999999999
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999576555864592,
+       "auc": 0.8222222222222222
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999576555864592,
+       "auc": 0.8222222222222222
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8956043956043955,
+      "relative_sd_spread": 0.3206077410125714,
+      "prediction": {
+       "bedroc": 0.9905604070156661,
+       "auc": 0.7142857142857143
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9905577496573535,
+       "auc": 0.7142857142857142
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9905577496573535,
+       "auc": 0.7142857142857142
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9902158829814031,
+       "auc": 0.6666666666666666
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9905577496573535,
+       "auc": 0.7142857142857142
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8736263736263737,
+      "relative_sd_spread": 0.3842931027763166,
+      "prediction": {
+       "bedroc": 0.998688773866847,
+       "auc": 0.975
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9984072389665926,
+       "auc": 0.95
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9984072389665926,
+       "auc": 0.95
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9983467902781037,
+       "auc": 0.925
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9983467902781037,
+       "auc": 0.925
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.7692307692307693,
+      "relative_sd_spread": 0.4444621846494678,
+      "prediction": {
+       "bedroc": 0.9996423729668722,
+       "auc": 0.9047619047619048
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996451587523683,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9996451587523683,
+       "auc": 0.9285714285714286
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9996581333240498,
+       "auc": 0.9523809523809523
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9996451587523683,
+       "auc": 0.9285714285714286
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8736263736263737,
+      "relative_sd_spread": 0.3665517471087561,
+      "prediction": {
+       "bedroc": 0.9918676449575985,
+       "auc": 0.6428571428571429
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9978964274043611,
+       "auc": 0.619047619047619
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9978992131898574,
+       "auc": 0.6428571428571428
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9978998113291273,
+       "auc": 0.6666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9978998113291273,
+       "auc": 0.6666666666666667
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 46,
+      "sd_vs_distance": 0.9185938945420906,
+      "relative_sd_spread": 0.2758768300301542,
+      "prediction": {
+       "bedroc": 0.9869162748229853,
+       "auc": 0.8304093567251463
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9900732168122518,
+       "auc": 0.8576998050682261
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9952606939291678,
+       "auc": 0.8693957115009746
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9934029379742312,
+       "auc": 0.8576998050682261
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9980932687519202,
+       "auc": 0.8869395711500975
+      }
+     },
+     {
+      "n_test": 12,
+      "sd_vs_distance": 0.9300699300699302,
+      "relative_sd_spread": 0.32110623015523676,
+      "prediction": {
+       "bedroc": 0.9987740227500669,
+       "auc": 0.7714285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9987740227500669,
+       "auc": 0.7714285714285714
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9989322066847452,
+       "auc": 0.8
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9997697099530439,
+       "auc": 0.8285714285714285
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997753530056773,
+       "auc": 0.8571428571428572
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  },
+  "THER": {
+   "set": "THER",
+   "n": 76,
+   "seeds": 5,
+   "regimes": {
+    "random": [
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.9352941176470588,
+      "relative_sd_spread": 0.532176738501461,
+      "prediction": {
+       "bedroc": 0.9934637257993199,
+       "auc": 0.8095238095238095
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9934637257993199,
+       "auc": 0.8095238095238095
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9935675243481714,
+       "auc": 0.8412698412698413
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9935675243481714,
+       "auc": 0.8412698412698413
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9935741471790854,
+       "auc": 0.8571428571428572
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9678571428571429,
+      "relative_sd_spread": 0.6315021492323895,
+      "prediction": {
+       "bedroc": 0.8025757093601493,
+       "auc": 0.8518518518518519
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.8025757093601493,
+       "auc": 0.8518518518518519
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.8025757093601493,
+       "auc": 0.8518518518518519
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.945522462214212,
+       "auc": 0.8518518518518519
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9453404822972771,
+       "auc": 0.8333333333333334
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.8678571428571429,
+      "relative_sd_spread": 0.5915626291624154,
+      "prediction": {
+       "bedroc": 0.9990628273087206,
+       "auc": 0.9
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9964413418583262,
+       "auc": 0.8800000000000001
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9864954172583877,
+       "auc": 0.84
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9964371262569344,
+       "auc": 0.8400000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9864920810673942,
+       "auc": 0.8200000000000001
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9571428571428571,
+      "relative_sd_spread": 0.4338169629970566,
+      "prediction": {
+       "bedroc": 0.9993096286316465,
+       "auc": 0.9814814814814814
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9993096286316465,
+       "auc": 0.9814814814814814
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9993096286316465,
+       "auc": 0.9814814814814814
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9993096286316465,
+       "auc": 0.9814814814814814
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9993096286316465,
+       "auc": 0.9814814814814814
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9285714285714284,
+      "relative_sd_spread": 0.3822084828392123,
+      "prediction": {
+       "bedroc": 0.9855759298916507,
+       "auc": 0.7962962962962964
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9478820517537629,
+       "auc": 0.7592592592592593
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9478820517537629,
+       "auc": 0.7592592592592593
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.8055777008827554,
+       "auc": 0.7592592592592593
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.8055774692889619,
+       "auc": 0.7407407407407407
+      }
+     },
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.9470588235294116,
+      "relative_sd_spread": 0.587091845380119,
+      "prediction": {
+       "bedroc": 0.9942091949931308,
+       "auc": 0.8833333333333333
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9942091949931308,
+       "auc": 0.8833333333333333
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9942091949931308,
+       "auc": 0.8833333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9986245233053316,
+       "auc": 0.9166666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9986245233053316,
+       "auc": 0.9166666666666667
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.8749999999999999,
+      "relative_sd_spread": 0.46830443541664757,
+      "prediction": {
+       "bedroc": 0.9964371262569344,
+       "auc": 0.8400000000000001
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9864954172583877,
+       "auc": 0.84
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9964371262569344,
+       "auc": 0.8400000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.986496296668786,
+       "auc": 0.8600000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9864954172583877,
+       "auc": 0.84
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.8928571428571428,
+      "relative_sd_spread": 0.35176469467678023,
+      "prediction": {
+       "bedroc": 0.9858185237865663,
+       "auc": 0.8518518518518519
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9858176451966275,
+       "auc": 0.8333333333333334
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9855876958943938,
+       "auc": 0.7962962962962963
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9856356652796924,
+       "auc": 0.8148148148148149
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9855876958943938,
+       "auc": 0.7962962962962963
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.914285714285714,
+      "relative_sd_spread": 0.48730523073804527,
+      "prediction": {
+       "bedroc": 0.9353441015114596,
+       "auc": 0.7777777777777778
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9353441015114596,
+       "auc": 0.7777777777777778
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9353441015114596,
+       "auc": 0.7777777777777778
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9346537301431062,
+       "auc": 0.7592592592592593
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9346537301431062,
+       "auc": 0.7592592592592593
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.95,
+      "relative_sd_spread": 0.565026330269383,
+      "prediction": {
+       "bedroc": 0.9990625914745551,
+       "auc": 0.8703703703703703
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9964437833728176,
+       "auc": 0.8703703703703705
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9964435517790241,
+       "auc": 0.8518518518518519
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9964446619627565,
+       "auc": 0.888888888888889
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9865080165649809,
+       "auc": 0.8518518518518519
+      }
+     },
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.9352941176470588,
+      "relative_sd_spread": 0.6644404855241598,
+      "prediction": {
+       "bedroc": 0.9832135132259591,
+       "auc": 0.8833333333333334
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9832116150215493,
+       "auc": 0.8666666666666667
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9414008805188975,
+       "auc": 0.8500000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9832116150215493,
+       "auc": 0.8666666666666667
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9414008805188975,
+       "auc": 0.8500000000000001
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.982142857142857,
+      "relative_sd_spread": 0.5570815665813144,
+      "prediction": {
+       "bedroc": 0.9864951243438541,
+       "auc": 0.8
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9485207690681792,
+       "auc": 0.7000000000000001
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9485207690681792,
+       "auc": 0.7000000000000001
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9485207690681792,
+       "auc": 0.7000000000000001
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9485207690681792,
+       "auc": 0.7000000000000001
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9249999999999998,
+      "relative_sd_spread": 0.387831403193929,
+      "prediction": {
+       "bedroc": 0.9865077239237262,
+       "auc": 0.8148148148148149
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9864951403785055,
+       "auc": 0.8148148148148149
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.986447170993207,
+       "auc": 0.7962962962962963
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.986447170993207,
+       "auc": 0.7962962962962963
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.986426981653699,
+       "auc": 0.7222222222222222
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9571428571428571,
+      "relative_sd_spread": 0.5851493270562786,
+      "prediction": {
+       "bedroc": 0.01743893547173624,
+       "auc": 0.6818181818181819
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.055301875377832765,
+       "auc": 0.7045454545454546
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.06528243797772755,
+       "auc": 0.7272727272727273
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.06528243797772755,
+       "auc": 0.7272727272727273
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.06597592191231347,
+       "auc": 0.75
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9392857142857142,
+      "relative_sd_spread": 0.32894156558549764,
+      "prediction": {
+       "bedroc": 0.9990637016582875,
+       "auc": 0.9074074074074074
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9990637016582875,
+       "auc": 0.9074074074074074
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9990637016582875,
+       "auc": 0.9074074074074074
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9990637016582875,
+       "auc": 0.9074074074074074
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9865088951549198,
+       "auc": 0.8703703703703703
+      }
+     },
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.976470588235294,
+      "relative_sd_spread": 0.561890968962049,
+      "prediction": {
+       "bedroc": 0.7372936874437107,
+       "auc": 0.8166666666666667
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.778799578569533,
+       "auc": 0.8
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7778162843414467,
+       "auc": 0.7833333333333333
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7778162843414467,
+       "auc": 0.7833333333333333
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7743842502573323,
+       "auc": 0.7666666666666666
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9642857142857141,
+      "relative_sd_spread": 0.4505965569577653,
+      "prediction": {
+       "bedroc": 0.9990637016582874,
+       "auc": 0.9074074074074074
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9964437833728176,
+       "auc": 0.8703703703703705
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9964435517790241,
+       "auc": 0.8518518518518519
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9964435517790241,
+       "auc": 0.8518518518518519
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9964435517790241,
+       "auc": 0.8518518518518519
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9678571428571429,
+      "relative_sd_spread": 0.41664121666009946,
+      "prediction": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0000000000000002,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9178571428571428,
+      "relative_sd_spread": 0.5353614309328173,
+      "prediction": {
+       "bedroc": 0.9996935295213331,
+       "auc": 0.8928571428571428
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9996935295213331,
+       "auc": 0.8928571428571428
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9996935295213331,
+       "auc": 0.8928571428571428
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9988202688579926,
+       "auc": 0.8214285714285715
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9987725420412357,
+       "auc": 0.8214285714285714
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.8857142857142855,
+      "relative_sd_spread": 0.5011851757809969,
+      "prediction": {
+       "bedroc": 0.9954647701871198,
+       "auc": 0.8035714285714285
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9478469535150518,
+       "auc": 0.7678571428571428
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9952828321067194,
+       "auc": 0.7857142857142857
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9318033350659999,
+       "auc": 0.6428571428571429
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9476641370466974,
+       "auc": 0.7321428571428572
+      }
+     },
+     {
+      "n_test": 16,
+      "sd_vs_distance": 0.9676470588235294,
+      "relative_sd_spread": 0.45884601385809803,
+      "prediction": {
+       "bedroc": 0.9366314402371841,
+       "auc": 0.796875
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9242933428687937,
+       "auc": 0.71875
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9242933428687937,
+       "auc": 0.71875
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9232788732057151,
+       "auc": 0.65625
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9231684607343146,
+       "auc": 0.609375
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9678571428571429,
+      "relative_sd_spread": 0.5805007635882389,
+      "prediction": {
+       "bedroc": 0.8056392502626033,
+       "auc": 0.8214285714285714
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9964614533202218,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999015958552633,
+       "auc": 0.8928571428571428
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9990672492221215,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9997095035192489,
+       "auc": 0.9285714285714286
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.8999999999999999,
+      "relative_sd_spread": 0.5066070736719896,
+      "prediction": {
+       "bedroc": 0.7888546552128356,
+       "auc": 0.6851851851851852
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.7888546552128356,
+       "auc": 0.6851851851851852
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.7888420106201536,
+       "auc": 0.6666666666666666
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.7888546552128356,
+       "auc": 0.6851851851851852
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.7890239905370886,
+       "auc": 0.6851851851851851
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9285714285714284,
+      "relative_sd_spread": 0.6028800984068112,
+      "prediction": {
+       "bedroc": 0.9865122282333632,
+       "auc": 0.888888888888889
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9997414284339591,
+       "auc": 0.9074074074074074
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.999923408350894,
+       "auc": 0.925925925925926
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9999225297609552,
+       "auc": 0.9074074074074074
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9999225297609552,
+       "auc": 0.9074074074074074
+      }
+     },
+     {
+      "n_test": 15,
+      "sd_vs_distance": 0.9464285714285712,
+      "relative_sd_spread": 0.49001441122580575,
+      "prediction": {
+       "bedroc": 0.9874334693600653,
+       "auc": 0.96
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9865603034413056,
+       "auc": 0.9199999999999999
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9839388179909113,
+       "auc": 0.8999999999999999
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9839388179909113,
+       "auc": 0.8999999999999999
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9839388179909113,
+       "auc": 0.8999999999999999
+      }
+     }
+    ],
+    "chemotype": [
+     {
+      "n_test": 44,
+      "sd_vs_distance": 0.9090909090909091,
+      "relative_sd_spread": 0.38125452756690376,
+      "prediction": {
+       "bedroc": 0.22269479843512932,
+       "auc": 0.85
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.21768277900853863,
+       "auc": 0.8323529411764705
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.3254062047627056,
+       "auc": 0.8441176470588236
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.3678108484195268,
+       "auc": 0.8352941176470589
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.536399304138411,
+       "auc": 0.8676470588235293
+      }
+     },
+     {
+      "n_test": 9,
+      "sd_vs_distance": 0.6166666666666666,
+      "relative_sd_spread": 0.2836055052409657,
+      "prediction": {
+       "bedroc": 0.9033755882763332,
+       "auc": 0.8571428571428572
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9128228082196101,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9128228082196101,
+       "auc": 0.9285714285714286
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9128228082196101,
+       "auc": 0.9285714285714286
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 7,
+      "sd_vs_distance": 0.9285714285714288,
+      "relative_sd_spread": 0.44711404448582726,
+      "prediction": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 1.0,
+       "auc": 1.0
+      }
+     },
+     {
+      "n_test": 13,
+      "sd_vs_distance": 0.8406593406593407,
+      "relative_sd_spread": 0.41209381958575864,
+      "prediction": {
+       "bedroc": 0.9918512881370453,
+       "auc": 0.6363636363636364
+      },
+      "standard deviation, beta 1": {
+       "bedroc": 0.9620478958870567,
+       "auc": 0.5909090909090909
+      },
+      "nearest distance, beta 1": {
+       "bedroc": 0.9620478958870567,
+       "auc": 0.5909090909090909
+      },
+      "standard deviation, beta 2": {
+       "bedroc": 0.9620478958870567,
+       "auc": 0.5909090909090909
+      },
+      "nearest distance, beta 2": {
+       "bedroc": 0.9620478958870567,
+       "auc": 0.5909090909090909
+      }
+     }
+    ]
+   },
+   "control_folds_checked": 2
+  }
+ }
+}

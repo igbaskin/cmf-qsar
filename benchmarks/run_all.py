@@ -971,9 +971,10 @@ def registry() -> List[Benchmark]:
                   "test for which candidates are the same structure, and a loop that proposes, "
                   "computes and refits -- measured on a published pool of perovskites, on the "
                   "2DMD defect series, with the model's ranking ability beside it, and as a "
-                  "closed loop with a calculator",
-                  "run_prototypes.py", "prototypes", compute=[[]],
-                  minutes="60",
+                  "closed loop with a calculator; the same loop with a model that needs no field as the "
+                  "reference (stage cheap)",
+                  "run_prototypes.py", "prototypes", compute=[[], ["--stage", "cheap"]],
+                  minutes="75",
                   report=lambda: _mod("run_prototypes").report(),
                   tables=["prototypes/table.md"]),
         Benchmark("fieldae",
@@ -1284,6 +1285,30 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_conformal").report(_r("conformal")),
                   tables=["conformal/table.md"]),
+        Benchmark("herding", "kernel herding against max-min, k-medoids, pivoted Cholesky and "
+                  "random choice: which molecules to measure first, which to use as Nystroem "
+                  "landmarks, and which solvation shells of an ensemble to keep",
+                  "run_herding.py", "herding", compute=[[]],
+                  # the shell stage reads the SD file that run_ensembles.py --stage file writes
+                  # into benchmarks/cache; that stage also rewrites results/ensembles/file.json
+                  prepare=["run_ensembles.py --stage file"],
+                  minutes="4",         # measured: 61 s, 43 s and 110 s for the three stages
+                  report=lambda: _mod("run_herding").report(_r("herding")),
+                  tables=["herding/table.md"]),
+        Benchmark("shift", "covariate shift: do density-ratio weights repair the conformal "
+                  "intervals and the fit when the test molecules differ from the training ones",
+                  "run_shift.py", "shift", compute=[["--repeats", "20"]],
+                  minutes="25",        # measured: 24, of which COX2 and DHFR take 11 each
+                  report=lambda: _mod("run_shift").report(_r("shift")),
+                  tables=["shift/table.md"]),
+        Benchmark("hsic", "the conditional HSIC test: does the activity depend on the fields "
+                  "beyond a count or a continuous reference; calibration and power on synthetic "
+                  "activities, the measured Sutherland activities against a model comparison, and "
+                  "the ethers whose answer is known",
+                  "run_hsic.py", "hsic", compute=[[]],
+                  minutes="13",        # measured: 722 s, 15 s and 12 s for the three stages
+                  report=lambda: _mod("run_hsic").report(_r("hsic")),
+                  tables=["hsic/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],
                   minutes="15",
@@ -1305,7 +1330,7 @@ def registry() -> List[Benchmark]:
                   tables=["fe110/table.md"],
                   readme=["Posed by rule: the surface frame without the slab"]),
         Benchmark("bound", "ranking by a confidence bound against ranking by the prediction",
-                  "run_bound.py", "bound", compute=[[]], minutes="15",
+                  "run_bound.py", "bound", compute=[[], ["--reference"]], minutes="16",
                   report=lambda: _mod("run_bound").report(_r("bound/table.md")),
                   tables=["bound/table.md"],
                   readme=["Ranking by a bound rather than by the prediction"]),

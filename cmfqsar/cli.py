@@ -2079,6 +2079,80 @@ def cmd_predict(args):
                                AtomTable.from_molecules(mf))
 
 
+#: below this share of the training set as the effective size of the weights, `predict --shift`
+#: warns that the library hardly overlaps the training set.  In benchmarks/run_shift.py the
+#: hold-out of one neighbourhood gave 6 % on average and every shift with overlap 36 % or more.
+SHIFT_MIN_ESS = 0.10
+
+
+def _model_blocks(model, table):
+    """(train-train, library-train, library-library) field kernels on the model's own scale.
+
+    A fresh model object fitted to the library would compute its own field scale from the
+    library's mean self-overlap, which differs from the training set's whenever the fields are
+    scaled; the three blocks would then not form one kernel, the matrix assembled from them is
+    not positive semidefinite, and a distance computed from it is wrong.  These three come from
+    the model's own field kernels, normalisation and scale.  Non-field descriptors are left out
+    of all three, so the blocks agree with each other.
+    """
+    if not model.uses_fields:
+        raise SystemExit("this needs the overlap kernel among the library molecules; the model "
+                         f"uses the '{model.kernel_source}' kernel")
+    K_train_f = model.K_fields_train
+    if K_train_f is None:
+        K_train_f = model._field_kernels(model.train, model.train, model.self_diag,
+                                         model.self_diag)
+    d_lib = model._self_kernels(table) if model.normalize else None
+    K_train = model.joint_kernel(K_train_f)
+    K_cross = model.joint_kernel(model._field_kernels(table, model.train, d_lib,
+                                                      model.self_diag))
+    K_lib = model.joint_kernel(model._field_kernels(table, table, d_lib, d_lib))
+    return K_train, K_cross, K_lib
+
+
+def _shifted_intervals(model, table, conf, names, yp, seed=0):
+    """Weighted conformal intervals for a library unlike the training set (`predict --shift`).
+
+    The stored out-of-fold errors are weighted by how typical each training molecule is of the
+    molecules being predicted, w(x) = p_library(x) / p_train(x), from a kernel logistic regression
+    that tells the two sets apart (:mod:`cmfqsar.shift`).  A molecule that no training molecule
+    resembles gets an infinite interval: there is no evidence about its error.
+    """
+    from cmfqsar.shift import shifted_conformal
+
+    if conf is None:
+        raise SystemExit("--shift weights the model's calibration, and this model carries none; "
+                         "build it with --conformal")
+    if model.is_low_rank:
+        raise SystemExit("--shift needs the kernel among the training molecules, which a "
+                         "low-rank model does not keep")
+    if len(names) < 2:
+        raise SystemExit("--shift estimates how the predicted molecules differ from the training "
+                         "set, which needs at least two of them")
+    K_train, K_cross, K_lib = _model_blocks(model, table)
+    try:
+        rule, ratio, w_lib, diff = shifted_conformal(conf, K_train, K_cross, K_lib, seed=seed)
+    except ValueError as exc:
+        raise SystemExit(f"--shift: {exc}")
+    lo, hi = rule.interval(yp, w_lib, diff)
+    n_inf = int(np.sum(~np.isfinite(hi - lo)))
+    print()
+    print(f"Weighted conformal (--shift): {rule.describe()} of {len(rule.weights)}")
+    print("  " + ratio.describe())
+    print(f"  {n_inf} of {len(names)} molecules get no finite interval: the training set holds "
+          f"too little like them to say how large their error is")
+    if rule.ess < SHIFT_MIN_ESS * len(rule.weights):
+        print(f"  warning: the weights are worth only {rule.ess:.1f} of {len(rule.weights)} "
+              f"training molecules, so the library hardly overlaps the training set. In "
+              f"benchmarks/run_shift.py such a library got 79-85 % coverage from the finite "
+              f"weighted intervals at 90 %; the normalised interval (build "
+              f"--conformal-normalise) kept 92.5 % there")
+    for n, v, a, b, w in zip(names, yp, lo, hi, w_lib):
+        span = f"[{a:7.3f}, {b:7.3f}]" if np.isfinite(b - a) else "[   -inf,    inf]"
+        print(f"{n:30s} {v:8.3f}   {span}   weight {w:.3g}")
+    return (lo, hi), {"shift_weight": w_lib}
+
+
 def _report_predictions(args, model, extra, names, activity, table):
     """Predict `table`, print the predictions and write the CSV: the tail of `predict`.
 
@@ -2171,8 +2245,14 @@ def _report_predictions(args, model, extra, names, activity, table):
             print(f"Conformal: {conf.describe()}")
             for n, v, a, b in zip(names, yp, lo, hi):
                 print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
+    shift_cols = None
+    if getattr(args, "shift", False):
+        bounds, shift_cols = _shifted_intervals(model, table, conf, names, yp,
+                                                seed=getattr(args, "seed", 0) or 0)
     if args.out:
         extra_columns = {}
+        if shift_cols:
+            extra_columns.update(shift_cols)
         if yp2 is not None:
             extra_columns.update({second["names"][1]: yp2, "difference": sel})
         if sd_cols:
@@ -3811,9 +3891,8 @@ def cmd_compare(args):
               f"fields {', '.join(s_.label for s_ in fs.specs)}")
         mf = [build_fields(m, fs, n) for m, n in zip(ds_a.mols, ds_a.names)]
         table = AtomTable.from_molecules(mf)
-        probe = CMFModel(fieldset=fs, method="krr", normalize=model.normalize)
-        Kyy = probe.joint_kernel(probe.prepare_training_kernels(table))
-        K, mask = assemble(model._linear_train_kernel(), model.test_kernel(table), Kyy)
+        # all three blocks on the model's own field scale, so that they form one kernel
+        K, mask = assemble(*_model_blocks(model, table))
         train_names = list(extra.get("train_names")
                            or getattr(model.train, "names", None) or [])
         if len(train_names) != model.train.n_mol:
@@ -3852,6 +3931,162 @@ def cmd_compare(args):
             for i, nm in enumerate(names):
                 wr.writerow([nm, label_a if mask[i] else label_b, f"{w[i]:.6f}"])
         print(f"Witness written to {args.out}")
+    if args.weights:
+        from cmfqsar.shift import classifier_ratio, distance2, effective_size
+
+        d = np.diag(K)
+        ratio = classifier_ratio(distance2(K, d, d), ~mask, seed=args.seed)
+        n_a = int(mask.sum())
+        print(f"\nWeights that make {label_a} look like {label_b}:")
+        print("  " + ratio.describe())
+        print(f"  effective size {effective_size(ratio.w_train):.1f} of {n_a}: the weighted set "
+              f"carries as much information as that many equally weighted molecules")
+        w_all = np.empty(len(mask))
+        w_all[mask] = ratio.w_train
+        w_all[~mask] = ratio.w_library
+        import csv as _csv
+        with open(args.weights, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["name", "set", "density_ratio"])
+            for i, nm in enumerate(names):
+                wr.writerow([nm, label_a if mask[i] else label_b, f"{w_all[i]:.6g}"])
+        print(f"Density ratio of every molecule written to {args.weights}")
+
+
+def cmd_dependence(args):
+    """Does the activity depend on the fields, and beyond a reference? (conditional HSIC test)"""
+    from cmfqsar.descriptors import read_values
+    from cmfqsar.hsic import hsic_test, strata_of
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    z = None
+    if args.given:
+        z = np.array([read_values(m, [args.given])[0] for m in ds.mols], float)
+        keep &= np.isfinite(z)
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [nm for nm, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    if len(y) < 8:
+        raise SystemExit(f"{len(y)} molecules with an activity"
+                         + (f" and a value of {args.given}" if args.given else "")
+                         + ": too few to test anything")
+    if keep.sum() < len(keep):
+        print(f"{int(len(keep) - keep.sum())} molecules left out: no activity"
+              + (f" or no value of {args.given}" if args.given else ""))
+    fs = _fieldset_from(args, mols)
+    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    print(f"{len(y)} molecules; fields {', '.join(s_.label for s_ in fs.specs)}, "
+          f"alpha = {args.alpha:g}; {args.permutations} permutations, "
+          f"{args.kernel_y} kernel on the activity")
+    plain = hsic_test(K, y, kernel_y=args.kernel_y, permutations=args.permutations,
+                      seed=args.seed)
+    print("\nDoes the activity depend on the fields at all?")
+    print("  " + plain.describe())
+    if z is None:
+        return
+    z = z[keep]
+    strata, exact = strata_of(z, bins=args.bins or None)
+    if exact and strata.max() + 1 > len(y) // 2 and not args.bins:
+        print(f"\n{args.given} takes {strata.max() + 1} distinct values on {len(y)} molecules, so "
+              f"most strata hold one molecule. Give --bins to cut it into quantile bins (the "
+              f"test is then approximate), or choose a reference with fewer values.")
+    if not exact and args.kernel_y != "linear":
+        raise SystemExit("a binned reference needs the linear kernel on the activity, which "
+                         "removes a straight line in the reference within each bin")
+    cond = hsic_test(K, y, strata=strata, exact=exact, kernel_y=args.kernel_y,
+                     permutations=args.permutations, seed=args.seed,
+                     covariate=None if exact else z)
+    print(f"\nDoes it depend on the fields beyond {args.given}?")
+    print("  " + cond.describe())
+    if cond.informative < len(y) // 2:
+        print(f"  only {cond.informative} of {len(y)} molecules share a stratum with another; "
+              f"the test has little to work with")
+    if cond.p_value <= 0.05:
+        print(f"  the fields carry information about the activity that {args.given} does not")
+    else:
+        print(f"  no evidence that the fields carry more than {args.given}; a field model may "
+              f"be measuring {args.given} in another form. Absence of evidence is not evidence "
+              f"of absence on a small set.")
+    if not exact:
+        print(f"  {args.given} was cut into {strata.max() + 1} bins and a straight line in it was "
+              f"removed within each bin; the test is approximate (5 % or fewer false positives "
+              f"at the 5 % level in benchmarks/run_hsic.py)")
+
+
+#: `cmf pick` builds the joint kernel over every molecule at once, five n by n matrices of
+#: float64 for the default fields; above this many molecules it refuses instead of filling memory
+PICK_MAX_MOLECULES = 5000
+
+
+def cmd_pick(args):
+    """A few molecules that stand for a library: kernel herding and its references."""
+    from cmfqsar.herding import METHODS, herd, mmd2_subset, pick
+
+    ds = load_dataset(args.dataset)
+    made = load_dataset(args.made) if args.made else None
+    mols = list(ds.mols) + (list(made.mols) if made else [])
+    names = list(ds.names) + (list(made.names) if made else [])
+    n_lib, n = len(ds), len(mols)
+    if n > PICK_MAX_MOLECULES:
+        raise SystemExit(f"{n} molecules: the kernel would need about "
+                         f"{5 * 8 * n * n / 1e9:.1f} GB. Pick from a random part of the library, "
+                         f"at most {PICK_MAX_MOLECULES} molecules")
+    if not 0 < args.n <= n_lib:
+        raise SystemExit(f"--n must lie between 1 and the {n_lib} molecules of the library")
+    if made and args.method not in ("herding", "greedy"):
+        raise SystemExit("--made continues a herding run; the other rules do not take it")
+    fs = _fieldset_from(args, mols)
+    print(f"{n_lib} molecules in the library"
+          + (f", {len(made)} already made" if made else "")
+          + f"; fields {', '.join(s_.label for s_ in fs.specs)}, alpha = {args.alpha:g}")
+    mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    if args.kernel == "gauss":
+        from cmfqsar.herding import distance2_matrix
+        D2 = distance2_matrix(K)
+        off = D2[np.triu_indices(n, 1)]
+        K = np.exp(-D2 / max(float(np.median(off[off > 1e-12])) if np.any(off > 1e-12)
+                             else 1.0, 1e-300))
+    target = np.r_[np.ones(n_lib), np.zeros(n - n_lib)]
+    if args.method in ("herding", "greedy"):
+        chosen = herd(K, args.n, weights=target, method=args.method,
+                      first=np.arange(n_lib, n) if made else None)
+    else:
+        chosen = pick(K[:n_lib, :n_lib], args.n, method=args.method, seed=args.seed)
+    K_lib = K[:n_lib, :n_lib]
+    steps = [mmd2_subset(K_lib, chosen[:t + 1]) for t in range(len(chosen))]
+    rng = np.random.RandomState(args.seed)
+    rand = [mmd2_subset(K_lib, rng.choice(n_lib, args.n, replace=False)) for _ in range(200)]
+    print(f"\n{args.n} molecules by {args.method} ({', '.join(METHODS)} are available):")
+    for t, j in enumerate(chosen):
+        print(f"  {t + 1:4d}. {names[j]:34s} MMD^2 of the first {t + 1}: {steps[t]:.5f}")
+    print(f"\nMMD^2 between the {args.n} chosen and the library: {steps[-1]:.5f}; random "
+          f"choices of {args.n} give a median of {np.median(rand):.5f} "
+          f"(5 to 95 %: {np.percentile(rand, 5):.5f} to {np.percentile(rand, 95):.5f})")
+    if made:
+        print("  (the MMD^2 values are of the new molecules alone; the herding rule counted the "
+              "molecules already made as chosen)")
+    if args.out:
+        import csv as _csv
+        with open(args.out, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["rank", "name", "mmd2_of_the_first"])
+            for t, j in enumerate(chosen):
+                wr.writerow([t + 1, names[j], f"{steps[t]:.6g}"])
+        print(f"Written to {args.out}")
+    if args.sdf_out:
+        from rdkit import Chem
+        with Chem.SDWriter(args.sdf_out) as w:
+            for t, j in enumerate(chosen):
+                m = Chem.Mol(mols[j])
+                m.SetProp("pick_rank", str(t + 1))
+                w.write(m)
+        print(f"The chosen molecules, in order, written to {args.sdf_out}")
 
 
 def cmd_cluster(args):
@@ -4666,6 +4901,12 @@ def main(argv=None):
     q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="report the model's calibrated interval at this level instead of the "
                         "one it was calibrated at; the model must carry a calibration")
+    q.add_argument("--shift", action="store_true",
+                   help="weight the model's calibration errors by how typical each training "
+                        "molecule is of the molecules being predicted (weighted conformal "
+                        "prediction under covariate shift). Use it when the library differs from "
+                        "the training set; a molecule unlike every training molecule gets an "
+                        "infinite interval. Needs a model built with --conformal")
     q.add_argument("--sd", action="store_true",
                    help="print the predictive standard deviation of every structure in the units "
                         "of the activity (the GP variance put on the scale of the fit's noise) "
@@ -4740,6 +4981,11 @@ def main(argv=None):
     cp.add_argument("--seed", type=int, default=0)
     cp.add_argument("--top", type=int, default=8, help="molecules listed at each end")
     cp.add_argument("--out", default=None, help="CSV of the witness value of every molecule")
+    cp.add_argument("--weights", default=None, metavar="CSV",
+                    help="estimate the density ratio p_second(x) / p_first(x) by kernel logistic "
+                         "regression and write it for every molecule. On the first set (the "
+                         "training set with --model) these are the weights that make it look "
+                         "like the second")
     cp.set_defaults(func=cmd_compare)
 
     cl = sub.add_parser("cluster", help="cluster a set by its field kernel (spectral clustering)")
@@ -4762,6 +5008,62 @@ def main(argv=None):
     cl.add_argument("--seed", type=int, default=0)
     cl.add_argument("--out", default=None, help="CSV of the cluster of every molecule")
     cl.set_defaults(func=cmd_cluster)
+
+    pk = sub.add_parser("pick", help="a few molecules that stand for a library (kernel herding)")
+    pk.add_argument("dataset", help="the library to choose from")
+    pk.add_argument("--n", type=int, required=True, help="how many molecules to choose")
+    pk.add_argument("--method", default="herding",
+                    choices=["herding", "greedy", "maxmin", "kmedoids", "pivoted_cholesky",
+                             "random"],
+                    help="herding: the subset whose mean field is closest to the library's "
+                         "(Chen, Welling and Smola 2010); greedy: the same with the exact greedy "
+                         "step; maxmin: furthest-first diversity picking; kmedoids: the medoids "
+                         "of k clusters in field space; pivoted_cholesky: always the molecule "
+                         "least explained by those chosen; random")
+    pk.add_argument("--kernel", default="linear", choices=["linear", "gauss"],
+                    help="linear: the joint field kernel, so the mean field is matched; gauss: a "
+                         "Gaussian of the field distance, which matches the whole distribution")
+    pk.add_argument("--made", default=None,
+                    help="a file of molecules already made or measured; herding continues from "
+                         "them and does not choose molecules like them again")
+    pk.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    pk.add_argument("--cif", action="store_true")
+    pk.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
+    pk.add_argument("--cif-min", type=int, default=5)
+    pk.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    pk.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    pk.add_argument("--alpha", type=float, default=0.5)
+    pk.add_argument("--seed", type=int, default=0, help="for random choice and its reference")
+    pk.add_argument("--out", default=None, help="CSV of the chosen molecules, in order")
+    pk.add_argument("--sdf-out", default=None, help="SD file of the chosen molecules, in order")
+    pk.set_defaults(func=cmd_pick)
+
+    dp = sub.add_parser("dependence", help="does the activity depend on the fields, and beyond a "
+                                           "reference such as a count? (conditional HSIC test)")
+    dp.add_argument("dataset")
+    dp.add_argument("--activity", default=None)
+    dp.add_argument("--given", default=None, metavar="NAME",
+                    help="the reference: a property of the file or a computed descriptor such as "
+                         "calc:HeavyAtomCount or calc:clogp. The activities are permuted within "
+                         "the molecules of equal value, which makes the test exact for a count")
+    dp.add_argument("--bins", type=int, default=0,
+                    help="cut a continuous reference into this many quantile bins and remove a "
+                         "straight line in it within each bin (the test is then approximate)")
+    dp.add_argument("--kernel-y", default="linear", choices=["linear", "gauss"],
+                    help="linear: does the mean activity depend on the fields (default); gauss: "
+                         "any dependence, the spread included")
+    dp.add_argument("--permutations", type=int, default=999)
+    dp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    dp.add_argument("--cif", action="store_true")
+    dp.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
+    dp.add_argument("--cif-min", type=int, default=5)
+    dp.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    dp.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    dp.add_argument("--alpha", type=float, default=0.5)
+    dp.add_argument("--seed", type=int, default=0)
+    dp.set_defaults(func=cmd_dependence)
 
     kc = sub.add_parser("kcca", help="what the field sees that another view does not (kernel "
                                      "canonical correlation analysis)")
