@@ -30,6 +30,9 @@ chosen by cross-validation on the training part, as in `run_conformal.py`.  Inte
 and 95 %:
 
     cv, cv-norm            the program's present rules (out-of-fold errors, plain and normalised)
+    cv-ad                  the reference that needs no ratio: the plain interval, and no interval
+                           (an infinite one) for a molecule outside the program's applicability
+                           domain (cmfqsar.validation.domain, with its defaults)
     cv-ulsif               the same errors weighted by the ratio estimated by uLSIF
     cv-klr, cv-norm-klr    weighted by the ratio from kernel logistic regression
     cv-oracle              weighted by the true ratio
@@ -68,6 +71,7 @@ from scipy.stats import spearmanr  # noqa: E402
 from cmfqsar.conformal import calibrate, difficulty_from_kernel  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
 from cmfqsar.mmd import mmd_test  # noqa: E402
+from cmfqsar.validation import domain  # noqa: E402
 from cmfqsar.model import cv_predict, krr_fit  # noqa: E402
 from cmfqsar.shift import (classifier_ratio, distance2, effective_size, gaussian_layer, kmm,  # noqa: E402
                            median_gamma, ulsif_crossfit, weighted_calibrate, weighted_cv_predict,
@@ -85,9 +89,12 @@ BETA = 0.1
 TEST_SHARE = 0.3
 SCENARIOS = {"random": ("none", 0.0), "pc1-1": ("pc1", 1.0), "pc1-2": ("pc1", 2.0),
              "size-1": ("size", 1.0), "size-2": ("size", 2.0), "neighbours": ("neighbours", 0.0)}
-RULES = ("cv", "cv-norm", "cv-ulsif", "cv-klr", "cv-norm-klr", "cv-oracle",
+RULES = ("cv", "cv-norm", "cv-ad", "cv-ulsif", "cv-klr", "cv-norm-klr", "cv-oracle",
          "split", "split-ulsif", "split-klr", "split-oracle")
 FITS = ("plain", "kmm", "ulsif", "klr", "oracle")
+#: the reference rule cv-ad uses the program's applicability domain (cmfqsar.validation.domain) with
+#: its defaults: the mean similarity to the 3 nearest training molecules against the 5 % point of
+#: the same quantity among the training molecules
 
 
 # --------------------------------------------------------------------------- the splits
@@ -271,6 +278,10 @@ def run_set(name, repeats=20, force=False, data=DATA, results=RESULTS, scenarios
             yp_oof = cv_predict(K[np.ix_(tr, tr)], y[tr], "krr", {"lam": lam}, folds=10, seed=rep)
             d_tr = difficulty_from_kernel(K[np.ix_(tr, tr)], d[tr], K[np.ix_(tr, tr)])
             d_te = difficulty_from_kernel(K[np.ix_(te, tr)], d[te], K[np.ix_(tr, tr)])
+            # the applicability-domain reference: no random numbers are drawn for it, so every
+            # other rule keeps the numbers it had before this rule was added
+            far = ~np.asarray(domain(K[np.ix_(te, tr)], d[te], K[np.ix_(tr, tr)]).inside, bool)
+            diags[-1]["ad_refused"] = float(np.mean(far))
             perm = rng.permutation(len(tr))
             cut = max(10, int(round(len(tr) / 3)))
             cal, fit = tr[np.sort(perm[:cut])], tr[np.sort(perm[cut:])]
@@ -303,10 +314,13 @@ def run_set(name, repeats=20, force=False, data=DATA, results=RESULTS, scenarios
                                          yp_te, o_te, None)
                     cand["split-oracle"] = (weighted_calibrate(y[cal], yp_cal, o_cal, level,
                                                                kind="split"), yp_te2, o_te, None)
+                cand["cv-ad"] = cand["cv"]
                 for rule, (cr, yp, wn, dn) in cand.items():
                     lo, hi = cr.interval(yp, dn) if wn is None else cr.interval(yp, wn, dn)
                     lo = np.broadcast_to(lo, yp.shape)
                     hi = np.broadcast_to(hi, yp.shape)
+                    if rule == "cv-ad":
+                        lo, hi = np.where(far, -np.inf, lo), np.where(far, np.inf, hi)
                     rows.append({"scenario": scen, "repeat": rep, "level": level, "rule": rule,
                                  **_cover(y[te], lo, hi)})
         print(f"  {scen}: done ({time.time() - t0:.0f} s)", flush=True)

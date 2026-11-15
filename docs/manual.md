@@ -5536,6 +5536,24 @@ mixed two scales: it was not one kernel, and the MMD and the witness were comput
 three blocks now come from the model's own field kernels and scale; the test feeds the training
 set back as the library and requires the three blocks to be identical.
 
+**A reference that needs no ratio (added 16 November 2026).** The rule `cv-ad` of `run_shift.py`
+needs no ratio: it is the plain interval, and no interval for a molecule outside the program's
+applicability domain (`validation.domain` with its defaults). It is the cheap way to treat a
+library unlike the training set, and the weighted interval has to be judged against it. The other
+rules keep every number they had; only the rows of `cv-ad` were added. At 90 %, under the four
+shifts with overlap, the domain rule covers 88.2 to 90.6 % with the plain width and refuses 6 to
+15 % of the molecules; the weighted interval (`cv-klr`) covers 89.7 to 91.2 %, refuses 2 to 15 %
+and is 7 to 17 % wider. Among the molecules each rule answers for, the weighted rule is the better
+calibrated: 89.4 to 90.7 % against 87.4 to 90.0 %. Without a shift the domain rule refuses 5 % of
+the molecules for nothing. With no overlap it covers 87.8 % and refuses 21 %, where the weights
+refuse 78 %. So the weighted interval earns its place where the library overlaps the training set,
+by about one to two points of calibration on the molecules it answers for, and the applicability
+domain gets most of the way without any ratio.
+
+The third tutorial, `docs/tutorials/03_trusting_a_prediction.ipynb`, makes a shifted library from
+its benzamide series twenty times, compares the five intervals live, and reads the eight sets from
+the stored runs.
+
 ### When the scale of the activity is the problem: a warped process
 
 The interval above, and the standard deviation of the chapter after this one, assume one thing
