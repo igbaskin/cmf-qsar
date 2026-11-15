@@ -8231,8 +8231,29 @@ The measurement found three faults, all repaired:
 * The trajectory section of this manual shows `--conformer-weighting given`, and the command
   line refused that value. It is accepted now.
 
+**What the ensemble is worth (added 15 November 2026).** The gate says that the general path equals
+BT5's path. It does not say what keeping 16 shells gives. Stage `members` of `run_ensembles.py` (14
+minutes) reads the same shells through the general path with the alignment-free model of BT5 and the
+same folds, and keeps the 1, 2, 4, 8 or 16 members of largest weight, or all 16 with equal weights.
+On the activation energy the single heaviest shell has a mean absolute error of 2.05 kJ/mol with
+random folds and 2.15 with folds by composition, and the 16 shells 1.61 and 1.68. The gain is +0.45
+[+0.07, +0.86] and +0.47 [+0.09, +0.85]. It is small with 4 shells (+0.12 and +0.12, with intervals
+that contain zero) and clear of zero from 8 shells (+0.41 and +0.49). Equal weights give 1.61 and
+1.71, so the given weights add nothing. On the log10 of the conductivity the shells add nothing over
+one shell: every gain is within 0.021 and every interval contains zero. The composition (the
+molality with the solvent fractions) is clearly below every shell model on the conductivity (the 16
+shells minus the composition: -0.047 [-0.066, -0.029] and -0.029 [-0.047, -0.010]). On the
+activation energy the 16 shells are behind it by -0.24 [-0.57, +0.11] and -0.25 [-0.59, +0.12],
+which the interval does not separate from zero. So the ensemble is worth keeping for the activation
+energy, and the shells are worth no more than the composition on either target. The control, the 16
+given members against the stored records of BT5, differs by 0.
+
+The twelfth tutorial, `docs/tutorials/12_an_ensemble_of_structures.ipynb`, reads the file of the
+shells, checks the mean field against the mean of the kernels, and runs the gate and these variants.
+
 ```bash
 python benchmarks/run_ensembles.py     # about 25 minutes; the kernels take one width per step
+python benchmarks/run_ensembles.py --stage members     # 14 minutes more
 ```
 
 # Working without an alignment
@@ -8874,7 +8895,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a qÂ
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The fourteenth tutorial, `docs/tutorials/14_on_a_surface.ipynb`, makes
+this program adds to it yet. The fifteenth tutorial, `docs/tutorials/15_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11862,7 +11883,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The twelfth tutorial, `docs/tutorials/12_a_spectrum_as_the_sample.ipynb`, runs the central part
+The thirteenth tutorial, `docs/tutorials/13_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12623,7 +12644,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The thirteenth tutorial, `docs/tutorials/13_a_mixture.ipynb`, runs the case of the computed
+The fourteenth tutorial, `docs/tutorials/14_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13295,7 +13316,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The fifteenth tutorial, `docs/tutorials/15_a_hop_in_a_crystal.ipynb`, runs the references and the
+The sixteenth tutorial, `docs/tutorials/16_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16237,7 +16258,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The sixteenth tutorial, `docs/tutorials/16_point_mutants.ipynb`, builds one
+among its references. The seventeenth tutorial, `docs/tutorials/17_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -16773,7 +16794,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Sixteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Seventeen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -16782,7 +16803,7 @@ ring and compared with the charge of one ring carbon, a series of chiral catalys
 frame of their reaction centre, with the enantioselectivity as the activity, the yields of
 coupling reactions that combine four molecules, compared with the names of their parts, the redox
 potentials of metal complexes, read with fields and compared with the composition of the
-complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the infrared spectra of benzoic acids as the samples, read with the kernel of
+complex, the better of two enantiomers, read from the handedness of the fields and compared with a rule that needs no field, the solvation shells of an electrolyte as one sample with weights, compared with one shell and with the composition, the infrared spectra of benzoic acids as the samples, read with the kernel of
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with

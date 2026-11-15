@@ -2188,6 +2188,26 @@ shells: it does, exactly, for both shell models, both targets and both splits
 (`benchmarks/run_ensembles.py`). The measurement also found that non-field descriptors were
 dropped from every ensemble; they now travel with it.
 
+**What the ensemble is worth (added 15 November 2026).** The gate says that the general path equals
+BT5's path. It does not say what keeping 16 shells gives. Stage `members` of `run_ensembles.py` (14
+minutes) reads the same shells through the general path with the alignment-free model of BT5 and the
+same folds, and keeps the 1, 2, 4, 8 or 16 members of largest weight, or all 16 with equal weights.
+On the activation energy the single heaviest shell has a mean absolute error of 2.05 kJ/mol with
+random folds and 2.15 with folds by composition, and the 16 shells 1.61 and 1.68. The gain is +0.45
+[+0.07, +0.86] and +0.47 [+0.09, +0.85]. It is small with 4 shells (+0.12 and +0.12, with intervals
+that contain zero) and clear of zero from 8 shells (+0.41 and +0.49). Equal weights give 1.61 and
+1.71, so the given weights add nothing. On the log10 of the conductivity the shells add nothing over
+one shell: every gain is within 0.021 and every interval contains zero. The composition (the
+molality with the solvent fractions) is clearly below every shell model on the conductivity (the 16
+shells minus the composition: -0.047 [-0.066, -0.029] and -0.029 [-0.047, -0.010]). On the
+activation energy the 16 shells are behind it by -0.24 [-0.57, +0.11] and -0.25 [-0.59, +0.12],
+which the interval does not separate from zero. So the ensemble is worth keeping for the activation
+energy, and the shells are worth no more than the composition on either target. The control, the 16
+given members against the stored records of BT5, differs by 0.
+
+The twelfth tutorial, `docs/tutorials/12_an_ensemble_of_structures.ipynb`, reads the file, checks
+the mean field against the mean of the kernels, and runs the gate and these variants.
+
 ### Increments fitted to the data
 
 The hydrophobic field and the two hydrogen-bond fields are built from one increment per (Sybyl
@@ -6598,8 +6618,8 @@ for.
 
 ### Tutorials
 
-Sixteen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the fifteenth reads the prepared set of the hop benchmark, and the sixteenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Seventeen notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the sixteenth reads the prepared set of the hop benchmark, and the seventeenth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6615,11 +6635,12 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `09_a_reaction_yield.ipynb` | a sample made of several molecules: the Buchwald-Hartwig screen (3,955 yields from 15 aryl halides, 4 ligands, 3 bases and 22 additives), the kernel of a combination, the frame that costs on new additives, and the names of the parts of an aryl halide as the reference that a structure has to beat |
 | `10_a_metal_complex.ipynb` | a metal in the middle: the three things that a metal breaks without a message and the check for each, the frame that the metal gives, and a redox potential of 25 nickel complexes and of 2216 iron complexes, with the fields compared with the composition of the complex |
 | `11_enantiomer_pairs.ipynb` | which of two mirror images is the more active one: 3,834 pairs from ChEMBL, an exact null of 50.0 % for a description that cannot see handedness, the folds that split pairs, the handedness channels read at the stereocentre, and a rule of one bit for each target as a reference |
-| `12_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
-| `13_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
-| `14_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
-| `15_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
-| `16_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `12_an_ensemble_of_structures.ipynb` | a sample made of several structures: 62 electrolytes, each described by the solvation shells of one simulation, read from one file with weights, the exact equality of the mean field with the mean of the shell kernels, the numbers of item BT5 from the general entry, and what the ensemble is worth against one shell and against equal weights |
+| `13_a_spectrum_as_the_sample.ipynb` | a curve in place of a structure: the infrared spectra of 189 benzoic acids as fields on a line, their kernel, the Hammett constant read from them with whole substituents held out, the position of one band as the reference, the co-spectrum read by region, and what happens with spectra from another method |
+| `14_a_mixture.ipynb` | a quantity in place of a property: the amounts of four components from the spectrum of a mixture, the kernel of mixtures from the kernel of the components, the best possible error and PLS as the references, when the cosine form must not be used, a baseline that the model has not seen, and the weight of the model as the net signal of a component |
+| `15_on_a_surface.ipynb` | molecules adsorbed on a metal: the surface kernel, which keeps the height and ignores the place in the plane, its co-pattern, and the count of atoms near the metal that every such model has to be compared with |
+| `16_a_hop_in_a_crystal.ipynb` | a periodic structure: the barrier of a lithium hop in 472 oxides from the environment of its path, with whole structures held out, the hop length and counts of atoms as the references, the fields without a frame against the stored model in the frame of the hop, the co-field as a profile along the path, and the step from the barriers of hops to the threshold at which a crystal conducts |
+| `17_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7068,7 +7089,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         sixteen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         seventeen notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

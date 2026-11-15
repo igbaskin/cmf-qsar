@@ -320,3 +320,54 @@ def test_the_table_says_whether_the_gate_is_met(tmp_path):
     with open(tmp_path / "gate.json", "w") as fh:
         json.dump(gate, fh)
     assert "**Not met.**" in RE.write_table(str(tmp_path))
+
+
+def test_max_conformers_keeps_the_heaviest_members_and_renormalises():
+    members = [_mol("CCO", 1), _mol("CO", 2), _mol("CCCO", 3), _mol("CC", 4)]
+    packed = ensemble_molecule(members, weights=[1.0, 4.0, 2.0, 3.0])
+    assert is_packed(packed)
+    full = member_weights(packed, _fs(conformers="ensemble", conformer_weighting="given"))
+    assert np.allclose(full, np.array([1.0, 4.0, 2.0, 3.0]) / 10.0)
+    two = member_weights(packed, _fs(conformers="ensemble", conformer_weighting="given", max_conformers=2))
+    assert np.allclose(two, np.array([0.0, 4.0, 0.0, 3.0]) / 7.0)         # the two heaviest, weights summing to 1
+    one = member_weights(packed, _fs(conformers="ensemble", conformer_weighting="given", max_conformers=1))
+    assert np.allclose(one, [0.0, 1.0, 0.0, 0.0])
+    equal = member_weights(packed, _fs(conformers="ensemble", conformer_weighting="uniform"))
+    assert np.allclose(equal, 0.25)
+
+
+def test_one_member_of_largest_weight_is_that_member():
+    members = [_mol("CCO", 1), _mol("CO", 2), _mol("CCCO", 3)]
+    packed = ensemble_molecule(members, weights=[1.0, 5.0, 2.0])
+    one = build_fields(packed, _fs(conformers="ensemble", conformer_weighting="given", max_conformers=1))
+    alone = build_fields(members[1], _fs(), name="alone")
+    assert one.coords.shape == alone.coords.shape and np.allclose(one.coords, alone.coords)
+    assert np.allclose(one.weights, alone.weights)
+
+
+def test_the_variants_of_stage_members():
+    sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
+    import run_ensembles as E
+    assert [E.variant_key(w, k) for w, k in E.VARIANTS] == [
+        "given-1", "given-2", "given-4", "given-8", "given-16", "uniform-16"]
+    assert E.VARIANTS[4] == ("given", 16)                 # the model of the gate, so the control exists
+
+
+def test_the_members_section_of_the_table_reads_a_result(tmp_path):
+    sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
+    import run_ensembles as E
+    err = [1.0, 2.0, 3.0]
+    rec = {"mae_mean": 2.0, "mae_sd": 0.5, "abs_errors": err}
+    iv = {"mean": 0.1, "low": -0.2, "high": 0.4}
+    key = "ea_298|by-composition"
+    result = {"variants": [E.variant_key(w, k) for w, k in E.VARIANTS],
+              "models": {key: {E.variant_key(w, k): rec for w, k in E.VARIANTS}},
+              "references": {key: {"conditions": rec, "composition": rec}},
+              "comparisons": {key: {f"{E.variant_key(w, k)} vs given-1": iv for w, k in E.VARIANTS}},
+              "control_largest_difference": 0.0}
+    lines = E.members_section(result)
+    text = "\n".join(lines)
+    assert "1 member, the heaviest" in text and "16 members, equal weights" in text
+    assert "+0.1000 [-0.2000, +0.4000]" in text
+    assert "largest difference 0." in text
+

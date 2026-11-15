@@ -625,13 +625,14 @@ def registry() -> List[Benchmark]:
         Benchmark("ensembles",
                   "an ensemble of structures through the general entry: the shells of item "
                   "BT5 written to one file and read back by load_dataset, against BT5's own "
-                  "tables and numbers (plan item MS5)",
+                  "tables and numbers (plan item MS5), and what the ensemble is worth against "
+                  "one shell, fewer shells and equal weights",
                   "run_ensembles.py", "ensembles",
                   compute=[["--stage", "file"]]
                   + [["--stage", "kernels", "--path", p, "--alpha", a]
                      for p in ("bt5", "general") for a in ("0.3", "0.5", "1.0", "2.0")]
-                  + [["--stage", "gate"]],
-                  minutes="25",
+                  + [["--stage", "gate"], ["--stage", "members"]],
+                  minutes="40",
                   report=lambda: _mod("run_ensembles").write_table(_r("ensembles")),
                   tables=["ensembles/table.md"]),
         Benchmark("diffusion",

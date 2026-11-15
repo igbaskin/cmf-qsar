@@ -7288,7 +7288,24 @@ would discard the typed fields and the global kernel that are the method's own.
   identical to the stored file. The first version moved the numbers by 5e-12, because the weights
   were divided by their sum twice; they are now divided once. The measurement also found that the
   fields of every ensemble, conformational ones included, dropped the non-field descriptors; they
-  now travel with the ensemble. 16 tests in `tests/test_ensembles.py`. *Open:* an energy per
+  now travel with the ensemble. 16 tests in `tests/test_ensembles.py`.
+  **What the ensemble is worth, added 15 November 2026,** while the twelfth tutorial was written.
+  The gate says that the general path equals BT5's path. It does not say what keeping 16 shells gives.
+  Stage `members` of `run_ensembles.py` (14 minutes) reads the same shells through the general path
+  with the alignment-free model of BT5 and the same folds, and keeps the 1, 2, 4, 8 or 16 members of
+  largest weight, or all 16 with equal weights. On the activation energy the single heaviest shell has
+  a mean absolute error of 2.05 kJ/mol with random folds and 2.15 with folds by composition, and the
+  16 shells 1.61 and 1.68. The gain is +0.45 [+0.07, +0.86] and +0.47 [+0.09, +0.85]. It is small with
+  4 shells (+0.12 and +0.12, with intervals that contain zero) and clear of zero from 8 shells (+0.41
+  and +0.49). Equal weights give 1.61 and 1.71, so the given weights add nothing. On the log10 of the
+  conductivity the shells add nothing over one shell: every gain is within 0.021 and every interval
+  contains zero. The composition (the molality with the solvent fractions) is clearly below every
+  shell model on the conductivity (the 16 shells minus the composition: -0.047 [-0.066, -0.029] and
+  -0.029 [-0.047, -0.010]). On the activation energy the 16 shells are behind it by -0.24 [-0.57,
+  +0.11] and -0.25 [-0.59, +0.12], which the interval does not separate from zero. So the ensemble is
+  worth keeping for the activation energy, and the shells are worth no more than the composition on
+  either target. The control, the 16 given members against the stored records of BT5, differs by 0.
+  *Open:* an energy per
   member for a Boltzmann weighting of members with different atoms; an atom map found
   automatically for members that share a part.
 
@@ -8234,7 +8251,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the sixteenth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the seventeenth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

@@ -27,8 +27,20 @@ This script measures it in three steps.
    whether the stored file still matches the present code before the general path is judged
    against it.
 
+A reference that the gate leaves out (added 15 November 2026). The gate says that the general
+path gives the same numbers as BT5's path. It does not say what the ensemble is worth against one
+structure. Stage ``members`` asks it with the alignment-free model, the better one of BT5: the
+same shells read through the general path, keeping the 1, 2, 4, 8 or 16 members of largest weight
+(``max_conformers``), and the 16 members with equal weights instead of the given ones. The model
+with 16 given weights is the gate's own model, so it is also a control: its records must equal
+the stored ones. The other references are the two that BT5 kept: the molality alone, and the
+molality with the solvent fractions. Each variant is compared with the single member of largest
+weight and with the composition, by the paired interval of rule 4 on the errors of the 62
+electrolytes.
+
 Stages
 ------
+    python benchmarks/run_ensembles.py --stage members
     python benchmarks/run_ensembles.py --stage file
     python benchmarks/run_ensembles.py --stage kernels --path bt5
     python benchmarks/run_ensembles.py --stage kernels --path general
@@ -71,6 +83,9 @@ MODELS = ("shells", "shells-free")
 GROUP = "electrolyte"
 WEIGHT = "member_weight"
 PATHS = ("bt5", "general")
+#: the members kept, by largest weight, and the variants of stage "members": (weighting, members)
+MEMBER_COUNTS = (1, 2, 4, 8, 16)
+VARIANTS = [("given", k) for k in MEMBER_COUNTS] + [("uniform", 16)]
 
 
 # ------------------------------------------------------------------------------- 1. the file
@@ -232,6 +247,82 @@ def gate_stage() -> Dict[str, object]:
     return out
 
 
+# ------------------------------------------------------------------------------ 4. the members
+
+
+def variant_key(weighting: str, keep: int) -> str:
+    return f"{weighting}-{keep}"
+
+
+def members_rows(weighting: str, keep: int):
+    """The alignment-free rows of the 62 electrolytes at BT5's four widths, read through the general
+    path, with the `keep` members of largest weight and the given or equal weights."""
+    if not os.path.exists(FILE):
+        raise SystemExit(f"{FILE} is not here; run --stage file first")
+    ds = load_dataset(FILE, activity_prop="ea_298", ensemble_by=GROUP, member_weight=WEIGHT)
+    spec = AutocorrelationSpec()
+    entry = {}
+    for alpha in RS.ALPHAS:
+        fs = FieldSet.create(physchem=list(RS.FIELDS), alpha=alpha, charge_model="gasteiger",
+                             conformers="ensemble", conformer_weighting=weighting,
+                             max_conformers=0 if keep >= 16 else keep)
+        mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+        entry[alpha] = (feature_matrix(mf, spec, fieldset=fs), spec, block_sizes(spec, fs.n_fields))
+    return entry
+
+
+def members_stage() -> Dict[str, object]:
+    """The electrolyte model for each variant, both targets, both splits, with its references."""
+    rows = RS.load_series()
+    with open(STORED, encoding="utf-8") as fh:
+        stored = json.load(fh)
+    labels = [str(r["composition"]) for r in rows]
+    splits = {"random": (RS.random_folds(len(rows)), None),
+              "by-composition": (RS.grouped_folds(labels), labels)}
+    out: Dict[str, object] = {"variants": [variant_key(w, k) for w, k in VARIANTS],
+                              "models": {}, "references": {}, "comparisons": {}, "seconds": {}}
+    entries = {}
+    for weighting, keep in VARIANTS:
+        t0 = time.time()
+        entries[variant_key(weighting, keep)] = members_rows(weighting, keep)
+        out["seconds"][variant_key(weighting, keep)] = time.time() - t0
+        print(f"  {variant_key(weighting, keep)}: rows in {time.time() - t0:.0f} s", flush=True)
+    for target, (tlabel, unit) in RS.TARGETS.items():
+        y = np.array([float(r[target]) for r in rows], float)
+        for split, (design, group_labels) in splits.items():
+            key = f"{target}|{split}"
+            print(f"  {tlabel}, {split} folds (predicting the mean costs "
+                  f"{float(np.mean(np.abs(y - y.mean()))):.3f} {unit})")
+            recs = {}
+            for name, entry in entries.items():
+                recs[name] = RS.nested(entry, RS.descriptors(rows, "shells-free"), y, design,
+                                       group_labels, (RS.MIX,), label=name, unit=unit)
+            refs = {}
+            for model in ("conditions", "composition"):
+                refs[model] = RS.nested(None, RS.descriptors(rows, model), y, design, group_labels,
+                                        (RS.MIX,), label=model, unit=unit)
+            out["models"][key] = recs
+            out["references"][key] = refs
+            comp: Dict[str, object] = {}
+            for name in recs:
+                for ref_name, ref in (("given-1", recs["given-1"]), ("given-16", recs["given-16"]),
+                                      ("composition", refs["composition"])):
+                    if name == ref_name:
+                        continue
+                    # a positive gain means that the variant has the smaller error
+                    comp[f"{name} vs {ref_name}"] = RS.paired_interval(ref["abs_errors"],
+                                                                      recs[name]["abs_errors"])
+            out["comparisons"][key] = comp
+    # the control: the 16 given members are the gate's own model, so every record must match
+    worst = 0.0
+    for key, recs in out["models"].items():
+        worst = max(worst, _largest_difference(recs["given-16"], stored["models"][key]["shells-free"]))
+    out["control_largest_difference"] = worst
+    print(f"  control: the 16 given members against the stored shells-free records, largest "
+          f"difference {worst:.3g}")
+    return out
+
+
 # --------------------------------------------------------------------------------- the table
 
 def _read(name: str, base: Optional[str] = None) -> Dict[str, object]:
@@ -250,6 +341,44 @@ def save(name: str, payload: Dict[str, object]) -> None:
 
 def _number(v: float) -> str:
     return "0" if v == 0 else f"{v:.2g}"
+
+
+def members_section(m: Dict[str, object]) -> List[str]:
+    """Lines of the table for stage "members"."""
+    names = {"given-1": "1 member, the heaviest", "given-2": "2 members", "given-4": "4 members",
+             "given-8": "8 members", "given-16": "16 members, given weights (the model of the gate)",
+             "uniform-16": "16 members, equal weights"}
+    lines = ["", "## How many members the model needs", "",
+             "The alignment-free model of BT5, the better of its two, with the shells read through the "
+             "general path. Each variant keeps the members of largest weight (`max_conformers`) and "
+             "uses the given weights, except the last, which weights 16 members equally. The "
+             "references are the two that BT5 kept: the molality alone, and the molality with the "
+             "solvent fractions. Mean absolute error over the five outer folds; the interval is the "
+             "paired interval of rule 4 over the 62 electrolytes, the gain of the variant over the "
+             "model named, positive when the variant has the smaller error.", ""]
+    tnames = {"log10_k_298": "log10 of the conductivity at 298 K", "ea_298": "activation energy at 298 K, kJ/mol"}
+    for key, recs in m["models"].items():
+        target, split = key.split("|")
+        refs = m["references"][key]
+        comp = m["comparisons"][key]
+        lines += [f"### {tnames[target]}, {split} folds", "",
+                  "| Model | Mean absolute error | Gain over 1 member | Gain over the composition |",
+                  "|---|---|---|---|"]
+        for model in ("conditions", "composition"):
+            r = refs[model]
+            lines.append(f"| {model} | {r['mae_mean']:.4f} +/- {r['mae_sd']:.4f} | | |")
+        for name in m["variants"]:
+            r = recs[name]
+            g1 = comp.get(f"{name} vs given-1")
+            gc = comp.get(f"{name} vs composition")
+            cell1 = f"{g1['mean']:+.4f} [{g1['low']:+.4f}, {g1['high']:+.4f}]" if g1 else ""
+            cellc = f"{gc['mean']:+.4f} [{gc['low']:+.4f}, {gc['high']:+.4f}]" if gc else ""
+            lines.append(f"| {names[name]} | {r['mae_mean']:.4f} +/- {r['mae_sd']:.4f} | {cell1} | {cellc} |")
+        lines.append("")
+    lines += [f"Control: the 16 given members against the stored `shells-free` records of "
+              f"`benchmarks/results/shells/gate.json`, largest difference "
+              f"{_number(m['control_largest_difference'])}.", ""]
+    return lines
 
 
 def write_table(path: Optional[str] = None) -> str:
@@ -329,6 +458,9 @@ def write_table(path: Optional[str] = None) -> str:
         "code.",
         "",
     ]
+    members = os.path.join(base, "members.json")
+    if os.path.exists(members):
+        lines += members_section(_read("members", base))
     text = "\n".join(lines)
     target = os.path.join(base, "table.md")
     with open(target, "w", encoding="utf-8") as fh:
@@ -342,7 +474,7 @@ def report() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", choices=["file", "kernels", "gate", "all"], default="all")
+    ap.add_argument("--stage", choices=["file", "kernels", "gate", "members", "all"], default="all")
     ap.add_argument("--path", choices=list(PATHS), default=None,
                     help="with --stage kernels: which path builds the tables (default both)")
     ap.add_argument("--alpha", type=float, default=None,
@@ -368,6 +500,9 @@ def main() -> int:
                 save("file", data)
     if args.stage in ("gate", "all"):
         save("gate", gate_stage())
+        write_table()
+    if args.stage == "members":
+        save("members", members_stage())
         write_table()
     return 0
 
