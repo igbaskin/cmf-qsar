@@ -1399,6 +1399,27 @@ indistinguishable from none.
 What none of it does is replace knowing the conformation: +0.264 against the crystal poses'
 +0.334. The conformational residue is 0.71 Å, and that is where the remaining error comes from.
 
+**A reference that needs no pose (added 15 November 2026).** Every row above asks how near a method
+comes to the crystal pose and what the model then predicts. None asks whether a model that needs no
+pose at all predicts the held-out molecules as well. `run_poses.py --posefree` (about 15 seconds) fits
+three models on the same random splits: the field model of the protocol in the crystal poses, which
+is the ceiling of every pose recovery, the rotation-invariant kernel of the same five fields, and
+the Tanimoto kernel of Morgan fingerprints. Each is a kernel ridge regression with the training mean
+as its bias, on 20 random 70/30 splits of every set, once with the ridge of the protocol (0.1) and
+once with the ridge chosen by five inner folds, because the joint field kernel has a diagonal of
+five and the other two of one. Mean external R2pred over the 16 sets: with the ridge at 0.1, crystal
+poses +0.307, invariant kernel +0.258, fingerprints +0.345; with the ridge chosen inside, +0.235,
++0.191 and +0.328. Fingerprints minus the crystal poses: +0.038 [-0.042, +0.117] with the fixed
+ridge and +0.094 [+0.013, +0.171] with the chosen one (bootstrap over the sets), ahead on 9 and 10
+of the 16 sets. So on these congeneric series a model that needs no pose predicts the held-out
+ligands at least as well as the field model in the true poses, and the recovered poses (+0.264 on
+the split of the pose runs) cannot be worth more than those. The protocol measures how well a pose
+is recovered; this says that, on these sets, the recovered pose does not raise the prediction above
+a fingerprint.
+
+The eighth tutorial, `docs/tutorials/08_recovering_a_pose.ipynb`, recovers the poses of one set
+live, reads the sixteen sets from the stored runs, and fits the models that need no pose.
+
 ### What a bounded restart cannot do
 
 The protocol destroys a pose by placing the molecule at random within 2 Å of the site **and giving
@@ -1803,7 +1824,7 @@ The same series gives two cautions. The first is about what the gain belongs to.
 Hirshfeld charges alone reaches 0.87 and 0.92, and a linear regression on the Hirshfeld charge of
 one ring carbon, the meta carbon for sigma-meta and the para carbon for sigma-para, reaches 0.89
 and 0.86. So the gain belongs to the charges, and on this series a field is not needed to collect
-it; the eighth tutorial makes the comparison. The second caution is about the structures. Until
+it; the ninth tutorial makes the comparison. The second caution is about the structures. Until
 14 November 2026 these two numbers were 0.79 and 0.78, because one record of the 95, the
 pentafluorosulfanyl group, held a structure that is not the molecule: no force field of RDKit
 holds that group, the embedded geometry had S-F distances from 1.19 to 2.49 Å, and the quantum
@@ -2700,7 +2721,7 @@ Both targets are computed, not measured, so both say how well a representation o
 that one calculation produced. `benchmarks/run_metal.py` measures them with five outer folds and
 ten inner folds. The iron series is measured twice: with five random folds, and with five folds
 built from the first coordination spheres, so that no sphere in a test fold was seen in training.
-The eleventh tutorial, `docs/tutorials/11_a_metal_complex.ipynb`, runs the three checks of this
+The twelfth tutorial, `docs/tutorials/12_a_metal_complex.ipynb`, runs the three checks of this
 chapter, both frames and both series.
 
 ### The iron series: the field beats the composition, and the frame decides everything
@@ -3208,8 +3229,8 @@ comparison depends on it. `benchmarks/results/denmark/table.md` gives every widt
 | 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
 
 The interval excludes zero at every width, so the frame is worth something on this series. How
-much depends on a setting of the kernel it is compared with. The ninth tutorial,
-`docs/tutorials/09_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
+much depends on a setting of the kernel it is compared with. The tenth tutorial,
+`docs/tutorials/10_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
 each catalyst, where the frame gives 0.88 and the invariant kernel 0.77 at its best width.
 
 **Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
@@ -3319,8 +3340,8 @@ gain of 0.05.
   settings on another data set.
 
 `examples/buchwald/README.md` describes the files and `benchmarks/results/buchwald/table.md`
-gives every split, the settings chosen and the co-fields of the linear model. The tenth tutorial,
-`docs/tutorials/10_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
+gives every split, the settings chosen and the co-fields of the linear model. The eleventh tutorial,
+`docs/tutorials/11_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
 additives and on new arenes, and the names of the parts as the reference.
 
 ## Three tests to run before you build a new field or a new score
@@ -8262,7 +8283,7 @@ which the interval does not separate from zero. So the ensemble is worth keeping
 energy, and the shells are worth no more than the composition on either target. The control, the 16
 given members against the stored records of BT5, differs by 0.
 
-The thirteenth tutorial, `docs/tutorials/13_an_ensemble_of_structures.ipynb`, reads the file of the
+The fourteenth tutorial, `docs/tutorials/14_an_ensemble_of_structures.ipynb`, reads the file of the
 shells, checks the mean field against the mean of the kernels, and runs the gate and these variants.
 
 ```bash
@@ -8568,7 +8589,7 @@ So the channels are **not shown to read more than a configuration label**. The p
 the rule is inside the noise, or depends on which centre the rule reads. What stands is the
 exact null, the localisation at the stereocentre, and a few targets, beta-2 above all, on which
 the channels are far ahead of the rule. Whether the two together beat each alone was not tried.
-The twelfth tutorial, `docs/tutorials/12_enantiomer_pairs.ipynb`, runs the exact null, the check of
+The thirteenth tutorial, `docs/tutorials/13_enantiomer_pairs.ipynb`, runs the exact null, the check of
 split pairs, a live fit of two targets and this comparison.
 
 **What this does not show.** The potencies are taken as ChEMBL standardises them, and a pair
@@ -8909,7 +8930,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a q�
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The seventeenth tutorial, `docs/tutorials/17_on_a_surface.ipynb`, makes
+this program adds to it yet. The eighteenth tutorial, `docs/tutorials/18_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -9765,7 +9786,7 @@ worse (25 to 144 meV), except 8 Å on WSe2 (15.9). So on random folds the arrang
 little more than which pairs of defects are neighbours, and which of the two extrapolates better
 depends on the material and on two free choices of the reference.
 
-The nineteenth tutorial, `docs/tutorials/19_defects_on_a_lattice.ipynb`, fits the counts and the
+The twentieth tutorial, `docs/tutorials/20_defects_on_a_lattice.ipynb`, fits the counts and the
 arrangement kernels and both forms of the pair expansion on 600 cells, and reads the full sets from
 the stored results.
 
@@ -12057,7 +12078,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The fifteenth tutorial, `docs/tutorials/15_a_spectrum_as_the_sample.ipynb`, runs the central part
+The sixteenth tutorial, `docs/tutorials/16_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12818,7 +12839,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The sixteenth tutorial, `docs/tutorials/16_a_mixture.ipynb`, runs the case of the computed
+The seventeenth tutorial, `docs/tutorials/17_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13490,7 +13511,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The eighteenth tutorial, `docs/tutorials/18_a_hop_in_a_crystal.ipynb`, runs the references and the
+The nineteenth tutorial, `docs/tutorials/19_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -15208,7 +15229,7 @@ columns extrapolates badly (the counts give 0.433 eV with it against 0.284 with 
 so there the linear contact model is the fair reference: 0.206 eV against 0.186 for the fields on
 lithium, +0.076 [+0.063, +0.087] paired.
 
-The fourteenth tutorial, `docs/tutorials/14_an_ion_and_its_solvent.ipynb`, finds the ion with the
+The fifteenth tutorial, `docs/tutorials/15_an_ion_and_its_solvent.ipynb`, finds the ion with the
 probe, computes the contacts, and reads these fits and the selectivity from the stored results.
 
 ## The ion with its shell as the molecule: a solvation complex
@@ -16452,7 +16473,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twentieth tutorial, `docs/tutorials/20_point_mutants.ipynb`, builds one
+among its references. The twenty-first tutorial, `docs/tutorials/21_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -16988,11 +17009,11 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-one notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
-built, the model as the fast level of a hierarchy, with a standard deviation in the units of the activity, a tolerance rule and a constant deviation as the reference, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
+built, the model as the fast level of a hierarchy, with a standard deviation in the units of the activity, a tolerance rule and a constant deviation as the reference, the recovery of a pose by a flexible search, judged against crystal poses and compared with a model that needs no pose, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
 frame of their reaction centre, with the enantioselectivity as the activity, the yields of
 coupling reactions that combine four molecules, compared with the names of their parts, the redox
@@ -17005,7 +17026,7 @@ the barrier of a hop read from the environment of its path, the formation energy
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The nineteenth downloads 5 MB of defect data on its first run, and the twentieth needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The twentieth downloads 5 MB of defect data on its first run, and the twenty-first needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 

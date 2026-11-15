@@ -206,3 +206,53 @@ def test_a_training_frame_is_judged_up_to_a_global_rigid_motion():
 def MW_set_coords(mol, X):
     from cmfqsar.align import set_coords
     set_coords(mol, np.asarray(X, float))
+
+
+def _posebench():
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "benchmarks"))
+    import run_poses as R
+    return R
+
+
+def test_ridge_predict_is_the_kernel_ridge_with_a_mean():
+    R = _posebench()
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(20, 3))
+    K = X @ X.T + 1.0
+    y = rng.normal(size=20) + 5.0
+    tr, te = np.arange(14), np.arange(14, 20)
+    p = R.ridge_predict(K, y, tr, te, 0.1)
+    a = np.linalg.solve(K[np.ix_(tr, tr)] + 0.1 * np.eye(14), y[tr] - y[tr].mean())
+    assert np.allclose(p, y[tr].mean() + K[np.ix_(te, tr)] @ a)
+    assert R.inner_ridge(K, y, tr, seed=0) in R.POSEFREE_LAMS
+
+
+def test_posefree_kernels_on_one_set():
+    import os
+    R = _posebench()
+    if not os.path.exists(os.path.join(R.DATA, "jnk1.sdf")):
+        pytest.skip("the openff sets are not here")
+    mols, names, y = R.load("jnk1")
+    Ks = R.posefree_kernels(mols, names)
+    assert set(Ks) == set(R.POSEFREE_MODELS)
+    for m, K in Ks.items():
+        assert K.shape == (len(mols), len(mols)) and np.allclose(K, K.T, atol=1e-8)
+    # the joint field kernel sums five unit-normalised fields; the other two have a unit diagonal
+    assert np.allclose(np.diag(Ks["crystal poses"]), 5.0)
+    assert np.allclose(np.diag(Ks["invariant"]), 1.0) and np.allclose(np.diag(Ks["fingerprints"]), 1.0)
+
+
+def test_posefree_section_reads_a_result():
+    R = _posebench()
+    s = {"n": 20, "r2": {f"{m} | {r}": [0.1, 0.3] for m in R.POSEFREE_MODELS for r in R.POSEFREE_RIDGES},
+         "pose_runs_seed0": {"mcs+flex": 0.25}}
+    p = {"seeds": 2, "test_fraction": 0.3, "models": list(R.POSEFREE_MODELS), "ridges": list(R.POSEFREE_RIDGES),
+         "sets": {"aaa": s, "bbb": s},
+         "paired": {"ridge 0.1: fingerprints - crystal poses": {"diff": 0.0, "low": -0.1, "high": 0.1,
+                                                                "sets_ahead": 1, "n_sets": 2}}}
+    text = "\n".join(R.posefree_section(p))
+    assert "## A reference that needs no pose" in text and "| **mean** |" in text
+    assert "+0.200" in text and "+0.250" in text and "1 of 2" in text
+

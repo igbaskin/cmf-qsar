@@ -20,8 +20,21 @@ it got, and what the model then predicts -- between the two fixed references:
 A method is worth what it moves from the floor towards the ceiling.  ``recovery`` is that fraction
 of the pose error removed; it can be negative, and when it is, the table says so.
 
+A reference that needs no pose (``--posefree``, added 15 November 2026).  Every number above
+asks how near a method comes to the crystal pose and what the model predicts there.  None asks
+whether a model that needs no pose at all predicts the held-out molecules as well.  The stage
+fits three models on the same random splits: the field model of this script in the crystal
+poses (the ceiling of any pose recovery), the rotation-invariant kernel of the same five fields,
+and the Tanimoto kernel of Morgan fingerprints.  Each is a kernel ridge regression with the
+training mean as its bias, once with the ridge of this script (0.1) and once with the ridge
+chosen by five inner folds of the training part, because the joint field kernel has a diagonal
+of five and the other two of one, so one fixed ridge is not the same regularisation for all
+three.  Twenty random 70/30 splits per set, the first of them the split of the pose runs; the
+kernels are computed once per set from the structures alone.
+
 Usage
 -----
+    python benchmarks/run_poses.py --posefree           # the reference that needs no pose
     python benchmarks/run_poses.py                      # the default sets
     python benchmarks/run_poses.py --sets jnk1 p38 --methods mcs field variance
     python benchmarks/run_poses.py --report
@@ -294,6 +307,135 @@ def run_frame_set(name, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM, force=Fal
     return res
 
 
+# --------------------------------------------------------------- a reference that needs no pose
+
+POSEFREE_DIR = os.path.join(RESULTS, "posefree")
+POSEFREE_SEEDS = 20
+POSEFREE_LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
+POSEFREE_MODELS = ("crystal poses", "invariant", "fingerprints")
+POSEFREE_RIDGES = ("ridge 0.1", "ridge chosen inside")
+
+
+def posefree_kernels(mols, names, alpha=ALPHA):
+    """The three kernels of one set over all its molecules, from the structures alone."""
+    from rdkit import DataStructs
+    from rdkit.Chem import rdFingerprintGenerator
+
+    from cmfqsar.fields import AtomTable, build_fields
+    from cmfqsar.model import CMFModel
+
+    fs = FieldSet.create(physchem=FIELDS, alpha=alpha, charge_model="gasteiger", param_scheme="rdkit")
+    table = AtomTable.from_molecules([build_fields(m, fs, n) for m, n in zip(mols, names)])
+    out = {}
+    for label, source in (("crystal poses", "fields"), ("invariant", "autocorrelation")):
+        model = CMFModel(fieldset=fs, method="gp", normalize=True, params={"lam": LAM}, kernel_source=source)
+        out[label] = np.asarray(model.training_kernel(table), float)
+    gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+    fps = [gen.GetFingerprint(Chem.RemoveHs(m)) for m in mols]
+    out["fingerprints"] = np.array([DataStructs.BulkTanimotoSimilarity(f, fps) for f in fps], float)
+    return out
+
+
+def ridge_predict(K, y, tr, te, lam):
+    mu = float(np.mean(y[tr]))
+    a = np.linalg.solve(K[np.ix_(tr, tr)] + lam * np.eye(len(tr)), y[tr] - mu)
+    return mu + K[np.ix_(te, tr)] @ a
+
+
+def inner_ridge(K, y, tr, seed, folds=5):
+    """The ridge with the smallest squared error over five inner folds of the training part."""
+    rng = np.random.RandomState(seed)
+    order = rng.permutation(len(tr))
+    parts = [order[k::folds] for k in range(folds)]
+    best = None
+    for lam in POSEFREE_LAMS:
+        err = 0.0
+        for p in parts:
+            inner_te = tr[p]
+            inner_tr = tr[np.setdiff1d(np.arange(len(tr)), p)]
+            err += float(np.sum((ridge_predict(K, y, inner_tr, inner_te, lam) - y[inner_te]) ** 2))
+        if best is None or err < best[0]:
+            best = (err, lam)
+    return best[1]
+
+
+def posefree_stage(sets=SETS, seeds=POSEFREE_SEEDS, results=RESULTS) -> dict:
+    """The three models on the same splits of every set, with both ridges."""
+    from cmfqsar.model import r2_score
+
+    out = {"seeds": seeds, "lams": list(POSEFREE_LAMS), "models": list(POSEFREE_MODELS),
+           "ridges": list(POSEFREE_RIDGES), "test_fraction": TEST_FRACTION, "sets": {}}
+    t0 = time.time()
+    for name in sets:
+        mols, names, y = load(name)
+        Ks = posefree_kernels(mols, names)
+        rec = {"n": len(mols), "r2": {f"{m} | {r}": [] for m in POSEFREE_MODELS for r in POSEFREE_RIDGES},
+               "rmse": {f"{m} | {r}": [] for m in POSEFREE_MODELS for r in POSEFREE_RIDGES},
+               "lams": {m: [] for m in POSEFREE_MODELS}}
+        for seed in range(seeds):
+            tr, te = (np.asarray(v, int) for v in split(len(mols), seed=seed))
+            mu = float(np.mean(y[tr]))
+            for m in POSEFREE_MODELS:
+                chosen = inner_ridge(Ks[m], y, tr, seed)
+                rec["lams"][m].append(chosen)
+                for r, lam in (("ridge 0.1", LAM), ("ridge chosen inside", chosen)):
+                    p = ridge_predict(Ks[m], y, tr, te, lam)
+                    rec["r2"][f"{m} | {r}"].append(float(r2_score(y[te], p, mu)))
+                    rec["rmse"][f"{m} | {r}"].append(float(np.sqrt(np.mean((p - y[te]) ** 2))))
+        flex = os.path.join(results, f"{name}_flex_c5.json")
+        if os.path.exists(flex):
+            got = json.load(open(flex))["methods"]
+            rec["pose_runs_seed0"] = {k: got[k]["r2_pred"] for k in ("crystal", "mcs", "mcs+flex") if k in got}
+        out["sets"][name] = rec
+        print(f"  {name}: " + ", ".join(f"{k} {np.mean(v):+.3f}" for k, v in rec["r2"].items()), flush=True)
+    # paired over the sets: the mean over the splits of each set, then a bootstrap over the sets
+    rng = np.random.default_rng(0)
+    out["paired"] = {}
+    for r in POSEFREE_RIDGES:
+        for a, b in (("fingerprints", "crystal poses"), ("invariant", "crystal poses"), ("fingerprints", "invariant")):
+            d = np.array([np.mean(s["r2"][f"{a} | {r}"]) - np.mean(s["r2"][f"{b} | {r}"]) for s in out["sets"].values()])
+            boot = [float(d[rng.integers(0, len(d), len(d))].mean()) for _ in range(2000)]
+            lo, hi = np.percentile(boot, [2.5, 97.5])
+            out["paired"][f"{r}: {a} - {b}"] = {"diff": float(d.mean()), "low": float(lo), "high": float(hi),
+                                                "sets_ahead": int(np.sum(d > 0)), "n_sets": int(len(d))}
+    out["seconds"] = time.time() - t0
+    os.makedirs(POSEFREE_DIR, exist_ok=True)
+    with open(os.path.join(POSEFREE_DIR, "posefree.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+def posefree_section(p: dict) -> list:
+    """Lines of the table for the reference that needs no pose."""
+    lines = ["## A reference that needs no pose", "",
+             f"The field model of this script in the crystal poses (the ceiling of every pose recovery "
+             f"above), the rotation-invariant kernel of the same fields, and the Tanimoto kernel of Morgan "
+             f"fingerprints, each a kernel ridge regression with the training mean as its bias, on "
+             f"{p['seeds']} random {int(100 * (1 - p['test_fraction']))}/{int(100 * p['test_fraction'])} "
+             f"splits of every set (the first is the split of the pose runs). The ridge is 0.1, as above, or "
+             f"chosen by five inner folds of the training part. External R2pred against the training mean, "
+             f"averaged over the splits.", "",
+             "| set | n | " + " | ".join(f"{m}, {r}" for r in p["ridges"] for m in p["models"]) + " | recovered poses (mcs+flex, split 1) |",
+             "|---|---:|" + "---:|" * (len(p["ridges"]) * len(p["models"]) + 1)]
+    for name, s in p["sets"].items():
+        cells = [f"{np.mean(s['r2'][f'{m} | {r}']):+.3f}" for r in p["ridges"] for m in p["models"]]
+        flex = s.get("pose_runs_seed0", {}).get("mcs+flex")
+        lines.append(f"| {name} | {s['n']} | " + " | ".join(cells) + f" | {'' if flex is None else f'{flex:+.3f}'} |")
+    means = [f"**{np.mean([np.mean(s['r2'][f'{m} | {r}']) for s in p['sets'].values()]):+.3f}**"
+             for r in p["ridges"] for m in p["models"]]
+    flex = [s["pose_runs_seed0"]["mcs+flex"] for s in p["sets"].values() if "mcs+flex" in s.get("pose_runs_seed0", {})]
+    lines.append("| **mean** | | " + " | ".join(means) + f" | {np.mean(flex):+.3f} |" if flex else "")
+    lines += ["", "Paired over the sets: the mean over the splits of each set, the difference, and a 95 % "
+              "interval from 2,000 bootstrap samples of the sets.", "",
+              "| ridge | model | minus | difference in R2pred | interval | sets ahead |", "|---|---|---|---:|---|---:|"]
+    for key, v in p["paired"].items():
+        r, pair = key.split(": ")
+        a, b = pair.split(" - ")
+        lines.append(f"| {r} | {a} | {b} | {v['diff']:+.3f} | [{v['low']:+.3f}, {v['high']:+.3f}] | "
+                     f"{v['sets_ahead']} of {v['n_sets']} |")
+    return lines + [""]
+
+
 def report(results=RESULTS, out=None):
     """Every variant in the results folder, each as its own labelled table.
 
@@ -333,6 +475,9 @@ def report(results=RESULTS, out=None):
         group.sort(key=lambda r: -r["n"])
         methods = [m for m in seen if any(m in r["methods"] for r in group)]
         lines += _table(group, methods, what)
+    posefree = os.path.join(results, "posefree", "posefree.json")
+    if os.path.exists(posefree):
+        lines += posefree_section(json.load(open(posefree)))
     text = "\n".join(lines) + "\n"
     path = out or os.path.join(results, "table.md")
     with open(path, "w") as fh:
@@ -380,9 +525,14 @@ def main(argv=None):
                     help="use the flexible E-step, which needs the molecules")
     ap.add_argument("--flex", action="store_true",
                     help="shorthand for --reconform with the flexible methods")
+    ap.add_argument("--posefree", action="store_true",
+                    help="models that need no pose, on the same splits, as the reference")
     ap.add_argument("--report", action="store_true")
     args = ap.parse_args(argv)
     if args.report:
+        return report()
+    if args.posefree:
+        posefree_stage()
         return report()
     sets = SETS if args.sets == ["all"] else args.sets
     if args.coalign:

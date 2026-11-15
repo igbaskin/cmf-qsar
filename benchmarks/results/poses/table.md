@@ -754,3 +754,38 @@ Fields: `electrostatic`, `steric`, `hydrophobic`, `hba`, `hbd`; alpha 0.5, lambd
 | coalign | 5.56 A | 0% | 2% | -0% | -2.325 | 0.00 A |
 | mcs+coalign | 0.15 A | 97% | 100% | +97% | +0.267 | 0.00 A |
 
+## A reference that needs no pose
+
+The field model of this script in the crystal poses (the ceiling of every pose recovery above), the rotation-invariant kernel of the same fields, and the Tanimoto kernel of Morgan fingerprints, each a kernel ridge regression with the training mean as its bias, on 20 random 70/30 splits of every set (the first is the split of the pose runs). The ridge is 0.1, as above, or chosen by five inner folds of the training part. External R2pred against the training mean, averaged over the splits.
+
+| set | n | crystal poses, ridge 0.1 | invariant, ridge 0.1 | fingerprints, ridge 0.1 | crystal poses, ridge chosen inside | invariant, ridge chosen inside | fingerprints, ridge chosen inside | recovered poses (mcs+flex, split 1) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| syk | 44 | +0.341 | +0.097 | +0.253 | +0.259 | -0.019 | +0.213 | -0.238 |
+| hif2a | 37 | +0.133 | +0.210 | -0.088 | -0.041 | +0.014 | +0.037 | +0.569 |
+| bace | 36 | +0.448 | +0.373 | +0.483 | +0.330 | +0.333 | +0.454 | +0.151 |
+| pde10 | 35 | +0.105 | +0.332 | +0.460 | +0.104 | +0.456 | +0.495 | -0.066 |
+| bace_hunt | 32 | +0.362 | +0.419 | +0.280 | +0.302 | +0.414 | +0.253 | +0.235 |
+| pfkfb3 | 32 | +0.526 | +0.230 | +0.414 | +0.529 | +0.318 | +0.433 | +0.517 |
+| cdk8 | 31 | +0.256 | +0.148 | +0.310 | +0.144 | +0.023 | +0.301 | +0.128 |
+| p38 | 29 | +0.129 | +0.138 | +0.182 | +0.003 | -0.021 | +0.129 | -0.618 |
+| eg5 | 27 | +0.345 | +0.454 | +0.607 | +0.312 | +0.357 | +0.605 | +0.641 |
+| tnks2 | 27 | +0.108 | +0.068 | +0.374 | +0.239 | +0.262 | +0.380 | +0.370 |
+| mcl1 | 25 | +0.431 | +0.422 | +0.627 | +0.427 | +0.561 | +0.639 | +0.240 |
+| shp2 | 24 | +0.167 | +0.190 | +0.280 | -0.147 | -0.033 | +0.187 | +0.518 |
+| ptp1b | 22 | +0.398 | +0.197 | +0.395 | +0.434 | -0.046 | +0.353 | +0.494 |
+| thrombin | 22 | +0.236 | -0.072 | +0.310 | +0.000 | -0.399 | +0.172 | +0.294 |
+| jnk1 | 21 | +0.494 | +0.438 | +0.321 | +0.449 | +0.360 | +0.288 | +0.351 |
+| pde2 | 21 | +0.437 | +0.487 | +0.316 | +0.410 | +0.482 | +0.317 | +0.642 |
+| **mean** | | **+0.307** | **+0.258** | **+0.345** | **+0.235** | **+0.191** | **+0.328** | +0.264 |
+
+Paired over the sets: the mean over the splits of each set, the difference, and a 95 % interval from 2,000 bootstrap samples of the sets.
+
+| ridge | model | minus | difference in R2pred | interval | sets ahead |
+|---|---|---|---:|---|---:|
+| ridge 0.1 | fingerprints | crystal poses | +0.038 | [-0.042, +0.117] | 9 of 16 |
+| ridge 0.1 | invariant | crystal poses | -0.049 | [-0.122, +0.018] | 7 of 16 |
+| ridge 0.1 | fingerprints | invariant | +0.087 | [-0.003, +0.171] | 12 of 16 |
+| ridge chosen inside | fingerprints | crystal poses | +0.094 | [+0.013, +0.171] | 10 of 16 |
+| ridge chosen inside | invariant | crystal poses | -0.043 | [-0.151, +0.058] | 9 of 16 |
+| ridge chosen inside | fingerprints | invariant | +0.137 | [+0.050, +0.226] | 13 of 16 |
+

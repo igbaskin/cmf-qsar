@@ -636,6 +636,23 @@ can judge it.
   what defeats it there is the conformation and not the pose search, which is what this item was
   about. The five-conformer runs, the 0.86 A among them, were measured with the narrow search and
   have not been repeated.
+  **A reference that needs no pose, added 15 November 2026,** while the eighth tutorial was written.
+  Every row above asks how near a method comes to the crystal pose and what the model then predicts.
+  None asks whether a model that needs no pose at all predicts the held-out molecules as well.
+  `run_poses.py --posefree` (about 15 seconds) fits three models on the same random splits: the field
+  model of the protocol in the crystal poses, which is the ceiling of every pose recovery, the
+  rotation-invariant kernel of the same five fields, and the Tanimoto kernel of Morgan fingerprints.
+  Each is a kernel ridge regression with the training mean as its bias, on 20 random 70/30 splits of
+  every set, once with the ridge of the protocol (0.1) and once with the ridge chosen by five inner
+  folds, because the joint field kernel has a diagonal of five and the other two of one. Mean
+  external R2pred over the 16 sets: with the ridge at 0.1, crystal poses +0.307, invariant kernel
+  +0.258, fingerprints +0.345; with the ridge chosen inside, +0.235, +0.191 and +0.328. Fingerprints
+  minus the crystal poses: +0.038 [-0.042, +0.117] with the fixed ridge and +0.094 [+0.013, +0.171]
+  with the chosen one (bootstrap over the sets), ahead on 9 and 10 of the 16 sets. So on these
+  congeneric series a model that needs no pose predicts the held-out ligands at least as well as the
+  field model in the true poses, and the recovered poses (+0.264 on the split of the pose runs)
+  cannot be worth more than those. The protocol measures how well a pose is recovered; this says
+  that, on these sets, the recovered pose does not raise the prediction above a fingerprint.
 * **C3. Alignment inside the pocket.** `cmfqsar/docking.py` places conformations rigidly and
   `cmfqsar/complementarity.py` scores them against the pocket fields. Use complementarity as the
   prior and confidence as the likelihood: the pose must fit the pocket and sit inside the model's
@@ -3609,7 +3626,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   (R2 1.000) on MoS2 and 54 meV (R2 0.996) on WSe2, where the additive count kernel gives 38;
   the autocorrelation does not extrapolate (R2 -0.02 and +0.06, 1.1 to 1.2 eV per site) and
   the fixed frame reaches R2 0.8.
-  **A pair expansion as the reference, added 15 November 2026,** while the nineteenth tutorial was
+  **A pair expansion as the reference, added 15 November 2026,** while the twentieth tutorial was
   written. Materials science has a standard cheap model for an arrangement of defects on a lattice: one energy
   for each kind of defect and one for each pair of kinds at each neighbour distance, fitted by linear
   regression (a cluster expansion cut at pairs; `run_2dmd.py --stage pairs`, two minutes). Its columns
@@ -4214,7 +4231,7 @@ for anything molecular.
   on the iron series it is nearly degenerate for 11 % of the complexes. The matched frame is also
   the one place the phenazine symmetry trap of EC1 reappears, and the search over assignments is
   there for it.
-  *The composition on the nickel series, added 14 November 2026,* while the eleventh tutorial was
+  *The composition on the nickel series, added 14 November 2026,* while the twelfth tutorial was
   written. The gate compared the fields with the numbers of the calculation and with the metal
   site, and the composition, the reference of the iron series, had not been run on the nickel
   series. It gives 0.195 V with leave-one-out (R² +0.779) and 0.245 V with five folds against
@@ -4464,7 +4481,7 @@ for anything molecular.
   database is licensed), so that half of the item stays with SC5, which needs the same data and
   the cavity frame; and the targets here are gas-phase one-to-one complexes, not solvation free
   energies.
-  **The oxygens at the ion as a reference, added 15 November 2026,** while the fourteenth tutorial was written.
+  **The oxygens at the ion as a reference, added 15 November 2026,** while the fifteenth tutorial was written.
   The counts above are read off the formula. A stronger reference reads the complex: the number of
   oxygens within 2.5 Å of the ion (the gap between the first shell, at 1.8 to 2.4 Å, and the rest),
   their mean distance, and the sum of 1/d over the oxygens within 3.5 Å, beside the three counts
@@ -6831,7 +6848,7 @@ What it leaves open, in order:
   yields at r = 0.97 (aryl halides) and 0.95 (additives), and it shows nothing the names do not.
   Run time: about 7 hours on one process (418 minutes of method time), 2 hours 50 minutes as
   three processes. README and manual sections *A reaction yield as the activity*.
-  **The names of the parts, added 15 November 2026,** while the tenth tutorial was written. The 15
+  **The names of the parts, added 15 November 2026,** while the eleventh tutorial was written. The 15
   aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl halide has its
   arene and its halogen in the training part. An aryl halide described by those two names only, with
   the additive by name, gives 0.700 (the names added) and 0.708 (with their product) when each aryl
@@ -7357,7 +7374,7 @@ would discard the typed fields and the global kernel that are the method's own.
   were divided by their sum twice; they are now divided once. The measurement also found that the
   fields of every ensemble, conformational ones included, dropped the non-field descriptors; they
   now travel with the ensemble. 16 tests in `tests/test_ensembles.py`.
-  **What the ensemble is worth, added 15 November 2026,** while the thirteenth tutorial was written.
+  **What the ensemble is worth, added 15 November 2026,** while the fourteenth tutorial was written.
   The gate says that the general path equals BT5's path. It does not say what keeping 16 shells gives.
   Stage `members` of `run_ensembles.py` (14 minutes) reads the same shells through the general path
   with the alignment-free model of BT5 and the same folds, and keeps the 1, 2, 4, 8 or 16 members of
@@ -8319,7 +8336,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twentieth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-first tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the
@@ -8559,7 +8576,7 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   exposed it: the blind description scored 47.9 % where it has to score 50.0 %. The configuration
   is now removed before the scaffold is read, and `check_groups` refuses a run in which any pair
   would be split.
-  *A cheap reference, added 14 November 2026,* while the twelfth tutorial was written. The channels
+  *A cheap reference, added 14 November 2026,* while the thirteenth tutorial was written. The channels
   had been compared with the exact null of 50.0 % only. A rule that learns one bit for each
   target, whether the R or the S member of a pair was the better one more often among the training
   pairs, read at one stereocentre, names the better enantiomer in 58.3 % of the 1,144 pairs
