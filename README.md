@@ -1068,6 +1068,20 @@ against a richer fit with seven widths. Without a frame the grid loses to its fi
 fields, and on four molecular series it gains nothing. The grid needs a DFT calculation per
 structure, so this says what the grid holds, not that it is a cheap predictor.
 
+### Molecules inside crystals
+
+Plan item M8 (`cmfqsar/molcrystal.py`, `benchmarks/run_molcrystals.py`): the molecules of a
+crystal perceived from a CIF -- bonds across the cell boundary, then bond orders and charges with
+RDKit -- so that the five molecular fields run on a crystal and the periodic kernel reads them.
+The data set `examples/melting_points` was made for it: 665 ONS melting points (CC BY
+4.0) matched to COD structures by the InChI of the perceived molecules. The gate is not met: the
+molecular fields in the cell predict the melting point no better than the inorganic fields
+(+0.009 [-0.052, +0.070]), and the packing adds nothing to the
+molecule alone (q² +0.654), which equals a fingerprint
+(+0.616) and loses to eight simple counts (+0.704). The
+periodic kernel is per unit volume and cosine-normalised, so it cannot see the size of the
+molecule.
+
 ### A measured curve as the sample: no structure needed
 
 A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no
@@ -7216,6 +7230,7 @@ cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process
 cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
+cmfqsar/molcrystal.py   molecules inside crystals: bonds across the cell boundary, bond orders and charges, the five molecular fields on the atoms of the cell
 cmfqsar/frameworks.py   porous frameworks as pockets: pores from the free distance, the periodic images cut into a pocket, profiles by framework atom type
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)
 examples/               synthetic benchmark and its generator

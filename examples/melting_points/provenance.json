@@ -1,0 +1,21 @@
+{
+ "compounds": 2701,
+ "matched": 665,
+ "not_matched": {
+  "AssertionError: data_2108587": 3,
+  "AssertionError: data_2202078": 1,
+  "AssertionError: data_7230630": 1,
+  "PerceptionError": 223,
+  "RuntimeError: CIF loop ended unexpectedly with incomplete row: ['Coordinates are presented as published in this book, Kitajgorodskij\\'s\\n\"Organicheskaja Kristallokhimija\", ke": 3,
+  "SpacegroupNotFoundError: invalid spacegroup `C 1 2/c 1`, setting `1` not found in data base": 1,
+  "SpacegroupNotFoundError: invalid spacegroup `I 1 2/c 1`, setting `1` not found in data base": 1,
+  "SpacegroupNotFoundError: invalid spacegroup `P 1 21 1`, setting `1` not found in data base": 2,
+  "SpacegroupNotFoundError: invalid spacegroup `P 1 21/a 1`, setting `1` not found in data base": 1,
+  "SpacegroupNotFoundError: invalid spacegroup `P 1 21/c 1`, setting `1` not found in data base": 11,
+  "SpacegroupNotFoundError: invalid spacegroup `P b c 21`, setting `1` not found in data base": 1,
+  "SpacegroupNotFoundError: invalid spacegroup `P n 21 a`, setting `1` not found in data base": 3,
+  "download": 7,
+  "no COD entry with the formula": 673,
+  "the molecules of the cell are not the compound": 1105
+ }
+}

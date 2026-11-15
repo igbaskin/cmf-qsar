@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 129 modules, 252 classes with 826 public methods, and 1335 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 130 modules, 254 classes with 826 public methods, and 1343 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -102,6 +102,7 @@ for.
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
 | [cmfqsar.mmd](#cmfqsarmmd) | Is this set of molecules like that one? |
 | [cmfqsar.model](#cmfqsarmodel) | CMF regression models: kernel ridge regression (KRR, the method of the 2013 paper), kernel partial least squares (KPLS, the kernel form of the PLS that CoMFA uses), support vector regression and a Gaussian-process view of KRR that provides predictive variances. |
+| [cmfqsar.molcrystal](#cmfqsarmolcrystal) | Molecules inside crystals: bond and charge perception across the cell boundary (plan item M8). |
 | [cmfqsar.multiobjective](#cmfqsarmultiobjective) | A design loop with more than one objective (plan item MC11). |
 | [cmfqsar.multitask](#cmfqsarmultitask) | Two endpoints at once, so that selectivity is a co-field rather than a ratio. |
 | [cmfqsar.mutants](#cmfqsarmutants) | Point mutants of one protein, as fields in the frame of the mutated residue (plan item PP1). |
@@ -11948,6 +11949,114 @@ what the original scripts (`cmf_krr_ecvr`) and the 2015 paper report.  `inner_se
 is the seed of the inner cross-validation (default: the same as `seed`); `None` gives
 interleaved inner folds as in the scripts, which reshuffle the molecules only once per
 repeat.
+
+## cmfqsar.molcrystal
+
+Source: `cmfqsar/molcrystal.py`
+
+Molecules inside crystals: bond and charge perception across the cell boundary (plan item M8).
+
+A molecular crystal read from a CIF is a list of atoms in a cell. The five classical fields of
+this program are defined for molecules: they need bond orders, formal charges, aromaticity and
+hydrogen-bond roles, which RDKit perceives from a molecule, not from a cloud of atoms. A molecule
+of a crystal is also often cut by the cell boundary, so its atoms sit at opposite faces of the
+cell. This module turns the cell into its molecules and gives each atom of the cell the field
+weights its molecule gives it.
+
+The steps, each of which can fail on its own and is reported by name:
+
+1. **Connectivity across the boundary.** Bonds from covalent radii plus a tolerance, counting the
+   periodic images (`cmfqsar.frameworks.periodic_bonds`). The bonded components are the
+   molecules; each is made whole by moving every atom to the image that joins it to its
+   neighbours. A component that joins itself in another image is a framework, not a molecule,
+   and the structure is refused as a molecular crystal.
+2. **Bond orders and formal charges.** RDKit's `DetermineBondOrders` (the xyz2mol method) on
+   each molecule with its connectivity fixed. A molecule's total charge is not in a CIF; the
+   charges 0, +1, -1, +2 and -2 are tried in that order and the first one that gives no radical
+   is kept, so a chloride counter-ion becomes Cl- and its cation is then expected to be +1. The
+   charges of the cell must add up to zero.
+3. **Fields.** Each distinct molecule is given the fields of an ordinary molecule
+   (`cmfqsar.fields.build_fields`, with the field set of a molecular data set); every copy of it
+   in the cell takes those weights atom by atom. The result is a
+   `cmfqsar.periodic.CrystalFields` whose atoms carry molecular weights, which the periodic
+   kernels of `cmfqsar.periodic` read as they read the weights of an inorganic solid.
+
+A crystal without hydrogen atoms (common in older X-ray structures) is refused rather than
+guessed: the donor field sits on the polar hydrogens, and bond orders perceived without them are
+wrong for every heteroatom. So is a structure with partly occupied or overlapping sites.
+
+`molecule_identity` gives the InChI key of a perceived molecule, which is how a crystal is
+matched to a compound of a data set given as SMILES: the match tests the perception itself.
+
+### `class PerceptionError  — bases: ValueError`
+
+A crystal whose molecules cannot be perceived, with the reason in the message.
+
+### `class CellMolecule  (dataclass)`
+
+One molecule of a cell, made whole, with its perceived bonds and charges.
+
+Attributes:
+
+- `mol: object`
+- `atom_index: np.ndarray`
+- `image: np.ndarray`
+- `charge: int` = `0`
+- `smiles: str` = `''`
+- `inchikey: str` = `''`
+
+### `read_molecular_crystal(path: str)`
+
+A crystal structure file as an ASE `Atoms`, with the checks a molecular crystal needs.
+
+Refused: a structure that is not periodic in three directions, one with partly occupied
+sites, and one with two atoms closer than `OVERLAP` (the two positions of a disordered
+group, written out as separate atoms).
+
+### `check_overlaps(atoms, limit: float=OVERLAP) -> None`
+
+Refuse a structure in which two atoms, counting images, are closer than `limit`.
+
+### `molecule_components(atoms, tolerance: float=BOND_TOLERANCE)`
+
+(molecule per atom, image per atom that makes each molecule whole, bond list).
+
+Raises `PerceptionError` when a component joins itself in another image, which makes
+it a framework (a coordination polymer, a covalent network) rather than a molecule.
+
+### `perceive(symbols: Sequence[str], coords: np.ndarray, pairs, charges=CHARGES)`
+
+Bond orders and formal charges of one molecule with fixed connectivity.
+
+Returns (molecule, total charge). The first charge of `charges` that gives a sanitised
+molecule without radical electrons is kept; `PerceptionError` if none does.
+
+### `cell_molecules(atoms, tolerance: float=BOND_TOLERANCE, require_hydrogens: bool=True, organic_only: bool=True) -> List[CellMolecule]`
+
+Every molecule of a molecular crystal, made whole, with bond orders and charges.
+
+Molecules are in the order of their first atom in the cell. Raises
+`PerceptionError` for a framework, a crystal with no hydrogens, an element outside
+`ORGANIC` (with `organic_only`), a molecule whose bonds cannot be perceived, and a
+cell whose charges do not add up to zero.
+
+### `molecule_identity(mol) -> Tuple[str, str]`
+
+(canonical SMILES, standard InChI key) of a molecule, '' where RDKit gives none.
+
+### `distinct_molecules(molecules: Sequence[CellMolecule]) -> Dict[str, int]`
+
+How many copies of each distinct molecule (by InChI key) the cell holds.
+
+### `molecular_crystal_fields(atoms, fieldset, name: str='', molecules: Optional[Sequence[CellMolecule]]=None)`
+
+The crystal with molecular field weights on its atoms, for the periodic kernels.
+
+Every molecule of the cell is given the fields of an ordinary molecule with `fieldset` (the
+field set of a molecular data set: electrostatic, steric, hydrophobic, donor, acceptor), and
+those weights are put on its atoms in the cell, at their positions in the cell. The result is
+a `cmfqsar.periodic.CrystalFields`, so `periodic_autocorrelation` and the periodic
+overlap kernel apply to it unchanged. Hydrogens are atoms of the cell like any other.
 
 ## cmfqsar.multiobjective
 

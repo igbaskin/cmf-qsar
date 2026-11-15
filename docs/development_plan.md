@@ -3236,6 +3236,25 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   bond and charge perception for molecules extracted from a periodic cell (connectivity across the
   boundary, then RDKit sanitisation), so that `build_fields` can run on a CIF. Measure on a
   sublimation-enthalpy or melting-point set against the inorganic field set.
+  **Built and measured 16 November 2026.** `cmfqsar/molcrystal.py`: `read_molecular_crystal`
+  (refuses partly occupied and overlapping sites), `molecule_components` (bonds across the
+  boundary, molecules made whole, a framework refused), `perceive` (RDKit `DetermineBondOrders`
+  with the connectivity fixed, total charges 0, +1, -1, +2, -2 tried until no radical is left),
+  `cell_molecules` (the cell's charges must add up to zero; no hydrogens refused),
+  `molecule_identity`, `molecular_crystal_fields` (the five fields of each molecule on its atoms
+  in the cell, as `CrystalFields`). 9 tests in `tests/test_molcrystal.py`. The data set
+  `examples/melting_points` (`benchmarks/prepare_molcrystals.py`): 665 of the
+  2701 ONS Open Melting Point compounds matched to COD structures by the InChI of the
+  perceived molecules. *The gate is not met:* molecular minus inorganic fields, both periodic,
+  +0.009 [-0.052, +0.070] (q² +0.285 against
+  +0.280). A first run said met (+0.072) because the inorganic reference had
+  chosen the narrowest window in every fold; the windows were extended to 0.07 A. The molecule
+  alone reaches +0.654, the packing summed with it
+  +0.631 (-0.022 [-0.041, -0.002]), a fingerprint
+  +0.616 and eight counts +0.704. The periodic kernel is per
+  unit volume and cosine-normalised, so it does not see the size of the molecule. *Open:* a
+  packing description that keeps the size or reads only the contacts between molecules; a
+  sublimation-enthalpy set.
 
 **Large (a month or more each)**
 
@@ -9003,7 +9022,7 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 15 | 14 | M8 |
+| H. Materials and periodicity | 15 | 15 | -- |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
@@ -9016,7 +9035,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 123 finished, 10 partly, 43 open.**
+**176 items: 124 finished, 10 partly, 42 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9041,7 +9060,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** M8, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT1 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

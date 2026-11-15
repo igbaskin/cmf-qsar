@@ -10680,6 +10680,83 @@ python benchmarks/run_gridfields.py --stage crystals --stage molecules   # about
 The grids themselves need VASP and ORCA: `--stage cells`, then `grid_dft_wsl.py` inside WSL (about
 two hours with four workers), then `--stage collect`, `--stage widefit` and `--stage cubes`.
 
+## Molecules inside crystals
+
+A crystal of molecules read from a CIF is a list of atoms in a cell, and the five classical fields
+are defined for molecules: they need bond orders, formal charges, aromaticity and hydrogen-bond
+roles, which RDKit perceives from a molecule. A molecule of a crystal is also often cut by the
+cell boundary. Plan item M8 (`cmfqsar/molcrystal.py`) turns a cell into its molecules and gives
+every atom of the cell the field weights of its molecule.
+
+**Perception.** `cell_molecules` finds the bonds from covalent radii across the cell boundary
+(the rule of `cmfqsar.frameworks`), takes the bonded components as molecules, and makes each
+whole by moving its atoms to the images that join them. A component bonded to its own image is a
+framework, and the structure is refused. Bond orders and formal charges come from RDKit's
+`DetermineBondOrders` with the connectivity fixed; a total charge is not in a CIF, so 0, +1, -1,
++2 and -2 are tried in turn and the first without radicals is kept, which turns a chloride
+counter-ion into Cl- and its cation into a +1 ion. The charges of the cell must add up to zero.
+A structure with carbon and no hydrogens, with partly occupied sites, or with two atoms closer
+than 0.6 A is refused rather than guessed. `molecular_crystal_fields` then gives each distinct
+molecule the fields of an ordinary molecule and puts them on its atoms in the cell, as a
+`CrystalFields` the periodic kernels read. 9 tests: a benzene cut by the cell boundary, a
+co-crystal, a salt, copies of one molecule, a framework, and the refusals.
+
+**The data.** No public set gives a melting point with its crystal structure, so
+`benchmarks/prepare_molcrystals.py` made one (`examples/melting_points`): the 2701
+compounds of the ONS Open Melting Point Collection (CC BY 4.0) with organic elements, searched in
+the Crystallography Open Database by sum formula, and an entry kept only when the molecules
+perceived from its cell are the compound by their InChI. 665 compounds were matched.
+Of the rest, 673 have no entry with their formula, for 1105 every entry tried was
+another compound (an isomer, a solvate), and 223 were refused by the perception.
+
+**The measurement** (`benchmarks/run_molcrystals.py`): the melting point (spread
+82 C) from six kernels, five folds repeated three times, the width and the ridge
+chosen by the evidence on the training block.
+
+| Kernel | Needs the crystal | q² | RMSE, C |
+|---|---|---:|---:|
+| periodic autocorrelation, inorganic fields | yes | +0.280 | 69.7 |
+| periodic autocorrelation, the five molecular fields | yes | +0.285 | 69.4 |
+| field autocorrelation of the molecule alone (its conformation in the crystal) | yes | +0.654 | 48.3 |
+| the last two summed | yes | +0.631 | 49.9 |
+| ECFP4 fingerprint, Tanimoto kernel | no | +0.616 | 50.9 |
+| eight counts (molecular weight, donors, acceptors, rotatable bonds, rings, aromatic rings, polar surface, sp3 fraction), Gaussian kernel | no | +0.704 | 44.7 |
+
+| Difference of q² | Mean [95 % interval] |
+|---|---|
+| molecular minus inorganic fields, both periodic (the gate) | +0.009 [-0.052, +0.070] |
+| packing and molecule summed minus the molecule alone | -0.022 [-0.041, -0.002] |
+| packing alone minus the molecule alone | -0.374 [-0.430, -0.321] |
+| packing and molecule summed minus the fingerprint | +0.030 [-0.014, +0.073] |
+| packing and molecule summed minus the eight counts | -0.052 [-0.088, -0.015] |
+
+**The gate is not met.** The molecular fields in the cell predict the melting point no better
+than the inorganic fields do, and both packing kernels are far below the molecule alone. The
+first run said otherwise (+0.072, with the interval above zero), and that came from the
+reference: the inorganic kernel had chosen the narrowest window offered (0.35 A) in every fold.
+The windows were extended three times, to 0.07 A for the periodic kernels and 0.05 A for the
+molecule alone, until the q² stopped changing; the inorganic kernel gained 0.06 on the way and
+the molecular one nothing.
+
+What the numbers say. The perception works: 665 crystals were matched by the identity
+of their molecules, and the five fields of the molecule alone, in its crystal conformation,
+predict the melting point as well as a fingerprint does. The packing, read as the periodic
+autocorrelation, adds nothing to the molecule and costs a little. The reason is in the kernel:
+its rows are per unit volume and it is cosine-normalised, so a crystal of large molecules and one
+of small molecules at the same density look alike, while the size of the molecule is the first
+thing a melting point depends on. Multiplying the rows by the volume per molecule was tried; the
+cosine normalisation divides it out again, and it changed nothing (+0.002). Eight counts beat
+every field model, as the counts of item M15 and of the protein item did before.
+
+What is open: a packing description that keeps the molecule's size, or one restricted to the
+contacts between molecules; the sublimation enthalpy, which the plan names beside the melting
+point and for which no open set was found; and the 11 compounds lost to space-group symbols ASE
+does not read.
+
+```bash
+python benchmarks/run_molcrystals.py     # about 2 hours from scratch, minutes with the cache
+```
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

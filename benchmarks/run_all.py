@@ -946,6 +946,17 @@ def registry() -> List[Benchmark]:
                            "(VASP and ORCA)"],
                   report=lambda: _mod("run_gridfields").report(),
                   tables=["gridfields/table.md"]),
+        Benchmark("molcrystals",
+                  "molecules inside crystals: the molecules of a COD crystal perceived "
+                  "across the cell boundary and given the five molecular fields, against the "
+                  "inorganic field set, the molecule alone, a fingerprint and eight counts, "
+                  "on 665 melting points (plan item M8)",
+                  "run_molcrystals.py", "molcrystals", compute=[[]],
+                  prepare=["prepare_molcrystals.py --stage labels --stage query --stage "
+                           "match --stage write (figshare and COD, about two hours)"],
+                  minutes="115",
+                  report=lambda: _mod("run_molcrystals").report(),
+                  tables=["molcrystals/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

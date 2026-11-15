@@ -1,0 +1,130 @@
+{
+ "comparisons": [
+  {
+   "above_zero": false,
+   "against": "inorganic, periodic",
+   "below_zero": false,
+   "hi": 0.07034852901408736,
+   "lo": -0.05203171387829603,
+   "mean": 0.009009274964402625,
+   "model": "molecular, periodic"
+  },
+  {
+   "above_zero": false,
+   "against": "molecular, molecule only",
+   "below_zero": true,
+   "hi": -0.0017758300481560978,
+   "lo": -0.04145898538905709,
+   "mean": -0.021590718208407633,
+   "model": "molecular, both"
+  },
+  {
+   "above_zero": false,
+   "against": "molecular, molecule only",
+   "below_zero": true,
+   "hi": -0.32081728545844945,
+   "lo": -0.42957758184776823,
+   "mean": -0.3740527556651355,
+   "model": "molecular, periodic"
+  },
+  {
+   "above_zero": false,
+   "against": "ECFP4 fingerprint",
+   "below_zero": false,
+   "hi": 0.07277954769115176,
+   "lo": -0.014226650879347609,
+   "mean": 0.029696673741643198,
+   "model": "molecular, both"
+  },
+  {
+   "above_zero": false,
+   "against": "eight counts",
+   "below_zero": true,
+   "hi": -0.014886430864034279,
+   "lo": -0.08811690256677256,
+   "mean": -0.052134777737701254,
+   "model": "molecular, both"
+  }
+ ],
+ "crystals": 665,
+ "folds": 5,
+ "gate": false,
+ "models": {
+  "ECFP4 fingerprint": {
+   "chosen": {
+    "Tanimoto, ridge 0.1": 15
+   },
+   "q2_mean": 0.6164590827092136,
+   "q2_sd": 0.0036990430980864265,
+   "rmse_mean": 50.876775506933846
+  },
+  "eight counts": {
+   "chosen": {
+    "width 2, ridge 0.1": 13,
+    "width 4, ridge 0.01": 2
+   },
+   "q2_mean": 0.7043103911373155,
+   "q2_sd": 0.00016625277780599974,
+   "rmse_mean": 44.672142727429645
+  },
+  "inorganic, periodic": {
+   "chosen": {
+    "sigma 0.07, ridge 1": 6,
+    "sigma 0.1, ridge 1": 9
+   },
+   "q2_mean": 0.27981321801140197,
+   "q2_sd": 0.005784577313669018,
+   "rmse_mean": 69.71686250377412
+  },
+  "molecular, both": {
+   "chosen": {
+    "sigma 0.75 with 0.05, ridge 0.1": 4,
+    "sigma 0.75 with 0.1, ridge 0.1": 4,
+    "sigma 0.75 with 0.15, ridge 0.1": 7
+   },
+   "q2_mean": 0.6314877344845828,
+   "q2_sd": 0.009859272207945063,
+   "rmse_mean": 49.86619565060757
+  },
+  "molecular, molecule only": {
+   "chosen": {
+    "sigma 0.05, ridge 0.1": 8,
+    "sigma 0.1, ridge 0.1": 4,
+    "sigma 0.15, ridge 0.1": 3
+   },
+   "q2_mean": 0.6541515104733714,
+   "q2_sd": 0.009786927413935777,
+   "rmse_mean": 48.30795366459126
+  },
+  "molecular, periodic": {
+   "chosen": {
+    "sigma 0.25, ridge 1": 1,
+    "sigma 0.35, ridge 1": 7,
+    "sigma 0.75, ridge 1": 7
+   },
+   "q2_mean": 0.28526294484549514,
+   "q2_sd": 0.014900780858092773,
+   "rmse_mean": 69.44934724091178
+  }
+ },
+ "molecules_per_cell_median": 4.0,
+ "multi_component": 3,
+ "r_max": 10.0,
+ "repeats": 3,
+ "seconds": 1698.1,
+ "sigmas": [
+  0.07,
+  0.1,
+  0.15,
+  0.2,
+  0.25,
+  0.35,
+  0.5,
+  0.75
+ ],
+ "target": "melting point, degrees C",
+ "y_max": 437.65,
+ "y_mean": 95.8153599272073,
+ "y_min": -142.5,
+ "y_sd": 82.15211899981942
+}
