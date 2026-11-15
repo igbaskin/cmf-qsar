@@ -4174,7 +4174,7 @@ for anything molecular.
   on the iron series it is nearly degenerate for 11 % of the complexes. The matched frame is also
   the one place the phenazine symmetry trap of EC1 reappears, and the search over assignments is
   there for it.
-  *The composition on the nickel series, added 14 November 2026,* while the ninth tutorial was
+  *The composition on the nickel series, added 14 November 2026,* while the eleventh tutorial was
   written. The gate compared the fields with the numbers of the calculation and with the metal
   site, and the composition, the reference of the iron series, had not been run on the nickel
   series. It gives 0.195 V with leave-one-out (R² +0.779) and 0.245 V with five folds against
@@ -6775,7 +6775,7 @@ What it leaves open, in order:
   yields at r = 0.97 (aryl halides) and 0.95 (additives), and it shows nothing the names do not.
   Run time: about 7 hours on one process (418 minutes of method time), 2 hours 50 minutes as
   three processes. README and manual sections *A reaction yield as the activity*.
-  **The names of the parts, added 15 November 2026,** while the ninth tutorial was written. The 15
+  **The names of the parts, added 15 November 2026,** while the tenth tutorial was written. The 15
   aryl halides are every combination of 5 arenes and 3 halogens, so a held-out aryl halide has its
   arene and its halogen in the training part. An aryl halide described by those two names only, with
   the additive by name, gives 0.700 (the names added) and 0.708 (with their product) when each aryl
@@ -7143,7 +7143,19 @@ would discard the typed fields and the global kernel that are the method's own.
   is calibrated again and orders the hops poorly (rank correlation with the absolute error
   +0.11 to +0.16), where the spread of the trees of a random forest reaches +0.45: the
   errors there grow with the barrier, and the deviation of a Gaussian process with one
-  noise level cannot say that. *Open:* a deviation that depends on the predicted value; a
+  noise level cannot say that.
+  **A constant deviation as the reference, added 15 November 2026,** while the seventh tutorial was written.
+  The deviation is calibrated on average, and its rank correlation with the error is only +0.14, so
+  the question is what it adds to a deviation that is the same for every structure. The reference
+  gives every held-out structure the cross-validated RMSE of the training part. Both are scored by the
+  negative log density that they give to the measured activities (nats per structure, smaller is
+  better). The deviation of the model is ahead by +0.034 [+0.005, +0.061] (bootstrap over the 8 sets)
+  and on 6 of the 8 sets; ACE and THER lose by 0.023 each. The held-out structures cut into thirds by
+  their deviation have a root mean square of z of 1.06, 1.07 and 1.03 for the lowest, the middle and
+  the highest third, and an RMSE of 0.85, 0.87 and 1.06 as the mean deviation goes from 0.70 to 0.80
+  to 1.03. So the deviation is calibrated within each third, and it orders the errors, mildly. `python
+  benchmarks/run_surrogate.py --reference` makes the table in under a minute.
+  *Open:* a deviation that depends on the predicted value; a
   series where the kernel misses a part of the chemistry, which is where
   the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
   `cmfqsar/lowrank.py` without the scale -- closed by MS6 on 9 November 2026.
@@ -7289,7 +7301,7 @@ would discard the typed fields and the global kernel that are the method's own.
   were divided by their sum twice; they are now divided once. The measurement also found that the
   fields of every ensemble, conformational ones included, dropped the non-field descriptors; they
   now travel with the ensemble. 16 tests in `tests/test_ensembles.py`.
-  **What the ensemble is worth, added 15 November 2026,** while the twelfth tutorial was written.
+  **What the ensemble is worth, added 15 November 2026,** while the thirteenth tutorial was written.
   The gate says that the general path equals BT5's path. It does not say what keeping 16 shells gives.
   Stage `members` of `run_ensembles.py` (14 minutes) reads the same shells through the general path
   with the alignment-free model of BT5 and the same folds, and keeps the 1, 2, 4, 8 or 16 members of
@@ -8251,7 +8263,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the seventeenth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the eighteenth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the
@@ -8491,7 +8503,7 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   exposed it: the blind description scored 47.9 % where it has to score 50.0 %. The configuration
   is now removed before the scaffold is read, and `check_groups` refuses a run in which any pair
   would be split.
-  *A cheap reference, added 14 November 2026,* while the tenth tutorial was written. The channels
+  *A cheap reference, added 14 November 2026,* while the twelfth tutorial was written. The channels
   had been compared with the exact null of 50.0 % only. A rule that learns one bit for each
   target, whether the R or the S member of a pair was the better one more often among the training
   pairs, read at one stereocentre, names the better enantiomer in 58.3 % of the 1,144 pairs

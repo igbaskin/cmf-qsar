@@ -1803,7 +1803,7 @@ The same series gives two cautions. The first is about what the gain belongs to.
 Hirshfeld charges alone reaches 0.87 and 0.92, and a linear regression on the Hirshfeld charge of
 one ring carbon, the meta carbon for sigma-meta and the para carbon for sigma-para, reaches 0.89
 and 0.86. So the gain belongs to the charges, and on this series a field is not needed to collect
-it; the seventh tutorial makes the comparison. The second caution is about the structures. Until
+it; the eighth tutorial makes the comparison. The second caution is about the structures. Until
 14 November 2026 these two numbers were 0.79 and 0.78, because one record of the 95, the
 pentafluorosulfanyl group, held a structure that is not the molecule: no force field of RDKit
 holds that group, the embedded geometry had S-F distances from 1.19 to 2.49 Å, and the quantum
@@ -2700,7 +2700,7 @@ Both targets are computed, not measured, so both say how well a representation o
 that one calculation produced. `benchmarks/run_metal.py` measures them with five outer folds and
 ten inner folds. The iron series is measured twice: with five random folds, and with five folds
 built from the first coordination spheres, so that no sphere in a test fold was seen in training.
-The tenth tutorial, `docs/tutorials/10_a_metal_complex.ipynb`, runs the three checks of this
+The eleventh tutorial, `docs/tutorials/11_a_metal_complex.ipynb`, runs the three checks of this
 chapter, both frames and both series.
 
 ### The iron series: the field beats the composition, and the frame decides everything
@@ -3208,8 +3208,8 @@ comparison depends on it. `benchmarks/results/denmark/table.md` gives every widt
 | 0.75, the default | 0.48 | +0.36 [+0.13, +0.76] |
 
 The interval excludes zero at every width, so the frame is worth something on this series. How
-much depends on a setting of the kernel it is compared with. The eighth tutorial,
-`docs/tutorials/08_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
+much depends on a setting of the kernel it is compared with. The ninth tutorial,
+`docs/tutorials/09_a_catalyst_series.ipynb`, repeats this comparison on the mean selectivity of
 each catalyst, where the frame gives 0.88 and the invariant kernel 0.77 at its best width.
 
 **Two faults had made the frame look worth more**, and both are worth knowing. Until 14 November
@@ -3319,8 +3319,8 @@ gain of 0.05.
   settings on another data set.
 
 `examples/buchwald/README.md` describes the files and `benchmarks/results/buchwald/table.md`
-gives every split, the settings chosen and the co-fields of the linear model. The ninth tutorial,
-`docs/tutorials/09_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
+gives every split, the settings chosen and the co-fields of the linear model. The tenth tutorial,
+`docs/tutorials/10_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
 additives and on new arenes, and the names of the parts as the reference.
 
 ## Three tests to run before you build a new field or a new score
@@ -5265,6 +5265,20 @@ On THER the deferred molecules are *better* predicted than the answered ones, as
 the error was on that set. What calibration adds is not a better ordering but a fair size: the
 error the fast level reports for the structures it answers is the error it makes, which is what a
 coarse model needs in order to carry it forward.
+
+**A constant deviation as the reference (added 15 November 2026).** The deviation is calibrated on
+average, and its rank correlation with the error is only +0.14, so the question is what it adds to a
+deviation that is the same for every structure. The reference gives every held-out structure the
+cross-validated RMSE of the training part. Both are scored by the negative log density that they
+give to the measured activities (nats per structure, smaller is better). The deviation of the model
+is ahead by +0.034 [+0.005, +0.061] (bootstrap over the 8 sets) and on 6 of the 8 sets; ACE and THER
+lose by 0.023 each. The held-out structures cut into thirds by their deviation have a root mean
+square of z of 1.06, 1.07 and 1.03 for the lowest, the middle and the highest third, and an RMSE of
+0.85, 0.87 and 1.06 as the mean deviation goes from 0.70 to 0.80 to 1.03. So the deviation is
+calibrated within each third, and it orders the errors, mildly. `python benchmarks/run_surrogate.py
+--reference` makes the table in under a minute.
+
+The seventh tutorial, `docs/tutorials/07_the_model_as_a_fast_level.ipynb`, fits three of the sets, checks the calibration before any test set exists, runs the tolerance rule and this comparison, and reads the hop sample and the low-rank path from the stored results.
 
 **On a hop set, where the hierarchy is real, the rule earns more.** The sample of LiTraj used
 in the external check of the hop model — 1,801 hops of lithium ions in 393 crystals, each labelled
@@ -8248,7 +8262,7 @@ which the interval does not separate from zero. So the ensemble is worth keeping
 energy, and the shells are worth no more than the composition on either target. The control, the 16
 given members against the stored records of BT5, differs by 0.
 
-The twelfth tutorial, `docs/tutorials/12_an_ensemble_of_structures.ipynb`, reads the file of the
+The thirteenth tutorial, `docs/tutorials/13_an_ensemble_of_structures.ipynb`, reads the file of the
 shells, checks the mean field against the mean of the kernels, and runs the gate and these variants.
 
 ```bash
@@ -8554,7 +8568,7 @@ So the channels are **not shown to read more than a configuration label**. The p
 the rule is inside the noise, or depends on which centre the rule reads. What stands is the
 exact null, the localisation at the stereocentre, and a few targets, beta-2 above all, on which
 the channels are far ahead of the rule. Whether the two together beat each alone was not tried.
-The eleventh tutorial, `docs/tutorials/11_enantiomer_pairs.ipynb`, runs the exact null, the check of
+The twelfth tutorial, `docs/tutorials/12_enantiomer_pairs.ipynb`, runs the exact null, the check of
 split pairs, a live fit of two targets and this comparison.
 
 **What this does not show.** The potencies are taken as ChEMBL standardises them, and a pair
@@ -8895,7 +8909,7 @@ holds zero. The global descriptors that the corrosion literature uses reach a q�
 the benzimidazoles (`descriptor_baselines.csv` in the same folder), because they describe a
 molecule and not its pose; that is why they were no test of this. A model of adsorbed poses is
 to be given credit for what it adds to the count, and on these adsorption energies nothing in
-this program adds to it yet. The fifteenth tutorial, `docs/tutorials/15_on_a_surface.ipynb`, makes
+this program adds to it yet. The sixteenth tutorial, `docs/tutorials/16_on_a_surface.ipynb`, makes
 the comparison step by step.
 
 There is no co-field, for the reason every invariant source has none: the kernel is not an
@@ -11883,7 +11897,7 @@ python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA 
 python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
 ```
 
-The thirteenth tutorial, `docs/tutorials/13_a_spectrum_as_the_sample.ipynb`, runs the central part
+The fourteenth tutorial, `docs/tutorials/14_a_spectrum_as_the_sample.ipynb`, runs the central part
 of this measurement in one minute, with five repeats of the folds in place of ten and without
 the structural descriptions.
 
@@ -12644,7 +12658,7 @@ The width that is chosen is 8 cm$^{-1}$ for the computed components (18 of 20 re
 python benchmarks/run_mixtures.py     # 11 minutes; the measured part needs prepare_chemotion_ir.py
 ```
 
-The fourteenth tutorial, `docs/tutorials/14_a_mixture.ipynb`, runs the case of the computed
+The fifteenth tutorial, `docs/tutorials/15_a_mixture.ipynb`, runs the case of the computed
 components in one minute, with ten repeats in place of twenty and with the curves as they are
 (a smoothing width is searched for the slopes only).
 
@@ -13316,7 +13330,7 @@ correlation of 0.75 to 0.86. The difference is about the model's error on one ho
 it should be, since a threshold is the barrier of one hop of the network. That is the step from
 a per-hop model to a per-structure number, and it holds.
 
-The sixteenth tutorial, `docs/tutorials/16_a_hop_in_a_crystal.ipynb`, runs the references and the
+The seventeenth tutorial, `docs/tutorials/17_a_hop_in_a_crystal.ipynb`, runs the references and the
 frame-free kernel of this section on the whole public set in a few minutes, reads the stored
 results of the kernel in the hop frame, draws the co-field profile and repeats the percolation
 step with the barriers of the frame-free model.
@@ -16258,7 +16272,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The seventeenth tutorial, `docs/tutorials/17_point_mutants.ipynb`, builds one
+among its references. The eighteenth tutorial, `docs/tutorials/18_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -16794,11 +16808,11 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Seventeen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Eighteen notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
-built, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
+built, the model as the fast level of a hierarchy, with a standard deviation in the units of the activity, a tolerance rule and a constant deviation as the reference, the Hammett constants of substituted benzenes, read from co-fields in the plane of the
 ring and compared with the charge of one ring carbon, a series of chiral catalysts in the
 frame of their reaction centre, with the enantioselectivity as the activity, the yields of
 coupling reactions that combine four molecules, compared with the names of their parts, the redox

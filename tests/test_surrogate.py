@@ -257,3 +257,84 @@ def test_the_refusals_name_the_reason():
     model, test, _y = _fitted(method="kpls", params={"components": 2})
     with pytest.raises(ValueError, match="krr or gp"):
         model.calibration()
+
+
+def _bench():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(root, "benchmarks"))
+    import run_surrogate as S
+    return S
+
+
+def test_nlpd_of_a_gaussian():
+    S = _bench()
+    err = np.array([1.0, -2.0, 0.5])
+    sd = np.array([1.0, 2.0, 0.5])                      # z is one for every structure
+    want = 0.5 * np.log(2.0 * np.pi) + np.mean(np.log(sd)) + 0.5
+    assert np.isclose(S.nlpd(err, sd), want)
+    assert np.isclose(S.nlpd(err, 2.0), np.mean(0.5 * np.log(2.0 * np.pi) + np.log(2.0) + 0.5 * (err / 2.0) ** 2))
+    # the score is smallest for the deviation that is true: scaling every sd by 2 or by 1/2 makes it worse
+    assert S.nlpd(err, sd) < S.nlpd(err, 2.0 * sd) and S.nlpd(err, sd) < S.nlpd(err, 0.5 * sd)
+
+
+def test_score_split_bins_hold_every_structure_once():
+    S = _bench()
+    rng = np.random.default_rng(3)
+    sd = rng.uniform(0.5, 1.5, size=31)
+    err = rng.normal(size=31) * sd
+    r = S.score_split(err, sd, constant=0.9)
+    assert sum(b["n"] for b in r["bins"]) == 31 and len(r["bins"]) == S.BINS
+    assert np.isclose(sum(b["sum_z2"] for b in r["bins"]), np.sum((err / sd) ** 2))
+    assert np.isclose(sum(b["sum_err2"] for b in r["bins"]), np.sum(err ** 2))
+    assert np.isclose(sum(b["sum_sd"] for b in r["bins"]), sd.sum())
+    means = [b["sum_sd"] / b["n"] for b in r["bins"]]
+    assert means == sorted(means)                        # the groups run from the lowest deviation to the highest
+    assert r["constant"]["sd"] == 0.9
+
+
+def test_a_deviation_that_orders_the_errors_beats_a_constant_one():
+    S = _bench()
+    rng = np.random.default_rng(4)
+    sd = rng.uniform(0.2, 3.0, size=400)
+    err = rng.normal(size=400) * sd                      # the errors really are as large as the deviation says
+    rms = float(np.sqrt(np.mean(err ** 2)))
+    r = S.score_split(err, sd, constant=rms)
+    assert r["model"]["nlpd"] < r["constant"]["nlpd"] - 0.05
+
+
+def test_paired_over_sets_interval():
+    S = _bench()
+    same = S.paired_over_sets([0.2, 0.2, 0.2, 0.2])
+    assert same["mean"] == same["low"] == same["high"] == pytest.approx(0.2)
+    spread = S.paired_over_sets([0.0, 0.1, 0.2, 0.3, 0.4, 0.5])
+    assert spread["low"] <= spread["mean"] <= spread["high"]
+
+
+def test_the_reference_report_reads_stored_results(tmp_path):
+    S = _bench()
+    import json
+    row = {"model": {"nlpd": 1.0, "z_rms": 1.0, "inside_2sd": 0.95},
+           "constant": {"sd": 1.0, "nlpd": 1.1, "z_rms": 1.0, "inside_2sd": 0.95},
+           "bins": [{"n": 10, "sum_sd": 8.0, "sum_err2": 9.0, "sum_z2": 11.0}] * S.BINS}
+    for name, n in (("AAA", 100), ("BBB", 50), ("CCC", 30)):
+        json.dump({"set": name, "n": n, "repeats": 2, "bins": S.BINS, "rows": [row, row]},
+                  open(os.path.join(str(tmp_path), f"reference_{name}.json"), "w"))
+    text = S.report_reference(str(tmp_path))
+    assert "constant deviation" in text and "| **mean** |" in text and "The same 3 sets and 2 splits" in text
+    assert "+0.100" in text                                # the gain of 1.1 - 1.0 on every set
+    assert "lowest third of the deviation" in text and "highest third" in text
+    assert S.report_reference(str(tmp_path / "nothing_here")) == ""
+
+
+def test_fit_split_is_what_run_set_fits(tmp_path):
+    S = _bench()
+    if not os.path.exists(os.path.join(S.DATA, "GPB.sdf")):
+        pytest.skip("the Sutherland sets are not here")
+    out = S.run_set("GPB", repeats=1, force=True, results=str(tmp_path))
+    y, mf, cache = S.prepare_set("GPB")
+    s = S.fit_split(mf, y, cache, 0)
+    held = Calibration.of(y[s["te"]], s["pred"], s["sd"])
+    assert np.isclose(out["rows"][0]["test"]["rmse"], held.rmse)
+    assert np.isclose(out["rows"][0]["rmse_cv"], s["rmse_cv"])
+    assert out["rows"][0]["alpha"] == s["alpha"] and out["rows"][0]["lam"] == s["lam"]
+

@@ -1199,9 +1199,10 @@ def registry() -> List[Benchmark]:
                   tables=["warped_mittal/table.md"]),
         Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
                   "a tolerance rule does: the model as the fast level of a hierarchy, and the "
-                  "same deviation on the low-rank path that never builds the n by n kernel",
-                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"], ["--low-rank"]],
-                  minutes="15",
+                  "same deviation on the low-rank path that never builds the n by n kernel, and "
+                  "against a constant deviation",
+                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"], ["--low-rank"], ["--reference"]],
+                  minutes="16",
                   report=lambda: _write_table(
                       "surrogate", _mod("run_surrogate").report_all(_r("surrogate"))),
                   tables=["surrogate/table.md"]),

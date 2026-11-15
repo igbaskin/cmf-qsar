@@ -76,3 +76,29 @@ The same splits, the same attenuation and ridge as the table above, with the mod
 | GPB | 66 | quarter | 60 | 0.79 | 0.99 | 0.56 | 1.10 | 100% | 5.4e-01 | 1.2e+00 |
 
 The gate of item MS6 is a root mean square of z within 0.1 of the exact path's. Over every set and split, the largest difference is 1.3e-11 on the folds and 1.1e-08 on the test with the molecules; 2.8e-01 on the folds and 6.0e-01 on the test with the half; 5.4e-01 on the folds and 1.2e+00 on the test with the quarter. With the molecules as landmarks the difference is round-off, because the kernel is the same matrix computed another way; with fewer landmarks the model is another model, and the difference is what the approximation does to the calibration of its own deviation. Its direction is the same everywhere: z rms falls below one, so the deviation is larger than the error. That is the term which keeps the variance from falling to zero where the landmarks span nothing -- the exact self-kernel less the part the landmarks reproduce -- being conservative by construction, and the largest single-split differences come from the smallest sets, where a quarter of the molecules is a dozen landmarks.
+
+## A constant deviation as the reference, and the calibration in bins of the deviation
+
+The same 8 sets and 5 splits. The reference gives every held-out structure the cross-validated RMSE of the training part as its deviation. The score is the negative log density that a Gaussian of that deviation gives to the measured activity, in nats per structure (smaller is better; it rewards a deviation that is right and one that is small where the model is right). The gain is the constant's score minus the model's, so a positive gain means that the deviation of the model is worth more.
+
+| set | n | score of the model | score of the constant | gain | z rms, model | z rms, constant | inside 2 sd, model | inside 2 sd, constant |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | 1.081 | 1.140 | +0.059 | 1.08 | 0.94 | 93% | 96% |
+| COX2 | 282 | 1.217 | 1.222 | +0.005 | 0.99 | 1.02 | 93% | 93% |
+| BZR | 147 | 0.944 | 0.972 | +0.028 | 0.98 | 0.96 | 94% | 96% |
+| ACE | 114 | 1.887 | 1.865 | -0.023 | 1.15 | 1.11 | 89% | 93% |
+| AChE | 111 | 1.152 | 1.229 | +0.077 | 0.96 | 0.94 | 94% | 93% |
+| THR | 88 | 0.964 | 1.038 | +0.074 | 1.02 | 1.08 | 94% | 91% |
+| THER | 76 | 1.972 | 1.949 | -0.023 | 1.07 | 1.07 | 93% | 94% |
+| GPB | 66 | 1.238 | 1.314 | +0.076 | 1.10 | 1.22 | 92% | 88% |
+| **mean** |  | 1.307 | 1.341 | **+0.034** | 1.05 | 1.04 | 93% | 93% |
+
+The mean gain is +0.034 nats per structure, with a 95 % interval of [+0.005, +0.061] from a bootstrap over the 8 sets; the model's deviation is ahead on 6 of 8 sets.
+
+The held-out structures of every split, cut into three equal groups by their deviation (lowest, middle, highest), pooled over the sets and the splits. A deviation that orders the errors has the same z rms in all three groups.
+
+| group | structures | mean deviation | RMSE | z rms |
+|---|---:|---:|---:|---:|
+| lowest third of the deviation | 635 | 0.698 | 0.851 | 1.06 |
+| middle third | 625 | 0.798 | 0.867 | 1.07 |
+| highest third | 605 | 1.030 | 1.059 | 1.03 |
