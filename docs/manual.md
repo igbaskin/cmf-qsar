@@ -543,6 +543,126 @@ The findings appear in the log of the application and on the console of the comm
 each marked `[refuse]`, `[warn]` or `[note]`. A model file written by a newer version of the
 program than the one reading it is not opened.
 
+## A field is a kernel mean embedding
+
+The literature on kernel methods has a name for what a CMF field is: a *kernel mean embedding*.
+Knowing the name links the method to results that were proved there. This section states the
+link, what it explains, what it adds, and what it does not add. The unit test
+`tests/test_mean_embedding.py` checks every identity below on the program's own functions.
+
+**The embedding.** A *measure*, in this section, is a list of points with a weight on each. The
+atoms of a molecule with their weights in one field are such a list. When weights can be
+negative, as partial charges are, it is a *signed measure*. Given a kernel $g$ on points, the
+*kernel mean embedding* of a measure is the function
+
+$$
+\hat{\mu}(\cdot) \;=\; \sum_l\, w_l\, g(\cdot,\, \mathbf{r}_l)
+$$
+<!-- #eq:mean-embedding -->
+
+which is the sum of the kernel centred on every point, times the weight of the point [31, Eq. (2)]
+(there with equal weights). With $g$ the Gaussian of the atoms, this is Eq. (#eq:field): the field
+$X_f$ of a molecule is the kernel mean embedding of its atoms with their weights in field $f$.
+
+**The overlap kernel is the inner product of two embeddings.** By Eq. (#eq:kernel) the overlap
+of two fields is a double sum over pairs of atoms of one function of two points:
+
+$$
+K_f(A,B) \;=\; \sum_{l \in A}\, \sum_{m \in B}\, w_{lf}\, w_{mf}\; \kappa(\mathbf{r}_l, \mathbf{r}_m), \qquad \kappa(\mathbf{r}, \mathbf{r}') \;=\; \left(\dfrac{\pi}{\alpha}\right)^{3/2} \exp\!\left(-\dfrac{\alpha}{4}\, |\mathbf{r} - \mathbf{r}'|^2\right)
+$$
+<!-- #eq:set-kernel -->
+
+Here κ is the overlap integral of the Gaussians of two atoms. It is a kernel on points,
+and the double sum of a kernel over all pairs of points of two sets is the *set kernel* of
+multiple-instance learning [32]. It is also the inner product of the two mean embeddings in the
+RKHS of κ [31, Eq. (29)], where weights per point are allowed. So the space of fields, with
+the overlap integral as the inner product, is a copy of the RKHS of κ. The Gaussian of
+κ has half the exponent of the Gaussian of one atom ($\alpha/4$ against $\alpha/2$), so it
+reaches $\sqrt{2}$ times further. The steric field, with a width per atom, fits the same picture:
+the width is one more coordinate of each point, and the pair term of Eq. (#eq:overlap) is the
+kernel on these extended points. It is still the integral of a product of two Gaussians, and so
+still an inner product. The joint kernel of Eq. (#eq:joint) joins one embedding per field type.
+
+| term of kernel mean embeddings | the same thing in CMF |
+|---|---|
+| a measure: points with weights | the atoms of a molecule with their weights in one field |
+| the base kernel on points | κ, the overlap of the Gaussians of two atoms |
+| the mean embedding of a measure | the field $X_f$ of the molecule |
+| the inner product of two embeddings (set kernel) | the overlap kernel $K_f(A,B)$ without normalisation |
+| the distance between two embeddings | the field distance of Eq. (#eq:feature-distance) without normalisation |
+| the embedding of a mixture of measures | the mean field of an ensemble; the spectrum of a mixture |
+| the maximum mean discrepancy (MMD) between two samples | the two-sample test of `cmf compare` |
+| the witness function of the MMD | the difference of the mean fields of two sets, read through the kernel |
+| a second kernel on the embeddings | the Gaussian layer of *Nonlinear kernel layers and multiple kernel learning* |
+| distribution regression | a model whose sample is an ensemble of structures |
+
+**What the link explains.** Several results of this manual, which were measured or derived one
+by one, are the same fact.
+
+1. *Mixtures and ensembles.* The embedding is linear in the measure. The mean field of an
+   ensemble is therefore the embedding of the mixture of its members, and the kernel of two mean
+   fields is the mean of the kernels of their members. The fourteenth tutorial shows this to
+   rounding error. The spectrum of a mixture is the sum of the spectra of its components for the
+   same reason, which is what the seventeenth tutorial uses.
+2. *Distances and the two-sample test.* The field distance between two molecules is the MMD
+   between their weighted atoms. The test of *Is the whole library inside? The two-sample test*
+   works one level higher. A set of molecules has a mean field, which is the embedding of the
+   set. The MMD² of two sets, in the form with the self-similarities kept, is the squared length
+   of the difference of the two mean fields. The witness of a molecule is the overlap of its field
+   with that difference field. The unit test checks both.
+3. *The invariant kernels embed a different measure.* The autocorrelation $\Phi_{fg}(d)$ of
+   *Working without an alignment* is the embedding, by a Gaussian on a line, of the distances
+   between pairs of atoms, each pair weighted by $w_{lf} w_{mg}$, sampled at the channel
+   distances. A broadened spectrum is the embedding of its stick spectrum on the axis of the
+   spectrum. That the autocorrelation cannot tell a molecule from its mirror image is a
+   property of the measure it embeds: the list of pair distances is the same for both.
+
+**What the theory adds.**
+
+1. *The field determines the weighted atoms.* For a Gaussian kernel on $\mathbb{R}^d$ the
+   embedding of finite signed measures is one-to-one: two different measures have different
+   embeddings [33, Section 3.1 and Proposition 2]. So, in one frame, two molecules have the same
+   field only if their atoms carry the same weights at the same places, where atoms at one
+   place count with their summed weight. The field loses nothing of the weighted atoms. It does
+   lose what the weights do not carry, such as which atom is bonded to which. One-to-one does not
+   mean easy to invert. A field at a small α is smooth, and recovering the atoms from it means
+   undoing a broadening, which amplifies small errors. That is the task of the decoder of
+   pseudo-atoms. The autocorrelation is not one-to-one on molecules, because the list of pair
+   distances is already the same for a mirror image.
+2. *Signed measures are covered.* Most of the theory of kernel mean embeddings is stated for
+   probability distributions [34]. CMF needs the signed case. The charges of a neutral molecule
+   sum to zero, so its electrostatic field embeds a measure with a total weight of zero, which no
+   probability distribution has. The statement in item 1 covers finite signed measures [33], and
+   such a field still has a length.
+3. *What normalisation removes.* For a probability distribution the total weight is fixed at
+   one. CMF does not fix it: three times the weights give three times the raw kernel. Cosine
+   normalisation divides by the length of the embedding and so removes the scale of the weights
+   exactly. A normalised kernel therefore cannot answer a question about *how much*: an amount,
+   a count, a size. The seventeenth tutorial shows the cosine form failing for amounts for this
+   reason. Where the question is how much, use the raw kernel or put a count among the
+   references.
+4. *A Gaussian layer is a kernel on embeddings, and an ensemble is distribution regression.* The
+   Gaussian layer is $\exp(-\gamma\, d^2(A,B))$, a Gaussian of the distance between two
+   embeddings. Kernels of this form on mean embeddings are listed in [35, Table 1], and kernel
+   ridge regression with them is the *distribution regression* of [35]. When the sample is an
+   ensemble (conformations, solvation shells), each sample is a distribution over structures
+   that is seen only through a finite number of members; [35] calls this *two-stage sampling*.
+   With the CMF kernel as the kernel on structures and member weights that are not negative and
+   sum to one, an ensemble is such a distribution. The paper proves that ridge regression on mean
+   embeddings is consistent in this setting, under conditions, and that the number of members per
+   sample has to grow with the number of training samples to keep the best rate of learning
+   [35, Theorem 5]. The conditions have not been checked for the kernels of this program, so the
+   result is a guide and not a guarantee.
+
+**What the link does not add.**
+
+- *No accuracy.* No kernel of the program changes. The section gives names and theorems, not a
+  new model.
+- *Nothing new about the mathematics.* Molecules compared by the overlap of Gaussians on their
+  atoms, and descriptors of materials built from smoothed densities of atoms such as SOAP [36],
+  use the same construction. What CMF adds to the embedding is the chemistry in the weights,
+  the common frame, and the reading of the weight vector of a model as a co-field.
+
 # Installation and first run
 
 ## Where the program lives
@@ -4948,7 +5068,7 @@ exercise an extrapolation? — and averaging a per-molecule verdict does not ans
 have identical nearest-neighbour similarities and still occupy different regions.
 
 Every set of molecules has a **mean field**, the mean of its feature maps, which for CMF is itself
-a function of space. The maximum mean discrepancy [23] is the
+a function of space (*A field is a kernel mean embedding* gives the general form). The maximum mean discrepancy [23] is the
 distance between two of them:
 
 $$
@@ -14759,7 +14879,7 @@ happens.
 
 **What the cheapest reference of each item costs.** Each of the three plan items names a value
 that needs no new data. For the diffusion coefficient it is the Nernst-Einstein value from the
-measured conductivity $\kappa$ and the transference number $t$ of the published set, which is
+measured conductivity κ and the transference number $t$ of the published set, which is
 the coefficient of an ideal solution of fully dissociated ions
 (`cmfqsar.cellmodel.nernst_einstein_diffusivity`):
 
@@ -17631,6 +17751,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **joint kernel**, $K(A,B)$ | the sum of the normalised, scaled field kernels with their mixing coefficients: the single similarity the learner sees. *Mixing the fields* |
 | **Kabsch superposition** | the least-squares rotation and translation that best superimposes two sets of matched points. It is the second half of an MCS alignment -- the substructure search finds the correspondence, this places the molecule -- and the pose benchmark measures how far the result lands from the crystal pose. *Alignment*; *Judging an alignment, and aligning flexibly* |
 | **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no single co-field, because the prediction is no longer linear in the fields; a local co-field per molecule remains. *Nonlinear kernel layers and multiple kernel learning* |
+| **kernel mean embedding** | the function that a list of weighted points gives under a kernel: the kernel centred on every point, times the weight of the point, summed. A CMF field is the kernel mean embedding of the atoms of a molecule with their weights. *A field is a kernel mean embedding* |
 | **kernel trick** | replacing every inner product of two feature vectors by a kernel value, so that a linear model in the feature space is fitted and applied without building a feature vector. *Why a kernel is enough* |
 | **local co-field** | the derivative of a layered model's prediction with respect to the normalised field, taken at one molecule: the co-field of the linear model tangent to it there. For the linear kernel it is the ordinary co-field for every molecule. *The co-field of a nonlinear model: one per molecule* |
 | **non-linearity index** | the share of the mean squared norm of the local co-fields of the training molecules that their spread around the mean makes up: 0 for a linear model, 1 when they have nothing in common. *The co-field of a nonlinear model: one per molecule* |
@@ -17782,3 +17903,21 @@ Appl.* **1971**, *33*, 82–95.
 
 [30] Aronszajn, N. Theory of reproducing kernels. *Trans. Am. Math. Soc.* **1950**, *68*,
 337–404. doi:10.1090/S0002-9947-1950-0051437-7
+
+[31] Smola, A.; Gretton, A.; Song, L.; Schölkopf, B. A Hilbert space embedding for distributions.
+In *Algorithmic Learning Theory (ALT 2007)*; Springer: Berlin, 2007.
+
+[32] Gärtner, T.; Flach, P. A.; Kowalczyk, A.; Smola, A. J. Multi-instance kernels. In
+*Proceedings of the 19th International Conference on Machine Learning (ICML 2002)*; 2002.
+
+[33] Sriperumbudur, B. K.; Fukumizu, K.; Lanckriet, G. R. G. Universality, characteristic kernels
+and RKHS embedding of measures. *J. Mach. Learn. Res.* **2011**, *12*, 2389–2410.
+
+[34] Muandet, K.; Fukumizu, K.; Sriperumbudur, B.; Schölkopf, B. Kernel mean embedding of
+distributions: a review and beyond. *Found. Trends Mach. Learn.* **2017**, *10*, 1–141.
+
+[35] Szabó, Z.; Sriperumbudur, B. K.; Póczos, B.; Gretton, A. Learning theory for distribution
+regression. *J. Mach. Learn. Res.* **2016**, *17*, 1–40.
+
+[36] Bartók, A. P.; Kondor, R.; Csányi, G. On representing chemical environments. *Phys. Rev. B*
+**2013**, *87*, 184115.
