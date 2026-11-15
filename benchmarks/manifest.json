@@ -1,6 +1,6 @@
 {
- "commit": "6a8cee3dca914b37d412a1ebfe1eedfbd51e0556",
- "created": "2026-11-16T00:34:18",
+ "commit": "143bb8e85dff72b33e2ca0341a7b8dcd24de62d5",
+ "created": "2026-11-16T00:50:56",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1510,6 +1510,22 @@
    "bytes": 3422,
    "sha256": "f1bdcc7dde25a68269a20a67a07585de1fb7d9e077aaa2662f574f402b43836b"
   },
+  "examples/melting_points/README.md": {
+   "bytes": 2621,
+   "sha256": "40771e25295fc33a8876bbae8072da4ed49289fdd7169640b786950d932033c6"
+  },
+  "examples/melting_points/crystals.extxyz": {
+   "bytes": 5025689,
+   "sha256": "f5b13ecff5caab669cce67db30479a3ea7cfe741d8d2fb30db909615d0c5776c"
+  },
+  "examples/melting_points/melting_points.csv": {
+   "bytes": 61674,
+   "sha256": "193bedcf697de651a3c73dc8ccb1b1792983296f8fba5d1cfab933530262f4e2"
+  },
+  "examples/melting_points/provenance.json": {
+   "bytes": 1200,
+   "sha256": "564b6fe30a039735b8bb88adc25467e5fb09e989a40d430a226c83d36ab3a197"
+  },
   "examples/mittal/ACE.sdf": {
    "bytes": 478266,
    "sha256": "60962476a99ca22c10d9b6abef917d04bc4e5335d223d8052fcbb95f45ba7463"
@@ -2575,7 +2591,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3469,6 +3485,8 @@
   "benchmarks/results/mixing/table.md": "bcef74d782677c2047c2a3841d4f7ed630c19afe089968f6af10e64b44043965",
   "benchmarks/results/mixtures/mixtures.json": "04353d3917d22022a8fec86dc8193f6e641d7e68343c401361b79d174e8781d6",
   "benchmarks/results/mixtures/table.md": "dd78826ef112517b1e0299089eabb31d1fab4eba1a95a950477f7bf11490dccb",
+  "benchmarks/results/molcrystals/melting.json": "0cfe01db1e01e53cc33bae9121553da512860f11c519ce9f960e2a9ed6781a2d",
+  "benchmarks/results/molcrystals/table.md": "5172f3e581fe008d7960aeaa9090a3da052f020d01b507ff1e089f4465c58df3",
   "benchmarks/results/multitask/0_c1ccccc1__activity__dG_ads.json": "8b6483f20cb49e09a5b7d704c5932cb48d14174cd04d679c17927df505fe8209",
   "benchmarks/results/multitask/0_c1ccccc1__mwila_hcl_adj__mwila_h2so4_adj.json": "71fdd64b1d548885653a9c778781a2cf7b3e48157c5745d67845faf6879d704c",
   "benchmarks/results/multitask/11_c1c_nH_c_nH_1__activity__dG_ads.json": "fc5d7afed200fdd27fe269e8d8406e42bd0c938d7aeebe1c4152bde87fc8ab50",
