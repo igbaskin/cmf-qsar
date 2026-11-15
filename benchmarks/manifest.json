@@ -1,6 +1,6 @@
 {
- "commit": "9ce46e74b8ffe017bc83e3c772375e396d802a04",
- "created": "2026-11-15T20:39:00",
+ "commit": "334d24cdf95df7e9c50044be58ce628b7e0afeaa",
+ "created": "2026-11-15T21:13:04",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2575,7 +2575,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3846,12 +3846,13 @@
   "benchmarks/results/protonation/scan_8_c1cn_nH_c1.json": "ca2a6a5b129188b3f3b7f2e9729f1862181dfe03958e7f8aea1a3b9c215a9fcd",
   "benchmarks/results/protonation/scan_9_c1nc_nH_n1.json": "c11d698a61f27934d90abfbd386ccfbbf86fa28527f81879d486bc0ebbb04609",
   "benchmarks/results/protonation/table.md": "34a69a8926874baec83bc3d463ffd4b91cf731b2098a458cc9db55c711caec42",
+  "benchmarks/results/prototypes/cheap.json": "49103bcc006085a4598fce068f373d40505c5c253f2c4470894ee31bb51a1e62",
   "benchmarks/results/prototypes/closed.json": "c2eee12048fddd739c63cc7f84df6fd4f6a5dd00706df07116ed5f5ab6a2ee6a",
   "benchmarks/results/prototypes/defects.json": "c8a3a7247d482b9c13a5acff79e5d48507988ee430bf43efe8d90022ba9b0246",
   "benchmarks/results/prototypes/loop.json": "2e64718a222c1b1ca36e38d6c7d324e96c459f0defa907afb4a9cd3180921282",
   "benchmarks/results/prototypes/ranking.json": "b2443252c6b4b95a8ce9e013e896cd449c97a6d7c00e004f52695a0799814b66",
   "benchmarks/results/prototypes/space.json": "79870661afe4d7d47c9ef7c1ae973f4578ee21f4d28416d6c150a9e2882a111a",
-  "benchmarks/results/prototypes/table.md": "ee97a0d41723b88729907b2fe7e6b9b29a4e6b8d594b648a013abedef96ba8ba",
+  "benchmarks/results/prototypes/table.md": "1903f5f6b82e79ac23a737e788655c6405369a0e2b2c069ec86a2c49856673d8",
   "benchmarks/results/query/ACE.json": "7ffc5cb285658f85f06dc88994edf28b89b2d3734d6e68b588009cffb727b766",
   "benchmarks/results/query/AChE.json": "f2ef6dcd690335f37c567a1b45c8e7f7b267aa6e23196ab63cb3576423541352",
   "benchmarks/results/query/BZR.json": "b452d9f356b0feba094826e29eb0ede962996786e43d0774ceeb1a44fc8c9432",
