@@ -1,6 +1,6 @@
 {
- "commit": "2927a4777626c8bd82d2d51b2f211c814a5190f6",
- "created": "2026-11-16T14:38:29",
+ "commit": "a29004576efe708939650cf1182b4fe5019ed081",
+ "created": "2026-11-16T15:49:03",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2716,10 +2716,10 @@
   "benchmarks/results/battery/difference.json": "65f46f32773b1542901fb44a7981b45929c3ed6162a3bfcb6555357ff1c2b02b",
   "benchmarks/results/battery/table.md": "244b5045b8fc8ffa4a76b0187a59d0a285ca002914a0b2a3b4a8e89218eb44c2",
   "benchmarks/results/battery/voltage.json": "31d3a44230b51435756ad0f2931dc3d24948d6fba340928a325be76d550177e8",
-  "benchmarks/results/bioisostere/GPB.json": "2c59413c1389436a1dd18ade8f33785080c3fc74dc194b3325ac1efd189bdcac",
-  "benchmarks/results/bioisostere/THER.json": "ec301df12f59907e8c29fefcecf851d2391c5886a325064f9019f2721140188b",
-  "benchmarks/results/bioisostere/THR.json": "a5b715f2447affa47bc790472ab1fd763041641896633467f8e403e93a82f5e5",
-  "benchmarks/results/bioisostere/table.md": "fa82bd2ba45eb8b9824c9ed09cff8004d7cbe609aaffaa69f585185fb3913b60",
+  "benchmarks/results/bioisostere/GPB.json": "a75c91372806c2b819d1262d6f542448f5177579231bce026f3ca6e018b6622d",
+  "benchmarks/results/bioisostere/THER.json": "50a3c5e675f0b56188179fa5e219d5461bfd9adb23ca1433ce221bfe59afa063",
+  "benchmarks/results/bioisostere/THR.json": "f583d7789e73bbc1631f441994fe7f5a4c7f18a130c56f939de7a91f29a3b383",
+  "benchmarks/results/bioisostere/table.md": "2c26eec9c22c6f9356b525d45c64bb5043c8bfdbc873ec252a7f1dd1dbf56e94",
   "benchmarks/results/bioisostere/table_GPB.csv": "87ebac844efe2a7e695b911ebcfbc7e441e3bb9c138da489b14d448b55db3e13",
   "benchmarks/results/bioisostere/table_THER.csv": "95aae23b4c50ea2accba37024ed489fbaf5f52497080cde76453689029f17d3e",
   "benchmarks/results/bioisostere/table_THR.csv": "4ff3a0a78f490af8fe78dda071b68be72af6a77b3a2606a884a3bb62e9fc4234",
