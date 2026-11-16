@@ -1,6 +1,6 @@
 {
- "commit": "3bbc6668a0f8058eb66be98872cd1e1db969aa72",
- "created": "2026-11-16T12:10:29",
+ "commit": "e7abe032e1ef0d644f4a5ae3d0b338dd7d7e5c53",
+ "created": "2026-11-16T12:51:21",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3990,6 +3990,9 @@
   "benchmarks/results/selectivity/file_Delta.json": "341303503fcb5321be0d304854945215316a217f17692bbe996043d74e1eac83",
   "benchmarks/results/selectivity/file_glycine.json": "ee84651199c29c151b7506b8f4d720e950b98c64ba6daacbe29fba1d8b4b239f",
   "benchmarks/results/selectivity/table.md": "080947fa98b1a7a7904c4cb08c84d6e0c5a2cbb10a36466e7e9c7b806d3a3ec9",
+  "benchmarks/results/shape/geometry.json": "605a566c5ab572ef8d853f99d7bf47f8eb4940da10ec7fbfcdeeacafb6bd9fb3",
+  "benchmarks/results/shape/model.json": "ad71b86d897f007789aec3b5e64975f739f4919d322d35cb0f1b5fe296987848",
+  "benchmarks/results/shape/table.md": "1aa0e7cd5362accd050d870b144adbd004c6001d8173eb4f649015b819c3f6fd",
   "benchmarks/results/shells/cofield.json": "4a80f53eecf0a6b68fadf6b37fcee3540610ed3f82afb7d70f9c11c98540a867",
   "benchmarks/results/shells/data.json": "9ce0dd2b2bbcfa0264778ad16f82c2b9024172791c756cfb59695f2901627140",
   "benchmarks/results/shells/gate.json": "1d2f65f5405a08fa132ad2a4058cabab2f8021caf9e5bda0919a2531b2cf493d",
