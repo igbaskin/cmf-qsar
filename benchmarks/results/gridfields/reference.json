@@ -1,0 +1,62 @@
+{
+ "cells": 1462,
+ "comparisons": [
+  {
+   "above_zero": true,
+   "against": "grid overlap",
+   "below_zero": false,
+   "hi": 0.12709424288981405,
+   "lo": 0.08392483883693483,
+   "mean": 0.10321765634053492,
+   "model": "energy of the run and element counts"
+  },
+  {
+   "above_zero": true,
+   "against": "energy of the run and element counts",
+   "below_zero": false,
+   "hi": 0.017232101480556962,
+   "lo": 0.010570287164257711,
+   "mean": 0.013775940469211378,
+   "model": "grid overlap and energy of the run"
+  }
+ ],
+ "elements": 56,
+ "folds": 5,
+ "models": {
+  "energy of the run": {
+   "chosen": {
+    "ridge 1": 15
+   },
+   "q2_mean": 0.3802688537869703,
+   "q2_sd": 0.0027003787998963126,
+   "rmse_mean": 0.5610649187831646
+  },
+  "energy of the run and element counts": {
+   "chosen": {
+    "ridge 1": 15
+   },
+   "q2_mean": 0.9397692689089713,
+   "q2_sd": 0.0004691835918641708,
+   "rmse_mean": 0.1749114526647149
+  },
+  "grid overlap": {
+   "chosen": {
+    "ridge 0.001": 15
+   },
+   "q2_mean": 0.8254811750813135,
+   "q2_sd": 0.0060153931668858514,
+   "rmse_mean": 0.2976936604290756
+  },
+  "grid overlap and energy of the run": {
+   "chosen": {
+    "ridge 0.01": 15
+   },
+   "q2_mean": 0.9529783246963844,
+   "q2_sd": 0.0002110488375559245,
+   "rmse_mean": 0.15454695019302875
+  }
+ },
+ "repeats": 3,
+ "seconds": 101.9,
+ "slope_on_energy": 0.17150778402903347
+}

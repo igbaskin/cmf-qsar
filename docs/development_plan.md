@@ -3299,6 +3299,14 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   `12_c1ccoc1`, goes the other way). The grid needs one DFT calculation per structure. *Open:* a
   model hook for the grid overlap kernel (the module is not connected to `CMFModel`); a fit with
   functions between the atoms, which might close the last 0.07.
+
+  **The energy of the same run as the reference, added 16 November 2026,** while the
+  twenty-third tutorial was written. The calculation that gives a cell's grids also gives its
+  total energy, and the target is a formation energy. A ridge regression on that energy and the
+  element counts (`run_gridfields.py --stage energies`, then `--stage reference`) reaches R²
+  +0.940 against +0.825 for the grid, better by +0.103 [+0.084, +0.127]; the grid added to it
+  gains +0.014 [+0.011, +0.017]. The gate of the item (grid against its fit) is unchanged. What
+  changes is the reading: the grid is not worth its cost as a predictor of a DFT energy.
 * **M10. Three-body and chirality for solids.** The two-body kernel cannot separate homometric
   structures or enantiomorphs. Typed angle channels, or a periodic analogue of the signed-volume
   block of `chirality` in `cmfqsar/invariant.py`, remove the deficiency at the cost of a cubic sum per
@@ -3971,6 +3979,12 @@ tests whether the target is reproducible between sources before any kernel is co
   separations across the axis; not done here. The mean coordination number, the count an EMT
   energy should follow, predicts it worse than the size law, because the energy is not linear
   in it.
+  **Neighbour counts as the reference, added 16 November 2026,** while the twenty-fourth
+  tutorial was written. `run_particles.py --stage counts`: a linear regression on the number of
+  neighbour pairs per atom in each of the first four lattice shells, with its own coefficients
+  for each metal, reaches 29 meV in cross-validation, level with the autocorrelation (+2.4
+  [-8.3, +13.0] meV), and 15 meV on the larger particles, better by 11.1 [4.8, 17.4] meV. The
+  fields are not needed for this target.
 * **NT3. Size and shape as descriptors.** `cmfqsar/descriptors.py` computes RDKit descriptors for
   molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
   the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
@@ -8594,7 +8608,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twenty-third tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-fifth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

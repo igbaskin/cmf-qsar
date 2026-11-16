@@ -37,6 +37,24 @@ Relative error of the atom-centred fit, mean over the cells: density 8.6%, elf 2
 
 Correlation of the off-diagonal kernel values: grid_overlap / fields_overlap +0.857; grid_overlap / fitted_overlap +0.999; grid_radial / fields_radial +0.487; grid_radial / fitted_radial +0.997.
 
+### The energy of the same run as the reference
+
+The grid of a cell costs one DFT calculation, and that calculation also gives a total energy. The reference is a ridge regression on that energy and the counts of the 56 elements, on the same folds; it needs nothing the grid does not already need.
+
+| Model | R², mean of 3 repeats | RMSE, eV | Ridge chosen (folds) |
+|---|---:|---:|---|
+| energy of the run | +0.380 | 0.5611 | ridge 1 (15) |
+| energy of the run and element counts | +0.940 | 0.1749 | ridge 1 (15) |
+| grid overlap | +0.825 | 0.2977 | ridge 0.001 (15) |
+| grid overlap and energy of the run | +0.953 | 0.1545 | ridge 0.01 (15) |
+
+| Difference of R² | Mean [95 % interval] |
+|---|---|
+| energy of the run and element counts minus grid overlap | +0.103 [+0.084, +0.127] |
+| grid overlap and energy of the run minus energy of the run and element counts | +0.014 [+0.011, +0.017] |
+
+Slope of the target on the energy of the run, in one least-squares fit with the element counts: 0.172.
+
 ## Molecules
 
 The four corrosion-inhibitor series with ORCA single points. Grids of the neutral molecule from orca_plot on 61³ points; the density without its cores, the potential outside the molecule. q² from five folds repeated three times.
