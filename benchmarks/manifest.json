@@ -1,6 +1,6 @@
 {
- "commit": "fea90235c0c136a972759e598fcfa67de9df3b8e",
- "created": "2026-11-16T13:11:15",
+ "commit": "c4333e32c344c53ba89f46a9d3a32ff772fcc840",
+ "created": "2026-11-16T13:22:26",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2822,10 +2822,10 @@
   "benchmarks/results/cellmodel_fields/sample_positive_electrode_ocp_v.json": "c06ffa355e06ac0b9bbae4788eeb0ae2400d78264695ec656912464cc6cee452",
   "benchmarks/results/cellmodel_fields/sample_positive_particle_diffusivity_m2_s-1.json": "cf333cc57ed97b305c2f49f0ff2a63b22b828ec47045877092206f3bf9159f5f",
   "benchmarks/results/cellmodel_fields/table.md": "72867ebd17af459e84efe220a4ab3c41cb080b846f7e600d77b0e7aff55c8c59",
-  "benchmarks/results/charge_transfer/binding.json": "2988bbc325b083fbe5f182581451b94be4855cf5373f0d03b10a05bf6af05d8c",
-  "benchmarks/results/charge_transfer/regression.json": "be0eca088a24c4920c32bc2f89b6ba9da49f927579433fd0be16e93efb79aed6",
+  "benchmarks/results/charge_transfer/binding.json": "a2126dc0f767373ba99a534f0ae2016ba0cc19532a66304eb3739d3023a03150",
+  "benchmarks/results/charge_transfer/regression.json": "2785772977ecc11827cd0a65891be0054ffdd293b5164c251bb89b2ff3d194e8",
   "benchmarks/results/charge_transfer/summary.json": "7da0cdfdd865d8afb92051d6cb6ecbdc5ae37197fde8618ec9fbfb1031ae7a4f",
-  "benchmarks/results/charge_transfer/table.md": "c4d17d7247c8d85ba86a2c2f0e4d16ad74fc0dd3511607bdaf862f4467f5dba2",
+  "benchmarks/results/charge_transfer/table.md": "2b456c51f45e02c73ef978cbdc3f1698adc1d42102b7574bfee9be79df1b6d71",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
