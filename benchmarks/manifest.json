@@ -1,6 +1,6 @@
 {
- "commit": "3de142f55df6d004fe8da0e5294be1dc8a840a6c",
- "created": "2026-11-16T19:15:25",
+ "commit": "067b6c434491c425b6892b5e61d84e353d0e7e9a",
+ "created": "2026-11-16T21:05:22",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3426,11 +3426,13 @@
   "benchmarks/results/litraj/public.json": "bd89018e7cf070539423566b965a88a31e0e1af24870dc81146adb166a4f4d8c",
   "benchmarks/results/litraj/run.json": "bac02c0be48e9e15a735543040de6c1b00ed8553ca292224cc8d99e921d5e7cb",
   "benchmarks/results/litraj/table.md": "000025e7c8b15537dd102687ebf5a4cd0000b929640ab2d47a7437bb07e69b25",
+  "benchmarks/results/local/hose.json": "6fcf96918dde1fa1952a84a7f8dd2b05178a9e09c451de0b8f988ae0c3a87222",
+  "benchmarks/results/local/hose_curve.json": "24692a7b219abfbf2d4556a6845267d3917f2a02c56d7b977099b5aad714bfb3",
   "benchmarks/results/local/pka.json": "6bff32226f9fd05d71aac7b1cf3438042bccadc1caaab73b733b06ce04abfe9d",
   "benchmarks/results/local/pka_conformers.json": "7a56b1186570bfdffe47e832f75b9352134184bd8a917b43f2ffaa8040adf3fb",
   "benchmarks/results/local/shifts.json": "7847bce698291261d34410afdd0cd9fc21cc6e7ea280c3cd694788b9862dfc88",
   "benchmarks/results/local/shifts_conformers.json": "b87fa9e053c1c608ffa2240217832a494d5525d706cf2a7defff353b186afd39",
-  "benchmarks/results/local/table.md": "d6b8c02fdd805737a8b2b7ceccac416319deb0edc1c46da8b4112fbede0a2e13",
+  "benchmarks/results/local/table.md": "cca57616f81332068b68647f39b02f418d3fafb96e76eaf1af872cfad77db174",
   "benchmarks/results/local_cofield/cofield.png": "0b02eb2a753d8082b14020355bacd10b536e43b20015efc947cff028c663ed9a",
   "benchmarks/results/local_cofield/indicator.json": "754d118fd56db0edd74541ad8653841354512a1307337aea057772c66048d6f1",
   "benchmarks/results/local_cofield/indicator.png": "c0fa0ae309f19adba56fbd48b4f4f8739965b73fa49dd642d174ba2f8214c53f",
