@@ -1,6 +1,6 @@
 {
- "commit": "c4333e32c344c53ba89f46a9d3a32ff772fcc840",
- "created": "2026-11-16T13:22:26",
+ "commit": "ae7b7b0bea902f49092bdbb8292291f41f3386e6",
+ "created": "2026-11-16T13:44:13",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3457,8 +3457,8 @@
   "benchmarks/results/md/p38.json": "0277d4222ea24f32b74bd94d91aefc5fb605e6f92d8ad3a9218cbaa5835594a7",
   "benchmarks/results/md/p38_norm.json": "fac200e10b9f64e465eb0451383b8a0b68e96b549feca3f61f84b9851e7f4f7f",
   "benchmarks/results/md/table.md": "f5be7828530bb7734ebcd7f1fec7aacb720d6f00a4bc5f46dfa2f8a9c18724bd",
-  "benchmarks/results/metabolism/summary.json": "ac4e025de4be9f25559d922a1f45c03c79e6c2332517a5273d69d02d8bd9434e",
-  "benchmarks/results/metabolism/table.md": "7c6a3503fcfcb879bb1f9762e14d55730fa0ab01f493d4916d186498464275ec",
+  "benchmarks/results/metabolism/summary.json": "80da8a32eb2920929a79b53c2e711afd1d4795fd8dc0d9ca3dec9e6ee386b661",
+  "benchmarks/results/metabolism/table.md": "e66b7e098071b699b88b0e175197988e71fae95de87d24a18c36458d2e8a5db4",
   "benchmarks/results/metal/cofield.json": "f28ada61c2526cd88222e5a363b873b152b784d9bd7967807459519d1c181753",
   "benchmarks/results/metal/data.json": "d271bb98f61a2b7ce3713d2f3fa9cbf21ced71e3686d06d914a20d04871446ca",
   "benchmarks/results/metal/iron.json": "2ec7d2391367acfa7a665f00a71aa60bfe7350390b6584b790f6b16312eadb62",
