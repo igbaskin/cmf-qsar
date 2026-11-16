@@ -152,3 +152,135 @@ def test_unknown_sampler_is_refused():
     T = _table(fs, 2)
     with pytest.raises(ValueError):
         rff.build(fs, T, 8, "grid")
+
+
+# ------------------------------------------------------- the model, saved and built
+
+
+def _exact_model(fs, T, y, lam):
+    m = CMFModel(fieldset=fs.copy(), method="krr", normalize=True)
+    m.params["lam"] = float(lam)
+    m.fit(T, y, cv_folds=3, cv_seed=0)
+    return m
+
+
+def _fourier_model(fs, T, y, lam, **kw):
+    m = CMFModel(fieldset=fs.copy(), method="krr", normalize=True)
+    m.fit_fourier(T, y, lam=lam, folds=3, seed=0, **kw)
+    return m
+
+
+def _y(T):
+    return np.linspace(-1.0, 1.0, T.n_mol) + 0.3 * np.sin(np.arange(T.n_mol))
+
+
+def test_a_fourier_model_on_the_lattice_is_the_exact_model():
+    """Predictions and the coefficients over the training molecules, which draw the co-field."""
+    fs = _fs(alpha=0.7)
+    T = _table(fs)
+    y = _y(T)
+    exact = _exact_model(fs, T, y, 0.1)
+    four = _fourier_model(fs, T, y, 0.1, sampler="lattice")
+    assert four.is_low_rank and four.low_rank_.kind == "fourier"
+    assert np.allclose(four.predict(T), exact.predict(T), atol=1e-4)
+    assert np.allclose(four.low_dual_, exact.coef, atol=1e-3)
+    for f in range(len(fs.specs)):
+        c0, k0, w0 = exact.cofield_coefficients(f)
+        c1, k1, w1 = four.cofield_coefficients(f)
+        assert np.allclose(c0, c1) and np.allclose(w0, w1)
+        assert np.allclose(k0, k1, atol=1e-3 * np.abs(k0).max())
+
+
+def test_the_dual_coefficients_reproduce_the_feature_weights():
+    """w = Phi^T a: the first block of the normal equations, for any frequencies."""
+    fs = _fs()
+    T = _table(fs)
+    m = _fourier_model(fs, T, _y(T), 0.3, n_frequencies=64)
+    Phi = m.low_rank_features(T)
+    assert np.allclose(Phi.T @ m.low_dual_, m.low_weights_, atol=1e-10)
+
+
+def test_a_fourier_model_records_what_it_used():
+    fs = _fs()
+    T = _table(fs)
+    m = _fourier_model(fs, T, _y(T), 0.1, n_frequencies=48)
+    rec = m.stats.extra["low_rank"]
+    assert rec["kind"] == "fourier" and rec["landmarks"] == 0 and rec["sampler"] == "qmc"
+    assert rec["rank"] == 2 * sum(rec["frequencies"]) // len(rec["frequencies"]) * 3 or \
+        rec["rank"] == m.low_rank_.rank
+
+
+def test_a_fourier_model_is_saved_and_read_back(tmp_path):
+    from cmfqsar.dataio import load_model, save_model
+    fs = _fs()
+    T = _table(fs)
+    m = _fourier_model(fs, T, _y(T), 0.1, n_frequencies=64)
+    path = os.path.join(str(tmp_path), "m.cmf")
+    save_model(path, m, {"dataset": "toy"})
+    back, _extra = load_model(path)
+    assert back.is_low_rank and back.low_rank_.kind == "fourier"
+    new = _table(fs)            # the same molecules, read as a new table
+    assert np.allclose(back.predict(new), m.predict(T), atol=1e-10)
+    assert np.allclose(back.predict_with_variance(new)[1], m.predict_with_variance(T)[1])
+    c0, k0, w0 = m.cofield_coefficients(1)
+    c1, k1, w1 = back.cofield_coefficients(1)
+    assert np.allclose(c0, c1) and np.allclose(k0, k1) and np.allclose(w0, w1)
+
+
+def test_a_fourier_model_refuses_the_invariant_kernel():
+    fs = _fs()
+    T = _table(fs, 4)
+    m = CMFModel(fieldset=fs.copy(), method="krr", normalize=True)
+    m.kernel_source = "autocorrelation"
+    with pytest.raises(ValueError):
+        m.fit_fourier(T, _y(T), n_frequencies=8, lam=0.1)
+
+
+def _sdf(tmp_path):
+    path = os.path.join(str(tmp_path), "set.sdf")
+    with Chem.SDWriter(path) as w:
+        for k, s in enumerate(SMILES):
+            m = _mol(s, k + 1)
+            m.SetProp("_Name", f"m{k}")
+            m.SetProp("activity", f"{4.0 + 0.3 * k:.2f}")
+            w.write(m)
+    return path
+
+
+def test_build_saves_a_fourier_model_that_predict_can_read(tmp_path, capsys):
+    from cmfqsar.cli import main
+    from cmfqsar.dataio import load_model
+    path = _sdf(tmp_path)
+    saved = os.path.join(str(tmp_path), "m.cmf")
+    capsys.readouterr()
+    main(["build", path, "--activity", "activity", "--fields", "electrostatic,steric",
+          "--low-rank", "fourier:32", "--alphas", "0.5", "--lams", "0.1",
+          "--test-fraction", "0", "--folds", "3", "--save", saved])
+    text = capsys.readouterr().out
+    assert "32 Sobol frequencies per field" in text and "128 columns of features" in text
+    back, extra = load_model(saved)
+    assert back.low_rank_.kind == "fourier" and extra["low_rank"]["landmarks"] == 0
+    main(["predict", saved, path, "--out", os.path.join(str(tmp_path), "p.csv")])
+    assert "Predictions written" in capsys.readouterr().out
+    prefix = os.path.join(str(tmp_path), "map")
+    main(["cofield", saved, "--out-prefix", prefix])
+    assert any(f.startswith("map") for f in os.listdir(str(tmp_path)))
+
+
+def test_build_refuses_a_lattice_too_large_to_fit(tmp_path):
+    from cmfqsar.cli import main
+    path = _sdf(tmp_path)
+    with pytest.raises(SystemExit, match="feature columns"):
+        main(["build", path, "--activity", "activity", "--fields", "electrostatic,steric",
+              "--low-rank", "lattice:1e-6", "--alphas", "5", "--lams", "0.1",
+              "--test-fraction", "0", "--folds", "3"])
+
+
+def test_the_lowrank_command_takes_fourier_features(tmp_path, capsys):
+    from cmfqsar.cli import main
+    path = _sdf(tmp_path)
+    capsys.readouterr()
+    main(["lowrank", path, "--activity", "activity", "--landmarks", "fourier:16",
+          "--fields", "electrostatic,steric", "--lams", "0.1", "--folds", "3"])
+    text = capsys.readouterr().out
+    assert "16 Sobol frequencies per field: 64 columns of features" in text

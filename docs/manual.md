@@ -7852,11 +7852,14 @@ decomposed exactly as before.
 
 **It is a flag on `build`, so the model is an ordinary model.** `--low-rank grid:2.0` or
 `--low-rank molecules:200` fits this way, chooses the ridge by the evidence or on folds, and
-`--save` writes a file that `predict`, `cofield` and the rest read like any other:
+`--save` writes a file that `predict`, `cofield` and the rest read like any other.
+`--low-rank fourier:512` takes random Fourier features instead of landmarks (see the
+subsection *Random Fourier features: features without landmarks* below):
 
 ```bash
 cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
 cmf build series.sdf --activity pKi --low-rank atoms:0.5 --alphas 2 --save narrow.cmf
+cmf build series.sdf --activity pKi --low-rank fourier:512 --alphas 2 --save fourier.cmf
 cmf predict model.cmf new.sdf --out predicted.csv
 cmf cofield model.cmf --out-prefix map
 ```
@@ -7938,14 +7941,36 @@ molecules repeated periodically, so its only error is the overlap of the periodi
 period is chosen so that this overlap is below a tolerance. The number of lattice points then
 follows from the period and the width; it is not chosen.
 
-The map has the same form as the landmark map, so `lowrank.gram`, `lowrank.fit` and
-`lowrank.cross_validate` fit a model on it unchanged:
+**How to use it.** `cmf build --low-rank fourier:N` fits on N Sobol frequencies per field
+(default 512, two columns each). `--low-rank lattice:TOL` puts the frequencies on the lattice,
+cut at the tolerance TOL (default 0.001). The command refuses a map of more than 16 000 columns,
+because the fit holds a square matrix of that size (2 GB); a lattice at a narrow field passes
+that limit. `cmf lowrank --landmarks` takes the same two kinds. From Python,
+`CMFModel.fit_fourier` fits a model, and because the map has the same form as the landmark map,
+`lowrank.gram`, `lowrank.fit` and `lowrank.cross_validate` work on it unchanged:
 
 ```python
 from cmfqsar import rff, lowrank
+model.fit_fourier(train, y, n_frequencies=512, sampler="qmc", lam=0.3)
 features = rff.build(fieldset, train, n_frequencies=256, sampler="qmc")
 pred, _ = lowrank.cross_validate(features, train, y, lam=0.3)
 ```
+
+The model file keeps the frequencies, so a new molecule gets exactly the features the model
+was fitted on. The predictive standard deviation and the conformal interval work as for
+landmarks.
+
+**The co-field of a Fourier model.** A plane wave has no centre, so the co-field cannot be
+drawn from the features the way it is drawn from landmarks. It is drawn from the training
+molecules instead. The first block of the ridge equations gives the feature weights as
+$\mathbf{w} = \Phi^\top \mathbf{a}$ with $\mathbf{a} = (\mathbf{y} - \hat{\mathbf{y}})/\lambda$,
+where $\Phi$ holds the features of the training molecules, $\hat{\mathbf{y}}$ the fitted values
+and $\lambda$ the ridge. So the model is also a sum over the training molecules with the
+coefficients $\mathbf{a}$, and its co-field is the exact co-field with these coefficients. Its
+overlap with a molecule is the prediction with the exact kernel in place of its estimate, so
+the two differ by the error of the kernel estimate: a relative error of 3.5e-3 at 1024 Sobol
+frequencies per field (see the measurements below). On the lattice the coefficients equal those
+of the exact model; the unit tests hold them to $10^{-3}$.
 
 **Measured** (`benchmarks/run_rff.py`, `benchmarks/results/rff/table.md`). The eight Sutherland
 sets at the attenuation and ridge that the exact grid search chose, scored on the folds of the
@@ -7992,8 +8017,7 @@ must not depend on any data set: they are the same functions of the atoms for ev
 same frame, so the features of a library can be computed once and kept for every model built
 later, and they keep working at a narrow field, where a grid of centres does not. Take the Sobol
 sequence and 256 to 1024 frequencies per field. The lattice is exact and deterministic, and is
-worth it for broad fields only. The map is not yet an option of `cmf build`; a model fitted on
-it cannot be saved, and it has no co-field.
+worth it for broad fields only.
 
 ## Screening a library that does not fit in memory
 

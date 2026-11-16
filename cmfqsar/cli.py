@@ -240,6 +240,42 @@ def _report_validation(args, model, ds, mf, tr, te, target):
                               "inside": [bool(v) for v in dom.inside]}
 
 
+#: the most feature columns a Fourier map may have: the fit holds a square matrix of this size,
+#: 2 GB at 16 000 columns
+FOURIER_MAX_COLUMNS = 16_000
+
+
+def _fourier_for(spec, train, fieldset, seed, scale=None, normalize=True):
+    """(random Fourier features, a sentence describing them) for fourier:N or lattice:TOL, or
+    None for any other kind of landmarks."""
+    from cmfqsar import rff
+
+    kind, _, size = str(spec).partition(":")
+    if kind == "fourier":
+        n = int(size or 512)
+        if n < 1:
+            raise SystemExit(f"fourier:N needs at least one frequency, not {spec!r}")
+        ff = rff.build(fieldset, train, n, "qmc", seed=seed, scale=scale, normalize=normalize)
+        how = f"random Fourier features, {n} Sobol frequencies per field"
+    elif kind == "lattice":
+        tol = float(size or 1e-3)
+        if not 0.0 < tol < 1.0:
+            raise SystemExit(f"lattice:TOL needs a tolerance between 0 and 1, not {spec!r}")
+        ff = rff.build(fieldset, train, sampler="lattice", scale=scale, normalize=normalize,
+                       tol=tol)
+        how = f"Fourier features on a lattice of frequencies, cut at {tol:g} of the peak"
+    else:
+        return None
+    if ff.rank > FOURIER_MAX_COLUMNS:
+        per = ", ".join(str(s) for s in ff.sizes)
+        raise SystemExit(
+            f"{spec} gives {ff.rank} feature columns ({per} per field); the fit would hold a "
+            f"square matrix of that size, {ff.rank ** 2 * 8 / 1e9:.1f} GB. "
+            + ("A lattice grows with the attenuation: use fourier:N for a narrow field, or a "
+               "larger tolerance" if kind == "lattice" else "Use fewer frequencies"))
+    return ff, how
+
+
 def _landmarks_for(args, train, fieldset):
     """The landmark set `--low-rank` asks for, and a sentence describing it."""
     from cmfqsar import lowrank as LR
@@ -260,8 +296,8 @@ def _landmarks_for(args, train, fieldset):
                               min_distance=spacing, seed=args.seed)
         return Z, kind, (f"the atoms of {min(200, train.n_mol)} molecules, thinned to "
                          f"{spacing:g} A apart")
-    raise SystemExit(f"--low-rank takes grid:SPACING, atoms:SPACING or molecules:N, not "
-                     f"{args.low_rank!r}")
+    raise SystemExit(f"--low-rank takes grid:SPACING, atoms:SPACING, molecules:N, fourier:N "
+                     f"or lattice:TOL, not {args.low_rank!r}")
 
 
 def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
@@ -281,11 +317,19 @@ def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
         print("  --low-rank takes one attenuation; the first of --alphas is used")
     alpha = (_floats(args.alphas) or [1.0])[0]
     model.fieldset.set_alpha(float(alpha))
-    Z, kind, how = _landmarks_for(args, train, model.fieldset)
-    low = LR.build(Z, model.fieldset, scale=model._low_rank_scale(train),
-                   normalize=model.normalize, kind=kind)
-    print(f"Low rank: {how}, {Z.n_mol} landmarks, {low.rank} columns of features at "
-          f"alpha {alpha:g}")
+    ff = _fourier_for(args.low_rank, train, model.fieldset, seed,
+                      scale=model._low_rank_scale(train), normalize=model.normalize)
+    if ff is not None:
+        # random Fourier features: no landmarks, and the same features for every training set
+        Z, kind = None, "fourier"
+        low, how = ff
+        print(f"Low rank: {how}, {low.rank} columns of features at alpha {alpha:g}")
+    else:
+        Z, kind, how = _landmarks_for(args, train, model.fieldset)
+        low = LR.build(Z, model.fieldset, scale=model._low_rank_scale(train),
+                       normalize=model.normalize, kind=kind)
+        print(f"Low rank: {how}, {Z.n_mol} landmarks, {low.rank} columns of features at "
+              f"alpha {alpha:g}")
     g = LR.gram(low, train, y, block=args.low_rank_block)
     exact_bytes = LR.memory(len(y), low.rank, len([s for s in model.fieldset.specs if s.enabled]),
                             exact=True)
@@ -309,7 +353,7 @@ def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
     print(f"  chosen by the {args.select}: ridge {best[0]:g}")
 
     model.fit_low_rank(train, y, Z, lam=best[0], kind=kind, folds=args.folds, seed=seed,
-                       block=args.low_rank_block)
+                       block=args.low_rank_block, features=low if Z is None else None)
     if te:
         model.evaluate_test(AtomTable.from_molecules([mf[i] for i in te]), target[te])
     print(model.stats.summary())
@@ -366,7 +410,8 @@ def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "task": args.task,
                                             "activity": ds.activity_prop,
-                                            "low_rank": {"kind": kind, "landmarks": Z.n_mol,
+                                            "low_rank": {"kind": kind,
+                                                         "landmarks": 0 if Z is None else Z.n_mol,
                                                          "rank": low.rank}})
         print(f"Model saved to {args.save}")
     print(f"Elapsed {time.time() - t0:.1f} s")
@@ -1578,7 +1623,11 @@ def cmd_lowrank(args):
           f"{args.alpha:g}")
 
     kind, _, size = str(args.landmarks).partition(":")
-    if kind == "grid":
+    ff = _fourier_for(args.landmarks, table, fieldset, args.seed)
+    if ff is not None:
+        low, how = ff
+        Z = None
+    elif kind == "grid":
         spacing = float(size or 2.0)
         Z = LR.gaussian_centres(table, spacing, len(specs))
         how = f"a grid of Gaussian centres {spacing:g} A apart"
@@ -1593,10 +1642,13 @@ def cmd_lowrank(args):
         how = (f"the atoms of {min(200, table.n_mol)} molecules, thinned to {spacing:g} A "
                f"apart")
     else:
-        raise SystemExit(f"--landmarks takes grid:SPACING, atoms:SPACING or molecules:N, not "
-                         f"{args.landmarks!r}")
-    low = LR.build(Z, fieldset, normalize=True, kind=kind)
-    print(f"  {how}: {Z.n_mol} landmarks, {low.rank} columns of features")
+        raise SystemExit(f"--landmarks takes grid:SPACING, atoms:SPACING, molecules:N, "
+                         f"fourier:N or lattice:TOL, not {args.landmarks!r}")
+    if Z is not None:
+        low = LR.build(Z, fieldset, normalize=True, kind=kind)
+        print(f"  {how}: {Z.n_mol} landmarks, {low.rank} columns of features")
+    else:
+        print(f"  {how}: {low.rank} columns of features")
 
     g = LR.gram(low, table, y, block=args.block)
     exact_bytes = LR.memory(len(y), low.rank, len(specs), exact=True)
@@ -4777,9 +4829,16 @@ def main(argv=None):
                         "of up to 200 of the molecules, thinned to that spacing, which is what "
                         "a narrow field wants because a grid only spans a field while its "
                         "spacing is not much larger than the field's own width; molecules:N "
-                        "takes N of the training molecules. The model is saved and predicted "
-                        "from like any other, and it scores a test set and calibrates a "
-                        "conformal interval when it is asked to; what this path does not do is "
+                        "takes N of the training molecules. fourier:N takes random Fourier "
+                        "features of the field kernel instead of landmarks, N Sobol "
+                        "frequencies per field (default 512, two columns each); they do not "
+                        "depend on the training set and keep working at a narrow field. "
+                        "lattice:TOL puts the frequencies on a lattice, which reproduces the "
+                        "exact kernel to the tolerance TOL (default 0.001) but needs many "
+                        "thousands of columns at an attenuation above about 1. The model is "
+                        "saved and predicted from like any other, and it scores a test set and "
+                        "calibrates a conformal interval when it is asked to; what this path "
+                        "does not do is "
                         "a second endpoint or the JSON report")
     b.add_argument("--low-rank-block", type=int, default=256, metavar="N",
                    help="molecules per block while the features are built; the memory of the "
@@ -5675,8 +5734,10 @@ def main(argv=None):
     lr.add_argument("--landmarks", default="grid:2.0", metavar="KIND:SIZE",
                     help="grid:SPACING for a grid of Gaussian centres that many angstroms "
                          "apart, atoms:SPACING for one on every atom of up to 200 molecules "
-                         "thinned to that spacing, or molecules:N for N of the molecules "
-                         "themselves. A grid spans the field only while its spacing is not "
+                         "thinned to that spacing, molecules:N for N of the molecules "
+                         "themselves, fourier:N for random Fourier features with N Sobol "
+                         "frequencies per field, or lattice:TOL for Fourier features on a "
+                         "lattice of frequencies cut at the tolerance TOL. A grid spans the field only while its spacing is not "
                          "much larger than the field's own width, so a narrow field wants the "
                          "atoms or the molecules (default grid:2.0)")
     lr.add_argument("--alpha", type=float, default=0.5,

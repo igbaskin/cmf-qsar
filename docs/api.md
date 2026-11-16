@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 857 public methods, and 1417 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 858 public methods, and 1417 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -11911,7 +11911,7 @@ is off by default because, measured, it gains no sharpness on these sets.
 
 #### `CMFModel.test_kernels(test: AtomTable, progress=None, cancel=None) -> np.ndarray`
 
-#### `CMFModel.fit_low_rank(train: AtomTable, y: Sequence[float], landmarks: AtomTable, lam: Optional[float]=None, kind: str='landmarks', folds: int=10, seed: Optional[int]=0, block: int=256, progress=None) -> 'CMFModel'`
+#### `CMFModel.fit_low_rank(train: AtomTable, y: Sequence[float], landmarks: Optional[AtomTable], lam: Optional[float]=None, kind: str='landmarks', folds: int=10, seed: Optional[int]=0, block: int=256, progress=None, features=None) -> 'CMFModel'`
 
 Fit in the space of the landmarks instead of the space of the molecules (item B6).
 
@@ -11920,6 +11920,21 @@ training molecule, and everything a prediction needs follows from those: see
 `cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
 number of molecules and the provenance and the contract are read off it; what is never
 built is the n by n kernel.
+
+`features` is a feature map built elsewhere, in place of the landmarks: the random
+Fourier features of `fit_fourier`.  It must carry the field scale of
+`_low_rank_scale`, or the fit is another model than the exact one.
+
+#### `CMFModel.fit_fourier(train: AtomTable, y: Sequence[float], n_frequencies: int=512, sampler: str='qmc', lam: Optional[float]=None, folds: int=10, seed: Optional[int]=0, block: int=256, period: Optional[float]=None, tol: Optional[float]=None, progress=None) -> 'CMFModel'`
+
+Fit on random Fourier features of the field kernel instead of landmarks.
+
+The features are those of `cmfqsar.rff.build`: `n_frequencies` per field, two
+columns each, drawn by `sampler` (`"qmc"`, the scrambled Sobol sequence, reproduces
+the kernel best), or every point of a lattice of frequencies (`"lattice"`, exact up to
+`tol`).  Unlike landmarks they do not depend on the training set, so a library's
+features are the same for every model in the same frame.  Everything else is
+`fit_low_rank`.
 
 #### `CMFModel.is_low_rank` -> bool  (property)
 
