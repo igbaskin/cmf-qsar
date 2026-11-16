@@ -3583,7 +3583,9 @@ cmf diagnose data.sdf --charges file
 
 The sixth tutorial, `docs/tutorials/06_before_you_model.ipynb`, runs the command on four sets
 with four different recommendations and reads one report line by line. It ends with the test of
-the section *Beyond a count: the conditional dependence test* below.
+the section *Beyond a count: the conditional dependence test* below, and with the choice of the
+first molecules to measure of the section *A few molecules that stand for many: kernel
+herding*.
 
 The command answers five questions and prints the numbers behind each.
 
@@ -5390,12 +5392,32 @@ carry most of the mean field. The full table, both targets and both splits, is i
 `benchmarks/results/herding/table.md`. A control run of the 4 heaviest shells reproduces the
 stored records of item MS5 to 4e-13.
 
+**A reference that needs no field (added 16 November 2026).** Every rule above chooses on the
+fields. The usual way to pick a diverse subset in medicinal chemistry needs none: max-min on
+Morgan fingerprints with the Tanimoto distance (RDKit's `MaxMinPicker`). It was added to the first
+stage as the rule `fingerprints`, with a second rule, `size`, that spreads the choice evenly over
+the number of heavy atoms. Both run in the same splits; every other row is unchanged. RMSE minus
+random, as in the table above:
+
+| m | max-min on fingerprints | spread over the size | herding minus fingerprints |
+|---:|---:|---:|---:|
+| 10 | -0.035 [-0.076, +0.010] | -0.002 [-0.060, +0.049] | +0.023 [-0.043, +0.097] |
+| 20 | -0.009 [-0.060, +0.040] | -0.006 [-0.023, +0.011] | +0.035 [-0.009, +0.077] |
+| 40 | -0.061 [-0.104, -0.019] | +0.002 [-0.054, +0.067] | +0.021 [-0.017, +0.060] |
+
+The fingerprint pick does as well as herding at every size, and at 40 molecules it gains the most
+of all rules. The paired difference from herding favours the fingerprints by 0.02 to 0.035 and its
+interval contains zero every time. Spreading the choice over the size is no better than random. So
+a training set chosen on the fields gains nothing over one chosen on fingerprints. The sixth
+tutorial, `docs/tutorials/06_before_you_model.ipynb`, chooses ten thrombin inhibitors by every
+rule, runs the ten splits of that set live, and reads the eight sets from the stored runs.
+
 **When to use it.** `cmf pick` gives the most representative molecules of a library, and the
 MMD says how representative they are. That is the right tool when the subset itself is the
 product: a first round of measurements that should look like the library, or a few members that
 should stand for an ensemble with equal weights, such as the frames of a trajectory. It is not a
 way to make a model more accurate. With 40 molecules, herding, max-min and k-medoids beat random
-choice by a little; with fewer, nothing does.
+choice by a little; with fewer, nothing does. A pick on fingerprints does as well.
 
 ## How certain is that number?
 

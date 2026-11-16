@@ -1,6 +1,6 @@
 {
- "commit": "991331b2c5943a1b46ad21cbbe9130b2a9e646f6",
- "created": "2026-11-16T07:45:56",
+ "commit": "192918b1724952f791a58a5551ea16d3b2fbc721",
+ "created": "2026-11-16T10:05:34",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2591,7 +2591,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3180,8 +3180,8 @@
   "benchmarks/results/hammett/table.md": "1ff394fbb71c2bff39075d570668cc9bbbc9b2482462d3091d8c1c0e1037e68f",
   "benchmarks/results/herding/landmarks.json": "74a9edaf01b0dbb1625acd3a4748955e567a3506908d6be7acc2ed657cbb7fff",
   "benchmarks/results/herding/members.json": "a3cf9b02042afbcea48e4f78cee960c6bcb2976a9797f1651a3dfa291d98ef17",
-  "benchmarks/results/herding/subsets.json": "1b77f2e02d8c8608061b90dbc825013342f3f024a95dcb1a8caa661af679bdcb",
-  "benchmarks/results/herding/table.md": "c732080e28551526c1eb89789163f59369264d6e723b255f7a2ebb7f79337865",
+  "benchmarks/results/herding/subsets.json": "2672c90676f9299b7507c546b4e67f60f5158e6c0b2ce1eb74324715a457dbc7",
+  "benchmarks/results/herding/table.md": "962e16603e74689a5758b867e02e12603da9e5cb54b27baeec2c83edc5feb395",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
   "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",

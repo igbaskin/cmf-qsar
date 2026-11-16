@@ -13,6 +13,10 @@ Stage ``subsets``: which molecules to make or measure first
     molecules) and it predicts the test set. The rules: herding on the model's kernel, herding on
     a Gaussian of the field distance, max-min, k-medoids, pivoted Cholesky and random choice
     (five draws per split). The model on the whole pool is the upper reference.
+    Two references need no field at all (added 16 November 2026): max-min on Morgan fingerprints
+    with the Tanimoto distance, which is how a diverse subset is usually picked in medicinal
+    chemistry (RDKit's MaxMinPicker), and molecules spread evenly over the number of heavy
+    atoms. They are run in the same splits; the other rules are unchanged.
 
 Stage ``landmarks``: which molecules to use as Nystroem landmarks
     On each whole set, with the attenuation and ridge chosen by exact cross-validation, the
@@ -72,6 +76,9 @@ LANDMARKS = (5, 10, 20, 40)
 REPEATS = 10
 RANDOM_DRAWS = 5
 RULES = ("herding", "herding-gauss", "maxmin", "kmedoids", "pivoted_cholesky", "random")
+#: rules that need no field: they choose from the structures alone (subsets stage only)
+CHEAP_RULES = ("fingerprints", "size")
+SUBSET_RULES = RULES[:-1] + CHEAP_RULES + RULES[-1:]
 
 
 def _gauss_layer(K):
@@ -113,6 +120,25 @@ def _select(rule, K_lin, K_gauss, k, seed=0):
 
 # --------------------------------------------------------------------------- stage: subsets
 
+def fingerprint_maxmin(mols, k, seed=0):
+    """k molecules by max-min on Morgan fingerprints (radius 2, 2048 bits) with the Tanimoto
+    distance: RDKit's MaxMinPicker, the usual way to pick a diverse subset without any field."""
+    from rdkit.Chem import rdFingerprintGenerator
+    from rdkit.SimDivFilters.rdSimDivPickers import MaxMinPicker
+    gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+    fps = [gen.GetFingerprint(m) for m in mols]
+    return np.array(list(MaxMinPicker().LazyBitVectorPick(fps, len(fps), int(k), seed=int(seed))),
+                    int)
+
+
+def size_spread(mols, k):
+    """k molecules spread evenly over the number of heavy atoms: the molecule at the middle of
+    each of k equal parts of the pool sorted by that number (ties in the order of the pool)."""
+    heavy = np.array([m.GetNumHeavyAtoms() for m in mols])
+    order = np.argsort(heavy, kind="stable")
+    return order[((np.arange(int(k)) + 0.5) * len(mols) / int(k)).astype(int)]
+
+
 def _fit_and_score(Ks, y, S, te, seed):
     best = None
     for alpha, K in Ks.items():
@@ -133,7 +159,7 @@ def _mmd_between(K, A, B):
     return float(K[np.ix_(A, A)].mean() - 2 * K[np.ix_(A, B)].mean() + K[np.ix_(B, B)].mean())
 
 
-def subsets_set(name, repeats=REPEATS):
+def subsets_set(name, repeats=REPEATS, rules=SUBSET_RULES):
     mols, names, y, Ks = _load(name)
     n = len(y)
     K_sel = Ks[SELECT_ALPHA]
@@ -150,10 +176,15 @@ def subsets_set(name, repeats=REPEATS):
         for m in SIZES:
             if m > len(pool) - 2:
                 continue
-            for rule in RULES:
+            for rule in rules:
                 draws = RANDOM_DRAWS if rule == "random" else 1
                 for d in range(draws):
-                    local = _select(rule, K_pool, K_pool_g, m, seed=1000 * rep + d)
+                    if rule == "fingerprints":
+                        local = fingerprint_maxmin([mols[i] for i in pool], m, seed=rep)
+                    elif rule == "size":
+                        local = size_spread([mols[i] for i in pool], m)
+                    else:
+                        local = _select(rule, K_pool, K_pool_g, m, seed=1000 * rep + d)
                     S = pool[np.sort(local)]
                     got = _fit_and_score(Ks, y, S, te, rep)
                     rows.append({"repeat": rep, "m": m, "rule": rule, "draw": d,
@@ -361,15 +392,16 @@ def report(results=RESULTS):
               "a model fitted on them alone predicts the test set. `random` is the mean of "
               f"{RANDOM_DRAWS} draws per split. The kernel the subsets are chosen on is the joint "
               f"kernel at alpha = {SELECT_ALPHA}; `herding-gauss` uses a Gaussian of the field "
-              "distance instead. MMD^2 is between the chosen molecules and the pool, in the "
-              "joint kernel.", "",
+              "distance instead. `fingerprints` (max-min on Morgan fingerprints, Tanimoto) and "
+              "`size` (spread evenly over the number of heavy atoms) need no field. MMD^2 is "
+              "between the chosen molecules and the pool, in the joint kernel.", "",
               "| m | rule | R2pred on the test set | RMSE on the test set | MMD^2 to the pool | "
               "MMD^2 to the test set | RMSE minus random, mean over sets [95 % interval] | "
               "sets where better than random |",
               "|---:|---|---:|---:|---:|---:|---:|---:|"]
         for m in SIZES:
             base = _per_set(data, m, "random", "rmse")
-            for rule in RULES:
+            for rule in SUBSET_RULES:
                 r2 = _per_set(data, m, rule, "r2pred")
                 if all(v is None for v in r2):
                     continue
@@ -392,11 +424,11 @@ def report(results=RESULTS):
               f"{np.mean(full):.3f}. The activity's standard deviation averages "
               f"{np.mean([d['activity_sd'] for d in data]):.2f}.", ""]
         L += ["### R2pred by set, m = 20", "",
-              "| set | n | " + " | ".join(f"`{r}`" for r in RULES) + " |",
-              "|---|---:|" + "---:|" * len(RULES)]
+              "| set | n | " + " | ".join(f"`{r}`" for r in SUBSET_RULES) + " |",
+              "|---|---:|" + "---:|" * len(SUBSET_RULES)]
         for d in data:
             cells = []
-            for rule in RULES:
+            for rule in SUBSET_RULES:
                 v = [r["r2pred"] for r in d["rows"] if r["m"] == 20 and r["rule"] == rule]
                 cells.append(f"{np.mean(v):+.2f}" if v else "--")
             L.append(f"| {d['set']} | {d['n']} | " + " | ".join(cells) + " |")
