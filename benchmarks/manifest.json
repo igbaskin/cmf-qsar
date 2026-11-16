@@ -1,6 +1,6 @@
 {
- "commit": "10d44bde4e1b861620ed6159e65d86229b48cf85",
- "created": "2026-11-16T06:53:49",
+ "commit": "5dcdadf166a1daf8719805451bf240d35078a068",
+ "created": "2026-11-16T07:08:51",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3180,8 +3180,8 @@
   "benchmarks/results/hammett/table.md": "1ff394fbb71c2bff39075d570668cc9bbbc9b2482462d3091d8c1c0e1037e68f",
   "benchmarks/results/herding/landmarks.json": "74a9edaf01b0dbb1625acd3a4748955e567a3506908d6be7acc2ed657cbb7fff",
   "benchmarks/results/herding/members.json": "a3cf9b02042afbcea48e4f78cee960c6bcb2976a9797f1651a3dfa291d98ef17",
-  "benchmarks/results/herding/subsets.json": "1b77f2e02d8c8608061b90dbc825013342f3f024a95dcb1a8caa661af679bdcb",
-  "benchmarks/results/herding/table.md": "c732080e28551526c1eb89789163f59369264d6e723b255f7a2ebb7f79337865",
+  "benchmarks/results/herding/subsets.json": "2672c90676f9299b7507c546b4e67f60f5158e6c0b2ce1eb74324715a457dbc7",
+  "benchmarks/results/herding/table.md": "962e16603e74689a5758b867e02e12603da9e5cb54b27baeec2c83edc5feb395",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
   "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",
