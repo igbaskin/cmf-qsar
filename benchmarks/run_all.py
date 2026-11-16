@@ -1006,6 +1006,16 @@ def registry() -> List[Benchmark]:
                   minutes="25",
                   report=lambda: _mod("run_nanotubes").report(),
                   tables=["nanotubes/table.md"]),
+        Benchmark("ligand_shells",
+                  "the surface kernel on the surface of a particle: a flat core against the flat "
+                  "kernel, turning the particle, the limit of a large sphere, and 216 generated "
+                  "ligand shells on gold icosahedra against the plain autocorrelation (plan item "
+                  "NT5)",
+                  "run_ligand_shells.py", "ligand_shells",
+                  compute=[["--stage", "checks"], ["--stage", "model"]],
+                  minutes="12",
+                  report=lambda: _mod("run_ligand_shells").report(),
+                  tables=["ligand_shells/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

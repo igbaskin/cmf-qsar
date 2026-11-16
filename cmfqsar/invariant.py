@@ -158,12 +158,21 @@ def surface_autocorrelation(mol: MoleculeFields, spec: SurfaceSpec = SurfaceSpec
     W = np.asarray(mol.weights, float)
     n_atoms, n_fields = W.shape
     pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
-    centres, heights = spec.centres, spec.heights
     if n_atoms == 0:
         return np.zeros(len(pairs) * spec.n_bins)
     xy = np.asarray(mol.coords, float)[:, :2]
     z = np.asarray(mol.coords, float)[:, 2]
     rho = np.linalg.norm(xy[:, None, :] - xy[None, :, :], axis=-1)
+    return _surface_channels(W, rho, z, spec, pairs)
+
+
+def _surface_channels(W: np.ndarray, rho: np.ndarray, z: np.ndarray, spec: SurfaceSpec,
+                      pairs: Sequence[Tuple[int, int]]) -> np.ndarray:
+    """The channels of the surface kernel from the distance along the surface between every two
+    atoms, `rho` (n, n), and the height of every atom, `z` (n,): shared by the flat surface and
+    the surface of a particle (plan item NT5)."""
+    centres, heights = spec.centres, spec.heights
+    rho = np.array(rho, float)
     if not spec.include_self:
         np.fill_diagonal(rho, np.inf)
     B = np.exp(-((rho[:, :, None] - centres[None, None, :]) ** 2) / (2.0 * spec.sigma ** 2))
@@ -175,6 +184,214 @@ def surface_autocorrelation(mol: MoleculeFields, spec: SurfaceSpec = SurfaceSpec
             t = t + np.einsum("a,b,abk,ai,bj->kij", W[:, g], W[:, f], B, Z, Z, optimize=True)
         out[i] = t
     return out.ravel()
+
+
+# --------------------------------------------------------------------------- #
+# The surface of a particle (plan item NT5)
+# --------------------------------------------------------------------------- #
+#
+# A ligand shell sits on a curved surface.  The flat surface kernel above measures the height
+# above z = 0 and the distance in the plane; on a particle the height becomes the distance from
+# the core's surface, and the distance in the plane becomes the distance between the two atoms'
+# anchor points -- their nearest points on that surface -- measured along it.  Three surfaces
+# have that distance in closed form, and they are the shapes of nanoscience: a plane (a slab, a
+# facet), a sphere (a particle), and a cylinder (a rod, a wire, a tube).  On a plane the anchor
+# point is the projection, the height is the coordinate along the normal and the path along the
+# surface is the straight distance in the plane, so a flat core gives the flat kernel exactly.
+#
+# The surface passes through the centres of the outermost core atoms, as z = 0 passes through the
+# top layer of a slab in examples/uma_fe110_adsorption.py.
+
+#: the shapes a core surface can take
+CORE_SHAPES = ("plane", "sphere", "cylinder")
+
+
+@dataclass(frozen=True)
+class ParticleSurfaceSpec(SurfaceSpec):
+    """The grid of the surface kernel, measured on the surface of a particle (plan item NT5).
+
+    The heights are distances from the core's surface and the in-plane distance is the distance
+    along that surface between the two atoms' anchor points (see :class:`CoreSurface`).  `shape`
+    is the surface fitted to the core atoms: "plane", "sphere" or "cylinder".
+    """
+    shape: str = "sphere"
+
+
+@dataclass
+class CoreSurface:
+    """A plane, a sphere or a cylinder through the outermost atoms of a core.
+
+    ``centre`` is a point of the plane, or the centre of the sphere, or a point of the cylinder's
+    axis; ``axis`` is the unit normal of the plane (pointing to the ligands) or the unit axis of
+    the cylinder; ``radius`` is that of the sphere or the cylinder.
+    """
+    shape: str
+    centre: np.ndarray
+    axis: np.ndarray
+    radius: float = 0.0
+
+    def heights(self, X: np.ndarray) -> np.ndarray:
+        """The distance of every point from the surface, positive outside the core."""
+        D = np.asarray(X, float) - self.centre
+        if self.shape == "plane":
+            return D @ self.axis
+        if self.shape == "sphere":
+            return np.linalg.norm(D, axis=1) - self.radius
+        radial = D - np.outer(D @ self.axis, self.axis)
+        return np.linalg.norm(radial, axis=1) - self.radius
+
+    def along(self, X: np.ndarray) -> np.ndarray:
+        """(n, n): the distance along the surface between the anchor points of every two points.
+
+        Plane: the distance between the projections.  Sphere: the radius times the angle between
+        the two directions from the centre (a great-circle arc).  Cylinder: the surface unrolled,
+        sqrt((R dphi)^2 + dt^2), with dphi the shorter way round and t the position on the axis.
+        """
+        D = np.asarray(X, float) - self.centre
+        if self.shape == "plane":
+            P = D - np.outer(D @ self.axis, self.axis)
+            return np.linalg.norm(P[:, None, :] - P[None, :, :], axis=-1)
+        if self.shape == "sphere":
+            U = D / np.maximum(np.linalg.norm(D, axis=1), 1e-12)[:, None]
+            chord = np.linalg.norm(U[:, None, :] - U[None, :, :], axis=-1)
+            # 2 arcsin(chord / 2) keeps its precision at small angles, where arccos does not
+            return self.radius * 2.0 * np.arcsin(np.clip(0.5 * chord, 0.0, 1.0))
+        t = D @ self.axis
+        radial = D - np.outer(t, self.axis)
+        e1 = _perpendicular(self.axis)
+        e2 = np.cross(self.axis, e1)
+        phi = np.arctan2(radial @ e2, radial @ e1)
+        dphi = np.abs(phi[:, None] - phi[None, :])
+        dphi = np.minimum(dphi, 2.0 * np.pi - dphi)
+        return np.sqrt((self.radius * dphi) ** 2 + (t[:, None] - t[None, :]) ** 2)
+
+
+def _perpendicular(a: np.ndarray) -> np.ndarray:
+    """A unit vector perpendicular to `a`."""
+    e = np.eye(3)[int(np.argmin(np.abs(a)))]
+    v = e - (e @ a) * a
+    return v / np.linalg.norm(v)
+
+
+def _outer_atoms(core: np.ndarray, tol: float = 0.5) -> np.ndarray:
+    """The core atoms within `tol` angstrom of the convex hull: the outermost layer."""
+    if len(core) < 5:
+        return np.ones(len(core), bool)
+    from scipy.spatial import ConvexHull
+    try:
+        hull = ConvexHull(core)
+    except Exception:                                        # noqa: BLE001 - a flat core
+        return np.ones(len(core), bool)
+    eq = hull.equations                                       # n . x + b <= 0 inside
+    depth = -(core @ eq[:, :3].T + eq[:, 3][None, :])        # distance inside every facet
+    return depth.min(axis=1) <= tol
+
+
+def fit_core_surface(core, shape: str = "sphere",
+                     towards: Optional[np.ndarray] = None) -> CoreSurface:
+    """The surface of a core: a plane, a sphere or a cylinder through its outermost atoms.
+
+    `core` is an (n, 3) array of positions, or anything with ``get_positions``.  Plane: the
+    normal is the direction in which the core is thinnest, turned to point at `towards` (the
+    ligands; +z when there are none), and the plane passes through the outermost atom along it.
+    Sphere: the centre is the centroid of the core and the radius the mean distance of its outer
+    atoms (those on its convex hull) from it.  Cylinder: the axis is the direction in which the
+    core is longest, through its centroid, and the radius is the mean distance of the outer atoms
+    from the axis, the end caps left out.
+    """
+    if shape not in CORE_SHAPES:
+        raise ValueError(f"unknown core shape {shape!r}; the shapes are {', '.join(CORE_SHAPES)}")
+    X = np.asarray(core.get_positions() if hasattr(core, "get_positions") else core, float)
+    if X.ndim != 2 or X.shape[1] != 3 or len(X) == 0:
+        raise ValueError("the core needs the positions of at least one atom, as an (n, 3) array")
+    c = X.mean(axis=0)
+    C = X - c
+    vals, vecs = np.linalg.eigh(C.T @ C)
+    if shape == "plane":
+        n = vecs[:, 0]
+        target = (np.asarray(towards, float).mean(axis=0) - c if towards is not None
+                  and len(towards) else np.array([0.0, 0.0, 1.0]))
+        if n @ target < 0:
+            n = -n
+        # the outermost layer alone: the thinnest direction of a whole slab is tilted when its
+        # layers are shifted against each other (the ABC stacking of fcc(111)), while a single
+        # layer has no spread along its normal at all
+        top = X[X @ n >= (X @ n).max() - 1.0]
+        if len(top) >= 3:
+            T = top - top.mean(axis=0)
+            m = np.linalg.eigh(T.T @ T)[1][:, 0]
+            n = m if m @ n >= 0 else -m
+        k = int(np.argmax(X @ n))
+        return CoreSurface("plane", centre=X[k].copy(), axis=n)
+    outer = _outer_atoms(X)
+    if shape == "sphere":
+        return CoreSurface("sphere", centre=c, axis=np.array([0.0, 0.0, 1.0]),
+                           radius=float(np.mean(np.linalg.norm(C[outer], axis=1))))
+    a = vecs[:, -1]
+    t = C @ a
+    radial = np.linalg.norm(C - np.outer(t, a), axis=1)
+    half = 0.5 * (t.max() - t.min())
+    side = outer & (np.abs(t - 0.5 * (t.max() + t.min())) <= 0.8 * half)
+    use = side if side.any() else outer
+    return CoreSurface("cylinder", centre=c, axis=a, radius=float(np.mean(radial[use])))
+
+
+def with_core(record, core):
+    """A copy of a molecule or structure record with its core attached, for the particle kernel.
+
+    The record holds the ligand shell (its fields are the ones the kernel reads); `core` holds
+    the positions of the core atoms, an (n, 3) array or anything with ``get_positions``.
+    """
+    import copy
+    out = copy.copy(record)
+    out.core = np.asarray(core.get_positions() if hasattr(core, "get_positions") else core,
+                          float)
+    return out
+
+
+def particle_surface_autocorrelation(mol, spec: ParticleSurfaceSpec = ParticleSurfaceSpec(),
+                                     pairs: Optional[Sequence[Tuple[int, int]]] = None,
+                                     core=None) -> np.ndarray:
+    """The surface kernel's channels of a ligand shell on the surface of its core (plan item NT5).
+
+    `core` is the core's positions; without it the record's own ``core`` (set by
+    :func:`with_core`) is used.  The heights are the distances from the core surface and the
+    in-plane distance is the distance along it between the anchor points; otherwise this is
+    :func:`surface_autocorrelation`, channel for channel.
+    """
+    W = np.asarray(mol.weights, float)
+    n_atoms, n_fields = W.shape
+    pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
+    if n_atoms == 0:
+        return np.zeros(len(pairs) * spec.n_bins)
+    core = core if core is not None else getattr(mol, "core", None)
+    if core is None:
+        raise ValueError(f"{getattr(mol, 'name', '') or 'this sample'} has no core: attach the "
+                         f"positions of its core atoms with cmfqsar.invariant.with_core")
+    X = np.asarray(mol.coords, float)
+    surface = fit_core_surface(core, spec.shape, towards=X)
+    return _surface_channels(W, surface.along(X), surface.heights(X), spec, pairs)
+
+
+def particle_surface_feature_matrix(mols: Sequence,
+                                    spec: ParticleSurfaceSpec = ParticleSurfaceSpec(),
+                                    n_fields: Optional[int] = None, progress=None) -> np.ndarray:
+    """Particle surface features of a set of ligand shells, one row each (plan item NT5)."""
+    if not len(mols):
+        return np.zeros((0, 0))
+    n_fields = n_fields if n_fields is not None else mols[0].weights.shape[1]
+    pairs = field_pairs(n_fields)
+    out = np.zeros((len(mols), sum(surface_block_sizes(spec, n_fields))))
+    for i, m in enumerate(mols):
+        if m.weights.shape[1] != n_fields:
+            raise ValueError(
+                f"{m.name or f'sample {i}'} carries {m.weights.shape[1]} fields where the set "
+                f"carries {n_fields}: build the fields of every sample from one field set.")
+        out[i] = particle_surface_autocorrelation(m, spec, pairs)
+        if progress is not None and i % 25 == 0:
+            progress(f"Particle surface autocorrelation {i + 1}/{len(mols)}",
+                     i / max(len(mols), 1))
+    return out
 
 
 def surface_block_sizes(spec: SurfaceSpec, n_fields: int) -> List[int]:

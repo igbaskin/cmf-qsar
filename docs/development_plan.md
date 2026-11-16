@@ -4066,6 +4066,27 @@ tests whether the target is reproducible between sources before any kernel is co
   becomes the distance between anchor points along the surface. A `ParticleSurfaceSpec` beside
   `SurfaceSpec`, with the core given as a set of atoms, and a test that a flat core reproduces the
   surface kernel exactly. One week.
+  **Built and measured 16 November 2026.** `ParticleSurfaceSpec` (a `SurfaceSpec` with a
+  `shape`), `CoreSurface` and `fit_core_surface` in `cmfqsar/invariant.py`: a plane, a sphere or
+  a cylinder through the outermost core atoms, the height an atom's distance from it and the
+  in-plane distance the distance along it between the two anchor points (projection, great-circle
+  arc, unrolled cylinder). The surface kernel's channels were split out into one function that
+  both use, with unchanged arithmetic. `with_core` attaches a sample's core, and
+  `CMFModel(kernel_source="particle", particle_shape=...)` reads it (saved with the model).
+  **Found on the way:** the thinnest direction of a finite fcc(111) slab is tilted by about two
+  degrees, because the ABC stacking shifts the layers against each other, so the plane is fitted
+  to the outermost layer alone; and arccos of a dot product loses half the digits at small
+  angles, so the arc uses 2 arcsin of half the chord.
+  **Measured** (`benchmarks/run_ligand_shells.py`, about 10 minutes): a flat core reproduces the
+  surface kernel exactly (difference 0) for three molecules on Au(111) and Au(100); a sphere and
+  a cylinder are invariant to turning and moving to 6e-16 and 8e-16; a flat patch wrapped onto
+  spheres of 10 to 500 A tends to the flat kernel as 1/R^2 (1.2e-2 to 4.9e-6). On 216 generated
+  thiolate shells on gold icosahedra (target: the accessibility of the end groups to a 1.4 A
+  probe) the particle kernel reaches q2 0.706 (0.738 on a finer grid), below the autocorrelation
+  of the shell alone (0.810), of the core and shell together (0.862) and a Gaussian kernel on the
+  recipe the shells were built from (0.836). The distance along the surface and the two heights
+  leave out the radius of the core, which the spatial distances between neighbouring chains
+  depend on. What the item still needs is a measured property of coated particles.
 * **NT6. Fields for the core.** `inorganic_fieldset` gives oxidation states, atomic volume,
   electronegativity, mass and element indicators. A particle core adds the coordination number and
   the surface exposure of each atom, which `cmfqsar/exposure.py` computes for molecules and can be
@@ -9347,7 +9368,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 5 | NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 6 | NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9359,7 +9380,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 128 finished, 10 partly, 38 open.**
+**176 items: 129 finished, 10 partly, 37 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9384,7 +9405,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT5 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT6, NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

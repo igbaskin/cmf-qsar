@@ -1180,7 +1180,8 @@ class CMFModel:
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
     kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" |
-                                            # "periodic" | "reciprocal" | "threebody"
+                                            # "periodic" | "reciprocal" | "threebody" |
+                                            # "particle"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     ac_chirality: bool = False              # autocorrelation: add the three-point signed block
@@ -1190,6 +1191,11 @@ class CMFModel:
     surf_z_min: float = 1.0                 # surface: lowest height channel (A)
     surf_z_max: float = 6.0                 # surface: highest height channel (A)
     surf_z_step: float = 1.0                # surface: spacing and width of the height channels
+    # "particle": the same channels measured on the surface of a particle's core (plan item NT5):
+    # the height is the distance from the core surface and the in-plane distance the distance
+    # along it.  Every sample carries its core (cmfqsar.invariant.with_core); the surface fitted
+    # to the core atoms is a "plane", a "sphere" or a "cylinder".
+    particle_shape: str = "sphere"
     # "periodic": the autocorrelation of a crystal, summed over a neighbour list with periodic
     # images, per atom of the cell, with the uniform background removed and a tapered cutoff
     # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
@@ -1552,7 +1558,8 @@ class CMFModel:
                         ac_sigma=self.ac_sigma, ac_d_max=self.ac_d_max,
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
-                        surf_z_step=self.surf_z_step, pbc_background=self.pbc_background,
+                        surf_z_step=self.surf_z_step, particle_shape=self.particle_shape,
+                        pbc_background=self.pbc_background,
                         pbc_taper=self.pbc_taper, pbc_overlap=self.pbc_overlap,
                         pbc_z_max=self.pbc_z_max, pbc_z_step=self.pbc_z_step,
                         pbc_oriented=self.pbc_oriented,
@@ -1568,8 +1575,14 @@ class CMFModel:
 
     @property
     def on_surface(self) -> bool:
-        """True for the surface kernel: in-plane invariant, height kept."""
-        return self.kernel_source == "surface"
+        """True for the surface kernel: in-plane invariant, height kept; also on the surface of
+        a particle (plan item NT5), whose channels are laid out the same way."""
+        return self.kernel_source in ("surface", "particle")
+
+    @property
+    def on_particle(self) -> bool:
+        """True for the surface kernel measured on the surface of a particle's core (NT5)."""
+        return self.kernel_source == "particle"
 
     @property
     def is_periodic(self) -> bool:
@@ -1604,6 +1617,14 @@ class CMFModel:
             return PeriodicSpec(r_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                 sigma=float(self.ac_sigma), background=bool(self.pbc_background),
                                 taper=float(self.pbc_taper), z_max=float(self.pbc_z_max), z_step=float(self.pbc_z_step), oriented=bool(self.pbc_oriented))
+        if self.on_particle:
+            from .invariant import ParticleSurfaceSpec
+            return ParticleSurfaceSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
+                                       sigma=float(self.ac_sigma), z_min=float(self.surf_z_min),
+                                       z_max=float(self.surf_z_max),
+                                       z_step=float(self.surf_z_step),
+                                       z_sigma=float(self.surf_z_step),
+                                       shape=str(self.particle_shape))
         if self.on_surface:
             return SurfaceSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                sigma=float(self.ac_sigma), z_min=float(self.surf_z_min),
@@ -1653,7 +1674,10 @@ class CMFModel:
             from .periodic import periodic_feature_matrix
             fn = periodic_feature_matrix
         else:
-            if self.on_surface:
+            if self.on_particle:
+                from .invariant import particle_surface_feature_matrix
+                fn = particle_surface_feature_matrix
+            elif self.on_surface:
                 fn = surface_feature_matrix
             else:
                 # the field set is needed only to expand a probe field into its Gaussian terms
@@ -2900,6 +2924,7 @@ class CMFModel:
             "surf_z_min": self.surf_z_min,
             "surf_z_max": self.surf_z_max,
             "surf_z_step": self.surf_z_step,
+            "particle_shape": self.particle_shape,
             "pbc_background": self.pbc_background,
             "pbc_taper": self.pbc_taper,
             "pbc_z_max": self.pbc_z_max,
@@ -2961,6 +2986,7 @@ class CMFModel:
         m.surf_z_min = float(st.get("surf_z_min", 1.0))
         m.surf_z_max = float(st.get("surf_z_max", 6.0))
         m.surf_z_step = float(st.get("surf_z_step", 1.0))
+        m.particle_shape = str(st.get("particle_shape", "sphere"))
         m.pbc_background = bool(st.get("pbc_background", True))
         m.pbc_taper = float(st.get("pbc_taper", 2.0))
         m.pbc_z_max = float(st.get("pbc_z_max", 0.0))

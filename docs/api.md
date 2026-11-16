@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 841 public methods, and 1395 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 261 classes with 844 public methods, and 1399 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -8799,12 +8799,83 @@ Attributes:
 
 Channels per pair of field types: distances times heights squared.
 
+### `class ParticleSurfaceSpec  — bases: SurfaceSpec  (dataclass)`
+
+The grid of the surface kernel, measured on the surface of a particle (plan item NT5).
+
+The heights are distances from the core's surface and the in-plane distance is the distance
+along that surface between the two atoms' anchor points (see `CoreSurface`).  `shape`
+is the surface fitted to the core atoms: "plane", "sphere" or "cylinder".
+
+Attributes:
+
+- `shape: str` = `'sphere'`
+
+### `class CoreSurface  (dataclass)`
+
+A plane, a sphere or a cylinder through the outermost atoms of a core.
+
+`centre` is a point of the plane, or the centre of the sphere, or a point of the cylinder's
+axis; `axis` is the unit normal of the plane (pointing to the ligands) or the unit axis of
+the cylinder; `radius` is that of the sphere or the cylinder.
+
+Attributes:
+
+- `shape: str`
+- `centre: np.ndarray`
+- `axis: np.ndarray`
+- `radius: float` = `0.0`
+
+#### `CoreSurface.heights(X: np.ndarray) -> np.ndarray`
+
+The distance of every point from the surface, positive outside the core.
+
+#### `CoreSurface.along(X: np.ndarray) -> np.ndarray`
+
+(n, n): the distance along the surface between the anchor points of every two points.
+
+Plane: the distance between the projections.  Sphere: the radius times the angle between
+the two directions from the centre (a great-circle arc).  Cylinder: the surface unrolled,
+sqrt((R dphi)^2 + dt^2), with dphi the shorter way round and t the position on the axis.
+
 ### `surface_autocorrelation(mol: MoleculeFields, spec: SurfaceSpec=SurfaceSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
 
 Surface autocorrelation of one molecule, flattened: (n_pairs * n_rho * n_z * n_z,).
 
 For a pair of different field types both orders are summed (f at z_i with g at z_j, and
 g at z_i with f at z_j), as the three-dimensional descriptor counts a pair both ways round.
+
+### `fit_core_surface(core, shape: str='sphere', towards: Optional[np.ndarray]=None) -> CoreSurface`
+
+The surface of a core: a plane, a sphere or a cylinder through its outermost atoms.
+
+`core` is an (n, 3) array of positions, or anything with `get_positions`.  Plane: the
+normal is the direction in which the core is thinnest, turned to point at `towards` (the
+ligands; +z when there are none), and the plane passes through the outermost atom along it.
+Sphere: the centre is the centroid of the core and the radius the mean distance of its outer
+atoms (those on its convex hull) from it.  Cylinder: the axis is the direction in which the
+core is longest, through its centroid, and the radius is the mean distance of the outer atoms
+from the axis, the end caps left out.
+
+### `with_core(record, core)`
+
+A copy of a molecule or structure record with its core attached, for the particle kernel.
+
+The record holds the ligand shell (its fields are the ones the kernel reads); `core` holds
+the positions of the core atoms, an (n, 3) array or anything with `get_positions`.
+
+### `particle_surface_autocorrelation(mol, spec: ParticleSurfaceSpec=ParticleSurfaceSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None, core=None) -> np.ndarray`
+
+The surface kernel's channels of a ligand shell on the surface of its core (plan item NT5).
+
+`core` is the core's positions; without it the record's own `core` (set by
+`with_core`) is used.  The heights are the distances from the core surface and the
+in-plane distance is the distance along it between the anchor points; otherwise this is
+`surface_autocorrelation`, channel for channel.
+
+### `particle_surface_feature_matrix(mols: Sequence, spec: ParticleSurfaceSpec=ParticleSurfaceSpec(), n_fields: Optional[int]=None, progress=None) -> np.ndarray`
+
+Particle surface features of a set of ligand shells, one row each (plan item NT5).
 
 ### `surface_block_sizes(spec: SurfaceSpec, n_fields: int) -> List[int]`
 
@@ -11455,6 +11526,7 @@ Attributes:
 - `surf_z_min: float` = `1.0`
 - `surf_z_max: float` = `6.0`
 - `surf_z_step: float` = `1.0`
+- `particle_shape: str` = `'sphere'`
 - `pbc_background: bool` = `True`
 - `pbc_taper: float` = `2.0`
 - `pbc_z_max: float` = `0.0`
@@ -11509,7 +11581,12 @@ this, so that a model on an invariant kernel is validated as the kernel it is.
 
 #### `CMFModel.on_surface` -> bool  (property)
 
-True for the surface kernel: in-plane invariant, height kept.
+True for the surface kernel: in-plane invariant, height kept; also on the surface of
+a particle (plan item NT5), whose channels are laid out the same way.
+
+#### `CMFModel.on_particle` -> bool  (property)
+
+True for the surface kernel measured on the surface of a particle's core (NT5).
 
 #### `CMFModel.is_periodic` -> bool  (property)
 

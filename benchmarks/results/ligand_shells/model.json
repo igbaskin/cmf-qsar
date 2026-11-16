@@ -1,0 +1,76 @@
+{
+ "n": 216,
+ "target_range": [
+  0.5724285714285715,
+  0.668888888888889
+ ],
+ "shell_atoms": [
+  32,
+  840
+ ],
+ "core_atoms": [
+  55,
+  147,
+  309
+ ],
+ "core_radius": [
+  5.77,
+  8.65,
+  11.54
+ ],
+ "ligands": [
+  8,
+  105
+ ],
+ "build_seconds": 28.162835100025404,
+ "kernel_seconds": {
+  "particle surface kernel (sphere)": 7.876697200001217,
+  "particle surface kernel (sphere), heights every 1 A, distances every 0.5 A": 15.301811600045767,
+  "autocorrelation of the shell alone": 6.442389200034086,
+  "autocorrelation of the core and the shell": 13.08112050005002
+ },
+ "results": {
+  "particle surface kernel (sphere)": {
+   "rmse": 0.01008581993435296,
+   "rmse_sd": 0.0003592885194909349,
+   "q2": 0.7056592838825713,
+   "q2_sd": 0.02099201906828411
+  },
+  "particle surface kernel (sphere), heights every 1 A, distances every 0.5 A": {
+   "rmse": 0.009513944022722591,
+   "rmse_sd": 0.00041360330153725926,
+   "q2": 0.7379293745380768,
+   "q2_sd": 0.02300599503690251
+  },
+  "autocorrelation of the shell alone": {
+   "rmse": 0.00810117307733546,
+   "rmse_sd": 0.0002055465069850469,
+   "q2": 0.8102191177900544,
+   "q2_sd": 0.009583681793923493
+  },
+  "autocorrelation of the core and the shell": {
+   "rmse": 0.006919657692882879,
+   "rmse_sd": 6.25872023250009e-05,
+   "q2": 0.8616172688486371,
+   "q2_sd": 0.002500554853663446
+  },
+  "Gaussian kernel on the recipe": {
+   "rmse": 0.007528322347761273,
+   "rmse_sd": 0.00017507469293344746,
+   "q2": 0.8361266351853633,
+   "q2_sd": 0.007637923082371859
+  },
+  "linear regression on the recipe": {
+   "rmse": 0.010168374163140639,
+   "rmse_sd": 6.102226129812403e-05,
+   "q2": 0.7011895198636257,
+   "q2_sd": 0.003587031454506513
+  },
+  "the mean of the training part": {
+   "rmse": 0.01870229892122047,
+   "rmse_sd": 4.7164163264025554e-05,
+   "q2": -0.010810857293173904,
+   "q2_sd": 0.005100105907210972
+  }
+ }
+}

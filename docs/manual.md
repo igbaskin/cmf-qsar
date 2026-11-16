@@ -9709,6 +9709,63 @@ one of the differences between the surface kernel and the count.
 
 ![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)
 
+### On the surface of a particle
+
+A ligand shell sits on a curved surface. Plan item NT5 measures the same channels on the surface
+of a particle's core (`ParticleSurfaceSpec` in `cmfqsar/invariant.py`). The height of an atom is
+its distance from the core's surface. The in-plane distance between two atoms is the distance
+along that surface between their anchor points, the points of the surface nearest to them. The
+surface is fitted to the outermost core atoms and is one of three shapes, chosen with
+`particle_shape`:
+
+| Shape | Height | Distance along the surface |
+|---|---|---|
+| plane | the coordinate along the normal of the outermost layer | the distance between the two projections onto the plane |
+| sphere | the distance from the centre minus the radius | the radius times the angle between the two directions from the centre |
+| cylinder | the distance from the axis minus the radius | the surface unrolled: the square root of (R Δφ)² + Δt², with Δφ the angle about the axis and Δt the distance along it |
+
+The plane passes through the outermost layer of the core and its normal points at the ligands.
+The sphere's centre is the centroid of the core and its radius the mean distance of the atoms
+on the core's convex hull. The cylinder's axis is the core's longest direction. Each sample
+carries its own core: `cmfqsar.invariant.with_core(record, core_positions)` attaches it, and
+`CMFModel(kernel_source="particle", particle_shape="sphere")` uses it, with the same grid
+settings as the surface kernel. Neither the command line nor the model panel offers it yet.
+
+`benchmarks/run_ligand_shells.py` checks the kernel and measures it:
+
+* **A flat core gives the flat kernel exactly.** Ethanol, benzene and acetic acid on Au(111) and
+  Au(100) slabs whose top layer is at z = 0: the difference is zero, not merely small.
+* **It is invariant to turning and moving the particle.** On a gold particle (sphere) and a gold
+  wire (cylinder), the channels of the turned and moved system differ by 6e-16 and 8e-16 of the
+  largest entry; the flat kernel, which takes z as the height, changes completely.
+* **A large sphere tends to the flat kernel**, as the square of the curvature: one patch wrapped
+  onto spheres of 10, 20, 50, 100, 200 and 500 Å differs from its flat kernel by 1.2e-2, 3.0e-3,
+  4.8e-4, 1.2e-4, 2.9e-5 and 4.9e-6.
+* **It is cheap**: 0.3 s for a shell of 840 atoms on a core of 309.
+
+What it is worth was measured on 216 generated shells: chains of 2, 4 or 6 carbon atoms on sulfur
+anchors, ending in O, N or C, covering 20 to 65 % of the surface atoms of gold icosahedra of 55,
+147 and 309 atoms, each chain tilted at random. The target is how accessible the end groups are
+to a 1.4 Å probe, a property of how the shell is arranged around the core. In 5-fold
+cross-validation repeated with five seeds:
+
+| Model | q2 |
+|---|---:|
+| Particle surface kernel (sphere) | 0.706 |
+| The same, heights every 1 Å and distances every 0.5 Å | 0.738 |
+| Autocorrelation of the shell alone | 0.810 |
+| Autocorrelation of the core and the shell together | 0.862 |
+| Gaussian kernel on the recipe (1/R, coverage, chain length, end group) | 0.836 |
+| Linear regression on the recipe | 0.701 |
+
+On this target the particle kernel is the weakest of the kernels: the plain distances between
+the atoms in space, with the core's atoms among them, describe the shell better. A distance along
+the surface and two heights say where two atoms sit relative to the core, but not how far apart
+they are in space, which depends on the radius of the core. So the particle kernel is the right
+frame when the property is about positions relative to the surface, as the flat kernel was for
+molecules on Fe(110); it is not shown to be needed for a property of the shell's packing. A
+measured property of coated particles is what would settle when it is.
+
 ## Posed by rule: the surface frame without the slab
 
 The surface kernel needs only the normal, but it cannot draw a co-field; the overlap kernel can,

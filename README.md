@@ -1127,6 +1127,17 @@ of the whole particle from q2 0.455 to 0.910. A regression on the neighbour pair
 lattice shells is still the better model of the energy of the whole particle (q2 0.994, every
 fold) and of particles larger than every training particle (13.8 meV per atom).
 
+### The surface kernel on the surface of a particle
+
+Plan item NT5 (`cmfqsar/invariant.py`, `benchmarks/run_ligand_shells.py`): the surface kernel's
+channels measured on the surface of a particle's core, a plane, a sphere or a cylinder fitted to
+its outermost atoms (`ParticleSurfaceSpec`, `CMFModel(kernel_source="particle")`). The height is
+the distance from the core's surface and the in-plane distance the distance along it. A flat
+core gives the flat kernel exactly, and a sphere or a cylinder makes the channels invariant to
+turning the particle (to 1e-15). On 216 generated ligand shells the kernel predicts how
+accessible the end groups are with q2 0.706 to 0.738, below the plain autocorrelation of the
+shell (0.810) and of the core and shell together (0.862).
+
 ### Nanotubes: the chain kernel measured
 
 Plan item NT4 (`benchmarks/run_nanotubes.py`): 147 carbon nanotubes (n, m), each with a band gap

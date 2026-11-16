@@ -1,0 +1,104 @@
+{
+ "flat": [
+  {
+   "core": "Au(111)",
+   "molecule": "CH3CH2OH",
+   "difference": 0.0
+  },
+  {
+   "core": "Au(111)",
+   "molecule": "C6H6",
+   "difference": 0.0
+  },
+  {
+   "core": "Au(111)",
+   "molecule": "CH3COOH",
+   "difference": 0.0
+  },
+  {
+   "core": "Au(100)",
+   "molecule": "CH3CH2OH",
+   "difference": 0.0
+  },
+  {
+   "core": "Au(100)",
+   "molecule": "C6H6",
+   "difference": 0.0
+  },
+  {
+   "core": "Au(100)",
+   "molecule": "CH3COOH",
+   "difference": 0.0
+  }
+ ],
+ "invariance": [
+  {
+   "shape": "sphere",
+   "difference": 6.205328368358894e-16,
+   "flat_kernel_difference": 1.123267271389601
+  },
+  {
+   "shape": "cylinder",
+   "difference": 8.217180989617487e-16,
+   "flat_kernel_difference": 0.9999986778245125
+  }
+ ],
+ "curvature": [
+  {
+   "radius": 10.0,
+   "difference": 0.012322871430276055
+  },
+  {
+   "radius": 20.0,
+   "difference": 0.0030308846299386323
+  },
+  {
+   "radius": 50.0,
+   "difference": 0.00048206043646661
+  },
+  {
+   "radius": 100.0,
+   "difference": 0.00011992530094304226
+  },
+  {
+   "radius": 200.0,
+   "difference": 2.9481821221259023e-05
+  },
+  {
+   "radius": 500.0,
+   "difference": 4.919216398499616e-06
+  }
+ ],
+ "cost": [
+  {
+   "core_atoms": 55,
+   "shell_atoms": 64,
+   "seconds": 0.006217600021045655
+  },
+  {
+   "core_atoms": 55,
+   "shell_atoms": 216,
+   "seconds": 0.02243880002060905
+  },
+  {
+   "core_atoms": 147,
+   "shell_atoms": 144,
+   "seconds": 0.016519299999345094
+  },
+  {
+   "core_atoms": 147,
+   "shell_atoms": 480,
+   "seconds": 0.11485160002484918
+  },
+  {
+   "core_atoms": 309,
+   "shell_atoms": 256,
+   "seconds": 0.027739399985875934
+  },
+  {
+   "core_atoms": 309,
+   "shell_atoms": 840,
+   "seconds": 0.29957050003577024
+  }
+ ]
+}
