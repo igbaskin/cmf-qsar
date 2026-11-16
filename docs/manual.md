@@ -15908,8 +15908,10 @@ computed energies, with R² = 0.97. Sawayama 2025 shows a line for five solvents
 study. What is added here is the test: series from several laboratories and on several
 electrodes, each series with its own level, and every solvent held out once.
 
-`--stage binding` computes the binding energy for the 13 single solvents of the series, and
-for diethyl carbonate (DEC), which the series hold only inside the mixture EC:DEC. The
+`--stage binding` computes the binding energy for the 13 single solvents of the series, for
+diethyl carbonate (DEC), which the series hold only inside the mixture EC:DEC, and for
+dimethyl ether, which is in no series and has the one ether group that the glymes have
+three or five times. The
 builder of the solvation complexes places the ion at the donor atom of the molecule, and
 GFN2-xTB optimises five starts. ORCA then optimises the complex of lowest energy with B97-3c
 and gives the energy with B3LYP-D3 and the def2-TZVPP basis set. The binding energy is the
@@ -15931,6 +15933,8 @@ energies at random between the solvents and gives the share of the exchanges tha
 | Single solvents, without the two that wrap the ion | 28 | 11 | 17.0 | 9.4 | +7.7 [+0.8, +12.8] | 0.1 % |
 | Single solvents and mixtures | 74 | 14 | 11.0 | 12.2 | -1.1 [-3.9, +1.2] | 68.3 % |
 | The same, without the two that wrap the ion | 72 | 12 | 11.7 | 6.9 | +4.8 [+3.1, +7.3] | 0.1 % |
+| Single solvents, the two that wrap the ion with the binding energy of one dimethyl ether | 30 | 13 | 16.2 | 9.5 | +6.7 [-0.8, +12.9] | 0.2 % |
+| Single solvents and mixtures, the same | 74 | 14 | 11.0 | 7.7 | +3.4 [+0.7, +7.5] | 0.0 % |
 | Single solvents, binding energies of the papers | 17 | 8 | 12.1 | 9.3 | +2.8 [+0.1, +6.7] | 0.6 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
@@ -15938,8 +15942,24 @@ energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the other solvent
 activation energies are not higher than those of the others. With them the regression is no
 better than the mean of the series. Without them it lowers the held-out error by 4.8 to 7.7
 kJ/mol, with a slope of 0.43 kJ/mol of activation energy per kJ/mol of binding energy. So the
-regression is a usable estimate for a solvent that holds the ion with one atom, and it must
-not be used for a solvent that wraps the ion.
+regression is a usable estimate for a solvent that holds the ion with one atom. It must
+not be used with the total binding energy of a solvent that wraps the ion; the next
+paragraph gives the binding energy of one donor group instead.
+
+The binding energy of a molecule is the sum over its donor atoms, so the number for a solvent
+that wraps the ion does not say what one donor group costs to detach. The two solvents were
+therefore also given the binding energy of one donor group, that of one dimethyl ether
+(173.4 kJ/mol; THF 196.7, water 155.5), and all 30 single-solvent values were fitted. The
+gain is +6.7 kJ/mol with an interval of -0.8 to +12.9 (the error falls from 16.2 to 9.5
+kJ/mol, and 0.2 % of the random exchanges do as well), against -0.2 with the total binding
+energy. With the mixtures it is +3.4 [+0.7, +7.5]. So the failure is a failure of the
+descriptor and not of the rule. Dividing the total by the number of donors at the ion (121
+and 98 kJ/mol) does not work: it puts both solvents below water and gives -0.2 [-5.7, +3.2].
+The two solvents are still above the prediction of one donor group, by 13 kJ/mol (diglyme,
+measured 34.7) and 15 kJ/mol (the polyether, measured 50.2). The binding energy that fits them
+is about 206 and 210 kJ/mol, 33 to 36 kJ/mol above one ether group and far below the total.
+Only two measured values stand behind this, so it is a hint and not a result; a series of
+diglyme, triglyme and tetraglyme on one electrode would settle it.
 
 The error that the regression leaves, 7 to 9 kJ/mol, is above the repeatability of 4.8 kJ/mol.
 A field model of the solvent cannot be shown to remove it. Six solvents were held out in two

@@ -372,13 +372,18 @@ def test_the_stored_binding_energies_and_their_check_against_the_papers():
     """The numbers the plan entry quotes. The file is the result of ``--stage binding``."""
     b = _stored("binding.json")
     by = {r["solvent"]: r for r in b["rows"]}
-    assert len(by) == 15 and sum(r["in_a_series"] for r in b["rows"]) == 14
+    assert len(by) == 16 and sum(r["in_a_series"] for r in b["rows"]) == 14
     # DEC binds less strongly than EC, so the mixture EC:DEC takes the value of EC
     assert by["DEC"]["binding"] == pytest.approx(207.8, abs=0.05)
     assert by["DEC"]["binding"] < by["EC"]["binding"]
     assert by["water"]["binding"] == pytest.approx(155.5, abs=0.05)
     assert by["DMC"]["binding"] == pytest.approx(197.5, abs=0.05)
     assert by["DMSO"]["binding"] == pytest.approx(250.2, abs=0.05)
+    # one dimethyl ether is the one-donor analog of a glyme: it binds like a small ether
+    dme = by["dimethyl ether"]
+    assert not dme["in_a_series"] and dme["donors_at_ion"] == 1
+    assert dme["binding"] == pytest.approx(173.4, abs=0.05)
+    assert by["water"]["binding"] < dme["binding"] < by["THF"]["binding"]
     # the two solvents that wrap the ion bind far more strongly than every other one
     assert by["diglyme"]["donors_at_ion"] == 3 and by["diglyme"]["binding"] > 350.0
     peg = by["poly(ethylene glycol) of molar mass 222"]
@@ -395,7 +400,7 @@ def test_the_stored_binding_energies_and_their_check_against_the_papers():
     assert check["orca_one_way"]["correlation"] == pytest.approx(0.986, abs=0.001)
     assert check["orca_one_way"]["sd_difference"] == pytest.approx(6.4, abs=0.05)
     shift = b["xtb_geometry_shift"]
-    assert shift["n"] == 12 and shift["mean"] == pytest.approx(-1.9, abs=0.05)
+    assert shift["n"] == 13 and shift["mean"] == pytest.approx(-1.8, abs=0.05)
     assert shift["largest"] == pytest.approx(5.8, abs=0.05)
 
 
@@ -432,6 +437,23 @@ def test_what_the_regression_on_the_binding_energy_says():
     assert m["held_out"]["regression"]["mae"] == pytest.approx(6.9, abs=0.05)
     assert (m["gain"]["gain"], m["gain"]["low"], m["gain"]["high"]) == pytest.approx(
         (4.8, 3.1, 7.3), abs=0.05)
+    # the two solvents that wrap the ion with the binding energy of one dimethyl ether: the rule
+    # holds for the whole set, and not with the total binding energy of the molecule
+    o = v["single_one_donor"]
+    assert o["n_points"] == 30 and v["single"]["n_points"] == 30
+    assert o["slope"] == pytest.approx(0.410, abs=0.001)
+    assert o["held_out"]["regression"]["mae"] == pytest.approx(9.5, abs=0.05)
+    assert (o["gain"]["gain"], o["gain"]["low"], o["gain"]["high"]) == pytest.approx(
+        (6.7, -0.8, 12.9), abs=0.06)
+    assert o["permutation"]["share_not_above"] < 0.005
+    assert o["gain"]["gain"] - v["single"]["gain"]["gain"] > 6.0
+    om = v["mixtures_one_donor"]
+    assert (om["gain"]["gain"], om["gain"]["low"], om["gain"]["high"]) == pytest.approx(
+        (3.4, 0.7, 7.5), abs=0.06)
+    # the two solvents are still above the prediction of a one-donor ether, by 13 and 15 kJ/mol
+    shift = {q["held_out"]: q["y"] - q["regression"] for q in o["predictions"]
+             if q["held_out"] in CT.CHELATING}
+    assert sorted(round(x) for x in shift.values()) == [13, 15]
     # the binding energies of the papers give the same answer on the eight solvents they cover
     p = v["published"]
     assert p["gain"]["gain"] == pytest.approx(2.8, abs=0.05) and p["gain"]["low"] > 0.0

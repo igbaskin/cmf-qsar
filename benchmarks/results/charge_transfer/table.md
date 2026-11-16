@@ -196,11 +196,12 @@ The hypothesis that the removal of the solvent shell sets the barrier has a vers
 
 ### The binding energy of Li+ with one molecule of each solvent
 
-Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP D3BJ def2-TZVPP RIJCOSX def2/J TightSCF`. The value is the energy of the ion and of the free molecule minus the energy of the complex, each at its own optimised geometry, in the gas phase and with no thermal correction. A larger number is a stronger binding. The starting geometries come from the builder of plan item BT4, which optimises them with GFN2-xTB from 5 starts. *Published* is the value that a paper of the label table gives for the same complex, calculated with B3LYP: a reaction enthalpy or a difference of electronic energies, and, where marked, the position of a marker in a figure. The ORCA runs of the 32 species took 238 minutes of processor time in all.
+Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP D3BJ def2-TZVPP RIJCOSX def2/J TightSCF`. The value is the energy of the ion and of the free molecule minus the energy of the complex, each at its own optimised geometry, in the gas phase and with no thermal correction. A larger number is a stronger binding. The starting geometries come from the builder of plan item BT4, which optimises them with GFN2-xTB from 5 starts. *Published* is the value that a paper of the label table gives for the same complex, calculated with B3LYP: a reaction enthalpy or a difference of electronic energies, and, where marked, the position of a marker in a figure. The ORCA runs of the 34 species took 243 minutes of processor time in all.
 
 | Solvent | Binding energy, kJ/mol | Geometry from | Donor atoms at the ion | Shortest distance to the ion, angstrom | With GFN2-xTB alone, kJ/mol | Published, kJ/mol |
 |---|---:|---|---:|---:|---:|---|
 | water | 155.5 | ORCA | 1 | 1.89 | 187.8 | none |
+| dimethyl ether (in no series) | 173.4 | ORCA | 1 | 1.85 | 192.9 | none |
 | THF | 196.7 | ORCA | 1 | 1.83 | 208.5 | 182.5 (figure) |
 | acetonitrile | 197.0 | ORCA | 1 | 1.93 | 209.3 | 185.2 (figure) |
 | DMC | 197.5 | ORCA | 1 | 1.78 | 235.3 | 185.8 |
@@ -216,7 +217,7 @@ Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP 
 | diglyme | 363.0 | GFN2-xTB | 3 | 1.83 | 405.2 | none |
 | poly(ethylene glycol) of molar mass 222 | 488.4 | GFN2-xTB | 5 | 1.93 | 524.4 | none |
 
-A solvent of more than 20 atoms was not optimised with ORCA, because the ORCA build of this machine runs on one core. It keeps the geometry of GFN2-xTB and ORCA gives the energy only. What that changes was measured on the 12 smaller solvents, which were computed both ways: the binding energy at the geometry of GFN2-xTB is different by -1.9 kJ/mol on average, with a standard deviation of 1.3 kJ/mol and a largest difference of 5.8 kJ/mol.
+A solvent of more than 20 atoms was not optimised with ORCA, because the ORCA build of this machine runs on one core. It keeps the geometry of GFN2-xTB and ORCA gives the energy only. What that changes was measured on the 13 smaller solvents, which were computed both ways: the binding energy at the geometry of GFN2-xTB is different by -1.8 kJ/mol on average, with a standard deviation of 1.3 kJ/mol and a largest difference of 5.8 kJ/mol.
 
 The polyether of the label table is given by its paper with a molar mass of 222 and no formula. Tetraethylene glycol dimethyl ether has that molar mass and was computed in its place.
 
@@ -234,6 +235,8 @@ The regression has one slope for all series and one intercept for each series, s
 | single solvents, without the two that wrap the ion | 10 | 28 | 11 | +0.430 | 0.82 | 17.0 | 9.4 | +7.7 [+0.8, +12.8] | 0.1 % |
 | single solvents and mixtures; a mixture takes its strongest solvent | 23 | 74 | 14 | +0.084 | 0.36 | 11.0 | 12.2 | -1.1 [-3.9, +1.2] | 68.3 % |
 | the same, without the two solvents that wrap the ion | 23 | 72 | 12 | +0.443 | 0.78 | 11.7 | 6.9 | +4.8 [+3.1, +7.3] | 0.1 % |
+| single solvents; the two that wrap the ion take the binding energy of one dimethyl ether | 10 | 30 | 13 | +0.410 | 0.78 | 16.2 | 9.5 | +6.7 [-0.8, +12.9] | 0.2 % |
+| single solvents and mixtures; the two that wrap the ion take the binding energy of one dimethyl ether | 23 | 74 | 14 | +0.398 | 0.73 | 11.0 | 7.7 | +3.4 [+0.7, +7.5] | 0.0 % |
 | single solvents, with the binding energies that the papers give | 6 | 17 | 8 | +0.370 | 0.76 | 12.1 | 9.3 | +2.8 [+0.1, +6.7] | 0.6 % |
 
 The repeatability between laboratories, from the reference system above, is 4.8 kJ/mol. The slope is in kJ/mol of activation energy per kJ/mol of binding energy. A mixture is held out once for each of its solvents, so it is counted more than once in the rows with mixtures.
@@ -248,6 +251,8 @@ Some electrolytes were held out in two or more series. The errors of the regress
 | single solvents, without the two that wrap the ion | 23 | 9.1 | 8.0 |
 | single solvents and mixtures; a mixture takes its strongest solvent | 64 | 10.9 | 6.8 |
 | the same, without the two solvents that wrap the ion | 64 | 7.1 | 5.3 |
+| single solvents; the two that wrap the ion take the binding energy of one dimethyl ether | 23 | 8.7 | 8.2 |
+| single solvents and mixtures; the two that wrap the ion take the binding energy of one dimethyl ether | 64 | 6.9 | 5.4 |
 | single solvents, with the binding energies that the papers give | 13 | 9.4 | 8.3 |
 
 ### The slope of each series, single solvents only
@@ -264,6 +269,15 @@ Some electrolytes were held out in two or more series. The errors of the regress
 | Xu2007: graphite, film formed in each electrolyte | 2 | 18.9 | 18.0 | +0.952 |
 | Xu2010: lithium titanate, no film | 3 | 291.8 | 10.6 | +0.017 |
 | Yamada2010: SiO, film formed in each electrolyte | 3 | 52.7 | 2.0 | -0.038 |
+
+### The two solvents that wrap the ion, with one donor group
+
+A solvent that wraps the ion with several oxygen atoms has a binding energy that is the sum over its donors. The column *Regression, total* gives it that value, and the column *Regression, one donor* gives it the binding energy of one dimethyl ether, the molecule with one such group. Each solvent is held out once, as in the other sections.
+
+| Held-out solvent | Series | Measured, kJ/mol | Mean of the series | Regression, total | Regression, one donor |
+|---|---|---:|---:|---:|---:|
+| diglyme | Chekushkin2021: LiMn2O4 | 34.7 | 22.7 | 39.9 | 21.5 |
+| poly(ethylene glycol) of molar mass 222 | Xu2010: lithium titanate, no film | 50.2 | 45.4 | 101.9 | 35.3 |
 
 ### The held-out values: single solvents only
 

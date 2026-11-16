@@ -6327,6 +6327,19 @@ concentration was driven, and the stage counts only discharges that ended at the
   with mixtures). The room for a field model was 0.4 and 0.5 kJ/mol at the first run, 3.0 and
   1.5 kJ/mol after the sixth reading, and is now 1.1 and 1.8 kJ/mol, which is below the
   repeatability of 4.8 kJ/mol. The verdict does not change.
+  *The binding energy of one donor group, 16 November 2026.* The two solvents that wrap
+  the ion break the regression with their total binding energy (363 and 488 kJ/mol). They
+  were given the binding energy of one dimethyl ether instead (173.4 kJ/mol, ORCA, the
+  pipeline of the other solvents; THF 196.7, water 155.5). The regression on all 30
+  single-solvent values then gains +6.7 [-0.8, +12.9] kJ/mol (slope 0.41, error 16.2 to
+  9.5, 0.2 % of the random exchanges do as well), against -0.2 with the total. With the
+  mixtures the gain is +3.4 [+0.7, +7.5]. The total divided by the donors at the ion (121
+  and 98) gives -0.2 [-5.7, +3.2] and puts both solvents below water. The two solvents are
+  still above the prediction of one donor group, by 13 (diglyme, measured 34.7) and 15
+  kJ/mol (the polyether, 50.2), so the binding energy that fits them is about 206 and
+  210 kJ/mol. Only two measured values stand behind this. The failure for solvents that
+  wrap the ion is therefore a failure of the descriptor and not of the rule; both
+  variants are in the benchmark (`single_one_donor` and `mixtures_one_donor`).
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the

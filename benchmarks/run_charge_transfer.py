@@ -110,9 +110,14 @@ SOLVENTS: Tuple[Tuple[str, str, str, bool], ...] = (
     # added last, so that the numbers and the seeds of the runs above stay as they were; it is
     # the second solvent of the EC:DEC mixtures of Doi 2005 and Fukutsuka 2010
     ("DEC", "DEC", "CCOC(=O)OCC", False),
+    # added after the sixth reading; it is in no series. It has one ether group, as a glyme has
+    # three or five, and it gives the binding energy of one donor group (`ONE_DONOR_ANALOG`)
+    ("dimethyl ether", "DME", "COC", False),
 )
 #: solvents of the table above that are in no series
-CHECK_ONLY = ("hexamethylphosphoramide",)
+CHECK_ONLY = ("hexamethylphosphoramide", "dimethyl ether")
+#: the molecule whose binding energy stands for one donor group of a solvent that wraps the ion
+ONE_DONOR_ANALOG = "dimethyl ether"
 #: solvents of which one molecule holds the ion with several donor atoms
 CHELATING = tuple(name for name, _key, _smiles, wraps in SOLVENTS if wraps)
 #: binding energies that the papers of the label table give for Li+ with one solvent molecule,
@@ -747,6 +752,16 @@ VARIANTS = (
 )
 
 
+#: the sets of points on which the two solvents that wrap the ion are given the binding energy of
+#: one donor group, that of `ONE_DONOR_ANALOG`
+ONE_DONOR_VARIANTS = (
+    ("single_one_donor", "single solvents; the two that wrap the ion take the binding energy of "
+                         "one dimethyl ether", {}),
+    ("mixtures_one_donor", "single solvents and mixtures; the two that wrap the ion take the "
+                           "binding energy of one dimethyl ether", {"mixtures": True}),
+)
+
+
 def regression_stage(binding: dict, rows: Optional[List[dict]] = None,
                      draws: int = DRAWS) -> dict:
     """The regression of the activation energy on the binding energy, on every set of points
@@ -758,6 +773,14 @@ def regression_stage(binding: dict, rows: Optional[List[dict]] = None,
     for key, words, options in VARIANTS:
         points = regression_points(rows, computed, **options)
         out["variants"][key] = dict(analyse(points, draws), words=words)
+    if ONE_DONOR_ANALOG in computed:
+        # the two solvents that wrap the ion enter with the binding energy of one donor group
+        one_donor = dict(computed)
+        for name in CHELATING:
+            one_donor[name] = computed[ONE_DONOR_ANALOG]
+        for key, words, options in ONE_DONOR_VARIANTS:
+            points = regression_points(rows, one_donor, **options)
+            out["variants"][key] = dict(analyse(points, draws), words=words)
     printed: Dict[str, List[float]] = {}
     for name, value, _how, _source in PUBLISHED_BINDING:
         printed.setdefault(name, []).append(value)
@@ -944,6 +967,20 @@ def regression_lines(reg: dict) -> List[str]:
         slope = "none" if q["slope"] is None else f"{q['slope']:+.3f}"
         L.append(f"| {q['series']} | {q['n']} | {_f(q['range_x'])} | {_f(q['range_y'])} | "
                  f"{slope} |")
+    if "single_one_donor" in reg["variants"]:
+        total = {q["held_out"]: q for q in reg["variants"]["single"]["predictions"]}
+        L += ["", "### The two solvents that wrap the ion, with one donor group", "",
+              "A solvent that wraps the ion with several oxygen atoms has a binding energy that "
+              "is the sum over its donors. The column *Regression, total* gives it that value, and "
+              "the column *Regression, one donor* gives it the binding energy of one dimethyl "
+              "ether, the molecule with one such group. Each solvent is held out once, as in the other sections.", "",
+              "| Held-out solvent | Series | Measured, kJ/mol | Mean of the series | Regression, "
+              "total | Regression, one donor |", "|---|---|---:|---:|---:|---:|"]
+        for q in reg["variants"]["single_one_donor"]["predictions"]:
+            if q["held_out"] in CHELATING:
+                t = total[q["held_out"]]
+                L.append(f"| {q['held_out']} | {q['series']} | {_f(q['y'])} | {_f(q['mean'])} | "
+                         f"{_f(t['regression'])} | {_f(q['regression'])} |")
     for key, words in (("single", "single solvents only"),
                        ("single_no_chelate", "single solvents, without the two that wrap the "
                                              "ion")):
