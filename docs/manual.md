@@ -11313,12 +11313,30 @@ case: crystals on one lattice, with an interval that stays above zero against a 
 widths. The module is not connected to `CMFModel`; a model hook for the grid overlap kernel, and a
 fit with functions between the atoms, are open.
 
+**The energy of the same run as the reference (added 16 November 2026).** The grid of a cell costs
+one DFT calculation, and that calculation also prints the total energy of the cell. The formation
+energy is a total energy minus the energies of the elements. So the reference the grid has to beat
+is a ridge regression on that energy and the counts of the 56 elements, on the same folds
+(`--stage energies` reads the energies into `benchmarks/results/gridfields/run_energies.csv`,
+`--stage reference` compares). It reaches R² +0.940 and an RMSE of 0.175 eV, against +0.825 and
+0.298 eV for the grid: the reference is better by +0.103 [+0.084, +0.127]. The energy alone
+reaches +0.380 and the element counts alone +0.362; the regression needs both. The grid added to
+the reference gains +0.014 [+0.011, +0.017]. The slope of the target on the energy is 0.17,
+because the target comes from another code and functional; the regression learns how the two
+calculations relate. So the grid is the best field of these cells and a worse predictor of their
+formation energy than the one number its own calculation gives. The control: the grid model, run
+again on the same folds, repeats its stored R² exactly.
+
+The twenty-third tutorial, `docs/tutorials/23_a_field_from_dft.ipynb`, reads the grid results and
+runs the regression on the energy of the run live; it does not need the grids.
+
 ```bash
-python benchmarks/run_gridfields.py --stage crystals --stage molecules   # about 40 minutes
+python benchmarks/run_gridfields.py --stage crystals --stage reference --stage molecules   # about 45 minutes
 ```
 
 The grids themselves need VASP and ORCA: `--stage cells`, then `grid_dft_wsl.py` inside WSL (about
-two hours with four workers), then `--stage collect`, `--stage widefit` and `--stage cubes`.
+two hours with four workers), then `--stage collect`, `--stage widefit`, `--stage energies` and
+`--stage cubes`.
 
 ## Molecules inside crystals
 
@@ -17374,7 +17392,7 @@ So the reading above holds against a linear count only: a field of the surroundi
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
 fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twenty-third tutorial, `docs/tutorials/23_point_mutants.ipynb`, builds one
+among its references. The twenty-fourth tutorial, `docs/tutorials/24_point_mutants.ipynb`, builds one
 mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
@@ -17910,7 +17928,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-three notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-four notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -17923,11 +17941,11 @@ complex, the better of two enantiomers, read from the handedness of the fields a
 spectra and compared with the position of one band, mixtures, with the amounts of the components read from one
 spectrum, a model of one near-infrared spectrometer read on the spectra of another, compared with a correction of every spectrum by itself, molecules adsorbed on a metal surface, read with the surface kernel and compared
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
-the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, and the change of folding stability
+the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, fields computed by DFT on a grid, compared with the total energy of the same calculation, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
 site. Each runs on the
 example data of the repository, locally
-or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second downloads 4 MB of perovskites, and the twenty-third needs OpenMM and PDBFixer
+or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fourth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
 them, so that the outputs in the files come from the current code.
 

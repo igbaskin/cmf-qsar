@@ -939,11 +939,12 @@ def registry() -> List[Benchmark]:
                   "grid and a radial correlation, against the same grids fitted with "
                   "Gaussians on the atoms (plan item M9)",
                   "run_gridfields.py", "gridfields",
-                  compute=[["--stage", "crystals"], ["--stage", "molecules"]],
-                  needs="vasp", minutes="40",
+                  compute=[["--stage", "crystals"], ["--stage", "reference"],
+                           ["--stage", "molecules"]],
+                  needs="vasp", minutes="45",
                   prepare=["run_gridfields.py --stage cells, then grid_dft_wsl.py inside "
-                           "WSL, then --stage collect, --stage widefit and --stage cubes "
-                           "(VASP and ORCA)"],
+                           "WSL, then --stage collect, --stage widefit, --stage energies and "
+                           "--stage cubes (VASP and ORCA)"],
                   report=lambda: _mod("run_gridfields").report(),
                   tables=["gridfields/table.md"]),
         Benchmark("molcrystals",
