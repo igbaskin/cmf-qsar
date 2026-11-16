@@ -1,6 +1,6 @@
 {
- "commit": "340ac380125944bfc1936ead2032ce33e13b494d",
- "created": "2026-11-16T13:05:44",
+ "commit": "fea90235c0c136a972759e598fcfa67de9df3b8e",
+ "created": "2026-11-16T13:11:15",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3472,8 +3472,9 @@
   "benchmarks/results/microstructure/gate_3d21_n400_c10.json": "130df8683b687f91764b673e6019abafdb1f61114de491f4fbccb1615409ac46",
   "benchmarks/results/microstructure/map_2d51_n400_c100.json": "efadd84ced36ebbdc19fecab7b1304a2c2361a29c27aec0f921019e39e7df02e",
   "benchmarks/results/microstructure/map_2d51_n400_c100.png": "ca45a4cc871fc883e80717294b5d2de549ec60ea07051a6d5ada8c74425b1c1b",
-  "benchmarks/results/microstructure/notes.md": "e5e05f667528cd487778cfbb41917f64ce929268b7a87764ed6291b0d4cd63b4",
-  "benchmarks/results/microstructure/table.md": "cc8c66ed4b8999a1dc6adb5c204a94d532eda18555c4f1ad8bbd33f154530f11",
+  "benchmarks/results/microstructure/notes.md": "61e9620ad0f5bbfd7e8a093e5b8ef0ac37d91629e3ee91879d72065f8c217875",
+  "benchmarks/results/microstructure/shape.json": "46fe58c63143db24780102bd755eeb6256be9312c4adafd7c72d627ade1f1489",
+  "benchmarks/results/microstructure/table.md": "ea1e02917cdcf971d08c9427bd2a3e831790bdcadbc7d861a8a81c9d3b0c4203",
   "benchmarks/results/microstructure/twoscale_2d51_n400_c10.json": "cfd52877caad3e24cc1cbe13a4af5a5c2e356a26f8884fe7c38ef4582a02eea5",
   "benchmarks/results/microstructure/uhcs.json": "c20899e972cbe056c114c6299a99bba37e2a98bbc47f1c0542585a2de117b813",
   "benchmarks/results/mixing/ACE.json": "aa0af912fcb9eb98ebb5aa34802ede38f267b31f15c93ef40770b04e4662b53f",
