@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 135 modules, 264 classes with 851 public methods, and 1408 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 857 public methods, and 1413 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -133,6 +133,7 @@ for.
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
 | [cmfqsar.resolution](#cmfqsarresolution) | A kernel that knows the resolution of its description (plan item MS4). |
 | [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
+| [cmfqsar.rff](#cmfqsarrff) | Random Fourier features of the field kernel: explicit features without landmarks. |
 | [cmfqsar.scattering](#cmfqsarscattering) | Measured scattering curves as samples: the total, untyped descriptor (plan item M12). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
@@ -17364,6 +17365,151 @@ The two shares of one pair.
 ### `correlation(x: Sequence[float], y: Sequence[float], runs: int=2000, seed: int=0) -> Tuple[float, float, float]`
 
 Pearson correlation of two columns with a bootstrap interval over the pairs.
+
+## cmfqsar.rff
+
+Source: `cmfqsar/rff.py`
+
+Random Fourier features of the field kernel: explicit features without landmarks.
+
+**Why they apply.**  The kernel of two molecules for one field is the overlap integral of their
+fields, `K(A, B) = INT rho_A(r) rho_B(r) dr`.  By Parseval's theorem the same integral is an
+integral over frequencies of the two Fourier transforms,
+
+    K(A, B) = (2 pi)^-3 INT F_A(omega) conj(F_B(omega)) d omega,
+
+and for a field made of atom-centred Gaussians `w_l exp(-b_l |r - r_l|^2 / 2)` the transform is
+a sum over the atoms,
+
+    F_A(omega) = sum_l w_l a_l(omega) exp(-i omega . r_l),   a_l(omega) = (2 pi / b_l)^{3/2}
+                                                                       exp(-|omega|^2 / (2 b_l)).
+
+So the field kernel is a Gaussian kernel on positions in R^3, summed over the atom pairs with the
+atom weights.  That kernel is shift-invariant, and the random features of Rahimi and Recht
+(NIPS 2007, "Random features for large-scale kernel machines") apply to it: draw D frequencies
+from a density p, and the integral becomes a mean over them,
+
+    K(A, B) ~ (1/D) sum_k Re[F_A(omega_k) conj(F_B(omega_k))] / ((2 pi)^3 p(omega_k)).
+
+Each frequency gives a molecule two features, the real and the imaginary part of `F_A`,
+
+    sum_l w_l a_l(omega_k) cos(omega_k . r_l)   and   sum_l w_l a_l(omega_k) sin(omega_k . r_l),
+
+which need no grid, no landmarks and no training molecules.  The estimate is unbiased for every
+pair of molecules.  An earlier assessment in the plan (item B6) said that random Fourier
+features do not fit the CMF kernel because it has no vector input.  The atoms are the vector
+input: the molecule kernel is a weighted sum of the kernel on R^3.
+
+**The density of the frequencies.**  For a field whose Gaussians share one width b (the
+electrostatic, hydrophobic and donor and acceptor fields), p is the normal density with variance
+`b / 2` per axis.  Then `a(omega)^2 / p(omega)` is a constant, every frequency carries the
+same weight, and the features are the classical ones.  The steric field has a width per atom
+(`b_l = alpha / R_l^2`); p is then matched to the narrowest Gaussian, so that the ratio stays
+bounded for every atom (importance sampling).  The same rule covers the probe fields, whose atoms
+carry several Gaussians, and the electric-field kind of plan item EC5, whose kernel integrates
+the gradients of the fields: a gradient multiplies the transform by `i omega`, so its features
+are the ordinary ones times `|omega|`.
+
+**Four ways to choose the frequencies.**
+
+* `"mc"`: independent draws from p (Monte Carlo); the error of a kernel value falls as
+  `1 / sqrt(D)`.
+* `"orthogonal"`: the orthogonal random features of Yu et al. (NIPS 2016): the directions come
+  in triples that are exactly orthogonal, the lengths are drawn from the right distribution.
+  Still unbiased, with a smaller variance.
+* `"qmc"`: a scrambled Sobol sequence mapped through the normal quantile function (quasi-Monte
+  Carlo, Avron et al., JMLR 17(120), 2016).  In three dimensions its error can fall almost as
+  `1 / D`.
+* `"lattice"`: a cubic lattice of frequencies inside a ball, with spacing `2 pi / P`.  By the
+  Poisson summation formula this sum is the exact kernel of the molecules repeated periodically
+  with period P, so the error is that of the periodic images only, and it is negligible once P
+  exceeds the size of the frame by a few widths.  The number of features is not chosen; it
+  follows from P and from the width of the field, as `(P sqrt(b))^3`.  These are the structure
+  factors of plan item M6 for a box around the molecules.
+
+**What stays exact.**  As in `cmfqsar.lowrank`, the self-kernel of a molecule is computed
+exactly and the cosine normalisation divides by it.  The feature map has the duck type of
+`cmfqsar.lowrank.LowRank`, so `cmfqsar.lowrank.gram`, `cmfqsar.lowrank.fit` and
+`cmfqsar.lowrank.cross_validate` fit a model on it unchanged.
+
+### `class FourierFeatures  (dataclass)`
+
+Frequencies per field and the weights that turn a molecule into a row of features.
+
+Fields that draw from the same density share one set of frequencies, so the cosines and sines
+of a block of atoms are computed once for all of them.
+
+Attributes:
+
+- `specs: Sequence[FieldSpec]`
+- `omegas: List[np.ndarray]`
+- `logq: List[np.ndarray]`
+- `group: List[int]`
+- `weights: np.ndarray`
+- `normalize: bool` = `True`
+- `sampler: str` = `'orthogonal'`
+- `kind: str` = `'fourier'`
+
+#### `FourierFeatures.sizes` -> List[int]  (property)
+
+Feature columns per field: two per frequency.
+
+#### `FourierFeatures.rank` -> int  (property)
+
+#### `FourierFeatures.field_features(part: AtomTable) -> List[np.ndarray]`
+
+Unscaled, unnormalised features of every field: a list of (molecules, 2 D) arrays
+whose inner products estimate the field kernels.
+
+#### `FourierFeatures.transform(table: AtomTable, block: int=BLOCK, progress=None) -> np.ndarray`
+
+The feature rows of every molecule of `table`, a block of molecules at a time.
+
+#### `FourierFeatures.joint_self(table: AtomTable, block: int=BLOCK) -> np.ndarray`
+
+The exact joint self-kernel, as `cmfqsar.lowrank.LowRank.joint_self`.
+
+#### `FourierFeatures.field_kernels(P: AtomTable, Q: Optional[AtomTable]=None, normalize: Optional[bool]=None) -> np.ndarray`
+
+The estimated field kernels, (F, nP, nQ), with or without the cosine normalisation
+by the exact self-kernels.  For tests and for measuring the error.
+
+### `proposal_variance(spec: FieldSpec, radii: Sequence[float]) -> float`
+
+The variance per axis of the normal density the frequencies are drawn from.
+
+It is half the largest width b present, which is the exact choice for a field of one width
+and keeps the importance weight of every atom at or below one for a field of several.
+
+### `frequencies(n: int, sd: float, sampler: str='orthogonal', seed: Optional[int]=0) -> Tuple[np.ndarray, np.ndarray]`
+
+(n, 3) frequencies from a normal density with standard deviation `sd` per axis, and the
+log of the weight each carries in the mean, `1 / (n (2 pi)^3 p(omega))`.
+
+### `lattice_frequencies(period: float, b_max: float, tol: float=LATTICE_TOL) -> Tuple[np.ndarray, np.ndarray]`
+
+The frequencies of a cubic lattice with spacing `2 pi / period` inside the ball where
+the spectrum of the narrowest Gaussian is not negligible, one of every pair (omega, -omega).
+
+The weight of a frequency is `(spacing / 2 pi)^3`, doubled for every frequency whose
+partner was dropped.
+
+### `default_period(table: AtomTable, spec: FieldSpec, tol: float=LATTICE_TOL) -> float`
+
+The longest extent of the atoms plus the distance at which the field's broadest overlap
+falls to `tol` of its peak.  Two molecules are never further apart than the extent, so the
+nearest periodic image of either is at least that distance away, and it adds less than `tol`.
+
+### `build(fieldset: FieldSet, table: AtomTable, n_frequencies: int=512, sampler: str='orthogonal', seed: Optional[int]=0, scale: Optional[Sequence[float]]=None, normalize: bool=True, period: Optional[float]=None, tol: float=LATTICE_TOL) -> FourierFeatures`
+
+The feature map of a field set.
+
+`table` is read for two things only: the smallest atom radius, which sets the density of the
+steric field's frequencies, and, for the lattice, the extent of the frame that sets the
+default `period`.  The frequencies themselves do not depend on any molecule.
+`n_frequencies` is per field (each gives two feature columns); the lattice ignores it and
+takes its size from `period` (by default `default_period` of each field) and from `tol`,
+the share of its peak at which a spectrum is cut.
 
 ## cmfqsar.scattering
 
