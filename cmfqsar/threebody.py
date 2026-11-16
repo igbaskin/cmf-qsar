@@ -188,13 +188,13 @@ def neighbourhoods(crystal, cutoff: float) -> List[Tuple[np.ndarray, np.ndarray]
     turned.  The periodicity flags of the cell are respected: a layer has neighbours in two
     directions and a chain in one.
     """
-    from ase.neighborlist import neighbor_list
+    from .periodic import _neighbour_pairs
 
     W = np.asarray(crystal.weights, float)
     n_atoms = W.shape[0]
     if n_atoms == 0:
         return []
-    i, j, D = neighbor_list("ijD", crystal.to_atoms(), float(cutoff))
+    i, j, D = _neighbour_pairs(crystal, float(cutoff), vectors=True)
     i = np.asarray(i, int)
     order = np.argsort(i, kind="stable")
     i, j, D = i[order], np.asarray(j, int)[order], np.asarray(D, float)[order]

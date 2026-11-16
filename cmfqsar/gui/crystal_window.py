@@ -786,6 +786,16 @@ class CrystalWindow(QMainWindow):
             self._tell("No fields", "Select at least one field.")
             return
         overlap = self.cmb_kernel.currentIndex() == 1
+        if overlap:
+            # refused before the fields are computed, not after (plan item NT2)
+            from ..periodic import OVERLAP_ATOM_LIMIT, overlap_size_message
+            used = [int(i) for i in np.concatenate([idx, te])]
+            big = max(used, key=lambda i: len(self.atoms[i]))
+            if len(self.atoms[big]) > OVERLAP_ATOM_LIMIT:
+                self._tell("Too many atoms for the overlap kernel",
+                           overlap_size_message(self.names[big], len(self.atoms[big]),
+                                                OVERLAP_ATOM_LIMIT))
+                return
         alphas = self._floats(self.ed_alphas.text(), [1.0])
         lams = self._floats(self.ed_lams.text(), [1e-3])
         folds, seed = self.spin_folds.value(), self.spin_seed.value()

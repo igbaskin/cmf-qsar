@@ -3941,6 +3941,36 @@ tests whether the target is reproducible between sources before any kernel is co
   `periodic_autocorrelation` is the only one that scales. Needed: open boundaries in that function
   (no background term, no cell volume) and a guard in the model that refuses the overlap kernel
   above an atom count. Two days.
+  **Built and measured 16 November 2026.** The open boundaries existed (NT1). What did not scale
+  was the neighbour list itself: ASE bins the atoms by the cell, and a structure with no cell, or
+  with no lattice vector across an open direction (a cluster, a tube as `ase.build.nanotube`
+  writes it), puts every atom into one bin. Such structures now take a k-d tree from SciPy
+  (`periodic._tree_pairs`), which gives the same pairs; crystals and layers with a full cell keep
+  ASE's list and their numbers bit for bit. The three-body channels use the same list. The
+  background term of a chain or a layer above 2,000 atoms is summed in blocks of 512 rows. The
+  model refuses the overlap kernel for a structure of more than 2,000 atoms
+  (`CMFModel.max_overlap_atoms`, saved with the model; None turns it off; molecules are never
+  refused), and the crystal window refuses before it computes the fields.
+  **Measured** (`benchmarks/run_particles.py`, about 4 minutes): copper icosahedra of 55 to 8,217
+  atoms and carbon nanotubes of 96 to 6,000 atoms. The old list grew with the square of the atom
+  count in time and memory (exponents 2.01 and 2.00): 11.6 s and 5.4 GB for 5,083 atoms. The
+  tree grows with exponent 1.31 and takes 0.11 s there; the whole autocorrelation of 8,217 atoms
+  takes 0.84 s and 330 MB. The overlap kernel of two structures grows with exponent 2.38: for
+  100 particles of 2,869 atoms the training kernel would take 28 minutes for each field width,
+  against 26 s for the autocorrelation. On 150 unrelaxed particles of six metals (13 to 3,564
+  atoms, EMT energy per atom) kernel ridge regression on the autocorrelation reaches 26 meV per
+  atom (q2 0.986) in 5-fold cross-validation repeated with five seeds, against 45 meV for a
+  linear regression on n^(-1/3) for each metal and 70 meV for one on the mean coordination
+  number; trained on the particles of at most 1,000 atoms it predicts the 54 larger ones to
+  26 meV (size law 36 meV).
+  **Found on the way:** a tube that grows in length is cheap for ASE's list (one bin across a
+  thin tube), but its autocorrelation still grew with the square (exponent 1.93), because the
+  background term of a chain pairs every atom with every other; a tube of 3,600 atoms needed
+  960 MB. Summing in blocks makes the memory linear (228 MB there, 380 MB at 6,000 atoms); the
+  time is still quadratic, 13.5 s at 6,000 atoms. An exact linear-time background would bin the
+  separations across the axis; not done here. The mean coordination number, the count an EMT
+  energy should follow, predicts it worse than the size law, because the energy is not linear
+  in it.
 * **NT3. Size and shape as descriptors.** `cmfqsar/descriptors.py` computes RDKit descriptors for
   molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
   the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
@@ -9150,7 +9180,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 2 | NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 3 | NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9162,7 +9192,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 125 finished, 10 partly, 41 open.**
+**176 items: 126 finished, 10 partly, 40 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9187,7 +9217,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT2 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT3 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

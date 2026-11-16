@@ -330,24 +330,36 @@ def layer_normal(cell, pbc) -> np.ndarray:
     return n / max(float(np.linalg.norm(n)), 1e-12)
 
 
-def _normal_separations(coords, cell, pbc) -> np.ndarray:
+def _normal_separations(coords, cell, pbc, rows: Optional[slice] = None) -> np.ndarray:
     """The separation of every ordered pair of atoms across the non-periodic directions, (N, N):
     zero for a crystal, the height difference for a layer, the distance between the two atoms'
-    projections on the plane normal to the chain for a chain."""
+    projections on the plane normal to the chain for a chain.  With `rows`, only the pairs whose
+    first atom is in that slice, (len(rows), N); every entry is computed as in the full matrix."""
     X = np.asarray(coords, float)
+    Xr = X if rows is None else X[rows]
     A = np.asarray(cell, float).reshape(3, 3)
     axes = [k for k in range(3) if pbc[k]]
     if len(axes) == 3:
-        return np.zeros((len(X), len(X)))
+        return np.zeros((len(Xr), len(X)))
     if len(axes) == 2:
-        z = X @ layer_normal(cell, pbc)
-        return np.abs(z[:, None] - z[None, :])
+        n = layer_normal(cell, pbc)
+        z = X @ n
+        zr = z if rows is None else z[rows]
+        return np.abs(zr[:, None] - z[None, :])
     if len(axes) == 1:
         a = A[axes[0]] / max(float(np.linalg.norm(A[axes[0]])), 1e-12)
-        D = X[:, None, :] - X[None, :, :]
+        D = Xr[:, None, :] - X[None, :, :]
         D = D - (D @ a)[..., None] * a[None, None, :]
         return np.linalg.norm(D, axis=-1)
-    return np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)
+    return np.linalg.norm(Xr[:, None, :] - X[None, :, :], axis=-1)
+
+
+#: above this many atoms the background term of a chain or a layer is summed over blocks of
+#: BACKGROUND_BLOCK rows (plan item NT2), so that its memory grows linearly with the number of
+#: atoms instead of with the square; its time still grows with the square.  Below it the whole
+#: matrix is used, as before, and the numbers are the same bit for bit.
+BACKGROUND_BLOCK_ABOVE = 2000
+BACKGROUND_BLOCK = 512
 
 
 @functools.lru_cache(maxsize=32)
@@ -408,13 +420,23 @@ def _background_rows(crystal, spec: PeriodicSpec, W: np.ndarray, cov: np.ndarray
     if n_periodic == 3:
         S = W.sum(axis=0)
         return (mult * (S[fi] * S[gi] + cov[fi, gi]) / measure)[:, None] * J[0][None, :]
-    H = _normal_separations(crystal.coords, crystal.cell, pbc)
     n_fields = W.shape[1]
     T = np.zeros((n_fields, J.shape[1], n_fields))
-    flat = H.ravel()
-    for k in range(J.shape[1]):
-        Jk = np.interp(flat, h, J[:, k]).reshape(H.shape)
-        T[:, k, :] = W.T @ Jk @ W
+    n_atoms = len(W)
+    if n_atoms <= BACKGROUND_BLOCK_ABOVE:
+        H = _normal_separations(crystal.coords, crystal.cell, pbc)
+        flat = H.ravel()
+        for k in range(J.shape[1]):
+            Jk = np.interp(flat, h, J[:, k]).reshape(H.shape)
+            T[:, k, :] = W.T @ Jk @ W
+    else:
+        for start in range(0, n_atoms, BACKGROUND_BLOCK):
+            rows = slice(start, min(start + BACKGROUND_BLOCK, n_atoms))
+            H = _normal_separations(crystal.coords, crystal.cell, pbc, rows)
+            flat = H.ravel()
+            for k in range(J.shape[1]):
+                Jk = np.interp(flat, h, J[:, k]).reshape(H.shape)
+                T[:, k, :] += W[rows].T @ (Jk @ W)
     # H is symmetric, so the two orders of a pair of different types are equal: mult counts both
     rows = T[fi, :, gi] + cov[fi, gi][:, None] * J[0][None, :]
     return mult[:, None] * rows / measure
@@ -453,11 +475,67 @@ def centre_layer(atoms):
     return out
 
 
-def _neighbour_pairs(crystal: CrystalFields, r_max: float):
-    """Ordered atom pairs (i, j, d) with 0 < d < r_max, periodic images included."""
+def _uses_tree(crystal) -> bool:
+    """Whether the neighbour list of `crystal` goes through the k-d tree of
+    :func:`_tree_pairs` rather than through ASE (plan item NT2).
+
+    ASE sorts the atoms into bins cut from the cell.  A structure with no periodic direction,
+    or with no lattice vector along an open direction (a cluster read with no cell, a nanotube
+    as ``ase.build.nanotube`` writes it), gives it no cell to cut, and every atom falls into one
+    bin: the search is then quadratic in the number of atoms, in time and in memory.  Measured
+    in ``benchmarks/run_particles.py``: 4.0 s for a copper icosahedron of 2,869 atoms, and a
+    process of 4.7 GB at 8,217 atoms.  A full cell keeps the ASE route, so every crystal and
+    layer gives the same numbers as before, bit for bit.
+    """
+    pbc = _pbc_of(crystal)
+    if not any(pbc):
+        return True
+    cell = getattr(crystal, "cell", None)
+    return cell is None or abs(float(np.linalg.det(np.asarray(cell, float)))) < 1e-12
+
+
+def _tree_pairs(crystal, r_max: float, vectors: bool = False):
+    """Ordered pairs (i, j, d) with 0 < d < r_max from a k-d tree (scipy), periodic images
+    included; with `vectors` the third array is the vector from atom i to atom j instead.
+
+    The images are those of :func:`cell_image_indices`, which needs no lattice vector along an
+    open direction.  The time grows with the number of pairs, which is linear in the number of
+    atoms at a fixed cutoff.
+    """
+    from scipy.spatial import cKDTree
+
+    coords = np.asarray(crystal.coords, float)
+    n = len(coords)
+    if any(_pbc_of(crystal)):
+        cloud, source = cell_image_indices(crystal, float(r_max))
+    else:
+        cloud, source = coords, np.arange(n)
+    found = cKDTree(coords).sparse_distance_matrix(cKDTree(cloud), float(r_max),
+                                                   output_type="ndarray")
+    i = np.asarray(found["i"], int)
+    k = np.asarray(found["j"], int)
+    d = np.asarray(found["v"], float)
+    keep = (d < float(r_max)) & ~((k == i) & (k < n))       # no atom paired with itself
+    i, k, d = i[keep], k[keep], d[keep]
+    order = np.lexsort((k, i))
+    i, k, d = i[order], k[order], d[order]
+    if vectors:
+        return i, source[k], cloud[k] - coords[i]
+    return i, source[k], d
+
+
+def _neighbour_pairs(crystal: CrystalFields, r_max: float, vectors: bool = False):
+    """Ordered atom pairs (i, j, d) with 0 < d < r_max, periodic images included; with
+    `vectors` the third array is the vector from atom i to atom j (ASE's "D").
+
+    A structure with an open direction and no lattice vector along it goes through a k-d tree
+    (:func:`_uses_tree`); every other structure through ASE's neighbour list, as before.
+    """
+    if _uses_tree(crystal):
+        return _tree_pairs(crystal, r_max, vectors)
     from ase.neighborlist import neighbor_list
     atoms = crystal.to_atoms()
-    i, j, d = neighbor_list("ijd", atoms, float(r_max))
+    i, j, d = neighbor_list("ijD" if vectors else "ijd", atoms, float(r_max))
     return np.asarray(i, int), np.asarray(j, int), np.asarray(d, float)
 
 
@@ -831,6 +909,43 @@ def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     coords, idx = cell_image_indices(crystal, r_max)
     return (coords, np.asarray(crystal.weights, float)[idx],
             np.asarray(crystal.radii, float)[idx])
+
+
+#: the largest structure, in atoms, that the overlap kernel takes by default (plan item NT2).
+#: The overlap kernel sums over every pair of atoms of two structures, so a training kernel of N
+#: structures of n atoms costs N^2 n^2 / 2 atom pairs; the periodic autocorrelation sums over a
+#: neighbour list and costs N n.  Measured in benchmarks/run_particles.py on copper icosahedra.
+OVERLAP_ATOM_LIMIT = 2000
+
+
+def check_overlap_size(table: Optional[AtomTable], limit: Optional[int] = OVERLAP_ATOM_LIMIT
+                       ) -> None:
+    """Refuse the overlap kernel for a table that holds a structure of more than `limit` atoms.
+
+    Only structures (crystals, layers, chains, particles: :class:`CrystalFields`) are counted;
+    molecules are never refused.  `limit` None turns the guard off.  The message names the
+    periodic autocorrelation, whose cost grows linearly with the number of atoms.
+    """
+    if limit is None or table is None or not getattr(table, "molecules", None):
+        return
+    sizes = np.diff(np.asarray(table.offsets, int))
+    worst, name = 0, ""
+    for k, m in enumerate(table.molecules):
+        if isinstance(m, CrystalFields) and int(sizes[k]) > worst:
+            worst, name = int(sizes[k]), m.name
+    if worst > int(limit):
+        raise ValueError(overlap_size_message(name, worst, int(limit)))
+
+
+def overlap_size_message(name: str, n_atoms: int, limit: int) -> str:
+    """Why the overlap kernel refuses a structure of `n_atoms` atoms, and what to use instead."""
+    return (f"{name or 'a structure'} has {n_atoms} atoms, more than the {limit} the overlap "
+            f"kernel takes (CMFModel.max_overlap_atoms). The overlap kernel compares every atom "
+            f"of one structure with every atom of the other, so its cost grows with the square "
+            f"of the number of atoms. For structures this large use the periodic field "
+            f"autocorrelation (kernel_source='periodic'; in the crystal window, the kernel "
+            f"'periodic field autocorrelation'), whose cost grows linearly. To compute the "
+            f"overlap kernel anyway, set max_overlap_atoms=None.")
 
 
 def overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float = 2.0) -> float:

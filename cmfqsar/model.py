@@ -1237,6 +1237,10 @@ class CMFModel:
     # them, so that two arrangements of the same defects related by a symmetry of the host are
     # the same structure to the kernel (plan item M14).  None keeps the fixed frame.
     pbc_symmetry: Optional[Tuple[np.ndarray, np.ndarray]] = None
+    # the largest structure, in atoms, that the overlap kernel takes (plan item NT2); a larger
+    # one is refused with a message that names the periodic autocorrelation.  Molecules are
+    # never refused.  None turns the guard off (cmfqsar.periodic.OVERLAP_ATOM_LIMIT).
+    max_overlap_atoms: Optional[int] = 2000
     # mixing coefficients over the channel blocks of the three invariant sources, the analogue of
     # the per-field h_f of the overlap kernel (invariant.py, "Mixing coefficients over the channel
     # blocks"): None keeps every block at one; "balanced" gives every kind of block -- within a
@@ -1315,6 +1319,7 @@ class CMFModel:
         above this method -- the normalisation, the scaling, the learners, the co-field -- is
         the same code for a crystal as for a molecule.
         """
+        self._check_overlap_size(P, Q)
         if not self.pbc_overlap:
             return kernel_matrices(P, Q, specs, progress=progress, cancel=cancel,
                                    cutoff=self.cutoff, engine=self.engine)
@@ -1336,8 +1341,17 @@ class CMFModel:
                                                           cancel=cancel)
         return K
 
+    def _check_overlap_size(self, *tables) -> None:
+        """Refuse the overlap kernel for a structure above `max_overlap_atoms` (item NT2)."""
+        if self.max_overlap_atoms is None:
+            return
+        from .periodic import check_overlap_size
+        for T in tables:
+            check_overlap_size(T, self.max_overlap_atoms)
+
     def _self_overlaps(self, P: AtomTable, specs) -> np.ndarray:
         """``K_f(i, i)`` of every structure: open boundaries, or periodic ones (item M4)."""
+        self._check_overlap_size(P)
         if not self.pbc_overlap:
             return self_kernels(P, specs)
         from .periodic import periodic_self_overlaps
@@ -1544,6 +1558,7 @@ class CMFModel:
                         pbc_oriented=self.pbc_oriented,
                         pbc_overlap_r_max=self.pbc_overlap_r_max,
                         pbc_symmetry=self.pbc_symmetry,
+                        max_overlap_atoms=self.max_overlap_atoms,
                         ac_block_weights=(dict(self.ac_block_weights)
                                           if isinstance(self.ac_block_weights, dict)
                                           else self.ac_block_weights),
@@ -2895,6 +2910,7 @@ class CMFModel:
             "tb_chirality_shells": self.tb_chirality_shells,
             "pbc_overlap": self.pbc_overlap,
             "pbc_overlap_r_max": self.pbc_overlap_r_max,
+            "max_overlap_atoms": self.max_overlap_atoms,
             "pbc_symmetry": (None if self.pbc_symmetry is None else
                              {"rotations": np.asarray(self.pbc_symmetry[0], float).tolist(),
                               "translations": np.asarray(self.pbc_symmetry[1], float).tolist()}),
@@ -2956,6 +2972,8 @@ class CMFModel:
         m.pbc_overlap = bool(st.get("pbc_overlap", False))
         r = st.get("pbc_overlap_r_max")
         m.pbc_overlap_r_max = None if r is None else float(r)
+        lim = st.get("max_overlap_atoms", 2000)
+        m.max_overlap_atoms = None if lim is None else int(lim)
         sym = st.get("pbc_symmetry")
         m.pbc_symmetry = None if sym is None else (np.asarray(sym["rotations"], float),
                                                    np.asarray(sym["translations"], float))

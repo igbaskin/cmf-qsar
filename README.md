@@ -1095,6 +1095,20 @@ equal those of the same cluster alone in a large box with the background term of
 reading faults were repaired on the way: database rows lost their names, a file name with an
 `@` (such as `Ag@C4.cif`) was split by ASE, and a structure with no cell lost its coordinates.
 
+### Particles of thousands of atoms
+
+Plan item NT2 (`cmfqsar/periodic.py`, `benchmarks/run_particles.py`): a particle with no cell, or
+a nanotube with no lattice vector across it, now gets its neighbour list from a k-d tree
+instead of from ASE, whose bins need a cell. For a copper icosahedron of 5,083 atoms the list
+took 11.6 s and 5.4 GB and now takes 0.11 s; the whole periodic autocorrelation of 8,217 atoms
+takes 0.84 s. The background term of a chain or a layer above 2,000 atoms is summed in blocks,
+so its memory grows linearly. The model refuses the overlap kernel for a structure of more than
+2,000 atoms (`max_overlap_atoms`), because its cost grows with the square of the atom count:
+28 minutes for 100 particles of 2,869 atoms, against 26 s for the autocorrelation. Molecules are
+never refused. On 150 metal particles of 13 to 3,564 atoms, the autocorrelation model predicts
+the EMT energy per atom to 26 meV, against 45 meV for a linear regression on n^(-1/3) for each
+metal.
+
 ### Fields from DFT on a grid
 
 Plan item M9 (`cmfqsar/gridfields.py`, `benchmarks/run_gridfields.py`): the electron density, the

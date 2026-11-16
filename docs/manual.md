@@ -1043,8 +1043,49 @@ that is repaired too.
 A structure with no periodic direction is read, listed, drawn and modelled like the others. The
 periodic autocorrelation then has no background term, and the channels of each of the 30
 clusters equal those of the same cluster alone in a 60 Å periodic box with the background term
-switched off, to 1e-15 of the largest entry. What is left for particles of thousands of atoms is
-the cost of the overlap kernel (plan item NT2).
+switched off, to 1e-15 of the largest entry.
+
+**Particles of thousands of atoms.** A particle of a few thousand atoms is modelled with the
+periodic field autocorrelation, the first kernel of the crystal window. Its cost grows linearly
+with the number of atoms. Before plan item NT2, two parts of it grew with the square:
+
+* **The neighbour list.** ASE sorts the atoms into bins cut from the cell. A structure with no
+  periodic direction, or with no lattice vector across an open direction (a cluster with no
+  cell, a nanotube as ASE writes it), gives it nothing to cut, so every atom falls into one bin.
+  Such structures now use a k-d tree (a search tree from SciPy), which finds the same pairs. For
+  a copper icosahedron of 5,083 atoms the old list took 11.6 s and 5.4 GB of memory; the new
+  one takes 0.11 s. The whole autocorrelation of an icosahedron of 8,217 atoms takes 0.84 s
+  and 330 MB. Crystals and layers with a full cell keep ASE's list, so their numbers are the
+  same as before, bit for bit.
+* **The background term of a chain or a layer.** It pairs every atom with every other. Above
+  2,000 atoms it is now summed in blocks of 512 rows, so its memory grows linearly (380 MB for a
+  tube of 6,000 atoms). Its time still grows with the square: 13.5 s for that tube, against
+  0.38 s for its pairs alone.
+
+The overlap kernel compares every atom of one structure with every atom of the other, so its
+cost grows with the square of the number of atoms. For 100 particles of 2,869 atoms its training
+kernel would take about 28 minutes for each field width, against 26 s for the autocorrelation of
+all 100. The model therefore refuses the overlap kernel for a structure of more than 2,000 atoms,
+with a message that names the autocorrelation. `CMFModel(max_overlap_atoms=None)` turns the
+refusal off. Molecules are never refused. The crystal window refuses before it computes any
+fields.
+
+`benchmarks/run_particles.py` also fits a model on 150 unrelaxed particles of Cu, Ag, Au, Ni,
+Pd and Pt (icosahedra, decahedra and truncated octahedra of 13 to 3,564 atoms). The target is
+the energy per atom from ASE's effective medium theory potential (EMT). Three linear regressions
+with an intercept and a slope for each metal are the references. In 5-fold cross-validation
+repeated with five seeds:
+
+| Model | Error (RMSE), meV per atom | q2 |
+|---|---:|---:|
+| Mean of the same metal | 223 | -0.01 |
+| Linear regression on n^(-1/3) (n atoms; the size law) | 45 | 0.959 |
+| Linear regression on the mean number of nearest neighbours | 70 | 0.899 |
+| Kernel ridge regression on the periodic autocorrelation | 26 | 0.986 |
+
+Trained on the 96 particles of at most 1,000 atoms, the autocorrelation model predicts the 54
+larger ones with an error of 26 meV per atom; the size law gives 36 meV. The tables are in
+`benchmarks/results/particles/table.md`.
 
 **What the view draws.** The cell is drawn as the twelve edges of its box, with the first,
 second and third lattice vectors in red, green and blue. Its atoms are spheres coloured by

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 840 public methods, and 1389 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 840 public methods, and 1391 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -11454,6 +11454,7 @@ Attributes:
 - `pbc_overlap: bool` = `False`
 - `pbc_overlap_r_max: Optional[float]` = `None`
 - `pbc_symmetry: Optional[Tuple[np.ndarray, np.ndarray]]` = `None`
+- `max_overlap_atoms: Optional[int]` = `2000`
 - `ac_block_weights: Union[None, str, Dict[str, float]]` = `None`
 - `ac_block_groups: Optional[Dict[str, str]]` = `None`
 - `ac_block_rho: float` = `1.0`
@@ -14412,6 +14413,18 @@ needed by a neighbour's atom is kept even where this structure has no atom near 
 
 The expansion itself is `cell_image_indices`; the weights and radii of an image are
 those of the atom it is an image of.
+
+### `check_overlap_size(table: Optional[AtomTable], limit: Optional[int]=OVERLAP_ATOM_LIMIT) -> None`
+
+Refuse the overlap kernel for a table that holds a structure of more than `limit` atoms.
+
+Only structures (crystals, layers, chains, particles: `CrystalFields`) are counted;
+molecules are never refused.  `limit` None turns the guard off.  The message names the
+periodic autocorrelation, whose cost grows linearly with the number of atoms.
+
+### `overlap_size_message(name: str, n_atoms: int, limit: int) -> str`
+
+Why the overlap kernel refuses a structure of `n_atoms` atoms, and what to use instead.
 
 ### `overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float=2.0) -> float`
 
