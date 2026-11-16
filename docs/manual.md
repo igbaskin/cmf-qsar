@@ -15489,10 +15489,10 @@ reaction was expected to raise it. This was not examined.
 #### The measured activation energies of charge transfer
 
 Plan item BT12 collects the measured activation energies from the literature
-(`examples/charge_transfer/`, 92 values from 16 studies) and
+(`examples/charge_transfer/`, 103 values from 18 studies) and
 `benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
 is *primary* when it was read in the paper that measured it and *secondary* when it was read
-in a paper that cites it. All 92 values are primary now. The file names the paper and the
+in a paper that cites it. All 103 values are primary now. The file names the paper and the
 place for every value.
 
 Five studies measured the same reference system: graphite with a formed surface film, in a
@@ -15511,22 +15511,28 @@ conditions. The mean per electrode is accurate enough for a cold cell with a car
 electrolyte, because the cell needs about 15 kJ/mol.
 
 A *series* is a set of values of one study that share the electrode and the surface film and
-differ in the solvent. The table holds 10 series with 38 values and 13 single solvents. Inside
-a series the solvent changes the value by far more than the repeatability. An additive on
-graphite changes it by 11 kJ/mol.
+differ in the solvent. The table holds 14 series with 47 values and 13 single solvents. Inside
+most series the solvent changes the value by far more than the repeatability. The three
+series of Doi 2005 hold two electrolytes only, EC:DEC and propylene carbonate, whose solvents
+bind the ion almost equally, and they differ by 1 to 4 kJ/mol. An additive on graphite
+changes the value by 11 kJ/mol.
 
 | Series | Solvents | Lowest, kJ/mol | Highest, kJ/mol | Range |
 | --- | ---: | ---: | ---: | ---: |
 | Solid electrolyte, no film (Abe 2005) | 3 | 31.5 | 69.9 | 38.4 |
 | Graphite in concentrated electrolytes (Sawayama 2025) | 5 | 28.5 | 57.6 | 29.1 |
 | Lithium titanate thin film, no film (Ishihara 2014) | 3 | 37.0 | 64.0 | 27.0 |
+| Carbon thin film, one film formed in EC:DEC (Fukutsuka 2010) | 3 | 60.2 | 82.3 | 22.1 |
 | Solid electrolyte, no film (Yamada, Sagane 2009) | 4 | 32.0 | 53.0 | 21.0 |
 | Graphite, one film formed in EC:DMC (Yamada 2009) | 3 | 40.0 | 58.0 | 18.0 |
 | Graphite, film formed in each electrolyte (Xu 2007) | 4 | 53.1 | 71.1 | 18.0 |
 | LiMn2O4 (Chekushkin 2021) | 4 | 19.3 | 34.7 | 15.4 |
 | Lithium titanate composite, no film (Xu 2010) | 8 | 40.1 | 54.9 | 14.9 |
+| Glassy carbon GC-20 after a heat treatment (Doi 2005) | 2 | 47.9 | 51.6 | 3.7 |
+| Glassy carbon GC-10 (Doi 2005) | 2 | 47.5 | 49.0 | 1.5 |
+| Glassy carbon GC-20 as received (Doi 2005) | 2 | 68.7 | 70.0 | 1.3 |
 
-The series do not all agree with each other. Three pairs of solvents were measured in more
+The series do not all agree with each other. Five pairs of solvents were measured in more
 than one series. Five series share one pair: dimethyl carbonate (DMC) against its 1:1 mixture
 with ethylene carbonate (EC).
 
@@ -15543,8 +15549,13 @@ group of authors. Two laboratories measured this pair on the same electrode mate
 film, and their results differ by 16 kJ/mol. That is three times the repeatability of the
 reference system. The amount of EC changes little: at the solid electrolyte the mixtures
 1:1, 1:9 and 1:14 give 51, 53 and 48 kJ/mol.
-The value of one solvent also moves between the series: propylene carbonate gives 46 to 64
-kJ/mol in four series. So only differences inside a series can be modelled.
+Two more pairs came with the rows of Fukutsuka 2010 and Doi 2005. On one of them two series
+on different solids agree: dimethyl sulfoxide is above propylene carbonate by 12.6 kJ/mol at
+a solid electrolyte (Abe 2005) and by 11.1 kJ/mol at a carbon film (Fukutsuka 2010). On the
+other they do not: propylene carbonate is above EC:DEC by 11.0 kJ/mol at the carbon film and
+by 1.3 to 3.7 kJ/mol at the three glassy carbon electrodes.
+The value of one solvent also moves between the series: propylene carbonate gives 46 to 71
+kJ/mol in eight series. So only differences inside a series can be modelled.
 
 #### The regression of the activation energy on the binding energy of Li+
 
@@ -15553,7 +15564,15 @@ number: the activation energy rises with the binding energy of Li+ with one mole
 solvent. This regression is the reference that a field model of the solvent would have to be
 better than, and `run_charge_transfer.py` runs it in two stages.
 
-`--stage binding` computes the binding energy for the 13 single solvents of the series. The
+The comparison itself is not new. Abe 2005, Fukutsuka 2010 and Ishihara 2014 set the
+activation energies of three solvents next to computed reaction enthalpies, and Okoshi and
+others (J. Electrochem. Soc. 160 (2013) A2160) fit four measured values of such papers to
+computed energies, with R² = 0.97. Sawayama 2025 shows a line for five solvents of one
+study. What is added here is the test: series from several laboratories and on several
+electrodes, each series with its own level, and every solvent held out once.
+
+`--stage binding` computes the binding energy for the 13 single solvents of the series, and
+for diethyl carbonate (DEC), which the series hold only inside the mixture EC:DEC. The
 builder of the solvation complexes places the ion at the donor atom of the molecule, and
 GFN2-xTB optimises five starts. ORCA then optimises the complex of lowest energy with B97-3c
 and gives the energy with B3LYP-D3 and the def2-TZVPP basis set. The binding energy is the
@@ -15571,25 +15590,32 @@ energies at random between the solvents and gives the share of the exchanges tha
 
 | Points of the regression | Values | Solvents | Error of the series mean, kJ/mol | Error of the regression, kJ/mol | Gain, 95 % interval | Exchanges that do as well |
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
-| Single solvents | 20 | 13 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
-| Single solvents, without the two that wrap the ion | 18 | 11 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
-| Single solvents and mixtures | 38 | 13 | 12.0 | 14.3 | -2.3 [-6.6, +1.5] | 80.3 % |
-| The same, without the two that wrap the ion | 36 | 11 | 13.4 | 7.0 | +6.4 [+4.2, +9.2] | 0.1 % |
-| Single solvents, binding energies of the papers | 12 | 8 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
+| Single solvents | 22 | 13 | 16.1 | 16.5 | -0.4 [-6.3, +3.2] | 30.9 % |
+| Single solvents, without the two that wrap the ion | 20 | 11 | 17.2 | 9.3 | +7.9 [+0.9, +12.8] | 0.0 % |
+| Single solvents and mixtures | 47 | 14 | 10.5 | 12.2 | -1.7 [-5.5, +1.3] | 75.9 % |
+| The same, without the two that wrap the ion | 45 | 12 | 11.5 | 6.0 | +5.5 [+3.9, +7.7] | 0.0 % |
+| Single solvents, binding energies of the papers | 14 | 8 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
 energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the other solvents, and their
 activation energies are not higher than those of the others. With them the regression is no
-better than the mean of the series. Without them it lowers the held-out error by 6 to 8
+better than the mean of the series. Without them it lowers the held-out error by 5.5 to 7.9
 kJ/mol, with a slope of 0.56 kJ/mol of activation energy per kJ/mol of binding energy. So the
 regression is a usable estimate for a solvent that holds the ion with one atom, and it must
 not be used for a solvent that wraps the ion.
 
-The error that the regression leaves, 7 to 10 kJ/mol, is above the repeatability of 5 kJ/mol.
-A field model of the solvent cannot be shown to remove it. Five solvents were held out in two
-or more series, and the errors for one solvent differ between its series. On these 12 values
-the regression has an error of 11.3 kJ/mol, and no model that depends on the solvent alone
-can have less than 10.4 kJ/mol. For this reason no field model was built for this target.
+The error that the regression leaves, 6 to 9 kJ/mol, is above the repeatability of 5 kJ/mol.
+A field model of the solvent cannot be shown to remove it. Six solvents were held out in two
+or more series, and the errors for one solvent differ between its series. On these 15 values
+the regression has an error of 9.5 kJ/mol, and no model that depends on the solvent alone
+can have less than 9.1 kJ/mol. For this reason no field model was built for this target.
+
+The regression was first run on 92 values. The 11 values of Fukutsuka 2010 and Doi 2005 were
+read afterwards, so they are a test of it. The slope stayed where it was: 0.559 became 0.556
+for single solvents and 0.491 became 0.498 with mixtures. In the series of Fukutsuka 2010
+the two single solvents are predicted from each other and from the slope of the other
+series: 71.2 kJ/mol for propylene carbonate, where 71.2 was measured, and 83.8 kJ/mol for
+dimethyl sulfoxide, where 82.3 was measured.
 
 ```bash
 python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py

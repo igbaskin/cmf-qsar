@@ -6079,6 +6079,45 @@ concentration was driven, and the stage counts only discharges that ended at the
   again. Its two rows for single solvents do not change, because no row with a single
   solvent changed. Its two rows with mixtures change by 0.3 kJ/mol or less, and the table
   above gives them as they are now. The verdict does not change.
+  *The labels, fourth reading, and what is published already, 14 November 2026.* The
+  literature was searched for the three results of this item (2,595 papers that cite the 16
+  studies, from OpenAlex, and the reviews they led to). None of the three is published in
+  this form, and none is new as an idea. A review of the Kyoto group (Kondo, Abe, Yamada,
+  ACS Appl. Mater. Interfaces 14 (2022) 22706) has three tables with 57 activation energies
+  from 18 studies of that group, with no statistics; 5 of the 16 studies of this table are
+  in it and 13 of its studies are not here. A fit of measured activation energies on
+  computed de-solvation energies is published for four values of the same group (Okoshi and
+  others, J. Electrochem. Soc. 160 (2013) A2160: slope 1.15, R² = 0.97, no validation). No
+  paper says that the correlation fails for solvents that wrap the ion; single studies
+  report the parts (Xu 2010, Yoshida 2011, Browning 2017 for Na⁺, Zhou 2025). About 40
+  studies with measured values are not in the table yet. Seven papers were then supplied
+  as files and read. Two of them gave rows. Fukutsuka 2010 (TANSO 245, 188) measured a
+  carbon thin film with one surface film formed in EC:DEC in three electrolytes: EC:DEC
+  60.2, propylene carbonate 71.2 and dimethyl sulfoxide 82.3 kJ/mol. Doi 2005
+  (J. Electrochem. Soc. 152, A1521) measured three glassy carbon electrodes in EC:DEC and in
+  propylene carbonate, and two of them with the crown ether 12-crown-4 added. The crown
+  ether is an additive at half of the concentration of the salt, so those two rows are in
+  no series. The other five papers gave no row: four measured no activation energy, and
+  one prints one value and shows the rest in a figure. The table now holds 103 values from
+  18 studies, in 14 series with 47 values. The file of the Kyoto repository is Yamada and
+  others 2010 on SiO, and it is still unread.
+  *What the fourth reading changes.* The repeatability and the means of the two electrodes
+  do not change, because no new row is graphite or an oxide. Five pairs of solvents are now
+  in more than one series. On one of them two series on different solids agree: dimethyl
+  sulfoxide is above propylene carbonate by 12.6 kJ/mol at a solid electrolyte and by
+  11.1 kJ/mol at the carbon film. The mixture EC:DEC needed the binding energy of diethyl
+  carbonate, which ORCA gives as 207.8 kJ/mol, below the 220.4 kJ/mol of EC; the stage
+  `binding` now has 15 solvents and 32 species (238 minutes of processor time). The
+  regression was run again, and the new rows are a test of it, because they were read
+  after its first run. The slope did not move: 0.559 became 0.556 for single solvents and
+  0.491 became 0.498 with mixtures. Without the two solvents that wrap the ion, the
+  held-out error is 17.2 kJ/mol for the mean of the series and 9.3 for the regression on
+  20 values of single solvents (gain +7.9 [+0.9, +12.8]), and 11.5 and 6.0 on 45 values
+  with mixtures (gain +5.5 [+3.9, +7.7]). With the two it gains nothing, as before
+  (-0.4 [-6.3, +3.2] and -1.7 [-5.5, +1.3]). On the electrolytes held out in two or more
+  series the regression has 9.5 kJ/mol and a model of the solvent alone at least 9.1
+  (5.7 and 5.2 with mixtures). The verdict does not change, and the table above keeps the
+  numbers of the run on 92 values.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -6109,17 +6148,17 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 92 measured values from 16 studies, all of them read in the paper that measured
+November: 103 measured values from 18 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
-classes of solvent the table holds 10 series with 13 single solvents. That is enough to test
+classes of solvent the table holds 14 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
 by 16 kJ/mol between them. The regression was run the same day, with binding energies from
-ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 13 to
-18 kJ/mol to 7 to 10 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
-ion. A model of the solvent alone can gain about 1 kJ/mol more, so no field model is built
+ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 11 to
+17 kJ/mol to 6 to 9 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
+ion. A model of the solvent alone can gain about 0.5 kJ/mol more, so no field model is built
 and part (c) of the gate is closed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
@@ -9105,12 +9144,12 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 92 measured values (13 and 14 November) says that the constants of the cell set are 27
+  of 103 measured values (13 and 14 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:
-  it lowers the held-out error to 7 to 10 kJ/mol for solvents that hold the ion with one
-  atom, it fails for solvents that wrap the ion, and it leaves about 1 kJ/mol for a model of
+  it lowers the held-out error to 6 to 9 kJ/mol for solvents that hold the ion with one
+  atom, it fails for solvents that wrap the ion, and it leaves about 0.5 kJ/mol for a model of
   the solvent alone. Part (c) of the gate is closed without a field model.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published

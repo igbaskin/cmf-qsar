@@ -90,6 +90,9 @@ SOLVENTS: Tuple[Tuple[str, str, str, bool], ...] = (
     ("water", "water", "O", False), ("diglyme", "diglyme", "COCCOCCOC", True),
     ("poly(ethylene glycol) of molar mass 222", "tetraglyme", "COCCOCCOCCOCCOC", True),
     ("hexamethylphosphoramide", "HMPA", "CN(C)P(=O)(N(C)C)N(C)C", False),
+    # added last, so that the numbers and the seeds of the runs above stay as they were; it is
+    # the second solvent of the EC:DEC mixtures of Doi 2005 and Fukutsuka 2010
+    ("DEC", "DEC", "CCOC(=O)OCC", False),
 )
 #: solvents of the table above that are in no series
 CHECK_ONLY = ("hexamethylphosphoramide",)

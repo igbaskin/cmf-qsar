@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 92 rows from 16 studies.
+* `activation_energies.csv`: one row per value, 103 rows from 18 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,9 +22,10 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 92 such rows, from 16 papers. Five of the papers are open: four under CC BY 4.0
-  and one as an open file on the site of its society. The other eleven are behind a paywall
-  and were read from files that the author of the program supplied.
+  There are 103 such rows, from 18 papers. Five of the papers are open: four under CC BY 4.0
+  and one as an open file on the site of its society. The other thirteen were read from
+  files that the author of the program supplied: twelve are behind a paywall, and the file
+  of one (Fukutsuka 2010) does not state a licence.
 * A row is **secondary** when the number was read in another paper that cites it. No row is
   secondary now. `source` is then the paper that measured the value, and `cited_in` names the
   paper and the place where the number was read. A secondary value has to be checked against
@@ -48,7 +49,7 @@ Nothing was written from memory.
 | Column | Meaning |
 |---|---|
 | `id` | the paper and a running number |
-| `electrode`, `electrode_class` | the material as the paper names it, and its class: graphite, non-graphitizable carbon, layered oxide, spinel oxide, olivine, lithium titanate, solid electrolyte |
+| `electrode`, `electrode_class` | the material as the paper names it, and its class: graphite, non-graphitizable carbon, carbonaceous thin film, layered oxide, spinel oxide, olivine, lithium titanate, solid electrolyte |
 | `form` | composite electrode, thin film, symmetric cell, full cell with a reference electrode, and so on, as the paper describes it |
 | `state` | the potential or the state of the cell, and its history where the paper gives one |
 | `salt`, `salt_molar` | the lithium salt and its concentration in mol/L; empty where the paper gives mol per kg of solvent or no concentration, and the `note` then says which |
@@ -82,11 +83,28 @@ Nothing was written from memory.
 * The series do not all agree on the pair of solvents that five of them measured, DMC against
   EC:DMC 1:1. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
   17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison for
-  each of the three pairs of solvents that more than one series measured.
+  each of the five pairs of solvents that more than one series measured. On one of them the
+  series agree: DMSO is above PC by 12.6 kJ/mol on a solid electrolyte (Abe 2005) and by
+  11.1 kJ/mol on a carbon film (Fukutsuka 2010).
 * One paper argues against the hypothesis that desolvation alone sets the barrier:
   Chekushkin 2021 (Electrochim. Acta 372, 137843). Its six values are in the table.
-* The set is not complete. One document is known and has not been read: a file of the Kyoto
-  University repository.
+* The set is not complete. A search of the literature on 14 November 2026 found about 40
+  further studies with measured values that are not read yet. Most of them are named in two
+  reviews: Kondo, Abe, Yamada 2022 (ACS Appl. Mater. Interfaces 14, 22706,
+  10.1021/acsami.1c21683), whose three tables hold 57 values from 18 studies, and Weiss and
+  others 2020 (Electrochem. Energy Rev. 3, 221, 10.1007/s41918-020-00062-7) for the transfer
+  between a solid and a liquid electrolyte. One of them is the file of the Kyoto University
+  repository that `sources.csv` lists as not read: it is Yamada and others 2010, on SiO.
+* Fukutsuka 2010 and Doi 2005 were read on 14 November 2026 and gave 11 rows and four
+  series. In Fukutsuka 2010 one surface film was formed in EC:DEC and the electrolyte was
+  then replaced, so the three rows differ in the solvent and not in the film; the row with
+  DMSO has another salt. In Doi 2005 two rows hold the crown ether 12-crown-4. It is an
+  additive there, at half of the concentration of the salt, so the two rows have PC as the
+  solvent and are in no series.
+* Five more papers were read on the same day and gave no row. Four of them measured no
+  activation energy (Okoshi 2013, Levin 2017, Vassiliev 2019, Motobayashi 2022). The fifth,
+  Zhou 2025, prints one value and shows the others only as markers in a figure.
+  `sources.csv` says for each what it holds.
 * Yamada, Sagane 2009 was read on 14 November 2026. Its two values that Table I of Ishihara
   2014 cites agree with the paper (51 kJ/mol for EC:DMC 1:1 and 32 kJ/mol for DMC), and its
   Table 1 gives two more: 53 kJ/mol for EC:DMC 1:9 and 48 kJ/mol for EC:DMC 1:14. One sentence

@@ -1,46 +1,47 @@
 {
  "variants": {
   "single": {
-   "n_points": 20,
-   "n_series": 7,
+   "n_points": 22,
+   "n_series": 8,
    "n_solvents": 13,
-   "slope": 0.07304970518440189,
-   "correlation_inside_series": 0.39396358723983205,
-   "sd_y_inside_series": 15.154397920892256,
-   "residual_sd": 14.497556632353408,
+   "slope": 0.07430623838938992,
+   "correlation_inside_series": 0.3972875768238786,
+   "sd_y_inside_series": 14.753038651849865,
+   "residual_sd": 14.049853391640143,
    "held_out": {
-    "n": 20,
+    "n": 22,
     "mean": {
-     "mae": 16.6093425,
-     "rmse": 21.469489539162023
+     "mae": 16.10849318181818,
+     "rmse": 20.742139388916982
     },
     "regression": {
-     "mae": 17.078743064512786,
-     "rmse": 22.451287278501823
+     "mae": 16.46362018445803,
+     "rmse": 21.67410969036791
     }
    },
    "gain": {
-    "gain": -0.4694005645127852,
-    "low": -6.832866773098399,
-    "high": 3.345286979304564,
+    "gain": -0.35512700263985053,
+    "low": -6.25859183474562,
+    "high": 3.20594465995366,
     "groups": 13
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.341,
+    "share_not_above": 0.3085,
     "solvents": 13
    },
    "between_series": {
-    "n": 12,
+    "n": 15,
     "electrolytes": [
      "DMC",
+     "DMSO",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 14.411288025690892,
-    "floor_mae": 11.908367610456722
+    "regression_mae": 14.377157312877625,
+    "floor_mae": 11.551305448150396
    },
    "per_series": [
     {
@@ -63,6 +64,13 @@
      "slope": 0.06809732198817578,
      "range_x": 207.4751791165155,
      "range_y": 15.4376
+    },
+    {
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "n": 2,
+     "slope": 0.47657477190221986,
+     "range_x": 23.291203509776636,
+     "range_y": 11.099999999999994
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
@@ -101,8 +109,8 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 46.73949988615779,
-     "slope": 0.07161727012326104
+     "regression": 46.72874339004443,
+     "slope": 0.0728791059038994
     },
     {
      "held_out": "DMC",
@@ -111,8 +119,8 @@
      "solvent": "DMC",
      "y": 50.67,
      "mean": 45.12,
-     "regression": 32.12585318661472,
-     "slope": 0.08957736860350916
+     "regression": 31.916249012710672,
+     "slope": 0.09102231074678986
     },
     {
      "held_out": "DMC",
@@ -121,8 +129,8 @@
      "solvent": "DMC",
      "y": 37.0,
      "mean": 64.0,
-     "regression": 61.36658909532992,
-     "slope": 0.08957736860350916
+     "regression": 61.324110437427215,
+     "slope": 0.09102231074678986
     },
     {
      "held_out": "DMF",
@@ -131,8 +139,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 42.56181026852498,
-     "slope": 0.06798166002023887
+     "regression": 42.608931409474444,
+     "slope": 0.06926980549089926
     },
     {
      "held_out": "DMSO",
@@ -145,14 +153,24 @@
      "slope": 0.06647660130407045
     },
     {
+     "held_out": "DMSO",
+     "id": "F10-03",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "DMSO",
+     "y": 82.3,
+     "mean": 71.2,
+     "regression": 72.7483200496114,
+     "slope": 0.06647660130407045
+    },
+    {
      "held_out": "EC",
      "id": "X07-04",
      "series": "Xu2007: graphite, film formed in each electrolyte",
      "solvent": "EC",
      "y": 71.1,
      "mean": 53.14,
-     "regression": 54.48389778990246,
-     "slope": 0.07124496254403714
+     "regression": 54.507754578903175,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EMC",
@@ -161,8 +179,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 69.75610221009754,
-     "slope": 0.07124496254403714
+     "regression": 69.73224542109682,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "FEC",
@@ -171,8 +189,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 61.07318029919427,
-     "slope": 0.06409956142460647
+     "regression": 61.02193941813153,
+     "slope": 0.06539942385724634
     },
     {
      "held_out": "PC",
@@ -215,14 +233,24 @@
      "slope": 0.050808221099556815
     },
     {
+     "held_out": "PC",
+     "id": "F10-02",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "PC",
+     "y": 71.2,
+     "mean": 82.3,
+     "regression": 81.1166153824005,
+     "slope": 0.050808221099556815
+    },
+    {
      "held_out": "THF",
      "id": "X10-07",
      "series": "Xu2010: lithium titanate, no film",
      "solvent": "THF",
      "y": 40.08,
      "mean": 50.415,
-     "regression": 39.65367307504671,
-     "slope": 0.07355900841753853
+     "regression": 39.43293388654574,
+     "slope": 0.07506787028357594
     },
     {
      "held_out": "THF",
@@ -231,8 +259,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 42.25026839094194,
-     "slope": 0.07355900841753853
+     "regression": 42.21694146579447,
+     "slope": 0.07506787028357594
     },
     {
      "held_out": "acetonitrile",
@@ -241,8 +269,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 41.92179430941685,
-     "slope": 0.07517899677674748
+     "regression": 41.8937729124741,
+     "slope": 0.07647282624965958
     },
     {
      "held_out": "acetonitrile",
@@ -251,8 +279,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 27.0158,
-     "regression": 22.337066155841356,
-     "slope": 0.07517899677674748
+     "regression": 22.2565452124526,
+     "slope": 0.07647282624965958
     },
     {
      "held_out": "diglyme",
@@ -261,8 +289,8 @@
      "solvent": "diglyme",
      "y": 34.7346,
      "mean": 22.673975,
-     "regression": 36.89141511387919,
-     "slope": 0.07614160273629297
+     "regression": 37.20898285303117,
+     "slope": 0.07784233904625415
     },
     {
      "held_out": "poly(ethylene glycol) of molar mass 222",
@@ -271,8 +299,8 @@
      "solvent": "poly(ethylene glycol) of molar mass 222",
      "y": 50.16,
      "mean": 45.375,
-     "regression": 97.53101715263034,
-     "slope": 0.1790114503022428
+     "regression": 98.30165927098597,
+     "slope": 0.1816564713525872
     },
     {
      "held_out": "water",
@@ -281,8 +309,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 58.11216831002315,
-     "slope": 0.05096960078803126
+     "regression": 58.00115454978819,
+     "slope": 0.052524841774124226
     },
     {
      "held_out": "water",
@@ -291,35 +319,35 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 30.392775,
-     "regression": 24.04761574727679,
-     "slope": 0.05096960078803126
+     "regression": 23.85400521118173,
+     "slope": 0.052524841774124226
     }
    ],
    "words": "single solvents only"
   },
   "single_no_chelate": {
-   "n_points": 18,
-   "n_series": 7,
+   "n_points": 20,
+   "n_series": 8,
    "n_solvents": 11,
-   "slope": 0.5589891815636177,
-   "correlation_inside_series": 0.8724504111605501,
-   "sd_y_inside_series": 16.161931962094954,
-   "residual_sd": 8.283889758483049,
+   "slope": 0.5559145647648472,
+   "correlation_inside_series": 0.8749734808405579,
+   "sd_y_inside_series": 15.638876484105376,
+   "residual_sd": 7.908579140661452,
    "held_out": {
-    "n": 18,
+    "n": 20,
     "mean": {
-     "mae": 17.893527777777777,
-     "rmse": 22.489862801425545
+     "mae": 17.214174999999994,
+     "rmse": 21.62257005871989
     },
     "regression": {
-     "mae": 10.30573311530813,
-     "rmse": 11.285941635893431
+     "mae": 9.336159364553527,
+     "rmse": 10.658335099835897
     }
    },
    "gain": {
-    "gain": 7.587794662469648,
-    "low": 0.2263682057082361,
-    "high": 13.178872342037774,
+    "gain": 7.8780156354464665,
+    "low": 0.9059648140478491,
+    "high": 12.774108905954686,
     "groups": 11
    },
    "permutation": {
@@ -328,16 +356,17 @@
     "solvents": 11
    },
    "between_series": {
-    "n": 12,
+    "n": 15,
     "electrolytes": [
      "DMC",
+     "DMSO",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 11.282098573703216,
-    "floor_mae": 10.360099771529512
+    "regression_mae": 9.466777701802728,
+    "floor_mae": 9.097978180933247
    },
    "per_series": [
     {
@@ -360,6 +389,13 @@
      "slope": 0.16273401069255727,
      "range_x": 41.50300217672256,
      "range_y": 6.75395
+    },
+    {
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "n": 2,
+     "slope": 0.47657477190221986,
+     "range_x": 23.291203509776636,
+     "range_y": 11.099999999999994
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
@@ -398,8 +434,8 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 42.70287054807344,
-     "slope": 0.5451509634646883
+     "regression": 42.72485500114763,
+     "slope": 0.5425719852161551
     },
     {
      "held_out": "DMC",
@@ -408,8 +444,8 @@
      "solvent": "DMC",
      "y": 50.67,
      "mean": 40.08,
-     "regression": 40.5200812617147,
-     "slope": 0.5347019332382401
+     "regression": 40.51818359068484,
+     "slope": 0.5323962491371662
     },
     {
      "held_out": "DMC",
@@ -418,8 +454,8 @@
      "solvent": "DMC",
      "y": 37.0,
      "mean": 64.0,
-     "regression": 48.280740507456784,
-     "slope": 0.5347019332382401
+     "regression": 48.348523405627944,
+     "slope": 0.5323962491371662
     },
     {
      "held_out": "DMF",
@@ -428,8 +464,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 61.05097505578614,
-     "slope": 0.5734179333597771
+     "regression": 60.89599320031181,
+     "slope": 0.5691812113462351
     },
     {
      "held_out": "DMSO",
@@ -442,14 +478,24 @@
      "slope": 0.5397504312818322
     },
     {
+     "held_out": "DMSO",
+     "id": "F10-03",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "DMSO",
+     "y": 82.3,
+     "mean": 71.2,
+     "regression": 83.77143713947487,
+     "slope": 0.5397504312818322
+    },
+    {
      "held_out": "EC",
      "id": "X07-04",
      "series": "Xu2007: graphite, film formed in each electrolyte",
      "solvent": "EC",
      "y": 71.1,
      "mean": 53.14,
-     "regression": 63.490835567482435,
-     "slope": 0.5487358472092574
+     "regression": 63.43878060459288,
+     "slope": 0.5459762222517917
     },
     {
      "held_out": "EMC",
@@ -458,8 +504,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 60.74916443251756,
-     "slope": 0.5487358472092574
+     "regression": 60.80121939540712,
+     "slope": 0.5459762222517917
     },
     {
      "held_out": "FEC",
@@ -468,8 +514,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 43.31296068671514,
-     "slope": 0.5146351843665976
+     "regression": 43.378234771755956,
+     "slope": 0.5129793320625432
     },
     {
      "held_out": "PC",
@@ -512,14 +558,24 @@
      "slope": 0.47642431121723694
     },
     {
+     "held_out": "PC",
+     "id": "F10-02",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "PC",
+     "y": 71.2,
+     "mean": 82.3,
+     "regression": 71.20350441043416,
+     "slope": 0.47642431121723694
+    },
+    {
      "held_out": "THF",
      "id": "X10-07",
      "series": "Xu2010: lithium titanate, no film",
      "solvent": "THF",
      "y": 40.08,
      "mean": 50.67,
-     "regression": 50.18652425355327,
-     "slope": 0.5874265477507598
+     "regression": 50.19012120977135,
+     "slope": 0.583056219788866
     },
     {
      "held_out": "THF",
@@ -528,8 +584,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 30.90023999898081,
-     "slope": 0.5874265477507598
+     "regression": 30.99676944023339,
+     "slope": 0.583056219788866
     },
     {
      "held_out": "acetonitrile",
@@ -538,8 +594,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 29.36291112796971,
-     "slope": 0.6550591947629163
+     "regression": 29.536674872442134,
+     "slope": 0.6470360168185318
     },
     {
      "held_out": "acetonitrile",
@@ -548,8 +604,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 19.297,
-     "regression": 46.48392318612744,
-     "slope": 0.6550591947629163
+     "regression": 46.15093721443742,
+     "slope": 0.6470360168185318
     },
     {
      "held_out": "water",
@@ -558,8 +614,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 19.614300724282543,
-     "slope": 0.5903032961767865
+     "regression": 20.184496739660936,
+     "slope": 0.5823151673957555
     },
     {
      "held_out": "water",
@@ -568,46 +624,48 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 26.05095,
-     "regression": 1.5515910138483306,
-     "slope": 0.5903032961767865
+     "regression": 1.8831223400353956,
+     "slope": 0.5823151673957555
     }
    ],
    "words": "single solvents, without the two that wrap the ion"
   },
   "mixtures": {
-   "n_points": 38,
-   "n_series": 10,
-   "n_solvents": 13,
-   "slope": 0.06357937157108098,
-   "correlation_inside_series": 0.33442040891014113,
-   "sd_y_inside_series": 11.271792649128528,
-   "residual_sd": 10.817738046802369,
+   "n_points": 47,
+   "n_series": 14,
+   "n_solvents": 14,
+   "slope": 0.06675922220646875,
+   "correlation_inside_series": 0.3402372058110338,
+   "sd_y_inside_series": 10.745702923219925,
+   "residual_sd": 10.26128041816411,
    "held_out": {
-    "n": 44,
+    "n": 57,
     "mean": {
-     "mae": 12.008274296536797,
-     "rmse": 16.08531661319087
+     "mae": 10.484457351712614,
+     "rmse": 14.666290005560215
     },
     "regression": {
-     "mae": 14.286446030399402,
-     "rmse": 18.24028815160752
+     "mae": 12.195522104967829,
+     "rmse": 16.565709466760637
     }
    },
    "gain": {
-    "gain": -2.278171733862605,
-    "low": -6.585180184859271,
-    "high": 1.5133643385873647,
-    "groups": 13
+    "gain": -1.711064753255215,
+    "low": -5.51466307209588,
+    "high": 1.2667978400333058,
+    "groups": 14
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.803,
+    "share_not_above": 0.7595,
     "solvents": 13
    },
    "between_series": {
-    "n": 21,
+    "n": 35,
     "electrolytes": [
      "DMC",
+     "DMSO",
+     "EC:DEC 1:1",
      "EC:DMC 1:1",
      "EC:DMC 1:9",
      "PC",
@@ -615,8 +673,8 @@
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 13.452540614334847,
-    "floor_mae": 9.635281176570231
+    "regression_mae": 10.503807956761689,
+    "floor_mae": 7.387161943152037
    },
    "per_series": [
     {
@@ -639,6 +697,34 @@
      "slope": 0.06616135180828003,
      "range_x": 207.4751791165155,
      "range_y": 15.4376
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.23276521514758663,
+     "range_x": 6.444261867259343,
+     "range_y": 1.5
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.5741541973640443,
+     "range_x": 6.444261867259343,
+     "range_y": 3.700000000000003
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.20172985312790542,
+     "range_x": 6.444261867259343,
+     "range_y": 1.2999999999999972
+    },
+    {
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "n": 3,
+     "slope": 0.6719579127228926,
+     "range_x": 29.73546537703598,
+     "range_y": 22.099999999999994
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
@@ -698,8 +784,48 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 46.818838794439145,
-     "slope": 0.06231008754157325
+     "regression": 46.79165593800419,
+     "slope": 0.0654988862459208
+    },
+    {
+     "held_out": "DEC",
+     "id": "F10-01",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "EC:DEC 1:1",
+     "y": 60.2,
+     "mean": 76.75,
+     "regression": 75.57932532802003,
+     "slope": 0.064714400087942
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-01",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.9,
+     "mean": 51.6,
+     "regression": 51.182963459250715,
+     "slope": 0.064714400087942
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-04",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.7,
+     "mean": 70.0,
+     "regression": 69.5829634592507,
+     "slope": 0.064714400087942
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-07",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.5,
+     "mean": 49.0,
+     "regression": 48.58296345925071,
+     "slope": 0.064714400087942
     },
     {
      "held_out": "DMC",
@@ -708,8 +834,8 @@
      "solvent": "DMC",
      "y": 50.67,
      "mean": 45.12,
-     "regression": 32.045891885016296,
-     "slope": 0.09012859548205422
+     "regression": 31.44972286741869,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -718,8 +844,8 @@
      "solvent": "EC:DMC 20:80",
      "y": 51.94,
      "mean": 45.12,
-     "regression": 34.11469558135149,
-     "slope": 0.09012859548205422
+     "regression": 33.61286238049942,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -728,8 +854,8 @@
      "solvent": "EC:DMC 30:70",
      "y": 52.52,
      "mean": 45.12,
-     "regression": 34.11469558135149,
-     "slope": 0.09012859548205422
+     "regression": 33.61286238049942,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -738,8 +864,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 52.08,
      "mean": 45.12,
-     "regression": 34.11469558135149,
-     "slope": 0.09012859548205422
+     "regression": 33.61286238049942,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -748,8 +874,8 @@
      "solvent": "EC:DMC 60:40",
      "y": 50.2,
      "mean": 45.12,
-     "regression": 34.11469558135149,
-     "slope": 0.09012859548205422
+     "regression": 33.61286238049942,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -758,8 +884,8 @@
      "solvent": "EC:DMC 70:30",
      "y": 54.94,
      "mean": 45.12,
-     "regression": 34.11469558135149,
-     "slope": 0.09012859548205422
+     "regression": 33.61286238049942,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -768,8 +894,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 54.0,
      "mean": 64.0,
-     "regression": 63.41918772898536,
-     "slope": 0.09012859548205422
+     "regression": 63.392703147553554,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -778,8 +904,8 @@
      "solvent": "DMC",
      "y": 37.0,
      "mean": 64.0,
-     "regression": 61.35038403265016,
-     "slope": 0.09012859548205422
+     "regression": 61.229563634472825,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMC",
@@ -788,8 +914,8 @@
      "solvent": "EC:DMC",
      "y": 28.9455,
      "mean": 26.69418333333333,
-     "regression": 25.066770448921655,
-     "slope": 0.09012859548205422
+     "regression": 24.992561705044626,
+     "slope": 0.09423838834543191
     },
     {
      "held_out": "DMF",
@@ -798,8 +924,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 42.233637535624844,
-     "slope": 0.059010437953843545
+     "regression": 42.352172090126956,
+     "slope": 0.06225080409146324
     },
     {
      "held_out": "DMSO",
@@ -808,8 +934,18 @@
      "solvent": "DMSO",
      "y": 69.9,
      "mean": 44.4,
-     "regression": 46.54512487906046,
-     "slope": 0.0576979638970863
+     "regression": 46.56478194426343,
+     "slope": 0.05822668492842341
+    },
+    {
+     "held_out": "DMSO",
+     "id": "F10-03",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "DMSO",
+     "y": 82.3,
+     "mean": 65.7,
+     "regression": 67.24378357103814,
+     "slope": 0.05822668492842341
     },
     {
      "held_out": "EC",
@@ -818,8 +954,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 58.0,
      "mean": 40.0,
-     "regression": 41.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 41.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -828,8 +964,8 @@
      "solvent": "EC:DMC 1:9",
      "y": 55.0,
      "mean": 40.0,
-     "regression": 41.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 41.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -838,8 +974,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 56.0,
      "mean": 52.0,
-     "regression": 53.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 53.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -848,8 +984,8 @@
      "solvent": "EC:EMC 30:70",
      "y": 67.75,
      "mean": 53.14,
-     "regression": 54.48389778990246,
-     "slope": 0.07124496254403714
+     "regression": 54.507754578903175,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -858,8 +994,8 @@
      "solvent": "EC:EMC 20:80",
      "y": 66.65,
      "mean": 53.14,
-     "regression": 54.48389778990246,
-     "slope": 0.07124496254403714
+     "regression": 54.507754578903175,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -868,8 +1004,8 @@
      "solvent": "EC",
      "y": 71.1,
      "mean": 53.14,
-     "regression": 54.48389778990246,
-     "slope": 0.07124496254403714
+     "regression": 54.507754578903175,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -878,8 +1014,8 @@
      "solvent": "EC:DMC 20:80",
      "y": 51.94,
      "mean": 46.97,
-     "regression": 41.71545914930627,
-     "slope": 0.07124496254403714
+     "regression": 41.62218087077011,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -888,8 +1024,8 @@
      "solvent": "EC:DMC 30:70",
      "y": 52.52,
      "mean": 46.97,
-     "regression": 41.71545914930627,
-     "slope": 0.07124496254403714
+     "regression": 41.62218087077011,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -898,8 +1034,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 52.08,
      "mean": 46.97,
-     "regression": 41.71545914930627,
-     "slope": 0.07124496254403714
+     "regression": 41.62218087077011,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -908,8 +1044,8 @@
      "solvent": "EC:DMC 60:40",
      "y": 50.2,
      "mean": 46.97,
-     "regression": 41.71545914930627,
-     "slope": 0.07124496254403714
+     "regression": 41.62218087077011,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -918,8 +1054,8 @@
      "solvent": "EC:DMC 70:30",
      "y": 54.94,
      "mean": 46.97,
-     "regression": 41.71545914930627,
-     "slope": 0.07124496254403714
+     "regression": 41.62218087077011,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -928,8 +1064,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 54.0,
      "mean": 50.5,
-     "regression": 51.08811464217214,
-     "slope": 0.07124496254403714
+     "regression": 51.098554816292484,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -938,8 +1074,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 51.0,
      "mean": 32.0,
-     "regression": 33.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 33.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -948,8 +1084,8 @@
      "solvent": "EC:DMC 1:9",
      "y": 53.0,
      "mean": 32.0,
-     "regression": 33.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 33.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -958,8 +1094,8 @@
      "solvent": "EC:DMC 1:14",
      "y": 48.0,
      "mean": 32.0,
-     "regression": 33.63535047970113,
-     "slope": 0.07124496254403714
+     "regression": 33.66438111851131,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EC",
@@ -968,8 +1104,48 @@
      "solvent": "EC:DMC",
      "y": 28.9455,
      "mean": 26.69418333333333,
-     "regression": 25.407744003246584,
-     "slope": 0.07124496254403714
+     "regression": 25.384907213208905,
+     "slope": 0.07250969863598392
+    },
+    {
+     "held_out": "EC",
+     "id": "F10-01",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "EC:DEC 1:1",
+     "y": 60.2,
+     "mean": 76.75,
+     "regression": 75.43830944039202,
+     "slope": 0.07250969863598392
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-01",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.9,
+     "mean": 51.6,
+     "regression": 51.13272851407366,
+     "slope": 0.07250969863598392
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-04",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.7,
+     "mean": 70.0,
+     "regression": 69.53272851407367,
+     "slope": 0.07250969863598392
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-07",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.5,
+     "mean": 49.0,
+     "regression": 48.53272851407366,
+     "slope": 0.07250969863598392
     },
     {
      "held_out": "EMC",
@@ -979,7 +1155,7 @@
      "y": 67.75,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.061538385433887476
+     "slope": 0.06473824033986682
     },
     {
      "held_out": "EMC",
@@ -989,7 +1165,7 @@
      "y": 66.65,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.061538385433887476
+     "slope": 0.06473824033986682
     },
     {
      "held_out": "EMC",
@@ -998,8 +1174,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 69.93919792746541,
-     "slope": 0.061538385433887476
+     "regression": 69.87883888196102,
+     "slope": 0.06473824033986682
     },
     {
      "held_out": "FEC",
@@ -1008,8 +1184,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 61.40849344347304,
-     "slope": 0.05559344384078306
+     "regression": 61.28004373922004,
+     "slope": 0.05885191523275148
     },
     {
      "held_out": "PC",
@@ -1018,8 +1194,8 @@
      "solvent": "PC",
      "y": 57.3,
      "mean": 50.7,
-     "regression": 50.801930628374215,
-     "slope": 0.045469946277658956
+     "regression": 50.80914114624037,
+     "slope": 0.04868646583844029
     },
     {
      "held_out": "PC",
@@ -1028,8 +1204,8 @@
      "solvent": "PC",
      "y": 64.0,
      "mean": 45.5,
-     "regression": 46.31487677504923,
-     "slope": 0.045469946277658956
+     "regression": 46.372520720141374,
+     "slope": 0.04868646583844029
     },
     {
      "held_out": "PC",
@@ -1038,8 +1214,8 @@
      "solvent": "PC",
      "y": 45.7,
      "mean": 43.050000000000004,
-     "regression": 43.763380546077464,
-     "slope": 0.045469946277658956
+     "regression": 43.8138447024837,
+     "slope": 0.04868646583844029
     },
     {
      "held_out": "PC",
@@ -1048,8 +1224,48 @@
      "solvent": "PC",
      "y": 61.7504,
      "mean": 15.4376,
-     "regression": 18.68326402191186,
-     "slope": 0.045469946277658956
+     "regression": 18.912860550362854,
+     "slope": 0.04868646583844029
+    },
+    {
+     "held_out": "PC",
+     "id": "F10-02",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "PC",
+     "y": 71.2,
+     "mean": 71.25,
+     "regression": 70.8398909756197,
+     "slope": 0.04868646583844029
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-02",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 51.6,
+     "mean": 47.9,
+     "regression": 48.21374833525429,
+     "slope": 0.04868646583844029
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-05",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 70.0,
+     "mean": 68.7,
+     "regression": 69.01374833525429,
+     "slope": 0.04868646583844029
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-08",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 49.0,
+     "mean": 47.5,
+     "regression": 47.81374833525429,
+     "slope": 0.04868646583844029
     },
     {
      "held_out": "THF",
@@ -1058,8 +1274,8 @@
      "solvent": "THF",
      "y": 40.08,
      "mean": 51.787142857142854,
-     "regression": 48.30420154009672,
-     "slope": 0.059251679568312565
+     "regression": 48.109137169444494,
+     "slope": 0.06257010802661415
     },
     {
      "held_out": "THF",
@@ -1068,8 +1284,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 42.56628093546372,
-     "slope": 0.059251679568312565
+     "regression": 42.492985281748595,
+     "slope": 0.06257010802661415
     },
     {
      "held_out": "acetonitrile",
@@ -1078,8 +1294,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 42.15435770830915,
-     "slope": 0.06444086760987836
+     "regression": 42.08403149142038,
+     "slope": 0.06768803377775233
     },
     {
      "held_out": "acetonitrile",
@@ -1088,8 +1304,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 27.65903333333333,
-     "regression": 24.482048420422576,
-     "slope": 0.06444086760987836
+     "regression": 24.32196060181182,
+     "slope": 0.06768803377775233
     },
     {
      "held_out": "diglyme",
@@ -1098,8 +1314,8 @@
      "solvent": "diglyme",
      "y": 34.7346,
      "mean": 24.76448333333333,
-     "regression": 35.980759372905716,
-     "slope": 0.06521262933357821
+     "regression": 36.68368593156813,
+     "slope": 0.06929951957745699
     },
     {
      "held_out": "poly(ethylene glycol) of molar mass 222",
@@ -1108,8 +1324,8 @@
      "solvent": "poly(ethylene glycol) of molar mass 222",
      "y": 50.16,
      "mean": 50.34714285714285,
-     "regression": 103.75752253715166,
-     "slope": 0.1944556197074976
+     "regression": 105.77831587443325,
+     "slope": 0.20181289039263658
     },
     {
      "held_out": "water",
@@ -1118,8 +1334,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 58.67916320027906,
-     "slope": 0.0430263179880892
+     "regression": 58.415324892194135,
+     "slope": 0.04672254582116707
     },
     {
      "held_out": "water",
@@ -1128,46 +1344,48 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 29.910349999999998,
-     "regression": 25.4081572200531,
-     "slope": 0.0430263179880892
+     "regression": 25.021390909542202,
+     "slope": 0.04672254582116707
     }
    ],
    "words": "single solvents and mixtures; a mixture takes its strongest solvent"
   },
   "mixtures_no_chelate": {
-   "n_points": 36,
-   "n_series": 10,
-   "n_solvents": 11,
-   "slope": 0.49061710949340526,
-   "correlation_inside_series": 0.8406255929932225,
-   "sd_y_inside_series": 11.574025299209824,
-   "residual_sd": 6.392829417291565,
+   "n_points": 45,
+   "n_series": 14,
+   "n_solvents": 12,
+   "slope": 0.49795987659390806,
+   "correlation_inside_series": 0.8457404470826823,
+   "sd_y_inside_series": 10.977882851534016,
+   "residual_sd": 5.95456664522053,
    "held_out": {
-    "n": 42,
+    "n": 55,
     "mean": {
-     "mae": 13.396259722222222,
-     "rmse": 16.893264942381144
+     "mae": 11.48896196969697,
+     "rmse": 15.292492702075222
     },
     "regression": {
-     "mae": 7.007135578542329,
-     "rmse": 8.6267572663657
+     "mae": 5.954146182706729,
+     "rmse": 7.671158362344219
     }
    },
    "gain": {
-    "gain": 6.389124143679894,
-    "low": 4.209837457464322,
-    "high": 9.164454162203135,
-    "groups": 11
+    "gain": 5.534815786990241,
+    "low": 3.8557499660762677,
+    "high": 7.725043798321069,
+    "groups": 12
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.0005,
+    "share_not_above": 0.0,
     "solvents": 11
    },
    "between_series": {
-    "n": 21,
+    "n": 35,
     "electrolytes": [
      "DMC",
+     "DMSO",
+     "EC:DEC 1:1",
      "EC:DMC 1:1",
      "EC:DMC 1:9",
      "PC",
@@ -1175,8 +1393,8 @@
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 7.495844936675736,
-    "floor_mae": 6.612282740110678
+    "regression_mae": 5.667341785841659,
+    "floor_mae": 5.16701030509482
    },
    "per_series": [
     {
@@ -1199,6 +1417,34 @@
      "slope": 0.1502198756292417,
      "range_x": 64.93616163472694,
      "range_y": 9.648499999999999
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.23276521514758663,
+     "range_x": 6.444261867259343,
+     "range_y": 1.5
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.5741541973640443,
+     "range_x": 6.444261867259343,
+     "range_y": 3.700000000000003
+    },
+    {
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "n": 2,
+     "slope": 0.20172985312790542,
+     "range_x": 6.444261867259343,
+     "range_y": 1.2999999999999972
+    },
+    {
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "n": 3,
+     "slope": 0.6719579127228926,
+     "range_x": 29.73546537703598,
+     "range_y": 22.099999999999994
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
@@ -1258,8 +1504,48 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 43.251612770628924,
-     "slope": 0.4807784611674134
+     "regression": 43.18436315109514,
+     "slope": 0.4886674591522397
+    },
+    {
+     "held_out": "DEC",
+     "id": "F10-01",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "EC:DEC 1:1",
+     "y": 60.2,
+     "mean": 76.75,
+     "regression": 67.88136781396378,
+     "slope": 0.4902542313905689
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-01",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.9,
+     "mean": 51.6,
+     "regression": 48.44067335138722,
+     "slope": 0.4902542313905689
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-04",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.7,
+     "mean": 70.0,
+     "regression": 66.84067335138722,
+     "slope": 0.4902542313905689
+    },
+    {
+     "held_out": "DEC",
+     "id": "D05-07",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.5,
+     "mean": 49.0,
+     "regression": 45.84067335138722,
+     "slope": 0.4902542313905689
     },
     {
      "held_out": "DMC",
@@ -1268,8 +1554,8 @@
      "solvent": "DMC",
      "y": 50.67,
      "mean": 40.08,
-     "regression": 40.52012434830632,
-     "slope": 0.5347542837603754
+     "regression": 40.526379853501325,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1278,8 +1564,8 @@
      "solvent": "EC:DMC 20:80",
      "y": 51.94,
      "mean": 40.08,
-     "regression": 52.79482621132184,
-     "slope": 0.5347542837603754
+     "regression": 52.97554255143048,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1288,8 +1574,8 @@
      "solvent": "EC:DMC 30:70",
      "y": 52.52,
      "mean": 40.08,
-     "regression": 52.79482621132184,
-     "slope": 0.5347542837603754
+     "regression": 52.97554255143048,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1298,8 +1584,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 52.08,
      "mean": 40.08,
-     "regression": 52.79482621132184,
-     "slope": 0.5347542837603754
+     "regression": 52.97554255143048,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1308,8 +1594,8 @@
      "solvent": "EC:DMC 60:40",
      "y": 50.2,
      "mean": 40.08,
-     "regression": 52.79482621132184,
-     "slope": 0.5347542837603754
+     "regression": 52.97554255143048,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1318,8 +1604,8 @@
      "solvent": "EC:DMC 70:30",
      "y": 54.94,
      "mean": 40.08,
-     "regression": 52.79482621132184,
-     "slope": 0.5347542837603754
+     "regression": 52.97554255143048,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1328,8 +1614,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 54.0,
      "mean": 64.0,
-     "regression": 60.55390336080943,
-     "slope": 0.5347542837603754
+     "regression": 60.50492384965098,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1338,8 +1624,8 @@
      "solvent": "DMC",
      "y": 37.0,
      "mean": 64.0,
-     "regression": 48.279201497793906,
-     "slope": 0.5347542837603754
+     "regression": 48.055761151721825,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMC",
@@ -1348,8 +1634,8 @@
      "solvent": "EC:DMC",
      "y": 28.9455,
      "mean": 22.673975,
-     "regression": 46.30191150366708,
-     "slope": 0.5347542837603754
+     "regression": 46.63773632252774,
+     "slope": 0.5423547680621222
     },
     {
      "held_out": "DMF",
@@ -1358,8 +1644,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 58.071427317159134,
-     "slope": 0.49196636307108116
+     "regression": 58.36684956268618,
+     "slope": 0.5000422886501352
     },
     {
      "held_out": "DMSO",
@@ -1368,8 +1654,18 @@
      "solvent": "DMSO",
      "y": 69.9,
      "mean": 44.4,
-     "regression": 61.92136736216878,
-     "slope": 0.47127662886124605
+     "regression": 61.989669842060195,
+     "slope": 0.47311377785771014
+    },
+    {
+     "held_out": "DMSO",
+     "id": "F10-03",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "DMSO",
+     "y": 82.3,
+     "mean": 65.7,
+     "regression": 78.24382382212491,
+     "slope": 0.47311377785771014
     },
     {
      "held_out": "EC",
@@ -1378,8 +1674,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 58.0,
      "mean": 40.0,
-     "regression": 52.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 52.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1388,8 +1684,8 @@
      "solvent": "EC:DMC 1:9",
      "y": 55.0,
      "mean": 40.0,
-     "regression": 52.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 52.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1398,8 +1694,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 56.0,
      "mean": 52.0,
-     "regression": 64.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 64.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1408,8 +1704,8 @@
      "solvent": "EC:EMC 30:70",
      "y": 67.75,
      "mean": 53.14,
-     "regression": 63.490835567482435,
-     "slope": 0.5487358472092573
+     "regression": 63.43878060459288,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1418,8 +1714,8 @@
      "solvent": "EC:EMC 20:80",
      "y": 66.65,
      "mean": 53.14,
-     "regression": 63.490835567482435,
-     "slope": 0.5487358472092573
+     "regression": 63.43878060459288,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1428,8 +1724,8 @@
      "solvent": "EC",
      "y": 71.1,
      "mean": 53.14,
-     "regression": 63.490835567482435,
-     "slope": 0.5487358472092573
+     "regression": 63.43878060459288,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1438,8 +1734,8 @@
      "solvent": "EC:DMC 20:80",
      "y": 51.94,
      "mean": 45.375,
-     "regression": 58.19644928583284,
-     "slope": 0.5487358472092573
+     "regression": 58.13196946075852,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1448,8 +1744,8 @@
      "solvent": "EC:DMC 30:70",
      "y": 52.52,
      "mean": 45.375,
-     "regression": 58.19644928583284,
-     "slope": 0.5487358472092573
+     "regression": 58.13196946075852,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1458,8 +1754,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 52.08,
      "mean": 45.375,
-     "regression": 58.19644928583284,
-     "slope": 0.5487358472092573
+     "regression": 58.13196946075852,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1468,8 +1764,8 @@
      "solvent": "EC:DMC 60:40",
      "y": 50.2,
      "mean": 45.375,
-     "regression": 58.19644928583284,
-     "slope": 0.5487358472092573
+     "regression": 58.13196946075852,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1478,8 +1774,8 @@
      "solvent": "EC:DMC 70:30",
      "y": 54.94,
      "mean": 45.375,
-     "regression": 58.19644928583284,
-     "slope": 0.5487358472092573
+     "regression": 58.13196946075852,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1488,8 +1784,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 54.0,
      "mean": 50.5,
-     "regression": 55.02971796046662,
-     "slope": 0.5487358472092573
+     "regression": 55.00693774153695,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1498,8 +1794,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 51.0,
      "mean": 32.0,
-     "regression": 44.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 44.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1508,8 +1804,8 @@
      "solvent": "EC:DMC 1:9",
      "y": 53.0,
      "mean": 32.0,
-     "regression": 44.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 44.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1518,8 +1814,8 @@
      "solvent": "EC:DMC 1:14",
      "y": 48.0,
      "mean": 32.0,
-     "regression": 44.59563341630209,
-     "slope": 0.5487358472092573
+     "regression": 44.53228923256142,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EC",
@@ -1528,8 +1824,48 @@
      "solvent": "EC:DMC",
      "y": 28.9455,
      "mean": 22.673975,
-     "regression": 46.9196821385634,
-     "slope": 0.5487358472092573
+     "regression": 46.797749046582496,
+     "slope": 0.5459762222517915
+    },
+    {
+     "held_out": "EC",
+     "id": "F10-01",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "EC:DEC 1:1",
+     "y": 60.2,
+     "mean": 76.75,
+     "regression": 66.8733645985297,
+     "slope": 0.5459762222517915
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-01",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.9,
+     "mean": 51.6,
+     "regression": 48.08158625051247,
+     "slope": 0.5459762222517915
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-04",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.7,
+     "mean": 70.0,
+     "regression": 66.48158625051246,
+     "slope": 0.5459762222517915
+    },
+    {
+     "held_out": "EC",
+     "id": "D05-07",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.5,
+     "mean": 49.0,
+     "regression": 45.48158625051247,
+     "slope": 0.5459762222517915
     },
     {
      "held_out": "EMC",
@@ -1539,7 +1875,7 @@
      "y": 67.75,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.48194319827518733
+     "slope": 0.489927733084688
     },
     {
      "held_out": "EMC",
@@ -1549,7 +1885,7 @@
      "y": 66.65,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.48194319827518733
+     "slope": 0.489927733084688
     },
     {
      "held_out": "EMC",
@@ -1558,8 +1894,8 @@
      "solvent": "EMC",
      "y": 53.14,
      "mean": 71.1,
-     "regression": 62.009077976983875,
-     "slope": 0.48194319827518733
+     "regression": 61.85846524170094,
+     "slope": 0.489927733084688
     },
     {
      "held_out": "FEC",
@@ -1568,8 +1904,8 @@
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 45.69829683652815,
-     "slope": 0.4541247328276459
+     "regression": 45.29658232026456,
+     "slope": 0.46431529937348337
     },
     {
      "held_out": "PC",
@@ -1578,8 +1914,8 @@
      "solvent": "PC",
      "y": 57.3,
      "mean": 50.7,
-     "regression": 51.65664871131995,
-     "slope": 0.4267487231670539
+     "regression": 51.6973544634337,
+     "slope": 0.4449070372216711
     },
     {
      "held_out": "PC",
@@ -1588,8 +1924,8 @@
      "solvent": "PC",
      "y": 64.0,
      "mean": 45.5,
-     "regression": 53.14785648012973,
-     "slope": 0.4267487231670539
+     "regression": 53.47327556698772,
+     "slope": 0.4449070372216711
     },
     {
      "held_out": "PC",
@@ -1598,8 +1934,8 @@
      "solvent": "PC",
      "y": 45.7,
      "mean": 43.050000000000004,
-     "regression": 49.74528473404753,
-     "slope": 0.4267487231670539
+     "regression": 50.03017154515189,
+     "slope": 0.4449070372216711
     },
     {
      "held_out": "PC",
@@ -1608,8 +1944,48 @@
      "solvent": "PC",
      "y": 61.7504,
      "mean": 15.4376,
-     "regression": 45.89910458859622,
-     "slope": 0.4267487231670539
+     "regression": 47.19525273589686,
+     "slope": 0.4449070372216711
+    },
+    {
+     "held_out": "PC",
+     "id": "F10-02",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "PC",
+     "y": 71.2,
+     "mean": 71.25,
+     "regression": 67.50233855379061,
+     "slope": 0.4449070372216711
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-02",
+     "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 51.6,
+     "mean": 47.9,
+     "regression": 50.76709745444295,
+     "slope": 0.4449070372216711
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-05",
+     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 70.0,
+     "mean": 68.7,
+     "regression": 71.56709745444294,
+     "slope": 0.4449070372216711
+    },
+    {
+     "held_out": "PC",
+     "id": "D05-08",
+     "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
+     "solvent": "PC",
+     "y": 49.0,
+     "mean": 47.5,
+     "regression": 50.36709745444295,
+     "slope": 0.4449070372216711
     },
     {
      "held_out": "THF",
@@ -1618,8 +1994,8 @@
      "solvent": "THF",
      "y": 40.08,
      "mean": 52.05833333333333,
-     "regression": 42.00095097938981,
-     "slope": 0.5040966200263869
+     "regression": 41.85855570714149,
+     "slope": 0.5112337629649738
     },
     {
      "held_out": "THF",
@@ -1628,8 +2004,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 32.740786391148205,
-     "slope": 0.5040966200263869
+     "regression": 32.5831450365385,
+     "slope": 0.5112337629649738
     },
     {
      "held_out": "acetonitrile",
@@ -1638,8 +2014,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 32.47821672048342,
-     "slope": 0.5112164662595601
+     "regression": 32.33637302732325,
+     "slope": 0.5177658025090063
     },
     {
      "held_out": "acetonitrile",
@@ -1648,8 +2024,8 @@
      "solvent": "acetonitrile",
      "y": 26.05095,
      "mean": 24.12125,
-     "regression": 28.740050570264575,
-     "slope": 0.5112164662595601
+     "regression": 28.79922330823432,
+     "slope": 0.5177658025090063
     },
     {
      "held_out": "water",
@@ -1658,8 +2034,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 23.864604421180978,
-     "slope": 0.5307589072760934
+     "regression": 23.223118174601787,
+     "slope": 0.5397457725131894
     },
     {
      "held_out": "water",
@@ -1668,51 +2044,52 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 27.498224999999998,
-     "regression": -0.7485421379730184,
-     "slope": 0.5307589072760934
+     "regression": -1.2268193485343595,
+     "slope": 0.5397457725131894
     }
    ],
    "words": "the same, without the two solvents that wrap the ion"
   },
   "published": {
-   "n_points": 12,
-   "n_series": 4,
+   "n_points": 14,
+   "n_series": 5,
    "n_solvents": 8,
-   "slope": 0.4556925631532092,
-   "correlation_inside_series": 0.8458341292099246,
-   "sd_y_inside_series": 14.216021111759789,
-   "residual_sd": 8.107080572551201,
+   "slope": 0.4590712968982634,
+   "correlation_inside_series": 0.8513505696044961,
+   "sd_y_inside_series": 13.655959423554899,
+   "residual_sd": 7.598439949920083,
    "held_out": {
-    "n": 12,
+    "n": 14,
     "mean": {
-     "mae": 15.002500000000003,
-     "rmse": 18.434987003882952
+     "mae": 14.444999999999999,
+     "rmse": 17.575561259073027
     },
     "regression": {
-     "mae": 10.337523764449854,
-     "rmse": 11.310458726481802
+     "mae": 9.20839565698715,
+     "rmse": 10.462860211361562
     }
    },
    "gain": {
-    "gain": 4.664976235550149,
-    "low": 0.736918621349012,
-    "high": 9.519687767140045,
+    "gain": 5.236604343012848,
+    "low": 1.413499835005573,
+    "high": 9.290048482908416,
     "groups": 8
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.009,
+    "share_not_above": 0.0065,
     "solvents": 8
    },
    "between_series": {
-    "n": 7,
+    "n": 10,
     "electrolytes": [
      "DMC",
+     "DMSO",
      "PC",
      "THF"
     ],
-    "regression_mae": 9.580653202633098,
-    "floor_mae": 8.795004863692977
+    "regression_mae": 8.426104227543775,
+    "floor_mae": 7.846732745622232
    },
    "per_series": [
     {
@@ -1721,6 +2098,13 @@
      "slope": 0.8568308710262391,
      "range_x": 45.19999999999999,
      "range_y": 38.400000000000006
+    },
+    {
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "n": 2,
+     "slope": 0.5522388059701483,
+     "range_x": 20.100000000000023,
+     "range_y": 11.099999999999994
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
@@ -1752,8 +2136,8 @@
      "solvent": "2,2,2-trifluoroethyl acetate",
      "y": 28.5,
      "mean": 47.35,
-     "regression": 25.853663603331416,
-     "slope": 0.47296669739644864
+     "regression": 25.67699704870945,
+     "slope": 0.4768537503034226
     },
     {
      "held_out": "DMC",
@@ -1762,8 +2146,8 @@
      "solvent": "DMC",
      "y": 50.67,
      "mean": 40.08,
-     "regression": 41.44541647074245,
-     "slope": 0.4137625668916502
+     "regression": 41.46273973576188,
+     "slope": 0.4190120411399621
     },
     {
      "held_out": "DMC",
@@ -1772,8 +2156,8 @@
      "solvent": "DMC",
      "y": 37.0,
      "mean": 64.0,
-     "regression": 51.752628020007165,
-     "slope": 0.4137625668916502
+     "regression": 51.597243582257136,
+     "slope": 0.4190120411399621
     },
     {
      "held_out": "DMF",
@@ -1782,8 +2166,8 @@
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 73.50864555809196,
-     "slope": 0.5860411140769842
+     "regression": 73.3856993945547,
+     "slope": 0.5838860542428517
     },
     {
      "held_out": "DMSO",
@@ -1796,14 +2180,24 @@
      "slope": 0.4081165467856848
     },
     {
+     "held_out": "DMSO",
+     "id": "F10-03",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "DMSO",
+     "y": 82.3,
+     "mean": 71.2,
+     "regression": 79.40314259039228,
+     "slope": 0.4081165467856848
+    },
+    {
      "held_out": "FEC",
      "id": "A05-03",
      "series": "Abe2005: solid electrolyte, no film",
      "solvent": "FEC",
      "y": 31.5,
      "mean": 63.6,
-     "regression": 50.37323461479958,
-     "slope": 0.3762948900483764
+     "regression": 50.120779599547106,
+     "slope": 0.3834771095434681
     },
     {
      "held_out": "PC",
@@ -1836,14 +2230,24 @@
      "slope": 0.44018465096766657
     },
     {
+     "held_out": "PC",
+     "id": "F10-02",
+     "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
+     "solvent": "PC",
+     "y": 71.2,
+     "mean": 82.3,
+     "regression": 73.4522885155499,
+     "slope": 0.44018465096766657
+    },
+    {
      "held_out": "THF",
      "id": "X10-07",
      "series": "Xu2010: lithium titanate, no film",
      "solvent": "THF",
      "y": 40.08,
      "mean": 50.67,
-     "regression": 49.10975413558304,
-     "slope": 0.4728017770960474
+     "regression": 49.1001033740465,
+     "slope": 0.47572625028893883
     },
     {
      "held_out": "THF",
@@ -1852,8 +2256,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 35.03360676830392,
-     "slope": 0.4728017770960474
+     "regression": 34.97891911959685,
+     "slope": 0.47572625028893883
     },
     {
      "held_out": "acetonitrile",
@@ -1862,8 +2266,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 36.31749856204094,
-     "slope": 0.4719413662616022
+     "regression": 36.27298502301001,
+     "slope": 0.4748460017611737
     }
    ],
    "words": "single solvents, with the binding energies that the papers give"

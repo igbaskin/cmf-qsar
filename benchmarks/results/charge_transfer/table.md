@@ -2,7 +2,7 @@
 
 The values were collected from the literature and are in `examples/charge_transfer/activation_energies.csv`, one row per value, with the paper and the place in it. A row is *primary* when the number was read in the paper that measured it, and *secondary* when it was read in another paper that cites it. All values below are in kJ/mol; a value given in eV was multiplied by 96.485 and a value given in kcal/mol by 4.184. No model is fitted here.
 
-The table holds 92 rows from 16 studies: 92 primary and 0 secondary. By class of electrode: graphite 39, layered oxide 21, lithium titanate 14, non-graphitizable carbon 3, olivine 1, solid electrolyte 9, spinel oxide 5.
+The table holds 103 rows from 18 studies: 103 primary and 0 secondary. By class of electrode: carbonaceous thin film 3, graphite 39, layered oxide 21, lithium titanate 14, non-graphitizable carbon 11, olivine 1, solid electrolyte 9, spinel oxide 5.
 
 ## How well laboratories agree on one system
 
@@ -29,6 +29,8 @@ Over these 5 studies the mean is 59.7 kJ/mol, the standard deviation 5.0 kJ/mol 
 | Chekushkin2021 | layered oxide | 2 | 15.4 | 61.8 | 46.3 | solvent, film | primary |
 | Chekushkin2021 | spinel oxide | 4 | 19.3 | 34.7 | 15.4 | solvent, salt, film | primary |
 | Doi2004 | non-graphitizable carbon | 3 | 72.0 | 75.8 | 3.8 | solvent, salt | primary |
+| Doi2005 | non-graphitizable carbon | 8 | 47.5 | 70.0 | 22.5 | solvent, additive, form of the electrode | primary |
+| Fukutsuka2010 | carbonaceous thin film | 3 | 60.2 | 82.3 | 22.1 | solvent, salt, film | primary |
 | Ishihara2014 | lithium titanate | 3 | 37.0 | 64.0 | 27.0 | solvent | primary |
 | Jow2012 | graphite | 2 | 67.0 | 68.0 | 1.0 | state | primary |
 | Jow2018 | graphite | 6 | 57.7 | 69.1 | 11.4 | additive | primary |
@@ -68,6 +70,10 @@ A series is a set of rows of one study that share the electrode and the film, or
 | Abe2005: solid electrolyte, no film | 3 | FEC; PC; DMSO | 31.5 | 69.9 | 38.4 | primary |
 | Chekushkin2021: LiCoO2 | 2 | water; PC | 15.4 | 61.8 | 46.3 | primary |
 | Chekushkin2021: LiMn2O4 | 4 | water; acetonitrile; EC:DMC; diglyme | 19.3 | 34.7 | 15.4 | primary |
+| Doi2005: glassy carbon GC-10, film formed in each electrolyte | 2 | EC:DEC 1:1; PC | 47.5 | 49.0 | 1.5 | primary |
+| Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte | 2 | EC:DEC 1:1; PC | 47.9 | 51.6 | 3.7 | primary |
+| Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte | 2 | EC:DEC 1:1; PC | 68.7 | 70.0 | 1.3 | primary |
+| Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 3 | EC:DEC 1:1; PC; DMSO | 60.2 | 82.3 | 22.1 | primary |
 | Ishihara2014: lithium titanate, no film | 3 | DMC; EC:DMC 1:1; PC | 37.0 | 64.0 | 27.0 | primary |
 | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 5 | 2,2,2-trifluoroethyl acetate; THF; acetonitrile; PC; DMF | 28.5 | 57.6 | 29.1 | primary |
 | Xu2007: graphite, film formed in each electrolyte | 4 | EMC; EC:EMC 20:80; EC:EMC 30:70; EC | 53.1 | 71.1 | 18.0 | primary |
@@ -76,7 +82,7 @@ A series is a set of rows of one study that share the electrode and the film, or
 | Yamada2009: graphite, one film formed with pentafluorostyrene | 2 | DMC; EC:DMC 1:1 | 52.0 | 56.0 | 4.0 | primary |
 | YamadaSagane2009: solid electrolyte, no film | 4 | DMC; EC:DMC 1:14; EC:DMC 1:1; EC:DMC 1:9 | 32.0 | 53.0 | 21.0 | primary |
 
-The 10 series hold 38 rows, and the largest holds 8. They hold 23 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 5 single solvents were measured in two or more series: DMC, PC, THF, acetonitrile, water.
+The 14 series hold 47 rows, and the largest holds 8. They hold 24 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 6 single solvents were measured in two or more series: DMC, DMSO, PC, THF, acetonitrile, water.
 
 ### One solvent in more than one series
 
@@ -89,8 +95,14 @@ The value of a single solvent in each series that measured it. The series differ
 | DMC | Yamada2009: graphite, one film formed in EC:DMC 1:1 | 40.0 |
 | DMC | Yamada2009: graphite, one film formed with pentafluorostyrene | 52.0 |
 | DMC | YamadaSagane2009: solid electrolyte, no film | 32.0 |
+| DMSO | Abe2005: solid electrolyte, no film | 69.9 |
+| DMSO | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 82.3 |
 | PC | Abe2005: solid electrolyte, no film | 57.3 |
 | PC | Chekushkin2021: LiCoO2 | 61.8 |
+| PC | Doi2005: glassy carbon GC-10, film formed in each electrolyte | 49.0 |
+| PC | Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte | 51.6 |
+| PC | Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte | 70.0 |
+| PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 71.2 |
 | PC | Ishihara2014: lithium titanate, no film | 64.0 |
 | PC | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 45.7 |
 | THF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 42.4 |
@@ -113,6 +125,12 @@ For every pair of solvents that two or more series measured: the value in the fi
 | DMC | EC:DMC 1:1 | YamadaSagane2009: solid electrolyte, no film | -19.0 |
 | DMC | EC:DMC 1:9 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | -15.0 |
 | DMC | EC:DMC 1:9 | YamadaSagane2009: solid electrolyte, no film | -21.0 |
+| DMSO | PC | Abe2005: solid electrolyte, no film | +12.6 |
+| DMSO | PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | +11.1 |
+| EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-10, film formed in each electrolyte | -1.5 |
+| EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte | -3.7 |
+| EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte | -1.3 |
+| EC:DEC 1:1 | PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | -11.0 |
 | EC:DMC 1:1 | EC:DMC 1:9 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | +3.0 |
 | EC:DMC 1:1 | EC:DMC 1:9 | YamadaSagane2009: solid electrolyte, no film | -2.0 |
 
@@ -122,7 +140,7 @@ The hypothesis that the removal of the solvent shell sets the barrier has a vers
 
 ### The binding energy of Li+ with one molecule of each solvent
 
-Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP D3BJ def2-TZVPP RIJCOSX def2/J TightSCF`. The value is the energy of the ion and of the free molecule minus the energy of the complex, each at its own optimised geometry, in the gas phase and with no thermal correction. A larger number is a stronger binding. The starting geometries come from the builder of plan item BT4, which optimises them with GFN2-xTB from 5 starts. *Published* is the value that a paper of the label table gives for the same complex, calculated with B3LYP: a reaction enthalpy or a difference of electronic energies, and, where marked, the position of a marker in a figure. The ORCA runs of the 30 species took 224 minutes of processor time in all.
+Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP D3BJ def2-TZVPP RIJCOSX def2/J TightSCF`. The value is the energy of the ion and of the free molecule minus the energy of the complex, each at its own optimised geometry, in the gas phase and with no thermal correction. A larger number is a stronger binding. The starting geometries come from the builder of plan item BT4, which optimises them with GFN2-xTB from 5 starts. *Published* is the value that a paper of the label table gives for the same complex, calculated with B3LYP: a reaction enthalpy or a difference of electronic energies, and, where marked, the position of a marker in a figure. The ORCA runs of the 32 species took 238 minutes of processor time in all.
 
 | Solvent | Binding energy, kJ/mol | Geometry from | Donor atoms at the ion | Shortest distance to the ion, angstrom | With GFN2-xTB alone, kJ/mol | Published, kJ/mol |
 |---|---:|---|---:|---:|---:|---|
@@ -133,6 +151,7 @@ Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP 
 | FEC | 199.1 | ORCA | 1 | 1.80 | 217.9 | 190.3 |
 | EMC | 201.6 | ORCA | 1 | 1.77 | 243.0 | none |
 | 2,2,2-trifluoroethyl acetate | 207.5 | ORCA | 2 | 1.84 | 258.9 | 161.1 (figure) |
+| DEC | 207.8 | ORCA | 1 | 1.77 | 249.7 | none |
 | EC | 220.4 | ORCA | 1 | 1.78 | 245.8 | 210.3 |
 | PC | 226.9 | ORCA | 1 | 1.78 | 254.1 | 217.1, 213.7 (figure) |
 | DMF | 243.6 | ORCA | 1 | 1.76 | 280.7 | 243.1 (figure) |
@@ -141,7 +160,7 @@ Computed with ORCA: the geometry with `B97-3c TightSCF`, the energy with `B3LYP 
 | diglyme | 363.0 | GFN2-xTB | 3 | 1.83 | 405.2 | none |
 | poly(ethylene glycol) of molar mass 222 | 488.4 | GFN2-xTB | 5 | 1.93 | 524.4 | none |
 
-A solvent of more than 20 atoms was not optimised with ORCA, because the ORCA build of this machine runs on one core. It keeps the geometry of GFN2-xTB and ORCA gives the energy only. What that changes was measured on the 11 smaller solvents, which were computed both ways: the binding energy at the geometry of GFN2-xTB is different by -1.9 kJ/mol on average, with a standard deviation of 1.4 kJ/mol and a largest difference of 5.8 kJ/mol.
+A solvent of more than 20 atoms was not optimised with ORCA, because the ORCA build of this machine runs on one core. It keeps the geometry of GFN2-xTB and ORCA gives the energy only. What that changes was measured on the 12 smaller solvents, which were computed both ways: the binding energy at the geometry of GFN2-xTB is different by -1.9 kJ/mol on average, with a standard deviation of 1.3 kJ/mol and a largest difference of 5.8 kJ/mol.
 
 The polyether of the label table is given by its paper with a molar mass of 222 and no formula. Tetraethylene glycol dimethyl ether has that molar mass and was computed in its place.
 
@@ -155,11 +174,11 @@ The regression has one slope for all series and one intercept for each series, s
 
 | Points of the regression | Series | Values | Solvents | Slope | Correlation inside the series | Error of the mean of the series | Error of the regression | Gain, with its 95 % interval | Exchanges that do as well |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| single solvents only | 7 | 20 | 13 | +0.073 | 0.39 | 16.6 | 17.1 | -0.5 [-6.8, +3.3] | 34.1 % |
-| single solvents, without the two that wrap the ion | 7 | 18 | 11 | +0.559 | 0.87 | 17.9 | 10.3 | +7.6 [+0.2, +13.2] | 0.0 % |
-| single solvents and mixtures; a mixture takes its strongest solvent | 10 | 38 | 13 | +0.064 | 0.33 | 12.0 | 14.3 | -2.3 [-6.6, +1.5] | 80.3 % |
-| the same, without the two solvents that wrap the ion | 10 | 36 | 11 | +0.491 | 0.84 | 13.4 | 7.0 | +6.4 [+4.2, +9.2] | 0.1 % |
-| single solvents, with the binding energies that the papers give | 4 | 12 | 8 | +0.456 | 0.85 | 15.0 | 10.3 | +4.7 [+0.7, +9.5] | 0.9 % |
+| single solvents only | 8 | 22 | 13 | +0.074 | 0.40 | 16.1 | 16.5 | -0.4 [-6.3, +3.2] | 30.9 % |
+| single solvents, without the two that wrap the ion | 8 | 20 | 11 | +0.556 | 0.87 | 17.2 | 9.3 | +7.9 [+0.9, +12.8] | 0.0 % |
+| single solvents and mixtures; a mixture takes its strongest solvent | 14 | 47 | 14 | +0.067 | 0.34 | 10.5 | 12.2 | -1.7 [-5.5, +1.3] | 75.9 % |
+| the same, without the two solvents that wrap the ion | 14 | 45 | 12 | +0.498 | 0.85 | 11.5 | 6.0 | +5.5 [+3.9, +7.7] | 0.0 % |
+| single solvents, with the binding energies that the papers give | 5 | 14 | 8 | +0.459 | 0.85 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
 The repeatability between laboratories, from the reference system above, is 5.0 kJ/mol. The slope is in kJ/mol of activation energy per kJ/mol of binding energy. A mixture is held out once for each of its solvents, so it is counted more than once in the rows with mixtures.
 
@@ -169,11 +188,11 @@ Some electrolytes were held out in two or more series. The errors of the regress
 
 | Points of the regression | Values of electrolytes in two or more series | Error of the regression on them | Smallest error of a model of the solvent alone |
 |---|---:|---:|---:|
-| single solvents only | 12 | 14.4 | 11.9 |
-| single solvents, without the two that wrap the ion | 12 | 11.3 | 10.4 |
-| single solvents and mixtures; a mixture takes its strongest solvent | 21 | 13.5 | 9.6 |
-| the same, without the two solvents that wrap the ion | 21 | 7.5 | 6.6 |
-| single solvents, with the binding energies that the papers give | 7 | 9.6 | 8.8 |
+| single solvents only | 15 | 14.4 | 11.6 |
+| single solvents, without the two that wrap the ion | 15 | 9.5 | 9.1 |
+| single solvents and mixtures; a mixture takes its strongest solvent | 35 | 10.5 | 7.4 |
+| the same, without the two solvents that wrap the ion | 35 | 5.7 | 5.2 |
+| single solvents, with the binding energies that the papers give | 10 | 8.4 | 7.8 |
 
 ### The slope of each series, single solvents only
 
@@ -182,6 +201,7 @@ Some electrolytes were held out in two or more series. The errors of the regress
 | Abe2005: solid electrolyte, no film | 3 | 51.1 | 38.4 | +0.758 |
 | Chekushkin2021: LiCoO2 | 2 | 71.4 | 46.3 | +0.649 |
 | Chekushkin2021: LiMn2O4 | 3 | 207.5 | 15.4 | +0.068 |
+| Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 2 | 23.3 | 11.1 | +0.477 |
 | Ishihara2014: lithium titanate, no film | 2 | 29.4 | 27.0 | +0.918 |
 | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 5 | 46.9 | 29.1 | +0.334 |
 | Xu2007: graphite, film formed in each electrolyte | 2 | 18.9 | 18.0 | +0.952 |
@@ -192,51 +212,55 @@ Some electrolytes were held out in two or more series. The errors of the regress
 | Held-out solvent | Series | Measured, kJ/mol | Mean of the series | Regression | Error of the regression |
 |---|---|---:|---:|---:|---:|
 | 2,2,2-trifluoroethyl acetate | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 28.5 | 47.4 | 46.7 | +18.2 |
-| DMC | Xu2010: lithium titanate, no film | 50.7 | 45.1 | 32.1 | -18.5 |
-| DMC | Ishihara2014: lithium titanate, no film | 37.0 | 64.0 | 61.4 | +24.4 |
+| DMC | Xu2010: lithium titanate, no film | 50.7 | 45.1 | 31.9 | -18.8 |
+| DMC | Ishihara2014: lithium titanate, no film | 37.0 | 64.0 | 61.3 | +24.3 |
 | DMF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 57.6 | 40.1 | 42.6 | -15.0 |
 | DMSO | Abe2005: solid electrolyte, no film | 69.9 | 44.4 | 46.9 | -23.0 |
+| DMSO | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 82.3 | 71.2 | 72.7 | -9.6 |
 | EC | Xu2007: graphite, film formed in each electrolyte | 71.1 | 53.1 | 54.5 | -16.6 |
-| EMC | Xu2007: graphite, film formed in each electrolyte | 53.1 | 71.1 | 69.8 | +16.6 |
-| FEC | Abe2005: solid electrolyte, no film | 31.5 | 63.6 | 61.1 | +29.6 |
+| EMC | Xu2007: graphite, film formed in each electrolyte | 53.1 | 71.1 | 69.7 | +16.6 |
+| FEC | Abe2005: solid electrolyte, no film | 31.5 | 63.6 | 61.0 | +29.5 |
 | PC | Abe2005: solid electrolyte, no film | 57.3 | 50.7 | 50.8 | -6.5 |
 | PC | Ishihara2014: lithium titanate, no film | 64.0 | 37.0 | 38.5 | -25.5 |
 | PC | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 45.7 | 43.1 | 43.8 | -1.9 |
 | PC | Chekushkin2021: LiCoO2 | 61.8 | 15.4 | 19.1 | -42.7 |
-| THF | Xu2010: lithium titanate, no film | 40.1 | 50.4 | 39.7 | -0.4 |
-| THF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 42.4 | 43.9 | 42.3 | -0.1 |
+| PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 71.2 | 82.3 | 81.1 | +9.9 |
+| THF | Xu2010: lithium titanate, no film | 40.1 | 50.4 | 39.4 | -0.6 |
+| THF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 42.4 | 43.9 | 42.2 | -0.2 |
 | acetonitrile | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 43.7 | 43.6 | 41.9 | -1.8 |
-| acetonitrile | Chekushkin2021: LiMn2O4 | 26.1 | 27.0 | 22.3 | -3.7 |
-| diglyme | Chekushkin2021: LiMn2O4 | 34.7 | 22.7 | 36.9 | +2.2 |
-| poly(ethylene glycol) of molar mass 222 | Xu2010: lithium titanate, no film | 50.2 | 45.4 | 97.5 | +47.4 |
-| water | Chekushkin2021: LiCoO2 | 15.4 | 61.8 | 58.1 | +42.7 |
-| water | Chekushkin2021: LiMn2O4 | 19.3 | 30.4 | 24.0 | +4.8 |
+| acetonitrile | Chekushkin2021: LiMn2O4 | 26.1 | 27.0 | 22.3 | -3.8 |
+| diglyme | Chekushkin2021: LiMn2O4 | 34.7 | 22.7 | 37.2 | +2.5 |
+| poly(ethylene glycol) of molar mass 222 | Xu2010: lithium titanate, no film | 50.2 | 45.4 | 98.3 | +48.1 |
+| water | Chekushkin2021: LiCoO2 | 15.4 | 61.8 | 58.0 | +42.6 |
+| water | Chekushkin2021: LiMn2O4 | 19.3 | 30.4 | 23.9 | +4.6 |
 
 ### The held-out values: single solvents, without the two that wrap the ion
 
 | Held-out solvent | Series | Measured, kJ/mol | Mean of the series | Regression | Error of the regression |
 |---|---|---:|---:|---:|---:|
 | 2,2,2-trifluoroethyl acetate | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 28.5 | 47.4 | 42.7 | +14.2 |
-| DMC | Xu2010: lithium titanate, no film | 50.7 | 40.1 | 40.5 | -10.1 |
+| DMC | Xu2010: lithium titanate, no film | 50.7 | 40.1 | 40.5 | -10.2 |
 | DMC | Ishihara2014: lithium titanate, no film | 37.0 | 64.0 | 48.3 | +11.3 |
-| DMF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 57.6 | 40.1 | 61.1 | +3.5 |
+| DMF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 57.6 | 40.1 | 60.9 | +3.3 |
 | DMSO | Abe2005: solid electrolyte, no film | 69.9 | 44.4 | 64.5 | -5.4 |
-| EC | Xu2007: graphite, film formed in each electrolyte | 71.1 | 53.1 | 63.5 | -7.6 |
-| EMC | Xu2007: graphite, film formed in each electrolyte | 53.1 | 71.1 | 60.7 | +7.6 |
-| FEC | Abe2005: solid electrolyte, no film | 31.5 | 63.6 | 43.3 | +11.8 |
+| DMSO | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 82.3 | 71.2 | 83.8 | +1.5 |
+| EC | Xu2007: graphite, film formed in each electrolyte | 71.1 | 53.1 | 63.4 | -7.7 |
+| EMC | Xu2007: graphite, film formed in each electrolyte | 53.1 | 71.1 | 60.8 | +7.7 |
+| FEC | Abe2005: solid electrolyte, no film | 31.5 | 63.6 | 43.4 | +11.9 |
 | PC | Abe2005: solid electrolyte, no film | 57.3 | 50.7 | 51.8 | -5.5 |
 | PC | Ishihara2014: lithium titanate, no film | 64.0 | 37.0 | 51.0 | -13.0 |
 | PC | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 45.7 | 43.1 | 50.5 | +4.8 |
 | PC | Chekushkin2021: LiCoO2 | 61.8 | 15.4 | 49.4 | -12.3 |
+| PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | 71.2 | 82.3 | 71.2 | +0.0 |
 | THF | Xu2010: lithium titanate, no film | 40.1 | 50.7 | 50.2 | +10.1 |
-| THF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 42.4 | 43.9 | 30.9 | -11.5 |
-| acetonitrile | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 43.7 | 43.6 | 29.4 | -14.3 |
-| acetonitrile | Chekushkin2021: LiMn2O4 | 26.1 | 19.3 | 46.5 | +20.4 |
-| water | Chekushkin2021: LiCoO2 | 15.4 | 61.8 | 19.6 | +4.2 |
-| water | Chekushkin2021: LiMn2O4 | 19.3 | 26.1 | 1.6 | -17.7 |
+| THF | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 42.4 | 43.9 | 31.0 | -11.4 |
+| acetonitrile | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 43.7 | 43.6 | 29.5 | -14.2 |
+| acetonitrile | Chekushkin2021: LiMn2O4 | 26.1 | 19.3 | 46.2 | +20.1 |
+| water | Chekushkin2021: LiCoO2 | 15.4 | 61.8 | 20.2 | +4.7 |
+| water | Chekushkin2021: LiMn2O4 | 19.3 | 26.1 | 1.9 | -17.4 |
 
 ## Papers that are cited or known and have not been read
 
 | Key | Reference | State |
 |---|---|---|
-| KyotoRepository | file 1.3247598.pdf of record 2433/109925 in the Kyoto University repository; the site returned no content to an automated reader | not read; no value taken |
+| KyotoRepository | Y. Yamada, Y. Iriyama, T. Abe, Z. Ogumi, J. Electrochem. Soc., 2010, 157, A26 | not read; no value taken |
