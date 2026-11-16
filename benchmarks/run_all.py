@@ -184,7 +184,7 @@ def _r(path):
 # replaces had lost the seven benchmarks added to the registry after they were written, and
 # nothing said so.
 REPRODUCE_MINUTES = 30        # the longest a benchmark may register and still join the run
-REPRODUCE_N_GROUPS = 8        # so that a group fits twice over in the time a job is given
+REPRODUCE_N_GROUPS = 9        # so that a group fits twice over in the time a job is given
 REPRODUCE_ALSO = ("hops",)    # longer than the rule allows, and in the run for a reason:
                               # the barriers of a lithium hop are the one measurement this
                               # program has compared with published numbers on the same
@@ -1393,7 +1393,7 @@ def registry() -> List[Benchmark]:
                   "feature columns, at the selected attenuation and from broad to narrow fields",
                   "run_rff.py", "rff", compute=[[]],
                   minutes="10",
-                  report=lambda: _mod("run_rff").report(_r("rff")),
+                  report=lambda: _mod("run_rff").write_table(_r("rff")),
                   tables=["rff/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],

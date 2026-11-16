@@ -8,8 +8,8 @@
 # exception and the split into groups are in benchmarks/run_all.py (REPRODUCE_MINUTES,
 # REPRODUCE_ALSO, reproduce_groups), `run_all.py --list` prints the groups, and
 # docs/release_checklist.md says why each benchmark that is not among them is left out. The
-# whole run is about 22.0 hours of computing on the author's machine, in eight groups of about
-# 2.5 hours; a GitHub runner stops a job after six hours, so a group fits twice over.
+# whole run is about 22.0 hours of computing on the author's machine, in nine groups of about
+# 2.4 hours; a GitHub runner stops a job after six hours, so a group fits twice over.
 #
 # Each group runs `run_all.py --reproduce GROUP`, which is `--compute` with two options a
 # reproduction run needs and an ordinary run does not: --fresh, because most scripts keep the
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [1, 2, 3, 4, 5, 6, 7, 8]
+        group: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v4
 

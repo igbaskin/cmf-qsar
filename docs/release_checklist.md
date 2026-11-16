@@ -124,10 +124,11 @@ of names: a benchmark joins the run when it registers 30 minutes or less (`REPRO
 needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
 exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
 this program has compared with published numbers on the same labels. The rule gives **90 of the
-146 benchmarks, 22.0 hours in all**, and `reproduce_groups()` splits them into **eight groups of
-about 2 hours 30 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
+146 benchmarks, 22.0 hours in all**, and `reproduce_groups()` splits them into **nine groups of
+about 2 hours 25 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
 There were seven groups until item MS5 (14 November 2026) added 25 minutes and the largest
-group no longer fitted twice. Its stage `members` (15 November 2026) took `ensembles` to 40
+group no longer fitted twice, and eight until item NT6 (16 November 2026): the eight groups were
+then full at 165 minutes each, and the 8 minutes of `core_fields` did not fit in any of them. Its stage `members` (15 November 2026) took `ensembles` to 40
 minutes, so that benchmark left the run.
 `python benchmarks/run_all.py --list` prints the groups as they stand.
 
