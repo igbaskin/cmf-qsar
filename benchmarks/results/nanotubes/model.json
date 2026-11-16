@@ -1,0 +1,157 @@
+{
+ "n": 147,
+ "metallic": 75,
+ "atoms": [
+  12,
+  988
+ ],
+ "diameter_nm": [
+  0.4068000345428845,
+  2.7120002302858968
+ ],
+ "gap_range": [
+  2.8499875405179133e-09,
+  2.1970555409772534
+ ],
+ "metallic_gaps": [
+  2.8499875405179133e-09,
+  0.3672529640406077
+ ],
+ "semiconducting_gaps": [
+  0.31662057025767015,
+  2.1970555409772534
+ ],
+ "groups_split": false,
+ "kernel_seconds": 93.38895779999439,
+ "targets": {
+  "metallic": {
+   "n": 147,
+   "results": {
+    "periodic autocorrelation, cutoff 8 A": {
+     "accuracy": 0.6598639455782312,
+     "balanced": 0.6602222222222223,
+     "accuracy_sd": 0.016663195529137247,
+     "balanced_sd": 0.016603026646583502
+    },
+    "periodic autocorrelation, cutoff 12 A": {
+     "accuracy": 0.617687074829932,
+     "balanced": 0.6178333333333335,
+     "accuracy_sd": 0.019903046038541237,
+     "balanced_sd": 0.020513019051745737
+    },
+    "three-body channels, radial grid to 4 A": {
+     "accuracy": 0.5918367346938775,
+     "balanced": 0.59,
+     "accuracy_sd": 0.018753807825973114,
+     "balanced_sd": 0.01870498712135017
+    },
+    "Gaussian kernel on the diameter": {
+     "accuracy": 0.6326530612244898,
+     "balanced": 0.6338888888888888,
+     "accuracy_sd": 0.014904015170208588,
+     "balanced_sd": 0.014836558118044877
+    },
+    "Gaussian kernel on the diameter and the chiral angle": {
+     "accuracy": 0.5782312925170069,
+     "balanced": 0.5772777777777778,
+     "accuracy_sd": 0.056589481205674634,
+     "balanced_sd": 0.05736777604539905
+    },
+    "the mean of the training part": {
+     "accuracy": 0.4353741496598639,
+     "balanced": 0.43327777777777776,
+     "accuracy_sd": 0.03102518163535069,
+     "balanced_sd": 0.030030026126125865
+    }
+   }
+  },
+  "gap": {
+   "n": 147,
+   "results": {
+    "periodic autocorrelation, cutoff 8 A": {
+     "rmse": 0.4224109928417552,
+     "q2": 0.20944368377053718,
+     "rmse_sd": 0.018967466850550212,
+     "q2_sd": 0.07154131504019003
+    },
+    "periodic autocorrelation, cutoff 12 A": {
+     "rmse": 0.4266789536924843,
+     "q2": 0.19384263940990434,
+     "rmse_sd": 0.01625381856550974,
+     "q2_sd": 0.06237536692463105
+    },
+    "three-body channels, radial grid to 4 A": {
+     "rmse": 0.415314361404831,
+     "q2": 0.2367561765759069,
+     "rmse_sd": 0.011306990943231753,
+     "q2_sd": 0.041826744640268684
+    },
+    "Gaussian kernel on the diameter": {
+     "rmse": 0.39442985048215096,
+     "q2": 0.3108425537530227,
+     "rmse_sd": 0.01684388523691428,
+     "q2_sd": 0.0603737960227788
+    },
+    "Gaussian kernel on the diameter and the chiral angle": {
+     "rmse": 0.3966403926201517,
+     "q2": 0.3037305437437096,
+     "rmse_sd": 0.011977558564007689,
+     "q2_sd": 0.04236630242199475
+    },
+    "the mean of the training part": {
+     "rmse": 0.47950507762922945,
+     "q2": -0.01669555467244943,
+     "rmse_sd": 0.002990070309828442,
+     "q2_sd": 0.01272394609739611
+    }
+   }
+  },
+  "gap of the semiconducting tubes": {
+   "n": 72,
+   "results": {
+    "periodic autocorrelation, cutoff 8 A": {
+     "rmse": 0.12810233029686668,
+     "q2": 0.8845239607702933,
+     "rmse_sd": 0.014960797586216544,
+     "q2_sd": 0.02688761625924475
+    },
+    "periodic autocorrelation, cutoff 12 A": {
+     "rmse": 0.14172292253670773,
+     "q2": 0.86021921844015,
+     "rmse_sd": 0.007048589418081542,
+     "q2_sd": 0.014307679984369697
+    },
+    "three-body channels, radial grid to 4 A": {
+     "rmse": 0.103735937955819,
+     "q2": 0.924468509773545,
+     "rmse_sd": 0.010907613426928177,
+     "q2_sd": 0.016450005268728075
+    },
+    "Gaussian kernel on the diameter": {
+     "rmse": 0.09294302115652919,
+     "q2": 0.9396360977294362,
+     "rmse_sd": 0.007540745619630687,
+     "q2_sd": 0.009776128124633037
+    },
+    "Gaussian kernel on the diameter and the chiral angle": {
+     "rmse": 0.11704423666006163,
+     "q2": 0.9045873723332386,
+     "rmse_sd": 0.006677969278749372,
+     "q2_sd": 0.010856285382464338
+    },
+    "the mean of the training part": {
+     "rmse": 0.3838972939735067,
+     "q2": -0.02316652604066167,
+     "rmse_sd": 0.00272538713324832,
+     "q2_sd": 0.014561603714442055
+    },
+    "linear regression on 1/d": {
+     "rmse": 0.08230009850711051,
+     "q2": 0.952831556437984,
+     "rmse_sd": 0.004603176390989265,
+     "q2_sd": 0.005336781681964321
+    }
+   }
+  }
+ }
+}

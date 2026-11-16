@@ -4039,6 +4039,27 @@ tests whether the target is reproducible between sources before any kernel is co
   which directions repeat). Nanotube handedness is invisible to a pair kernel (M10); the diameter
   and the metallic or semiconducting character are visible in the distances. No new item; NT4 is
   M1 measured on a nanotube set.
+  **Measured 16 November 2026** (`benchmarks/run_nanotubes.py`, no change to the program). 147
+  carbon nanotubes (n, m), 3 <= n <= 20, diameter 0.41 to 2.71 nm, at most 1,000 atoms in the
+  cell, built by ASE with no lattice vector across the axis. The target is a band gap from a
+  pi-orbital tight-binding model (hopping -2.7 eV exp(-(d - 1.42) / 0.184), so that curvature
+  counts), computed exactly from the singular values of the block that joins the two
+  sublattices; armchair tubes come out at zero and zigzag tubes with n divisible by 3 at a small
+  curvature gap that falls as 1/d^2. The chain kernel: one cell and three cells agree to 1e-14,
+  and a tube in a 20 A box given as a crystal differs by 6.1 times the largest entry. A chiral
+  tube and its mirror image have the same channels exactly. The claims: the diameter is visible
+  (gap of the 72 semiconducting tubes, periodic autocorrelation q2 0.885, three-body channels
+  0.924, a Gaussian kernel on the diameter 0.940, linear regression on 1/d 0.953); the metallic
+  character is not (n - m divisible by 3: balanced accuracy 0.660 for the autocorrelation, 0.634
+  for the diameter alone, 0.590 for the three-body channels; chance is 0.5).
+  **Found on the way:** the handedness block of M10 is a triple product of three different
+  fields, so a structure of one element has none, and a chiral carbon tube and its mirror image
+  are the same to every kernel of the program. A prototype in the benchmark
+  (`shell_handedness`) takes the three vectors from three radial shells of one field instead:
+  its channels change sign exactly in a mirror and vanish (1e-17) for achiral tubes. No target
+  here needs it (a tube and its mirror image have the same gap), so it is not built into M10.
+  The 1,000-atom limit keeps more tubes with n - m divisible by 3 (75 of 147), because their
+  translational cell is three times shorter.
 * **NT5. Curved surfaces for ligand shells.** The surface kernel (`SurfaceSpec` in
   `cmfqsar/invariant.py`) resolves the in-plane distance by the height above z = 0. For a coated
   particle the height becomes the distance from the particle surface, and the in-plane distance
@@ -9281,7 +9302,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 4 | NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 5 | NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9293,7 +9314,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 127 finished, 10 partly, 39 open.**
+**176 items: 128 finished, 10 partly, 38 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9318,7 +9339,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT4 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT5 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

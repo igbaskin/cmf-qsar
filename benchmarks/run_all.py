@@ -991,6 +991,16 @@ def registry() -> List[Benchmark]:
                   minutes="4",
                   report=lambda: _mod("run_shape").report(),
                   tables=["shape/table.md"]),
+        Benchmark("nanotubes",
+                  "item M1 measured on 147 carbon nanotubes with tight-binding band gaps: "
+                  "the chain kernel on one cell and on three, a tube and its mirror image, and "
+                  "whether the distances see the diameter and the metallic character (plan item "
+                  "NT4)",
+                  "run_nanotubes.py", "nanotubes",
+                  compute=[["--stage", "build"], ["--stage", "checks"], ["--stage", "model"]],
+                  minutes="25",
+                  report=lambda: _mod("run_nanotubes").report(),
+                  tables=["nanotubes/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

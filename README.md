@@ -1127,6 +1127,16 @@ of the whole particle from q2 0.455 to 0.910. A regression on the neighbour pair
 lattice shells is still the better model of the energy of the whole particle (q2 0.994, every
 fold) and of particles larger than every training particle (13.8 meV per atom).
 
+### Nanotubes: the chain kernel measured
+
+Plan item NT4 (`benchmarks/run_nanotubes.py`): 147 carbon nanotubes (n, m), each with a band gap
+from a π-orbital tight-binding model. The chain kernel behaves as item M1 says: one cell and three
+cells give the same channels, and a tube given as a crystal in a box does not. A chiral tube and
+its mirror image are the same to every kernel, item M10's included, whose handedness block needs
+three different fields. The distances carry the diameter (gap of the semiconducting tubes q2
+0.885, against 0.953 for a linear regression on 1/d) but not whether the tube is metallic
+(balanced accuracy 0.660, the diameter alone 0.634, chance 0.5).
+
 ### Fields from DFT on a grid
 
 Plan item M9 (`cmfqsar/gridfields.py`, `benchmarks/run_gridfields.py`): the electron density, the

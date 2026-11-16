@@ -1177,6 +1177,34 @@ over atoms of a function of their neighbours, so a count of the neighbours is cl
 answer itself; a set whose property is not of that form is needed before the fields can be said
 to add to a particle model. The tables are in `benchmarks/results/shape/table.md`.
 
+**Nanotubes.** A nanotube is periodic along its axis only: give it as a chain (`--pbc c`, or
+*Periodic in: a chain*). As ASE builds it, a tube has no lattice vector across its axis, which
+the program takes as it is. Plan item NT4 measured the chain kernel on 147 carbon nanotubes
+(n, m) of 0.41 to 2.71 nm, with at most 1,000 atoms in the cell (`benchmarks/run_nanotubes.py`).
+Each has a band gap from a π-orbital tight-binding model: one orbital per carbon atom, and a
+hopping between bonded atoms that grows as the bond shortens, so that curvature counts. The
+target is computed, not measured: it tests what the distances can see.
+
+* **The kernel is the kernel of a chain.** One cell of a tube and three cells give the same
+  channels to 1e-14. The same tube in a 20 Å box given as a crystal differs by 6.1 times the
+  largest entry, because the background term is then taken per volume and not per length.
+* **Handedness is invisible, also to item M10.** A chiral tube and its mirror image have the same
+  channels exactly. The handedness block of item M10 is a triple product of three different
+  fields, so a tube of one element has no such block at all. A prototype in the benchmark that
+  takes three radial shells of the one field instead gives channels that change sign exactly
+  in a mirror and are zero (to 1e-17) for the achiral tubes; it is not part of the program yet.
+* **The diameter is visible; the metallic character is not.** In the model a tube is metallic
+  when n − m is divisible by 3. In 5-fold cross-validation repeated with five seeds the periodic
+  autocorrelation names it with a balanced accuracy of 0.660 (0.5 is no better than chance),
+  and a Gaussian kernel on the diameter alone reaches 0.634; the three-body channels reach
+  0.590. For the gap of the semiconducting tubes the channels reach q2 0.885 (three-body
+  channels 0.924), and a linear regression on 1/d, the textbook law, reaches 0.953 with an error
+  of 0.082 eV.
+
+So the distances carry the size of a tube, and a law in its diameter reads it better. Whether a
+tube conducts depends on how its hexagons close around the circumference, which no histogram of
+distances out to 12 Å shows. The tables are in `benchmarks/results/nanotubes/table.md`.
+
 **What the view draws.** The cell is drawn as the twelve edges of its box, with the first,
 second and third lattice vectors in red, green and blue. Its atoms are spheres coloured by
 element, with the colours the molecular view uses for the organic elements and the standard Jmol
