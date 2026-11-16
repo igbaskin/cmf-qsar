@@ -7893,6 +7893,108 @@ own width; the application has no control for any of this; and the largest align
 repository is 361 molecules, so the saving is shown where it is not yet needed. That last one
 is the alignment problem of the next part of the plan and not this item's to solve.
 
+### Random Fourier features: features without landmarks
+
+`cmfqsar/rff.py` builds a fourth kind of feature map, which needs no landmarks at all. The
+assessment of plan item B6 said that random Fourier features do not fit this kernel, because
+the kernel has no vector input. That was wrong. The atom positions are the vector input.
+
+**The construction.** The field kernel of two molecules is the overlap integral of their fields.
+By Parseval's theorem it is also an integral of their Fourier transforms over the frequencies
+$\boldsymbol{\omega}$:
+
+$$
+K(A, B) = (2\pi)^{-3} \int F_A(\boldsymbol{\omega})\, \overline{F_B(\boldsymbol{\omega})}\, d\boldsymbol{\omega},
+\qquad
+F_A(\boldsymbol{\omega}) = \sum_l w_l\, a_l(\boldsymbol{\omega})\, e^{-i\boldsymbol{\omega}\cdot\mathbf{r}_l},
+$$
+<!-- #eq:fourier-kernel -->
+
+where $a_l(\boldsymbol{\omega}) = (2\pi/b_l)^{3/2} \exp(-|\boldsymbol{\omega}|^2 / 2b_l)$ is the
+transform of the Gaussian of atom $l$ with width $b_l$. The integral is estimated as a mean over
+$D$ frequencies drawn from a density $p$, as in Rahimi and Recht (NIPS 2007). Each frequency
+gives a molecule two features per field:
+
+$$
+\sum_l w_l\, a_l(\boldsymbol{\omega}_k) \cos(\boldsymbol{\omega}_k \cdot \mathbf{r}_l)
+\quad\text{and}\quad
+\sum_l w_l\, a_l(\boldsymbol{\omega}_k) \sin(\boldsymbol{\omega}_k \cdot \mathbf{r}_l),
+$$
+
+each divided by $\sqrt{D\,(2\pi)^3\, p(\boldsymbol{\omega}_k)}$. Their inner product is an
+unbiased estimate of the kernel for every pair of molecules. For a field whose atoms share one
+width, $p$ is the normal density with variance $b/2$ per axis, and every frequency then carries
+the same weight. The steric field has a width per atom; $p$ is then matched to the narrowest
+Gaussian, so that the weight of every atom stays bounded (importance sampling). The same rule
+covers the probe fields and the electric-field kind, whose gradient multiplies the transform by
+$|\boldsymbol{\omega}|$. The self-kernel stays exact, as for the other feature maps.
+
+**Four ways to choose the frequencies.** `mc` draws them independently. `orthogonal` draws them
+in exactly orthogonal triples (Yu et al., NIPS 2016). `qmc` takes a scrambled Sobol sequence
+through the normal quantile function (quasi-Monte Carlo, Avron et al., JMLR 17(120), 2016).
+`lattice` takes every point of a cubic lattice of frequencies inside the ball where the spectrum
+is not negligible. By the Poisson summation formula the lattice sum is the exact kernel of the
+molecules repeated periodically, so its only error is the overlap of the periodic images. The
+period is chosen so that this overlap is below a tolerance. The number of lattice points then
+follows from the period and the width; it is not chosen.
+
+The map has the same form as the landmark map, so `lowrank.gram`, `lowrank.fit` and
+`lowrank.cross_validate` fit a model on it unchanged:
+
+```python
+from cmfqsar import rff, lowrank
+features = rff.build(fieldset, train, n_frequencies=256, sampler="qmc")
+pred, _ = lowrank.cross_validate(features, train, y, lam=0.3)
+```
+
+**Measured** (`benchmarks/run_rff.py`, `benchmarks/results/rff/table.md`). The eight Sutherland
+sets at the attenuation and ridge that the exact grid search chose, scored on the folds of the
+Nyström benchmark above; three seeds for each random choice. A *column* is one feature of one
+field: two per frequency, one per landmark.
+
+* **The kernel is right.** The lattice reproduces the joint kernel to $10^{-6}$ at a tolerance of
+  $10^{-6}$, and the $q^2$ to the fourth decimal on every set. The unit tests hold it to
+  $10^{-4}$ for the probe and electric-field kinds as well.
+* **Sobol frequencies reproduce the kernel best.** The relative error of the joint kernel, as a
+  geometric mean over the eight sets, for three numbers of frequencies per field:
+
+| frequencies | independent | orthogonal triples | Sobol sequence |
+|---|---:|---:|---:|
+| 64 | 3.9e-2 | 3.8e-2 | 2.3e-2 |
+| 256 | 1.9e-2 | 1.8e-2 | 9.3e-3 |
+| 1024 | 9.4e-3 | 9.0e-3 | 3.5e-3 |
+
+  Orthogonal triples gain nothing here: their advantage grows with the dimension of the input,
+  and positions have three.
+* **The $q^2$ needs about 500 columns per field.** With Sobol frequencies, 256 frequencies
+  (512 columns) lose 0.005 of $q^2$ on average and 0.012 at worst; 1024 frequencies lose 0.001
+  on average and 0.006 at worst. The three seeds differ by 0.013 in $q^2$ at 256 frequencies.
+* **Landmark molecules need far fewer columns.** The fewest columns per field that bring the
+  $q^2$ within 0.01 of the exact model are 10 to 40 for landmark molecules, 55 to 630 for a grid
+  of Gaussian centres, and 64 to 1024 for Sobol frequencies. The two largest counts, 512 and 1024,
+  were needed on ACE and AChE, which chose an attenuation of 2 and 5.
+* **The lattice is cheap only for a broad field.** At a tolerance of $10^{-3}$ it is within
+  0.0005 of the exact $q^2$ on every set. It needs 260 to 740 columns per field at an attenuation
+  of 0.1 or 0.3, but 4 700 to 30 000 at 2 or 5. The count grows as $(P\sqrt{b})^3$, for a
+  period $P$ and a width $b$. This is the width problem of the grid of Gaussian centres, seen
+  from the other side of the Fourier transform.
+* **Random frequencies have no width problem.** On COX2 and THR at attenuations from 0.1 to 5,
+  128 Sobol frequencies (256 columns) are never more than 0.009 below the exact $q^2$. At an
+  attenuation of 5, forty landmark molecules lose 0.04 on COX2 and 0.13 on THR, and the grid of
+  centres 2 Å apart loses 0.04 and 0.014.
+* **No time is saved at these sizes.** The features cost time linear in the number of molecules,
+  the exact kernel quadratic, but at 66 to 361 molecules 1024 frequencies took 0.6 to 2.7 s
+  against 0.1 to 4.5 s for the exact kernel.
+
+**When to use it.** For a fit, landmark molecules remain the better choice: they reach the
+exact model with the fewest columns. Random Fourier features are the map to use when the features
+must not depend on any data set: they are the same functions of the atoms for every set in the
+same frame, so the features of a library can be computed once and kept for every model built
+later, and they keep working at a narrow field, where a grid of centres does not. Take the Sobol
+sequence and 256 to 1024 frequencies per field. The lattice is exact and deterministic, and is
+worth it for broad fields only. The map is not yet an option of `cmf build`; a model fitted on
+it cannot be saved, and it has no co-field.
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right

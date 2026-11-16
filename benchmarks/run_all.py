@@ -1388,6 +1388,13 @@ def registry() -> List[Benchmark]:
                   minutes="19",
                   report=lambda: _mod("run_cme").report(_r("cme")),
                   tables=["cme/table.md"]),
+        Benchmark("rff", "random Fourier features of the field kernel against the exact "
+                  "model and against Nystrom landmarks: kernel error, q2 and the number of "
+                  "feature columns, at the selected attenuation and from broad to narrow fields",
+                  "run_rff.py", "rff", compute=[[]],
+                  minutes="10",
+                  report=lambda: _mod("run_rff").report(_r("rff")),
+                  tables=["rff/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],
                   minutes="15",
