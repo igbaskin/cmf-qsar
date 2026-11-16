@@ -1127,6 +1127,18 @@ of the whole particle from q2 0.455 to 0.910. A regression on the neighbour pair
 lattice shells is still the better model of the energy of the whole particle (q2 0.994, every
 fold) and of particles larger than every training particle (13.8 meV per atom).
 
+### Fields of where an atom sits
+
+Plan item NT6 (`cmfqsar/periodic.py`, `benchmarks/run_core_fields.py`): three per-atom fields
+computed from the positions, `prop:coordination`, `prop:generalized_coordination` and
+`prop:exposure` (`inorganic_fieldset(core=True)`, `--fields`, or the *Fields* box of the crystal
+window). They agree exactly with ASE's neighbour list on 141,618 particle atoms and with the
+published generalized coordination numbers of Pt(111) and Pt(100). On the 150 EMT particles of
+item NT2 they take the energy per atom from 28.7 to 17.2 meV in random folds, and on particles
+larger than every training particle from 33.7 to 4.4 meV (shell counts: 13.8). On 360 particles of
+two metals they take the mixing energy from 11.2 to 4.6 meV per atom in random folds, but with a
+geometry held out a Gaussian kernel on neighbour counts is better (12.2 against 13.2).
+
 ### The surface kernel on the surface of a particle
 
 Plan item NT5 (`cmfqsar/invariant.py`, `benchmarks/run_ligand_shells.py`): the surface kernel's

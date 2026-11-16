@@ -39,6 +39,15 @@ measures.  :func:`inorganic_fieldset` builds such a set and :func:`crystal_field
 weights for one structure.  Any per-atom array a structure file carries (Bader charges, magnetic
 moments, ...) can be a field as ``prop:<name>``.
 
+Three more fields describe where an atom sits rather than what it is (plan item NT6), for the
+core of a particle and for any other structure: ``prop:coordination``, the number of
+neighbours; ``prop:generalized_coordination``, the sum of the neighbours' own coordination
+numbers divided by 12 (Calle-Vallejo et al. 2014), which separates a corner atom next to other
+corner atoms from one next to a full facet; and ``prop:exposure``, the accessible fraction of the
+atom's sphere (Shrake and Rupley, the same calculation as ``calc:surface_fraction``).  They are
+computed from the positions, periodic images included; ``inorganic_fieldset(core=True)`` adds
+them.
+
 Partial occupancy (plan item M2)
 -------------------------------
 A disordered site -- a Li site occupied in 54 % of the cells, a site shared by Zr and Ta -- is
@@ -107,6 +116,16 @@ from .fields import AtomTable, FieldSet, FieldSpec
 from .invariant import block_sizes, channel_labels, field_pairs
 
 INORGANIC_FIELDS: Tuple[str, ...] = ("electrostatic", "steric", "prop:electronegativity")
+#: the per-atom fields of where an atom sits (plan item NT6), computed from the positions
+CORE_FIELDS: Tuple[str, ...] = ("prop:coordination", "prop:generalized_coordination",
+                                "prop:exposure")
+#: two atoms are neighbours when they are closer than this factor times the sum of their covalent
+#: radii.  For the fcc metals of ASE's table the limit falls between the first shell and the
+#: second (gold: 3.26 A, between 2.88 and 4.08 A).
+COORDINATION_FACTOR = 1.2
+#: the coordination number of an atom inside a close-packed metal; the generalized coordination
+#: number divides by it, so that an atom of a perfect fcc crystal has 12 / 12 * 12 = 12
+BULK_COORDINATION = 12.0
 OTHER_ELEMENT = "other"          # the indicator field that collects the elements not listed
 
 
@@ -1580,9 +1599,11 @@ def defect_count(table: AtomTable) -> np.ndarray:
 # --------------------------------------------------------------------------- #
 def inorganic_fieldset(elements: Sequence[str] = (), physchem: Sequence[str] = INORGANIC_FIELDS,
                        charge_model: str = "oxidation", other: bool = True,
-                       alpha: float = 1.0) -> FieldSet:
+                       alpha: float = 1.0, core: bool = False) -> FieldSet:
     """A field set for solids: the physico-chemical fields named, one indicator field per element
-    listed (``cif:<symbol>``) and, with ``other``, one more for every element not listed.
+    listed (``cif:<symbol>``) and, with ``other``, one more for every element not listed.  With
+    ``core``, the three fields of where an atom sits (:data:`CORE_FIELDS`: coordination number,
+    generalized coordination number, exposure; plan item NT6) follow the physico-chemical ones.
 
     ``charge_model`` says where the electrostatic weights come from: ``"oxidation"`` guesses
     oxidation states from the composition (pymatgen), falling back to the electronegativity proxy
@@ -1595,7 +1616,10 @@ def inorganic_fieldset(elements: Sequence[str] = (), physchem: Sequence[str] = I
     which is what a series of computed cells wants (plan item BT1).
     """
     specs = []
-    for name in physchem:
+    names = list(physchem)
+    if core:
+        names += [name for name in CORE_FIELDS if name not in names]
+    for name in names:
         kind = "steric" if name == "steric" else "gauss"
         specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
     for el in elements:
@@ -1902,16 +1926,83 @@ def read_disordered(path: str, occupancy_tolerance: float = 1.05,
     return atoms
 
 
+def _position_record(atoms):
+    """The positions, cell and periodicity of an ASE ``Atoms`` in the form the neighbour search
+    of this module reads."""
+    from types import SimpleNamespace
+    return SimpleNamespace(coords=np.asarray(atoms.get_positions(), float),
+                           cell=np.asarray(atoms.get_cell()[:], float),
+                           pbc=tuple(bool(p) for p in atoms.get_pbc()), name="",
+                           to_atoms=lambda: atoms)
+
+
+def coordination_pairs(atoms, factor: float = COORDINATION_FACTOR):
+    """The ordered neighbour pairs (i, j) of a structure, periodic images included: two atoms
+    are neighbours when they are closer than `factor` times the sum of their covalent radii.
+
+    An atom bonded to its own periodic image (a cell of one atom) counts the image as a
+    neighbour, as a crystal must."""
+    from ase.data import covalent_radii
+    n = len(atoms)
+    if n == 0:
+        return np.zeros(0, int), np.zeros(0, int)
+    r = np.asarray(covalent_radii[atoms.get_atomic_numbers()], float)
+    i, j, d = _neighbour_pairs(_position_record(atoms), float(factor) * 2.0 * float(r.max()))
+    keep = d < float(factor) * (r[i] + r[j])
+    return i[keep], j[keep]
+
+
+def coordination_numbers(atoms, factor: float = COORDINATION_FACTOR) -> np.ndarray:
+    """The number of neighbours of every atom (:func:`coordination_pairs`)."""
+    i, _ = coordination_pairs(atoms, factor)
+    return np.bincount(i, minlength=len(atoms)).astype(float)
+
+
+def generalized_coordination(atoms, factor: float = COORDINATION_FACTOR,
+                             bulk: float = BULK_COORDINATION) -> np.ndarray:
+    """The generalized coordination number of every atom: the sum of the coordination numbers
+    of its neighbours divided by `bulk` (Calle-Vallejo et al., Angew. Chem. Int. Ed. 53, 8316,
+    2014).  Two atoms with the same number of neighbours differ when those neighbours are
+    themselves more or less surrounded: a vertex next to an edge against a vertex next to a
+    facet."""
+    i, j = coordination_pairs(atoms, factor)
+    cn = np.bincount(i, minlength=len(atoms)).astype(float)
+    return np.bincount(i, weights=cn[j], minlength=len(atoms)) / float(bulk)
+
+
+def core_columns(atoms, names: Iterable[str]) -> Dict[str, np.ndarray]:
+    """The per-atom values of the core fields among `names` (:data:`CORE_FIELDS`), each
+    computed once: {field name: (n_atoms,)}."""
+    wanted = [nm for nm in names if nm in CORE_FIELDS]
+    out: Dict[str, np.ndarray] = {}
+    if not wanted:
+        return out
+    if "prop:coordination" in wanted:
+        out["prop:coordination"] = coordination_numbers(atoms)
+    if "prop:generalized_coordination" in wanted:
+        out["prop:generalized_coordination"] = generalized_coordination(atoms)
+    if "prop:exposure" in wanted:
+        from .descriptors import surface_access
+        out["prop:exposure"] = surface_access(atoms)
+    return out
+
+
 def _species_columns(fieldset: FieldSet, species: Dict[str, float], charges_of: Dict[str, float],
-                     listed: set, name: str) -> np.ndarray:
+                     listed: set, name: str,
+                     site: Optional[Dict[str, float]] = None) -> np.ndarray:
     """The field weights of one site occupied by `species` with the given occupancies:
-    (n_species, F), one row per species, each row the weights of that species alone."""
+    (n_species, F), one row per species, each row the weights of that species alone.  `site`
+    holds the values of the core fields at this site, which belong to the position and are the
+    same whatever species occupies it."""
     from ase.data import atomic_masses, atomic_numbers, covalent_radii
+    site = site or {}
     rows = []
     for el in species:
         cols = []
         for sp in fieldset.specs:
-            if sp.name == "electrostatic":
+            if sp.name in site:
+                cols.append(site[sp.name])
+            elif sp.name == "electrostatic":
                 cols.append(charges_of[el])
             elif sp.name == "steric":
                 cols.append(covalent_radii[atomic_numbers[el]] ** 3)
@@ -1965,9 +2056,12 @@ def crystal_fields(atoms, fieldset: FieldSet, name: str = "") -> CrystalFields:
     if species is not None:
         return _disordered_fields(atoms, fieldset, species, radii, listed, name)
     charges, source = None, ""
+    core = core_columns(atoms, [sp.name for sp in fieldset.specs])
     cols = []
     for sp in fieldset.specs:
-        if sp.name == "electrostatic":
+        if sp.name in core:
+            cols.append(core[sp.name])
+        elif sp.name == "electrostatic":
             if charges is None:
                 charges, source = crystal_charges(atoms, fieldset.charge_model)
             cols.append(charges)
@@ -2036,12 +2130,14 @@ def _disordered_fields(atoms, fieldset: FieldSet, species: List[Dict[str, float]
     W = np.zeros((n, F))
     M = np.zeros((n, F, F))
     q_out = np.zeros(n)
+    core = core_columns(atoms, [sp.name for sp in fieldset.specs])
     for i, d in enumerate(species):
         if needs_charges and fieldset.charge_model == "file":
             local = {el: float(q[i]) for el in d}               # the site's charge, whatever shares it
         else:
             local = charges_of
-        rows = _species_columns(fieldset, d, local, listed, label)
+        rows = _species_columns(fieldset, d, local, listed, label,
+                                {k: float(v[i]) for k, v in core.items()})
         p = np.array([d[el] for el in d], float)
         W[i] = p @ rows
         M[i] = (rows * p[:, None]).T @ rows

@@ -63,7 +63,10 @@ STRUCTURE_FILTER = ("Periodic structures (*.cif *.vasp *.poscar *.extxyz *.xyz *
                     "*.traj POSCAR CONTCAR);;All files (*)")
 #: the physico-chemical fields offered, with the label each gets in the panel
 PHYSCHEM = [("electrostatic", "Electrostatic (charges)"), ("steric", "Steric (atomic volume)"),
-            ("prop:electronegativity", "Electronegativity"), ("prop:mass", "Mass")]
+            ("prop:electronegativity", "Electronegativity"), ("prop:mass", "Mass"),
+            ("prop:coordination", "Coordination number (neighbours of each atom)"),
+            ("prop:generalized_coordination", "Generalized coordination number"),
+            ("prop:exposure", "Exposure (accessible fraction of each atom)")]
 #: how many points the co-field grid over one cell may have before the spacing is coarsened
 MAX_GRID_POINTS = 400_000
 #: how the atoms of a cell can be drawn.  The first two show the atoms alone, which is what a

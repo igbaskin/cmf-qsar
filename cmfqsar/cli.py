@@ -4867,8 +4867,11 @@ def main(argv=None):
     bc.add_argument("--fields", default="electrostatic,steric,prop:electronegativity",
                     help="physico-chemical fields: electrostatic (oxidation states), steric (atomic "
                          "volume), prop:electronegativity, prop:mass, prop:inverse_sqrt_mass (the "
-                         "field of the light atoms), or prop:<array> for any per-atom array of the "
-                         "file (Bader charges, magnetic moments, ...)")
+                         "field of the light atoms), prop:coordination, "
+                         "prop:generalized_coordination and prop:exposure (where each atom sits: "
+                         "its neighbours and its accessible fraction, computed from the "
+                         "positions), or prop:<array> for any per-atom array of the file (Bader "
+                         "charges, magnetic moments, ...)")
     bc.add_argument("--elements", default="auto",
                     help="indicator fields: 'auto' (one per element in at least --min-structures "
                          "training structures, plus one for the rest), 'none', or a list Na,Cl,O")

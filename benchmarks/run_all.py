@@ -1016,6 +1016,16 @@ def registry() -> List[Benchmark]:
                   minutes="12",
                   report=lambda: _mod("run_ligand_shells").report(),
                   tables=["ligand_shells/table.md"]),
+        Benchmark("core_fields",
+                  "fields of where an atom sits: the coordination number, the generalized "
+                  "coordination number and the exposure checked against ASE and published "
+                  "values, and measured on the 150 particles of item NT2 and on 360 particles of "
+                  "two metals against counts of neighbours (plan item NT6)",
+                  "run_core_fields.py", "core_fields",
+                  compute=[["--stage", "checks"], ["--stage", "single"], ["--stage", "alloys"]],
+                  minutes="8",
+                  report=lambda: _mod("run_core_fields").report(),
+                  tables=["core_fields/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

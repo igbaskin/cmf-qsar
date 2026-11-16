@@ -1177,6 +1177,90 @@ over atoms of a function of their neighbours, so a count of the neighbours is cl
 answer itself; a set whose property is not of that form is needed before the fields can be said
 to add to a particle model. The tables are in `benchmarks/results/shape/table.md`.
 
+**Fields of where an atom sits.** The fields of a solid say what an atom is: its charge, its
+size, its electronegativity, its element. Plan item NT6 adds three fields that say where it
+sits, computed from the positions with the periodic images included:
+
+| Field | What each atom gets |
+|---|---|
+| `prop:coordination` | the number of its neighbours: atoms closer than 1.2 times the sum of the two covalent radii |
+| `prop:generalized_coordination` | the sum of its neighbours' own coordination numbers, divided by 12 (Calle-Vallejo et al. 2014) |
+| `prop:exposure` | the fraction of its sphere that a probe of 1.4 Å can touch, the per-atom number behind `calc:surface_fraction` |
+
+The generalized coordination number separates two atoms with the same number of neighbours
+when those neighbours are themselves more or less surrounded: a corner atom next to an edge from
+one next to a facet. `inorganic_fieldset(core=True)` adds the three fields; on the command line
+name them in `--fields`, and in the crystal window tick them in the *Fields* box. A site shared by
+several species (partial occupancy) gets the value of its position times its occupancy.
+`cmfqsar/exposure.py` computes an exposure for molecules through RDKit; a structure has no RDKit
+molecule, so the exposure of a structure reuses the Shrake-Rupley calculation of `calc:surface_fraction`.
+
+Two cautions. The neighbour rule is made for metals and covalent solids. In an ionic crystal two
+cations can be closer than the sum of their covalent radii: magnesium in MgO gets 18 neighbours
+(its 6 oxygen atoms and 12 magnesium atoms), while sodium in NaCl gets 6. And the exposure depends
+slightly on how the structure is turned, because the 200 points on each sphere do not turn with
+it: by at most 0.03 and on average 0.004 for gold and copper particles of 147 and 314 atoms. The
+two coordination numbers do not depend on it at all.
+
+`benchmarks/run_core_fields.py` checks the fields against answers known without them, and
+measures them. The coordination numbers of the 141,618 atoms of the 150 particles of item NT2
+agree exactly with ASE's neighbour list cut halfway between the first and second shells, and the
+atoms with an exposure above zero are exactly the atoms with fewer than twelve neighbours. The
+atoms of Pt(111) and Pt(100) terraces get generalized coordination numbers of exactly 7.5 and
+6.67, the published values, and the bulk 12. The three fields of a particle of 3,564 atoms take
+2.1 s.
+
+On the 150 particles of one metal, the core fields beside the fields of NT3 give, for the energy
+per atom (meV per atom):
+
+| Split | Fields of NT3 | With the three core fields | Neighbour pairs in four shells |
+|---|---:|---:|---:|
+| Random folds | 28.7 | **17.2** | 33.9 |
+| Geometries held out, mean over the folds | 74.7 | 33.1 | **31.0** |
+| Geometries held out, median fold | 30.9 | **8.3** | 14.8 |
+| Geometries held out, worst fold | 587 | 207 | **73** |
+| Larger particles predicted | 33.7 | **4.4** | 13.8 |
+
+The last column is the count reference of the twenty-fourth tutorial (see above). With the core
+fields the model has a smaller error than the counts in 21 of the 25 folds that hold out
+geometries, and on particles larger than every training particle it is three times better. Its
+one bad fold is the one that holds out both geometries of 13 atoms, the smallest particles, where
+it misses by 207 meV and the counts by 73. The energy of the whole particle is a different matter:
+it grows with the size, which the per-atom channels cannot follow, and the core fields take it
+only from q2 0.455 to 0.811 (the counts reach 0.994, and the size descriptors of item NT3 0.910).
+
+The second set asks where the atoms of two metals are. 360 particles of 55 to 314 atoms: ten
+geometries, three metal pairs (Au-Cu, Ag-Pt, Ni-Pd), 25, 50 and 75 % of the first metal, and four
+arrangements: the first metal in the core, at the surface, and two random ones. The target is
+the EMT mixing energy per atom: the energy of the particle minus the energies of the two pure
+particles of the same geometry, in proportion to the composition. It runs from -54 to 176 meV per
+atom (standard deviation 54), and the composition alone explains almost none of it (q2 0.11). In
+meV per atom:
+
+| Model | Random folds | One geometry held out |
+|---|---:|---:|
+| Fields: steric, electronegativity, one indicator per metal | 11.2 | 16.2 |
+| The same and the three core fields | **4.6** | 13.2 |
+| The same and the exposure alone | 5.7 | 13.3 |
+| The same and the coordination number alone | 8.4 | 13.5 |
+| Linear regression on the neighbour pairs of each kind (AA, AB, BB) and the atoms of each metal with each coordination number | 22.4 | 22.5 |
+| Gaussian kernel on the same counts and the composition | 6.8 | **12.2** |
+
+The core fields lower the error of the field model by a factor of 2.4 in random folds, and the
+exposure alone gives most of that: which metal sits at the surface is what the mixing energy is
+about. With a geometry held out they lower it in 7 of the 10 geometries. But a Gaussian kernel
+on the counts of neighbours by kind and by coordination number is better than the fields with a
+geometry held out, in 9 of the 10 geometries; a linear regression on the same counts is not
+(22.5). The width and ridge parameter of that kernel were chosen inside every training part and
+none lay at an edge of its grid.
+
+What this says: the fields of where an atom sits are worth adding to a particle model whenever
+the property depends on the surface. They help on both sets and in nearly every comparison with
+the field model alone. They do not make the fields better than a good model of the counts on a
+target computed with EMT, whose energy is a sum over atoms of a function of their neighbours. The
+place where they do beat the counts is a particle larger than any in the training set. The
+tables are in `benchmarks/results/core_fields/table.md`.
+
 **Nanotubes.** A nanotube is periodic along its axis only: give it as a chain (`--pbc c`, or
 *Periodic in: a chain*). As ASE builds it, a tube has no lattice vector across its axis, which
 the program takes as it is. Plan item NT4 measured the chain kernel on 147 carbon nanotubes
@@ -1326,8 +1410,9 @@ Your own relaxed state needs no script: one file holding a slab and an adsorbate
 relaxation writes, so open its `CONTCAR`, CIF or extended-XYZ file directly.
 
 **Fitting a model.** The *Model* panel is the crystal form of the main window's: the fields
-(electrostatic, steric, electronegativity, mass, and one indicator field per element that occurs
-in at least the stated number of cells, plus one for the rest), where the electrostatic weights
+(electrostatic, steric, electronegativity, mass, the coordination number, the generalized
+coordination number and the exposure of each atom, and one indicator field per element that
+occurs in at least the stated number of cells, plus one for the rest), where the electrostatic weights
 come from (the oxidation-state guess, the electronegativity proxy, or the charges a calculation
 wrote into the file; the guess is exact for a small ionic cell and slow for a large cell of many
 elements), in how many directions the cells are periodic (a layer is summed only in its own
@@ -10225,7 +10310,8 @@ element indicator fields the partial structure factors a diffraction experiment 
 The fields of a solid are built by `inorganic_fieldset`: electrostatic (oxidation states guessed
 from the composition, or the `oxi_states`/`charges` array of the file), steric (atomic volume),
 electronegativity, one indicator field per element and one for the rest, and any per-atom array as
-`prop:<name>`. The command is `build-crystals` (an ASE-readable structure file, `--target KEY` or
+`prop:<name>`. With `core=True` it adds the coordination number, the generalized coordination
+number and the exposure of every atom (plan item NT6, in the section on particles). The command is `build-crystals` (an ASE-readable structure file, `--target KEY` or
 `--target-file CSV`, `--cutoff`, `--sigma`, `--taper`, `--no-background`, `--elements`,
 `--charges`, `--external-cv`, `--save`); in the library, `kernel_source="periodic"` on a
 `CMFModel` with a table from `crystal_table`. There is no co-field, but there is a co-pattern: the

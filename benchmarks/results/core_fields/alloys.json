@@ -1,0 +1,4559 @@
+{
+ "n": 360,
+ "atoms": [
+  55,
+  314
+ ],
+ "emt_seconds": 0.008522799995262176,
+ "feature_seconds": {
+  "plain": 6.606008099974133,
+  "core": 21.766205799998716,
+  "prop:coordination": 8.527553400024772,
+  "prop:generalized_coordination": 8.353583300020546,
+  "prop:exposure": 22.492671900021378
+ },
+ "unit": "meV per atom",
+ "range": [
+  -54.22780918462575,
+  175.5499167024357
+ ],
+ "sd": 53.54194162526235,
+ "by_arrangement": {
+  "core": {
+   "mean": 49.500018235306236,
+   "sd": 74.06195802435258
+  },
+  "surface": {
+   "mean": 26.215652285040623,
+   "sd": 60.169904119472555
+  },
+  "random0": {
+   "mean": 23.678856702723422,
+   "sd": 30.570464588537444
+  },
+  "random1": {
+   "mean": 21.717184894133474,
+   "sd": 30.397185020914602
+  }
+ },
+ "cv": {
+  "periodic autocorrelation, steric, electronegativity and one indicator per metal": {
+   "rmse": 11.158498094720159,
+   "rmse_sd": 1.0213500287629302,
+   "q2": 0.956202774949858,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.0982530751854
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.941712658421501
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.51952055270708
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.40819458820302
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.291894758121959
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.755654416006706
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.611464706688631
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.591089764916175
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.357676218320252
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 13.213693982033334
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 12.49077131501643
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.15408031880821
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.514705263177923
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.561274115143558
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.493868343344072
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.693752858004054
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.446212668570274
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.58297190179402
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 12.419483370005342
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.280555092535165
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 14.06251049926768
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.650895966022363
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 17.754194750551406
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 12.042218300438538
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.93517596867108
+    }
+   ]
+  },
+  "the same and the three core fields": {
+   "rmse": 4.556685844343777,
+   "rmse_sd": 0.1812195327365982,
+   "q2": 0.9927456867606,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 3.8498568865340865
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.278987847143904
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.309018645087903
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.405680949017975
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.685517730481283
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 3.8720786708652466
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.682378462365869
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 3.604939541977168
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.266689004546535
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.672644557335582
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.029713483739777
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.51156762007836
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.504332263021617
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.271110208782558
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.3114667230810415
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.264393403506142
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 3.959504575693322
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.8776923218383015
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.366674221035815
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.155814775094039
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.558910636106211
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.905400907369886
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.636681210621983
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.640799228518601
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.607146333549175
+    }
+   ]
+  },
+  "the same and the coordination number alone": {
+   "rmse": 8.438583164928474,
+   "rmse_sd": 0.4995590522826231,
+   "q2": 0.9750729898011292,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.812048290347566
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.273241442411468
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.375545976534918
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.4377310065980655
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.885167340550156
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.074385617243491
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.259898948660338
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.069139928969145
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.921330760909509
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.653890293485736
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.368735045725087
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.446086583998342
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.872272718258917
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.824247963229964
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.6451327105210956
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.389906718091435
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.325803968964957
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.179257674106475
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.457740800916872
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.650844470365304
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.917903894480897
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.268896794011187
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.367788572996087
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.139587991959333
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.013817982421915
+    }
+   ]
+  },
+  "the same and the generalized coordination number alone": {
+   "rmse": 7.774519009725353,
+   "rmse_sd": 0.5839869610337682,
+   "q2": 0.9787967527821999,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.115672945232776
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.282300135172807
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.366252126258077
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.893289562467387
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.258752322869581
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.280913298368707
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 9.622438827102286
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.206085484744218
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.993458097385038
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 10.31843346629375
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.09733970920739
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.906426639755382
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.056503081345358
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.805697187460151
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.395785538424235
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.2049296444183355
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.628780856936508
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.1744471291909715
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.324749815868413
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.570599570334008
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.23624528352071
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.327428810270275
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 11.392426169984333
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.850376775039256
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.1481602881794215
+    }
+   ]
+  },
+  "the same and the exposure alone": {
+   "rmse": 5.690609676224789,
+   "rmse_sd": 0.3175752255833474,
+   "q2": 0.9886686975347058,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.792883089753212
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.155245022175344
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.6670798318127815
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.649349011780278
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.993831753695539
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.776446383949093
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.777609636772893
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.046736333286448
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.354852801439
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.308261347121195
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.4372112608215994
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.291398094624373
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.833654278268275
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.096156419585237
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.524637177010668
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.362428088913494
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.95691006196475
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.746855813769655
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.320357595159503
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.1407812150327645
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.348779937321164
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.428324767326192
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.916927222006451
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.232423903349289
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.367576715656312
+    }
+   ]
+  },
+  "bond counting: linear regression on AA, AB, BB pairs and surface atoms of each metal, for each pair": {
+   "rmse": 23.350044908720324,
+   "rmse_sd": 0.556925027630587,
+   "q2": 0.8097020115531208,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.08997993830519
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 20.845244470288897
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 26.211800334536978
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.51845442846231
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.567890404068006
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.21989203524416
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.38966481478121
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.04130564047159
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.34783847237554
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 27.414229879463605
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.794909100114072
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.45283591820117
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 19.031982484328644
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.81991209413316
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.417041159976936
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.2105604530689
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.11538800602455
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.582904311933554
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 26.41618282373496
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 20.77607547678021
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.866179271808804
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.36884252935949
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.40370679627814
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 31.14133881637049
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 20.471325572583613
+    }
+   ]
+  },
+  "bond counting with coordination classes: linear regression on AA, AB, BB pairs and the atoms of each metal with each coordination number, for each pair": {
+   "rmse": 22.351223531719018,
+   "rmse_sd": 0.4134672061246984,
+   "q2": 0.8256736804203364,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.222881123297796
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.672289128144914
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.1909070236559
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 18.367150265587828
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 19.996528393114676
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 27.863765288836795
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 20.687802532296505
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 19.82159858955387
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 19.195422092845735
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.19765740276562
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 20.10919198806064
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 24.259085778588755
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 18.52382753586761
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.916023975615495
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.38457539120581
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.157504596024467
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.89530332577804
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 22.314757626019954
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.804766284602454
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 18.394045653058708
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 23.142852974049752
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.46241993164825
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 21.10122582607091
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 28.436247339063936
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 19.93578889586936
+    }
+   ]
+  },
+  "Gaussian kernel on the same counts and the composition, for each pair": {
+   "rmse": 6.762385382837055,
+   "rmse_sd": 0.6280565378673856,
+   "q2": 0.9839105328992904,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.808729622257784
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.558490257258675
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.942179632961507
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.3080120208203905
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.933469779600414
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.027197559704447
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.509119195966545
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.0087076676733675
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 4.99337870441887
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.555577843299518
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.876068794924054
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.2063023042136365
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 8.761497361270594
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.7830044192704335
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.884059751731415
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.828215052629756
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.916459413035144
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.002602535843543
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.605594214907564
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.4505937926538515
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.954578072425791
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 5.752953855219073
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 7.078512539724957
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 12.343240234943776
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 6.688367287980141
+    }
+   ]
+  },
+  "composition alone: linear regression on x and x^2, for each pair": {
+   "rmse": 50.60146209183858,
+   "rmse_sd": 0.6646348665416245,
+   "q2": 0.10666815253998334,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 48.434465897609265
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 51.695846004251294
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 46.936686154412534
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 54.55554797260837
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 49.517228972873156
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 38.900099561025755
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 54.719043930640815
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 50.952188495712555
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 46.128355888373115
+    },
+    {
+     "seed": 1,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 56.7360534688649
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 53.61710954180748
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 48.71698781299273
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 43.91288381643915
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 52.7257083861739
+    },
+    {
+     "seed": 2,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 51.174455035049434
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 51.83200207138255
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 46.71442598333302
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 54.70766140765929
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 54.92514546006114
+    },
+    {
+     "seed": 3,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 45.572615685981894
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 46.260964210272235
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 55.19070175766949
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 48.099251236072774
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 55.39532030710244
+    },
+    {
+     "seed": 4,
+     "held_out": [
+      "deca3",
+      "deca4",
+      "deca5",
+      "ico3",
+      "ico4",
+      "ico5",
+      "octa5",
+      "octa6",
+      "octa7",
+      "octa8"
+     ],
+     "rmse": 53.14897437384156
+    }
+   ]
+  }
+ },
+ "loo_geometry": {
+  "periodic autocorrelation, steric, electronegativity and one indicator per metal": {
+   "rmse": 16.15787184074552,
+   "rmse_sd": 0.0,
+   "q2": 0.9089290041045721,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 16.91921476070854
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 11.565898447397682
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 14.199087405108278
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 35.279324344785806
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 9.426513535323522
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 14.962214049453475
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 14.132453264193698
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 8.070956708863907
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 7.344731100073961
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 10.628025251941615
+    }
+   ]
+  },
+  "the same and the three core fields": {
+   "rmse": 13.23295162324993,
+   "rmse_sd": 0.0,
+   "q2": 0.9389163166485822,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 21.577849427069545
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 8.486467558223572
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 8.367040898956253
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 21.90507208696376
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 12.090549569557322
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 13.649583488279198
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 10.088108668953812
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 6.888928000646529
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 6.556752095649319
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 11.787112908716713
+    }
+   ]
+  },
+  "the same and the coordination number alone": {
+   "rmse": 13.45284417067698,
+   "rmse_sd": 0.0,
+   "q2": 0.936869389262739,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 20.827117245446974
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 7.555156125449543
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 10.916520751183839
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 25.570172482925614
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 8.235633157861091
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 12.197092093702661
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 12.528523808713828
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 6.741494882792824
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 5.735682730081094
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 9.697030078254018
+    }
+   ]
+  },
+  "the same and the generalized coordination number alone": {
+   "rmse": 13.232496494375042,
+   "rmse_sd": 0.0,
+   "q2": 0.938920518352145,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 20.251767090314818
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 7.270497770143808
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 10.2258824884855
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 23.770361787068058
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 11.17054989659792
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 14.33145952089341
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 11.750795232625302
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 6.354515419552639
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 5.26297522862908
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 9.05896100052639
+    }
+   ]
+  },
+  "the same and the exposure alone": {
+   "rmse": 13.29446410660424,
+   "rmse_sd": 0.0,
+   "q2": 0.9383471099902465,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 23.306404367983554
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 8.581828718578468
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 9.92629760158489
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 20.950972183318747
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 11.652926075138005
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 11.492703392981312
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 10.441229640645908
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 7.460105279238849
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 6.4817931596725105
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 11.771060421856449
+    }
+   ]
+  },
+  "bond counting: linear regression on AA, AB, BB pairs and surface atoms of each metal, for each pair": {
+   "rmse": 24.05980741340877,
+   "rmse_sd": 0.0,
+   "q2": 0.7980722245098822,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 26.488962170302962
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 15.735352837201184
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 24.166525104077024
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 29.773528687139613
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 19.741967766078822
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 28.036422192670344
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 23.061315054063947
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 22.648097487069258
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 21.953870589473524
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 25.81615133078195
+    }
+   ]
+  },
+  "bond counting with coordination classes: linear regression on AA, AB, BB pairs and the atoms of each metal with each coordination number, for each pair": {
+   "rmse": 22.547666506447026,
+   "rmse_sd": 0.0,
+   "q2": 0.8226566234637096,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 29.18631667761645
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 16.07347250296509
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 24.183050219134117
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 26.754268903882167
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 15.223266470267472
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 22.669882629292204
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 26.94257355714874
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 19.780276755180196
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 18.576275924748693
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 21.569727879379958
+    }
+   ]
+  },
+  "Gaussian kernel on the same counts and the composition, for each pair": {
+   "rmse": 12.18325580279022,
+   "rmse_sd": 0.0,
+   "q2": 0.9482228080776217,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 31.53810789680156
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 7.842584243440054
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 7.7818942176120505
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 10.823626253811396
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 7.3005623157637505
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 10.650479608443181
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 5.013834890126342
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 2.8831093834556847
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 5.726337280241625
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 4.180592620005893
+    }
+   ]
+  },
+  "composition alone: linear regression on x and x^2, for each pair": {
+   "rmse": 48.86475029501531,
+   "rmse_sd": 0.0,
+   "q2": 0.16708029782136014,
+   "folds": [
+    {
+     "seed": 0,
+     "held_out": [
+      "deca3"
+     ],
+     "rmse": 45.59903517335794
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca4"
+     ],
+     "rmse": 48.281772846340694
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "deca5"
+     ],
+     "rmse": 52.93010760526504
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico3"
+     ],
+     "rmse": 47.87580814517844
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico4"
+     ],
+     "rmse": 45.12171595285864
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "ico5"
+     ],
+     "rmse": 44.87521575359974
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa5"
+     ],
+     "rmse": 47.367769780333454
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa6"
+     ],
+     "rmse": 49.36138450992212
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa7"
+     ],
+     "rmse": 52.03375849528163
+    },
+    {
+     "seed": 0,
+     "held_out": [
+      "octa8"
+     ],
+     "rmse": 54.18513783362941
+    }
+   ]
+  }
+ },
+ "count_kernel_chosen": [
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.3,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.03,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.03,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.3,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.3,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.001
+  },
+  {
+   "gamma": 0.3,
+   "lambda": 0.01
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  },
+  {
+   "gamma": 0.1,
+   "lambda": 0.0001
+  }
+ ],
+ "count_kernel_grid": {
+  "gamma": [
+   0.003,
+   0.01,
+   0.03,
+   0.1,
+   0.3,
+   1.0,
+   3.0
+  ],
+  "lambda": [
+   1e-05,
+   0.0001,
+   0.001,
+   0.01,
+   0.1
+  ]
+ }
+}

@@ -4091,6 +4091,32 @@ tests whether the target is reproducible between sources before any kernel is co
   electronegativity, mass and element indicators. A particle core adds the coordination number and
   the surface exposure of each atom, which `cmfqsar/exposure.py` computes for molecules and can be
   reused. Two days.
+  **Built and measured 16 November 2026.** Three per-atom fields in `cmfqsar/periodic.py`,
+  computed from the positions with the periodic images included (`CORE_FIELDS`,
+  `core_columns`): `prop:coordination` (neighbours closer than 1.2 times the sum of the covalent
+  radii, `coordination_numbers`), `prop:generalized_coordination` (the neighbours' coordination
+  numbers summed and divided by 12, Calle-Vallejo et al. 2014, `generalized_coordination`) and
+  `prop:exposure` (the Shrake-Rupley fraction of NT3's `surface_access`; `exposure.py` works
+  through RDKit and needs a molecule). `inorganic_fieldset(core=True)` adds them; a shared site
+  gets the value of its position times its occupancy; the command line takes them in `--fields`
+  and the crystal window offers them as check boxes.
+  **Found on the way:** the covalent-radius rule counts cation pairs in an ionic crystal (Mg in
+  MgO gets 18 neighbours, Na in NaCl 6), so it suits metals and covalent solids; and the exposure
+  moves by up to 0.03 when a particle is turned, because the probe points do not turn with it.
+  **Measured** (`benchmarks/run_core_fields.py`, about 7 minutes): coordination numbers equal
+  ASE's half-shell neighbour list on all 141,618 atoms of NT2's particles, exposed atoms are
+  exactly those with fewer than twelve neighbours, Pt(111) and Pt(100) terraces give 7.5 and
+  6.67 (published) and the bulk 12; 2.1 s for 3,564 atoms. On NT2's 150 particles (energy per
+  atom) the core fields take random folds from 28.7 to 17.2 meV, the median geometry-held-out
+  fold from 30.9 to 8.3 meV (shell counts 14.8, beaten in 21 of 25 folds; worst fold 207 against
+  73, both 13-atom geometries held out), and the larger particles from 33.7 to 4.4 meV (counts
+  13.8); the whole-particle energy only from q2 0.455 to 0.811. On 360 generated particles of two
+  metals (EMT mixing energy, -54 to 176 meV per atom) they take random folds from 11.2 to 4.6 meV
+  (exposure alone 5.7) and one-geometry-held-out folds from 16.2 to 13.2 (7 of 10 geometries
+  better); a Gaussian kernel on neighbour counts by kind and coordination number reaches 6.8 and
+  12.2, better than the fields in 9 of 10 held-out geometries, while a linear regression on the
+  same counts reaches 22.4 and 22.5. Not done here: an oxide core, which needs a neighbour rule
+  between cations and anions, and a measured property of particles.
 * **NT7. Site-resolved models on particles.** Catalytic activity and binding belong to sites, not to
   the whole particle. This is M5 applied to particles: per-site rows of the channel tensor,
   per-site targets, and the decomposition that names which site carries the property. Measured
@@ -9368,7 +9394,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 6 | NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 7 | NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9380,7 +9406,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 129 finished, 10 partly, 37 open.**
+**176 items: 130 finished, 10 partly, 36 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9405,7 +9431,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT6, NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

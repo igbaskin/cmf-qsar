@@ -1,0 +1,103 @@
+{
+ "coordination": {
+  "particles": 150,
+  "atoms": 141618,
+  "differ": 0
+ },
+ "exposure": {
+  "atoms": 141618,
+  "differ_from_under_12": 0
+ },
+ "generalized_coordination": {
+  "fcc(111)": {
+   "published": 7.5,
+   "computed": 7.5,
+   "spread": 0.0,
+   "coordination": 9.0
+  },
+  "fcc(100)": {
+   "published": 6.666666666666667,
+   "computed": 6.666666666666667,
+   "spread": 0.0,
+   "coordination": 8.0
+  },
+  "bulk": {
+   "published": 12.0,
+   "computed": 12.0,
+   "spread": 0.0,
+   "coordination": 12.0
+  }
+ },
+ "timing": [
+  {
+   "name": "Cu_ico2",
+   "atoms": 13,
+   "seconds": 0.003047799982596189
+  },
+  {
+   "name": "Cu_octa4",
+   "atoms": 38,
+   "seconds": 0.007564899977296591
+  },
+  {
+   "name": "Ni_ico3",
+   "atoms": 55,
+   "seconds": 0.013691899948753417
+  },
+  {
+   "name": "Cu_ico4",
+   "atoms": 147,
+   "seconds": 0.047870000009424984
+  },
+  {
+   "name": "Cu_ico5",
+   "atoms": 309,
+   "seconds": 0.11847050004871562
+  },
+  {
+   "name": "Cu_octa8",
+   "atoms": 314,
+   "seconds": 0.1472217999980785
+  },
+  {
+   "name": "Ni_ico6",
+   "atoms": 561,
+   "seconds": 0.3275499000446871
+  },
+  {
+   "name": "Cu_ico7",
+   "atoms": 923,
+   "seconds": 0.6383730000234209
+  },
+  {
+   "name": "Cu_octa12",
+   "atoms": 1072,
+   "seconds": 0.5522479999926873
+  },
+  {
+   "name": "Ni_ico8",
+   "atoms": 1415,
+   "seconds": 0.8554751999909058
+  },
+  {
+   "name": "Cu_ico9",
+   "atoms": 2057,
+   "seconds": 1.2336671999655664
+  },
+  {
+   "name": "Cu_octa16",
+   "atoms": 2406,
+   "seconds": 1.486787399975583
+  },
+  {
+   "name": "Cu_octa18",
+   "atoms": 3564,
+   "seconds": 2.0677277999930084
+  },
+  {
+   "name": "Cu_octa18",
+   "atoms": 3564,
+   "seconds": 2.040894899982959
+  }
+ ]
+}
