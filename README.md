@@ -6819,7 +6819,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 |---|---|
 | `01_first_model.ipynb` | an aligned series: fields, fitting, cross-validation, the co-field in 3D, the atoms behind one prediction |
 | `02_no_alignment.ipynb` | a SMILES table with no common frame: the rotation-invariant kernel, per-atom contributions, predicting new molecules |
-| `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
+| `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test, and weighted intervals for a library unlike the training set, against the applicability domain as the reference |
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
 | `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, what the ranking is worth against 100 presumed inactives, and the distance to the nearest training molecule as the reference of the bound, on eight sets |
 | `06_before_you_model.ipynb` | the diagnosis of a data set before any model: `cmf diagnose` on four sets with four different recommendations, one report read line by line, the columns of a file that hold the activity and why the diagnosis does not use a column that nobody named, why routes are compared with their settings chosen inside the folds, and what the recommendation is worth |
