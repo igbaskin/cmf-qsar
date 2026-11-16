@@ -1,6 +1,6 @@
 {
- "commit": "f7c3f3b97bdc9aa373943428fd557f06351da74b",
- "created": "2026-11-16T10:11:30",
+ "commit": "31c269a12cd87816d97a95896f9053b98ba56b29",
+ "created": "2026-11-16T10:38:45",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3511,6 +3511,9 @@
   "benchmarks/results/nystrom/select.json": "4771519914d32ee0a893e66a06f5bfdacf2d6fe3dec27fbb88780bb3f7ae6c63",
   "benchmarks/results/nystrom/table.md": "ba0427b7787242c1ce6c8e867a9bcd37c70805e0ce25a4b49abd94dfa3b60a58",
   "benchmarks/results/nystrom/width.json": "67c75027ba4c42e1578a49d07a8e9dafde144fd353edd663776ecb59cf8ec61a",
+  "benchmarks/results/particles/property.json": "5bc96d6d667baaa4a06134aede4032d967e4701684792d3d5c5d2fa308916f15",
+  "benchmarks/results/particles/scaling.json": "cc025a590c08c6e1908e122f2e3723a14c8e0a015fd58273b19223004ff14003",
+  "benchmarks/results/particles/table.md": "3a19fc3949613bcc89659ebc78d689fb8f43a0327d6f811e688a0f42fe20b979",
   "benchmarks/results/perfield/ACE.json": "5879108eb92f095fd40f5bb41da7087cd827e4f37450ff239dfbf5aca39af444",
   "benchmarks/results/perfield/AChE.json": "8455f9c2e3f8c2220a3703869124c962f5597fe31704037fac55ee092e06db68",
   "benchmarks/results/perfield/BZR.json": "25298c7e65ea09b2f3d91a52b721ad030e715901f571741a1814faa2df4ee928",
