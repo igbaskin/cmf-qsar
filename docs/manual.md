@@ -3516,7 +3516,8 @@ cmf diagnose data.sdf --charges file
 ```
 
 The sixth tutorial, `docs/tutorials/06_before_you_model.ipynb`, runs the command on four sets
-with four different recommendations and reads one report line by line.
+with four different recommendations and reads one report line by line. It ends with the test of
+the section *Beyond a count: the conditional dependence test* below.
 
 The command answers five questions and prints the numbers behind each.
 
@@ -3761,6 +3762,14 @@ straight-line residual reject all 100.
 than a count or a property you can name. A small p-value says the fields carry information beyond
 the reference; it does not say that a model will predict it. A large p-value on a small set is
 not evidence that they carry nothing, as THER shows.
+
+The sixth tutorial, `docs/tutorials/06_before_you_model.ipynb`, runs the test and the model
+comparison on ACE, makes activities with a known answer on the same molecules, and reads the eight
+sets from the stored runs. One check was added there (16 November 2026). On ACE the stored 400
+activities without a signal gave 7.5 % false positives, the highest of the eight sets. 1,000 new
+activities with other random numbers gave 5.1 %, and 3,000 gave 4.8 %. So the 7.5 % was chance.
+For a right test, at least one of eight sets reaches 7.5 % on 400 activities in about one case in
+seven.
 
 # Building a model
 
