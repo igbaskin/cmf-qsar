@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 858 public methods, and 1417 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 858 public methods, and 1419 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -18817,6 +18817,31 @@ where the site was not measured.
 
 The target index of a set where one site of every cell is measured: the site of each cell,
 its value, and how many sites that cell has.
+
+### `read_site_values(path: str, names: Sequence[str], n_sites: Sequence[int], column: Optional[str]=None) -> Tuple[AtomTargets, List[str]]`
+
+Per-site targets from a table (plan item NT7): one row per measured site.
+
+The table is a CSV file with a header row. The first column names the structure, as the
+structure set names it; the second gives the site, the index of the atom in that structure,
+counted from 0; the value is the column called `column`, or the third column. A site that is
+not in the table is not measured. Returns the target index and the structure names of the
+table that match no structure.
+
+Two rows for one site, or a site index outside its structure, are refused: the first is
+usually two tables pasted together and the second a table counted from 1.
+
+### `fit_site_model(model, crystals: Sequence[CrystalFields], targets: AtomTargets, lams: Sequence[float]=(0.0001, 0.001, 0.01, 0.1, 1.0), folds: int=5, seed: Optional[int]=0, progress=None) -> Dict[str, object]`
+
+Fit `model` (`kernel_source="periodic"`) on the measured sites, choosing the ridge
+parameter on folds that hold out whole structures (plan item NT7).
+
+The grid search of `cmfqsar.model` draws its folds over the samples, which for sites
+would put two sites of one particle on both sides of a split, so that the model is tested on
+a structure it has seen. Here the folds are `AtomTargets.folds`, the same folds give the
+cross-validated statistics stored in `model.stats`, and the model is then fitted on every
+measured site. Returns the chosen parameter, the error of every candidate and the
+cross-validated predictions.
 
 ### `elements_of(crystals: Sequence[CrystalFields], min_sites: int=1) -> List[str]`
 
