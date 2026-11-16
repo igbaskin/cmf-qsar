@@ -2632,15 +2632,15 @@ of one model fit per group. The masking is exact, because the kernel is a sum ov
 atoms; a test checks that for any division of a molecule in two, K(whole, whole) is K(a,a) +
 2K(a,b) + K(b,b).
 
-**The co-field weighting earns its place.** On matched molecular pairs found by RDKit's `rdMMPA`,
+**The co-field weighting earns its place against a distance.** On matched molecular pairs found by RDKit's `rdMMPA`,
 each measure of how far apart two groups are is compared with the size of the measured activity
 difference by rank correlation, with the model refitted without both members of every pair:
 
-| set | pairs | fingerprint | field distance | co-field (pair left out) |
-| --- | ---: | ---: | ---: | ---: |
-| GPB | 730 | -0.025 | +0.005 | +0.561 |
-| THER | 142 | +0.084 | +0.162 | +0.277 |
-| THR | 751 | +0.144 | +0.242 | +0.335 |
+| set | pairs | fingerprint | field distance | fingerprint model | co-field (pair left out) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| GPB | 730 | -0.025 | +0.005 | +0.522 | +0.561 |
+| THER | 142 | +0.084 | +0.162 | +0.398 | +0.277 |
+| THR | 751 | +0.144 | +0.242 | +0.392 | +0.335 |
 
 On GPB and THR the predicted change beats both references by more than the interval of rule 4
 (against the fingerprint +0.586 [+0.505, +0.669] and +0.191 [+0.106, +0.279]; against the field
@@ -2649,6 +2649,12 @@ pairs, it is ahead of both but the interval contains zero. The field distance is
 reference -- it compares the two groups in their poses -- and the co-field still adds to it,
 which is the part neither reference can have: whether the activity depends on the place where
 the two groups differ.
+
+**It does not beat a model that needs no field** (added 16 November 2026). Both references above
+are distances, which are fitted to nothing, so what the co-field gains over them could be the
+fitting. Kernel ridge on Morgan fingerprints of the whole molecules, chosen and refitted the same
+way, reaches the third column above; the co-field is ahead by +0.039 [-0.026, +0.103] on GPB and
+behind on THER and THR, every interval containing zero. The twenty-eighth tutorial shows it.
 
 What the table is read for is the size rather than the ranking. A predicted change smaller than
 twice the conformal half width is a change the model cannot see, and the groups inside that
@@ -6892,7 +6898,7 @@ for.
 
 ### Tutorials
 
-Twenty-seven notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Twenty-eight notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -6925,6 +6931,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `25_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 | `26_a_microstructure.ipynb` | a two-phase microstructure on a voxel grid as the sample: 400 cells built and solved live, the overlap of their two-point statistics against the phase fraction and against three measured numbers (the fraction and the correlation lengths along the axes) as the reference, the 3D cells, the elastic label, two scales, the map over the lag vector, and the limit on real micrographs |
 | `27_which_atom_reacts.ipynb` | one atom as the sample: the atom a cytochrome P450 attacks, in 636 drug molecules and 14,488 heavy atoms, with the field around an atom against a count of the atom types over bonds, a count over distance, and a few properties of the atom itself as the references, and the mixture that beats them all |
+| `28_interchangeable_groups.ipynb` | a bioisostere table read off a fitted model: matched molecular pairs of the glycogen phosphorylase set, the predicted change of an exchange against the fingerprint distance, the field distance and a fingerprint model as the references, the three sets from the stored runs, and the pairs of groups the model's own error cannot separate |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7377,7 +7384,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-seven notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-eight notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```
