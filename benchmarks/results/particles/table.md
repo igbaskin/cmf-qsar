@@ -64,3 +64,13 @@ Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, teste
 | size law | 36.2 | 92.7 | 0.9787 |
 | coordination law | 44.6 | 100.2 | 0.9678 |
 | autocorrelation | 26.1 | 76.0 | 0.9889 |
+
+### References that count neighbours
+
+The same particles, folds and inner choice of the ridge. 'Shell counts' is a linear regression on the number of neighbour pairs per atom in each of the first 4 shells of the bulk lattice, with its own coefficients for each metal (a linear kernel within a metal, zero between metals). 'Coordination histogram' is the same on the fraction of atoms with each coordination number from 0 to 12. Both need no field. 'Difference' is the RMSE of the reference minus that of the autocorrelation, with a 95 % bootstrap interval over the particles; negative means the reference is better. In the cross-validation the predictions are averaged over the seeds first.
+
+| Model | RMSE, meV per atom (cross-validation) | Difference | RMSE, meV per atom (extrapolation) | Largest error, meV | Difference |
+|---|---:|---:|---:|---:|---:|
+| autocorrelation | 26.3 |  | 26.1 | 76.0 |  |
+| shell counts | 29.2 | +2.4 [-8.3, +13.0] | 15.0 | 35.9 | -11.1 [-17.4, -4.8] |
+| coordination histogram | 95.4 | +61.9 [+39.5, +83.3] | 31.8 | 65.0 | +5.7 [-1.6, +13.1] |

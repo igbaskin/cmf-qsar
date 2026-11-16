@@ -60,12 +60,21 @@ or attenuation) and the ridge are chosen by the evidence on the training block o
 The crystals decide the item; the molecules are reported series by series, because 20 to 29
 molecules give intervals of about 0.1 to 0.2.
 
+The reference that needs no grid (added 16 November 2026)
+--------------------------------------------------------
+The DFT run that gives the grids of a cell also gives its total energy, and the target is a
+formation energy. Stage ``energies`` reads that energy from each OUTCAR; stage ``reference``
+compares the grid kernel with a ridge regression on the energy and the element counts, on the
+same folds. The grid input is only worth its cost if it beats this regression.
+
 Usage
 -----
     python benchmarks/run_gridfields.py --stage cells        # writes the cells for VASP
     (inside WSL) python3 benchmarks/grid_dft_wsl.py CELLS WORKDIR   # about an hour, 4 workers
     python benchmarks/run_gridfields.py --stage collect --vasp-dir DIR
     python benchmarks/run_gridfields.py --stage crystals
+    python benchmarks/run_gridfields.py --stage energies --vasp-dir DIR  # the energy of each run
+    python benchmarks/run_gridfields.py --stage reference                # grid against that energy
     python benchmarks/run_gridfields.py --stage cubes --qm-results DIR   # orca_plot, 15 minutes
     python benchmarks/run_gridfields.py --stage molecules
     python benchmarks/run_gridfields.py --report
@@ -533,6 +542,119 @@ def stage_crystals(force: bool = False) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# Crystals: the energy of the same DFT run as the reference
+# --------------------------------------------------------------------------- #
+
+#: the energies of the static runs, one row per cell, written by stage `energies`
+ENERGIES = os.path.join(RESULTS, "run_energies.csv")
+
+
+def outcar_energy(path: str) -> Optional[float]:
+    """The total energy of a VASP run, in eV, or None: the last value of energy(sigma->0) in its
+    OUTCAR (plain or gzip), the energy extrapolated to zero smearing."""
+    import gzip
+    opener = gzip.open if path.endswith(".gz") else open
+    value = None
+    try:
+        with opener(path, "rt", errors="ignore") as fh:
+            for line in fh:
+                if "energy(sigma->0)" in line:
+                    value = float(line.split("energy(sigma->0)")[1].split("=")[1].split()[0])
+    except (OSError, EOFError, ValueError, IndexError):
+        return None
+    return value
+
+
+def stage_energies(vasp_dir: str) -> dict:
+    """The total energy of every converged static run: the number the grid's run also gives."""
+    _atoms, names, _y, _rec = m4_set()
+    rows, status = [], {"ok": 0, "no converged run": 0, "no energy": 0}
+    for n in names:
+        run = os.path.join(vasp_dir, n)
+        done = os.path.join(run, "done.json")
+        if not os.path.isfile(done) or not jload(done).get("ok"):
+            status["no converged run"] += 1
+            continue
+        e = outcar_energy(os.path.join(run, "OUTCAR.gz"))
+        if e is None:
+            status["no energy"] += 1
+            continue
+        rows.append((safe(n), e))
+        status["ok"] += 1
+    os.makedirs(RESULTS, exist_ok=True)
+    with open(ENERGIES, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("cell,energy_eV\n")
+        for n, e in rows:
+            fh.write(f"{n},{e:.8f}\n")
+    log(f"energies: {status}")
+    return status
+
+
+def run_energy_columns(names: Sequence[str], atoms) -> tuple:
+    """(the energy of each cell's run, its element counts, the element names), in that order."""
+    energy = {}
+    with open(ENERGIES, encoding="utf-8") as fh:
+        next(fh)
+        for line in fh:
+            n, e = line.strip().split(",")
+            energy[n] = float(e)
+    E = np.asarray([energy[safe(n)] for n in names], float)
+    elements = sorted({s for a in atoms for s in a.get_chemical_symbols()})
+    col = {e: i for i, e in enumerate(elements)}
+    C = np.zeros((len(atoms), len(elements)))
+    for i, a in enumerate(atoms):
+        for s in a.get_chemical_symbols():
+            C[i, col[s]] += 1.0
+    return E, C, elements
+
+
+def linear_kernel(X: np.ndarray) -> np.ndarray:
+    """The kernel of a ridge regression on the standardised columns of X."""
+    X = np.asarray(X, float)
+    sd = X.std(axis=0)
+    Z = (X - X.mean(axis=0)) / np.where(sd > 0, sd, 1.0)
+    return Z @ Z.T
+
+
+def stage_reference() -> dict:
+    """The grid against a linear regression on the energy of its own DFT run and the elements.
+
+    The grid of a cell costs one DFT calculation, and that calculation also gives a total energy.
+    The target is a formation energy, which is a total energy minus the energies of the elements.
+    So a linear regression on the run's energy and the element counts is the reference the grid
+    has to beat: it needs nothing that the grid does not already need.
+    """
+    K, y, names = crystal_kernels()
+    atoms, all_names, _y, _rec = m4_set()
+    by_name = dict(zip(all_names, atoms))
+    sub = [by_name[n] for n in names]
+    E, C, elements = run_energy_columns(names, sub)
+    lin = linear_kernel(np.c_[E, C])
+    both = 0.5 * (K["grid_overlap"] / np.mean(np.diag(K["grid_overlap"]))
+                  + lin / np.mean(np.diag(lin)))
+    models = {"grid overlap": ("sum", K["grid_overlap"]),
+              "energy of the run": ("sum", linear_kernel(E[:, None])),
+              "energy of the run and element counts": ("sum", lin),
+              "grid overlap and energy of the run": ("sum", both)}
+    t0 = time.time()
+    res = cross_validate(models, y, {})
+    rows = compare(res, y, [("energy of the run and element counts", "grid overlap"),
+                            ("grid overlap and energy of the run",
+                             "energy of the run and element counts")])
+    A = np.c_[np.ones(len(y)), E, C]
+    coef = np.linalg.lstsq(A, y, rcond=None)[0]
+    payload = {"cells": int(len(y)), "elements": len(elements), "models": strip(res),
+               "comparisons": rows, "slope_on_energy": float(coef[1]),
+               "seconds": round(time.time() - t0, 1), "folds": FOLDS, "repeats": REPEATS}
+    jdump(payload, os.path.join(RESULTS, "reference.json"))
+    for m, r in res.items():
+        log(f"  {m:40s} R2 {r['q2_mean']:+.3f}  {r['chosen']}")
+    for r in rows:
+        log(f"  {r['model']} - {r['against']}: {r['mean']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}]")
+    return payload
+
+
+# --------------------------------------------------------------------------- #
 # Molecules: orca_plot grids of the corrosion series
 # --------------------------------------------------------------------------- #
 
@@ -768,6 +890,24 @@ def report(path: Optional[str] = None) -> str:
                   "", "Correlation of the off-diagonal kernel values: "
                   + "; ".join(f"{k} {v:+.3f}" for k, v in c["kernel_correlations"].items())
                   + ".", ""]
+    rpath = os.path.join(RESULTS, "reference.json")
+    if os.path.isfile(rpath):
+        r = jload(rpath)
+        lines += ["### The energy of the same run as the reference", "",
+                  "The grid of a cell costs one DFT calculation, and that calculation also gives "
+                  "a total energy. The reference is a ridge regression on that energy and the "
+                  f"counts of the {r['elements']} elements, on the same folds; it needs nothing "
+                  "the grid does not already need.", "",
+                  "| Model | R², mean of 3 repeats | RMSE, eV | Ridge chosen (folds) |",
+                  "|---|---:|---:|---|"]
+        for name, mr in r["models"].items():
+            ch = ", ".join(f"{k} ({v})" for k, v in mr["chosen"].items())
+            lines.append(f"| {name} | {mr['q2_mean']:+.3f} | {mr['rmse_mean']:.4f} | {ch} |")
+        lines += ["", "| Difference of R² | Mean [95 % interval] |", "|---|---|"]
+        for cmp_row in r["comparisons"]:
+            lines.append(f"| {cmp_row['model']} minus {cmp_row['against']} | {_iv(cmp_row)} |")
+        lines += ["", f"Slope of the target on the energy of the run, in one least-squares fit "
+                  f"with the element counts: {r['slope_on_energy']:.3f}.", ""]
     rows = []
     for s in SETS:
         p = os.path.join(RESULTS, f"molecules_{s}.json")
@@ -806,10 +946,11 @@ def report(path: Optional[str] = None) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--stage", choices=("cells", "collect", "widefit", "crystals", "cubes",
-                                        "molecules"),
+    ap.add_argument("--stage", choices=("cells", "collect", "widefit", "crystals", "energies",
+                                        "reference", "cubes", "molecules"),
                     action="append", help="stage(s) to run; the report always follows")
-    ap.add_argument("--vasp-dir", help="the work directory of grid_dft_wsl.py (stage collect)")
+    ap.add_argument("--vasp-dir", help="the work directory of grid_dft_wsl.py (stages collect "
+                    "and energies)")
     ap.add_argument("--qm-results", help="results directory of run_corrosion_qm.py that holds "
                     "the ORCA jobs (stage cubes); default: this checkout's")
     ap.add_argument("--jobs", type=int, default=6, help="parallel workers")
@@ -827,6 +968,12 @@ def main(argv=None) -> int:
             stage_widefit(args.jobs)
         elif st == "crystals":
             stage_crystals(force=args.force)
+        elif st == "energies":
+            if not args.vasp_dir:
+                ap.error("--stage energies needs --vasp-dir")
+            stage_energies(args.vasp_dir)
+        elif st == "reference":
+            stage_reference()
         elif st == "cubes":
             stage_cubes(args.qm_results, args.jobs)
         elif st == "molecules":
