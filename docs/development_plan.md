@@ -450,9 +450,20 @@ larger searches in parts C and E.
   directly a sum over the basis, so the contributions, the Shapley values, the pharmacophore and
   the co-field error bars keep their form with the index set changed from training molecules to
   landmarks.
-  *Random Fourier features do not fit.* They need a shift-invariant kernel on vectors, and the
-  CMF kernel has no vector input. The only analogue is sampling the fields on a grid as explicit
-  features, which is the grid dependence the 2013 paper removed and breaks rule 3.
+  *Random Fourier features fit after all (corrected 16 November 2026).* This note first said
+  that they need a shift-invariant kernel on vectors and that the CMF kernel has no vector
+  input. That was wrong: the atom positions are the vector input. By Parseval's theorem the
+  overlap of two fields is an integral over frequencies of their Fourier transforms. Each
+  frequency gives a molecule a cosine and a sine feature, a sum over its atoms, so no grid in
+  space is needed. Like the Nyström features, they approximate the closed-form kernel and do not
+  replace it, so rule 3 holds. `cmfqsar/rff.py` builds the features,
+  `cmf build --low-rank fourier:N` fits on them, and `benchmarks/run_rff.py` measured them (manual,
+  "Random Fourier features: features without landmarks"). With the frequencies on a lattice they
+  reproduce the exact q² to the fourth decimal. They need more columns than landmark molecules:
+  to come within 0.01 of the exact q², a field needs 64 to 1024 columns (32 to 512 Sobol
+  frequencies, two columns each) against 10 to 40 landmark molecules. Their advantages are that
+  they do not depend on any data set and that they keep working at a narrow field, where a grid
+  of centres fails.
   *Matrix-free iterative solvers do not fit.* Every matrix-vector product is a full kernel pass,
   about six hours at 100 000 molecules, and conjugate gradient needs tens of them. Falkon, which
   is Nyström with a preconditioned conjugate gradient, is worth it only when m must exceed about
