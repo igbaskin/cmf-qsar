@@ -972,11 +972,12 @@ def registry() -> List[Benchmark]:
                   "particles of thousands of atoms: how the cost of the neighbour list, the "
                   "periodic autocorrelation and the overlap kernel grows with the number of "
                   "atoms of copper clusters and carbon nanotubes, and a model of the EMT energy "
-                  "of 150 metal particles against linear regressions on the size and the "
-                  "coordination number (plan item NT2)",
+                  "of 150 metal particles against linear regressions on the size, the "
+                  "coordination number and the numbers of neighbours in four lattice shells "
+                  "(plan item NT2)",
                   "run_particles.py", "particles",
-                  compute=[["--stage", "scaling"], ["--stage", "property"]],
-                  minutes="4",
+                  compute=[["--stage", "scaling"], ["--stage", "property"], ["--stage", "counts"]],
+                  minutes="5",
                   report=lambda: _mod("run_particles").report(),
                   tables=["particles/table.md"]),
         Benchmark("threebody",

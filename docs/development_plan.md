@@ -3979,6 +3979,12 @@ tests whether the target is reproducible between sources before any kernel is co
   separations across the axis; not done here. The mean coordination number, the count an EMT
   energy should follow, predicts it worse than the size law, because the energy is not linear
   in it.
+  **Neighbour counts as the reference, added 16 November 2026,** while the twenty-fourth
+  tutorial was written. `run_particles.py --stage counts`: a linear regression on the number of
+  neighbour pairs per atom in each of the first four lattice shells, with its own coefficients
+  for each metal, reaches 29 meV in cross-validation, level with the autocorrelation (+2.4
+  [-8.3, +13.0] meV), and 15 meV on the larger particles, better by 11.1 [4.8, 17.4] meV. The
+  fields are not needed for this target.
 * **NT3. Size and shape as descriptors.** `cmfqsar/descriptors.py` computes RDKit descriptors for
   molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
   the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
@@ -8557,7 +8563,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twenty-fourth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-fifth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the

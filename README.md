@@ -1107,7 +1107,9 @@ so its memory grows linearly. The model refuses the overlap kernel for a structu
 28 minutes for 100 particles of 2,869 atoms, against 26 s for the autocorrelation. Molecules are
 never refused. On 150 metal particles of 13 to 3,564 atoms, the autocorrelation model predicts
 the EMT energy per atom to 26 meV, against 45 meV for a linear regression on n^(-1/3) for each
-metal.
+metal. A regression on the numbers of neighbours in four lattice shells does as well (29 meV, the
+interval of the difference contains zero) and predicts the larger particles better (15 against 26
+meV); added 16 November 2026, shown in the twenty-fourth tutorial.
 
 ### Fields from DFT on a grid
 
@@ -6848,8 +6850,8 @@ for.
 
 ### Tutorials
 
-Twenty-four notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fourth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty-five notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6877,7 +6879,8 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `21_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
 | `22_a_design_loop.ipynb` | a design loop that looks for the best structure with few calculations: a prototype and its symmetry, random choice and the greedy rule on perovskites and on defect series, the same loop on the names of the elements and the counts of the defects as the reference, why a whole-cell kernel fails on one defect pool, and a closed loop with a calculator (downloads 4 MB on its first run) |
 | `23_a_field_from_dft.ipynb` | fields computed by DFT as values on a grid (the density, the electron localisation function and the potential of 1,462 perovskite cells): the overlap of two grids against the same grids fitted on the atoms and against the atom-centred fields, the total energy of the same calculation with the element counts as the reference, and the molecules (reads the stored results of the grids; downloads 4 MB on its first run) |
-| `24_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `24_metal_particles.ipynb` | particles of thousands of atoms with no cell: how the cost of the autocorrelation and of the overlap kernel grows with the size, the EMT energy per atom of 150 particles of six metals against the size law, and a regression on the numbers of neighbours in four lattice shells as the reference, in cross-validation and on larger particles (all computed live) |
+| `25_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7330,7 +7333,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-four notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-five notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```
