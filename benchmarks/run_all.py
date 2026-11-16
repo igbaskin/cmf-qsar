@@ -1204,9 +1204,10 @@ def registry() -> List[Benchmark]:
                   "acid among the ORCA spectra of the 189 benzoic acids, with the settings "
                   "fitted on half of the substituents; a control for the start geometry "
                   "(needs xtb); and a kernel canonical correlation analysis of a structural "
-                  "kernel and the spectrum kernel on held-out substituents",
+                  "kernel and the spectrum kernel on held-out substituents; and against the "
+                  "searches a spectroscopist would use: binned spectra and a peak-table search",
                   "run_spectra_bridge.py", "spectra_bridge", compute=[[]],
-                  minutes="15",
+                  minutes="16",
                   report=lambda: _mod("run_spectra_bridge").report(),
                   tables=["spectra_bridge/table.md"]),
         Benchmark("spectra_measured",

@@ -8464,6 +8464,16 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   *Open:* a model of the hydrogen bonds for the compounds with a donor (a pair of molecules
   or a cluster); a density-functional library for larger compounds; a conformer search; a
   library larger than the set; the co-field of a structural direction in space.
+  *The searches a spectroscopist would use, 16 November 2026* (`run_spectra_bridge.py --part
+  reference`), while the thirtieth tutorial was written. Binned spectra and a peak-table search,
+  with their settings chosen on the calibration acids as the kernel's are: with a B97-3c query the
+  kernel finds 99.6 %, the peak tables 86.8 %, the binned spectra 77.0 %; with a GFN2-xTB query
+  42.8 %, 8.2 % and 32.9 %. The kernel is ahead in all ten splits at both levels; its smallest
+  lead is +9.9 points [+3.4, +16.7] over the binned spectra with GFN2-xTB. That lead was +19.3
+  while the bins stopped at 100 cm⁻¹, the width the reference chose; with wider bins it chose
+  200. In part (a) the carbonyl band itself (r +0.87) and the first principal component of the
+  spectra alone (+0.75) already follow the Hammett constant, so pair 1 adds little; pair 2 (para
+  against meta, +0.84) is what neither description shows alone (0.45 and 0.60).
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two

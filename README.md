@@ -3263,6 +3263,17 @@ modes, where a chemist reads the substitution pattern. With quantum charges the 
 strongest with an envelope of 1 A around the carbonyl carbon (+0.893); with Gasteiger charges
 it vanishes there (+0.105) and needs 10 A.
 
+**Against the searches a spectroscopist would use (added 16 November 2026).** A library search
+compares whole spectra, so `run_spectra_bridge.py --part reference` measures binned spectra and a
+peak-table search with their settings chosen in the same way. The kernel stays ahead in all ten
+splits: with a B97-3c query 99.6 % against 86.8 % for the peak tables (+12.7 points [+7.3, +18.6])
+and 77.0 % for the binned spectra; with a GFN2-xTB query 42.8 % against 32.9 % for the binned
+spectra (+9.9 [+3.4, +16.7]). Its match falls smoothly with the distance between two lines, where
+a bin edge or a tolerance gives all or nothing. In part (a) the Hammett pair is mostly the main
+direction of the spectra alone (their first principal component follows the constant at +0.75, the
+carbonyl band itself at +0.87); the para/meta pair (+0.84) is what neither description shows alone
+(at most 0.45 and 0.60). The thirtieth tutorial shows it.
+
 ```bash
 python examples/make_band_examples.py --xtb-ir --jobs 8    # the GFN2-xTB spectra, under a minute
 python examples/make_band_examples.py --orca-ir --jobs 16  # the B97-3c spectra, hours, cached
@@ -6918,7 +6929,7 @@ for.
 
 ### Tutorials
 
-Twenty-nine notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Thirty notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -6953,6 +6964,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `27_which_atom_reacts.ipynb` | one atom as the sample: the atom a cytochrome P450 attacks, in 636 drug molecules and 14,488 heavy atoms, with the field around an atom against a count of the atom types over bonds, a count over distance, and a few properties of the atom itself as the references, and the mixture that beats them all |
 | `28_interchangeable_groups.ipynb` | a bioisostere table read off a fitted model: matched molecular pairs of the glycogen phosphorylase set, the predicted change of an exchange against the fingerprint distance, the field distance and a fingerprint model as the references, the three sets from the stored runs, and the pairs of groups the model's own error cannot separate |
 | `29_carbon_shifts.ipynb` | the 13C shift of one carbon: a HOSE-code lookup built sphere by sphere, the posed overlap of the ring carbons with fields and with element channels in their place, the whole set and a learning curve from the stored run, and a margin on one subset that random subsets do not repeat |
+| `30_spectrum_to_structure.ipynb` | which acid gave an infrared spectrum: the spectrum kernel against binned spectra and a peak-table search for a B97-3c and a GFN2-xTB query, why a bin edge costs a match, measured queries from the stored runs, and a kernel CCA of structure and spectrum against each description alone |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7405,7 +7417,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-nine notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         thirty notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

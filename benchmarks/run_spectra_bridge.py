@@ -28,10 +28,17 @@ of the ORCA spectra as the other.  The pairs of directions are judged by their c
 held-out substituents against a shuffled pairing of the two views, and read on the spectral
 side by region, as the co-spectrum of plan item SP1 is read.
 
+**The references a spectroscopist would use first** (`--part reference`).  A library search
+compares whole spectra, so the kernel of part (b) is also measured against binned spectra and
+a peak-table search, with their settings chosen on the calibration acids.  For part (a), the
+carbonyl band itself and the principal components of each view alone show what the pairing of
+the two views adds.
+
 Usage
 -----
     python benchmarks/run_spectra_bridge.py            # both parts, then the table
     python benchmarks/run_spectra_bridge.py --part b
+    python benchmarks/run_spectra_bridge.py --part reference   # the searches a spectroscopist uses
     python benchmarks/run_spectra_bridge.py --report
 """
 from __future__ import annotations
@@ -455,6 +462,231 @@ def part_control(repeats: int = REPEATS, results: str = RESULTS) -> Optional[dic
 
 
 # --------------------------------------------------------------------------- #
+# The references a spectroscopist would use first
+# --------------------------------------------------------------------------- #
+BIN_STEPS = (5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 400.0)
+PEAK_SHARES = (0.05, 0.1, 0.2)
+PEAK_TOLERANCES = (5.0, 10.0, 20.0, 30.0, 60.0, 100.0, 150.0)
+BOOTSTRAP = 2000
+PCS = 6
+
+
+def binned(spectra: Sequence[SP.Spectrum], step: float, power: float = 1.0,
+           x_range: Tuple[float, float] = RANGE) -> np.ndarray:
+    """Every spectrum as a histogram: the intensities of its lines, each to the power `power`,
+    summed in bins of width `step` that start at the lower end of `x_range`.  A line on the
+    edge between two bins goes to the upper one."""
+    edges = np.arange(x_range[0], x_range[1] + step, step)
+    F = np.zeros((len(spectra), len(edges) - 1))
+    for i, s in enumerate(spectra):
+        ok = (s.x >= edges[0]) & (s.x < edges[-1])
+        idx = np.searchsorted(edges, s.x[ok], side="right") - 1
+        np.add.at(F[i], idx, np.power(np.maximum(s.y[ok], 0.0), power))
+    return F
+
+
+def peak_table(spectrum: SP.Spectrum, share: float) -> np.ndarray:
+    """The positions of the lines with at least `share` times the intensity of the strongest
+    line: the peak table of a spectrum."""
+    return spectrum.x[spectrum.y >= share * float(np.max(spectrum.y))]
+
+
+def peak_distances(library: Sequence[np.ndarray], queries: Sequence[np.ndarray]):
+    """For every query and library table: the distance from each query peak to the nearest
+    library peak, and from each library peak to the nearest query peak.  They do not depend
+    on the tolerance, so every tolerance is scored from them."""
+    to_lib = [[np.abs(q[:, None] - p[None, :]).min(axis=1) for p in library] for q in queries]
+    to_qry = [[np.abs(q[:, None] - p[None, :]).min(axis=0) for p in library] for q in queries]
+    return to_lib, to_qry
+
+
+def peak_similarity(distances, tol: float) -> np.ndarray:
+    """The peak-table search: the share of the peaks of both tables that have a partner in
+    the other table within `tol`."""
+    to_lib, to_qry = distances
+    S = np.zeros((len(to_lib), len(to_lib[0])))
+    for i in range(len(to_lib)):
+        for j in range(len(to_lib[i])):
+            a, b = to_lib[i][j], to_qry[i][j]
+            S[i, j] = (np.sum(a <= tol) + np.sum(b <= tol)) / (len(a) + len(b))
+    return S
+
+
+def choose_on_calibration(settings: Dict[str, object], splits, twins, same) -> List[dict]:
+    """For every split: the setting with the highest mean reciprocal rank on the calibration
+    queries, what it scores on the test queries, and whether each test query was first.
+
+    A setting is a matrix of similarities, or a function of the calibration rows that returns
+    one (for the centred forms, whose mean spectrum of the queries comes from the calibration
+    queries)."""
+    rows = []
+    for cal, test in splits:
+        best = None
+        for name, setting in settings.items():
+            S = setting(cal) if callable(setting) else setting
+            crit = float(np.mean(1.0 / ranks(S)[cal]))
+            if best is None or crit > best[0]:
+                best = (crit, name, S)
+        crit, name, S = best
+        rows.append(dict(scores(S, test, twins, same), criterion=crit, setting=name,
+                         first=(ranks(S)[test] <= 1.0).astype(float).tolist(),
+                         test=[int(i) for i in test]))
+    return rows
+
+
+def paired_difference(a: Sequence[dict], b: Sequence[dict], table: dict,
+                      repeats: int = BOOTSTRAP, seed: int = 0) -> dict:
+    """The share of test queries ranked first by `a` minus the share by `b`, over all splits,
+    with a 95 % interval from resampling whole substituents, and the number of splits in
+    which `a` is ahead, level and behind."""
+    subs = np.array(table["substituent"])
+    diff, group = [], []
+    ahead = level = behind = 0
+    for ra, rb in zip(a, b):
+        d = np.array(ra["first"]) - np.array(rb["first"])
+        diff += d.tolist()
+        group += subs[np.array(ra["test"])].tolist()
+        m = float(d.mean())
+        ahead, level, behind = ahead + (m > 0), level + (m == 0), behind + (m < 0)
+    diff, group = np.array(diff), np.array(group)
+    names = sorted(set(group))
+    rows = {g: np.flatnonzero(group == g) for g in names}
+    rng = np.random.default_rng(seed)
+    boot = []
+    for _ in range(int(repeats)):
+        pick = rng.choice(len(names), len(names))
+        idx = np.concatenate([rows[names[k]] for k in pick])
+        boot.append(float(diff[idx].mean()))
+    return {"mean": float(diff.mean()), "low": float(np.percentile(boot, 2.5)),
+            "high": float(np.percentile(boot, 97.5)), "ahead": int(ahead), "level": int(level),
+            "behind": int(behind)}
+
+
+def reference_settings(library, queries) -> Dict[str, Dict[str, object]]:
+    """The candidate settings of every way of ranking: the spectrum kernel of this benchmark
+    (centred, the axis as it is), the binned spectra (a cosine of the histograms, centred or
+    not) and the peak-table search."""
+    out: Dict[str, Dict[str, object]] = {"kernel": {}, "binned": {}, "peaks": {}}
+    for sigma in WIDTHS:
+        grid = SP.Grid.for_width(RANGE[0], RANGE[1], sigma)
+        for power in POWERS:
+            lib = SP.feature_matrix(library, grid, sigma, power)
+            qry = SP.feature_matrix(queries, grid, sigma, power)
+            out["kernel"][f"{sigma:g} cm^-1, power {power:g}"] = (
+                lambda cal, lib=lib, qry=qry: similarities(lib, qry, cal))
+    for step in BIN_STEPS:
+        for power in POWERS:
+            lib, qry = binned(library, step, power), binned(queries, step, power)
+            out["binned"][f"bins of {step:g} cm^-1, power {power:g}"] = similarities(lib, qry)
+            out["binned"][f"bins of {step:g} cm^-1, power {power:g}, centred"] = (
+                lambda cal, lib=lib, qry=qry: similarities(lib, qry, cal))
+    for share in PEAK_SHARES:
+        dist = peak_distances([peak_table(s, share) for s in library],
+                              [peak_table(s, share) for s in queries])
+        for tol in PEAK_TOLERANCES:
+            out["peaks"][f"lines of {100 * share:g} % of the strongest or more, within "
+                         f"{tol:g} cm^-1"] = peak_similarity(dist, tol)
+    return out
+
+
+def held_out_components(X: np.ndarray, folds: Sequence[np.ndarray], k: int = PCS
+                        ) -> np.ndarray:
+    """The scores of held-out rows on the first `k` principal components of the other rows.
+    A component of a fold is matched to the component of all rows that its loadings resemble
+    most, and given the same sign, so that the held-out scores of all folds can be pooled."""
+    _u, _s, full = np.linalg.svd(X - X.mean(axis=0), full_matrices=False)
+    out = np.zeros((len(X), k))
+    for test in folds:
+        train = np.setdiff1d(np.arange(len(X)), test)
+        mu = X[train].mean(axis=0)
+        _u, _s, V = np.linalg.svd(X[train] - mu, full_matrices=False)
+        for j in range(k):
+            dots = V[:3 * k] @ full[j]
+            m = int(np.argmax(np.abs(dots)))
+            out[test, j] = (X[test] - mu) @ (V[m] * np.sign(dots[m]))
+    return out
+
+
+def kernel_components(K: np.ndarray, k: int = PCS) -> np.ndarray:
+    """The first `k` components of a kernel principal component analysis: the eigenvectors of
+    the centred kernel with the largest eigenvalues."""
+    n = len(K)
+    H = np.eye(n) - 1.0 / n
+    w, V = np.linalg.eigh(H @ K @ H)
+    return V[:, np.argsort(w)[::-1][:k]]
+
+
+def part_reference(repeats: int = REPEATS, width: str = "10.00 A") -> dict:
+    """The references a spectroscopist would use first.
+
+    Part (b): the binned spectra and the peak-table search, with their settings chosen on the
+    calibration acids as the kernel's are, against the spectrum kernel (centred, the axis as
+    it is), for every level of the queries.
+
+    Part (a): what the spectrum alone and the structure alone already follow, with no pairing:
+    the carbonyl band itself, the principal components of the spectra (held out over the folds
+    of part (a)), and the components of a kernel principal component analysis of the
+    structural kernel of part (a) at the envelope width `width`."""
+    t0 = time.time()
+    names, table = read_names()
+    library = IR.read_spectra(LIBRARY, names)
+    twins = twin_rows(table)
+    formulas = np.array(table["formula"])
+    same = formulas[:, None] == formulas[None, :]
+    splits = [split_substituents(table, r) for r in range(int(repeats))]
+    out = {"repeats": int(repeats), "bin_steps": list(BIN_STEPS),
+           "peak_shares": list(PEAK_SHARES), "peak_tolerances": list(PEAK_TOLERANCES),
+           "levels": {}}
+    for level in ("xtb", "b97-3c"):
+        cfg = LEVELS[level]
+        if not os.path.isfile(cfg["path"]):
+            continue
+        queries = IR.read_spectra(cfg["path"], names)
+        chosen = {fam: choose_on_calibration(settings, splits, twins, same)
+                  for fam, settings in reference_settings(library, queries).items()}
+        rec = {"query": cfg["label"], "rows": {}, "difference": {}}
+        for fam, rows in chosen.items():
+            rec["rows"][fam] = summarise([{k: v for k, v in r.items()
+                                           if k not in ("first", "test")} for r in rows])
+        for fam in ("binned", "peaks"):
+            rec["difference"][fam] = paired_difference(chosen["kernel"], chosen[fam], table)
+        out["levels"][level] = rec
+        log(f"  references, {cfg['label']} queries: " + "; ".join(
+            f"{fam} first in {100 * row['top1']['mean']:.1f} %"
+            for fam, row in rec["rows"].items()) + f"  ({time.time() - t0:.0f} s)")
+    # part (a): what each view follows on its own
+    mols, names_a, fields5, targets, _fs5, table_a = B.read(B.DATA, structures=B.STRUCTURES)
+    spectra = IR.read_spectra(LIBRARY, names_a)
+    spectra = [spectra[int(m)] for m in targets.molecule]
+    sigma_w, power = KCCA_SPECTRUM
+    grid = SP.Grid.for_width(RANGE[0], RANGE[1], sigma_w)
+    Z = unit_rows(SP.feature_matrix(spectra, grid, sigma_w, power))
+    band = np.asarray(targets.y, float)
+    props = {"the Hammett constant": np.asarray(table_a["sigma"], float),
+             "para (1) or meta (0)": np.array([p == "para" for p in table_a["position"]],
+                                              float),
+             "the position of the carbonyl band": band}
+    folds = substituent_folds(table_a, KCCA_FOLDS, 0)
+    spectrum_pcs = held_out_components(Z, folds)
+    structure_pcs = kernel_components(IR.structure_kernels(fields5, targets)[width])
+
+    def corr(M):
+        return {name: [float(np.corrcoef(M[:, j], v)[0, 1]) for j in range(M.shape[1])]
+                for name, v in props.items()}
+
+    out["a"] = {"width": width, "components": PCS,
+                "band": {name: float(np.corrcoef(band, v)[0, 1]) for name, v in props.items()
+                         if name != "the position of the carbonyl band"},
+                "spectrum": corr(spectrum_pcs), "structure": corr(structure_pcs)}
+    log(f"  references, part (a): the carbonyl band against the Hammett constant r "
+        f"{out['a']['band']['the Hammett constant']:+.2f}; best spectral component "
+        + ", ".join(f"{name} {max(np.abs(v)):.2f}" for name, v in out["a"]["spectrum"].items())
+        + f"  ({time.time() - t0:.0f} s)")
+    out["seconds"] = round(time.time() - t0, 1)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # Part (a): kernel canonical correlation of a structural kernel and the spectrum kernel
 # --------------------------------------------------------------------------- #
 def substituent_folds(table: dict, folds: int, seed: int) -> List[np.ndarray]:
@@ -629,6 +861,8 @@ def run(part: str = "all", repeats: int = REPEATS, results: str = RESULTS) -> di
             out["b_control"] = control
     if part in ("all", "a"):
         out["a"] = part_a(results)
+    if part in ("all", "reference"):
+        out["reference"] = part_reference(repeats)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=1)
     return out
@@ -666,6 +900,8 @@ def report(results: str = RESULTS) -> str:
         lines += _report_a(d["a"])
     if "a" in d and "b" in d:
         lines += _verdict(d)
+    if "reference" in d:
+        lines += _report_reference(d["reference"], d.get("a"))
     text = "\n".join(lines)
     os.makedirs(results, exist_ok=True)
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
@@ -948,13 +1184,109 @@ def _verdict(d: dict) -> List[str]:
     return out
 
 
+REFERENCE_NAMES = (("kernel", "the spectrum kernel, centred, the axis as it is"),
+                   ("binned", "binned spectra (a cosine of histograms)"),
+                   ("peaks", "a peak-table search"))
+
+
+def _points(d: dict) -> str:
+    return (f"{100 * d['mean']:+.1f} [{100 * d['low']:+.1f}, {100 * d['high']:+.1f}]")
+
+
+def _strongest(values: Sequence[float]) -> str:
+    j = int(np.argmax(np.abs(values)))
+    return f"{values[j]:+.2f} (component {j + 1})"
+
+
+def _report_reference(r: dict, a: Optional[dict]) -> List[str]:
+    out = ["## References a spectroscopist would use first", "",
+           "Part (b) compares the kernel with the composition and with one band.  A "
+           "spectroscopist who searches a library of spectra uses neither: the search compares "
+           "whole spectra.  Two such searches are measured here.  Their settings are chosen on "
+           "the calibration acids by the same rule as the kernel's (the highest mean "
+           "reciprocal rank), on the same splits.", "",
+           "- **Binned spectra.**  Every spectrum becomes a histogram: the intensities of its "
+           "lines are summed in bins of one width ("
+           + ", ".join(f"{v:g}" for v in r["bin_steps"]) + " cm^-1), with the power 1 or 0.5 "
+           "of the intensity.  The candidates are ranked by the cosine of the histograms, "
+           "with and without centring.",
+           "- **A peak-table search.**  Every spectrum becomes the list of its lines with at "
+           "least " + ", ".join(f"{100 * v:g}" for v in r["peak_shares"]) + " % of the "
+           "intensity of the strongest line.  The candidates are ranked by the share of the "
+           "peaks of both lists that have a partner in the other list within a tolerance ("
+           + ", ".join(f"{v:g}" for v in r["peak_tolerances"]) + " cm^-1).", "",
+           "The kernel is the row \"centred spectra, the axis as it is\" of the tables above, "
+           "chosen and scored again here.", "",
+           "| query | how the candidates are ranked | first, % of the queries | among the first "
+           "three, % | the right isomer above the other isomer of the same substituent, % | "
+           "first among the candidates with the composition of the query, % | settings chosen "
+           "most often |",
+           "|---|---|---:|---:|---:|---:|---|"]
+    for level, rec in r["levels"].items():
+        for fam, label in REFERENCE_NAMES:
+            row = rec["rows"][fam]
+            out.append(f"| {rec['query']} | {label} | {_pct(row['top1'])} | "
+                       f"{_pct(row['top3'])} | {_pct(row['isomer'])} | "
+                       f"{_pct(row['top1_formula'])} | {'; '.join(row['chosen'])} |")
+    out += ["", "The difference in the share ranked first, in percentage points: the mean over "
+            "the test queries of all splits, with a 95 % interval from resampling whole "
+            "substituents.", "",
+            "| query | the kernel minus the binned spectra | splits with the kernel ahead, "
+            "level, behind | the kernel minus the peak-table search | splits with the kernel "
+            "ahead, level, behind |",
+            "|---|---:|---|---:|---|"]
+    for level, rec in r["levels"].items():
+        b, p = rec["difference"]["binned"], rec["difference"]["peaks"]
+        out.append(f"| {rec['query']} | {_points(b)} | {b['ahead']}, {b['level']}, "
+                   f"{b['behind']} | {_points(p)} | {p['ahead']}, {p['level']}, "
+                   f"{p['behind']} |")
+    ra = r["a"]
+    out += ["", "### Part (a): what each view follows on its own", "",
+            "Part (a) pairs a structural direction with a spectral one, and pair 1 follows the "
+            "Hammett constant.  Without any pairing, the spectrum and the structure may already "
+            "follow it.  Three references use no target and no pairing:", "",
+            "- **the carbonyl band itself** (the number in the data file of plan item SP2);",
+            f"- **the spectra alone**: the first {ra['components']} principal components of "
+            "the spectra of part (a), scored on held-out acids with the folds of part (a);",
+            f"- **the structure alone**: the first {ra['components']} components of a kernel "
+            "principal component analysis of the structural kernel of part (a), envelope "
+            f"{ra['width']}, on all acids.", "",
+            "A cell gives the correlation with the property; for the components, the "
+            "component with the largest correlation.  The sign of a component is free.", "",
+            "| property | the carbonyl band itself | the spectra alone | the structure alone |"
+            + (" kernel canonical correlation: pair 1, spectrum | pair 2, spectrum |"
+               if a else ""),
+            "|---|---:|---:|---:|" + ("---:|---:|" if a else "")]
+    cca = a["views"]["five"]["reading"] if a else {}
+    for name in ra["spectrum"]:
+        band = ra["band"].get(name)
+        cells = [f"{band:+.2f}" if band is not None else "(the property itself)",
+                 _strongest(ra["spectrum"][name]), _strongest(ra["structure"][name])]
+        if a:
+            cells += [f"{cca[name]['spectrum'][0]:+.2f}", f"{cca[name]['spectrum'][1]:+.2f}"]
+        out.append(f"| {name} | " + " | ".join(cells) + " |")
+    h, p = "the Hammett constant", "para (1) or meta (0)"
+    out += ["", f"The carbonyl band itself follows the Hammett constant at "
+            f"{ra['band'][h]:+.2f}, and the leading component of the spectra alone at "
+            f"{_strongest(ra['spectrum'][h])}.  So pair 1 of part (a) finds what the spectrum "
+            "already shows without the structure.  Para against meta is different: no "
+            f"component of the spectra alone follows it beyond "
+            f"{max(abs(v) for v in ra['spectrum'][p]):.2f}, and no component of the structure "
+            f"alone beyond {max(abs(v) for v in ra['structure'][p]):.2f}"
+            + (f", while pair 2 reaches {cca[p]['spectrum'][1]:+.2f}.  This is what the "
+               "pairing of the two views adds." if a else "."), ""]
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--part", default="all", choices=["all", "a", "b", "dft", "control"],
+    ap.add_argument("--part", default="all", choices=["all", "a", "b", "dft", "control", "reference"],
                     help="b: the GFN2-xTB queries; dft: the queries of a second density "
                          "functional; control: GFN2-xTB queries that start from the ORCA "
-                         "geometries; a: the canonical correlation analysis")
+                         "geometries; a: the canonical correlation analysis; reference: the binned "
+                         "spectra, the peak-table search and what each view follows on "
+                         "its own")
     ap.add_argument("--repeats", type=int, default=REPEATS)
     ap.add_argument("--report", action="store_true", help="only write the table")
     a = ap.parse_args(argv)

@@ -13674,6 +13674,31 @@ which are the same on the carboxyl group of every acid, it falls from +0.822 at 
 at 1 A: the direction has to reach the substituent. This is the finding of section *A
 vibrational band as the local target*, reached here without a target.
 
+**The searches a spectroscopist would use (added 16 November 2026).** Part (b) compares the kernel
+with the composition and with one band, but a library search compares whole spectra. Stage `--part
+reference` of the benchmark measures two such searches, with their settings chosen on the
+calibration acids by the same rule and on the same splits: binned spectra (a cosine of histograms
+with bins of 5 to 400 cm$^{-1}$, centred or not) and a peak-table search (the share of the lines
+above 5, 10 or 20 % of the strongest that have a partner within 5 to 150 cm$^{-1}$). With a B97-3c
+query the kernel finds the acid in 99.6 % of the cases, the peak tables in 86.8 % and the binned
+spectra in 77.0 %: the kernel is ahead by +12.7 points [+7.3, +18.6] and +22.5 [+17.6, +27.8], in
+all ten splits (intervals from resampling whole substituents). With a GFN2-xTB query: 42.8 %, 8.2
+% and 32.9 %; the kernel is ahead of the binned spectra by +9.9 [+3.4, +16.7], and only slightly
+on the isomer question (74.0 against 71.0 %). The binned search was first offered bins up to 100
+cm$^{-1}$ and chose the widest on the GFN2-xTB queries; with wider bins on offer it rose from 23.5
+to 32.9 % at 200 cm$^{-1}$, so the lead first measured (+19.3) overstated the kernel. The kernel
+wins because its match falls smoothly with the distance between two lines, where a bin edge or a
+tolerance gives all or nothing. For part (a) the stage asks what each description shows without
+the pairing. The carbonyl band itself follows the Hammett constant at r +0.87, and the first
+principal component of the spectra alone, held out, at +0.75: pair 1 is mostly the main direction
+of the spectra. Para against meta is new: no component of the spectra alone follows it beyond 0.45
+and none of the structural kernel alone beyond 0.60, while pair 2 reaches +0.84. The rows measured
+before this stage are unchanged.
+
+The thirtieth tutorial, `docs/tutorials/30_spectrum_to_structure.ipynb`, runs part (b) and the two
+searches live for both query levels, shows why a bin edge costs a match, reads the measured
+queries from the stored runs, and sets the kernel CCA against each description alone.
+
 **What is not done.** No measured spectrum is used. The two functionals compute the same
 object: the harmonic spectrum of one molecule in the gas phase, in the same conformer. A
 measured spectrum of a carboxylic acid differs from that in more than the places of the lines.
@@ -18610,7 +18635,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-nine notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Thirty notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18629,8 +18654,9 @@ site, two-phase microstructures on a voxel grid, compared with the phase fractio
 correlation lengths of the grains, and one atom of a drug as the sample, with the atom a
 cytochrome P450 attacks read from the field around it and compared with counts of the atom types
 around it, which groups can replace each other at a position, compared with a model that
-needs no field, and the 13C shift of one carbon, compared with a HOSE-code lookup and with element
-channels in place of the fields. Each runs on the
+needs no field, the 13C shift of one carbon, compared with a HOSE-code lookup and with element
+channels in place of the fields, and which acid gave an infrared spectrum, compared with binned
+spectra and a peak-table search. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
