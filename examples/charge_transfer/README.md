@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 125 rows from 26 studies.
+* `activation_energies.csv`: one row per value, 129 rows from 27 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,8 +22,9 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 125 such rows, from 26 papers. Six of the papers are open: four under CC BY 4.0,
-  one under CC BY-NC 4.0 (Fukuma 2024) and one as an open file on the site of its society.
+  There are 129 such rows, from 27 papers. Seven of the papers are open: four under CC BY 4.0,
+  one under CC BY-NC 4.0 (Fukuma 2024), one under CC BY-NC-ND 4.0 (Uchida 2020) and one as
+  an open file on the site of its society.
   The other twenty were read from files. The author of the program supplied nineteen of
   them: eighteen are behind a paywall, and the file of one (Fukutsuka 2010) does not state a
   licence. The twentieth, Zabara 2024, is the copy that the repository of its university
@@ -115,7 +116,7 @@ Nothing was written from memory.
   LiMn2O4/LiMn2O4 cells (0.3 to 6.0 kJ/mol) are left out because the authors assign them to
   electron transfer in the cathode and not to the transfer of the ion. `sources.csv` lists
   them.
-* Nine Elsevier papers were read on 16 November 2026 as well. Seven gave rows. Doi 2004
+* Nine Elsevier papers were read on 16 November 2026 as well. Eight gave rows. Doi 2004
   (Carbon) gave four: GC-20 and carbon treated by hot isostatic pressing, each in EC:DEC and
   PC. Its two values for untreated GC-20 are the two that Doi 2005 shows for comparison, so
   they are rows `DC04-01` and `DC04-02` of Doi 2004 and no longer of Doi 2005. Nakayama 2007
@@ -128,8 +129,10 @@ Nothing was written from memory.
   the note of its rows says that the label depends on the semicircle that is called charge
   transfer. The two values of Sagane 2005 for Na+ are not rows. Uhlmann 2016 gave no row,
   because its interface resistance is assigned to an exchange of H+ and Li+. Uchida 2020
-  gave none yet: its text has only approximate values, and the exact ones are in Tables S2
-  and S3 of its supporting information, which was not read.
+  gave four rows once its supporting information was read (Table S2): graphite in LiPF6 and
+  in LiFSA, each with EC:DMC 50:50 and 10:90, in two series. The notes of the rows give its
+  values for the film resistance (Table S3). The two rows with LiFSA are not counted in the
+  reference system or in the means of the electrodes, whose salts are LiPF6 and LiClO4.
 * Five more papers were read on the same day and gave no row. Four of them measured no
   activation energy (Okoshi 2013, Levin 2017, Vassiliev 2019, Motobayashi 2022). The fifth,
   Zhou 2025, prints one value and shows the others only as markers in a figure.

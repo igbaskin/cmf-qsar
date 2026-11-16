@@ -1,11 +1,11 @@
 {
- "n_rows": 125,
- "n_primary": 125,
+ "n_rows": 129,
+ "n_primary": 129,
  "n_secondary": 0,
- "n_studies": 26,
+ "n_studies": 27,
  "classes": {
   "carbonaceous thin film": 3,
-  "graphite": 39,
+  "graphite": 43,
   "layered oxide": 25,
   "lithium metal": 6,
   "lithium titanate": 16,
@@ -19,12 +19,13 @@
    "Abe2004": 56.0,
    "Jow2018": 57.7,
    "Keefe2020": 58.373425,
+   "Uchida2020": 62.1,
    "Xu2007": 68.5,
    "Yamada2009": 58.0
   },
-  "n": 5,
-  "mean": 59.714684999999996,
-  "sd": 4.9944650110021795,
+  "n": 6,
+  "mean": 60.11223749999999,
+  "sd": 4.572092796350212,
   "low": 56.0,
   "high": 68.5
  },
@@ -342,6 +343,21 @@
    ]
   },
   {
+   "source": "Uchida2020",
+   "electrode_class": "graphite",
+   "n": 4,
+   "low": 36.6,
+   "high": 71.2,
+   "range": 34.6,
+   "varied": [
+    "solvent",
+    "salt"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Xu2007",
    "electrode_class": "graphite",
    "n": 4,
@@ -431,13 +447,13 @@
  ],
  "means": {
   "negative": {
-   "n": 18,
-   "mean": 61.73844722222222,
-   "sd": 6.066250018011227,
+   "n": 20,
+   "mean": 61.7746025,
+   "sd": 6.454068135750851,
    "low": 48.2425,
-   "high": 71.1,
+   "high": 71.2,
    "published": 35.0,
-   "shift": 26.73844722222222
+   "shift": 26.7746025
   },
   "positive": {
    "n": 12,
@@ -782,6 +798,44 @@
    ]
   },
   {
+   "series": "Uchida2020: graphite, LiFSA, film formed in each electrolyte",
+   "n": 2,
+   "solvents": [
+    "EC:DMC 1:9",
+    "EC:DMC 1:1"
+   ],
+   "values": [
+    36.6,
+    50.0
+   ],
+   "low": 36.6,
+   "high": 50.0,
+   "range": 13.399999999999999,
+   "one_solvent": [],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "series": "Uchida2020: graphite, LiPF6, film formed in each electrolyte",
+   "n": 2,
+   "solvents": [
+    "EC:DMC 1:1",
+    "EC:DMC 1:9"
+   ],
+   "values": [
+    53.0,
+    71.2
+   ],
+   "low": 53.0,
+   "high": 71.2,
+   "range": 18.200000000000003,
+   "one_solvent": [],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "series": "Xu2007: graphite, film formed in each electrolyte",
    "n": 4,
    "solvents": [
@@ -955,8 +1009,8 @@
   }
  ],
  "solvent_count": {
-  "n_series": 18,
-  "n_rows": 60,
+  "n_series": 20,
+  "n_rows": 64,
   "largest": 8,
   "solvents": [
    "2,2,2-trifluoroethyl acetate",
@@ -1256,6 +1310,14 @@
    "first": "EC:DMC 1:1",
    "second": "EC:DMC 1:9",
    "differences": [
+    {
+     "series": "Uchida2020: graphite, LiFSA, film formed in each electrolyte",
+     "difference": 13.399999999999999
+    },
+    {
+     "series": "Uchida2020: graphite, LiPF6, film formed in each electrolyte",
+     "difference": -18.200000000000003
+    },
     {
      "series": "Yamada2009: graphite, one film formed in EC:DMC 1:1",
      "difference": 3.0

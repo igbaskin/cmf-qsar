@@ -69,6 +69,10 @@ PUBLISHED = {"negative": 35.0, "positive": 17.8}
 #: which classes of electrode stand for the two electrodes of a lithium-ion cell
 NEGATIVE = ("graphite",)
 POSITIVE = ("layered oxide",)
+#: the salts of the reference system and of the electrode means: the two that all of the studies
+#: of the reference system use. A row with another salt (LiFSA of Uchida 2020) is in the table,
+#: and in its series, but it is not counted as an estimate of the same system.
+USUAL_SALTS = ("LiPF6", "LiClO4")
 #: the accuracy a cold cell needs, from the tolerance stage of plan item BT12, kJ/mol
 NEEDED = 15.0
 
@@ -184,9 +188,9 @@ def read_sources(path: Optional[str] = None) -> Dict[str, dict]:
 
 def is_reference(r: dict) -> bool:
     """The reference system: graphite with its film after formation, in a carbonate electrolyte
-    with ethylene carbonate, with no additive."""
+    with ethylene carbonate and LiPF6 or LiClO4, with no additive."""
     return (r["electrode_class"] == "graphite" and r["solvent_class"] == "EC-based carbonate"
-            and r["film"] == "formed" and r["additive"] == "none")
+            and r["film"] == "formed" and r["additive"] == "none" and r["salt"] in USUAL_SALTS)
 
 
 def repeatability(rows: List[dict]) -> dict:
@@ -227,13 +231,14 @@ def within_study(rows: List[dict]) -> List[dict]:
 
 
 def electrode_means(rows: List[dict]) -> Dict[str, dict]:
-    """The mean for the two electrodes of a cell with a carbonate electrolyte: films after
-    formation, every additive, one value per row, studies weighted by their rows."""
+    """The mean for the two electrodes of a cell with a carbonate electrolyte and LiPF6 or LiClO4:
+    films after formation, every additive, one value per row, studies weighted by their rows."""
     out = {}
     for name, classes in (("negative", NEGATIVE), ("positive", POSITIVE)):
         v = np.array([r["ea"] for r in rows
                       if r["electrode_class"] in classes
                       and r["solvent_class"] == "EC-based carbonate"
+                      and r["salt"] in USUAL_SALTS
                       and r["film"] in ("formed", "formed and cycled") and not r["is_range"]],
                      float)
         out[name] = {"n": int(len(v)), "mean": float(v.mean()), "sd": float(v.std(ddof=1)),
