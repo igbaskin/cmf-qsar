@@ -3904,6 +3904,38 @@ tests whether the target is reproducible between sources before any kernel is co
   with a cell and boundary conditions, readers for CIF, POSCAR, extended XYZ and ASE databases, and
   the name and the target taken from the structure's info fields. Every other NT item depends on
   this one. About a week.
+  **Built and measured 16 November 2026.** `cmfqsar/structures.py` reads crystals, layers, chains
+  and particles into the same `Dataset` as molecules (a new `structures` list beside `mols`; a
+  set holds one or the other), with the periodic directions checked against the cell, the name
+  from the first of seven info fields, the target from a numeric info field (never an
+  identifier, and nothing guessed when two fields could be it) or a CSV column, and the
+  published split from a `subset` info field. `load_dataset` reads such files only when the
+  caller says it takes structures; the 37 commands that expect molecules refuse them with a
+  message that names `build-crystals` and the crystal window. The main window hands a structure
+  file to the crystal window, the crystal window uses the published split, and `build-crystals`
+  takes the one numeric info field as its target and refuses a CSV whose target column is not
+  clear.
+  **Measured** (`benchmarks/run_structures.py`): 60 crystals, 139 sheets, 39 nanotubes and 30
+  metal clusters written in six formats and read back. Extended XYZ, the two ASE databases and
+  ASE trajectories keep every name, target and periodic direction of all four kinds; the
+  periodic channels agree to 1e-14 of their largest entry (9e-9 for extended XYZ, which writes
+  eight decimals). CIF and POSCAR files state three periodic directions, so every sheet comes
+  back as a crystal with channels 4.6 times their largest entry away, and exact once the
+  directions are given; ASE cannot write a tube to either, nor a cluster to POSCAR. Reading the
+  665 melting-point cells takes 0.07 to 0.22 s from every format except CIF (39 s).
+  Three faults were found and repaired: ASE's reader drops the key-value pairs of a database
+  row (the names and targets); it reads an `@` in a file name as an index marker, so
+  `Ag@C4.cif` failed; and a structure with no cell had its coordinates replaced by fractions of
+  a zero cell. The crystal window could not draw a tube or a cluster, because the periodic
+  images needed three lattice vectors; it now draws and fits both.
+  **Found on the way:** with no periodic direction the periodic autocorrelation already has no
+  background term, and a cluster with no cell gives the channels of the same cluster alone in a
+  60 Å box with the background off, to 1e-15. The first half of NT2 (open boundaries) therefore
+  exists; the guard on the overlap kernel is what is left of it. And the electrostatic field of
+  `inorganic_fieldset` guesses oxidation states by a combinatorial search that did not finish in
+  ten minutes on five single-atom-catalyst sheets of 127 atoms (C, N and a metal), where the
+  other fields of the same sheets take 0.05 s each; the crystal window's default fields include
+  it. Not repaired here.
 * **NT2. Particles of thousands of atoms.** The overlap kernel is quadratic in the number of atoms,
   and `AtomTable` concatenates every structure's atoms. For a particle the neighbour-list path of
   `periodic_autocorrelation` is the only one that scales. Needed: open boundaries in that function
@@ -9099,7 +9131,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 2 | NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9111,7 +9143,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 124 finished, 10 partly, 42 open.**
+**176 items: 125 finished, 10 partly, 41 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9127,7 +9159,7 @@ equally blocked.
   from ChEMBL.
 * **Waiting for the application.** G5, NT8 and NT11 are what is left of this block: the
   particle side of the window, where a structure that is neither a molecule nor a cell needs a
-  data model of its own (NT1), and the model panel and command line that would offer it. Two of
+  data model of its own (NT1, built 16 November 2026), and the model panel and command line that would offer it. Two of
   NT8's three parts are already done (the cell outline with its images, and the bonds with the
   metal rule); what it still asks for is instanced drawing for ten thousand atoms. Neither
   needs a new measurement. Three of the six are done. M13 closed the crystal side on
@@ -9136,7 +9168,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT1 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT2 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

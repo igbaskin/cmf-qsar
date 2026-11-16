@@ -965,20 +965,86 @@ structure per file, named after its file; this is how a set downloaded from a da
 *Open one structure file…* reads a file that holds one structure or many, as `examples/sac/`
 and `examples/hops/` do. Both routes read through ASE, so any format ASE reads is accepted. A
 folder is searched for the file endings `.cif`, `.vasp`, `.poscar`, `.contcar`, `.extxyz`,
-`.xyz`, `.json` (an ASE database), `.traj` (an ASE trajectory), `.cell` (CASTEP), `.res`
-(SHELX), `.xsf` (XCrySDen) and `.pwo` (Quantum ESPRESSO output), and for files named `POSCAR`
-or `CONTCAR`, which VASP writes without an ending; a file with any other ending is left
-alone, so notes and tables may sit beside the structures. The file dialog lists the common
-endings; a file of another ASE format is opened through *All files*. A CIF with partly
-occupied sites is read with its occupancies, as the section on partial occupancy describes. The *Structures* panel lists what came back with the
-measured value, the subset and the prediction of each cell, and the line under it says how many
-atoms the cells have.
+`.xyz`, `.json` and `.db` (the two forms of an ASE database), `.traj` (an ASE trajectory),
+`.cell` (CASTEP), `.res` (SHELX), `.xsf` (XCrySDen) and `.pwo` (Quantum ESPRESSO output), and
+for files named `POSCAR` or `CONTCAR`, which VASP writes without an ending; a file with any
+other ending is left alone, so notes and tables may sit beside the structures. The file dialog
+lists the common endings; a file of another ASE format is opened through *All files*. A CIF
+with partly occupied sites is read with its occupancies, as the section on partial occupancy
+describes. The *Structures* panel lists what came back with the measured value, the subset and
+the prediction of each cell, and the line under it says how many atoms the cells have. A file
+of this kind opened in the main window's Data set panel is handed to this window, with a line
+in the log that says so, since the main window holds molecules.
+
+**One data set for molecules and structures.** Inside the program a set of structures is the
+same `Dataset` object a set of molecules is (`cmfqsar/structures.py`, plan item NT1): a name, a
+measured value and a subset for each entry, with the structures kept as ASE `Atoms` together
+with their cell and their periodic directions. A set holds molecules or structures, never both.
+Four things are read from the files:
+
+* **The periodic directions.** Three for a crystal, two for a layer (a sheet or a slab), one
+  for a chain (a nanotube or a wire), none for a particle or a cluster. A structure with no
+  periodic direction needs no cell, and is read with its coordinates as they are. The *Periodic
+  directions* box, or `--pbc` on the command line, sets them for a whole set, because a CIF or
+  a POSCAR file always states three.
+* **The name.** From the first of the info fields `name`, `title`, `label`, `material_id`,
+  `cod_id`, `id` and `cod` that a structure carries, else from the file name. Names are made
+  unique (`_2`, `_3` are added), because the values of a CSV table are matched on them.
+* **The measured value.** From a numeric info field of the structures: the field called
+  `target`, `y`, `value`, `property` or `activity`, else the only numeric field the files
+  carry. A field that holds an identifier (an `id`, a COD number, a space group) is never taken.
+  With two or more candidates nothing is taken, and the value is read from a CSV table or named
+  with `--target KEY`. An energy that an extended XYZ file or a database row stores as the
+  result of a calculation is an info field like any other.
+* **The split.** An info field `subset`, `set` or `split` with `train` and `test` (or 1 and 2)
+  gives the published training and test sets, as an SD tag does for molecules, and *Build the
+  model* then uses that split instead of a random one.
+
+An ASE database keeps the name and the properties of each structure in the key-value pairs of
+its row, which ASE's general reader drops; the program reads them.
 
 **The measured values.** *File → Read the measured values from a CSV…* takes a table whose first
 column holds the structure names as the panel shows them. A plain `name,value` file needs no
 further choice; a prepared table with one column per property asks which column is the property.
-A per-structure property stored in the file itself (the `info` key of an extended-XYZ file) is
-read with `--target KEY` on the command line and is not offered in the window.
+On the command line, a table with several numeric columns needs `--target-column`: taking the
+first numeric column would read a database number as the property.
+
+**What each file format keeps.** `benchmarks/run_structures.py` writes four sets in six formats
+and reads them back: 60 crystals of the melting-point set, the 139 sheets of the single-atom
+catalyst set (periodic in two directions), 39 carbon nanotubes (periodic in one direction, with
+no lattice vector across the tube) and 30 metal clusters of 13 to 309 atoms (no cell at all).
+The table `benchmarks/results/structures/table.md` gives each case; in short:
+
+* **Extended XYZ, the two ASE databases and ASE trajectories keep everything**: every name,
+  every target and every periodic direction, for all four kinds of structure. The periodic
+  channels agree to 1e-14 of their largest entry, and to 9e-9 for extended XYZ, which writes
+  coordinates with eight decimals.
+* **CIF and POSCAR files cannot state a layer.** They always describe three periodic
+  directions, so each of the 139 sheets comes back as a crystal, and its channels differ by
+  4.6 times their largest entry, because pairs are then counted across the vacuum. Given the
+  directions (`--pbc ab`, or the *Periodic directions* box), the channels agree to 8e-15.
+* **CIF and POSCAR files cannot hold a chain**, and a POSCAR file cannot hold a structure with
+  no cell: ASE refuses to write them. A CIF file holds a cluster with no cell.
+* **A CIF file moves the structure but does not change it.** It stores the lengths and angles of
+  the cell, so the reader puts the cell in the standard orientation; atoms of a sheet move by up
+  to 0.10 Å while no distance between two atoms changes by more than 2e-14 Å.
+* **Names and targets come back complete** from every format: from the info fields where the
+  format has them, and from the file names and a CSV table for CIF and POSCAR folders.
+
+Reading the 665 cells of the melting-point set (77,820 atoms) takes 0.07 s from an ASE
+trajectory, 0.08 s from the JSON database, 0.18 s from extended XYZ, 0.20 s from POSCAR files,
+0.22 s from the SQLite database and 39 s from CIF files, whose parser is the slow one. Two faults
+of the reading were found by this benchmark and repaired: an ASE database lost the names and
+properties of its rows, and a file name with an `@` in it, such as `Ag@C4.cif`, was read as a
+file `Ag` with an index, because ASE reads `@` that way unless told not to. A structure with no
+cell read from an extended XYZ file had its coordinates replaced by fractions of a zero cell;
+that is repaired too.
+
+A structure with no periodic direction is read, listed, drawn and modelled like the others. The
+periodic autocorrelation then has no background term, and the channels of each of the 30
+clusters equal those of the same cluster alone in a 60 Å periodic box with the background term
+switched off, to 1e-15 of the largest entry. What is left for particles of thousands of atoms is
+the cost of the overlap kernel (plan item NT2).
 
 **What the view draws.** The cell is drawn as the twelve edges of its box, with the first,
 second and third lattice vectors in red, green and blue. Its atoms are spheres coloured by

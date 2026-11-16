@@ -1,0 +1,52 @@
+{
+ "rows": [
+  {
+   "format": "extxyz",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 0.17848980001872405,
+   "megabytes": 5.098972
+  },
+  {
+   "format": "db",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 0.21879610000178218,
+   "megabytes": 3.141632
+  },
+  {
+   "format": "json",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 0.0814259999897331,
+   "megabytes": 3.347535
+  },
+  {
+   "format": "traj",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 0.07033809996210039,
+   "megabytes": 2.698042
+  },
+  {
+   "format": "cif",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 39.093434300040826,
+   "megabytes": 6.675036
+  },
+  {
+   "format": "poscar",
+   "structures": 665,
+   "with_target": 665,
+   "atoms": 77820,
+   "seconds": 0.20100699999602512,
+   "megabytes": 5.105632
+  }
+ ]
+}

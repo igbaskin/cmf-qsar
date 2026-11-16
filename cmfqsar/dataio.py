@@ -176,9 +176,31 @@ class Dataset:
     #: LP1), and the index of what was measured; both empty for an ordinary data set
     atom_activity_prop: str = ""
     atom_targets: Optional["AtomTargets"] = None
+    #: structures that are not molecules -- crystals, layers, chains, particles -- as ASE
+    #: ``Atoms`` with their cell and periodic directions (plan item NT1).  A data set holds
+    #: molecules or structures, never both; ``mols`` is empty when this list is not.
+    structures: list = field(default_factory=list)
+
+    @property
+    def kind(self) -> str:
+        """``structures`` when the set holds ASE structures, else ``molecules``."""
+        return "structures" if self.structures else "molecules"
+
+    @property
+    def items(self) -> list:
+        """The molecules or the structures, whichever the set holds."""
+        return self.structures if self.structures else self.mols
+
+    def _value(self, i: int, prop: str):
+        """Property ``prop`` of entry ``i`` as a string (an SD tag or an info field), or None."""
+        if self.structures:
+            v = self.structures[i].info.get(prop)
+            return None if v is None or np.ndim(v) != 0 else str(v)
+        m = self.mols[i]
+        return m.GetProp(prop) if m.HasProp(prop) else None
 
     def __len__(self) -> int:
-        return len(self.mols)
+        return len(self.structures) if self.structures else len(self.mols)
 
     def set_atom_activity(self, prop: str) -> "AtomTargets":
         """Read a per-atom target and keep the index of the (molecule, atom) pairs it measured."""
@@ -220,11 +242,12 @@ class Dataset:
 
     def set_activity_from_property(self, prop: str) -> None:
         vals = []
-        for m in self.mols:
+        for i in range(len(self)):
             v = float("nan")
-            if m.HasProp(prop):
+            raw = self._value(i, prop)
+            if raw is not None:
                 try:
-                    v = float(str(m.GetProp(prop)).strip().split()[0])
+                    v = float(str(raw).strip().split()[0])
                 except (ValueError, IndexError):
                     v = float("nan")
             vals.append(v)
@@ -250,11 +273,12 @@ class Dataset:
     def classes_from_property(self, prop: str, positive=("1", "+1", "active", "yes", "true", "a", "p")) -> np.ndarray:
         """+1 / -1 class labels read from an SD property (numeric or a label such as active/inactive)."""
         pos = {str(p).strip().lower() for p in positive}
-        out = np.full(len(self.mols), np.nan)
-        for i, m in enumerate(self.mols):
-            if not m.HasProp(prop):
+        out = np.full(len(self), np.nan)
+        for i in range(len(self)):
+            raw = self._value(i, prop)
+            if raw is None:
                 continue
-            raw = str(m.GetProp(prop)).strip()
+            raw = str(raw).strip()
             low = raw.lower()
             if low in pos:
                 out[i] = 1.0
@@ -268,7 +292,10 @@ class Dataset:
         return out
 
     def append(self, other: "Dataset", subset: str = "test") -> None:
+        if len(self) and len(other) and self.kind != other.kind:
+            raise ValueError(f"cannot add {other.kind} to a set of {self.kind}")
         self.mols += other.mols
+        self.structures += other.structures
         self.names += other.names
         self.activity = np.concatenate([self.activity, other.activity])
         self.subset = np.concatenate([self.subset, np.array([subset] * len(other), dtype=object)])
@@ -277,8 +304,12 @@ class Dataset:
                 self.properties.append(p)
 
     def remove(self, indices: Sequence[int]) -> None:
-        keep = [i for i in range(len(self)) if i not in set(indices)]
-        self.mols = [self.mols[i] for i in keep]
+        drop = set(int(i) for i in indices)
+        keep = [i for i in range(len(self)) if i not in drop]
+        if self.structures:
+            self.structures = [self.structures[i] for i in keep]
+        else:
+            self.mols = [self.mols[i] for i in keep]
         self.names = [self.names[i] for i in keep]
         self.activity = self.activity[keep]
         self.subset = self.subset[keep]
@@ -481,7 +512,8 @@ def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = 
                  subset: str = "train", activity_file: Optional[str] = None,
                  use_subset_column: bool = True, ensemble_by: Optional[str] = None,
                  atom_activity: Optional[str] = None,
-                 member_weight: Optional[str] = None) -> Dataset:
+                 member_weight: Optional[str] = None,
+                 accept_structures: bool = False, pbc: Optional[str] = None) -> Dataset:
     """Load a structure file; activities come from an SD property or from a separate table.
 
     `activity_file` is a text table (tab/comma/whitespace separated, header optional) with the
@@ -501,7 +533,27 @@ def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = 
     `atom_activity` names a target that belongs to the atoms rather than to the molecule (plan
     item LP1): the data set then carries the index of the (molecule, atom) pairs that were
     measured, beside whatever molecule-level activity it has.
+
+    A file of structures that are not molecules -- CIF, POSCAR, an extended XYZ file that states
+    a lattice, an ASE database, or a folder of such files -- is read by
+    :func:`cmfqsar.structures.load_structures` when ``accept_structures`` is set (plan item NT1):
+    ``activity_prop`` then names the info field of the target, ``activity_file`` a CSV matched
+    on the names, and ``pbc`` the periodic directions (``abc``, ``ab``, ``a`` or ``none``).
+    Without ``accept_structures`` such a file is refused with a message that says where it can
+    be used, because the caller expects molecules.  An XYZ file is the exception: the molecule
+    reader has always read it, lattice or not, and still does for such a caller.
     """
+    from .structures import is_structure_file, load_structures
+    is_xyz = str(path).lower().endswith(".xyz")
+    if os.path.isdir(path) or is_structure_file(path):
+        if accept_structures:
+            return load_structures(path, target=activity_prop, target_file=activity_file,
+                                   pbc=pbc, subset=subset, use_subset_column=use_subset_column)
+        if not is_xyz:
+            raise ValueError(
+                f"{os.path.basename(os.path.normpath(path))} holds periodic or other non-molecular "
+                f"structures, which this command does not take; use 'cmfqsar build-crystals' "
+                f"or, in the application, File -> Crystals and other periodic structures")
     mols, names, props = read_molecules(path, add_hs=add_hs)
     if ensemble_by:
         from .conformers import group_conformers

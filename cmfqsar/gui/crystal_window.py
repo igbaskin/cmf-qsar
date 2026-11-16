@@ -52,15 +52,15 @@ from ..fields import FieldSet
 from ..model import CMFModel, grid_search
 from ..periodic import (crystal_fields, crystal_table, crystal_targets, elements_in,
                         inorganic_fieldset, overlap_cutoff, periodic_channel_labels,
-                        read_crystal_set, top_channels)
+                        top_channels)
 from .copattern_panel import CoPatternChart
 from .viewer3d import (Viewer3D, cofield_colors, color_name as _cname, element_color,
                        signed_spheres)
 from .workers import TaskWorker
 
 #: the file types the open dialog offers; a folder is opened with the other entry of the menu
-STRUCTURE_FILTER = ("Periodic structures (*.cif *.vasp *.extxyz *.xyz *.json *.traj POSCAR "
-                    "CONTCAR);;All files (*)")
+STRUCTURE_FILTER = ("Periodic structures (*.cif *.vasp *.poscar *.extxyz *.xyz *.json *.db "
+                    "*.traj POSCAR CONTCAR);;All files (*)")
 #: the physico-chemical fields offered, with the label each gets in the panel
 PHYSCHEM = [("electrostatic", "Electrostatic (charges)"), ("steric", "Steric (atomic volume)"),
             ("prop:electronegativity", "Electronegativity"), ("prop:mass", "Mass")]
@@ -646,18 +646,22 @@ class CrystalWindow(QMainWindow):
 
         def task(progress, cancel):
             progress(f"Reading {os.path.basename(path)}", 0.2)
-            atoms, names = read_crystal_set(path, pbc=pbc)
-            progress(f"{len(atoms)} structures", 0.9)
-            y = crystal_targets(atoms, names, key=target_key, csv=target_file,
-                                column=target_column)
-            return atoms, names, y
+            from ..structures import load_structures
+            # the target: the info field named, the CSV column named, or the one numeric info
+            # field the files carry (plan item NT1); the split from a "subset" info field
+            ds = load_structures(path, target=target_key, target_file=target_file,
+                                 target_column=target_column, pbc=pbc)
+            progress(f"{len(ds)} structures", 0.9)
+            return ds
 
-        def done(out):
-            self.atoms, self.names, self.y = out[0], list(out[1]), np.asarray(out[2], float)
+        def done(ds):
+            self.atoms, self.names = list(ds.structures), list(ds.names)
+            self.y = np.asarray(ds.activity, float)
             self.source = path
             self._target_path, self._target_column = target_file, target_column
-            self.target_name = target_file or target_key or ""
-            self.subset = ["train"] * len(self.names)
+            self.target_name = ds.activity_prop or ""
+            self.subset = [str(s) for s in ds.subset]
+            self._file_subset = list(self.subset)
             self.model = self.model_fieldset = None
             self.predictions.clear()
             self._display.clear()
@@ -667,8 +671,11 @@ class CrystalWindow(QMainWindow):
             self.reading.setRowCount(0)
             self.text_stats.clear()
             self.populate()
-            self.log(f"Read {len(self.atoms)} periodic structures from {path}"
-                     + (f"; measured values from {self.target_name}" if self.target_name else
+            from ..structures import summary
+            split = sum(1 for s in self.subset if s == "test")
+            self.log(f"Read from {path}: {summary(ds)}"
+                     + (f"; the files name {split} of them as the test set" if split else "")
+                     + ("" if self.target_name else
                         "; no measured values yet (File -> Read the measured values from a CSV)"))
             if self.names:
                 self.table.setCurrentCell(0, 0)
@@ -765,7 +772,12 @@ class CrystalWindow(QMainWindow):
         idx = np.flatnonzero(ok)
         rng = np.random.default_rng(self.spin_seed.value())
         te = np.array([], int)
-        if self.spin_test.value() > 0:
+        split = list(getattr(self, "_file_subset", None) or [])
+        if len(split) == len(self.names) and "test" in split:
+            # the files name the published split (a "subset" info field): it is used as given
+            te = np.array([i for i in idx if split[i] == "test"], int)
+            idx = np.array([i for i in idx if split[i] == "train"], int)
+        elif self.spin_test.value() > 0:
             perm = rng.permutation(idx)
             n_te = int(round(self.spin_test.value() * len(idx)))
             te, idx = np.sort(perm[:n_te]), np.sort(perm[n_te:])

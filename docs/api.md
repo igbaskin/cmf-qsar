@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 133 modules, 259 classes with 838 public methods, and 1372 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 840 public methods, and 1389 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -146,6 +146,7 @@ for.
 | [cmfqsar.spectrum](#cmfqsarspectrum) | A spectrum as a one-dimensional field: the kernel and the co-spectrum (plan item SP1). |
 | [cmfqsar.spectrum2d](#cmfqsarspectrum2d) | A spectrum with two axes as a field on a plane: the kernel and the co-map (plan item SP4). |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
+| [cmfqsar.structures](#cmfqsarstructures) | Structures that are not molecules: crystals, layers, chains and particles (plan item NT1). |
 | [cmfqsar.surrogate](#cmfqsarsurrogate) | The model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration on the folds, and the rule that sends a structure back to the fine level (plan item MS1). |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
 | [cmfqsar.threebody](#cmfqsarthreebody) | Three-body channels and handedness for a periodic cell (plan item M10). |
@@ -3585,6 +3586,15 @@ Attributes:
 - `activity_prop: str` = `''`
 - `atom_activity_prop: str` = `''`
 - `atom_targets: Optional['AtomTargets']` = `None`
+- `structures: list` = `field(default_factory=list)`
+
+#### `Dataset.kind` -> str  (property)
+
+`structures` when the set holds ASE structures, else `molecules`.
+
+#### `Dataset.items` -> list  (property)
+
+The molecules or the structures, whichever the set holds.
 
 #### `Dataset.set_atom_activity(prop: str) -> 'AtomTargets'`
 
@@ -3652,7 +3662,7 @@ Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .xyz, .smi/
 
 SD properties that are numeric for at least `min_fraction` of the molecules.
 
-### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None, atom_activity: Optional[str]=None, member_weight: Optional[str]=None) -> Dataset`
+### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None, atom_activity: Optional[str]=None, member_weight: Optional[str]=None, accept_structures: bool=False, pbc: Optional[str]=None) -> Dataset`
 
 Load a structure file; activities come from an SD property or from a separate table.
 
@@ -3673,6 +3683,15 @@ property that holds each record's weight, which the field set uses with the weig
 `atom_activity` names a target that belongs to the atoms rather than to the molecule (plan
 item LP1): the data set then carries the index of the (molecule, atom) pairs that were
 measured, beside whatever molecule-level activity it has.
+
+A file of structures that are not molecules -- CIF, POSCAR, an extended XYZ file that states
+a lattice, an ASE database, or a folder of such files -- is read by
+`cmfqsar.structures.load_structures` when `accept_structures` is set (plan item NT1):
+`activity_prop` then names the info field of the target, `activity_file` a CSV matched
+on the names, and `pbc` the periodic directions (`abc`, `ab`, `a` or `none`).
+Without `accept_structures` such a file is refused with a message that says where it can
+be used, because the caller expects molecules.  An XYZ file is the exception: the molecule
+reader has always read it, lattice or not, and still does for such a caller.
 
 ### `guess_activity_property(cands: Sequence[str]) -> Optional[str]`
 
@@ -14354,6 +14373,15 @@ height channels, at which in-plane distance and which two heights; for the recip
 channels of plan item M6, at which reciprocal length; for the three-body channels of plan
 item M10, at which two radii from a centre and how far apart.
 
+### `completed_cell(cell: np.ndarray, pbc: Sequence[bool]) -> np.ndarray`
+
+The cell with a unit vector put in for every open direction that has no lattice vector.
+
+A nanotube read from a file may carry one lattice vector along its axis and zero vectors
+across it, and a cluster none at all (plan item NT1). Along an open direction no translation
+is ever made, so the vector put in there only makes the cell invertible, for the widths of
+`image_translations`; it is perpendicular to the vectors already there.
+
 ### `image_translations(cell: np.ndarray, r_max: float, pbc: Sequence[bool]=(True, True, True)) -> np.ndarray`
 
 Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
@@ -14668,13 +14696,14 @@ A set of periodic structures with a name for each: one file, or a folder of file
 
 A folder is read file by file (`structure_files`) and every structure is named after
 its file, which is how a set of CIFs downloaded from a database arrives.  A single file may
-hold one structure or many; a structure that carries a `name` info key keeps it, and the
-rest are named `<formula>_<index>`.
+hold one structure or many; a structure keeps the name its info fields give it, and the
+rest are named `<formula>_<index>`.  An ASE database keeps the key-value pairs of its rows.
 
 `pbc` sets which lattice directions are periodic for every structure
-(`pbc_flags`); without it the files decide.  A structure that is not periodic in all
-three directions is gathered about the middle of its cell (`centre_layer`), because a
-layer or a chain a file leaves split across the cell boundary has no mean plane.
+(`pbc_flags`); without it the files decide.  A layer or a chain is gathered about the
+middle of its cell (`centre_layer`), because a layer or a chain a file leaves split
+across the cell boundary has no mean plane.  This is
+`cmfqsar.structures.read_structure_set` (plan item NT1), kept here under its old name.
 
 ### `crystal_targets(structures: Sequence, names: Sequence[str], key: Optional[str]=None, csv: Optional[str]=None, column: Optional[str]=None) -> np.ndarray`
 
@@ -19639,6 +19668,156 @@ these fields can see.
 ### `stereo_matrix(mols: Sequence, spec: StereoSpec=StereoSpec(), n_fields: Optional[int]=None) -> Tuple[np.ndarray, dict]`
 
 The channels of a set of molecules, and how many centres they were read from.
+
+## cmfqsar.structures
+
+Source: `cmfqsar/structures.py`
+
+Structures that are not molecules: crystals, layers, chains and particles (plan item NT1).
+
+The rest of the program was built around one object, an RDKit molecule with one conformation.
+A crystal, a layer, a nanotube or a metal cluster is not such an object: it has no bond table,
+and it may have a cell and directions along which it repeats.  This module reads such structures
+as ASE `Atoms` and puts them in the same `cmfqsar.dataio.Dataset` the molecules use,
+with a name, a target value and a training or test label for each.
+
+Four things are read here.
+
+* **The files.**  CIF, the POSCAR and CONTCAR files of VASP, extended XYZ, ASE trajectories, and
+  ASE databases in both of their forms (SQLite `.db` and `.json`).  ASE reads all of them,
+  but its general reader drops the key-value pairs of a database row, which is where a database
+  keeps the name and the property of each structure; `read_database` keeps them.
+* **The boundary conditions.**  The number of directions along which a structure repeats: three
+  for a crystal, two for a layer (a sheet or a slab), one for a chain (a tube or a wire), none
+  for a particle or a molecule.  A structure with no periodic direction needs no cell at all;
+  `boundary` checks that every periodic direction has a lattice vector.
+* **The name.**  Taken from the first of the info fields in `NAME_KEYS` that a structure
+  carries, else from the file name.  Names are made unique, because the target values of a CSV
+  file are matched on them.
+* **The target and the split.**  A target is a numeric info field (`numeric_info_keys`),
+  or a column of a CSV table matched on the names; an info field called `subset`, `set` or
+  `split` gives the published training and test sets, as an SD tag does for molecules.
+
+What this module does not do is decide which kernel a structure gets.  The periodic
+autocorrelation of `cmfqsar.periodic` takes all four kinds: with no periodic direction it
+has no background term, and a cluster with no cell gives the channels of the same cluster alone
+in a large periodic box with the background switched off (`benchmarks/run_structures.py`).
+
+### `is_structure_file(path: str) -> bool`
+
+True when a file holds structures for this module rather than molecules.
+
+The endings of `STRUCTURE_ENDINGS` and the names POSCAR and CONTCAR, which VASP writes
+without an ending, always are.  An XYZ file is one when its first comment line states a
+lattice (`Lattice="..."`, the extended XYZ convention); a plain XYZ file holds molecules
+and stays with the molecule reader.  A JSON file is one when it is an ASE database.
+
+### `is_database(path: str) -> bool`
+
+True for an ASE database: an SQLite `.db` file or an ASE `.json` database.
+
+### `read_database(path: str, selection: Optional[str]=None) -> list`
+
+The structures of an ASE database, each with its row's key-value pairs in `info`.
+
+ASE's general reader (`ase.io.read`) returns the atoms of each row and drops its key-value
+pairs, which is where a database keeps the name and the properties of a structure.  Here
+they are copied into `atoms.info`, with the row number as `id` when the row has no name.
+`selection` is an ASE query string such as `"natoms<20,gap>1"`.
+
+### `read_structure_file(path: str, index: str=':') -> list`
+
+Every structure of one file, as a list of ASE `Atoms`.
+
+A database is read by `read_database`; every other file by
+`cmfqsar.periodic.read_structures`, which reads a CIF with partial occupancies through
+the disorder reader.  `index` picks structures as ASE does (`":"` for all, `"0"` for
+the first, `"-1"` for the last).
+
+### `boundary(atoms) -> int`
+
+The number of directions along which a structure repeats: 3, 2, 1 or 0.
+
+A periodic direction needs a lattice vector of non-zero length, and a structure that says
+it repeats along a direction it has no vector for is refused with the reason.  A structure
+with no periodic direction (a particle, a cluster, a molecule) needs no cell.
+
+### `boundary_name(atoms) -> str`
+
+`crystal`, `layer`, `chain` or `open` (no periodic direction).
+
+### `structure_name(atoms, fallback: str) -> str`
+
+The first non-empty info field of `NAME_KEYS`, else `fallback`.
+
+### `unique_names(names: Sequence[str]) -> List[str]`
+
+The names with `_2`, `_3`, ... added to the second and later copies of a name.
+
+### `read_structure_set(path: str, pbc: Optional[str]=None, index: str=':') -> Tuple[list, List[str]]`
+
+A set of structures with a name for each, from one file or a folder of files.
+
+A folder is read file by file (`cmfqsar.periodic.structure_files`); a file with one
+structure gives it the file's name, and a file with several gives each its name from the
+info fields, else `<file>_<k>`.  A single file names each structure from its info fields,
+else after the file (one structure) or `<formula>_<k>` (several).
+
+`pbc` sets which lattice directions repeat for every structure (`abc`, `ab`, `a`, or
+`none` for open boundaries); without it the files decide.  A layer or a chain is gathered
+about the middle of its cell, because a file may leave it split across the boundary along
+the open direction.  The names are made unique.
+
+### `numeric_info_keys(structures: Sequence, min_fraction: float=0.5, targets_only: bool=False) -> List[str]`
+
+Info fields that hold a number for at least `min_fraction` of the structures.
+
+With `targets_only` the fields that hold identifiers or bookkeeping numbers (an `id`, a
+COD number, a space group, a step) are left out, which is what a list of candidate targets
+should show.
+
+### `guess_target_key(structures: Sequence) -> Optional[str]`
+
+The info field that is most likely the target, or None when that is not clear.
+
+A field called `target`, `y`, `value`, `property` or `activity` is taken; otherwise
+the one candidate of `numeric_info_keys` when there is exactly one.  With two or more
+candidates nothing is guessed, and the caller must name the field.
+
+### `info_values(structures: Sequence, key: str) -> np.ndarray`
+
+`info[key]` of each structure as a float, NaN where it is missing or not a number.
+
+### `split_labels(structures: Sequence) -> Optional[List[Optional[str]]]`
+
+`train`, `test` or `decoy` for each structure, from a `subset` info field.
+
+The values are read as for molecules (`1`/`train`, `2`/`test`); a structure with no
+such field gets None.  None for the whole set when no structure has one.
+
+### `target_csv_column(path: str) -> Optional[str]`
+
+The column of a CSV table to read the target from when none is named.
+
+A file with no header, or with one numeric column, needs no choice (None: the second column
+is read).  Otherwise the numeric columns that hold an identifier (a COD number, an id) are
+set aside, and the one column left is taken; with two or more left the choice is refused,
+with the list, because taking the first numeric column of a prepared table quietly reads a
+database number as the property.
+
+### `load_structures(path: str, target: Optional[str]=None, target_file: Optional[str]=None, target_column: Optional[str]=None, pbc: Optional[str]=None, subset: str='train', use_subset_column: bool=True, index: str=':')`
+
+A `cmfqsar.dataio.Dataset` of structures read from a file or a folder.
+
+The target is the info field `target` names, or the column `target_column` of the CSV
+file `target_file` matched on the names, or, when neither is given, the field
+`guess_target_key` picks; a structure with no value gets NaN.  An info field `subset`
+gives the published split when `use_subset_column` is set; every other structure is in
+`subset`.
+
+### `summary(ds) -> str`
+
+One line on a structure set: how many, of what kind, how many atoms, how many targets.
 
 ## cmfqsar.surrogate
 

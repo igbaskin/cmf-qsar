@@ -1157,10 +1157,24 @@ def cmd_build_crystals(args):
     """A model on periodic structures: the periodic field autocorrelation of cmfqsar/periodic.py."""
     from cmfqsar.periodic import (crystal_table, crystal_targets, elements_in, inorganic_fieldset,
                                   periodic_channel_labels, read_crystal_set, top_channels)
+    from cmfqsar.structures import guess_target_key, numeric_info_keys, target_csv_column
     t0 = time.time()
-    if not (args.target or args.target_file):
-        raise SystemExit("build-crystals needs --target KEY or --target-file CSV")
     atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+    if args.target_file and not args.target_column:
+        try:
+            args.target_column = target_csv_column(args.target_file)
+        except ValueError as exc:
+            raise SystemExit(f"{exc} with --target-column")
+    if not (args.target or args.target_file):
+        # plan item NT1: the target may be the one numeric info field the files carry
+        args.target = guess_target_key(atoms)
+        if not args.target:
+            keys = numeric_info_keys(atoms, targets_only=True)
+            raise SystemExit("build-crystals needs --target KEY or --target-file CSV"
+                             + (f"; the files carry the numeric fields {', '.join(keys)}"
+                                if keys else "; the files carry no numeric info field"))
+        print(f"  the target is the info field '{args.target}', the one numeric field the "
+              f"files carry")
     y = crystal_targets(atoms, names, key=args.target, csv=args.target_file,
                         column=args.target_column)
     ok = np.isfinite(y)
@@ -4732,7 +4746,9 @@ def main(argv=None):
                                     "folder of such files (one structure per file, named after "
                                     "it)")
     bc.add_argument("--target", default=None, metavar="KEY",
-                    help="per-structure info key with the property (extended XYZ / ASE JSON)")
+                    help="per-structure info key with the property (extended XYZ, or a key of "
+                         "the rows of an ASE database); without --target and --target-file the "
+                         "one numeric info field the files carry is taken")
     bc.add_argument("--target-file", default=None, metavar="CSV",
                     help="CSV 'name,value' with the property, matched on the structures' 'name' "
                          "info key (default name: <formula>_<index>)")

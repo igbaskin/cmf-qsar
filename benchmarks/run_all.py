@@ -670,7 +670,7 @@ def registry() -> List[Benchmark]:
                   "numbers, on 69 phenazine reduction potentials",
                   "run_phenazine.py", "phenazine",
                   compute=[["--stage", "data"], ["--stage", "gate"], ["--stage", "cofield"]],
-                  minutes="3",
+                  minutes="5",
                   report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
                   tables=["phenazine/table.md"]),
         Benchmark("slab",
@@ -799,7 +799,7 @@ def registry() -> List[Benchmark]:
                   tables=["anisotropic/table.md"]),
         Benchmark("cases", "three series worked through with the interpretation tools",
                   "run_cases.py", "cases", compute=[[]],
-                  minutes="3",
+                  minutes="5",
                   report=lambda: _mod("run_cases").report(_r("cases")),
                   tables=["cases/table.md"]),
         Benchmark("speed", "what the kernel costs and what each shortcut saves",
@@ -873,7 +873,7 @@ def registry() -> List[Benchmark]:
                   "costs to show, and whether the site colouring and the co-field inside the "
                   "cell add up (the window is driven without a screen)",
                   "run_cell_view.py", "cell_view", compute=[[]],
-                  minutes="3",
+                  minutes="5",
                   report=lambda: _mod("run_cell_view").write_table(_r("cell_view")),
                   tables=["cell_view/table.md"]),
         Benchmark("surface_view",
@@ -957,6 +957,16 @@ def registry() -> List[Benchmark]:
                   minutes="115",
                   report=lambda: _mod("run_molcrystals").report(),
                   tables=["molcrystals/table.md"]),
+        Benchmark("structures",
+                  "structures that are not molecules -- crystals, layers, chains and metal "
+                  "particles -- written in six file formats and read back: what each format "
+                  "keeps of the names, targets, periodic directions, atoms and periodic "
+                  "channels, and how fast each is read (plan item NT1)",
+                  "run_structures.py", "structures",
+                  compute=[["--stage", "formats"], ["--stage", "speed"]],
+                  minutes="5",
+                  report=lambda: _mod("run_structures").report(),
+                  tables=["structures/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "
@@ -1282,7 +1292,7 @@ def registry() -> List[Benchmark]:
                   tables=["ranking/table.md"]),
         Benchmark("conformal", "do the conformal intervals keep the coverage they promise",
                   "run_conformal.py", "conformal", compute=[["--repeats", "10"]],
-                  minutes="3",
+                  minutes="5",
                   report=lambda: _mod("run_conformal").report(_r("conformal")),
                   tables=["conformal/table.md"]),
         Benchmark("herding", "kernel herding against max-min, k-medoids, pivoted Cholesky and "

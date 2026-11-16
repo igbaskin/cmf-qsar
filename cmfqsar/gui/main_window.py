@@ -1926,13 +1926,30 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(
             self, titles.get(kind, "Open"), "",
             "Structure files (*.sdf *.sd *.mol *.mol2 *.xyz *.smi *.csv *.tsv *.txt);;"
-            "All files (*)")
+            "Crystals and other periodic structures (*.cif *.vasp *.poscar *.extxyz *.db "
+            "*.json *.traj POSCAR CONTCAR);;All files (*)")
         if not path:
             return
         self.load_dataset_file(path, kind)
 
     def load_dataset_file(self, path: str, kind: str = "train", activity: Optional[str] = None,
                           on_loaded=None):
+        from ..structures import is_structure_file
+        if is_structure_file(path):
+            # plan item NT1: a crystal, a layer or a particle is not a molecule, and the
+            # periodic side of the program has a window of its own (M13); the file goes there
+            if kind != "train":
+                self.error(f"{os.path.basename(path)} holds periodic structures, which cannot "
+                           f"be added to a set of molecules; open it in the window for "
+                           f"periodic structures (File -> Crystals and other periodic "
+                           f"structures)")
+                return
+            win = self.open_crystal_window()
+            win.load(path, target_key=activity)
+            self.log(f"{os.path.basename(path)} holds periodic structures; it was opened in "
+                     f"the window for periodic structures")
+            return
+
         def task(progress, cancel):
             progress(f"Reading {os.path.basename(path)}", 0.2)
             return load_dataset(path, activity_prop=activity, add_hs=True, subset=kind)
@@ -1977,7 +1994,7 @@ class MainWindow(QMainWindow):
         from .crystal_window import CrystalWindow
         win = getattr(self, "_crystal_window", None)
         if win is None:
-            win = CrystalWindow(self)
+            win = CrystalWindow(self, background=self.background)
             self._crystal_window = win
         win.show()
         win.raise_()

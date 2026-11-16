@@ -433,8 +433,10 @@ def centre_layer(atoms):
     """
     out = atoms.copy()
     pbc = [bool(p) for p in out.get_pbc()]
-    if all(pbc) or len(out) == 0:
+    if all(pbc) or not any(pbc) or len(out) == 0:
         return out
+    if abs(np.linalg.det(np.asarray(out.get_cell(), float))) < 1e-12:
+        return out                    # no vector along an open direction: nothing to wrap
     frac = np.array(out.get_scaled_positions(wrap=False), float)
     for k in range(3):
         if pbc[k]:
@@ -725,6 +727,27 @@ def periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]
 # :func:`periodic_overlap_kernels` is a true similarity between two structures on one lattice.
 
 
+def completed_cell(cell: np.ndarray, pbc: Sequence[bool]) -> np.ndarray:
+    """The cell with a unit vector put in for every open direction that has no lattice vector.
+
+    A nanotube read from a file may carry one lattice vector along its axis and zero vectors
+    across it, and a cluster none at all (plan item NT1). Along an open direction no translation
+    is ever made, so the vector put in there only makes the cell invertible, for the widths of
+    :func:`image_translations`; it is perpendicular to the vectors already there.
+    """
+    B = np.asarray(cell, float).reshape(3, 3).copy()
+    for k in range(3):
+        if pbc[k] or np.linalg.norm(B[k]) > 1e-8:
+            continue
+        rows = [B[j] for j in range(3) if j != k and np.linalg.norm(B[j]) > 1e-8]
+        Q = np.linalg.qr(np.array(rows).T)[0] if rows else np.zeros((3, 0))
+        # the axis direction least covered by the vectors already there, made perpendicular
+        cands = [e - Q @ (Q.T @ e) for e in np.eye(3)]
+        v = max(cands, key=lambda c: float(np.linalg.norm(c)))
+        B[k] = v / np.linalg.norm(v)
+    return B
+
+
 def image_translations(cell: np.ndarray, r_max: float,
                        pbc: Sequence[bool] = (True, True, True)) -> np.ndarray:
     """Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
@@ -736,12 +759,16 @@ def image_translations(cell: np.ndarray, r_max: float,
     paired with its own copy across the vacuum.
     """
     A = np.asarray(cell, float).reshape(3, 3)
-    volume = abs(float(np.linalg.det(A)))
+    pbc = [bool(p) for p in pbc]
+    if not any(pbc):
+        return np.zeros((1, 3))
+    B = completed_cell(A, pbc)
+    volume = abs(float(np.linalg.det(B)))
     if volume <= 0:
         raise ValueError("the cell is singular: three independent lattice vectors are needed")
     diameter = float(np.linalg.norm(A.sum(axis=0)))
     reach = float(r_max) + diameter
-    widths = np.array([volume / max(np.linalg.norm(np.cross(A[(k + 1) % 3], A[(k + 2) % 3])), 1e-12)
+    widths = np.array([volume / max(np.linalg.norm(np.cross(B[(k + 1) % 3], B[(k + 2) % 3])), 1e-12)
                        for k in range(3)])
     n = np.ceil(reach / widths).astype(int)
     ranges = [np.arange(-int(n[k]), int(n[k]) + 1) if pbc[k] else np.zeros(1, int)
@@ -778,6 +805,10 @@ def cell_image_indices(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray]:
     corners = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
                         [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]], float) @ A
     lo, hi = corners.min(axis=0), corners.max(axis=0)
+    if abs(float(np.linalg.det(A))) < 1e-12 and len(coords):
+        # a cell with no vector along an open direction (a tube, a cluster) spans no box
+        # there, so the box is widened to the atoms; a full cell is measured as before
+        lo, hi = np.minimum(lo, coords.min(axis=0)), np.maximum(hi, coords.max(axis=0))
     all_rows = np.arange(len(coords))
     out_x, out_i = [coords], [all_rows]
     for T in image_translations(A, float(r_max), _pbc_of(crystal)):
@@ -1933,7 +1964,9 @@ def read_structures(path: str, index: str = ":") -> list:
     the occupancies reach the fields; every other file goes through ASE as it is.
     """
     from ase.io import read
-    out = read(path, index=index)
+    # ASE reads an "@" in a file name as an index marker unless told not to, and names such as
+    # "Ag@C4" (a metal atom on a support) are common (plan item NT1)
+    out = read(str(path), index=index, do_not_split_by_at_sign=True)
     out = list(out) if isinstance(out, (list, tuple)) else [out]
     if str(path).lower().endswith(".cif") and any(site_species(a) is not None for a in out):
         try:
@@ -1946,7 +1979,7 @@ def read_structures(path: str, index: str = ":") -> list:
 #: file name endings a folder of periodic structures is searched for, lower-cased.  A POSCAR or
 #: CONTCAR written by VASP has no ending at all, so those two names are taken as well.
 STRUCTURE_SUFFIXES: Tuple[str, ...] = (".cif", ".vasp", ".poscar", ".contcar", ".extxyz", ".xyz",
-                                      ".json", ".traj", ".cell", ".res", ".xsf", ".pwo")
+                                      ".json", ".traj", ".cell", ".res", ".xsf", ".pwo", ".db")
 
 
 def structure_files(folder: str) -> List[str]:
@@ -1982,41 +2015,17 @@ def read_crystal_set(path: str, pbc: Optional[str] = None,
 
     A folder is read file by file (:func:`structure_files`) and every structure is named after
     its file, which is how a set of CIFs downloaded from a database arrives.  A single file may
-    hold one structure or many; a structure that carries a ``name`` info key keeps it, and the
-    rest are named ``<formula>_<index>``.
+    hold one structure or many; a structure keeps the name its info fields give it, and the
+    rest are named ``<formula>_<index>``.  An ASE database keeps the key-value pairs of its rows.
 
     ``pbc`` sets which lattice directions are periodic for every structure
-    (:func:`pbc_flags`); without it the files decide.  A structure that is not periodic in all
-    three directions is gathered about the middle of its cell (:func:`centre_layer`), because a
-    layer or a chain a file leaves split across the cell boundary has no mean plane.
+    (:func:`pbc_flags`); without it the files decide.  A layer or a chain is gathered about the
+    middle of its cell (:func:`centre_layer`), because a layer or a chain a file leaves split
+    across the cell boundary has no mean plane.  This is
+    :func:`cmfqsar.structures.read_structure_set` (plan item NT1), kept here under its old name.
     """
-    if os.path.isdir(path):
-        files = structure_files(path)
-        if not files:
-            raise ValueError(f"{path} holds no structure file; the endings read are "
-                             f"{', '.join(STRUCTURE_SUFFIXES)}, POSCAR and CONTCAR")
-        atoms, names = [], []
-        for f in files:
-            got = read_structures(f, index=index)
-            stem = os.path.splitext(os.path.basename(f))[0]
-            for k, a in enumerate(got):
-                atoms.append(a)
-                names.append(stem if len(got) == 1 else f"{stem}_{k}")
-    else:
-        atoms = read_structures(path, index=index)
-        stem = os.path.splitext(os.path.basename(path))[0]
-        names = [str(a.info.get("name", stem if len(atoms) == 1
-                                else f"{a.get_chemical_formula()}_{k}"))
-                 for k, a in enumerate(atoms)]
-    if pbc:
-        flags = pbc_flags(pbc)
-        for a in atoms:
-            a.set_pbc(flags)
-    if any(not all(a.get_pbc()) for a in atoms):
-        atoms = [centre_layer(a) for a in atoms]
-    for a, nm in zip(atoms, names):
-        a.info.setdefault("name", nm)
-    return atoms, names
+    from .structures import read_structure_set
+    return read_structure_set(path, pbc=pbc, index=index)
 
 
 def crystal_targets(structures: Sequence, names: Sequence[str], key: Optional[str] = None,

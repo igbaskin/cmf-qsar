@@ -1079,6 +1079,22 @@ meV per site, +0.954 and 198). Mixing the two kernels fails with the two-point o
 weight is chosen inside the training fold on a random split, where both descriptions look nearly
 perfect.
 
+### Structures that are not molecules: one data set for both
+
+Plan item NT1 (`cmfqsar/structures.py`, `benchmarks/run_structures.py`): crystals, layers,
+chains and particles are held in the same `Dataset` as molecules, as ASE structures with their
+cell and periodic directions. Each has a name, a measured value and a training or test label,
+read from the info fields of the files where they exist. CIF, POSCAR, extended XYZ, ASE
+trajectories and ASE databases are read; a database keeps the key-value pairs of its rows,
+which ASE's own reader drops. Four sets written in six formats and read back show what each
+format keeps. Extended XYZ, the databases and trajectories keep everything, and the periodic
+channels come back to 1e-14 (9e-9 for extended XYZ). A CIF or POSCAR file cannot state a
+layer: the 139 sheets come back as crystals and their channels differ by 4.6 times their
+largest entry until `--pbc ab` is given. A cluster with no cell is modelled too: its channels
+equal those of the same cluster alone in a large box with the background term off. Three
+reading faults were repaired on the way: database rows lost their names, a file name with an
+`@` (such as `Ag@C4.cif`) was split by ASE, and a structure with no cell lost its coordinates.
+
 ### Fields from DFT on a grid
 
 Plan item M9 (`cmfqsar/gridfields.py`, `benchmarks/run_gridfields.py`): the electron density, the
@@ -7279,6 +7295,7 @@ cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process
 cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
+cmfqsar/structures.py   structures that are not molecules in the data set: readers for CIF, POSCAR, extended XYZ and ASE databases, periodic directions, names, targets and the split
 cmfqsar/molcrystal.py   molecules inside crystals: bonds across the cell boundary, bond orders and charges, the five molecular fields on the atoms of the cell
 cmfqsar/frameworks.py   porous frameworks as pockets: pores from the free distance, the periodic images cut into a pocket, profiles by framework atom type
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)
