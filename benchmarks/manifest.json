@@ -1,6 +1,6 @@
 {
- "commit": "31c269a12cd87816d97a95896f9053b98ba56b29",
- "created": "2026-11-16T10:38:45",
+ "commit": "8137022fc9502dddee66976a3e4000d8e3d7d781",
+ "created": "2026-11-16T10:46:43",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2591,7 +2591,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3146,7 +3146,9 @@
   "benchmarks/results/gridfields/molecules_13_c1c_nH_nn1.json": "a5a35f0cb9e0e3aaaa5298b7625a19cdee0270daf502f1f14ea3c6273dbe7daa",
   "benchmarks/results/gridfields/molecules_161_c1ccc2scnc2c1.json": "8579ff71aa07468cf84279491b7396f087b5e006c553205f32be987b28744867",
   "benchmarks/results/gridfields/molecules_7_c1nncs1.json": "c5da44a9dbe0124ddcc04e26ca00024b4ed9a4ebaaabb986f21df2b2754b2f33",
-  "benchmarks/results/gridfields/table.md": "d6ec7fbc1ab6df256e17a9c4f6a403151abf80e0f80cd8fbee600183d7b56c7a",
+  "benchmarks/results/gridfields/reference.json": "de03ef0d4bdc27eaf76e9ab96335c528427dd8e180032ed887b56f4491bfc794",
+  "benchmarks/results/gridfields/run_energies.csv": "3ff30b6bd22a6eae0ec997d698cce1d3dec3b86082503b755370310f4bfeed20",
+  "benchmarks/results/gridfields/table.md": "ac24c1c9c38265a55d8667a798038a2820aba781ad6010ffdcf02ec8b780827e",
   "benchmarks/results/guest_atoms/alpha.json": "f91825630aaecf4107354711883450dc0bf06485e02f771189b00e838e0d9411",
   "benchmarks/results/guest_atoms/beta.json": "6f633957188d831f959db257e455e120329a577964ccacd96c8fb57f413effef",
   "benchmarks/results/guest_atoms/gamma.json": "fcc6e94b4a5ca23e8fd5f599e43a6371e78d4e1da6a6b4fe0fbecb84af53d3ab",
