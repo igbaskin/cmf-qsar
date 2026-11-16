@@ -11120,6 +11120,32 @@ statistic with the same accuracy as the current baseline, is steadier below 100 
 combines scales by a product, carries a continuous interpretation map, and shares the limit
 of that statistic on real micrographs, where a trained network sees more.
 
+**A reference that needs no field (added 16 November 2026).** The cells of this benchmark are made
+from four numbers: the phase fraction, the grain size, the elongation and the direction of the
+grains. `run_microstructure.py --stage shape` measures three of them on each 2D cell (four on a 3D
+cell): the phase fraction and the correlation length of phase 1 along each axis, the lag at which
+the normalised two-point statistic falls below 1/e. A polynomial of degree 1 to 3 or a Gaussian
+kernel on these numbers, chosen by the inner cross-validation (32 settings), runs on the draws of
+the gate. In 2D it matches or beats the autocorrelation kernel on the direction-dependent labels
+at every size: by +0.001 to +0.036 at contrast 10 and +0.005 to +0.041 at contrast 100 on k_xx,
+ahead in 11 to 20 of 20 draws, and by up to +0.061 on the elastic C_xx; it beats the Gaussian
+process on the principal components by up to +0.18. In 3D the kernel keeps a lead of 0.003 to
+0.020 on k_xx, in 16 to 18 of 20 draws; there 177 of the 1,200 lengths do not fall below 1/e
+within half the 21-voxel cell and are given that largest value, so the 3D reference is the weaker
+measurement. On the two-scale property, the numbers with the defect concentration added equal the
+product kernel from 100 cells on (differences 0.001 to 0.005); with 20 or 50 cells the product
+kernel is ahead, by up to 0.10 on the mean label. So on these synthetic cells the kernel does not
+beat what a materials scientist would measure: the earlier conclusion, that the kernel lands on
+the established statistic with the accuracy of the current baseline, stands, and the cheap
+reference reaches the same accuracy or better. A first version of the length measurement divided
+by almost zero for cells whose two-point statistic never fell below 1/e within half the grid; the
+stage now gives such a cell half the grid, and only that version is reported.
+
+The twenty-sixth tutorial, `docs/tutorials/26_a_microstructure.ipynb`, builds and solves the 2D
+cells live, runs the kernel, the phase fraction and the three numbers on the draws of the gate,
+and reads the 3D cells, the elastic label, the two-scale property and the map from the stored
+runs.
+
 ## Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above is a **two-point** one. It counts how much field weight sits
@@ -18093,7 +18119,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-five notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-six notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18108,7 +18134,8 @@ spectrum, a model of one near-infrared spectrometer read on the spectra of anoth
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
 the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, fields computed by DFT on a grid, compared with the total energy of the same calculation, metal particles of thousands of atoms, compared with the numbers of their neighbours, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
-site. Each runs on the
+site, and two-phase microstructures on a voxel grid, compared with the phase fraction and the
+correlation lengths of the grains. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

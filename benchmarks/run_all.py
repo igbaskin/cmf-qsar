@@ -918,15 +918,19 @@ def registry() -> List[Benchmark]:
                   "itself; the PyMKS elastic label needs prepare_elastic.py in a PyMKS "
                   "environment); then a property of two scales, the coefficient map over the "
                   "lag vector, and the UHCS steel micrographs against CNN features (downloads "
-                  "270 MB into benchmarks/cache/uhcs on the first run; needs torchvision)",
+                  "270 MB into benchmarks/cache/uhcs on the first run; needs torchvision); "
+                  "and the phase fraction with the correlation lengths of the grains as the "
+                  "reference that needs no field, on the draws of the gate",
                   "run_microstructure.py", "microstructure",
                   # the pilot (five draws), the gate (twenty draws, equal budgets, the GP
-                  # baseline, every label the cache holds), and the other three tests
+                  # baseline, every label the cache holds), the other three tests, and the
+                  # reference that needs no field (it reads the gate results, so it runs last)
                   compute=[[],
                            ["--protocol", "gate", "--jobs", "8"],
                            ["--stage", "twoscale", "--protocol", "gate", "--jobs", "8"],
                            ["--stage", "map"],
-                           ["--stage", "uhcs", "--protocol", "gate", "--jobs", "8"]],
+                           ["--stage", "uhcs", "--protocol", "gate", "--jobs", "8"],
+                           ["--stage", "shape"]],
                   prepare=["prepare_elastic.py benchmarks/cache/microstructure/<set>.npz "
                            "(inside the PyMKS environment)"],
                   minutes="120",
