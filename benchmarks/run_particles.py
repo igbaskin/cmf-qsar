@@ -45,10 +45,20 @@ eV.  Compared on the same folds:
 Two splits: 5-fold cross-validation repeated with 5 seeds, and extrapolation in size (train on the
 particles of at most 1,000 atoms, predict the larger ones).
 
+Stage counts (added 16 November 2026)
+-------------------------------------
+An EMT energy is a sum over atoms of a function of the neighbours of each atom, and the
+autocorrelation reads the same pair distances. So the references that a field model has to beat
+are counts: a linear regression on the number of neighbour pairs per atom in each of the first
+four shells of the bulk lattice, and one on the fraction of atoms with each coordination number,
+each with its own coefficients for each metal. Same folds and inner choice of the ridge; paired
+bootstrap intervals over the particles.
+
 Usage
 -----
     python benchmarks/run_particles.py --stage scaling     # about 2 minutes
     python benchmarks/run_particles.py --stage property    # about 2 minutes
+    python benchmarks/run_particles.py --stage counts      # about 2 minutes
     python benchmarks/run_particles.py --report
 """
 from __future__ import annotations
@@ -354,6 +364,122 @@ def stage_property() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Stage counts: references that count neighbours instead of reading fields
+# --------------------------------------------------------------------------- #
+#: the number of neighbour shells of the bulk fcc lattice counted by the shell reference; fixed
+#: before the first run, from the cutoff of ASE's EMT, which lies between the third and the
+#: fourth shell
+SHELLS = 4
+BOOT = 2000
+
+
+def shell_counts(structs: list, shells: int = SHELLS) -> np.ndarray:
+    """The number of neighbour pairs per atom in each of the first `shells` shells of the bulk
+    lattice, for every particle.
+
+    The shells of an fcc metal lie at a sqrt(k / 2), k = 1, 2, ...; a pair is counted in the
+    shell whose radius is nearest, with the borders halfway between two shells.
+    """
+    from ase.data import atomic_numbers, reference_states
+    out = []
+    for a in structs:
+        el = a.get_chemical_symbols()[0]
+        lattice = reference_states[atomic_numbers[el]]["a"]
+        radii = lattice * np.sqrt(np.arange(1, shells + 2) / 2.0)
+        edges = np.r_[0.0, 0.5 * (radii[:-1] + radii[1:])]
+        rec = crystal_table([a], inorganic_fieldset([el], physchem=("steric",)),
+                            ["x"]).molecules[0]
+        _i, _j, d = _tree_pairs(rec, edges[-1])
+        out.append(np.histogram(d, bins=edges)[0] / len(a))
+    return np.asarray(out, float)
+
+
+def coordination_histogram(structs: list) -> np.ndarray:
+    """The fraction of the atoms of a particle with each coordination number, 0 to 12.
+
+    If the energy of an atom depended on its own number of nearest neighbours only, the energy
+    per atom would be linear in these fractions.
+    """
+    from ase.data import atomic_numbers, reference_states
+    out = []
+    for a in structs:
+        el = a.get_chemical_symbols()[0]
+        lattice = reference_states[atomic_numbers[el]]["a"]
+        rec = crystal_table([a], inorganic_fieldset([el], physchem=("steric",)),
+                            ["x"]).molecules[0]
+        i, _j, _d = _tree_pairs(rec, 0.5 * (lattice / np.sqrt(2.0) + lattice))
+        cn = np.bincount(i, minlength=len(a))
+        out.append(np.bincount(np.minimum(cn, 12), minlength=13) / len(a))
+    return np.asarray(out, float)
+
+
+def per_metal_kernel(el: np.ndarray, X: np.ndarray) -> np.ndarray:
+    """A linear regression on the columns of X with its own coefficients and intercept for each
+    metal, as a kernel: (1 + x_i . x_j) for two particles of the same metal, 0 otherwise."""
+    Z = np.asarray(X, float) - np.asarray(X, float).mean(axis=0)
+    same = (np.asarray(el)[:, None] == np.asarray(el)[None, :]).astype(float)
+    return same * (1.0 + Z @ Z.T)
+
+
+def _boot_rmse_difference(y, pa, pb, seed=0):
+    """RMSE of a minus RMSE of b, meV per atom, with a 95 % bootstrap interval over particles."""
+    rng = np.random.RandomState(seed)
+    ea, eb = (np.asarray(pa) - y) ** 2, (np.asarray(pb) - y) ** 2
+    idx = rng.randint(0, len(y), (BOOT, len(y)))
+    d = 1000 * (np.sqrt(ea[idx].mean(axis=1)) - np.sqrt(eb[idx].mean(axis=1)))
+    return {"mean": float(1000 * (np.sqrt(ea.mean()) - np.sqrt(eb.mean()))),
+            "lo": float(np.percentile(d, 2.5)), "hi": float(np.percentile(d, 97.5))}
+
+
+def stage_counts() -> None:
+    """The autocorrelation against two count references, on the folds of stage property."""
+    warnings.filterwarnings("ignore")
+    structs = particle_set()
+    y = energies(structs)
+    names = [a.info["name"] for a in structs]
+    el = np.array([a.get_chemical_symbols()[0] for a in structs])
+    n = np.array([len(a) for a in structs], float)
+    fs = inorganic_fieldset(list(METALS), physchem=PHYSCHEM)
+    K = _cosine(periodic_feature_matrix(crystal_table(structs, fs, names).molecules, SPEC))
+    t0 = time.perf_counter()
+    S = shell_counts(structs)
+    H = coordination_histogram(structs)
+    t_counts = time.perf_counter() - t0
+    kernels = {"autocorrelation": K, "shell counts": per_metal_kernel(el, S),
+               "coordination histogram": per_metal_kernel(el, H)}
+    from cmfqsar.model import _cv_splits
+    cv = {m: [] for m in kernels}
+    pred = {m: np.zeros(len(y)) for m in kernels}
+    for seed in SEEDS:
+        P = {m: np.full(len(y), np.nan) for m in kernels}
+        for te, tr in _cv_splits(y, 5, seed):
+            for m, Km in kernels.items():
+                P[m][te] = _krr_inner(Km, y, tr, te, seed)
+        for m in kernels:
+            cv[m].append(_scores(y, P[m], float(y.mean())))
+            pred[m] += P[m] / len(SEEDS)
+    tr = np.flatnonzero(n <= SPLIT_ATOMS)
+    te = np.flatnonzero(n > SPLIT_ATOMS)
+    ext_pred = {m: _krr_inner(Km, y, tr, te, 0) for m, Km in kernels.items()}
+    out = {"n": len(y), "shells": SHELLS, "counts_seconds": t_counts,
+           "cv": {m: {"rmse_mev": float(np.mean([s["rmse_mev"] for s in v])),
+                      "rmse_mev_sd": float(np.std([s["rmse_mev"] for s in v])),
+                      "q2": float(np.mean([s["q2"] for s in v]))} for m, v in cv.items()},
+           "extrapolation": {m: {**_scores(y[te], p, float(y[tr].mean())),
+                                 "max_error_mev": float(1000 * np.max(np.abs(p - y[te])))}
+                             for m, p in ext_pred.items()},
+           "differences": {
+               "cv": {m: _boot_rmse_difference(y, pred[m], pred["autocorrelation"])
+                      for m in kernels if m != "autocorrelation"},
+               "extrapolation": {m: _boot_rmse_difference(y[te], ext_pred[m],
+                                                          ext_pred["autocorrelation"])
+                                 for m in kernels if m != "autocorrelation"}},
+           "boot": BOOT}
+    print(json.dumps(out, indent=1))
+    jdump(out, os.path.join(RESULTS, "counts.json"))
+
+
+# --------------------------------------------------------------------------- #
 # Report
 # --------------------------------------------------------------------------- #
 def _slope(rows: List[Dict], key: str, kind: str, n_min: int = 500) -> float:
@@ -477,6 +603,32 @@ def report() -> str:
             lines.append(f"| {m} | {s['rmse_mev']:.1f} | {s['max_error_mev']:.1f} | "
                          f"{s['q2']:.4f} |")
         lines.append("")
+    cp = os.path.join(RESULTS, "counts.json")
+    if os.path.isfile(cp):
+        C = jload(cp)
+        lines += ["### References that count neighbours", "",
+                  "The same particles, folds and inner choice of the ridge. 'Shell counts' is a "
+                  "linear regression on the number of neighbour pairs per atom in each of the "
+                  f"first {C['shells']} shells of the bulk lattice, with its own coefficients for "
+                  "each metal (a linear kernel within a metal, zero between metals). "
+                  "'Coordination histogram' is the same on the fraction of atoms with each "
+                  "coordination number from 0 to 12. Both need no field. 'Difference' is the "
+                  "RMSE of the reference minus that of the autocorrelation, with a 95 % "
+                  "bootstrap interval over the particles; negative means the reference is "
+                  "better. In the cross-validation the predictions are averaged over the seeds "
+                  "first.", "",
+                  "| Model | RMSE, meV per atom (cross-validation) | Difference | "
+                  "RMSE, meV per atom (extrapolation) | Largest error, meV | Difference |",
+                  "|---|---:|---:|---:|---:|---:|"]
+        for m in C["cv"]:
+            dc = C["differences"]["cv"].get(m)
+            de = C["differences"]["extrapolation"].get(m)
+            fmt = (lambda d: "" if d is None else
+                   f"{d['mean']:+.1f} [{d['lo']:+.1f}, {d['hi']:+.1f}]")
+            lines.append(f"| {m} | {C['cv'][m]['rmse_mev']:.1f} | {fmt(dc)} | "
+                         f"{C['extrapolation'][m]['rmse_mev']:.1f} | "
+                         f"{C['extrapolation'][m]['max_error_mev']:.1f} | {fmt(de)} |")
+        lines.append("")
     text = "\n".join(lines)
     os.makedirs(RESULTS, exist_ok=True)
     with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8") as fh:
@@ -487,7 +639,7 @@ def report() -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--stage", choices=("scaling", "property"), action="append",
+    ap.add_argument("--stage", choices=("scaling", "property", "counts"), action="append",
                     help="stage(s) to run; the report always follows")
     ap.add_argument("--report", action="store_true", help="only rebuild the table")
     args = ap.parse_args(argv)
@@ -496,6 +648,8 @@ def main(argv=None) -> int:
             stage_scaling()
         elif st == "property":
             stage_property()
+        elif st == "counts":
+            stage_counts()
     print(report())
     return 0
 

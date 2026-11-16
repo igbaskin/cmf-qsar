@@ -1,18 +1,18 @@
 {
- "n_rows": 109,
- "n_primary": 109,
+ "n_rows": 125,
+ "n_primary": 125,
  "n_secondary": 0,
- "n_studies": 19,
+ "n_studies": 26,
  "classes": {
   "carbonaceous thin film": 3,
   "graphite": 39,
-  "layered oxide": 21,
+  "layered oxide": 25,
   "lithium metal": 6,
-  "lithium titanate": 14,
-  "non-graphitizable carbon": 11,
+  "lithium titanate": 16,
+  "non-graphitizable carbon": 13,
   "olivine": 1,
-  "solid electrolyte": 9,
-  "spinel oxide": 5
+  "solid electrolyte": 11,
+  "spinel oxide": 11
  },
  "repeatability": {
   "studies": {
@@ -136,16 +136,46 @@
    ]
   },
   {
+   "source": "Doi2004Carbon",
+   "electrode_class": "non-graphitizable carbon",
+   "n": 4,
+   "low": 55.8,
+   "high": 70.0,
+   "range": 14.200000000000003,
+   "varied": [
+    "solvent",
+    "form of the electrode"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Doi2005",
    "electrode_class": "non-graphitizable carbon",
-   "n": 8,
+   "n": 6,
    "low": 47.5,
-   "high": 70.0,
-   "range": 22.5,
+   "high": 67.5,
+   "range": 20.0,
    "varied": [
     "solvent",
     "additive",
     "form of the electrode"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Fukuma2024",
+   "electrode_class": "lithium titanate",
+   "n": 2,
+   "low": 12.5,
+   "high": 18.1,
+   "range": 5.600000000000001,
+   "varied": [
+    "film",
+    "state"
    ],
    "read_from": [
     "primary"
@@ -163,6 +193,18 @@
     "salt",
     "film"
    ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Iriyama2004",
+   "electrode_class": "layered oxide",
+   "n": 2,
+   "low": 47.27765,
+   "high": 61.7504,
+   "range": 14.472749999999998,
+   "varied": [],
    "read_from": [
     "primary"
    ]
@@ -256,6 +298,36 @@
    ]
   },
   {
+   "source": "Nakayama2007",
+   "electrode_class": "spinel oxide",
+   "n": 5,
+   "low": 23.0,
+   "high": 50.0,
+   "range": 27.0,
+   "varied": [
+    "solvent",
+    "salt"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Sagane2005",
+   "electrode_class": "solid electrolyte",
+   "n": 2,
+   "low": 56.2,
+   "high": 97.4,
+   "range": 41.2,
+   "varied": [
+    "solvent",
+    "form of the electrode"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Sawayama2025",
    "electrode_class": "graphite",
    "n": 5,
@@ -294,6 +366,18 @@
     "solvent",
     "salt"
    ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Yamada2007",
+   "electrode_class": "layered oxide",
+   "n": 2,
+   "low": 46.0,
+   "high": 48.0,
+   "range": 2.0,
+   "varied": [],
    "read_from": [
     "primary"
    ]
@@ -507,6 +591,48 @@
    ]
   },
   {
+   "series": "Doi2004Carbon: carbon treated by hot isostatic pressing, film formed in each electrolyte",
+   "n": 2,
+   "solvents": [
+    "PC",
+    "EC:DEC 1:1"
+   ],
+   "values": [
+    55.8,
+    61.5
+   ],
+   "low": 55.8,
+   "high": 61.5,
+   "range": 5.700000000000003,
+   "one_solvent": [
+    "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "series": "Doi2004Carbon: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+   "n": 2,
+   "solvents": [
+    "EC:DEC 1:1",
+    "PC"
+   ],
+   "values": [
+    68.7,
+    70.0
+   ],
+   "low": 68.7,
+   "high": 70.0,
+   "range": 1.2999999999999972,
+   "one_solvent": [
+    "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
    "n": 2,
    "solvents": [
@@ -541,27 +667,6 @@
    "low": 47.9,
    "high": 51.6,
    "range": 3.700000000000003,
-   "one_solvent": [
-    "PC"
-   ],
-   "read_from": [
-    "primary"
-   ]
-  },
-  {
-   "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
-   "n": 2,
-   "solvents": [
-    "EC:DEC 1:1",
-    "PC"
-   ],
-   "values": [
-    68.7,
-    70.0
-   ],
-   "low": 68.7,
-   "high": 70.0,
-   "range": 1.2999999999999972,
    "one_solvent": [
     "PC"
    ],
@@ -612,6 +717,34 @@
    "one_solvent": [
     "DMC",
     "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "series": "Nakayama2007: LiMn2O4 thin film, water and PC",
+   "n": 5,
+   "solvents": [
+    "water",
+    "water",
+    "water",
+    "water",
+    "PC"
+   ],
+   "values": [
+    23.0,
+    24.0,
+    24.0,
+    25.0,
+    50.0
+   ],
+   "low": 23.0,
+   "high": 50.0,
+   "range": 27.0,
+   "one_solvent": [
+    "PC",
+    "water"
    ],
    "read_from": [
     "primary"
@@ -822,8 +955,8 @@
   }
  ],
  "solvent_count": {
-  "n_series": 16,
-  "n_rows": 53,
+  "n_series": 18,
+  "n_rows": 60,
   "largest": 8,
   "solvents": [
    "2,2,2-trifluoroethyl acetate",
@@ -929,6 +1062,14 @@
      "value": 61.7504
     },
     {
+     "series": "Doi2004Carbon: carbon treated by hot isostatic pressing, film formed in each electrolyte",
+     "value": 55.8
+    },
+    {
+     "series": "Doi2004Carbon: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "value": 70.0
+    },
+    {
      "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
      "value": 49.0
     },
@@ -937,16 +1078,16 @@
      "value": 51.6
     },
     {
-     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
-     "value": 70.0
-    },
-    {
      "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
      "value": 71.2
     },
     {
      "series": "Ishihara2014: lithium titanate, no film",
      "value": 64.0
+    },
+    {
+     "series": "Nakayama2007: LiMn2O4 thin film, water and PC",
+     "value": 50.0
     },
     {
      "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
@@ -993,9 +1134,13 @@
     {
      "series": "Chekushkin2021: LiMn2O4",
      "value": 19.297
+    },
+    {
+     "series": "Nakayama2007: LiMn2O4 thin film, water and PC",
+     "value": 24.0
     }
    ],
-   "range": 3.859400000000001
+   "range": 8.5624
   }
  ],
  "contrasts": [
@@ -1086,16 +1231,20 @@
    "second": "PC",
    "differences": [
     {
+     "series": "Doi2004Carbon: carbon treated by hot isostatic pressing, film formed in each electrolyte",
+     "difference": 5.700000000000003
+    },
+    {
+     "series": "Doi2004Carbon: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
+     "difference": -1.2999999999999972
+    },
+    {
      "series": "Doi2005: glassy carbon GC-10, film formed in each electrolyte",
      "difference": -1.5
     },
     {
      "series": "Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte",
      "difference": -3.700000000000003
-    },
-    {
-     "series": "Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte",
-     "difference": -1.2999999999999972
     },
     {
      "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
@@ -1128,6 +1277,20 @@
     {
      "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
      "difference": -1.9299999999999926
+    }
+   ]
+  },
+  {
+   "first": "PC",
+   "second": "water",
+   "differences": [
+    {
+     "series": "Chekushkin2021: LiCoO2",
+     "difference": 46.312799999999996
+    },
+    {
+     "series": "Nakayama2007: LiMn2O4 thin film, water and PC",
+     "difference": 26.0
     }
    ]
   }

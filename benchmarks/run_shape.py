@@ -37,6 +37,11 @@ with its size.  Compared on the same folds:
 * a linear regression on the same five descriptors, with an intercept for each metal;
 * for the energy per atom, linear regressions with an intercept and a slope for each metal on
   n^(-1/3) (the size law) and on the surface fraction;
+* for the energy per atom, the count reference of tutorial 24 (`run_particles.shell_counts`): a
+  linear regression on the number of neighbour pairs per atom in each of the first four shells
+  of the bulk lattice, with an intercept and slopes for each metal; for the whole energy, the
+  same counts multiplied by n, with no intercept (an EMT energy is a sum over atoms of a function
+  of their neighbours);
 * for the whole energy, a linear regression on n and n^(2/3) for each metal with no intercept,
   the volume and surface terms of a liquid drop.
 
@@ -268,16 +273,22 @@ def stage_model() -> None:
     kern = _Kernels(table, fs_plain, fs_desc)
     # the descriptors of the plain field set are not read; its kernel ignores them
     sf = D[:, list(SHAPE5).index("calc:surface_fraction")][:, None]
+    shells = RP.shell_counts(structs)                     # pairs per atom, four lattice shells
     targets = {
         "energy per atom": (e_atom, 1000.0, "meV per atom", {
             "size law: linear regression on n^(-1/3) for each metal":
                 lambda tr, te: _per_metal(el, (n ** (-1 / 3))[:, None], e_atom, tr, te),
             "linear regression on the surface fraction for each metal":
-                lambda tr, te: _per_metal(el, sf, e_atom, tr, te)}),
+                lambda tr, te: _per_metal(el, sf, e_atom, tr, te),
+            "linear regression on the neighbour pairs per atom in four shells, for each metal":
+                lambda tr, te: _per_metal(el, shells, e_atom, tr, te)}),
         "energy of the particle": (e_total, 1.0, "eV", {
             "liquid drop: linear regression on n and n^(2/3) for each metal":
                 lambda tr, te: _per_metal(el, np.stack([n, n ** (2 / 3)], 1), e_total, tr, te,
-                                          intercept=False)}),
+                                          intercept=False),
+            "linear regression on the neighbour pairs in four shells, for each metal":
+                lambda tr, te: _per_metal(el, np.column_stack([n, shells * n[:, None]]),
+                                          e_total, tr, te, intercept=False)}),
     }
     out = {"n": len(n), "atoms": [int(n.min()), int(n.max())], "descriptors": list(SHAPE5),
            "descriptor_seconds": t_desc, "targets": {}}
@@ -332,8 +343,10 @@ def stage_model() -> None:
 # --------------------------------------------------------------------------- #
 # Report
 # --------------------------------------------------------------------------- #
-#: the reference each target's folds are counted against: the physical law of its size
-REFERENCE = {"energy per atom": "size law", "energy of the particle": "liquid drop"}
+#: the reference each target's folds are counted against: the count of neighbour pairs in four
+#: lattice shells (tutorial 24), the strongest reference on both targets
+REFERENCE = {"energy per atom": "linear regression on the neighbour pairs",
+             "energy of the particle": "linear regression on the neighbour pairs"}
 
 
 def _ref_key(T: Dict, tname: str) -> str:
@@ -417,8 +430,8 @@ def report() -> str:
                     lines.append(f"| {m} | {s['rmse']:.4g} | {s['rmse_sd']:.2g} | "
                                  f"{s['q2']:.4f} |")
                 lines += ["", "The same folds one by one (25 folds: 5 seeds of 5 folds). "
-                          f"'Folds won' counts the folds in which the model's error is below "
-                          f"that of the {REFERENCE[tname]}.", "",
+                          "'Folds won' counts the folds in which the model's error is below "
+                          "that of the regression on the neighbour pairs in four shells.", "",
                           f"| Model | Median error of a fold, {u} | Largest error of a fold, {u} "
                           "| Held out in that fold | Folds won |", "|---|---:|---:|---|---:|"]
                 ref = [f["rmse"] for f in T["cv_geometry"][_ref_key(T, tname)]["folds"]]

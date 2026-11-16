@@ -3984,6 +3984,12 @@ tests whether the target is reproducible between sources before any kernel is co
   separations across the axis; not done here. The mean coordination number, the count an EMT
   energy should follow, predicts it worse than the size law, because the energy is not linear
   in it.
+  **Neighbour counts as the reference, added 16 November 2026,** while the twenty-fourth
+  tutorial was written. `run_particles.py --stage counts`: a linear regression on the number of
+  neighbour pairs per atom in each of the first four lattice shells, with its own coefficients
+  for each metal, reaches 29 meV in cross-validation, level with the autocorrelation (+2.4
+  [-8.3, +13.0] meV), and 15 meV on the larger particles, better by 11.1 [4.8, 17.4] meV. The
+  fields are not needed for this target.
 * **NT3. Size and shape as descriptors.** `cmfqsar/descriptors.py` computes RDKit descriptors for
   molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
   the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
@@ -4014,8 +4020,12 @@ tests whether the target is reproducible between sources before any kernel is co
   which the per-atom channels cannot follow (q2 0.455), reaches q2 0.910 with them (liquid-drop
   regression on n and n^(2/3) for each metal: 0.825). On particles larger than every training
   particle the descriptors do worse than the autocorrelation alone (48.2 against 33.7 meV per
-  atom), and the liquid drop is the best model of the large particles' energy (q2 0.904 against
-  0.817).
+  atom). After the merge with tutorial 24, its count reference (a linear regression on the
+  neighbour pairs in four lattice shells, for each metal) was added to the same folds: it is the
+  best model of the whole particle's energy (q2 0.994 in random folds, all 25 geometry folds
+  won, 0.991 on the larger particles) and of the larger particles' energy per atom (13.8 meV);
+  on the energy per atom with geometries held out the descriptor model has the smaller error in
+  18 of 25 folds (median 16.0 against 14.8 meV), but its worst fold is 462 meV against 73.
   **Found on the way:** holding out geometries corrects NT2's comparison (see there): the kernel,
   with or without the descriptors, misses the 13-atom particles by 460 to 590 meV per atom when
   it has seen none of them, where the size law misses by 53 meV. Not done here: a public
@@ -6243,8 +6253,37 @@ concentration was driven, and the stage counts only discharges that ended at the
   without the two solvents that wrap the ion the error is 11.0 kJ/mol for the mean of the
   series and 6.0 for the regression, on 51 values (gain +5.0 [+3.3, +7.1]); with the two it
   gains nothing (-1.5 [-4.8, +1.2]). The single solvents do not change. The verdict does
-  not change. The other Elsevier papers could not be opened: ScienceDirect shows a
-  captcha, and eight papers still need files from the author of the program.
+  not change. The other Elsevier papers could not be opened at that time; they were read in
+  the sixth reading.
+  *A sixth reading, 16 November 2026.* Nine Elsevier papers were supplied as files and
+  read: Yamada 2003 and 2007, Iriyama 2004, Nakayama 2007, Doi 2004 (Carbon), Sagane 2005,
+  Uhlmann 2016, Uchida 2020 and Fukuma 2024. Seven of them gave 18 rows. Two of the rows
+  are the two values of untreated GC-20 that Doi 2005 shows for comparison: they were
+  measured in Doi 2004 (Carbon), so that paper is now their source and the table has them
+  once. The table holds 125 values from 26 studies, in 18 series with 60 values. Nakayama
+  2007 measured LiMn2O4 in water (23 to 25 kJ/mol) and in propylene carbonate (50 kJ/mol);
+  the slope turns the difference of the binding energies into 35 kJ/mol and 26 kJ/mol was
+  measured. Chekushkin 2021 measured 46.3 kJ/mol for the same pair on LiCoO2, so the pair is
+  the ninth that more than one series measured. Doi 2004 measured glassy carbon and carbon
+  treated by hot isostatic pressing: on the second one propylene carbonate is below EC:DEC
+  by 5.7 kJ/mol, where the regression gives +3.0. Five papers gave rows that are in no
+  series: Yamada 2003 (50 kJ/mol; the paper does not say which of its two electrolytes),
+  Yamada 2007 (46 and 48), Iriyama 2004 (0.64 and 0.49 eV), Sagane 2005 (56.2 and 97.4;
+  its two values for Na+ are left out) and Fukuma 2024 (18.1 without and 12.5 with a film
+  on lithium titanate; the same cell gives 49.6 kJ/mol for the film resistance, which its
+  authors read as the desolvation step, so the assignment of the semicircle decides the
+  label). Uhlmann 2016 gave no row, because its interface resistance is assigned to an
+  exchange of H+ and Li+. Uchida 2020 prints only approximate values in its text; the
+  exact values are in its supporting information, which was not read. The regression was
+  run again. Without the two solvents that wrap the ion the held-out error is 19.0 kJ/mol
+  for the mean of the series and 10.1 for the regression on 25 values of single solvents
+  (gain +8.8 [+2.6, +12.4]), and 11.8 and 6.5 on 58 values with mixtures (gain +5.3 [+3.4,
+  +7.9]); with the two it gains nothing (-0.1 [-6.5, +3.1] and -1.4 [-4.8, +1.3]). The slope
+  moved from 0.556 to 0.487 and from 0.498 to 0.459. On the electrolytes held out in two or
+  more series the regression has 10.3 kJ/mol and a model of the solvent alone at least 7.3
+  (6.6 and 5.1 with mixtures). The room for a field model of the solvent was 0.4 and 0.5
+  kJ/mol and is now 3.0 and 1.5 kJ/mol, which is below the repeatability of 5.0 kJ/mol. The
+  verdict does not change, but the number it rests on does.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -6275,18 +6314,18 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 109 measured values from 19 studies, all of them read in the paper that measured
+November: 125 measured values from 26 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
-classes of solvent the table holds 16 series with 13 single solvents. That is enough to test
+classes of solvent the table holds 18 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
 by 16 kJ/mol between them. The regression was run the same day, with binding energies from
-ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 11 to
-17 kJ/mol to 6 to 9 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
-ion. A model of the solvent alone can gain about 0.5 kJ/mol more, so no field model is built
-and part (c) of the gate is closed.
+ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 12 to
+19 kJ/mol to 6.5 to 10 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
+ion. A model of the solvent alone can gain 1.5 to 3 kJ/mol more, which is below the
+repeatability of 5 kJ/mol, so no field model is built and part (c) of the gate is closed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -8595,7 +8634,7 @@ correlation of its whole kernel with the target before any accuracy is measured.
   shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
   than measured against the target.
 
-  **A reference that PP1 left out, added 15 November 2026,** while the twenty-fourth tutorial was
+  **A reference that PP1 left out, added 15 November 2026,** while the twenty-fifth tutorial was
   written. The burial reference of PP1 is a linear regression, and the field models are not
   linear. `run_mutants.py --sites` asks the question again on every one of the 280 positions that
   the repository holds (four substitutions of each, two draws, wild-type structures only, the
@@ -9271,12 +9310,12 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 109 measured values (13 to 16 November) says that the constants of the cell set are 27
+  of 125 measured values (13 to 16 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:
-  it lowers the held-out error to 6 to 9 kJ/mol for solvents that hold the ion with one
-  atom, it fails for solvents that wrap the ion, and it leaves about 0.5 kJ/mol for a model of
+  it lowers the held-out error to 6.5 to 10 kJ/mol for solvents that hold the ion with one
+  atom, it fails for solvents that wrap the ion, and it leaves 1.5 to 3 kJ/mol for a model of
   the solvent alone. Part (c) of the gate is closed without a field model.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published

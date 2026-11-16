@@ -1107,9 +1107,11 @@ so its memory grows linearly. The model refuses the overlap kernel for a structu
 28 minutes for 100 particles of 2,869 atoms, against 26 s for the autocorrelation. Molecules are
 never refused. On 150 metal particles of 13 to 3,564 atoms, the autocorrelation model predicts
 the EMT energy per atom to 26 meV, against 45 meV for a linear regression on n^(-1/3) for each
-metal. Item NT3 found that random folds overstate this: held out geometry by geometry, the
-kernel wins 20 of 25 folds but misses the 13-atom particles by 587 meV when it has seen none of
-them.
+metal. A regression on the numbers of neighbours in four lattice shells does as well (29 meV, the
+interval of the difference contains zero) and predicts the larger particles better (15 against 26
+meV); added 16 November 2026, shown in the twenty-fourth tutorial. Item NT3 found that random
+folds overstate the kernel's margin over the size law: held out geometry by geometry, the kernel
+wins 20 of 25 folds but misses the 13-atom particles by 587 meV when it has seen none of them.
 
 ### Size and shape as descriptors
 
@@ -1121,9 +1123,9 @@ invariant kernels used to ignore the descriptor block; they now add it, as the o
 does. The surface atoms of copper icosahedra and fcc particles of up to 5,083 atoms are exactly
 the outer shell, and the diameters of 39 nanotubes agree with the textbook formula. On 150 EMT
 particles the descriptors take the energy per atom from 28.8 to 16.2 meV per atom and the energy
-of the whole particle from q2 0.455 to 0.910. On particles larger than every training particle
-they do worse than the autocorrelation alone, and a liquid-drop regression on n and n^(2/3)
-predicts the large particles best.
+of the whole particle from q2 0.455 to 0.910. A regression on the neighbour pairs in four
+lattice shells is still the better model of the energy of the whole particle (q2 0.994, every
+fold) and of particles larger than every training particle (13.8 meV per atom).
 
 ### Fields from DFT on a grid
 
@@ -3718,7 +3720,7 @@ cell:
   activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
   capacity only; the energy, the power and the charging of a cold cell were not run.
 - The measured activation energies were then collected from the literature
-  (`examples/charge_transfer/`, 109 values from 19 studies, each with its paper and the place
+  (`examples/charge_transfer/`, 125 values from 26 studies, each with its paper and the place
   in it; `benchmarks/run_charge_transfer.py`). All of them were read in the paper that
   measured them. In carbonate electrolytes the mean is 61.7 kJ/mol for graphite and
   68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Five studies of
@@ -3732,13 +3734,14 @@ cell:
 - That regression was then run (`--stage binding` and `--stage regression`). The binding
   energy of Li+ with one molecule of each solvent comes from ORCA, because GFN2-xTB agrees
   too poorly with the values of the papers (correlation 0.80 against 0.94). With one solvent
-  held out at a time, the regression lowers the error from 17.2 to 9.3 kJ/mol for the 11
-  solvents that hold the ion with one atom (gain 7.9 kJ/mol, 95 % interval 0.9 to 12.8). It
+  held out at a time, the regression lowers the error from 19.0 to 10.1 kJ/mol for the 11
+  solvents that hold the ion with one atom (gain 8.8 kJ/mol, 95 % interval 2.6 to 12.4). It
   gains nothing when the two solvents that wrap the ion with several oxygen atoms are
   included. On the solvents measured in several series, no model of the solvent alone can
-  have an error below 9.1 kJ/mol where the regression has 9.5. So no field model was built
-  for this target. The 11 values of two studies that were read after the first run did not
-  move the slope (0.559 became 0.556). A fit of this kind on four values of one group is
+  have an error below 7.3 kJ/mol where the regression has 10.3. That room of 3.0 kJ/mol is
+  below the repeatability of 5.0 kJ/mol, so no field model was built for this target. The
+  33 values of ten studies that were read after the first run moved the slope from 0.559
+  to 0.487. A fit of this kind on four values of one group is
   published (Okoshi and others, J. Electrochem. Soc. 160 (2013) A2160); the test across
   laboratories with held-out solvents is what this run adds.
 
@@ -6864,8 +6867,8 @@ for.
 
 ### Tutorials
 
-Twenty-four notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
-example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fourth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
+Twenty-five notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
 | Notebook | What it shows |
@@ -6893,7 +6896,8 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `21_defects_on_a_lattice.ipynb` | one to three point defects on one host lattice (5,933 cells each of MoS2 and WSe2): the difference field, the average over the 768 operations of the host, the counts and the arrangement kernels, a pair expansion as the reference, and the extrapolation from one and two defects to three (downloads 5 MB on its first run) |
 | `22_a_design_loop.ipynb` | a design loop that looks for the best structure with few calculations: a prototype and its symmetry, random choice and the greedy rule on perovskites and on defect series, the same loop on the names of the elements and the counts of the defects as the reference, why a whole-cell kernel fails on one defect pool, and a closed loop with a calculator (downloads 4 MB on its first run) |
 | `23_a_field_from_dft.ipynb` | fields computed by DFT as values on a grid (the density, the electron localisation function and the potential of 1,462 perovskite cells): the overlap of two grids against the same grids fitted on the atoms and against the atom-centred fields, the total energy of the same calculation with the element counts as the reference, and the molecules (reads the stored results of the grids; downloads 4 MB on its first run) |
-| `24_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
+| `24_metal_particles.ipynb` | particles of thousands of atoms with no cell: how the cost of the autocorrelation and of the overlap kernel grows with the size, the EMT energy per atom of 150 particles of six metals against the size law, and a regression on the numbers of neighbours in four lattice shells as the reference, in cross-validation and on larger particles (all computed live) |
+| `25_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7346,7 +7350,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-four notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-five notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

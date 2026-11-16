@@ -1,6 +1,6 @@
 {
- "commit": "8137022fc9502dddee66976a3e4000d8e3d7d781",
- "created": "2026-11-16T10:46:43",
+ "commit": "6253d608b521a9cc32def5a3b33470f6962c572c",
+ "created": "2026-11-16T11:55:22",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -71,16 +71,16 @@
    "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
   },
   "examples/charge_transfer/README.md": {
-   "bytes": 10163,
-   "sha256": "ea6ec1165e4172abed79e4a09da2c3262b427f186d49be23947ce53b26f9144b"
+   "bytes": 11738,
+   "sha256": "6b8a5927fdaa5681dd66a70e9e37ee939000d7e9fdf4def5f17f8f64560ffa70"
   },
   "examples/charge_transfer/activation_energies.csv": {
-   "bytes": 47264,
-   "sha256": "d363389d0256cdd595215d86c40ca543bb116d974d91a2ae1a5af735165de7a5"
+   "bytes": 55949,
+   "sha256": "6c4a738649f5febfbaac0c0db84791b61b669554de684f719c07d9f8d77fd676"
   },
   "examples/charge_transfer/sources.csv": {
-   "bytes": 11756,
-   "sha256": "b4194daf4cd5f21f48bf7713ee978a1b1ea6f713d95f6725674dec9bde3aa088"
+   "bytes": 15434,
+   "sha256": "2d3b041e5255daff7fc5e4b0e0a9a50817f8c084bdb390db229dc5960da6ca7b"
   },
   "examples/complexes_fe/fe_redox.sdf": {
    "bytes": 7991354,
@@ -2823,9 +2823,9 @@
   "benchmarks/results/cellmodel_fields/sample_positive_particle_diffusivity_m2_s-1.json": "cf333cc57ed97b305c2f49f0ff2a63b22b828ec47045877092206f3bf9159f5f",
   "benchmarks/results/cellmodel_fields/table.md": "72867ebd17af459e84efe220a4ab3c41cb080b846f7e600d77b0e7aff55c8c59",
   "benchmarks/results/charge_transfer/binding.json": "2988bbc325b083fbe5f182581451b94be4855cf5373f0d03b10a05bf6af05d8c",
-  "benchmarks/results/charge_transfer/regression.json": "557e60dc262788700904e4e10f670949da8aadd5155ba86b557147814e4b5e65",
-  "benchmarks/results/charge_transfer/summary.json": "f28ff9b21ac6c1037508c8de9e5f9f74faadfe995ab5dc175cb456eb4582dbe0",
-  "benchmarks/results/charge_transfer/table.md": "71d02cd681ccb898412bb358b7329576a3630ddee9eae6a103d967de9b4ff13f",
+  "benchmarks/results/charge_transfer/regression.json": "b78b5d7a5e9dd53c2e0687f2df31b890bc1910e60142947119e9d1bca78f6139",
+  "benchmarks/results/charge_transfer/summary.json": "75f7e400432628bb04937acf919e05d72baab78a43769d48ec795e4c1c636e0c",
+  "benchmarks/results/charge_transfer/table.md": "9aeeeaffc1bb206d32480b5695b74a3175724217298b408e21267de026bf5b54",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
@@ -3513,9 +3513,10 @@
   "benchmarks/results/nystrom/select.json": "4771519914d32ee0a893e66a06f5bfdacf2d6fe3dec27fbb88780bb3f7ae6c63",
   "benchmarks/results/nystrom/table.md": "ba0427b7787242c1ce6c8e867a9bcd37c70805e0ce25a4b49abd94dfa3b60a58",
   "benchmarks/results/nystrom/width.json": "67c75027ba4c42e1578a49d07a8e9dafde144fd353edd663776ecb59cf8ec61a",
+  "benchmarks/results/particles/counts.json": "63b1c25309b38cf041e54782c9873e61cb9b8c14156d0ada5145dce43142e0c4",
   "benchmarks/results/particles/property.json": "5bc96d6d667baaa4a06134aede4032d967e4701684792d3d5c5d2fa308916f15",
   "benchmarks/results/particles/scaling.json": "cc025a590c08c6e1908e122f2e3723a14c8e0a015fd58273b19223004ff14003",
-  "benchmarks/results/particles/table.md": "3a19fc3949613bcc89659ebc78d689fb8f43a0327d6f811e688a0f42fe20b979",
+  "benchmarks/results/particles/table.md": "ac1c87162d608e6916dc6c7261badf8ce31cdd3c2b59f759053282e24f7ed459",
   "benchmarks/results/perfield/ACE.json": "5879108eb92f095fd40f5bb41da7087cd827e4f37450ff239dfbf5aca39af444",
   "benchmarks/results/perfield/AChE.json": "8455f9c2e3f8c2220a3703869124c962f5597fe31704037fac55ee092e06db68",
   "benchmarks/results/perfield/BZR.json": "25298c7e65ea09b2f3d91a52b721ad030e715901f571741a1814faa2df4ee928",

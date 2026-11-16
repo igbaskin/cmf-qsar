@@ -51,7 +51,7 @@ Blocks of fcc copper of 3 x 3 x 3L cubic cells: aspect ratio against the ratio o
 
 ## Size and shape beside the periodic autocorrelation
 
-150 unrelaxed particles of Cu, Ag, Au, Ni, Pd and Pt (13 to 3,564 atoms; the set of item NT2). The size and shape descriptors of all of them took 17.8 s. Kernel ridge regression on the model's own kernel, cutoff 8 A, the ridge parameter chosen by an inner 5-fold cross-validation and the descriptor statistics taken from each training part alone.
+150 unrelaxed particles of Cu, Ag, Au, Ni, Pd and Pt (13 to 3,564 atoms; the set of item NT2). The size and shape descriptors of all of them took 41.7 s. Kernel ridge regression on the model's own kernel, cutoff 8 A, the ridge parameter chosen by an inner 5-fold cross-validation and the descriptor statistics taken from each training part alone.
 
 ### Target: the energy per atom (EMT), 84.96 to 1171 meV per atom
 
@@ -64,6 +64,7 @@ Blocks of fcc copper of 3 x 3 x 3L cubic cells: aspect ratio against the ratio o
 | linear regression on the five descriptors, an intercept for each metal | 74.62 | 0.85 | 0.8862 |
 | size law: linear regression on n^(-1/3) for each metal | 44.89 | 2.3 | 0.9587 |
 | linear regression on the surface fraction for each metal | 90.51 | 2.3 | 0.8325 |
+| linear regression on the neighbour pairs per atom in four shells, for each metal | 33.87 | 3.3 | 0.9763 |
 
 5-fold cross-validation that holds out each of the 25 geometries (shape and size) in all six metals at once, repeated with 5 seeds; the inner folds that choose the ridge parameter hold out geometries too:
 
@@ -74,16 +75,18 @@ Blocks of fcc copper of 3 x 3 x 3L cubic cells: aspect ratio against the ratio o
 | linear regression on the five descriptors, an intercept for each metal | 89.57 | 7 | 0.8350 |
 | size law: linear regression on n^(-1/3) for each metal | 45.85 | 1 | 0.9570 |
 | linear regression on the surface fraction for each metal | 92.57 | 5.2 | 0.8243 |
+| linear regression on the neighbour pairs per atom in four shells, for each metal | 31.05 | 3.4 | 0.9801 |
 
-The same folds one by one (25 folds: 5 seeds of 5 folds). 'Folds won' counts the folds in which the model's error is below that of the size law.
+The same folds one by one (25 folds: 5 seeds of 5 folds). 'Folds won' counts the folds in which the model's error is below that of the regression on the neighbour pairs in four shells.
 
 | Model | Median error of a fold, meV per atom | Largest error of a fold, meV per atom | Held out in that fold | Folds won |
 |---|---:|---:|---|---:|
-| periodic autocorrelation alone | 30.87 | 587 | deca2, deca4, deca6, ico2, octa8 | 20 of 25 |
-| periodic autocorrelation and the five size and shape descriptors | 15.98 | 462 | deca2, deca4, deca6, ico2, octa8 | 24 of 25 |
+| periodic autocorrelation alone | 30.87 | 587 | deca2, deca4, deca6, ico2, octa8 | 7 of 25 |
+| periodic autocorrelation and the five size and shape descriptors | 15.98 | 462 | deca2, deca4, deca6, ico2, octa8 | 18 of 25 |
 | linear regression on the five descriptors, an intercept for each metal | 86.09 | 174.4 | deca2, deca4, deca6, ico2, octa8 | 0 of 25 |
-| size law: linear regression on n^(-1/3) for each metal | 42.86 | 65.03 | deca3, ico2, ico3, ico5, ico9 | -- |
+| size law: linear regression on n^(-1/3) for each metal | 42.86 | 65.03 | deca3, ico2, ico3, ico5, ico9 | 5 of 25 |
 | linear regression on the surface fraction for each metal | 85.87 | 177.8 | deca2, deca4, deca6, ico2, octa8 | 0 of 25 |
+| linear regression on the neighbour pairs per atom in four shells, for each metal | 14.76 | 73.21 | deca2, deca3, deca9, ico4, ico9 | -- |
 
 Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, tested on the 54 larger ones (q2 against the mean of the training part):
 
@@ -94,6 +97,7 @@ Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, teste
 | linear regression on the five descriptors, an intercept for each metal | 323.8 | 729.9 | -0.7023 |
 | size law: linear regression on n^(-1/3) for each metal | 36.19 | 92.75 | 0.9787 |
 | linear regression on the surface fraction for each metal | 96.07 | 213 | 0.8501 |
+| linear regression on the neighbour pairs per atom in four shells, for each metal | 13.76 | 29.28 | 0.9969 |
 
 ### Target: the energy of the particle (EMT), 7.972 to 708.3 eV
 
@@ -105,6 +109,7 @@ Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, teste
 | periodic autocorrelation and the five size and shape descriptors | 45.31 | 2.1 | 0.9095 |
 | linear regression on the five descriptors, an intercept for each metal | 46.16 | 1.8 | 0.9062 |
 | liquid drop: linear regression on n and n^(2/3) for each metal | 63 | 3.1 | 0.8250 |
+| linear regression on the neighbour pairs in four shells, for each metal | 11.45 | 2.6 | 0.9939 |
 
 5-fold cross-validation that holds out each of the 25 geometries (shape and size) in all six metals at once, repeated with 5 seeds; the inner folds that choose the ridge parameter hold out geometries too:
 
@@ -114,15 +119,17 @@ Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, teste
 | periodic autocorrelation and the five size and shape descriptors | 60.1 | 12 | 0.8346 |
 | linear regression on the five descriptors, an intercept for each metal | 53.23 | 2.1 | 0.8752 |
 | liquid drop: linear regression on n and n^(2/3) for each metal | 59.77 | 3.8 | 0.8423 |
+| linear regression on the neighbour pairs in four shells, for each metal | 9.611 | 1.3 | 0.9959 |
 
-The same folds one by one (25 folds: 5 seeds of 5 folds). 'Folds won' counts the folds in which the model's error is below that of the liquid drop.
+The same folds one by one (25 folds: 5 seeds of 5 folds). 'Folds won' counts the folds in which the model's error is below that of the regression on the neighbour pairs in four shells.
 
 | Model | Median error of a fold, eV | Largest error of a fold, eV | Held out in that fold | Folds won |
 |---|---:|---:|---|---:|
 | periodic autocorrelation alone | 86.92 | 555.1 | deca2, deca4, deca6, ico2, octa8 | 0 of 25 |
-| periodic autocorrelation and the five size and shape descriptors | 50.29 | 116.2 | deca2, deca4, deca6, ico2, octa8 | 18 of 25 |
-| linear regression on the five descriptors, an intercept for each metal | 45.35 | 83.18 | deca3, ico8, ico9, octa18, octa4 | 14 of 25 |
-| liquid drop: linear regression on n and n^(2/3) for each metal | 43.54 | 109 | deca9, ico10, ico5, ico6, ico9 | -- |
+| periodic autocorrelation and the five size and shape descriptors | 50.29 | 116.2 | deca2, deca4, deca6, ico2, octa8 | 0 of 25 |
+| linear regression on the five descriptors, an intercept for each metal | 45.35 | 83.18 | deca3, ico8, ico9, octa18, octa4 | 0 of 25 |
+| liquid drop: linear regression on n and n^(2/3) for each metal | 43.54 | 109 | deca9, ico10, ico5, ico6, ico9 | 0 of 25 |
+| linear regression on the neighbour pairs in four shells, for each metal | 6.481 | 20.41 | deca9, ico10, ico5, ico6, ico9 | -- |
 
 Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, tested on the 54 larger ones (q2 against the mean of the training part):
 
@@ -132,3 +139,4 @@ Extrapolation in size: trained on the 96 particles of at most 1,000 atoms, teste
 | periodic autocorrelation and the five size and shape descriptors | 118.3 | 309.8 | 0.8172 |
 | linear regression on the five descriptors, an intercept for each metal | 169.4 | 431.9 | 0.6249 |
 | liquid drop: linear regression on n and n^(2/3) for each metal | 85.73 | 228.2 | 0.9040 |
+| linear regression on the neighbour pairs in four shells, for each metal | 26.36 | 87.88 | 0.9909 |
