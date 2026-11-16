@@ -1393,7 +1393,7 @@ def registry() -> List[Benchmark]:
                   "feature columns, at the selected attenuation and from broad to narrow fields",
                   "run_rff.py", "rff", compute=[[]],
                   minutes="10",
-                  report=lambda: _mod("run_rff").report(_r("rff")),
+                  report=lambda: _mod("run_rff").write_table(_r("rff")),
                   tables=["rff/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],
