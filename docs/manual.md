@@ -17231,6 +17231,21 @@ cmf local examples/local/metabolism.sdf --target som --rho 0.25 \
 That runs in about fifteen seconds and prints both the field model and the atom-centred count,
 with the share of molecules whose site each puts first and among the first two.
 
+**A reference that needs no field and no geometry (added 16 November 2026).** The published rule-
+based predictors of this field score an atom from its own element, the hydrogens on it, whether it
+is aromatic or in a ring, how many heavy neighbours it has, and how far it sits from the middle of
+the molecule (SMARTCyp's accessibility). `run_metabolism.py` gives those properties to the same
+model on the same folds. Alone they reach 55.2 %, far below every count. Added to the count over
+bonds they reach 70.9 %, and added to the count over distance 74.4 %, which is no better than the
+count with the field (-2.5 % [-5.5, +0.2]). Added to the mixture of the count and the field they
+change nothing: 76.9 %, +0.0 % [-1.3, +1.3]. So what those properties hold about an atom, the
+count and the field between them already hold, and the reading of the item stands. Every row
+measured before this reference was added is unchanged.
+
+The twenty-seventh tutorial, `docs/tutorials/27_which_atom_reacts.ipynb`, sets up the per-atom
+target, draws three molecules with their sites, and runs the four descriptions and the mixture
+live on the same folds.
+
 **What is not done.** The mixture of the count and the field, which is the row that passes the
 gate, is in the benchmark and not in `cmf local`: the command fits one descriptor at a time. An
 isoform-resolved target is the other open question. The sites here are merged over the isoforms,
@@ -18167,7 +18182,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-six notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-seven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18182,8 +18197,10 @@ spectrum, a model of one near-infrared spectrometer read on the spectra of anoth
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
 the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, fields computed by DFT on a grid, compared with the total energy of the same calculation, metal particles of thousands of atoms, compared with the numbers of their neighbours, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
-site, and two-phase microstructures on a voxel grid, compared with the phase fraction and the
-correlation lengths of the grains. Each runs on the
+site, two-phase microstructures on a voxel grid, compared with the phase fraction and the
+correlation lengths of the grains, and one atom of a drug as the sample, with the atom a
+cytochrome P450 attacks read from the field around it and compared with counts of the atom types
+around it. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

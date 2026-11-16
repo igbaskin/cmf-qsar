@@ -772,7 +772,8 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_restriction").write_table(_r("restriction")),
                   tables=["restriction/table.md"]),
         Benchmark("metabolism",
-                  "which atom a cytochrome P450 attacks, against a count over bonds",
+                  "which atom a cytochrome P450 attacks, against a count over bonds, a count "
+                  "over distance and the properties a rule-based predictor scores an atom with",
                   "run_metabolism.py", "metabolism", compute=[[]],
                   minutes="5",
                   report=lambda: _mod("run_metabolism").write_table(_r("metabolism")),

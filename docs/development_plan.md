@@ -9150,7 +9150,12 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   those items will use. Gate: the correct site among the first two predicted on a public
   site-of-metabolism set, against a 2D baseline.
   **Done 27 October 2026; the gate is passed, but by the field next to the count and not by the
-  field alone.** The data set is `examples/local/metabolism.sdf`, prepared by
+  field alone.** **A reference that needs no field, added 16 November 2026,** while the
+  twenty-seventh tutorial was written: the properties a rule-based predictor scores an atom with
+  (element, hydrogens, aromatic, in a ring, heavy neighbours, accessibility) reach 55.2 % alone
+  and 74.4 % added to the count over distance, which is no better than the count with the field
+  (-2.5 % [-5.5, +0.2]); added to that mixture they change nothing (+0.0 % [-1.3, +1.3]). The
+  verdict of the item is unchanged, and every row measured before stayed the same. The data set is `examples/local/metabolism.sdf`, prepared by
   `examples/make_local_examples.py --som`: 636 molecules, 1301 sites among 14 488 heavy atoms,
   from the benchmark of Zaretzki, Matlock and Swamidass (J. Chem. Inf. Model. 53 (2013) 3373) in
   the preprocessed form the FAME.AL project publishes under the MIT licence, the sites merged over
