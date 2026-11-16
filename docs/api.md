@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 857 public methods, and 1413 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 857 public methods, and 1417 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -14383,6 +14383,15 @@ measures.  `inorganic_fieldset` builds such a set and `crystal_fields` evaluates
 weights for one structure.  Any per-atom array a structure file carries (Bader charges, magnetic
 moments, ...) can be a field as `prop:<name>`.
 
+Three more fields describe where an atom sits rather than what it is (plan item NT6), for the
+core of a particle and for any other structure: `prop:coordination`, the number of
+neighbours; `prop:generalized_coordination`, the sum of the neighbours' own coordination
+numbers divided by 12 (Calle-Vallejo et al. 2014), which separates a corner atom next to other
+corner atoms from one next to a full facet; and `prop:exposure`, the accessible fraction of the
+atom's sphere (Shrake and Rupley, the same calculation as `calc:surface_fraction`).  They are
+computed from the positions, periodic images included; `inorganic_fieldset(core=True)` adds
+them.
+
 Partial occupancy (plan item M2)
 -------------------------------
 A disordered site -- a Li site occupied in 54 % of the cells, a site shared by Zr and Ta -- is
@@ -14866,10 +14875,12 @@ or an added atom counts one, a substitution one (its two rows share a site).
 `defect_fields` records the number; for a record without it the rows are counted,
 where a `+` row at the coordinate of a `-` row is a substitution and shares its site.
 
-### `inorganic_fieldset(elements: Sequence[str]=(), physchem: Sequence[str]=INORGANIC_FIELDS, charge_model: str='oxidation', other: bool=True, alpha: float=1.0) -> FieldSet`
+### `inorganic_fieldset(elements: Sequence[str]=(), physchem: Sequence[str]=INORGANIC_FIELDS, charge_model: str='oxidation', other: bool=True, alpha: float=1.0, core: bool=False) -> FieldSet`
 
 A field set for solids: the physico-chemical fields named, one indicator field per element
-listed (`cif:<symbol>`) and, with `other`, one more for every element not listed.
+listed (`cif:<symbol>`) and, with `other`, one more for every element not listed.  With
+`core`, the three fields of where an atom sits (`CORE_FIELDS`: coordination number,
+generalized coordination number, exposure; plan item NT6) follow the physico-chemical ones.
 
 `charge_model` says where the electrostatic weights come from: `"oxidation"` guesses
 oxidation states from the composition (pymatgen), falling back to the electronegativity proxy
@@ -14926,6 +14937,31 @@ occupancy-weighted field weights.  `site_tolerance` is kept small so that split 
 fraction of an angstrom apart stay separate sites instead of being merged into one with an
 occupancy above one; `occupancy_tolerance` is what a site may sum to before the file is
 refused.  An ordered CIF comes back as an ordinary structure.
+
+### `coordination_pairs(atoms, factor: float=COORDINATION_FACTOR)`
+
+The ordered neighbour pairs (i, j) of a structure, periodic images included: two atoms
+are neighbours when they are closer than `factor` times the sum of their covalent radii.
+
+An atom bonded to its own periodic image (a cell of one atom) counts the image as a
+neighbour, as a crystal must.
+
+### `coordination_numbers(atoms, factor: float=COORDINATION_FACTOR) -> np.ndarray`
+
+The number of neighbours of every atom (`coordination_pairs`).
+
+### `generalized_coordination(atoms, factor: float=COORDINATION_FACTOR, bulk: float=BULK_COORDINATION) -> np.ndarray`
+
+The generalized coordination number of every atom: the sum of the coordination numbers
+of its neighbours divided by `bulk` (Calle-Vallejo et al., Angew. Chem. Int. Ed. 53, 8316,
+2014).  Two atoms with the same number of neighbours differ when those neighbours are
+themselves more or less surrounded: a vertex next to an edge against a vertex next to a
+facet.
+
+### `core_columns(atoms, names: Iterable[str]) -> Dict[str, np.ndarray]`
+
+The per-atom values of the core fields among `names` (`CORE_FIELDS`), each
+computed once: {field name: (n_atoms,)}.
 
 ### `crystal_fields(atoms, fieldset: FieldSet, name: str='') -> CrystalFields`
 
