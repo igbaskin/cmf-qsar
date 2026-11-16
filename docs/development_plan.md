@@ -6575,6 +6575,15 @@ on the same folds.
   application, and no attempt at the shift sets that would make this a shift predictor: 400
   molecules with one force-field conformation each is far from the one to three ppm that programs
   built for the task reach with tens of thousands of spectra and calculated geometries.
+  **A HOSE-code reference, added 16 November 2026,** while the twenty-ninth tutorial was written.
+  A lookup of the mean shift of the training carbons that share the deepest sphere of bonds (RDKit
+  Morgan environments up to four bonds; no geometry, no fit) reaches q2 +0.976 and 8.34 ppm on the
+  same folds. The count of this item is 0.123 behind it, and the local field only ties it: -0.003
+  [-0.008, +0.001] at its best width. So the gate passed against a weak reference. The three-
+  distance kernel of LP5 does beat the lookup, by +0.014 [+0.011, +0.017], and so does LP3's posed
+  overlap on the ring carbons, by +0.119 [+0.088, +0.153]; in both, five element channels in place
+  of the five fields do as well (+0.000 [-0.002, +0.002] and -0.004 [-0.018, +0.011]).
+  `run_local.py --only hose`; the rows measured before are unchanged.
 * **LP3. Local alignment and the co-field around an atom.** For a congeneric site (the carboxyl
   group, an aromatic carbon with its two neighbours) a superposition on the centre and its first
   shell is well posed, and the overlap kernel in that frame gives what the invariant kernel
@@ -6650,6 +6659,14 @@ on the same folds.
   **Not done:** no panel in the application (the co-field leaves as a cube file), and no quantum
   charges for the shift set, which is what the *electrostatic* co-field would need to carry the
   resonance that the indicator fields carry by type.
+  **Element channels in place of the fields, measured 16 November 2026.** The posed overlap at rho
+  0.25 with five element channels (H, C, N, O and the rest, each with the envelope) instead of the
+  five fields gives q2 +0.903 against +0.899, -0.004 [-0.018, +0.011]; both beat a HOSE-code
+  lookup (+0.780) by about +0.12. A learning curve over 38, 76 and 153 training molecules per fold
+  finds no size at which the fields lead (+0.011, +0.003, -0.004, with one draw of five clear of
+  zero at 38). What the pose carries is where the substituents sit; the five fields add nothing to
+  that over their elements, which agrees with the reading above, where the Sybyl indicator fields,
+  not the electrostatic one, carried the substituent table. `run_local.py --only hose-curve`.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
   first with no extra work once an environment is a field; the second needs members with their

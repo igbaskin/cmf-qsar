@@ -428,9 +428,10 @@ def registry() -> List[Benchmark]:
                       "guest_atoms", _mod("run_guest_atoms").report(_r("guest_atoms"))),
                   tables=["guest_atoms/table.md"]),
         Benchmark("local",
-                  "does the field around an atom predict a shift or an acidity of that atom",
+                  "does the field around an atom predict a shift or an acidity of that atom, "
+                  "and does it beat a HOSE-code lookup",
                   "run_local.py", "local", compute=[[]],
-                  minutes="45",
+                  minutes="110",
                   report=lambda: _mod("run_local").write_table(_r("local")),
                   tables=["local/table.md"]),
         Benchmark("local_cofield",

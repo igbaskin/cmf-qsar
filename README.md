@@ -2985,6 +2985,14 @@ nmrshiftdb2, measured in chloroform: the local field gives q2 +0.973 and an erro
 20.5 ppm for the count, a difference of +0.120 [+0.107, +0.133]. The width decides it: 2.0 A
 gives +0.902, which says a shift is a property of the atom and its first shells.
 
+**Against a HOSE-code lookup the field only ties (added 16 November 2026).** The count is not how
+shifts are predicted in practice; a HOSE-code lookup is (the mean shift of the training atoms that
+share the most spheres of bonds with the new one, no geometry, no fit). On the same folds it
+reaches q2 +0.976 and 8.34 ppm, and the local field ties it: -0.003 [-0.008, +0.001]. The models
+that see where the neighbours sit beat it, the three-distance kernel by +0.014 [+0.011, +0.017]
+and the posed overlap of the ring carbons by +0.119 [+0.088, +0.153], but five element channels in
+place of the fields do as well in both. The twenty-ninth tutorial shows it.
+
 **On carboxylic acid pKa it does not.** 912 acids: the best local field is +0.582, at the much
 wider envelope of 3.2 A that an acidity turns out to want, against +0.541 for the count, a difference of +0.041 [-0.013, +0.094], inside the interval. The
 **difference field** of the acid and its anion, which the plan proposed as the sample because
@@ -6910,7 +6918,7 @@ for.
 
 ### Tutorials
 
-Twenty-eight notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Twenty-nine notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -6944,6 +6952,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `26_a_microstructure.ipynb` | a two-phase microstructure on a voxel grid as the sample: 400 cells built and solved live, the overlap of their two-point statistics against the phase fraction and against three measured numbers (the fraction and the correlation lengths along the axes) as the reference, the 3D cells, the elastic label, two scales, the map over the lag vector, and the limit on real micrographs |
 | `27_which_atom_reacts.ipynb` | one atom as the sample: the atom a cytochrome P450 attacks, in 636 drug molecules and 14,488 heavy atoms, with the field around an atom against a count of the atom types over bonds, a count over distance, and a few properties of the atom itself as the references, and the mixture that beats them all |
 | `28_interchangeable_groups.ipynb` | a bioisostere table read off a fitted model: matched molecular pairs of the glycogen phosphorylase set, the predicted change of an exchange against the fingerprint distance, the field distance and a fingerprint model as the references, the three sets from the stored runs, and the pairs of groups the model's own error cannot separate |
+| `29_carbon_shifts.ipynb` | the 13C shift of one carbon: a HOSE-code lookup built sphere by sphere, the posed overlap of the ring carbons with fields and with element channels in their place, the whole set and a learning curve from the stored run, and a margin on one subset that random subsets do not repeat |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7396,7 +7405,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-eight notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-nine notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

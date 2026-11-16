@@ -12240,6 +12240,29 @@ three ppm on 13C by using tens of thousands of spectra and often a calculated ge
 has 400 molecules and one force-field conformation each. The question the item asks is
 narrower, and the measurement answers it.
 
+**A reference a spectroscopist would use (added 16 November 2026).** The count above is the
+reference rule 1 asked for, but 13C shifts are predicted in practice by a HOSE-code lookup
+(Bremser 1978): describe the atom sphere by sphere of bonds and take the mean shift of the
+training atoms that share the deepest sphere with it. It needs no geometry and fits nothing.
+`run_local.py --only hose` measures it with RDKit's Morgan environments as the codes, on the same
+folds. Up to four bonds it reaches q2 +0.976 and 8.34 ppm, so the count is 0.123 behind it
+([-0.136, -0.111]), and the local field of this section only ties it: -0.003 [-0.008, +0.001] at
+its best width, -0.014 [-0.018, -0.009] at the default. The +0.120 above measured a weak
+reference. What does beat the lookup is a model that sees where the atoms around the carbon sit:
+the three-distance kernel of *Three atoms at a time* by +0.014 [+0.011, +0.017] (5.45 against 8.34
+ppm) and the posed overlap of the next section by +0.119 [+0.088, +0.153] on the 1,225 ring
+carbons. In both, five element channels (H, C, N, O and the rest) in place of the five fields do
+as well: +0.000 [-0.002, +0.002] and -0.004 [-0.018, +0.011]. For a carbon shift it is the
+positions of the neighbours that count, not their fields. The stage also draws a learning curve on
+the ring carbons (`--only hose-curve`): the fields and the element channels tie at 38, 76 and 153
+training molecules per fold, while the lead of either over the lookup grows as the set shrinks,
+from +0.119 to +0.185. Every row measured before this stage is unchanged.
+
+The twenty-ninth tutorial, `docs/tutorials/29_carbon_shifts.ipynb`, builds the lookup, compares it
+live with the posed overlap on half of the ring carbons, reads the whole set and the learning
+curve from the stored run, and shows a margin of +0.045 on one subset that random subsets of the
+same size do not repeat.
+
 **Carboxylic acid pKa, 912 acids with the value on the carboxyl carbon.**
 
 | descriptor | envelope width rho | q2 | error (pKa units) | mean kernel between two samples | difference in q2 against the counts |
@@ -18587,7 +18610,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-eight notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-nine notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18605,8 +18628,9 @@ of point mutants of a protein, read with fields and compared with a count of the
 site, two-phase microstructures on a voxel grid, compared with the phase fraction and the
 correlation lengths of the grains, and one atom of a drug as the sample, with the atom a
 cytochrome P450 attacks read from the field around it and compared with counts of the atom types
-around it, and which groups can replace each other at a position, compared with a model that
-needs no field. Each runs on the
+around it, which groups can replace each other at a position, compared with a model that
+needs no field, and the 13C shift of one carbon, compared with a HOSE-code lookup and with element
+channels in place of the fields. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
