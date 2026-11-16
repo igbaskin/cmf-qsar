@@ -1,6 +1,6 @@
 {
- "commit": "10d44bde4e1b861620ed6159e65d86229b48cf85",
- "created": "2026-11-16T06:53:49",
+ "commit": "991331b2c5943a1b46ad21cbbe9130b2a9e646f6",
+ "created": "2026-11-16T07:45:56",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -4058,6 +4058,9 @@
   "benchmarks/results/structure/THR.json": "cffb48db9ff9813d285eab50ecaa3f72c08c10b7eb571c2d9be990e5fde32081",
   "benchmarks/results/structure/power.json": "6ba17e1803acb41bf4aed4389c87b2541c8269935d6e13b3cd07144023fcb31d",
   "benchmarks/results/structure/table.md": "b83ed92793fedf864848a4766b670abf636c04df56b94e2d12b0ece03a21e102",
+  "benchmarks/results/structures/formats.json": "ea9e127dff2af93529ce7300b973129e637a4ca5215525089741b19d775c6887",
+  "benchmarks/results/structures/speed.json": "7debdda211b5ee63e434e66634f15a2d6dab06520adbda9c0cc589aaa562491b",
+  "benchmarks/results/structures/table.md": "abccf2bc5010eff1f95515114e12f987265802ab91a47230a28bdc7998392f15",
   "benchmarks/results/surface_view/arrows.json": "15969fa124819f15f1984c5d2f693b17cb0ef9149ee6ad9740e0ab880306156a",
   "benchmarks/results/surface_view/bonds.json": "456da232f6a238d4a275067ef967918eb4f602da86a6347ea3a6e192e7fdea97",
   "benchmarks/results/surface_view/copattern.json": "408461633ed2392d9cf0464caf97ded1c086480e9bf3e5ef2db541bdfe6cf366",
