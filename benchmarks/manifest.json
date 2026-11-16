@@ -1,6 +1,6 @@
 {
- "commit": "b0bf98d4cb31cca3041fc1b561fde72af2441afa",
- "created": "2026-11-16T23:32:35",
+ "commit": "e6f257810b3e45d3930a84476503de6969fbaebb",
+ "created": "2026-11-17T01:29:14",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1826,6 +1826,26 @@
    "bytes": 7094,
    "sha256": "b354a9f278bcf2ff08fc2f888ebe69b25c7767504514fa45cad9097878eaaecb"
   },
+  "examples/particle_sites/README.md": {
+   "bytes": 4054,
+   "sha256": "6386416506257caf18473b136c8c130132ab7b6ea5c95ec99443b209ba1d2f11"
+  },
+  "examples/particle_sites/make_particle_sites.py": {
+   "bytes": 9291,
+   "sha256": "b2f405b147a614a373480ae80bd26f4f6a9b81f9939e0846e051936be0de5b08"
+  },
+  "examples/particle_sites/particles.extxyz": {
+   "bytes": 241193,
+   "sha256": "d1639ab6e8e103e3092de2c469e23659ceeecc61695eb69a094da47d67efcbd3"
+  },
+  "examples/particle_sites/sites.csv": {
+   "bytes": 189293,
+   "sha256": "0587a7f1461b58d183a628945ac4c4ccdce7069d48979204622f0c3722f7ae88"
+  },
+  "examples/particle_sites/terrace.csv": {
+   "bytes": 56,
+   "sha256": "88ebfcacedf5b0a0cd24b8a0cb465141271779d10a6fade2dcb9dbf4b9e99853"
+  },
   "examples/phenazine/README.md": {
    "bytes": 3683,
    "sha256": "983bdbb364a04ae39923ea3a392ae90e5242c50ff94d6cae9384d1bde49ce6ea"
@@ -3539,6 +3559,10 @@
   "benchmarks/results/nystrom/select.json": "4771519914d32ee0a893e66a06f5bfdacf2d6fe3dec27fbb88780bb3f7ae6c63",
   "benchmarks/results/nystrom/table.md": "ba0427b7787242c1ce6c8e867a9bcd37c70805e0ce25a4b49abd94dfa3b60a58",
   "benchmarks/results/nystrom/width.json": "67c75027ba4c42e1578a49d07a8e9dafde144fd353edd663776ecb59cf8ec61a",
+  "benchmarks/results/particle_sites/checks.json": "dbf2de544d14038000ea29014c6bda5a41977da2f909e260130707ac63496ed2",
+  "benchmarks/results/particle_sites/decomposition.json": "79496d265fe94f9baa34e7876204ebb7b7d5fe705c5cd8fd811cfb8ced71a0da",
+  "benchmarks/results/particle_sites/model.json": "5ead7c43d97000d4cbbbc3ec83631f1afbcba88ba4d9643b77f4ec85020b3e72",
+  "benchmarks/results/particle_sites/table.md": "785bbf88757292af2b031f6a2f3c4590ddcdbc1670d48589d8c8cbdcb8595daf",
   "benchmarks/results/particles/counts.json": "63b1c25309b38cf041e54782c9873e61cb9b8c14156d0ada5145dce43142e0c4",
   "benchmarks/results/particles/property.json": "5bc96d6d667baaa4a06134aede4032d967e4701684792d3d5c5d2fa308916f15",
   "benchmarks/results/particles/scaling.json": "cc025a590c08c6e1908e122f2e3723a14c8e0a015fd58273b19223004ff14003",
