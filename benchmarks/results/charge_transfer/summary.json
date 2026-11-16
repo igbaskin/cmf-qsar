@@ -1,12 +1,13 @@
 {
- "n_rows": 103,
- "n_primary": 103,
+ "n_rows": 109,
+ "n_primary": 109,
  "n_secondary": 0,
- "n_studies": 18,
+ "n_studies": 19,
  "classes": {
   "carbonaceous thin film": 3,
   "graphite": 39,
   "layered oxide": 21,
+  "lithium metal": 6,
   "lithium titanate": 14,
   "non-graphitizable carbon": 11,
   "olivine": 1,
@@ -322,6 +323,22 @@
    "varied": [
     "solvent",
     "temperature range"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Zabara2024",
+   "electrode_class": "lithium metal",
+   "n": 6,
+   "low": 47.7,
+   "high": 69.52,
+   "range": 21.819999999999993,
+   "varied": [
+    "solvent",
+    "film",
+    "state"
    ],
    "read_from": [
     "primary"
@@ -760,11 +777,53 @@
    "read_from": [
     "primary"
    ]
+  },
+  {
+   "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+   "n": 3,
+   "solvents": [
+    "EC:DMC 1:1",
+    "EC:DEC 1:1",
+    "EC:EMC 7:3"
+   ],
+   "values": [
+    47.7,
+    47.86,
+    64.42
+   ],
+   "low": 47.7,
+   "high": 64.42,
+   "range": 16.72,
+   "one_solvent": [],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+   "n": 3,
+   "solvents": [
+    "EC:DMC 1:1",
+    "EC:DEC 1:1",
+    "EC:EMC 7:3"
+   ],
+   "values": [
+    67.59,
+    68.73,
+    69.52
+   ],
+   "low": 67.59,
+   "high": 69.52,
+   "range": 1.9299999999999926,
+   "one_solvent": [],
+   "read_from": [
+    "primary"
+   ]
   }
  ],
  "solvent_count": {
-  "n_series": 14,
-  "n_rows": 47,
+  "n_series": 16,
+  "n_rows": 53,
   "largest": 8,
   "solvents": [
    "2,2,2-trifluoroethyl acetate",
@@ -783,6 +842,7 @@
    "EC:DMC 70:30",
    "EC:EMC 20:80",
    "EC:EMC 30:70",
+   "EC:EMC 7:3",
    "EMC",
    "FEC",
    "PC",
@@ -995,6 +1055,34 @@
   },
   {
    "first": "EC:DEC 1:1",
+   "second": "EC:DMC 1:1",
+   "differences": [
+    {
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "difference": 0.1599999999999966
+    },
+    {
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "difference": 1.1400000000000006
+    }
+   ]
+  },
+  {
+   "first": "EC:DEC 1:1",
+   "second": "EC:EMC 7:3",
+   "differences": [
+    {
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "difference": -16.560000000000002
+    },
+    {
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "difference": -0.789999999999992
+    }
+   ]
+  },
+  {
+   "first": "EC:DEC 1:1",
    "second": "PC",
    "differences": [
     {
@@ -1026,6 +1114,20 @@
     {
      "series": "YamadaSagane2009: solid electrolyte, no film",
      "difference": -2.0
+    }
+   ]
+  },
+  {
+   "first": "EC:DMC 1:1",
+   "second": "EC:EMC 7:3",
+   "differences": [
+    {
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "difference": -16.72
+    },
+    {
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "difference": -1.9299999999999926
     }
    ]
   }

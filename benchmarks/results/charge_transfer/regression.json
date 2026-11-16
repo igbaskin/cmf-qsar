@@ -631,50 +631,51 @@
    "words": "single solvents, without the two that wrap the ion"
   },
   "mixtures": {
-   "n_points": 47,
-   "n_series": 14,
+   "n_points": 53,
+   "n_series": 16,
    "n_solvents": 14,
    "slope": 0.06675922220646875,
-   "correlation_inside_series": 0.3402372058110338,
-   "sd_y_inside_series": 10.745702923219925,
-   "residual_sd": 10.26128041816411,
+   "correlation_inside_series": 0.33220515102279335,
+   "sd_y_inside_series": 10.39360908976143,
+   "residual_sd": 9.938551145776394,
    "held_out": {
-    "n": 57,
+    "n": 63,
     "mean": {
-     "mae": 10.484457351712614,
-     "rmse": 14.666290005560215
+     "mae": 10.062921730914587,
+     "rmse": 14.187129878565013
     },
     "regression": {
-     "mae": 12.195522104967829,
-     "rmse": 16.565709466760637
+     "mae": 11.611027936240733,
+     "rmse": 15.967076875044706
     }
    },
    "gain": {
-    "gain": -1.711064753255215,
-    "low": -5.51466307209588,
-    "high": 1.2667978400333058,
+    "gain": -1.548106205326146,
+    "low": -4.836235184087998,
+    "high": 1.1631458548648037,
     "groups": 14
    },
    "permutation": {
     "draws": 2000,
-    "share_not_above": 0.7595,
+    "share_not_above": 0.7645,
     "solvents": 13
    },
    "between_series": {
-    "n": 35,
+    "n": 41,
     "electrolytes": [
      "DMC",
      "DMSO",
      "EC:DEC 1:1",
      "EC:DMC 1:1",
      "EC:DMC 1:9",
+     "EC:EMC 7:3",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 10.503807956761689,
-    "floor_mae": 7.387161943152037
+    "regression_mae": 9.853250694796564,
+    "floor_mae": 7.051479707568814
    },
    "per_series": [
     {
@@ -774,6 +775,20 @@
      "slope": 0.8132238220468434,
      "range_x": 22.953910301943182,
      "range_y": 21.0
+    },
+    {
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "n": 3,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 16.72
+    },
+    {
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "n": 3,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 1.9299999999999926
     }
    ],
    "predictions": [
@@ -828,14 +843,34 @@
      "slope": 0.064714400087942
     },
     {
+     "held_out": "DEC",
+     "id": "Z24-01",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.73,
+     "mean": 68.555,
+     "regression": 68.555,
+     "slope": 0.064714400087942
+    },
+    {
+     "held_out": "DEC",
+     "id": "Z24-04",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.86,
+     "mean": 56.06,
+     "regression": 56.06,
+     "slope": 0.064714400087942
+    },
+    {
      "held_out": "DMC",
      "id": "X10-01",
      "series": "Xu2010: lithium titanate, no film",
      "solvent": "DMC",
      "y": 50.67,
      "mean": 45.12,
-     "regression": 31.44972286741869,
-     "slope": 0.09423838834543191
+     "regression": 31.44972286741868,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -844,8 +879,8 @@
      "solvent": "EC:DMC 20:80",
      "y": 51.94,
      "mean": 45.12,
-     "regression": 33.61286238049942,
-     "slope": 0.09423838834543191
+     "regression": 33.612862380499415,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -854,8 +889,8 @@
      "solvent": "EC:DMC 30:70",
      "y": 52.52,
      "mean": 45.12,
-     "regression": 33.61286238049942,
-     "slope": 0.09423838834543191
+     "regression": 33.612862380499415,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -864,8 +899,8 @@
      "solvent": "EC:DMC 1:1",
      "y": 52.08,
      "mean": 45.12,
-     "regression": 33.61286238049942,
-     "slope": 0.09423838834543191
+     "regression": 33.612862380499415,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -874,8 +909,8 @@
      "solvent": "EC:DMC 60:40",
      "y": 50.2,
      "mean": 45.12,
-     "regression": 33.61286238049942,
-     "slope": 0.09423838834543191
+     "regression": 33.612862380499415,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -884,8 +919,8 @@
      "solvent": "EC:DMC 70:30",
      "y": 54.94,
      "mean": 45.12,
-     "regression": 33.61286238049942,
-     "slope": 0.09423838834543191
+     "regression": 33.612862380499415,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -895,7 +930,7 @@
      "y": 54.0,
      "mean": 64.0,
      "regression": 63.392703147553554,
-     "slope": 0.09423838834543191
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -905,7 +940,7 @@
      "y": 37.0,
      "mean": 64.0,
      "regression": 61.229563634472825,
-     "slope": 0.09423838834543191
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMC",
@@ -915,7 +950,27 @@
      "y": 28.9455,
      "mean": 26.69418333333333,
      "regression": 24.992561705044626,
-     "slope": 0.09423838834543191
+     "slope": 0.09423838834543197
+    },
+    {
+     "held_out": "DMC",
+     "id": "Z24-02",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:DMC 1:1",
+     "y": 67.59,
+     "mean": 69.125,
+     "regression": 69.125,
+     "slope": 0.09423838834543197
+    },
+    {
+     "held_out": "DMC",
+     "id": "Z24-05",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:DMC 1:1",
+     "y": 47.7,
+     "mean": 56.14,
+     "regression": 56.14,
+     "slope": 0.09423838834543197
     },
     {
      "held_out": "DMF",
@@ -935,7 +990,7 @@
      "y": 69.9,
      "mean": 44.4,
      "regression": 46.56478194426343,
-     "slope": 0.05822668492842341
+     "slope": 0.05822668492842343
     },
     {
      "held_out": "DMSO",
@@ -945,7 +1000,7 @@
      "y": 82.3,
      "mean": 65.7,
      "regression": 67.24378357103814,
-     "slope": 0.05822668492842341
+     "slope": 0.05822668492842343
     },
     {
      "held_out": "EC",
@@ -1155,7 +1210,7 @@
      "y": 67.75,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.06473824033986682
+     "slope": 0.06473824033986685
     },
     {
      "held_out": "EMC",
@@ -1165,7 +1220,7 @@
      "y": 66.65,
      "mean": 71.1,
      "regression": 71.1,
-     "slope": 0.06473824033986682
+     "slope": 0.06473824033986685
     },
     {
      "held_out": "EMC",
@@ -1175,7 +1230,27 @@
      "y": 53.14,
      "mean": 71.1,
      "regression": 69.87883888196102,
-     "slope": 0.06473824033986682
+     "slope": 0.06473824033986685
+    },
+    {
+     "held_out": "EMC",
+     "id": "Z24-03",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:EMC 7:3",
+     "y": 69.52,
+     "mean": 68.16,
+     "regression": 68.16,
+     "slope": 0.06473824033986685
+    },
+    {
+     "held_out": "EMC",
+     "id": "Z24-06",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:EMC 7:3",
+     "y": 64.42,
+     "mean": 47.78,
+     "regression": 47.78,
+     "slope": 0.06473824033986685
     },
     {
      "held_out": "FEC",
@@ -1185,7 +1260,7 @@
      "y": 31.5,
      "mean": 63.6,
      "regression": 61.28004373922004,
-     "slope": 0.05885191523275148
+     "slope": 0.058851915232751496
     },
     {
      "held_out": "PC",
@@ -1275,7 +1350,7 @@
      "y": 40.08,
      "mean": 51.787142857142854,
      "regression": 48.109137169444494,
-     "slope": 0.06257010802661415
+     "slope": 0.06257010802661417
     },
     {
      "held_out": "THF",
@@ -1285,7 +1360,7 @@
      "y": 42.4,
      "mean": 43.875,
      "regression": 42.492985281748595,
-     "slope": 0.06257010802661415
+     "slope": 0.06257010802661417
     },
     {
      "held_out": "acetonitrile",
@@ -1315,7 +1390,7 @@
      "y": 34.7346,
      "mean": 24.76448333333333,
      "regression": 36.68368593156813,
-     "slope": 0.06929951957745699
+     "slope": 0.069299519577457
     },
     {
      "held_out": "poly(ethylene glycol) of molar mass 222",
@@ -1324,8 +1399,8 @@
      "solvent": "poly(ethylene glycol) of molar mass 222",
      "y": 50.16,
      "mean": 50.34714285714285,
-     "regression": 105.77831587443325,
-     "slope": 0.20181289039263658
+     "regression": 105.77831587443319,
+     "slope": 0.20181289039263642
     },
     {
      "held_out": "water",
@@ -1335,7 +1410,7 @@
      "y": 15.4376,
      "mean": 61.7504,
      "regression": 58.415324892194135,
-     "slope": 0.04672254582116707
+     "slope": 0.046722545821167076
     },
     {
      "held_out": "water",
@@ -1344,35 +1419,35 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 29.910349999999998,
-     "regression": 25.021390909542202,
-     "slope": 0.04672254582116707
+     "regression": 25.0213909095422,
+     "slope": 0.046722545821167076
     }
    ],
    "words": "single solvents and mixtures; a mixture takes its strongest solvent"
   },
   "mixtures_no_chelate": {
-   "n_points": 45,
-   "n_series": 14,
+   "n_points": 51,
+   "n_series": 16,
    "n_solvents": 12,
    "slope": 0.49795987659390806,
-   "correlation_inside_series": 0.8457404470826823,
-   "sd_y_inside_series": 10.977882851534016,
-   "residual_sd": 5.95456664522053,
+   "correlation_inside_series": 0.8253905502744352,
+   "sd_y_inside_series": 10.586271436286145,
+   "residual_sd": 6.0638627062888855,
    "held_out": {
-    "n": 55,
+    "n": 61,
     "mean": {
-     "mae": 11.48896196969697,
-     "rmse": 15.292492702075222
+     "mae": 10.954801775956286,
+     "rmse": 14.75589238645902
     },
     "regression": {
-     "mae": 5.954146182706729,
-     "rmse": 7.671158362344219
+     "mae": 5.964394099161804,
+     "rmse": 7.74190908606326
     }
    },
    "gain": {
-    "gain": 5.534815786990241,
-    "low": 3.8557499660762677,
-    "high": 7.725043798321069,
+    "gain": 4.990407676794482,
+    "low": 3.3274394583530955,
+    "high": 7.073783163344805,
     "groups": 12
    },
    "permutation": {
@@ -1381,20 +1456,21 @@
     "solvents": 11
    },
    "between_series": {
-    "n": 35,
+    "n": 41,
     "electrolytes": [
      "DMC",
      "DMSO",
      "EC:DEC 1:1",
      "EC:DMC 1:1",
      "EC:DMC 1:9",
+     "EC:EMC 7:3",
      "PC",
      "THF",
      "acetonitrile",
      "water"
     ],
-    "regression_mae": 5.667341785841659,
-    "floor_mae": 5.16701030509482
+    "regression_mae": 5.724560061084342,
+    "floor_mae": 5.156228309227285
    },
    "per_series": [
     {
@@ -1494,6 +1570,20 @@
      "slope": 0.8132238220468434,
      "range_x": 22.953910301943182,
      "range_y": 21.0
+    },
+    {
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "n": 3,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 16.72
+    },
+    {
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "n": 3,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 1.9299999999999926
     }
    ],
    "predictions": [
@@ -1545,6 +1635,26 @@
      "y": 47.5,
      "mean": 49.0,
      "regression": 45.84067335138722,
+     "slope": 0.4902542313905689
+    },
+    {
+     "held_out": "DEC",
+     "id": "Z24-01",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 68.73,
+     "mean": 68.555,
+     "regression": 68.555,
+     "slope": 0.4902542313905689
+    },
+    {
+     "held_out": "DEC",
+     "id": "Z24-04",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:DEC 1:1",
+     "y": 47.86,
+     "mean": 56.06,
+     "regression": 56.06,
      "slope": 0.4902542313905689
     },
     {
@@ -1638,14 +1748,34 @@
      "slope": 0.5423547680621222
     },
     {
+     "held_out": "DMC",
+     "id": "Z24-02",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:DMC 1:1",
+     "y": 67.59,
+     "mean": 69.125,
+     "regression": 69.125,
+     "slope": 0.5423547680621222
+    },
+    {
+     "held_out": "DMC",
+     "id": "Z24-05",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:DMC 1:1",
+     "y": 47.7,
+     "mean": 56.14,
+     "regression": 56.14,
+     "slope": 0.5423547680621222
+    },
+    {
      "held_out": "DMF",
      "id": "S25-05",
      "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
      "solvent": "DMF",
      "y": 57.6,
      "mean": 40.075,
-     "regression": 58.36684956268618,
-     "slope": 0.5000422886501352
+     "regression": 58.366849562686184,
+     "slope": 0.5000422886501353
     },
     {
      "held_out": "DMSO",
@@ -1898,6 +2028,26 @@
      "slope": 0.489927733084688
     },
     {
+     "held_out": "EMC",
+     "id": "Z24-03",
+     "series": "Zabara2024: lithium metal, as assembled, film formed in each electrolyte",
+     "solvent": "EC:EMC 7:3",
+     "y": 69.52,
+     "mean": 68.16,
+     "regression": 68.16,
+     "slope": 0.489927733084688
+    },
+    {
+     "held_out": "EMC",
+     "id": "Z24-06",
+     "series": "Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte",
+     "solvent": "EC:EMC 7:3",
+     "y": 64.42,
+     "mean": 47.78,
+     "regression": 47.78,
+     "slope": 0.489927733084688
+    },
+    {
      "held_out": "FEC",
      "id": "A05-03",
      "series": "Abe2005: solid electrolyte, no film",
@@ -1905,7 +2055,7 @@
      "y": 31.5,
      "mean": 63.6,
      "regression": 45.29658232026456,
-     "slope": 0.46431529937348337
+     "slope": 0.46431529937348354
     },
     {
      "held_out": "PC",
@@ -1995,7 +2145,7 @@
      "y": 40.08,
      "mean": 52.05833333333333,
      "regression": 41.85855570714149,
-     "slope": 0.5112337629649738
+     "slope": 0.5112337629649737
     },
     {
      "held_out": "THF",
@@ -2004,8 +2154,8 @@
      "solvent": "THF",
      "y": 42.4,
      "mean": 43.875,
-     "regression": 32.5831450365385,
-     "slope": 0.5112337629649738
+     "regression": 32.583145036538504,
+     "slope": 0.5112337629649737
     },
     {
      "held_out": "acetonitrile",
@@ -2014,8 +2164,8 @@
      "solvent": "acetonitrile",
      "y": 43.7,
      "mean": 43.550000000000004,
-     "regression": 32.33637302732325,
-     "slope": 0.5177658025090063
+     "regression": 32.33637302732324,
+     "slope": 0.5177658025090064
     },
     {
      "held_out": "acetonitrile",
@@ -2025,7 +2175,7 @@
      "y": 26.05095,
      "mean": 24.12125,
      "regression": 28.79922330823432,
-     "slope": 0.5177658025090063
+     "slope": 0.5177658025090064
     },
     {
      "held_out": "water",
@@ -2034,8 +2184,8 @@
      "solvent": "water",
      "y": 15.4376,
      "mean": 61.7504,
-     "regression": 23.223118174601787,
-     "slope": 0.5397457725131894
+     "regression": 23.22311817460178,
+     "slope": 0.5397457725131896
     },
     {
      "held_out": "water",
@@ -2044,8 +2194,8 @@
      "solvent": "water",
      "y": 19.297,
      "mean": 27.498224999999998,
-     "regression": -1.2268193485343595,
-     "slope": 0.5397457725131894
+     "regression": -1.2268193485343666,
+     "slope": 0.5397457725131896
     }
    ],
    "words": "the same, without the two solvents that wrap the ion"

@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 103 rows from 18 studies.
+* `activation_energies.csv`: one row per value, 109 rows from 19 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,10 +22,11 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 103 such rows, from 18 papers. Five of the papers are open: four under CC BY 4.0
-  and one as an open file on the site of its society. The other thirteen were read from
-  files that the author of the program supplied: twelve are behind a paywall, and the file
-  of one (Fukutsuka 2010) does not state a licence.
+  There are 109 such rows, from 19 papers. Five of the papers are open: four under CC BY 4.0
+  and one as an open file on the site of its society. The other fourteen were read from
+  files. The author of the program supplied thirteen of them: twelve are behind a paywall,
+  and the file of one (Fukutsuka 2010) does not state a licence. The fourteenth, Zabara
+  2024, is the copy that the repository of its university makes open after an embargo.
 * A row is **secondary** when the number was read in another paper that cites it. No row is
   secondary now. `source` is then the paper that measured the value, and `cited_in` names the
   paper and the place where the number was read. A secondary value has to be checked against
@@ -49,7 +50,7 @@ Nothing was written from memory.
 | Column | Meaning |
 |---|---|
 | `id` | the paper and a running number |
-| `electrode`, `electrode_class` | the material as the paper names it, and its class: graphite, non-graphitizable carbon, carbonaceous thin film, layered oxide, spinel oxide, olivine, lithium titanate, solid electrolyte |
+| `electrode`, `electrode_class` | the material as the paper names it, and its class: graphite, non-graphitizable carbon, carbonaceous thin film, lithium metal, layered oxide, spinel oxide, olivine, lithium titanate, solid electrolyte |
 | `form` | composite electrode, thin film, symmetric cell, full cell with a reference electrode, and so on, as the paper describes it |
 | `state` | the potential or the state of the cell, and its history where the paper gives one |
 | `salt`, `salt_molar` | the lithium salt and its concentration in mol/L; empty where the paper gives mol per kg of solvent or no concentration, and the `note` then says which |
@@ -83,9 +84,11 @@ Nothing was written from memory.
 * The series do not all agree on the pair of solvents that five of them measured, DMC against
   EC:DMC 1:1. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
   17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison for
-  each of the five pairs of solvents that more than one series measured. On one of them the
+  each of the eight pairs of solvents that more than one series measured. On one of them the
   series agree: DMSO is above PC by 12.6 kJ/mol on a solid electrolyte (Abe 2005) and by
-  11.1 kJ/mol on a carbon film (Fukutsuka 2010).
+  11.1 kJ/mol on a carbon film (Fukutsuka 2010). Three pairs are the mixtures of Zabara 2024
+  on lithium metal: they differ by 0.8 to 1.9 kJ/mol as assembled, and by up to 16.7 kJ/mol
+  after ten cycles.
 * One paper argues against the hypothesis that desolvation alone sets the barrier:
   Chekushkin 2021 (Electrochim. Acta 372, 137843). Its six values are in the table.
 * The set is not complete. A search of the literature on 14 November 2026 found about 40
@@ -101,6 +104,14 @@ Nothing was written from memory.
   DMSO has another salt. In Doi 2005 two rows hold the crown ether 12-crown-4. It is an
   additive there, at half of the concentration of the salt, so the two rows have PC as the
   solvent and are in no series.
+* Zabara 2024 was read on 16 November 2026 and gave 6 rows and two series: lithium metal in
+  EC:DEC 1:1, EC:DMC 1:1 and EC:EMC 7:3, as assembled and after ten cycles. All three
+  electrolytes hold EC. The values are printed in the legends of its Figures 4 and 6. Its
+  other twelve values are not rows. The six of the Li/LiMn2O4 cells are left out because
+  the authors say that the semicircle of a full cell cannot be assigned. The six of the
+  LiMn2O4/LiMn2O4 cells (0.3 to 6.0 kJ/mol) are left out because the authors assign them to
+  electron transfer in the cathode and not to the transfer of the ion. `sources.csv` lists
+  them.
 * Five more papers were read on the same day and gave no row. Four of them measured no
   activation energy (Okoshi 2013, Levin 2017, Vassiliev 2019, Motobayashi 2022). The fifth,
   Zhou 2025, prints one value and shows the others only as markers in a figure.

@@ -2,7 +2,7 @@
 
 The values were collected from the literature and are in `examples/charge_transfer/activation_energies.csv`, one row per value, with the paper and the place in it. A row is *primary* when the number was read in the paper that measured it, and *secondary* when it was read in another paper that cites it. All values below are in kJ/mol; a value given in eV was multiplied by 96.485 and a value given in kcal/mol by 4.184. No model is fitted here.
 
-The table holds 103 rows from 18 studies: 103 primary and 0 secondary. By class of electrode: carbonaceous thin film 3, graphite 39, layered oxide 21, lithium titanate 14, non-graphitizable carbon 11, olivine 1, solid electrolyte 9, spinel oxide 5.
+The table holds 109 rows from 19 studies: 109 primary and 0 secondary. By class of electrode: carbonaceous thin film 3, graphite 39, layered oxide 21, lithium metal 6, lithium titanate 14, non-graphitizable carbon 11, olivine 1, solid electrolyte 9, spinel oxide 5.
 
 ## How well laboratories agree on one system
 
@@ -42,6 +42,7 @@ Over these 5 studies the mean is 59.7 kJ/mol, the standard deviation 5.0 kJ/mol 
 | Xu2010 | lithium titanate | 8 | 40.1 | 54.9 | 14.9 | solvent, salt | primary |
 | Yamada2009 | graphite | 6 | 40.0 | 58.0 | 18.0 | solvent, film | primary |
 | YamadaSagane2009 | solid electrolyte | 4 | 32.0 | 53.0 | 21.0 | solvent, temperature range | primary |
+| Zabara2024 | lithium metal | 6 | 47.7 | 69.5 | 21.8 | solvent, film, state | primary |
 
 ## The two electrodes of a cell with a carbonate electrolyte
 
@@ -81,8 +82,10 @@ A series is a set of rows of one study that share the electrode and the film, or
 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | 3 | DMC; EC:DMC 1:9; EC:DMC 1:1 | 40.0 | 58.0 | 18.0 | primary |
 | Yamada2009: graphite, one film formed with pentafluorostyrene | 2 | DMC; EC:DMC 1:1 | 52.0 | 56.0 | 4.0 | primary |
 | YamadaSagane2009: solid electrolyte, no film | 4 | DMC; EC:DMC 1:14; EC:DMC 1:1; EC:DMC 1:9 | 32.0 | 53.0 | 21.0 | primary |
+| Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | 3 | EC:DMC 1:1; EC:DEC 1:1; EC:EMC 7:3 | 47.7 | 64.4 | 16.7 | primary |
+| Zabara2024: lithium metal, as assembled, film formed in each electrolyte | 3 | EC:DMC 1:1; EC:DEC 1:1; EC:EMC 7:3 | 67.6 | 69.5 | 1.9 | primary |
 
-The 14 series hold 47 rows, and the largest holds 8. They hold 24 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 6 single solvents were measured in two or more series: DMC, DMSO, PC, THF, acetonitrile, water.
+The 16 series hold 53 rows, and the largest holds 8. They hold 25 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 6 single solvents were measured in two or more series: DMC, DMSO, PC, THF, acetonitrile, water.
 
 ### One solvent in more than one series
 
@@ -127,12 +130,18 @@ For every pair of solvents that two or more series measured: the value in the fi
 | DMC | EC:DMC 1:9 | YamadaSagane2009: solid electrolyte, no film | -21.0 |
 | DMSO | PC | Abe2005: solid electrolyte, no film | +12.6 |
 | DMSO | PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | +11.1 |
+| EC:DEC 1:1 | EC:DMC 1:1 | Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | +0.2 |
+| EC:DEC 1:1 | EC:DMC 1:1 | Zabara2024: lithium metal, as assembled, film formed in each electrolyte | +1.1 |
+| EC:DEC 1:1 | EC:EMC 7:3 | Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | -16.6 |
+| EC:DEC 1:1 | EC:EMC 7:3 | Zabara2024: lithium metal, as assembled, film formed in each electrolyte | -0.8 |
 | EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-10, film formed in each electrolyte | -1.5 |
 | EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte | -3.7 |
 | EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-20 not heat-treated, film formed in each electrolyte | -1.3 |
 | EC:DEC 1:1 | PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | -11.0 |
 | EC:DMC 1:1 | EC:DMC 1:9 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | +3.0 |
 | EC:DMC 1:1 | EC:DMC 1:9 | YamadaSagane2009: solid electrolyte, no film | -2.0 |
+| EC:DMC 1:1 | EC:EMC 7:3 | Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | -16.7 |
+| EC:DMC 1:1 | EC:EMC 7:3 | Zabara2024: lithium metal, as assembled, film formed in each electrolyte | -1.9 |
 
 ## The reference: a regression on the binding energy of Li+ with the solvent
 
@@ -176,8 +185,8 @@ The regression has one slope for all series and one intercept for each series, s
 |---|---:|---:|---:|---:|---:|---:|---:|---|---:|
 | single solvents only | 8 | 22 | 13 | +0.074 | 0.40 | 16.1 | 16.5 | -0.4 [-6.3, +3.2] | 30.9 % |
 | single solvents, without the two that wrap the ion | 8 | 20 | 11 | +0.556 | 0.87 | 17.2 | 9.3 | +7.9 [+0.9, +12.8] | 0.0 % |
-| single solvents and mixtures; a mixture takes its strongest solvent | 14 | 47 | 14 | +0.067 | 0.34 | 10.5 | 12.2 | -1.7 [-5.5, +1.3] | 75.9 % |
-| the same, without the two solvents that wrap the ion | 14 | 45 | 12 | +0.498 | 0.85 | 11.5 | 6.0 | +5.5 [+3.9, +7.7] | 0.0 % |
+| single solvents and mixtures; a mixture takes its strongest solvent | 16 | 53 | 14 | +0.067 | 0.33 | 10.1 | 11.6 | -1.5 [-4.8, +1.2] | 76.4 % |
+| the same, without the two solvents that wrap the ion | 16 | 51 | 12 | +0.498 | 0.83 | 11.0 | 6.0 | +5.0 [+3.3, +7.1] | 0.0 % |
 | single solvents, with the binding energies that the papers give | 5 | 14 | 8 | +0.459 | 0.85 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
 The repeatability between laboratories, from the reference system above, is 5.0 kJ/mol. The slope is in kJ/mol of activation energy per kJ/mol of binding energy. A mixture is held out once for each of its solvents, so it is counted more than once in the rows with mixtures.
@@ -190,8 +199,8 @@ Some electrolytes were held out in two or more series. The errors of the regress
 |---|---:|---:|---:|
 | single solvents only | 15 | 14.4 | 11.6 |
 | single solvents, without the two that wrap the ion | 15 | 9.5 | 9.1 |
-| single solvents and mixtures; a mixture takes its strongest solvent | 35 | 10.5 | 7.4 |
-| the same, without the two solvents that wrap the ion | 35 | 5.7 | 5.2 |
+| single solvents and mixtures; a mixture takes its strongest solvent | 41 | 9.9 | 7.1 |
+| the same, without the two solvents that wrap the ion | 41 | 5.7 | 5.2 |
 | single solvents, with the binding energies that the papers give | 10 | 8.4 | 7.8 |
 
 ### The slope of each series, single solvents only

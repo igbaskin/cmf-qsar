@@ -15586,10 +15586,10 @@ reaction was expected to raise it. This was not examined.
 #### The measured activation energies of charge transfer
 
 Plan item BT12 collects the measured activation energies from the literature
-(`examples/charge_transfer/`, 103 values from 18 studies) and
+(`examples/charge_transfer/`, 109 values from 19 studies) and
 `benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
 is *primary* when it was read in the paper that measured it and *secondary* when it was read
-in a paper that cites it. All 103 values are primary now. The file names the paper and the
+in a paper that cites it. All 109 values are primary now. The file names the paper and the
 place for every value.
 
 Five studies measured the same reference system: graphite with a formed surface film, in a
@@ -15608,7 +15608,7 @@ conditions. The mean per electrode is accurate enough for a cold cell with a car
 electrolyte, because the cell needs about 15 kJ/mol.
 
 A *series* is a set of values of one study that share the electrode and the surface film and
-differ in the solvent. The table holds 14 series with 47 values and 13 single solvents. Inside
+differ in the solvent. The table holds 16 series with 53 values and 13 single solvents. Inside
 most series the solvent changes the value by far more than the repeatability. The three
 series of Doi 2005 hold two electrolytes only, EC:DEC and propylene carbonate, whose solvents
 bind the ion almost equally, and they differ by 1 to 4 kJ/mol. An additive on graphite
@@ -15623,13 +15623,15 @@ changes the value by 11 kJ/mol.
 | Solid electrolyte, no film (Yamada, Sagane 2009) | 4 | 32.0 | 53.0 | 21.0 |
 | Graphite, one film formed in EC:DMC (Yamada 2009) | 3 | 40.0 | 58.0 | 18.0 |
 | Graphite, film formed in each electrolyte (Xu 2007) | 4 | 53.1 | 71.1 | 18.0 |
+| Lithium metal, after ten cycles (Zabara 2024) | 3 | 47.7 | 64.4 | 16.7 |
 | LiMn2O4 (Chekushkin 2021) | 4 | 19.3 | 34.7 | 15.4 |
 | Lithium titanate composite, no film (Xu 2010) | 8 | 40.1 | 54.9 | 14.9 |
 | Glassy carbon GC-20 after a heat treatment (Doi 2005) | 2 | 47.9 | 51.6 | 3.7 |
+| Lithium metal, as assembled (Zabara 2024) | 3 | 67.6 | 69.5 | 1.9 |
 | Glassy carbon GC-10 (Doi 2005) | 2 | 47.5 | 49.0 | 1.5 |
 | Glassy carbon GC-20 as received (Doi 2005) | 2 | 68.7 | 70.0 | 1.3 |
 
-The series do not all agree with each other. Five pairs of solvents were measured in more
+The series do not all agree with each other. Eight pairs of solvents were measured in more
 than one series. Five series share one pair: dimethyl carbonate (DMC) against its 1:1 mixture
 with ethylene carbonate (EC).
 
@@ -15651,6 +15653,11 @@ on different solids agree: dimethyl sulfoxide is above propylene carbonate by 12
 a solid electrolyte (Abe 2005) and by 11.1 kJ/mol at a carbon film (Fukutsuka 2010). On the
 other they do not: propylene carbonate is above EC:DEC by 11.0 kJ/mol at the carbon film and
 by 1.3 to 3.7 kJ/mol at the three glassy carbon electrodes.
+Three more pairs came with the rows of Zabara 2024, which measured lithium metal in EC:DEC
+1:1, EC:DMC 1:1 and EC:EMC 7:3. As assembled, the three values are 68.7, 67.6 and 69.5
+kJ/mol, so each pair differs by 0.8 to 1.9 kJ/mol. After ten cycles they are 47.9, 47.7 and
+64.4 kJ/mol: EC:DEC and EC:DMC differ by 0.2 kJ/mol, and EC:EMC is above both by 16.6 and
+16.7 kJ/mol. The authors read this as a more rigid film in EC:EMC.
 The value of one solvent also moves between the series: propylene carbonate gives 46 to 71
 kJ/mol in eight series. So only differences inside a series can be modelled.
 
@@ -15689,14 +15696,14 @@ energies at random between the solvents and gives the share of the exchanges tha
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
 | Single solvents | 22 | 13 | 16.1 | 16.5 | -0.4 [-6.3, +3.2] | 30.9 % |
 | Single solvents, without the two that wrap the ion | 20 | 11 | 17.2 | 9.3 | +7.9 [+0.9, +12.8] | 0.0 % |
-| Single solvents and mixtures | 47 | 14 | 10.5 | 12.2 | -1.7 [-5.5, +1.3] | 75.9 % |
-| The same, without the two that wrap the ion | 45 | 12 | 11.5 | 6.0 | +5.5 [+3.9, +7.7] | 0.0 % |
+| Single solvents and mixtures | 53 | 14 | 10.1 | 11.6 | -1.5 [-4.8, +1.2] | 76.4 % |
+| The same, without the two that wrap the ion | 51 | 12 | 11.0 | 6.0 | +5.0 [+3.3, +7.1] | 0.0 % |
 | Single solvents, binding energies of the papers | 14 | 8 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
 energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the other solvents, and their
 activation energies are not higher than those of the others. With them the regression is no
-better than the mean of the series. Without them it lowers the held-out error by 5.5 to 7.9
+better than the mean of the series. Without them it lowers the held-out error by 5.0 to 7.9
 kJ/mol, with a slope of 0.56 kJ/mol of activation energy per kJ/mol of binding energy. So the
 regression is a usable estimate for a solvent that holds the ion with one atom, and it must
 not be used for a solvent that wraps the ion.
@@ -15713,6 +15720,17 @@ for single solvents and 0.491 became 0.498 with mixtures. In the series of Fukut
 the two single solvents are predicted from each other and from the slope of the other
 series: 71.2 kJ/mol for propylene carbonate, where 71.2 was measured, and 83.8 kJ/mol for
 dimethyl sulfoxide, where 82.3 was measured.
+
+The six lithium metal values of Zabara 2024 were read on 16 November 2026, after the runs
+above, so they are a second test. They add two series to the mixtures and nothing to the
+single solvents. Each of the three electrolytes holds EC, which binds the ion most strongly,
+so the regression gives the three of a series the same value, and its prediction is the
+mean of the other two. That is close as assembled: the errors are 0.2, 1.5 and 1.4 kJ/mol.
+It is far off after ten cycles: the errors are 8.2, 8.4 and 16.6 kJ/mol. The slope stays at
+0.498 with mixtures. The error of the series mean falls from 11.5 to 11.0 kJ/mol, the error
+of the regression stays at 6.0 kJ/mol, and the gain becomes +5.0 [+3.3, +7.1]. A binding
+energy of one molecule cannot separate solvents that share their strongest component, and
+a film that changes with cycling is not in it.
 
 ```bash
 python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py

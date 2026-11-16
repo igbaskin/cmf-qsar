@@ -6150,6 +6150,25 @@ concentration was driven, and the stage counts only discharges that ended at the
   series the regression has 9.5 kJ/mol and a model of the solvent alone at least 9.1
   (5.7 and 5.2 with mixtures). The verdict does not change, and the table above keeps the
   numbers of the run on 92 values.
+  *A fifth reading, 16 November 2026.* Zabara 2024 (Electrochim. Acta 485, 144080) was read
+  in the open copy of its university repository. It measured lithium metal in symmetric
+  cells, in EC:DEC 1:1, EC:DMC 1:1 and EC:EMC 7:3, as assembled and after ten cycles, and
+  prints the activation energy of the charge-transfer resistance in the legends of its
+  Figures 4 and 6: 68.7, 67.6 and 69.5 kJ/mol as assembled, and 47.9, 47.7 and 64.4 kJ/mol
+  after ten cycles. These six values are rows (class `lithium metal`, two series). Its
+  Li/LiMn2O4 values (34 to 58 kJ/mol as assembled) are not rows, because the authors say
+  that a full cell cannot be assigned, and its LiMn2O4/LiMn2O4 values (0.3 to 6.0 kJ/mol)
+  are not rows, because the authors assign them to electron transfer in the cathode. The
+  table holds 109 values from 19 studies, in 16 series with 53 values. The six values are
+  a second test of the regression, because they were read after its runs. The three
+  electrolytes of a series all hold EC, so the regression predicts the mean of the other
+  two: the errors are 0.2, 1.5 and 1.4 kJ/mol as assembled and 8.2, 8.4 and 16.6 kJ/mol
+  after ten cycles. The slope does not move (0.498 with mixtures). With mixtures and
+  without the two solvents that wrap the ion the error is 11.0 kJ/mol for the mean of the
+  series and 6.0 for the regression, on 51 values (gain +5.0 [+3.3, +7.1]); with the two it
+  gains nothing (-1.5 [-4.8, +1.2]). The single solvents do not change. The verdict does
+  not change. The other Elsevier papers could not be opened: ScienceDirect shows a
+  captcha, and eight papers still need files from the author of the program.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -6180,11 +6199,11 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 103 measured values from 18 studies, all of them read in the paper that measured
+November: 109 measured values from 19 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
-classes of solvent the table holds 14 series with 13 single solvents. That is enough to test
+classes of solvent the table holds 16 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
 by 16 kJ/mol between them. The regression was run the same day, with binding energies from
@@ -9176,7 +9195,7 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 103 measured values (13 and 14 November) says that the constants of the cell set are 27
+  of 109 measured values (13 to 16 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:

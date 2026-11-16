@@ -3684,7 +3684,7 @@ cell:
   activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
   capacity only; the energy, the power and the charging of a cold cell were not run.
 - The measured activation energies were then collected from the literature
-  (`examples/charge_transfer/`, 103 values from 18 studies, each with its paper and the place
+  (`examples/charge_transfer/`, 109 values from 19 studies, each with its paper and the place
   in it; `benchmarks/run_charge_transfer.py`). All of them were read in the paper that
   measured them. In carbonate electrolytes the mean is 61.7 kJ/mol for graphite and
   68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Five studies of

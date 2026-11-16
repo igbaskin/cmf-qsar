@@ -33,7 +33,7 @@ def test_an_energy_in_another_unit_is_converted_and_an_unknown_unit_is_refused()
 
 def test_the_table_loads_and_every_row_names_a_paper_that_has_a_record():
     rows, sources = CT.read_labels(), CT.read_sources()
-    assert len(rows) == 103
+    assert len(rows) == 109
     assert len({r["id"] for r in rows}) == len(rows)
     assert {r["source"] for r in rows} <= set(sources)
     assert all(r["location"] or r["cited_in"] for r in rows)       # the place it was read
@@ -139,7 +139,7 @@ def test_the_collected_values_and_what_they_say():
     """The numbers the plan entry quotes."""
     rows, sources = CT.read_labels(), CT.read_sources()
     res = CT.summarise(rows, sources)
-    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (103, 0, 18)
+    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (109, 0, 19)
     rep = res["repeatability"]
     assert rep["n"] == 5
     assert rep["mean"] == pytest.approx(59.7, abs=0.05) and rep["sd"] == pytest.approx(5.0, abs=0.05)
@@ -162,15 +162,23 @@ def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
     count = res["solvent_count"]
     assert ranges["Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC "
                   "1:1"] == pytest.approx(22.1)
-    assert (count["n_series"], count["n_rows"], count["largest"]) == (14, 47, 8)
+    # lithium metal in three EC mixtures: the three values agree within 2 kJ/mol as assembled
+    # and differ by 17 kJ/mol after ten cycles
+    assert ranges["Zabara2024: lithium metal, as assembled, film formed in each "
+                  "electrolyte"] == pytest.approx(1.93)
+    assert ranges["Zabara2024: lithium metal, after ten cycles, film formed in each "
+                  "electrolyte"] == pytest.approx(16.72)
+    assert (count["n_series"], count["n_rows"], count["largest"]) == (16, 53, 8)
     assert len(count["one_solvent"]) == 13
     assert count["one_solvent_in_two_series"] == ["DMC", "DMSO", "PC", "THF", "acetonitrile",
                                                   "water"]
-    # five pairs of solvents were measured in more than one series; on the pair that most
+    # eight pairs of solvents were measured in more than one series; on the pair that most
     # series share, the series do not agree
     pairs = {(c["first"], c["second"]): c for c in res["contrasts"]}
     assert sorted(pairs) == [("DMC", "EC:DMC 1:1"), ("DMC", "EC:DMC 1:9"), ("DMSO", "PC"),
-                             ("EC:DEC 1:1", "PC"), ("EC:DMC 1:1", "EC:DMC 1:9")]
+                             ("EC:DEC 1:1", "EC:DMC 1:1"), ("EC:DEC 1:1", "EC:EMC 7:3"),
+                             ("EC:DEC 1:1", "PC"), ("EC:DMC 1:1", "EC:DMC 1:9"),
+                             ("EC:DMC 1:1", "EC:EMC 7:3")]
     # DMSO against PC: a solid electrolyte and a carbon film agree within 2 kJ/mol
     d = {x["series"].split(":")[0]: x["difference"] for x in pairs[("DMSO", "PC")]["differences"]}
     assert d["Abe2005"] == pytest.approx(12.6) and d["Fukutsuka2010"] == pytest.approx(11.1)
@@ -320,8 +328,8 @@ def test_the_sets_of_points_of_the_regression_on_the_collected_values():
     assert sizes["single"] == (8, 22, 13)
     assert sizes["single_no_chelate"] == (8, 20, 11)
     # DEC is in no series as a single solvent, and it is held out as a part of EC:DEC
-    assert sizes["mixtures"] == (14, 47, 14)
-    assert sizes["mixtures_no_chelate"] == (14, 45, 12)
+    assert sizes["mixtures"] == (16, 53, 14)
+    assert sizes["mixtures_no_chelate"] == (16, 51, 12)
     assert sizes["published"] == (5, 14, 8)
     assert reg["repeatability"] == pytest.approx(5.0, abs=0.05)
     # every held-out value of the first set is predicted once
@@ -397,7 +405,7 @@ def test_what_the_regression_on_the_binding_energy_says():
     m = v["mixtures_no_chelate"]
     assert m["held_out"]["regression"]["mae"] == pytest.approx(6.0, abs=0.05)
     assert (m["gain"]["gain"], m["gain"]["low"], m["gain"]["high"]) == pytest.approx(
-        (5.5, 3.9, 7.7), abs=0.05)
+        (5.0, 3.3, 7.1), abs=0.05)
     # the binding energies of the papers give the same answer on the eight solvents they cover
     p = v["published"]
     assert p["gain"]["gain"] == pytest.approx(5.2, abs=0.05) and p["gain"]["low"] > 0.0
@@ -406,7 +414,7 @@ def test_what_the_regression_on_the_binding_energy_says():
     assert w["between_series"]["n"] == 15
     assert w["between_series"]["regression_mae"] == pytest.approx(9.5, abs=0.05)
     assert w["between_series"]["floor_mae"] == pytest.approx(9.1, abs=0.05)
-    assert m["between_series"]["n"] == 35
+    assert m["between_series"]["n"] == 41
     assert m["between_series"]["regression_mae"] == pytest.approx(5.7, abs=0.05)
     assert m["between_series"]["floor_mae"] == pytest.approx(5.2, abs=0.05)
 
