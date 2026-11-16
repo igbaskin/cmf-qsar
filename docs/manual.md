@@ -8648,12 +8648,30 @@ it is judged against.
 | THER, 76 molecules | 142 | +0.084 | +0.162 | +0.277 | +0.641 |
 | THR, 88 molecules | 751 | +0.144 | +0.242 | +0.335 | +0.711 |
 
-**The co-field weighting earns its place.** On GPB and THR the predicted change ranks the measured
-activity difference better than both references by more than the interval of rule 4: against the
+**The co-field weighting earns its place against a distance.** On GPB and THR the predicted change
+ranks the measured activity difference better than both references by more than the interval of
+rule 4: against the
 fingerprint distance +0.586 [+0.505, +0.669] and +0.191 [+0.106, +0.279], against the field
 distance +0.556 [+0.479, +0.632] and +0.093 [+0.008, +0.181]. On THER it is ahead of both as
 well, +0.193 [-0.059, +0.437] and +0.116 [-0.089, +0.313], but the interval contains zero; that is
 the set with the fewest pairs. On no set is it worse than either reference.
+
+**A reference that is a model and needs no field (added 16 November 2026).** Both references above
+are distances, and a distance is fitted to nothing, so what the co-field gains over them could be
+the fitting rather than the field. `run_bioisostere.py` now adds a third: kernel ridge on Morgan
+fingerprints of the whole molecules, chosen and refitted exactly as the field model is, with its
+predicted change the difference of its two predictions. It knows which molecules are alike and
+what they measured, and nothing about where in space the two groups differ. It reaches +0.522 on
+GPB, +0.398 on THER and +0.392 on THR, against +0.561, +0.277 and +0.335 for the co-field. The co-
+field is ahead by +0.039 [-0.026, +0.103] on GPB and behind by -0.121 [-0.281, +0.030] on THER and
+-0.057 [-0.132, +0.022] on THR; all three intervals contain zero. So the co-field clearly beats a
+distance and does not clearly beat a model. What a distance lacks is not the field but the
+fitting: whether a difference between two groups matters cannot be read from the groups alone.
+Every row measured before this reference was added is unchanged.
+
+The twenty-eighth tutorial, `docs/tutorials/28_interchangeable_groups.ipynb`, finds the pairs of
+the GPB set, runs all four measures live, reads the three sets from the stored runs, and ends with
+the part of the table that holds whatever the ranking says.
 
 **How much of it is memory** is the gap between the last two columns, and the gap is large: the
 whole model, which has seen both activities of every pair it judges, reaches +0.631, +0.641 and
@@ -18440,7 +18458,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-seven notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-eight notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18458,7 +18476,8 @@ of point mutants of a protein, read with fields and compared with a count of the
 site, two-phase microstructures on a voxel grid, compared with the phase fraction and the
 correlation lengths of the grains, and one atom of a drug as the sample, with the atom a
 cytochrome P450 attacks read from the field around it and compared with counts of the atom types
-around it. Each runs on the
+around it, and which groups can replace each other at a position, compared with a model that
+needs no field. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

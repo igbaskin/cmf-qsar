@@ -8900,6 +8900,13 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   and +0.556 [+0.479, +0.632]; on THR +0.191 [+0.106, +0.279] and +0.093 [+0.008, +0.181]; on
   THER +0.193 [-0.059, +0.437] and +0.116 [-0.089, +0.313], which contains zero and is the set
   with the fewest pairs. On no set is the co-field worse than either reference.
+  **A reference that is a model, added 16 November 2026,** while the twenty-eighth tutorial was
+  written. Both references above are distances, which are fitted to nothing. Kernel ridge on
+  Morgan fingerprints of the whole molecules, chosen and refitted the same way, reaches +0.522 on
+  GPB, +0.398 on THER and +0.392 on THR; the co-field is ahead by +0.039 [-0.026, +0.103] on GPB
+  and behind by -0.121 [-0.281, +0.030] on THER and -0.057 [-0.132, +0.022] on THR, every
+  interval containing zero. The co-field beats a distance and does not beat a model: what a
+  distance lacks is the fitting, not the field. The rows measured before are unchanged.
   **What this does and does not show.** The field distance is not a weak reference: it compares
   the two groups **in their poses**, so it already knows the shape and the charge each of them
   puts where, and the co-field still adds to it. What the co-field has that the references cannot

@@ -17,6 +17,11 @@ How it is measured
 * **The pairs** are matched molecular pairs found by RDKit's `rdMMPA`: one single bond cut at a
   time, both pieces tried as the core, two molecules with the same core and different groups.
   Nothing is chosen by eye, and two molecules that match on several cores are counted once.
+* **A reference that is a model and needs no field** (added 16 November 2026): kernel ridge
+  on Morgan fingerprints of the whole molecules, fitted the same way and refitted without both
+  members of every pair, its predicted change being the difference of its two predictions.  The
+  two measures below it are distances, so what the co-field gains over them could be the fitting
+  rather than the field; this reference separates the two.
 * **Three measures of how far apart two groups are**, the ladder of rule 1:
   1. the **fingerprint distance** between the two groups -- two dimensions, no geometry, no model;
   2. the **field distance** between the two posed groups, restricted to their own atoms --
@@ -121,6 +126,54 @@ def fitted(mols, names, y, folds=10, seed=0):
     return model, fields, K, q2, alpha, lam
 
 
+#: the name of the reference that is a fitted model without a field
+MODEL_REFERENCE = "predicted change of a fingerprint model, the pair left out"
+
+
+def fingerprint_kernel(mols, radius: int = 2, bits: int = 2048) -> np.ndarray:
+    """The Tanimoto kernel of Morgan fingerprints of whole molecules."""
+    from rdkit.Chem import rdFingerprintGenerator
+
+    gen = rdFingerprintGenerator.GetMorganGenerator(radius=int(radius), fpSize=int(bits))
+    X = np.array([np.asarray(gen.GetFingerprintAsNumPy(m), float) for m in mols])
+    shared = X @ X.T
+    own = np.diag(shared)
+    return shared / np.maximum(own[:, None] + own[None, :] - shared, 1e-12)
+
+
+def fingerprint_changes(mols, y, pairs, folds=10, seed=0):
+    """What a model with no field says each exchange does, with the pair left out.
+
+    The two references of the item are distances, and a distance cannot know whether the
+    activity depends on the place where the groups differ. This one is a model, fitted the same
+    way on the same molecules and asked the same question, so that what the co-field adds over
+    it is the field and not the fitting. Its predicted change is the difference of its two
+    predictions, where the co-field's is the difference of two sums over the atoms of a group.
+    """
+    from cmfqsar.model import cv_predict
+
+    y = np.asarray(y, float)
+    K = fingerprint_kernel(mols)
+    best = None
+    for lam in LAMS:
+        p = cv_predict(K, y, "krr", {"lam": float(lam)}, folds=folds, seed=seed)
+        q2 = 1.0 - float(np.sum((y - p) ** 2)) / float(np.sum((y - y.mean()) ** 2))
+        if best is None or q2 > best[0]:
+            best = (q2, float(lam))
+    q2, lam = best
+    n = len(y)
+    cache, out = {}, []
+    for p in pairs:
+        key = (int(p.a), int(p.b))
+        if key not in cache:
+            rows = np.asarray([i for i in range(n) if i not in key], int)
+            coef, bias = krr_fit(K[np.ix_(rows, rows)], y[rows], lam, True)
+            pred = K[np.ix_(list(key), rows)] @ coef + bias
+            cache[key] = float(pred[1] - pred[0])          # group a replaced by group b
+        out.append(cache[key])
+    return out, q2, lam
+
+
 def leave_out(K, y, lam):
     """A function giving the dual coefficients fitted without both members of a pair."""
     y = np.asarray(y, float)
@@ -160,9 +213,13 @@ def run_set(key, folds=10, seed=0, max_molecules=0, with_table=True, results=RES
     full = score_pairs(model, fields, pairs)
     _say(f"  pairs scored, {time.time() - t0:.0f} s")
 
+    fp_change, fp_q2, fp_lam = fingerprint_changes(mols, y, pairs, folds, seed)
+    _say(f"  the fingerprint model reaches q2 {fp_q2:+.3f} at ridge {fp_lam:g}")
+
     measured = np.abs([s.measured for s in honest])
     columns = {
         "fingerprint distance": [s.fingerprint for s in honest],
+        MODEL_REFERENCE: [abs(c) for c in fp_change],
         "field distance": [s.field for s in honest],
         "predicted change, the pair left out": [abs(s.change) for s in honest],
         "predicted change, the whole model": [abs(s.change) for s in full],
@@ -172,7 +229,7 @@ def run_set(key, folds=10, seed=0, max_molecules=0, with_table=True, results=RES
         rows.append(dict(name=name, rho=spearman(col, measured)))
         _say(f"  {name:38s} rank correlation {rows[-1]['rho']:+.3f}")
     gains = {}
-    for other in ("fingerprint distance", "field distance"):
+    for other in ("fingerprint distance", "field distance", MODEL_REFERENCE):
         g = rank_gain(columns["predicted change, the pair left out"], columns[other],
                       measured, seed=seed)
         gains[other] = g
@@ -182,7 +239,12 @@ def run_set(key, folds=10, seed=0, max_molecules=0, with_table=True, results=RES
     signed = spearman([s.change for s in honest], [s.measured for s in honest])
     _say(f"  the signed change against the signed measurement: {signed:+.3f}")
 
+    fp_signed = spearman(fp_change, [s.measured for s in honest])
+    _say(f"  the fingerprint model's signed change against the signed measurement: "
+         f"{fp_signed:+.3f}")
+
     out = dict(set=key, what=what, n=len(mols), pairs=len(pairs), q2=q2, alpha=alpha, lam=lam,
+               fingerprint_model=dict(q2=fp_q2, lam=fp_lam, signed=fp_signed),
                half_width=half, rows=rows, gains={k: list(v) for k, v in gains.items()},
                signed=signed, seconds=time.time() - t0,
                measured=[s.measured for s in honest], columns=columns)
@@ -244,19 +306,24 @@ def report(results=RESULTS):
            "belongs to a substituent is the sum over that substituent's own atoms, and "
            "exchanging one group for another is the difference of two such sums -- one integral "
            "per pair of groups rather than one model fit per group.", "",
-           "The pairs are matched molecular pairs from RDKit's `rdMMPA`. The three measures are "
-           "the ladder of rule 1: the fingerprint distance between the groups (no geometry, no "
+           "The pairs are matched molecular pairs from RDKit's `rdMMPA`. The measures are the "
+           "ladder of rule 1: the fingerprint distance between the groups (no geometry, no "
            "model), the field distance between the two posed groups restricted to their own "
-           "atoms (geometry, no model), and the predicted change (geometry and the co-field). "
-           "All three are compared with the size of the measured activity difference by rank "
-           "correlation. For every pair the dual coefficients are refitted without both of its "
-           "members, so the predicted change has not seen the two activities it is judged "
-           "against.", ""]
+           "atoms (geometry, no model), the predicted change of a model on fingerprints of the "
+           "whole molecules (a model, no field; added 16 November 2026), and the predicted "
+           "change of the field model (geometry and the co-field). All are compared with the "
+           "size of the measured activity difference by rank correlation. For every pair both "
+           "models are refitted without both of its members, so a predicted change has not seen "
+           "the two activities it is judged against.", ""]
     for d in data:
         out += [f"## {d['set']}: {d['what']}", "",
                 f"{d['pairs']} matched pairs among {d['n']} molecules; the model reaches q2 "
                 f"{d['q2']:+.3f} at alpha {d['alpha']:g} and ridge {d['lam']:g}, with a "
-                f"conformal half width of {d['half_width']:.2f} log units at 90 per cent.", "",
+                f"conformal half width of {d['half_width']:.2f} log units at 90 per cent."
+                + (f" The fingerprint model of the reference reaches q2 "
+                   f"{d['fingerprint_model']['q2']:+.3f} at ridge "
+                   f"{d['fingerprint_model']['lam']:g}." if d.get("fingerprint_model") else ""),
+                "",
                 "| measure | rank correlation with the size of the measured change |",
                 "| --- | ---: |"]
         for r in d["rows"]:
@@ -280,13 +347,14 @@ def report(results=RESULTS):
 
 def _verdict(data):
     out = ["## What the sets say together", "",
-           "| set | pairs | fingerprint | field | co-field (pair left out) | co-field (whole "
-           "model) |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
+           "| set | pairs | fingerprint distance | field distance | fingerprint model | "
+           "co-field (pair left out) | co-field (whole model) |",
+           "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for d in data:
         rho = {r["name"]: r["rho"] for r in d["rows"]}
         out.append(f"| {d['set']} | {d['pairs']} | "
-                   + " | ".join(f"{rho[k]:+.3f}" for k in
-                                ("fingerprint distance", "field distance",
+                   + " | ".join(f"{rho[k]:+.3f}" if k in rho else "--" for k in
+                                ("fingerprint distance", "field distance", MODEL_REFERENCE,
                                  "predicted change, the pair left out",
                                  "predicted change, the whole model")) + " |")
     keys = list(data[0]["gains"])
@@ -321,18 +389,33 @@ def _verdict(data):
                 f"sets where an interval excludes zero against it are {', '.join(against)}. A "
                 "table built this way would mislead, and the item's own warning applies."]
     else:
+        ahead = [d["set"] for d in data if d["gains"][MODEL_REFERENCE][0] > 0]
         out += ["**The co-field weighting does not earn its place on these sets.** No set shows "
-                "it ahead of both references by more than the interval of rule 4. What the item "
-                "predicted for that case holds: the table would then be shape similarity, which "
-                "needs no model, and that is a result of the same kind as plan item D5."]
+                "it ahead of every reference by more than the interval of rule 4. Against the "
+                "two distances it is ahead on "
+                + ", ".join(d["set"] for d in data
+                            if all(d["gains"][k][1] > 0 for k in
+                                   ("fingerprint distance", "field distance")))
+                + ", which is what this item first reported. Against a model that needs no "
+                  "field it is ahead on "
+                + (", ".join(ahead) if ahead else "no set")
+                + " and behind on "
+                + (", ".join(d["set"] for d in data
+                             if d["gains"][MODEL_REFERENCE][0] < 0) or "no set")
+                + ", and every one of those intervals contains zero. So what the co-field gains "
+                  "over a distance is the fitting and not the field: a model on fingerprints, "
+                  "which knows nothing about where the two groups differ, ranks the measured "
+                  "change as well."]
     out += ["",
             "**How much of it is memory** is the difference between the last two columns. The "
             "whole model, which has seen both activities of every pair it is judging, reaches "
-            + ", ".join(f"{[r['rho'] for r in d['rows'] if 'whole model' in r['name']][0]:+.3f} "
-                        f"on {d['set']}" for d in data)
+            + ", ".join(
+                f"{[r['rho'] for r in d['rows'] if r['name'] == 'predicted change, the whole model'][0]:+.3f} "
+                f"on {d['set']}" for d in data)
             + "; refitting without the two members of each pair leaves "
-            + ", ".join(f"{[r['rho'] for r in d['rows'] if 'pair left out' in r['name']][0]:+.3f}"
-                        for d in data)
+            + ", ".join(
+                f"{[r['rho'] for r in d['rows'] if r['name'] == 'predicted change, the pair left out'][0]:+.3f}"
+                for d in data)
             + ". The gap is large, and it is the reason the honest column is the one reported "
               "above. Two things still come from the whole set: the field type, attenuation and "
               "ridge were chosen on all the molecules, and the alignment is the published one.",

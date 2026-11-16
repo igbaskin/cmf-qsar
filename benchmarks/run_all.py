@@ -754,7 +754,8 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_transformfield").write_table(_r("transformfield")),
                   tables=["transformfield/table.md"]),
         Benchmark("bioisostere",
-                  "which groups are interchangeable: the co-field against shape and fingerprints",
+                  "which groups are interchangeable: the co-field against shape, fingerprints "
+                  "and a fingerprint model refitted without each pair",
                   "run_bioisostere.py", "bioisostere", compute=[[]],
                   minutes="5",
                   report=lambda: _mod("run_bioisostere").write_table(_r("bioisostere")),
