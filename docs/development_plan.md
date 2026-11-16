@@ -6284,6 +6284,22 @@ concentration was driven, and the stage counts only discharges that ended at the
   (6.6 and 5.1 with mixtures). The room for a field model of the solvent was 0.4 and 0.5
   kJ/mol and is now 3.0 and 1.5 kJ/mol, which is below the repeatability of 5.0 kJ/mol. The
   verdict does not change, but the number it rests on does.
+  *A seventh reading, 16 November 2026.* The supporting information of Uchida 2020 (a Word
+  file; its tables are images) was read. Table S2 gives the activation energy of the
+  desolvation resistance of graphite symmetric cells: 53.0 kJ/mol in LiPF6 with EC:DMC
+  50:50, 71.2 with EC:DMC 10:90, 50.0 in LiFSA with EC:DMC 50:50 and 36.6 with EC:DMC
+  10:90. These are four rows in two series, one for each salt. With the same solvent, the
+  salt changes the value by 35 kJ/mol. Table S3 gives the activation energy of the film
+  resistance for the same cells (31.7, 17.8, 52.5 and 74.5 kJ/mol), which is in the notes of
+  the rows. The two rows with LiFSA are not counted in the reference system or in the
+  means of the electrodes, whose salts are LiPF6 and LiClO4; this rule was added to the
+  benchmark. The two rows with LiPF6 join the reference: six studies, 56.0 to 68.5 kJ/mol,
+  mean 60.1 and standard deviation 4.6 kJ/mol, so the repeatability is now 4.6 kJ/mol
+  (it was 5.0). The mean for graphite is 61.8 kJ/mol over 20 values. The table holds 129
+  values from 27 studies, in 20 series with 64 values. The regression does not change: the
+  two mixtures of a series hold the same two solvents, so holding one solvent out removes
+  both and the series gives no held-out value. The room for a field model, 3.0 and 1.5
+  kJ/mol, is below the repeatability of 4.6 kJ/mol.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -6314,18 +6330,18 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 125 measured values from 26 studies, all of them read in the paper that measured
+November: 129 measured values from 27 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
-classes of solvent the table holds 18 series with 13 single solvents. That is enough to test
+classes of solvent the table holds 20 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
 by 16 kJ/mol between them. The regression was run the same day, with binding energies from
 ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 12 to
 19 kJ/mol to 6.5 to 10 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
 ion. A model of the solvent alone can gain 1.5 to 3 kJ/mol more, which is below the
-repeatability of 5 kJ/mol, so no field model is built and part (c) of the gate is closed.
+repeatability of 4.6 kJ/mol, so no field model is built and part (c) of the gate is closed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -9310,7 +9326,7 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 125 measured values (13 to 16 November) says that the constants of the cell set are 27
+  of 129 measured values (13 to 16 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:

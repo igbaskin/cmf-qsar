@@ -15739,20 +15739,20 @@ reaction was expected to raise it. This was not examined.
 #### The measured activation energies of charge transfer
 
 Plan item BT12 collects the measured activation energies from the literature
-(`examples/charge_transfer/`, 125 values from 26 studies) and
+(`examples/charge_transfer/`, 129 values from 27 studies) and
 `benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
 is *primary* when it was read in the paper that measured it and *secondary* when it was read
-in a paper that cites it. All 125 values are primary now. The file names the paper and the
+in a paper that cites it. All 129 values are primary now. The file names the paper and the
 place for every value.
 
-Five studies measured the same reference system: graphite with a formed surface film, in a
-carbonate electrolyte with ethylene carbonate and no additive. Their values are 56.0 to 68.5
-kJ/mol, with a mean of 59.7 and a standard deviation of 5.0 kJ/mol. That spread is the
+Six studies measured the same reference system: graphite with a formed surface film, in a
+carbonate electrolyte with ethylene carbonate and LiPF6 or LiClO4, with no additive. Their
+values are 56.0 to 68.5 kJ/mol, with a mean of 60.1 and a standard deviation of 4.6 kJ/mol. That spread is the
 repeatability between laboratories, as an upper estimate.
 
 | Electrode, carbonate electrolyte, formed film | Values | Mean, kJ/mol | Standard deviation | Cell set, kJ/mol | Difference |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Negative: graphite | 18 | 61.7 | 6.1 | 35.0 | +26.7 |
+| Negative: graphite | 20 | 61.8 | 6.5 | 35.0 | +26.8 |
 | Positive: layered oxides | 12 | 68.0 | 13.0 | 17.8 | +50.2 |
 
 The constants of the published cell set are far below the measured values. With 60 kJ/mol on
@@ -15761,7 +15761,7 @@ conditions. The mean per electrode is accurate enough for a cold cell with a car
 electrolyte, because the cell needs about 15 kJ/mol.
 
 A *series* is a set of values of one study that share the electrode and the surface film and
-differ in the solvent. The table holds 18 series with 60 values and 13 single solvents. Inside
+differ in the solvent. The table holds 20 series with 64 values and 13 single solvents. Inside
 most series the solvent changes the value by far more than the repeatability. The four
 series on glassy carbon, two of Doi 2004 and two of Doi 2005, hold two electrolytes only, EC:DEC
 and propylene carbonate, whose solvents bind the ion almost equally. Three of them differ by 1 to 4
@@ -15777,11 +15777,13 @@ changes the value by 11 kJ/mol.
 | LiMn2O4 thin film, in water and in PC (Nakayama 2007) | 2 (5 values) | 23.0 | 50.0 | 27.0 |
 | Carbon thin film, one film formed in EC:DEC (Fukutsuka 2010) | 3 | 60.2 | 82.3 | 22.1 |
 | Solid electrolyte, no film (Yamada, Sagane 2009) | 4 | 32.0 | 53.0 | 21.0 |
+| Graphite with LiPF6, film formed in each electrolyte (Uchida 2020) | 2 | 53.0 | 71.2 | 18.2 |
 | Graphite, one film formed in EC:DMC (Yamada 2009) | 3 | 40.0 | 58.0 | 18.0 |
 | Graphite, film formed in each electrolyte (Xu 2007) | 4 | 53.1 | 71.1 | 18.0 |
 | Lithium metal, after ten cycles (Zabara 2024) | 3 | 47.7 | 64.4 | 16.7 |
 | LiMn2O4 (Chekushkin 2021) | 4 | 19.3 | 34.7 | 15.4 |
 | Lithium titanate composite, no film (Xu 2010) | 8 | 40.1 | 54.9 | 14.9 |
+| Graphite with LiFSA, film formed in each electrolyte (Uchida 2020) | 2 | 36.6 | 50.0 | 13.4 |
 | Carbon treated by hot isostatic pressing (Doi 2004, Carbon) | 2 | 55.8 | 61.5 | 5.7 |
 | Glassy carbon GC-20 after a heat treatment (Doi 2005) | 2 | 47.9 | 51.6 | 3.7 |
 | Lithium metal, as assembled (Zabara 2024) | 3 | 67.6 | 69.5 | 1.9 |
@@ -15802,7 +15804,7 @@ with ethylene carbonate (EC).
 
 Three series give 17 to 19 kJ/mol on three different solids, and all three come from one
 group of authors. Two laboratories measured this pair on the same electrode material with no
-film, and their results differ by 16 kJ/mol. That is three times the repeatability of the
+film, and their results differ by 16 kJ/mol. That is more than three times the repeatability of the
 reference system. The amount of EC changes little: at the solid electrolyte the mixtures
 1:1, 1:9 and 1:14 give 51, 53 and 48 kJ/mol.
 
@@ -15823,6 +15825,16 @@ The ninth pair came with Nakayama 2007: propylene carbonate is above water by 26
 a LiMn2O4 thin film, and by 46.3 kJ/mol on LiCoO2 (Chekushkin 2021). The binding energies of
 the two solvents differ by 71 kJ/mol, which the slope of the regression below turns into
 35 kJ/mol.
+
+The four values of Uchida 2020 (graphite, EC:DMC 50:50 and 10:90) form two series, one with
+LiPF6 and one with LiFSA. In EC:DMC 10:90 LiPF6 gives 71.2 and LiFSA 36.6 kJ/mol, so the
+salt changes the value by 35 kJ/mol at a fixed solvent, and a description of the solvent
+alone cannot explain that. The authors add that the desolvation resistance cannot be
+separated fully from the resistance of the film. The regression cannot use these series:
+the two mixtures of a series hold the same two solvents, so holding one solvent out removes
+both. The four values are counted in the values of the table and not in the held-out
+errors, and the regression results do not change. The rows with LiFSA are not counted in
+the reference system, whose salts are LiPF6 and LiClO4.
 
 The value of one solvent also moves between the series: propylene carbonate gives 46 to 71
 kJ/mol in ten series. So only differences inside a series can be modelled.
@@ -15862,8 +15874,8 @@ energies at random between the solvents and gives the share of the exchanges tha
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
 | Single solvents | 27 | 13 | 17.9 | 18.0 | -0.1 [-6.5, +3.1] | 28.7 % |
 | Single solvents, without the two that wrap the ion | 25 | 11 | 19.0 | 10.1 | +8.8 [+2.6, +12.4] | 0.1 % |
-| Single solvents and mixtures | 60 | 14 | 11.0 | 12.4 | -1.4 [-4.8, +1.3] | 72.4 % |
-| The same, without the two that wrap the ion | 58 | 12 | 11.8 | 6.5 | +5.3 [+3.4, +7.9] | 0.0 % |
+| Single solvents and mixtures | 64 | 14 | 11.0 | 12.4 | -1.4 [-4.8, +1.3] | 72.4 % |
+| The same, without the two that wrap the ion | 62 | 12 | 11.8 | 6.5 | +5.3 [+3.4, +7.9] | 0.0 % |
 | Single solvents, binding energies of the papers | 14 | 8 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
@@ -15874,13 +15886,13 @@ kJ/mol, with a slope of 0.49 kJ/mol of activation energy per kJ/mol of binding e
 regression is a usable estimate for a solvent that holds the ion with one atom, and it must
 not be used for a solvent that wraps the ion.
 
-The error that the regression leaves, 6.5 to 10 kJ/mol, is above the repeatability of 5 kJ/mol.
+The error that the regression leaves, 6.5 to 10 kJ/mol, is above the repeatability of 4.6 kJ/mol.
 A field model of the solvent cannot be shown to remove it. Six solvents were held out in two
 or more series, and the errors for one solvent differ between its series. On these 20 values
 the regression has an error of 10.3 kJ/mol, and no model that depends on the solvent alone
 can have less than 7.3 kJ/mol (6.6 and 5.1 kJ/mol with the mixtures). So a field model of the
 solvent could remove 3.0 kJ/mol at most (1.5 kJ/mol with the mixtures), which is less than the
-repeatability of 5.0 kJ/mol, and it could not be shown to do so. For this reason no field
+repeatability of 4.6 kJ/mol, and it could not be shown to do so. For this reason no field
 model was built for this target. Before the last 16 values the room was 0.4 and 0.5 kJ/mol;
 the five values of Nakayama 2007 are among the 20.
 

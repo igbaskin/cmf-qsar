@@ -1,6 +1,6 @@
 {
- "commit": "6253d608b521a9cc32def5a3b33470f6962c572c",
- "created": "2026-11-16T11:55:22",
+ "commit": "3bbc6668a0f8058eb66be98872cd1e1db969aa72",
+ "created": "2026-11-16T12:10:29",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -71,16 +71,16 @@
    "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
   },
   "examples/charge_transfer/README.md": {
-   "bytes": 11738,
-   "sha256": "6b8a5927fdaa5681dd66a70e9e37ee939000d7e9fdf4def5f17f8f64560ffa70"
+   "bytes": 11996,
+   "sha256": "11c8573b984313966583de1db76213b9beae234a36a3a007caef0ea6735a1ca0"
   },
   "examples/charge_transfer/activation_energies.csv": {
-   "bytes": 55949,
-   "sha256": "6c4a738649f5febfbaac0c0db84791b61b669554de684f719c07d9f8d77fd676"
+   "bytes": 59459,
+   "sha256": "c7964e9498074fc3e4c879c8a3c5e575f68b2b2985ed84ef237cb30b0f47f350"
   },
   "examples/charge_transfer/sources.csv": {
-   "bytes": 15434,
-   "sha256": "2d3b041e5255daff7fc5e4b0e0a9a50817f8c084bdb390db229dc5960da6ca7b"
+   "bytes": 15506,
+   "sha256": "7f410483c9938beecb9a765b99043ce26db3c7bf2c1979e9d232ccebcbc83d2d"
   },
   "examples/complexes_fe/fe_redox.sdf": {
    "bytes": 7991354,
@@ -2823,9 +2823,9 @@
   "benchmarks/results/cellmodel_fields/sample_positive_particle_diffusivity_m2_s-1.json": "cf333cc57ed97b305c2f49f0ff2a63b22b828ec47045877092206f3bf9159f5f",
   "benchmarks/results/cellmodel_fields/table.md": "72867ebd17af459e84efe220a4ab3c41cb080b846f7e600d77b0e7aff55c8c59",
   "benchmarks/results/charge_transfer/binding.json": "2988bbc325b083fbe5f182581451b94be4855cf5373f0d03b10a05bf6af05d8c",
-  "benchmarks/results/charge_transfer/regression.json": "b78b5d7a5e9dd53c2e0687f2df31b890bc1910e60142947119e9d1bca78f6139",
-  "benchmarks/results/charge_transfer/summary.json": "75f7e400432628bb04937acf919e05d72baab78a43769d48ec795e4c1c636e0c",
-  "benchmarks/results/charge_transfer/table.md": "9aeeeaffc1bb206d32480b5695b74a3175724217298b408e21267de026bf5b54",
+  "benchmarks/results/charge_transfer/regression.json": "e3cd6da4abd17e1b4627a02793077a4b8fde312b0d6e376e971918e23c783c2c",
+  "benchmarks/results/charge_transfer/summary.json": "245ef459da1b64aaa6a69fa4bb84a9de6e5b62882e2c62307129003a44665e9f",
+  "benchmarks/results/charge_transfer/table.md": "5e99bd601ada569f0fdc18a53ab41551512b9ce4a9cc25504240e549ef5703d4",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",

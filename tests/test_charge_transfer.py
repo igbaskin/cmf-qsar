@@ -33,7 +33,7 @@ def test_an_energy_in_another_unit_is_converted_and_an_unknown_unit_is_refused()
 
 def test_the_table_loads_and_every_row_names_a_paper_that_has_a_record():
     rows, sources = CT.read_labels(), CT.read_sources()
-    assert len(rows) == 125
+    assert len(rows) == 129
     assert len({r["id"] for r in rows}) == len(rows)
     assert {r["source"] for r in rows} <= set(sources)
     assert all(r["location"] or r["cited_in"] for r in rows)       # the place it was read
@@ -71,6 +71,9 @@ def test_the_reference_system_leaves_out_additives_cycled_films_and_other_electr
     assert not CT.is_reference(_row(film="cycled"))
     assert not CT.is_reference(_row(electrode_class="layered oxide"))
     assert not CT.is_reference(_row(solvent_class="linear carbonate only"))
+    # LiFSA is not one of the salts of the reference system
+    assert CT.is_reference(_row(salt="LiClO4"))
+    assert not CT.is_reference(_row(salt="LiFSA"))
 
 
 def test_the_repeatability_takes_one_value_per_study():
@@ -139,13 +142,14 @@ def test_the_collected_values_and_what_they_say():
     """The numbers the plan entry quotes."""
     rows, sources = CT.read_labels(), CT.read_sources()
     res = CT.summarise(rows, sources)
-    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (125, 0, 26)
+    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (129, 0, 27)
     rep = res["repeatability"]
-    assert rep["n"] == 5
-    assert rep["mean"] == pytest.approx(59.7, abs=0.05) and rep["sd"] == pytest.approx(5.0, abs=0.05)
+    assert rep["n"] == 6
+    assert rep["mean"] == pytest.approx(60.1, abs=0.05) and rep["sd"] == pytest.approx(4.6, abs=0.05)
+    assert "Uchida2020" in rep["studies"] and rep["studies"]["Uchida2020"] == pytest.approx(62.1)
     assert rep["studies"]["Yamada2009"] == 58.0        # the paper, not the 55 of the review
     neg, pos = res["means"]["negative"], res["means"]["positive"]
-    assert neg["mean"] == pytest.approx(61.7, abs=0.05) and neg["shift"] == pytest.approx(26.7, abs=0.05)
+    assert neg["mean"] == pytest.approx(61.8, abs=0.05) and neg["shift"] == pytest.approx(26.8, abs=0.05)
     assert pos["mean"] == pytest.approx(68.0, abs=0.05) and pos["shift"] == pytest.approx(50.2, abs=0.05)
     assert res["to_read"] == ["KyotoRepository"]
 
@@ -176,7 +180,7 @@ def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
                   "electrolyte"] == pytest.approx(1.93)
     assert ranges["Zabara2024: lithium metal, after ten cycles, film formed in each "
                   "electrolyte"] == pytest.approx(16.72)
-    assert (count["n_series"], count["n_rows"], count["largest"]) == (18, 60, 8)
+    assert (count["n_series"], count["n_rows"], count["largest"]) == (20, 64, 8)
     assert len(count["one_solvent"]) == 13
     assert count["one_solvent_in_two_series"] == ["DMC", "DMSO", "PC", "THF", "acetonitrile",
                                                   "water"]
@@ -336,10 +340,10 @@ def test_the_sets_of_points_of_the_regression_on_the_collected_values():
     assert sizes["single"] == (9, 27, 13)
     assert sizes["single_no_chelate"] == (9, 25, 11)
     # DEC is in no series as a single solvent, and it is held out as a part of EC:DEC
-    assert sizes["mixtures"] == (18, 60, 14)
-    assert sizes["mixtures_no_chelate"] == (18, 58, 12)
+    assert sizes["mixtures"] == (20, 64, 14)
+    assert sizes["mixtures_no_chelate"] == (20, 62, 12)
     assert sizes["published"] == (5, 14, 8)
-    assert reg["repeatability"] == pytest.approx(5.0, abs=0.05)
+    assert reg["repeatability"] == pytest.approx(4.6, abs=0.05)
     # every held-out value of the first set is predicted once
     assert reg["variants"]["single"]["held_out"]["n"] == 27
 
@@ -443,7 +447,7 @@ def test_the_table_is_written_without_the_cell_model_results():
     rows, sources = CT.read_labels(), CT.read_sources()
     res = dict(CT.summarise(rows, sources), cold=[])
     text = CT.table(res, sources)
-    assert "| negative | 18 | 61.7 |" in text
+    assert "| negative | 20 | 61.8 |" in text
     assert "What that difference costs a cold cell" not in text
     assert "| KyotoRepository |" in text                 # a file that is still to be read
     assert "| YamadaSagane2009 | solid electrolyte | 4 |" in text

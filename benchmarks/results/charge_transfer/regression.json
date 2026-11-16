@@ -745,13 +745,13 @@
    "words": "single solvents, without the two that wrap the ion"
   },
   "mixtures": {
-   "n_points": 60,
-   "n_series": 18,
+   "n_points": 64,
+   "n_series": 20,
    "n_solvents": 14,
    "slope": 0.07833214679031925,
-   "correlation_inside_series": 0.3725766293731602,
-   "sd_y_inside_series": 10.415245312588363,
-   "residual_sd": 9.782522737746064,
+   "correlation_inside_series": 0.36255329525281355,
+   "sd_y_inside_series": 10.457107268502455,
+   "residual_sd": 9.858307552864575,
    "held_out": {
     "n": 71,
     "mean": {
@@ -868,6 +868,20 @@
      "slope": 0.33386092038305476,
      "range_x": 46.93445167803375,
      "range_y": 29.1
+    },
+    {
+     "series": "Uchida2020: graphite, LiFSA, film formed in each electrolyte",
+     "n": 2,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 13.399999999999999
+    },
+    {
+     "series": "Uchida2020: graphite, LiPF6, film formed in each electrolyte",
+     "n": 2,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 18.200000000000003
     },
     {
      "series": "Xu2007: graphite, film formed in each electrolyte",
@@ -1634,13 +1648,13 @@
    "words": "single solvents and mixtures; a mixture takes its strongest solvent"
   },
   "mixtures_no_chelate": {
-   "n_points": 58,
-   "n_series": 18,
+   "n_points": 62,
+   "n_series": 20,
    "n_solvents": 12,
    "slope": 0.459385171195884,
-   "correlation_inside_series": 0.836901695353587,
-   "sd_y_inside_series": 10.584735474133822,
-   "residual_sd": 5.86739574987388,
+   "correlation_inside_series": 0.8140272592889356,
+   "sd_y_inside_series": 10.619910548335813,
+   "residual_sd": 6.243097617915842,
    "held_out": {
     "n": 69,
     "mean": {
@@ -1757,6 +1771,20 @@
      "slope": 0.33386092038305476,
      "range_x": 46.93445167803375,
      "range_y": 29.1
+    },
+    {
+     "series": "Uchida2020: graphite, LiFSA, film formed in each electrolyte",
+     "n": 2,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 13.399999999999999
+    },
+    {
+     "series": "Uchida2020: graphite, LiPF6, film formed in each electrolyte",
+     "n": 2,
+     "slope": null,
+     "range_x": 0.0,
+     "range_y": 18.200000000000003
     },
     {
      "series": "Xu2007: graphite, film formed in each electrolyte",
@@ -2725,6 +2753,6 @@
    "words": "single solvents, with the binding energies that the papers give"
   }
  },
- "repeatability": 4.9944650110021795,
+ "repeatability": 4.572092796350212,
  "draws": 2000
 }

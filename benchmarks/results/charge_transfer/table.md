@@ -2,7 +2,7 @@
 
 The values were collected from the literature and are in `examples/charge_transfer/activation_energies.csv`, one row per value, with the paper and the place in it. A row is *primary* when the number was read in the paper that measured it, and *secondary* when it was read in another paper that cites it. All values below are in kJ/mol; a value given in eV was multiplied by 96.485 and a value given in kcal/mol by 4.184. No model is fitted here.
 
-The table holds 125 rows from 26 studies: 125 primary and 0 secondary. By class of electrode: carbonaceous thin film 3, graphite 39, layered oxide 25, lithium metal 6, lithium titanate 16, non-graphitizable carbon 13, olivine 1, solid electrolyte 11, spinel oxide 11.
+The table holds 129 rows from 27 studies: 129 primary and 0 secondary. By class of electrode: carbonaceous thin film 3, graphite 43, layered oxide 25, lithium metal 6, lithium titanate 16, non-graphitizable carbon 13, olivine 1, solid electrolyte 11, spinel oxide 11.
 
 ## How well laboratories agree on one system
 
@@ -13,10 +13,11 @@ The reference system is a graphite electrode with its surface film after formati
 | Abe2004 | 56.0 |
 | Jow2018 | 57.7 |
 | Keefe2020 | 58.4 |
+| Uchida2020 | 62.1 |
 | Xu2007 | 68.5 |
 | Yamada2009 | 58.0 |
 
-Over these 5 studies the mean is 59.7 kJ/mol, the standard deviation 5.0 kJ/mol and the range 56.0 to 68.5 kJ/mol. The studies differ in the salt, in the second solvent and in the kind of graphite, so this spread is an upper estimate of the repeatability of one system.
+Over these 6 studies the mean is 60.1 kJ/mol, the standard deviation 4.6 kJ/mol and the range 56.0 to 68.5 kJ/mol. The studies differ in the salt, in the second solvent and in the kind of graphite, so this spread is an upper estimate of the repeatability of one system.
 
 ## How much the value changes inside one study
 
@@ -43,6 +44,7 @@ Over these 5 studies the mean is 59.7 kJ/mol, the standard deviation 5.0 kJ/mol 
 | Nakayama2007 | spinel oxide | 5 | 23.0 | 50.0 | 27.0 | solvent, salt | primary |
 | Sagane2005 | solid electrolyte | 2 | 56.2 | 97.4 | 41.2 | solvent, form of the electrode | primary |
 | Sawayama2025 | graphite | 5 | 28.5 | 57.6 | 29.1 | solvent | primary |
+| Uchida2020 | graphite | 4 | 36.6 | 71.2 | 34.6 | solvent, salt | primary |
 | Xu2007 | graphite | 4 | 53.1 | 71.1 | 18.0 | solvent | primary |
 | Xu2010 | lithium titanate | 8 | 40.1 | 54.9 | 14.9 | solvent, salt | primary |
 | Yamada2007 | layered oxide | 2 | 46.0 | 48.0 | 2.0 | nothing | primary |
@@ -56,7 +58,7 @@ Films after formation, every additive, one value per row. The published value is
 
 | Electrode | Rows | Mean | Standard deviation | Lowest | Highest | Published value | Mean minus published |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| negative | 18 | 61.7 | 6.1 | 48.2 | 71.1 | 35.0 | +26.7 |
+| negative | 20 | 61.8 | 6.5 | 48.2 | 71.2 | 35.0 | +26.8 |
 | positive | 12 | 68.0 | 13.0 | 52.0 | 100.0 | 17.8 | +50.2 |
 
 What that difference costs a cold cell, from the stage `--stage exchange` of `run_cellmodel.py`. The stage ran stated activation energies in steps of 10 kJ/mol; the column gives the one nearest to the mean and the difference of the capacity, in per cent of the capacity with the published values.
@@ -85,6 +87,8 @@ A series is a set of rows of one study that share the electrode and the film, or
 | Ishihara2014: lithium titanate, no film | 3 | DMC; EC:DMC 1:1; PC | 37.0 | 64.0 | 27.0 | primary |
 | Nakayama2007: LiMn2O4 thin film, water and PC | 5 | water; water; water; water; PC | 23.0 | 50.0 | 27.0 | primary |
 | Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite | 5 | 2,2,2-trifluoroethyl acetate; THF; acetonitrile; PC; DMF | 28.5 | 57.6 | 29.1 | primary |
+| Uchida2020: graphite, LiFSA, film formed in each electrolyte | 2 | EC:DMC 1:9; EC:DMC 1:1 | 36.6 | 50.0 | 13.4 | primary |
+| Uchida2020: graphite, LiPF6, film formed in each electrolyte | 2 | EC:DMC 1:1; EC:DMC 1:9 | 53.0 | 71.2 | 18.2 | primary |
 | Xu2007: graphite, film formed in each electrolyte | 4 | EMC; EC:EMC 20:80; EC:EMC 30:70; EC | 53.1 | 71.1 | 18.0 | primary |
 | Xu2010: lithium titanate, no film | 8 | THF; poly(ethylene glycol) of molar mass 222; EC:DMC 60:40; DMC; EC:DMC 20:80; EC:DMC 1:1; EC:DMC 30:70; EC:DMC 70:30 | 40.1 | 54.9 | 14.9 | primary |
 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | 3 | DMC; EC:DMC 1:9; EC:DMC 1:1 | 40.0 | 58.0 | 18.0 | primary |
@@ -93,7 +97,7 @@ A series is a set of rows of one study that share the electrode and the film, or
 | Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | 3 | EC:DMC 1:1; EC:DEC 1:1; EC:EMC 7:3 | 47.7 | 64.4 | 16.7 | primary |
 | Zabara2024: lithium metal, as assembled, film formed in each electrolyte | 3 | EC:DMC 1:1; EC:DEC 1:1; EC:EMC 7:3 | 67.6 | 69.5 | 1.9 | primary |
 
-The 18 series hold 60 rows, and the largest holds 8. They hold 25 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 6 single solvents were measured in two or more series: DMC, DMSO, PC, THF, acetonitrile, water.
+The 20 series hold 64 rows, and the largest holds 8. They hold 25 different solvents or mixtures, of which 13 are single solvents: 2,2,2-trifluoroethyl acetate, DMC, DMF, DMSO, EC, EMC, FEC, PC, THF, acetonitrile, diglyme, poly(ethylene glycol) of molar mass 222, water. 6 single solvents were measured in two or more series: DMC, DMSO, PC, THF, acetonitrile, water.
 
 ### One solvent in more than one series
 
@@ -150,6 +154,8 @@ For every pair of solvents that two or more series measured: the value in the fi
 | EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-10, film formed in each electrolyte | -1.5 |
 | EC:DEC 1:1 | PC | Doi2005: glassy carbon GC-20 heat-treated at 773 K, film formed in each electrolyte | -3.7 |
 | EC:DEC 1:1 | PC | Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1 | -11.0 |
+| EC:DMC 1:1 | EC:DMC 1:9 | Uchida2020: graphite, LiFSA, film formed in each electrolyte | +13.4 |
+| EC:DMC 1:1 | EC:DMC 1:9 | Uchida2020: graphite, LiPF6, film formed in each electrolyte | -18.2 |
 | EC:DMC 1:1 | EC:DMC 1:9 | Yamada2009: graphite, one film formed in EC:DMC 1:1 | +3.0 |
 | EC:DMC 1:1 | EC:DMC 1:9 | YamadaSagane2009: solid electrolyte, no film | -2.0 |
 | EC:DMC 1:1 | EC:EMC 7:3 | Zabara2024: lithium metal, after ten cycles, film formed in each electrolyte | -16.7 |
@@ -199,11 +205,11 @@ The regression has one slope for all series and one intercept for each series, s
 |---|---:|---:|---:|---:|---:|---:|---:|---|---:|
 | single solvents only | 9 | 27 | 13 | +0.087 | 0.44 | 17.9 | 18.0 | -0.1 [-6.5, +3.1] | 28.7 % |
 | single solvents, without the two that wrap the ion | 9 | 25 | 11 | +0.487 | 0.88 | 19.0 | 10.1 | +8.8 [+2.6, +12.4] | 0.1 % |
-| single solvents and mixtures; a mixture takes its strongest solvent | 18 | 60 | 14 | +0.078 | 0.37 | 11.0 | 12.4 | -1.4 [-4.8, +1.3] | 72.4 % |
-| the same, without the two solvents that wrap the ion | 18 | 58 | 12 | +0.459 | 0.84 | 11.8 | 6.5 | +5.3 [+3.4, +7.9] | 0.0 % |
+| single solvents and mixtures; a mixture takes its strongest solvent | 20 | 64 | 14 | +0.078 | 0.36 | 11.0 | 12.4 | -1.4 [-4.8, +1.3] | 72.4 % |
+| the same, without the two solvents that wrap the ion | 20 | 62 | 12 | +0.459 | 0.81 | 11.8 | 6.5 | +5.3 [+3.4, +7.9] | 0.0 % |
 | single solvents, with the binding energies that the papers give | 5 | 14 | 8 | +0.459 | 0.85 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
 
-The repeatability between laboratories, from the reference system above, is 5.0 kJ/mol. The slope is in kJ/mol of activation energy per kJ/mol of binding energy. A mixture is held out once for each of its solvents, so it is counted more than once in the rows with mixtures.
+The repeatability between laboratories, from the reference system above, is 4.6 kJ/mol. The slope is in kJ/mol of activation energy per kJ/mol of binding energy. A mixture is held out once for each of its solvents, so it is counted more than once in the rows with mixtures.
 
 ### What a model of the solvent alone cannot remove
 
