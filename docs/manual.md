@@ -1087,6 +1087,71 @@ Trained on the 96 particles of at most 1,000 atoms, the autocorrelation model pr
 larger ones with an error of 26 meV per atom; the size law gives 36 meV. The tables are in
 `benchmarks/results/particles/table.md`.
 
+These random folds overstate the margin. The same shape and size is built in all six metals, so
+a random fold nearly always leaves a copy of the test particle's geometry in the training part.
+Holding out each geometry in all six metals at once (plan item NT3, below), the autocorrelation
+model still has the smaller error in 20 of 25 folds (median 31 against 43 meV per atom). But
+in the fold that holds out both 13-atom particles it misses them by 587 meV per atom, where the
+size law misses by 53 meV: the kernel does not extrapolate to particles smaller than every
+training particle, and the size law does.
+
+**Size and shape as descriptors.** The periodic channels are per atom of the cell, and the kernel
+divides every row by its length, so the size of a particle never reaches the model. Plan item NT3
+gives it back through the descriptor block of the section *Descriptors that are not fields*. Six
+descriptors are computed from the structure:
+
+| Name | What it is |
+|---|---|
+| `calc:atoms` | the number of atoms (in the cell, for a periodic structure) |
+| `calc:diameter` | the largest distance between two atom centres across the open directions, in Å: the size of a particle, the diameter of a tube, the thickness of a layer |
+| `calc:gyration_radius` | the root-mean-square distance of the atoms from their centre across the open directions, in Å (from the axis, for a tube) |
+| `calc:aspect_ratio` | the square root of the ratio of the largest to the smallest principal moment of the gyration tensor: 1 for a sphere or a cube, more for a rod or a plate; particles only |
+| `calc:surface_fraction` | the fraction of the atoms that a probe sphere of 1.4 Å can touch |
+| `calc:surface_area` | the area the centre of that probe can reach, in Å² |
+
+"Open directions" are the ones that are not periodic: all three for a particle, the two across
+the axis for a tube, the normal for a layer. A quantity a structure cannot have, such as the
+diameter of a crystal, is missing (NaN). The surface atoms come from the Shrake-Rupley method:
+each atom is a sphere of its covalent radius plus the probe radius, sampled at 200 points, and an
+atom with a point inside no other atom's sphere is at the surface; periodic images count.
+Measured values of each structure, such as a hydrodynamic size or a zeta potential, are read
+from a table whose first column holds the structure names: *File → Read descriptor values from a
+CSV…* in the crystal window, `--descriptor-file` for `build-crystals`. The names go into the
+*Descriptors* box of the window (`--descriptors` on the command line), separated by commas.
+
+Before this item the invariant kernels — the periodic autocorrelation among them — ignored the
+descriptor block without a word; it now enters beside them as it does beside the overlap kernel.
+
+`benchmarks/run_shape.py` checks the descriptors against answers known without them. The surface
+atoms of eleven copper icosahedra of 13 to 5,083 atoms are exactly the atoms of the outer shell,
+10 (k − 1)² + 2 for k shells (0.8 s for the largest). For seven truncated octahedra and
+decahedra they are exactly the atoms with fewer than twelve neighbours. The diameters of 39
+carbon nanotubes agree with a √(n² + nm + m²)/π to 2e-15 Å. Blocks of copper 2, 3, 4 and 6 times
+longer than wide have aspect ratios 1.99, 2.99, 3.99 and 5.98. A bulk crystal has no surface
+atoms, and every atom of a graphene sheet is at the surface.
+
+On the 150 particles of item NT2, the five descriptors `calc:atoms`, `calc:diameter`,
+`calc:gyration_radius`, `calc:aspect_ratio` and `calc:surface_fraction` beside the
+autocorrelation give:
+
+| Target and split | Autocorrelation alone | With the five descriptors | Physical law of the size |
+|---|---:|---:|---:|
+| Energy per atom, random folds, meV | 28.8 | **16.2** | 44.9 |
+| Energy per atom, geometries held out, median fold, meV | 30.9 | **16.0** | 42.9 |
+| Energy per atom, geometries held out, worst fold, meV | 587 | 462 | **65** |
+| Energy per atom, larger particles predicted, meV | 33.7 | 48.2 | 36.2 |
+| Energy of the particle, random folds, q2 | 0.455 | **0.910** | 0.825 |
+| Energy of the particle, larger particles predicted, q2 | 0.498 | 0.817 | **0.904** |
+
+The law of the size is a linear regression on n^(-1/3) for each metal for the energy per atom,
+and a linear regression on n and n^(2/3) for each metal (a liquid drop) for the energy of the
+particle. Without the descriptors the model cannot follow a quantity that grows with the
+particle (q2 0.455). With them it reaches the liquid drop in random folds and has the smaller
+error in 18 of 25 folds that hold out geometries. But a linear term in the atom count
+extrapolates badly: on particles larger than every training particle the descriptors make the
+energy per atom worse (48 against 34 meV), and the liquid drop predicts the energy of a large
+particle better than any kernel model. The tables are in `benchmarks/results/shape/table.md`.
+
 **What the view draws.** The cell is drawn as the twelve edges of its box, with the first,
 second and third lattice vectors in red, green and blue. Its atoms are spheres coloured by
 element, with the colours the molecular view uses for the organic elements and the standard Jmol
@@ -4122,6 +4187,10 @@ Three properties of the block are deliberate:
 - **The model stays linear in its inputs**, so the decomposition rules survive. A prediction
   splits into a field part and a descriptor part, and the descriptor part splits further into one
   number per descriptor, which is what the program reports.
+
+The block enters beside every kernel: the overlap kernel, and since plan item NT3 the invariant
+ones too (the autocorrelation of molecules, the periodic, surface, reciprocal and three-body
+kernels), which before ignored it without saying so.
 
 A molecule missing a descriptor is refused by default (`prop_missing`), because a model that
 silently substitutes the mean is telling you nothing about that molecule while looking as

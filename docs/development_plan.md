@@ -3971,6 +3971,11 @@ tests whether the target is reproducible between sources before any kernel is co
   linear regression on n^(-1/3) for each metal and 70 meV for one on the mean coordination
   number; trained on the particles of at most 1,000 atoms it predicts the 54 larger ones to
   26 meV (size law 36 meV).
+  **Corrected by NT3 (16 November 2026):** the random folds overstate this margin, because every
+  geometry is built in all six metals. Holding each geometry out in all six metals at once, the
+  kernel has the smaller error in 20 of 25 folds (median 31 against 43 meV), but it misses the
+  13-atom particles by 587 meV when both 13-atom geometries are held out (size law 53 meV): it
+  does not extrapolate to particles smaller than every training particle.
   **Found on the way:** a tube that grows in length is cheap for ASE's list (one bin across a
   thin tube), but its autocorrelation still grew with the square (exponent 1.93), because the
   background term of a chain pairs every atom with every other; a tube of 3,600 atoms needed
@@ -3983,6 +3988,39 @@ tests whether the target is reproducible between sources before any kernel is co
   molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
   the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
   added through the descriptor block that the model already has. Two days.
+  **Built and measured 16 November 2026.** Six descriptors under the `calc:` prefix
+  (`cmfqsar/descriptors.py`, `SHAPE`): `atoms`, `diameter` and `gyration_radius` across the open
+  directions (the size of a particle, the diameter of a tube, the thickness of a layer),
+  `aspect_ratio` of the gyration tensor (particles), `surface_fraction` and `surface_area` from
+  the Shrake-Rupley method (covalent radii, a 1.4 Å probe, 200 points per atom, periodic images
+  included). `structures.attach_values` copies the numeric columns of a table into the
+  structures' info fields, where the descriptor reader finds them; `build-crystals` takes
+  `--descriptors`, `--descriptor-file` and `--descriptor-h`, and the crystal window a
+  *Descriptors* box and *File → Read descriptor values from a CSV…*.
+  **Found on the way:** the descriptor block was added beside the overlap kernel only; the
+  invariant kernels (the periodic autocorrelation among them) ignored it without a word, so a
+  structure's descriptors never reached the kernel a particle needs. It is now added beside
+  them too (training and test kernels, the diagonal, and the per-fold kernels of aligned block
+  weights); no stored benchmark combined the two, so no stored number changes.
+  **Measured** (`benchmarks/run_shape.py`, about 4 minutes). The descriptors against answers
+  known without them: the surface atoms of 11 copper icosahedra (13 to 5,083 atoms) are exactly
+  the outer shell, 10 (k - 1)^2 + 2, and those of 7 truncated octahedra and decahedra exactly the
+  atoms with fewer than twelve neighbours; 39 nanotube diameters agree with
+  a sqrt(n^2 + nm + m^2) / pi to 2e-15 Å; blocks 2 to 6 times longer than wide have aspect ratios
+  within 0.4 % of that. On the 150 EMT particles of NT2, the five descriptors beside the
+  autocorrelation take the energy per atom from 28.8 to 16.2 meV in random folds, and from a
+  median 30.9 to 16.0 meV in folds that hold out each geometry in all six metals (24 of 25 folds
+  better than the size law, against 20 of 25 without them). The energy of the whole particle,
+  which the per-atom channels cannot follow (q2 0.455), reaches q2 0.910 with them (liquid-drop
+  regression on n and n^(2/3) for each metal: 0.825). On particles larger than every training
+  particle the descriptors do worse than the autocorrelation alone (48.2 against 33.7 meV per
+  atom), and the liquid drop is the best model of the large particles' energy (q2 0.904 against
+  0.817).
+  **Found on the way:** holding out geometries corrects NT2's comparison (see there): the kernel,
+  with or without the descriptors, misses the 13-atom particles by 460 to 590 meV per atom when
+  it has seen none of them, where the size law misses by 53 meV. Not done here: a public
+  nano-QSAR set with measured sizes and zeta potentials, whose first study is whether the target
+  is reproducible between sources (the caution above).
 
 **Fields and kernels**
 
@@ -9188,7 +9226,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 3 | NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 4 | NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9200,7 +9238,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 126 finished, 10 partly, 40 open.**
+**176 items: 127 finished, 10 partly, 39 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9225,7 +9263,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT3 to NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** NT4 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

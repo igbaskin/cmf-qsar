@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 840 public methods, and 1391 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 259 classes with 841 public methods, and 1395 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -3946,6 +3946,24 @@ The computed descriptors, as they are written in a field set: `calc:mw` and so o
 ### `crystal_names() -> List[str]`
 
 The crystal descriptors, as they are written in a field set: `calc:capacity` and so on.
+
+### `shape_names() -> List[str]`
+
+The size and shape descriptors, as they are written in a field set: `calc:atoms` ...
+
+### `surface_access(atoms, probe: float=SURFACE_PROBE, points: int=SURFACE_POINTS) -> np.ndarray`
+
+The accessible fraction of every atom's sphere (Shrake and Rupley 1973).
+
+Each atom is a sphere of its covalent radius plus the probe radius, sampled at `points`
+points; a point is accessible when it lies inside no other atom's sphere, periodic images
+included.  An atom with any accessible point is at the surface.  On copper icosahedra and
+truncated octahedra this finds exactly the atoms of the outer shell, the ones with fewer than
+twelve neighbours (tests/test_shape_descriptors.py).
+
+### `compute_shape(atoms, key: str) -> float`
+
+One size or shape descriptor of one structure (plan item NT3); NaN where it has none.
 
 ### `is_structure(obj) -> bool`
 
@@ -19818,6 +19836,18 @@ set aside, and the one column left is taken; with two or more left the choice is
 with the list, because taking the first numeric column of a prepared table quietly reads a
 database number as the property.
 
+### `attach_values(structures: Sequence, names: Sequence[str], path: str, columns: Optional[Sequence[str]]=None) -> Tuple[List[str], List[str]]`
+
+Copy the measured values of a CSV table into the info fields of the structures (NT3).
+
+The first column holds the structure names; every other column with a title and a number is
+a quantity measured on the structure -- a hydrodynamic size, a zeta potential, a coating --
+which a field set then names as a descriptor and `cmfqsar.descriptors.read_values`
+reads from `atoms.info`.  `columns` keeps only the named ones.  A structure the table does
+not name, or a cell that is not a number, is left without the value (NaN to the model).
+
+Returns the columns copied and the names of the table that match no structure.
+
 ### `load_structures(path: str, target: Optional[str]=None, target_file: Optional[str]=None, target_column: Optional[str]=None, pbc: Optional[str]=None, subset: str='train', use_subset_column: bool=True, index: str=':')`
 
 A `cmfqsar.dataio.Dataset` of structures read from a file or a folder.
@@ -22177,6 +22207,11 @@ Read the measured values from a CSV whose first column holds the structure names
 
 A table with several numeric columns -- which is what a prepared data set usually is --
 asks which column is the property; a plain `name,value` file asks nothing.
+
+#### `CrystalWindow.import_descriptors(path: str='')`
+
+Read measured values of every structure (size, zeta potential, ...) from a CSV whose
+first column holds the structure names; they become descriptors (plan item NT3).
 
 #### `CrystalWindow.populate() -> None`
 

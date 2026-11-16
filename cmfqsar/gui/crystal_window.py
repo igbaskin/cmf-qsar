@@ -403,6 +403,16 @@ class CrystalWindow(QMainWindow):
         form.addRow("In at least", self.spin_min_structures)
         form.addRow("Charges", self.cmb_charges)
         form.addRow("Periodic in", self.cmb_pbc)
+        self.ed_descriptors = QLineEdit("")
+        self.ed_descriptors.setPlaceholderText("none, or calc:atoms,calc:surface_fraction")
+        self.ed_descriptors.setToolTip(
+            "Numbers beside the fields, one per structure, separated by commas (plan item "
+            "NT3). The periodic channels are per atom, so the size of a particle reaches the "
+            "model only this way. Computed from the structure: calc:atoms, calc:diameter, "
+            "calc:gyration_radius, calc:aspect_ratio, calc:surface_fraction, "
+            "calc:surface_area. Any other name is read from the structures' info fields, or "
+            "from a table (File -> Read descriptor values from a CSV).")
+        form.addRow("Descriptors", self.ed_descriptors)
         ff.addLayout(form)
         lay.addWidget(fields)
 
@@ -509,6 +519,7 @@ class CrystalWindow(QMainWindow):
         self._act(fm, "Open a folder of structures...", self.open_folder, "Ctrl+O")
         self._act(fm, "Open one structure file...", self.open_file)
         self._act(fm, "Read the measured values from a CSV...", self.import_targets)
+        self._act(fm, "Read descriptor values from a CSV...", self.import_descriptors)
         fm.addSeparator()
         self._act(fm, "Save model...", self.save_model_file)
         self._act(fm, "Export predictions (CSV)...", self.export_predictions)
@@ -719,6 +730,29 @@ class CrystalWindow(QMainWindow):
                  f"{self.target_name}"
                  + ("" if got else "; no name in the file matches a structure name"))
 
+    def import_descriptors(self, path: str = ""):
+        """Read measured values of every structure (size, zeta potential, ...) from a CSV whose
+        first column holds the structure names; they become descriptors (plan item NT3)."""
+        if not self.names:
+            self._tell("No structures", "Open a set of structures first.")
+            return
+        if not path:
+            path, _ = QFileDialog.getOpenFileName(self, "Descriptor values (CSV)", "",
+                                                  "CSV (*.csv *.txt);;All files (*)")
+        if not path:
+            return
+        from ..structures import attach_values
+        try:
+            got, unmatched = attach_values(self.atoms, self.names, path)
+        except ValueError as exc:
+            self._tell("Descriptor values", str(exc))
+            return
+        named = [d for d in self.ed_descriptors.text().split(",") if d.strip()]
+        self.ed_descriptors.setText(",".join(named + [g for g in got if g not in named]))
+        self.log(f"Read {', '.join(got)} from {os.path.basename(path)}"
+                 + (f"; {len(unmatched)} names of the table match no structure" if unmatched
+                    else ""))
+
     def populate(self) -> None:
         if len(self.subset) != len(self.names):
             self.subset = ["train"] * len(self.names)
@@ -754,8 +788,11 @@ class CrystalWindow(QMainWindow):
                                    self.spin_min_structures.value())
         else:
             elements = []
-        return inorganic_fieldset(elements, physchem=physchem,
-                                  charge_model=self.cmb_charges.currentText(), alpha=1.0)
+        fs = inorganic_fieldset(elements, physchem=physchem,
+                                charge_model=self.cmb_charges.currentText(), alpha=1.0)
+        fs.descriptors = tuple(d.strip() for d in self.ed_descriptors.text().split(",")
+                               if d.strip())
+        return fs
 
     def build_model(self):
         if not self.names:

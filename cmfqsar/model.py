@@ -1753,8 +1753,12 @@ class CMFModel:
         self.ac_block_weights_ = self._derive_block_weights(
             self.ac_train_ * self.ac_scale_, None if y is None else np.asarray(y, float),
             self.ac_blocks_, self.ac_block_keys_)
-        return autocorrelation_kernel(self.ac_train_, scale=self.ac_column_scale,
-                                      n_bins=spec.n_bins, blocks=self.ac_blocks_)
+        K = autocorrelation_kernel(self.ac_train_, scale=self.ac_column_scale,
+                                   n_bins=spec.n_bins, blocks=self.ac_blocks_)
+        # the non-field descriptors -- the size and shape of a particle, measured values --
+        # enter as a block of their own, as they do beside the overlap kernel (plan item NT3)
+        self.prepare_descriptors(train)
+        return K + self.descriptor_block(train.descriptors)
 
     def test_kernel(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """The (n_test, n_train) joint kernel block, whichever source it comes from."""
@@ -1764,9 +1768,10 @@ class CMFModel:
         from .invariant import autocorrelation_kernel
         if getattr(self, "ac_train_", None) is None:
             raise RuntimeError("model is not fitted")
-        return autocorrelation_kernel(self.ac_train_, self._ac_features(test),
-                                      scale=self.ac_column_scale, n_bins=self._ac_spec().n_bins,
-                                      blocks=getattr(self, "ac_blocks_", None))
+        K = autocorrelation_kernel(self.ac_train_, self._ac_features(test),
+                                   scale=self.ac_column_scale, n_bins=self._ac_spec().n_bins,
+                                   blocks=getattr(self, "ac_blocks_", None))
+        return K + self.descriptor_block(test.descriptors)
 
     def _require_fields_if_atoms(self, what: str) -> None:
         """Atom-level interpretation needs the overlap kernel; the dual form does not."""
@@ -1837,7 +1842,8 @@ class CMFModel:
     def joint_self(self, table: AtomTable) -> np.ndarray:
         """Diagonal of the linear joint kernel, i.e. K(x, x) for every molecule of `table`."""
         if not self.uses_fields:
-            return np.ones(table.n_mol)          # the autocorrelation kernel is cosine-normalised
+            # the autocorrelation kernel is cosine-normalised; the descriptor block is not
+            return np.ones(table.n_mol) + self.descriptor_self(table.descriptors)
         # open boundaries, or the periodic self-overlaps with the host symmetry (items M4 and
         # M14), which the training diagonal was built from and which matters whenever the
         # diagonal is not replaced by one, that is for a model that is not normalised.  At the
@@ -3171,6 +3177,9 @@ def block_fold_kernels(model: "CMFModel", y: np.ndarray, folds: int = 10,
                                 rho=model.ac_block_rho)
         K = autocorrelation_kernel(X, scale=sc * expand_block_weights(w, blocks), n_bins=n_bins,
                                    blocks=blocks)
+        train = getattr(model, "train", None)
+        if train is not None:
+            K = K + model.descriptor_block(train.descriptors)      # plan item NT3
         out.append((te, tr, K))
     return out
 

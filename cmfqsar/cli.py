@@ -1177,6 +1177,19 @@ def cmd_build_crystals(args):
               f"files carry")
     y = crystal_targets(atoms, names, key=args.target, csv=args.target_file,
                         column=args.target_column)
+    descriptors = [d for d in (args.descriptors or "").split(",") if d]
+    if args.descriptor_file:
+        # plan item NT3: measured values of each structure, matched on the names
+        from cmfqsar.structures import attach_values
+        try:
+            got, unmatched = attach_values(atoms, names, args.descriptor_file)
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        print(f"  read {', '.join(got)} from {args.descriptor_file}"
+              + (f"; {len(unmatched)} names of the table match no structure" if unmatched
+                 else ""))
+        if not descriptors:
+            descriptors = list(got)
     ok = np.isfinite(y)
     print(f"Loaded {len(atoms)} structures from {args.dataset}; target: {args.target or args.target_file}")
     if ok.sum() < len(atoms):
@@ -1196,7 +1209,12 @@ def cmd_build_crystals(args):
     else:
         elements = [e for e in args.elements.split(",") if e]
     fs = inorganic_fieldset(elements, physchem=physchem, charge_model=args.charges)
+    if descriptors:
+        fs.descriptors = tuple(descriptors)
+        fs.descriptor_h = float(args.descriptor_h)
     print(f"  fields: {', '.join(sp.label for sp in fs.specs)}")
+    if descriptors:
+        print(f"  descriptors beside the channels: {', '.join(descriptors)}")
     print(f"  training set: {len(idx)} structures" + (f", test set: {len(te)}" if len(te) else ""))
     train = crystal_table([atoms[i] for i in idx], fs, [names[i] for i in idx])
     sources = sorted({m.charge_source for m in train.molecules if m.charge_source})
@@ -4764,6 +4782,23 @@ def main(argv=None):
                     help="indicator fields: 'auto' (one per element in at least --min-structures "
                          "training structures, plus one for the rest), 'none', or a list Na,Cl,O")
     bc.add_argument("--min-structures", type=int, default=5, metavar="N")
+    bc.add_argument("--descriptors", default=None, metavar="A,B",
+                    help="numbers beside the channels, one per structure, standardised on the "
+                         "training set and added to the kernel as a block of their own. The "
+                         "periodic channels are per atom, so the size of a particle reaches the "
+                         "model only this way. Computed: calc:atoms, calc:diameter, "
+                         "calc:gyration_radius, calc:aspect_ratio, calc:surface_fraction, "
+                         "calc:surface_area, and the electrode quantities calc:capacity, "
+                         "calc:density, ...; any other name is read from the structures' info "
+                         "fields or from --descriptor-file. Do not pass anything derived from "
+                         "the target")
+    bc.add_argument("--descriptor-file", default=None, metavar="CSV",
+                    help="a table of measured values (hydrodynamic size, zeta potential, ...): "
+                         "the first column holds the structure names, every other numeric "
+                         "column is one quantity. Without --descriptors every such column "
+                         "becomes a descriptor")
+    bc.add_argument("--descriptor-h", type=float, default=1.0, metavar="H",
+                    help="mixing coefficient of the descriptor block (default 1)")
     bc.add_argument("--charges", default="oxidation",
                     choices=["oxidation", "electronegativity", "file", "dft"],
                     help="electrostatic weights: oxidation states guessed from the composition, the "

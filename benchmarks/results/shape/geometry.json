@@ -1,0 +1,519 @@
+{
+ "icosahedra": [
+  {
+   "shells": 2,
+   "atoms": 13,
+   "surface_atoms": 12,
+   "expected": 12,
+   "seconds": 0.000903200008906424
+  },
+  {
+   "shells": 3,
+   "atoms": 55,
+   "surface_atoms": 42,
+   "expected": 42,
+   "seconds": 0.003670100006274879
+  },
+  {
+   "shells": 4,
+   "atoms": 147,
+   "surface_atoms": 92,
+   "expected": 92,
+   "seconds": 0.012645700015127659
+  },
+  {
+   "shells": 5,
+   "atoms": 309,
+   "surface_atoms": 162,
+   "expected": 162,
+   "seconds": 0.031536599970422685
+  },
+  {
+   "shells": 6,
+   "atoms": 561,
+   "surface_atoms": 252,
+   "expected": 252,
+   "seconds": 0.06496689998311922
+  },
+  {
+   "shells": 7,
+   "atoms": 923,
+   "surface_atoms": 362,
+   "expected": 362,
+   "seconds": 0.11288029997376725
+  },
+  {
+   "shells": 8,
+   "atoms": 1415,
+   "surface_atoms": 492,
+   "expected": 492,
+   "seconds": 0.17942309996578842
+  },
+  {
+   "shells": 9,
+   "atoms": 2057,
+   "surface_atoms": 642,
+   "expected": 642,
+   "seconds": 0.273309700016398
+  },
+  {
+   "shells": 10,
+   "atoms": 2869,
+   "surface_atoms": 812,
+   "expected": 812,
+   "seconds": 0.38903969997772947
+  },
+  {
+   "shells": 11,
+   "atoms": 3871,
+   "surface_atoms": 1002,
+   "expected": 1002,
+   "seconds": 0.5535514000221156
+  },
+  {
+   "shells": 12,
+   "atoms": 5083,
+   "surface_atoms": 1212,
+   "expected": 1212,
+   "seconds": 0.7704468000447378
+  }
+ ],
+ "fcc": [
+  {
+   "shape": "truncated octahedron",
+   "size": 5,
+   "atoms": 79,
+   "surface_atoms": 60,
+   "fewer_than_12": 60,
+   "disagree": 0
+  },
+  {
+   "shape": "truncated octahedron",
+   "size": 9,
+   "atoms": 459,
+   "surface_atoms": 234,
+   "fewer_than_12": 234,
+   "disagree": 0
+  },
+  {
+   "shape": "truncated octahedron",
+   "size": 13,
+   "atoms": 1289,
+   "surface_atoms": 482,
+   "fewer_than_12": 482,
+   "disagree": 0
+  },
+  {
+   "shape": "truncated octahedron",
+   "size": 17,
+   "atoms": 2951,
+   "surface_atoms": 876,
+   "fewer_than_12": 876,
+   "disagree": 0
+  },
+  {
+   "shape": "decahedron",
+   "size": 3,
+   "atoms": 55,
+   "surface_atoms": 42,
+   "fewer_than_12": 42,
+   "disagree": 0
+  },
+  {
+   "shape": "decahedron",
+   "size": 5,
+   "atoms": 309,
+   "surface_atoms": 162,
+   "fewer_than_12": 162,
+   "disagree": 0
+  },
+  {
+   "shape": "decahedron",
+   "size": 7,
+   "atoms": 923,
+   "surface_atoms": 362,
+   "fewer_than_12": 362,
+   "disagree": 0
+  }
+ ],
+ "tubes": [
+  {
+   "n": 4,
+   "m": 1,
+   "atoms": 28,
+   "diameter": 3.587639082443191,
+   "formula": 3.587639082443191,
+   "gyration_radius": 1.7938195412215956
+  },
+  {
+   "n": 4,
+   "m": 2,
+   "atoms": 56,
+   "diameter": 4.142648780007597,
+   "formula": 4.142648780007597,
+   "gyration_radius": 2.0713243900037983
+  },
+  {
+   "n": 4,
+   "m": 3,
+   "atoms": 148,
+   "diameter": 4.762115900658183,
+   "formula": 4.762115900658182,
+   "gyration_radius": 2.381057950329091
+  },
+  {
+   "n": 4,
+   "m": 4,
+   "atoms": 16,
+   "diameter": 5.424000460571793,
+   "formula": 5.424000460571793,
+   "gyration_radius": 2.7120002302858963
+  },
+  {
+   "n": 5,
+   "m": 0,
+   "atoms": 20,
+   "diameter": 3.914435157494723,
+   "formula": 3.914435157494723,
+   "gyration_radius": 1.9572175787473618
+  },
+  {
+   "n": 5,
+   "m": 1,
+   "atoms": 124,
+   "diameter": 4.358930514101608,
+   "formula": 4.358930514101608,
+   "gyration_radius": 2.179465257050804
+  },
+  {
+   "n": 5,
+   "m": 2,
+   "atoms": 52,
+   "diameter": 4.889127944682973,
+   "formula": 4.889127944682973,
+   "gyration_radius": 2.444563972341487
+  },
+  {
+   "n": 5,
+   "m": 3,
+   "atoms": 196,
+   "diameter": 5.480209220492614,
+   "formula": 5.480209220492613,
+   "gyration_radius": 2.740104610246307
+  },
+  {
+   "n": 5,
+   "m": 4,
+   "atoms": 244,
+   "diameter": 6.114543184036156,
+   "formula": 6.1145431840361555,
+   "gyration_radius": 3.0572715920180777
+  },
+  {
+   "n": 5,
+   "m": 5,
+   "atoms": 20,
+   "diameter": 6.780000575714742,
+   "formula": 6.780000575714742,
+   "gyration_radius": 3.3900002878573705
+  },
+  {
+   "n": 6,
+   "m": 0,
+   "atoms": 24,
+   "diameter": 4.697322188993669,
+   "formula": 4.6973221889936685,
+   "gyration_radius": 2.3486610944968342
+  },
+  {
+   "n": 6,
+   "m": 1,
+   "atoms": 172,
+   "diameter": 5.133733580527614,
+   "formula": 5.133733580527613,
+   "gyration_radius": 2.5668667902638065
+  },
+  {
+   "n": 6,
+   "m": 2,
+   "atoms": 104,
+   "diameter": 5.6454786699304735,
+   "formula": 5.645478669930473,
+   "gyration_radius": 2.8227393349652363
+  },
+  {
+   "n": 6,
+   "m": 3,
+   "atoms": 84,
+   "diameter": 6.213973170011397,
+   "formula": 6.213973170011396,
+   "gyration_radius": 3.1069865850056977
+  },
+  {
+   "n": 6,
+   "m": 4,
+   "atoms": 152,
+   "diameter": 6.825050909024888,
+   "formula": 6.825050909024888,
+   "gyration_radius": 3.412525454512444
+  },
+  {
+   "n": 6,
+   "m": 5,
+   "atoms": 364,
+   "diameter": 7.468266296277866,
+   "formula": 7.468266296277864,
+   "gyration_radius": 3.7341331481389317
+  },
+  {
+   "n": 6,
+   "m": 6,
+   "atoms": 24,
+   "diameter": 8.13600069085769,
+   "formula": 8.13600069085769,
+   "gyration_radius": 4.068000345428845
+  },
+  {
+   "n": 7,
+   "m": 0,
+   "atoms": 28,
+   "diameter": 5.480209220492613,
+   "formula": 5.480209220492613,
+   "gyration_radius": 2.740104610246307
+  },
+  {
+   "n": 7,
+   "m": 1,
+   "atoms": 76,
+   "diameter": 5.910667469337629,
+   "formula": 5.910667469337628,
+   "gyration_radius": 2.9553337346688147
+  },
+  {
+   "n": 7,
+   "m": 2,
+   "atoms": 268,
+   "diameter": 6.408206533342882,
+   "formula": 6.408206533342881,
+   "gyration_radius": 3.2041032666714404
+  },
+  {
+   "n": 7,
+   "m": 3,
+   "atoms": 316,
+   "diameter": 6.958452142757695,
+   "formula": 6.958452142757694,
+   "gyration_radius": 3.479226071378847
+  },
+  {
+   "n": 7,
+   "m": 4,
+   "atoms": 124,
+   "diameter": 7.549889117086314,
+   "formula": 7.549889117086313,
+   "gyration_radius": 3.7749445585431567
+  },
+  {
+   "n": 7,
+   "m": 5,
+   "atoms": 436,
+   "diameter": 8.173580570700095,
+   "formula": 8.173580570700093,
+   "gyration_radius": 4.086790285350047
+  },
+  {
+   "n": 7,
+   "m": 6,
+   "atoms": 508,
+   "diameter": 8.822688774933194,
+   "formula": 8.822688774933193,
+   "gyration_radius": 4.411344387466596
+  },
+  {
+   "n": 7,
+   "m": 7,
+   "atoms": 28,
+   "diameter": 9.492000806000638,
+   "formula": 9.492000806000638,
+   "gyration_radius": 4.746000403000319
+  },
+  {
+   "n": 8,
+   "m": 0,
+   "atoms": 32,
+   "diameter": 6.263096251991558,
+   "formula": 6.263096251991557,
+   "gyration_radius": 3.1315481259957787
+  },
+  {
+   "n": 8,
+   "m": 1,
+   "atoms": 292,
+   "diameter": 6.688989729287508,
+   "formula": 6.688989729287507,
+   "gyration_radius": 3.3444948646437536
+  },
+  {
+   "n": 8,
+   "m": 2,
+   "atoms": 56,
+   "diameter": 7.175278164886383,
+   "formula": 7.175278164886382,
+   "gyration_radius": 3.587639082443191
+  },
+  {
+   "n": 8,
+   "m": 3,
+   "atoms": 388,
+   "diameter": 7.710543048103375,
+   "formula": 7.710543048103374,
+   "gyration_radius": 3.855271524051687
+  },
+  {
+   "n": 8,
+   "m": 4,
+   "atoms": 112,
+   "diameter": 8.285297560015195,
+   "formula": 8.285297560015193,
+   "gyration_radius": 4.1426487800075975
+  },
+  {
+   "n": 8,
+   "m": 5,
+   "atoms": 172,
+   "diameter": 8.891887393996319,
+   "formula": 8.891887393996317,
+   "gyration_radius": 4.445943696998158
+  },
+  {
+   "n": 8,
+   "m": 6,
+   "atoms": 296,
+   "diameter": 9.524231801316366,
+   "formula": 9.524231801316365,
+   "gyration_radius": 4.762115900658182
+  },
+  {
+   "n": 8,
+   "m": 7,
+   "atoms": 676,
+   "diameter": 10.177531409486283,
+   "formula": 10.177531409486281,
+   "gyration_radius": 5.08876570474314
+  },
+  {
+   "n": 8,
+   "m": 8,
+   "atoms": 32,
+   "diameter": 10.848000921143585,
+   "formula": 10.848000921143585,
+   "gyration_radius": 5.424000460571793
+  },
+  {
+   "n": 9,
+   "m": 0,
+   "atoms": 36,
+   "diameter": 7.045983283490502,
+   "formula": 7.045983283490502,
+   "gyration_radius": 3.522991641745251
+  },
+  {
+   "n": 9,
+   "m": 1,
+   "atoms": 364,
+   "diameter": 7.468266296277866,
+   "formula": 7.468266296277864,
+   "gyration_radius": 3.7341331481389326
+  },
+  {
+   "n": 9,
+   "m": 2,
+   "atoms": 412,
+   "diameter": 7.945435590399727,
+   "formula": 7.945435590399726,
+   "gyration_radius": 3.972717795199863
+  },
+  {
+   "n": 9,
+   "m": 3,
+   "atoms": 156,
+   "diameter": 8.46821800489571,
+   "formula": 8.468218004895709,
+   "gyration_radius": 4.2341090024478545
+  },
+  {
+   "n": 9,
+   "m": 4,
+   "atoms": 532,
+   "diameter": 9.028693695317589,
+   "formula": 9.028693695317587,
+   "gyration_radius": 4.514346847658794
+  }
+ ],
+ "blocks": [
+  {
+   "cells": [
+    3,
+    3,
+    3
+   ],
+   "atoms": 108,
+   "aspect_ratio": 1.0000000000000002,
+   "side_ratio": 1.0
+  },
+  {
+   "cells": [
+    3,
+    3,
+    6
+   ],
+   "atoms": 216,
+   "aspect_ratio": 1.9941307517641855,
+   "side_ratio": 2.0
+  },
+  {
+   "cells": [
+    3,
+    3,
+    9
+   ],
+   "atoms": 324,
+   "aspect_ratio": 2.9895629357846922,
+   "side_ratio": 3.0
+  },
+  {
+   "cells": [
+    3,
+    3,
+    12
+   ],
+   "atoms": 432,
+   "aspect_ratio": 3.98532147707785,
+   "side_ratio": 4.0
+  },
+  {
+   "cells": [
+    3,
+    3,
+    18
+   ],
+   "atoms": 648,
+   "aspect_ratio": 5.977165184533721,
+   "side_ratio": 6.0
+  }
+ ],
+ "edge": [
+  {
+   "structure": "bulk copper (crystal)",
+   "atoms": 32,
+   "surface_fraction": 0.0,
+   "diameter": NaN
+  },
+  {
+   "structure": "graphene sheet (layer)",
+   "atoms": 32,
+   "surface_fraction": 1.0,
+   "diameter": 0.0
+  }
+ ]
+}

@@ -74,6 +74,32 @@ CRYSTAL: Dict[str, str] = {
 #: the working ion of the crystal descriptors when the name does not say which
 WORKING_ION = "Li"
 
+#: size and shape descriptors of a structure (plan item NT3), under the same ``calc:`` prefix.
+#: The periodic kernels describe a structure per atom, so the size of a particle never reaches
+#: them; these numbers give it back as a descriptor.  "Open directions" are the ones that are not
+#: periodic: all three for a particle, the two across the axis for a tube or a wire, the normal
+#: for a layer.  A quantity a structure cannot have (the diameter of a crystal) is NaN.
+SHAPE: Dict[str, str] = {
+    "atoms": "number of atoms (in the cell, for a periodic structure)",
+    "diameter": "largest distance between two atom centres across the open directions, "
+                "angstrom: the size of a particle, the diameter of a tube or a wire, the "
+                "thickness of a layer",
+    "gyration_radius": "root-mean-square distance of the atoms from their centre across the "
+                       "open directions, angstrom (from the axis, for a tube)",
+    "aspect_ratio": "square root of the ratio of the largest to the smallest principal moment of "
+                    "the gyration tensor: 1 for a sphere or a cube, more for a rod or a plate; "
+                    "particles only",
+    "surface_fraction": "fraction of the atoms that a probe sphere of 1.4 angstrom can touch "
+                        "(the Shrake-Rupley method, atoms with their covalent radii, periodic "
+                        "images included)",
+    "surface_area": "area that the centre of the probe sphere can reach, square angstrom (per "
+                    "cell, for a periodic structure)",
+}
+
+#: the probe radius and the points per atom of the surface descriptors
+SURFACE_PROBE = 1.4
+SURFACE_POINTS = 200
+
 # --------------------------------------------------------------------------- #
 # Fields at anchored points (plan item EC3)
 # --------------------------------------------------------------------------- #
@@ -224,6 +250,134 @@ def crystal_names() -> List[str]:
     return [f"calc:{k}" for k in CRYSTAL]
 
 
+def shape_names() -> List[str]:
+    """The size and shape descriptors, as they are written in a field set: ``calc:atoms`` ..."""
+    return [f"calc:{k}" for k in SHAPE]
+
+
+def _open_coordinates(atoms) -> Optional[np.ndarray]:
+    """The atom positions across the open directions: (n, 3) for a particle, (n, 2) in the plane
+    normal to the axis for a chain, (n, 1) along the normal for a layer; None for a crystal.
+
+    A structure split across the cell boundary along an open direction is gathered first."""
+    from .periodic import centre_layer, layer_normal
+    pbc = [bool(p) for p in atoms.get_pbc()]
+    if all(pbc):
+        return None
+    if any(pbc):
+        atoms = centre_layer(atoms)
+    X = np.asarray(atoms.get_positions(), float)
+    if not any(pbc):
+        return X
+    cell = np.asarray(atoms.get_cell(), float)
+    if sum(pbc) == 2:
+        return (X @ layer_normal(cell, pbc))[:, None]
+    axis = cell[pbc.index(True)]
+    axis = axis / max(float(np.linalg.norm(axis)), 1e-12)
+    basis = np.linalg.svd(np.eye(3) - np.outer(axis, axis))[0][:, :2]
+    return X @ basis
+
+
+def _largest_distance(P: np.ndarray) -> float:
+    """The largest distance between two of the points, through their convex hull."""
+    if len(P) < 2:
+        return 0.0
+    if P.shape[1] == 1:
+        return float(np.ptp(P[:, 0]))
+    V = P
+    if len(P) > 8:
+        from scipy.spatial import ConvexHull
+        try:
+            V = P[ConvexHull(P, qhull_options="QJ").vertices]
+        except Exception:                                    # noqa: BLE001 - all on a line
+            V = P
+    D = np.sqrt(((V[:, None, :] - V[None, :, :]) ** 2).sum(-1))
+    return float(D.max())
+
+
+def _sphere_points(m: int) -> np.ndarray:
+    """`m` nearly even points on the unit sphere (the golden spiral)."""
+    k = np.arange(m) + 0.5
+    phi = np.arccos(1.0 - 2.0 * k / m)
+    theta = np.pi * (1.0 + 5.0 ** 0.5) * k
+    return np.stack([np.cos(theta) * np.sin(phi), np.sin(theta) * np.sin(phi), np.cos(phi)], 1)
+
+
+def surface_access(atoms, probe: float = SURFACE_PROBE,
+                   points: int = SURFACE_POINTS) -> np.ndarray:
+    """The accessible fraction of every atom's sphere (Shrake and Rupley 1973).
+
+    Each atom is a sphere of its covalent radius plus the probe radius, sampled at `points`
+    points; a point is accessible when it lies inside no other atom's sphere, periodic images
+    included.  An atom with any accessible point is at the surface.  On copper icosahedra and
+    truncated octahedra this finds exactly the atoms of the outer shell, the ones with fewer than
+    twelve neighbours (tests/test_shape_descriptors.py).
+    """
+    from types import SimpleNamespace
+
+    from ase.data import covalent_radii
+    from scipy.spatial import cKDTree
+
+    from .periodic import cell_image_indices
+    X = np.asarray(atoms.get_positions(), float)
+    n = len(X)
+    if n == 0:
+        return np.zeros(0)
+    R = np.asarray(covalent_radii[atoms.get_atomic_numbers()], float) + float(probe)
+    pbc = tuple(bool(p) for p in atoms.get_pbc())
+    if any(pbc):
+        rec = SimpleNamespace(coords=X, cell=np.asarray(atoms.get_cell(), float), pbc=pbc,
+                              name="")
+        cloud, source = cell_image_indices(rec, 2.0 * float(R.max()))
+    else:
+        cloud, source = X, np.arange(n)
+    tree = cKDTree(cloud)
+    U = _sphere_points(int(points))
+    out = np.zeros(n)
+    for start in range(0, n, 500):                   # blocks of atoms keep the memory bounded
+        idx = np.arange(start, min(n, start + 500))
+        P = (X[idx, None, :] + R[idx, None, None] * U[None, :, :]).reshape(-1, 3)
+        owner = np.repeat(idx, len(U))
+        found = cKDTree(P).sparse_distance_matrix(tree, float(R.max()), output_type="ndarray")
+        p, k, d = found["i"], found["j"], found["v"]
+        inside = (d < R[source[k]] - 1e-9) & ~((k == owner[p]) & (k < n))
+        buried = np.zeros(len(P), bool)
+        buried[p[inside]] = True
+        out[idx] = (~buried).reshape(len(idx), len(U)).mean(axis=1)
+    return out
+
+
+def compute_shape(atoms, key: str) -> float:
+    """One size or shape descriptor of one structure (plan item NT3); NaN where it has none."""
+    if key == "atoms":
+        return float(len(atoms))
+    if key in ("surface_fraction", "surface_area"):
+        from ase.data import covalent_radii
+        access = surface_access(atoms)
+        if key == "surface_fraction":
+            return float(np.mean(access > 0)) if len(access) else float("nan")
+        R = np.asarray(covalent_radii[atoms.get_atomic_numbers()], float) + SURFACE_PROBE
+        return float(np.sum(access * 4.0 * np.pi * R ** 2))
+    P = _open_coordinates(atoms)
+    if P is None or len(P) == 0:
+        return float("nan")
+    if key == "diameter":
+        return _largest_distance(P)
+    C = P - P.mean(axis=0)
+    if key == "gyration_radius":
+        return float(np.sqrt(np.mean(np.sum(C * C, axis=1))))
+    if key == "aspect_ratio":
+        if P.shape[1] != 3:
+            return float("nan")
+        from ase.data import covalent_radii
+        # each atom counted as a ball of its covalent radius, so that a flat flake has a finite
+        # ratio: a uniform ball of radius r adds r^2 / 5 along every axis
+        r2 = float(np.mean(covalent_radii[atoms.get_atomic_numbers()] ** 2))
+        lam = np.linalg.eigvalsh(C.T @ C / len(C)) + r2 / 5.0
+        return float(np.sqrt(lam[-1] / lam[0]))
+    raise AssertionError(key)                                # unreachable: SHAPE is checked
+
+
 def is_structure(obj) -> bool:
     """Is this an ASE structure rather than an RDKit molecule?"""
     return hasattr(obj, "get_chemical_symbols") and hasattr(obj, "get_positions")
@@ -292,12 +446,15 @@ def compute_crystal(atoms, name: str) -> float:
     import numpy as np
     key, _, ion = name.partition("@")
     ion = ion or WORKING_ION
+    if key in SHAPE:
+        return compute_shape(atoms, key)
     if key not in CRYSTAL:
         import difflib
-        near = difflib.get_close_matches(key, list(CRYSTAL), n=4)
+        near = difflib.get_close_matches(key, list(CRYSTAL) + list(SHAPE), n=4)
         raise KeyError(f"unknown crystal descriptor {key!r}"
                        + (f"; did you mean {', '.join(near)}?" if near else
-                          f"; the crystal descriptors are {', '.join(CRYSTAL)}"))
+                          f"; the crystal descriptors are {', '.join(CRYSTAL)}, and the size "
+                          f"and shape descriptors {', '.join(SHAPE)}"))
     symbols = list(atoms.get_chemical_symbols())
     n_ion = float(sum(1 for s in symbols if s == ion))
     mass = float(np.sum(atoms.get_masses()))                 # g/mol of the whole cell

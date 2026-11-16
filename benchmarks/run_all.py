@@ -979,6 +979,17 @@ def registry() -> List[Benchmark]:
                   minutes="4",
                   report=lambda: _mod("run_particles").report(),
                   tables=["particles/table.md"]),
+        Benchmark("shape",
+                  "size and shape as descriptors of a structure: the surface atoms, diameters "
+                  "and aspect ratios against answers known without them, and the five size "
+                  "and shape descriptors beside the periodic autocorrelation on the EMT energy "
+                  "of 150 metal particles, with folds that hold out whole geometries (plan item "
+                  "NT3)",
+                  "run_shape.py", "shape",
+                  compute=[["--stage", "geometry"], ["--stage", "model"]],
+                  minutes="4",
+                  report=lambda: _mod("run_shape").report(),
+                  tables=["shape/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

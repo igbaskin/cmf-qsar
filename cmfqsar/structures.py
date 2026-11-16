@@ -349,6 +349,49 @@ def target_csv_column(path: str) -> Optional[str]:
                      f"({', '.join(left or cols)}); name the one that holds the target")
 
 
+def attach_values(structures: Sequence, names: Sequence[str], path: str,
+                  columns: Optional[Sequence[str]] = None) -> Tuple[List[str], List[str]]:
+    """Copy the measured values of a CSV table into the info fields of the structures (NT3).
+
+    The first column holds the structure names; every other column with a title and a number is
+    a quantity measured on the structure -- a hydrodynamic size, a zeta potential, a coating --
+    which a field set then names as a descriptor and :func:`cmfqsar.descriptors.read_values`
+    reads from ``atoms.info``.  ``columns`` keeps only the named ones.  A structure the table does
+    not name, or a cell that is not a number, is left without the value (NaN to the model).
+
+    Returns the columns copied and the names of the table that match no structure.
+    """
+    import csv
+    with open(path, newline="", encoding="utf-8", errors="replace") as fh:
+        rows = [r for r in csv.reader(fh) if r and any(c.strip() for c in r)]
+    if len(rows) < 2:
+        raise ValueError(f"{os.path.basename(path)} needs a header and at least one row")
+    titles = [c.strip() for c in rows[0]]
+    if columns:
+        missing = [c for c in columns if c not in titles[1:]]
+        if missing:
+            raise ValueError(f"{os.path.basename(path)} has no column {', '.join(missing)}; it "
+                             f"has {', '.join(t for t in titles[1:] if t)}")
+        keep = [titles.index(c) for c in columns]
+    else:
+        keep = [k for k in range(1, len(titles))
+                if titles[k] and any(_number(r[k]) is not None for r in rows[1:] if len(r) > k)]
+    if not keep:
+        raise ValueError(f"{os.path.basename(path)} has no numeric column besides the names")
+    where = {str(n): i for i, n in enumerate(names)}
+    unmatched = []
+    for r in rows[1:]:
+        i = where.get(r[0].strip())
+        if i is None:
+            unmatched.append(r[0].strip())
+            continue
+        for k in keep:
+            v = _number(r[k]) if len(r) > k else None
+            if v is not None:
+                structures[i].info[titles[k]] = v
+    return [titles[k] for k in keep], unmatched
+
+
 def load_structures(path: str, target: Optional[str] = None, target_file: Optional[str] = None,
                     target_column: Optional[str] = None, pbc: Optional[str] = None,
                     subset: str = "train", use_subset_column: bool = True, index: str = ":"):

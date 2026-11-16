@@ -1107,7 +1107,23 @@ so its memory grows linearly. The model refuses the overlap kernel for a structu
 28 minutes for 100 particles of 2,869 atoms, against 26 s for the autocorrelation. Molecules are
 never refused. On 150 metal particles of 13 to 3,564 atoms, the autocorrelation model predicts
 the EMT energy per atom to 26 meV, against 45 meV for a linear regression on n^(-1/3) for each
-metal.
+metal. Item NT3 found that random folds overstate this: held out geometry by geometry, the
+kernel wins 20 of 25 folds but misses the 13-atom particles by 587 meV when it has seen none of
+them.
+
+### Size and shape as descriptors
+
+Plan item NT3 (`cmfqsar/descriptors.py`, `benchmarks/run_shape.py`): six descriptors computed
+from a structure (`calc:atoms`, `calc:diameter`, `calc:gyration_radius`, `calc:aspect_ratio`,
+`calc:surface_fraction`, `calc:surface_area`) and measured values read from a table
+(`--descriptor-file`, or *File → Read descriptor values from a CSV…* in the crystal window). The
+invariant kernels used to ignore the descriptor block; they now add it, as the overlap kernel
+does. The surface atoms of copper icosahedra and fcc particles of up to 5,083 atoms are exactly
+the outer shell, and the diameters of 39 nanotubes agree with the textbook formula. On 150 EMT
+particles the descriptors take the energy per atom from 28.8 to 16.2 meV per atom and the energy
+of the whole particle from q2 0.455 to 0.910. On particles larger than every training particle
+they do worse than the autocorrelation alone, and a liquid-drop regression on n and n^(2/3)
+predicts the large particles best.
 
 ### Fields from DFT on a grid
 
