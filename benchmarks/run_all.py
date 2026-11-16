@@ -1285,8 +1285,9 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_conformal").report(_r("conformal")),
                   tables=["conformal/table.md"]),
-        Benchmark("herding", "kernel herding against max-min, k-medoids, pivoted Cholesky and "
-                  "random choice: which molecules to measure first, which to use as Nystroem "
+        Benchmark("herding", "kernel herding against max-min, k-medoids, pivoted Cholesky, "
+                  "random choice and a pick on fingerprints: which molecules to measure first, "
+                  "which to use as Nystroem "
                   "landmarks, and which solvation shells of an ensemble to keep",
                   "run_herding.py", "herding", compute=[[]],
                   # the shell stage reads the SD file that run_ensembles.py --stage file writes

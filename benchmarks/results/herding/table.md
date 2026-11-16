@@ -2,7 +2,7 @@
 
 ## Which molecules to measure first
 
-8 Sutherland sets, 10 random splits into a pool (70 %) and a test set (30 %). From the pool, m molecules are chosen without looking at the activity; a model fitted on them alone predicts the test set. `random` is the mean of 5 draws per split. The kernel the subsets are chosen on is the joint kernel at alpha = 0.3; `herding-gauss` uses a Gaussian of the field distance instead. MMD^2 is between the chosen molecules and the pool, in the joint kernel.
+8 Sutherland sets, 10 random splits into a pool (70 %) and a test set (30 %). From the pool, m molecules are chosen without looking at the activity; a model fitted on them alone predicts the test set. `random` is the mean of 5 draws per split. The kernel the subsets are chosen on is the joint kernel at alpha = 0.3; `herding-gauss` uses a Gaussian of the field distance instead. `fingerprints` (max-min on Morgan fingerprints, Tanimoto) and `size` (spread evenly over the number of heavy atoms) need no field. MMD^2 is between the chosen molecules and the pool, in the joint kernel.
 
 | m | rule | R2pred on the test set | RMSE on the test set | MMD^2 to the pool | MMD^2 to the test set | RMSE minus random, mean over sets [95 % interval] | sets where better than random |
 |---:|---|---:|---:|---:|---:|---:|---:|
@@ -11,34 +11,40 @@
 | 10 | `maxmin` | +0.161 | 1.394 | 0.2060 | 0.2526 | +0.056 [-0.010, +0.137] | 4 of 8 |
 | 10 | `kmedoids` | +0.094 | 1.325 | 0.0598 | 0.1154 | -0.014 [-0.086, +0.057] | 4 of 8 |
 | 10 | `pivoted_cholesky` | +0.165 | 1.362 | 0.1785 | 0.2261 | +0.023 [-0.070, +0.114] | 3 of 8 |
+| 10 | `fingerprints` | +0.130 | 1.304 | 0.0874 | 0.1324 | -0.035 [-0.076, +0.010] | 5 of 8 |
+| 10 | `size` | +0.051 | 1.337 | 0.0838 | 0.1381 | -0.002 [-0.060, +0.049] | 3 of 8 |
 | 10 | `random` | +0.079 | 1.339 | 0.0994 | 0.1503 | | |
 | 20 | `herding` | +0.142 | 1.253 | 0.0076 | 0.0580 | +0.026 [+0.003, +0.051] | 3 of 8 |
 | 20 | `herding-gauss` | +0.190 | 1.213 | 0.0068 | 0.0588 | -0.013 [-0.059, +0.035] | 5 of 8 |
 | 20 | `maxmin` | +0.252 | 1.234 | 0.0927 | 0.1402 | +0.008 [-0.051, +0.068] | 4 of 8 |
 | 20 | `kmedoids` | +0.234 | 1.188 | 0.0441 | 0.0939 | -0.039 [-0.096, +0.016] | 4 of 8 |
 | 20 | `pivoted_cholesky` | +0.225 | 1.242 | 0.0856 | 0.1333 | +0.015 [-0.040, +0.068] | 3 of 8 |
+| 20 | `fingerprints` | +0.213 | 1.218 | 0.0458 | 0.0874 | -0.009 [-0.060, +0.040] | 4 of 8 |
+| 20 | `size` | +0.198 | 1.221 | 0.0328 | 0.0804 | -0.006 [-0.023, +0.011] | 4 of 8 |
 | 20 | `random` | +0.186 | 1.227 | 0.0405 | 0.0929 | | |
 | 40 | `herding` | +0.381 | 1.074 | 0.0020 | 0.0521 | -0.039 [-0.059, -0.022] | 7 of 8 |
 | 40 | `herding-gauss` | +0.381 | 1.072 | 0.0018 | 0.0522 | -0.041 [-0.075, -0.004] | 6 of 8 |
 | 40 | `maxmin` | +0.390 | 1.078 | 0.0285 | 0.0757 | -0.036 [-0.073, -0.003] | 7 of 8 |
 | 40 | `kmedoids` | +0.395 | 1.057 | 0.0198 | 0.0679 | -0.057 [-0.085, -0.028] | 7 of 8 |
 | 40 | `pivoted_cholesky` | +0.367 | 1.093 | 0.0290 | 0.0746 | -0.020 [-0.060, +0.022] | 5 of 8 |
+| 40 | `fingerprints` | +0.402 | 1.052 | 0.0188 | 0.0619 | -0.061 [-0.104, -0.019] | 6 of 8 |
+| 40 | `size` | +0.319 | 1.115 | 0.0101 | 0.0623 | +0.002 [-0.054, +0.067] | 3 of 8 |
 | 40 | `random` | +0.328 | 1.113 | 0.0144 | 0.0663 | | |
 
 The model on the whole pool: R2pred +0.482, RMSE 0.978. The activity's standard deviation averages 1.36.
 
 ### R2pred by set, m = 20
 
-| set | n | `herding` | `herding-gauss` | `maxmin` | `kmedoids` | `pivoted_cholesky` | `random` |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| ACE | 114 | +0.35 | +0.43 | +0.35 | +0.44 | +0.41 | +0.35 |
-| AChE | 111 | +0.18 | -0.15 | +0.19 | +0.19 | +0.08 | +0.10 |
-| BZR | 147 | -0.10 | -0.04 | -0.07 | -0.04 | +0.01 | -0.04 |
-| COX2 | 282 | +0.09 | +0.26 | +0.25 | -0.02 | +0.28 | +0.10 |
-| DHFR | 361 | +0.12 | +0.22 | +0.14 | +0.31 | +0.13 | +0.18 |
-| GPB | 66 | +0.31 | +0.44 | +0.45 | +0.45 | +0.33 | +0.45 |
-| THER | 76 | +0.10 | +0.10 | +0.34 | +0.17 | +0.32 | +0.18 |
-| THR | 88 | +0.08 | +0.27 | +0.37 | +0.38 | +0.24 | +0.17 |
+| set | n | `herding` | `herding-gauss` | `maxmin` | `kmedoids` | `pivoted_cholesky` | `fingerprints` | `size` | `random` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ACE | 114 | +0.35 | +0.43 | +0.35 | +0.44 | +0.41 | +0.29 | +0.32 | +0.35 |
+| AChE | 111 | +0.18 | -0.15 | +0.19 | +0.19 | +0.08 | +0.31 | +0.17 | +0.10 |
+| BZR | 147 | -0.10 | -0.04 | -0.07 | -0.04 | +0.01 | -0.05 | +0.09 | -0.04 |
+| COX2 | 282 | +0.09 | +0.26 | +0.25 | -0.02 | +0.28 | +0.24 | +0.09 | +0.10 |
+| DHFR | 361 | +0.12 | +0.22 | +0.14 | +0.31 | +0.13 | +0.21 | +0.14 | +0.18 |
+| GPB | 66 | +0.31 | +0.44 | +0.45 | +0.45 | +0.33 | +0.32 | +0.45 | +0.45 |
+| THER | 76 | +0.10 | +0.10 | +0.34 | +0.17 | +0.32 | +0.20 | +0.17 | +0.18 |
+| THR | 88 | +0.08 | +0.27 | +0.37 | +0.38 | +0.24 | +0.17 | +0.15 | +0.17 |
 
 ## Which molecules to use as Nystroem landmarks
 
