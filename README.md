@@ -3720,11 +3720,11 @@ cell:
   activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
   capacity only; the energy, the power and the charging of a cold cell were not run.
 - The measured activation energies were then collected from the literature
-  (`examples/charge_transfer/`, 129 values from 27 studies, each with its paper and the place
+  (`examples/charge_transfer/`, 162 values from 34 studies, each with its paper and the place
   in it; `benchmarks/run_charge_transfer.py`). All of them were read in the paper that
-  measured them. In carbonate electrolytes the mean is 61.8 kJ/mol for graphite and
-  68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Six studies of
-  the same graphite system agree to 4.6 kJ/mol, so the mean per electrode is accurate enough
+  measured them. In carbonate electrolytes the mean is 61.4 kJ/mol for graphite and
+  68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Seven studies of
+  the same graphite system agree to 4.8 kJ/mol, so the mean per electrode is accurate enough
   for a cold cell and no model is needed for a carbonate electrolyte. Inside one study a
   change of solvent changes the value by 15 to 38 kJ/mol. The studies do not agree with each
   other on it: with no surface film on lithium titanate, dimethyl carbonate is lower than its
@@ -3734,14 +3734,15 @@ cell:
 - That regression was then run (`--stage binding` and `--stage regression`). The binding
   energy of Li+ with one molecule of each solvent comes from ORCA, because GFN2-xTB agrees
   too poorly with the values of the papers (correlation 0.80 against 0.94). With one solvent
-  held out at a time, the regression lowers the error from 19.0 to 10.1 kJ/mol for the 11
-  solvents that hold the ion with one atom (gain 8.8 kJ/mol, 95 % interval 2.6 to 12.4). It
+  held out at a time, the regression lowers the error from 17.0 to 9.4 kJ/mol for the 11
+  solvents that hold the ion with one atom (gain 7.7 kJ/mol, 95 % interval 0.8 to 12.8). It
   gains nothing when the two solvents that wrap the ion with several oxygen atoms are
   included. On the solvents measured in several series, no model of the solvent alone can
-  have an error below 7.3 kJ/mol where the regression has 10.3. That room of 3.0 kJ/mol is
-  below the repeatability of 4.6 kJ/mol, so no field model was built for this target. The
-  33 values of ten studies that were read after the first run moved the slope from 0.559
-  to 0.487. A fit of this kind on four values of one group is
+  have an error below 8.0 kJ/mol where the regression has 9.1. That room of 1.1 kJ/mol is
+  below the repeatability of 4.8 kJ/mol, so no field model was built for this target. The
+  70 values of 18 studies that were read after the first run moved the slope from 0.559
+  to 0.430. With the same solvent, the salt or its concentration changes the value by up
+  to 36 kJ/mol, and on SiO four solvents give values within 3 kJ/mol. A fit of this kind on four values of one group is
   published (Okoshi and others, J. Electrochem. Soc. 160 (2013) A2160); the test across
   laboratories with held-out solvents is what this run adds.
 

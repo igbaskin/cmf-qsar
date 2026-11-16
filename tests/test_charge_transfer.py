@@ -33,7 +33,7 @@ def test_an_energy_in_another_unit_is_converted_and_an_unknown_unit_is_refused()
 
 def test_the_table_loads_and_every_row_names_a_paper_that_has_a_record():
     rows, sources = CT.read_labels(), CT.read_sources()
-    assert len(rows) == 129
+    assert len(rows) == 162
     assert len({r["id"] for r in rows}) == len(rows)
     assert {r["source"] for r in rows} <= set(sources)
     assert all(r["location"] or r["cited_in"] for r in rows)       # the place it was read
@@ -74,6 +74,10 @@ def test_the_reference_system_leaves_out_additives_cycled_films_and_other_electr
     # LiFSA is not one of the salts of the reference system
     assert CT.is_reference(_row(salt="LiClO4"))
     assert not CT.is_reference(_row(salt="LiFSA"))
+    # the salt concentration is 0.8 to 1.5 mol/L, or not given in mol/L
+    assert CT.is_reference(_row(salt_molar="1.2")) and CT.is_reference(_row(salt_molar=""))
+    assert not CT.is_reference(_row(salt_molar="0.12"))
+    assert not CT.is_reference(_row(salt_molar="4.8"))
 
 
 def test_the_repeatability_takes_one_value_per_study():
@@ -142,16 +146,18 @@ def test_the_collected_values_and_what_they_say():
     """The numbers the plan entry quotes."""
     rows, sources = CT.read_labels(), CT.read_sources()
     res = CT.summarise(rows, sources)
-    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (129, 0, 27)
+    assert (res["n_primary"], res["n_secondary"], res["n_studies"]) == (162, 0, 34)
     rep = res["repeatability"]
-    assert rep["n"] == 6
-    assert rep["mean"] == pytest.approx(60.1, abs=0.05) and rep["sd"] == pytest.approx(4.6, abs=0.05)
+    assert rep["n"] == 7
+    assert rep["mean"] == pytest.approx(59.2, abs=0.05) and rep["sd"] == pytest.approx(4.8, abs=0.05)
+    # of the four values of Son 2025 only the one at 1.2 mol/L is the usual electrolyte
+    assert rep["studies"]["Son2025"] == pytest.approx(53.6)
     assert "Uchida2020" in rep["studies"] and rep["studies"]["Uchida2020"] == pytest.approx(62.1)
     assert rep["studies"]["Yamada2009"] == 58.0        # the paper, not the 55 of the review
     neg, pos = res["means"]["negative"], res["means"]["positive"]
-    assert neg["mean"] == pytest.approx(61.8, abs=0.05) and neg["shift"] == pytest.approx(26.8, abs=0.05)
+    assert neg["mean"] == pytest.approx(61.4, abs=0.05) and neg["shift"] == pytest.approx(26.4, abs=0.05)
     assert pos["mean"] == pytest.approx(68.0, abs=0.05) and pos["shift"] == pytest.approx(50.2, abs=0.05)
-    assert res["to_read"] == ["KyotoRepository"]
+    assert res["to_read"] == []
 
 
 def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
@@ -174,23 +180,31 @@ def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
     assert ranges["Doi2004Carbon: carbon treated by hot isostatic pressing, film formed in each "
                   "electrolyte"] == pytest.approx(5.7)
     assert not any(k.startswith("Doi2005: glassy carbon GC-20 not heat-treated") for k in ranges)
+    # lithium titanate with three electrolytes: a film raises EC:DEC and FEC:DMC and not PC
+    assert ranges["Nasara2020: lithium titanate thin film, no film"] == pytest.approx(30.0)
+    assert ranges["Nasara2020: lithium titanate thin film, film formed in each "
+                  "electrolyte"] == pytest.approx(23.0)
+    # SiO: four solvents with binding energies from 197 to 250 kJ/mol, values within 3 kJ/mol
+    assert ranges["Yamada2010: SiO, film formed in each electrolyte"] == pytest.approx(3.0)
     # water against PC on a spinel oxide: 26 kJ/mol; on LiCoO2 (Chekushkin 2021) 46 kJ/mol
     assert ranges["Nakayama2007: LiMn2O4 thin film, water and PC"] == pytest.approx(27.0)
     assert ranges["Zabara2024: lithium metal, as assembled, film formed in each "
                   "electrolyte"] == pytest.approx(1.93)
     assert ranges["Zabara2024: lithium metal, after ten cycles, film formed in each "
                   "electrolyte"] == pytest.approx(16.72)
-    assert (count["n_series"], count["n_rows"], count["largest"]) == (20, 64, 8)
+    assert (count["n_series"], count["n_rows"], count["largest"]) == (23, 74, 8)
     assert len(count["one_solvent"]) == 13
     assert count["one_solvent_in_two_series"] == ["DMC", "DMSO", "PC", "THF", "acetonitrile",
                                                   "water"]
-    # nine pairs of solvents were measured in more than one series; on the pair that most
+    # thirteen pairs of solvents were measured in more than one series; on the pair that most
     # series share, the series do not agree
     pairs = {(c["first"], c["second"]): c for c in res["contrasts"]}
-    assert sorted(pairs) == [("DMC", "EC:DMC 1:1"), ("DMC", "EC:DMC 1:9"), ("DMSO", "PC"),
-                             ("EC:DEC 1:1", "EC:DMC 1:1"), ("EC:DEC 1:1", "EC:EMC 7:3"),
+    assert sorted(pairs) == [("DMC", "EC:DMC 1:1"), ("DMC", "EC:DMC 1:9"), ("DMC", "PC"),
+                             ("DMSO", "PC"), ("EC:DEC 1:1", "EC:DMC 1:1"),
+                             ("EC:DEC 1:1", "EC:EMC 7:3"), ("EC:DEC 1:1", "FEC:DMC 3:7"),
                              ("EC:DEC 1:1", "PC"), ("EC:DMC 1:1", "EC:DMC 1:9"),
-                             ("EC:DMC 1:1", "EC:EMC 7:3"), ("PC", "water")]
+                             ("EC:DMC 1:1", "EC:EMC 7:3"), ("EC:DMC 1:1", "PC"),
+                             ("FEC:DMC 3:7", "PC"), ("PC", "water")]
     # DMSO against PC: a solid electrolyte and a carbon film agree within 2 kJ/mol
     d = {x["series"].split(":")[0]: x["difference"] for x in pairs[("DMSO", "PC")]["differences"]}
     assert d["Abe2005"] == pytest.approx(12.6) and d["Fukutsuka2010"] == pytest.approx(11.1)
@@ -198,7 +212,7 @@ def test_the_series_of_the_collected_values_and_the_one_pair_they_share():
     crown = [r for r in CT.read_labels() if "12-crown-4" in r["additive"]]
     assert len(crown) == 2 and not any(r["solvent_series"] for r in crown)
     c = pairs[("DMC", "EC:DMC 1:1")]
-    assert len(c["differences"]) == 5
+    assert len(c["differences"]) == 6
     d = {x["series"].split(":")[0]: x["difference"] for x in c["differences"]
          if "pentafluorostyrene" not in x["series"]}
     assert d["Ishihara2014"] == pytest.approx(-17.0) and d["Xu2010"] == pytest.approx(-1.41)
@@ -337,15 +351,15 @@ def test_the_sets_of_points_of_the_regression_on_the_collected_values():
     reg = CT.regression_stage(binding, draws=20)
     sizes = {key: (v["n_series"], v["n_points"], v["n_solvents"])
              for key, v in reg["variants"].items()}
-    assert sizes["single"] == (9, 27, 13)
-    assert sizes["single_no_chelate"] == (9, 25, 11)
+    assert sizes["single"] == (10, 30, 13)
+    assert sizes["single_no_chelate"] == (10, 28, 11)
     # DEC is in no series as a single solvent, and it is held out as a part of EC:DEC
-    assert sizes["mixtures"] == (20, 64, 14)
-    assert sizes["mixtures_no_chelate"] == (20, 62, 12)
-    assert sizes["published"] == (5, 14, 8)
-    assert reg["repeatability"] == pytest.approx(4.6, abs=0.05)
+    assert sizes["mixtures"] == (23, 74, 14)
+    assert sizes["mixtures_no_chelate"] == (23, 72, 12)
+    assert sizes["published"] == (6, 17, 8)
+    assert reg["repeatability"] == pytest.approx(4.8, abs=0.05)
     # every held-out value of the first set is predicted once
-    assert reg["variants"]["single"]["held_out"]["n"] == 27
+    assert reg["variants"]["single"]["held_out"]["n"] == 30
 
 
 def _stored(name):
@@ -402,33 +416,33 @@ def test_what_the_regression_on_the_binding_energy_says():
     """The numbers the plan entry quotes."""
     v = _stored("regression.json")["variants"]
     # with every single solvent the regression is no better than the mean of the series
-    assert v["single"]["gain"]["gain"] == pytest.approx(-0.1, abs=0.05)
+    assert v["single"]["gain"]["gain"] == pytest.approx(-0.2, abs=0.05)
     assert v["single"]["gain"]["low"] < 0.0 < v["single"]["gain"]["high"]
     assert v["single"]["permutation"]["share_not_above"] > 0.2
     # without the two solvents that wrap the ion it is better, and not by chance
     w = v["single_no_chelate"]
-    assert w["slope"] == pytest.approx(0.487, abs=0.001)
-    assert w["correlation_inside_series"] == pytest.approx(0.88, abs=0.005)
-    assert w["held_out"]["mean"]["mae"] == pytest.approx(19.0, abs=0.05)
-    assert w["held_out"]["regression"]["mae"] == pytest.approx(10.1, abs=0.05)
+    assert w["slope"] == pytest.approx(0.430, abs=0.001)
+    assert w["correlation_inside_series"] == pytest.approx(0.82, abs=0.005)
+    assert w["held_out"]["mean"]["mae"] == pytest.approx(17.0, abs=0.05)
+    assert w["held_out"]["regression"]["mae"] == pytest.approx(9.4, abs=0.05)
     assert (w["gain"]["gain"], w["gain"]["low"], w["gain"]["high"]) == pytest.approx(
-        (8.8, 2.6, 12.4), abs=0.05)
+        (7.7, 0.8, 12.8), abs=0.06)
     assert w["permutation"]["share_not_above"] < 0.005
     m = v["mixtures_no_chelate"]
-    assert m["held_out"]["regression"]["mae"] == pytest.approx(6.5, abs=0.05)
+    assert m["held_out"]["regression"]["mae"] == pytest.approx(6.9, abs=0.05)
     assert (m["gain"]["gain"], m["gain"]["low"], m["gain"]["high"]) == pytest.approx(
-        (5.3, 3.4, 7.9), abs=0.05)
+        (4.8, 3.1, 7.3), abs=0.05)
     # the binding energies of the papers give the same answer on the eight solvents they cover
     p = v["published"]
-    assert p["gain"]["gain"] == pytest.approx(5.2, abs=0.05) and p["gain"]["low"] > 0.0
+    assert p["gain"]["gain"] == pytest.approx(2.8, abs=0.05) and p["gain"]["low"] > 0.0
     # on the solvents measured in several series, a model of the solvent alone can remove
     # 1.5 to 3.0 kJ/mol of the error of the regression and no more
-    assert w["between_series"]["n"] == 20
-    assert w["between_series"]["regression_mae"] == pytest.approx(10.3, abs=0.05)
-    assert w["between_series"]["floor_mae"] == pytest.approx(7.3, abs=0.05)
-    assert m["between_series"]["n"] == 49
-    assert m["between_series"]["regression_mae"] == pytest.approx(6.6, abs=0.05)
-    assert m["between_series"]["floor_mae"] == pytest.approx(5.1, abs=0.05)
+    assert w["between_series"]["n"] == 23
+    assert w["between_series"]["regression_mae"] == pytest.approx(9.1, abs=0.05)
+    assert w["between_series"]["floor_mae"] == pytest.approx(8.0, abs=0.05)
+    assert m["between_series"]["n"] == 64
+    assert m["between_series"]["regression_mae"] == pytest.approx(7.1, abs=0.05)
+    assert m["between_series"]["floor_mae"] == pytest.approx(5.3, abs=0.05)
 
 
 def test_the_table_holds_the_reference_when_its_results_are_given():
@@ -437,7 +451,7 @@ def test_the_table_holds_the_reference_when_its_results_are_given():
     text = CT.table(res, sources, _stored("binding.json"), _stored("regression.json"))
     assert "## The reference: a regression on the binding energy of Li+ with the solvent" in text
     assert "| water | 155.5 | ORCA | 1 |" in text
-    assert "| single solvents, without the two that wrap the ion | 9 | 25 | 11 | +0.487 |" in text
+    assert "| single solvents, without the two that wrap the ion | 10 | 28 | 11 | +0.430 |" in text
     assert "### What a model of the solvent alone cannot remove" in text
     # without the results the table has no such section
     assert "## The reference" not in CT.table(res, sources)
@@ -447,9 +461,9 @@ def test_the_table_is_written_without_the_cell_model_results():
     rows, sources = CT.read_labels(), CT.read_sources()
     res = dict(CT.summarise(rows, sources), cold=[])
     text = CT.table(res, sources)
-    assert "| negative | 20 | 61.8 |" in text
+    assert "| negative | 21 | 61.4 |" in text
     assert "What that difference costs a cold cell" not in text
-    assert "| KyotoRepository |" in text                 # a file that is still to be read
+    assert "| Yamada2010 | silicon monoxide | 4 |" in text
     assert "| YamadaSagane2009 | solid electrolyte | 4 |" in text
     assert "| DMC | EC:DMC 1:1 | Xu2010: lithium titanate, no film | -1.4 |" in text
 

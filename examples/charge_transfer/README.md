@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 129 rows from 27 studies.
+* `activation_energies.csv`: one row per value, 162 rows from 34 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,11 +22,11 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 129 such rows, from 27 papers. Seven of the papers are open: four under CC BY 4.0,
-  one under CC BY-NC 4.0 (Fukuma 2024), one under CC BY-NC-ND 4.0 (Uchida 2020) and one as
-  an open file on the site of its society.
-  The other twenty were read from files. The author of the program supplied nineteen of
-  them: eighteen are behind a paywall, and the file of one (Fukutsuka 2010) does not state a
+  There are 162 such rows, from 34 papers. Nine of the papers are open: four under CC BY 4.0,
+  one under CC BY-NC 4.0 (Fukuma 2024), two under CC BY-NC-ND 4.0 (Uchida 2020, Son 2025),
+  one open journal (Doi 2022) and one as an open file on the site of its society.
+  The other twenty-five were read from files. The author of the program supplied twenty-four
+  of them: twenty-three are behind a paywall, and the file of one (Fukutsuka 2010) does not state a
   licence. The twentieth, Zabara 2024, is the copy that the repository of its university
   makes open after an embargo.
 * A row is **secondary** when the number was read in another paper that cites it. No row is
@@ -86,12 +86,27 @@ Nothing was written from memory.
 * The series do not all agree on the pair of solvents that five of them measured, DMC against
   EC:DMC 1:1. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
   17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison for
-  each of the nine pairs of solvents that more than one series measured. On one of them the
+  each of the thirteen pairs of solvents that more than one series measured. On one of them the
   series agree: DMSO is above PC by 12.6 kJ/mol on a solid electrolyte (Abe 2005) and by
   11.1 kJ/mol on a carbon film (Fukutsuka 2010). Three pairs are the mixtures of Zabara 2024
   on lithium metal: they differ by 0.8 to 1.9 kJ/mol as assembled, and by up to 16.7 kJ/mol
   after ten cycles. The ninth pair is water against PC: PC is above water by 26.0 kJ/mol on
   a LiMn2O4 thin film (Nakayama 2007) and by 46.3 kJ/mol on LiCoO2 (Chekushkin 2021).
+* Nine more papers were read on 16 November 2026 and gave 33 rows. Nasara 2020 gave 6 rows
+  in two series (lithium titanate in EC:DEC, FEC:DMC and PC, without a film and with a film
+  formed in each electrolyte; the table gives the value of the text and the note gives the
+  range of its two repeats). Yamada 2010 gave 4 rows in one series (SiO). Ishihara 2014 (J.
+  Electrochem. Soc.) gave 5 rows and Sagane 2012 7 rows, all in ionic liquids and in no
+  series. Son 2025 gave 4 rows, one for each concentration of LiPF6 from 0.12 to 4.8 mol/L,
+  and Doi 2022 gave 6 rows for LiBF4 in PC at six concentrations; four of the six are read
+  from the markers of a figure (about 1 kJ/mol). Busche 2016 gave 1 row. None of these 23
+  rows is in a series of solvents. Xu 2007 (J. Electrochem. Soc.) gave no row: its values are
+  points of a figure and the plot of its Figure 5 is missing in the file. Mehrotra 2014 gives
+  no activation energy. The record `KyotoRepository` was replaced by `Yamada2010`.
+* The reference system and the means of the electrodes take only the salts LiPF6 and LiClO4
+  at 0.8 to 1.5 mol/L, or at a concentration that is not given in mol/L. The rows with
+  LiFSA (Uchida 2020) and the concentration series (Son 2025 except its 1.2 mol/L row,
+  Doi 2022) are in the table and not in the reference.
 * One paper argues against the hypothesis that desolvation alone sets the barrier:
   Chekushkin 2021 (Electrochim. Acta 372, 137843). Its six values are in the table.
 * The set is not complete. A search of the literature on 14 November 2026 found about 40

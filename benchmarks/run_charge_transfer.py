@@ -14,8 +14,9 @@ No model is fitted here. The script answers the four questions that come before 
 
 1. *How well do laboratories agree on one system?*  The reference system is a graphite
    electrode with its surface film, after formation, in a carbonate electrolyte that contains
-   ethylene carbonate, with no additive. The spread of the values of different studies for it
-   is the repeatability, and no model can have a smaller error.
+   ethylene carbonate and LiPF6 or LiClO4 at 0.8 to 1.5 mol/L, with no additive. The spread of
+   the values of different studies for it is the repeatability, and no model can have a
+   smaller error.
 2. *How much does the electrolyte change the value inside one study?*  For every study that
    measured one electrode in several electrolytes, the range of its values. A study is read on
    its own because laboratories differ in the cell and in the fit of the spectrum.
@@ -73,6 +74,18 @@ POSITIVE = ("layered oxide",)
 #: of the reference system use. A row with another salt (LiFSA of Uchida 2020) is in the table,
 #: and in its series, but it is not counted as an estimate of the same system.
 USUAL_SALTS = ("LiPF6", "LiClO4")
+#: the salt concentrations of the reference system and of the electrode means, in mol/L. A row
+#: whose concentration is not given in mol/L counts. Son 2025 (0.12 to 4.8 M) and Doi 2022 are
+#: concentration series: only a row inside the limits is an estimate of the usual electrolyte.
+USUAL_CONCENTRATION = (0.8, 1.5)
+
+
+def usual_electrolyte(r: dict) -> bool:
+    """True when the salt is one of `USUAL_SALTS` and the concentration is inside
+    `USUAL_CONCENTRATION` or not given in mol/L."""
+    molar = r.get("salt_molar")
+    inside = (not molar) or USUAL_CONCENTRATION[0] <= float(molar) <= USUAL_CONCENTRATION[1]
+    return r["salt"] in USUAL_SALTS and inside
 #: the accuracy a cold cell needs, from the tolerance stage of plan item BT12, kJ/mol
 NEEDED = 15.0
 
@@ -188,9 +201,9 @@ def read_sources(path: Optional[str] = None) -> Dict[str, dict]:
 
 def is_reference(r: dict) -> bool:
     """The reference system: graphite with its film after formation, in a carbonate electrolyte
-    with ethylene carbonate and LiPF6 or LiClO4, with no additive."""
+    with ethylene carbonate and LiPF6 or LiClO4 at 0.8 to 1.5 mol/L, with no additive."""
     return (r["electrode_class"] == "graphite" and r["solvent_class"] == "EC-based carbonate"
-            and r["film"] == "formed" and r["additive"] == "none" and r["salt"] in USUAL_SALTS)
+            and r["film"] == "formed" and r["additive"] == "none" and usual_electrolyte(r))
 
 
 def repeatability(rows: List[dict]) -> dict:
@@ -231,14 +244,15 @@ def within_study(rows: List[dict]) -> List[dict]:
 
 
 def electrode_means(rows: List[dict]) -> Dict[str, dict]:
-    """The mean for the two electrodes of a cell with a carbonate electrolyte and LiPF6 or LiClO4:
-    films after formation, every additive, one value per row, studies weighted by their rows."""
+    """The mean for the two electrodes of a cell with a carbonate electrolyte and LiPF6 or LiClO4
+    at 0.8 to 1.5 mol/L: films after formation, every additive, one value per row, studies
+    weighted by their rows."""
     out = {}
     for name, classes in (("negative", NEGATIVE), ("positive", POSITIVE)):
         v = np.array([r["ea"] for r in rows
                       if r["electrode_class"] in classes
                       and r["solvent_class"] == "EC-based carbonate"
-                      and r["salt"] in USUAL_SALTS
+                      and usual_electrolyte(r)
                       and r["film"] in ("formed", "formed and cycled") and not r["is_range"]],
                      float)
         out[name] = {"n": int(len(v)), "mean": float(v.mean()), "sd": float(v.std(ddof=1)),
@@ -958,8 +972,9 @@ def table(res: dict, sources: Dict[str, dict], binding: Optional[dict] = None,
          + ", ".join(f"{c} {n}" for c, n in res["classes"].items()) + ".", "",
          "## How well laboratories agree on one system", "",
          "The reference system is a graphite electrode with its surface film after formation, in "
-         "a carbonate electrolyte that contains ethylene carbonate, with no additive. One value "
-         "per study, the mean of its rows for this system.", "",
+         "a carbonate electrolyte that contains ethylene carbonate and LiPF6 or LiClO4 at 0.8 to "
+         "1.5 mol/L, with no additive. One value per study, the mean of its rows for this "
+         "system.", "",
          "| Study | Activation energy, kJ/mol |", "|---|---:|"]
     for k, v in rep["studies"].items():
         L.append(f"| {k} | {_f(v)} |")
