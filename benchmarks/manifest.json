@@ -1,6 +1,6 @@
 {
- "commit": "a29004576efe708939650cf1182b4fe5019ed081",
- "created": "2026-11-16T15:49:03",
+ "commit": "9be122644cc813eb18cc0cfca6786d6bfb1359cd",
+ "created": "2026-11-16T17:28:15",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3958,6 +3958,9 @@
   "benchmarks/results/restriction/pairs_DHFR.json": "6c57f57fd8c3be1a0cc0940a4d9c7e1aec7a117c3afbe4b998113d149a7bb4a3",
   "benchmarks/results/restriction/pairs_THR.json": "31854c9803a9aae29cac33b4236a4d800ff068404dbae0ae2b7923072fe51daf",
   "benchmarks/results/restriction/table.md": "50e936576a6e44c783fd57d6027ecc4af4753917d076470ad07be82ed1393421",
+  "benchmarks/results/rff/rank.json": "f00d471072c50e5dd6546498e8466add29d5d78db571cd61ae740ce0780393e9",
+  "benchmarks/results/rff/table.md": "ce417c58fa9ecdf3b46dec3da77f80481eda8de2e1f2db6eb1869a5c53e3e8e5",
+  "benchmarks/results/rff/width.json": "e2de812c3c3503e1d353bb54da32b45f5a853aed9fdcc13292ecbc3ab85daf81",
   "benchmarks/results/rowlength/defects.json": "cd6fe7b04e1f6641d7251d6442c1b2e3fbe4a4d3cb5335dc9b24bab25844c600",
   "benchmarks/results/rowlength/hops.json": "d7f965d29d1ed5dd945f0d275c21b27159b28362a9f0598f07a79de2c7fc1716",
   "benchmarks/results/rowlength/lithium.json": "5b92b839051c3fcc6d100bd2fe90664c3ed51e6100f9e23aa941678bcfdeaab1",
