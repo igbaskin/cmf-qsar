@@ -1359,6 +1359,14 @@ def registry() -> List[Benchmark]:
                   minutes="13",        # measured: 722 s, 15 s and 12 s for the three stages
                   report=lambda: _mod("run_hsic").report(_r("hsic")),
                   tables=["hsic/table.md"]),
+        Benchmark("cme", "the expected field at an activity (conditional mean embedding): how "
+                  "much of the field variance the activity explains, how reproducible its maps "
+                  "are against the co-field, planted signals with a known answer, and whether "
+                  "the distance to an active's expected field ranks molecules",
+                  "run_cme.py", "cme", compute=[[]],
+                  minutes="19",
+                  report=lambda: _mod("run_cme").report(_r("cme")),
+                  tables=["cme/table.md"]),
         Benchmark("diagnose", "the data-set diagnosis, on sets whose answers are known",
                   "run_diagnose.py", "diagnose", compute=[["--family", "all", "--force"]],
                   minutes="15",

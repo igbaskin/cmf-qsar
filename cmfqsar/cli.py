@@ -4049,6 +4049,97 @@ def cmd_dependence(args):
               f"at the 5 % level in benchmarks/run_hsic.py)")
 
 
+def cmd_expected(args):
+    """The expected field of a molecule with a given activity (conditional mean embedding)."""
+    from cmfqsar.cme import expected_fields, fit_cme, pattern
+    from cmfqsar.cofields import _point_chunk, export_cube, make_grid, per_molecule_fields
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [nm for nm, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    if len(y) < 8:
+        raise SystemExit(f"{len(y)} molecules with an activity: too few to estimate an expected "
+                         f"field")
+    if keep.sum() < len(keep):
+        print(f"{int(len(keep) - keep.sum())} molecules left out: no activity")
+    if len(y) > EXPECTED_MAX_MOLECULES:
+        raise SystemExit(f"{len(y)} molecules: the kernel over all of them would need "
+                         f"{len(y) ** 2 * 8 * 6 / 1e9:.1f} GB; the limit is "
+                         f"{EXPECTED_MAX_MOLECULES} molecules")
+    fs = _fieldset_from(args, mols)
+    table = AtomTable.from_molecules([build_fields(m, fs, nm) for m, nm in zip(mols, names)])
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(table))
+    print(f"{len(y)} molecules, activity {y.min():.3g} to {y.max():.3g}; fields "
+          f"{', '.join(s_.label for s_ in fs.specs)}, alpha = {args.alpha:g}")
+    fits = {ky: fit_cme(K, y, ky) for ky in ("linear", "gauss")}
+    fit = fits[args.kernel_y]
+    print(f"\nThe conditional mean embedding: {fit.describe()}.")
+    other = fits["gauss" if args.kernel_y == "linear" else "linear"]
+    print(f"  with {'the Gaussian kernel' if other.kernel_y == 'gauss' else 'a straight line'} "
+          f"instead: {100 * other.explained:.1f} %")
+    if fit.explained <= 0:
+        print("  the activity explains none of the field variance out of fold: the expected "
+              "field at any activity is the mean field within its error")
+    targets = expected_fields(fit, args.at) if args.at else []
+    for ef in targets:
+        print(f"\nExpected field at activity {ef.activity:g}:")
+        if not (y.min() <= ef.activity <= y.max()):
+            print(f"  {ef.activity:g} lies outside the training activities"
+                  + ("; the straight line extrapolates to it" if fit.kernel_y == "linear" else
+                     "; the Gaussian weights fade there and the field falls back to the mean"))
+        if fit.kernel_y == "gauss":
+            print(f"  {100 * ef.from_mean:.0f} % of the weight only restores the mean field")
+        print(f"  an average of about {ef.effective_size:.0f} molecules; the largest weights: "
+              + ", ".join(f"{nm} {w:+.3f}" for nm, w in ef.leading(names, 5)))
+    if args.weights_out and targets:
+        import csv
+        with open(args.weights_out, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(["name", "activity"] + [f"weight at {ef.activity:g}" for ef in targets])
+            for i, nm in enumerate(names):
+                w.writerow([nm, f"{y[i]:.6g}"] + [f"{ef.weights[i]:.6g}" for ef in targets])
+        print(f"\nweights written to {args.weights_out}")
+    if not args.out_prefix:
+        return
+    grid = make_grid(table.coords, margin=args.margin, spacing=args.spacing)
+    pts = grid.points()
+    chunk = _point_chunk(len(y))
+    print(f"\ngrid {grid.shape} at {grid.spacing:g} A = {grid.n_points} points")
+    for f, spec in enumerate(fs.specs):
+        basis = probe.training_field_basis(f)
+        W = np.stack([ef.weights for ef in targets], axis=1) if targets else np.zeros((len(y), 0))
+        mean = np.zeros(len(pts))
+        pat = np.zeros(len(pts))
+        exp_ = np.zeros((W.shape[1], len(pts)))
+        for a in range(0, len(pts), chunk):
+            X = per_molecule_fields(probe, f, pts[a:a + chunk], chunk=chunk, basis=basis)
+            mean[a:a + chunk] = X.mean(axis=0)
+            pat[a:a + chunk] = pattern(y, X)
+            exp_[:, a:a + chunk] = W.T @ X
+        written = [f"{args.out_prefix}_pattern_{spec.name}.cube"]
+        export_cube(written[0], grid, pat, title=f"CMF pattern of {spec.name}: covariance of "
+                                                 f"the field with the activity")
+        for k, ef in enumerate(targets):
+            tag = f"{ef.activity:g}"
+            pe = f"{args.out_prefix}_expected_{tag}_{spec.name}.cube"
+            pd = f"{args.out_prefix}_departure_{tag}_{spec.name}.cube"
+            export_cube(pe, grid, exp_[k], title=f"CMF expected {spec.name} field at "
+                                                 f"activity {tag}")
+            export_cube(pd, grid, exp_[k] - mean, title=f"CMF expected {spec.name} field at "
+                                                         f"activity {tag} minus the mean field")
+            written += [pe, pd]
+        print(f"  {spec.name}: " + ", ".join(os.path.basename(p) for p in written))
+
+
+#: `cmf expected` builds the joint kernel over every molecule at once; above this many molecules
+#: it refuses instead of filling memory
+EXPECTED_MAX_MOLECULES = 5000
+
+
 #: `cmf pick` builds the joint kernel over every molecule at once, five n by n matrices of
 #: float64 for the default fields; above this many molecules it refuses instead of filling memory
 PICK_MAX_MOLECULES = 5000
@@ -5115,6 +5206,37 @@ def main(argv=None):
     dp.add_argument("--alpha", type=float, default=0.5)
     dp.add_argument("--seed", type=int, default=0)
     dp.set_defaults(func=cmd_dependence)
+
+    ex = sub.add_parser("expected", help="the expected field of a molecule with a given "
+                                         "activity, and the pattern of the field with the "
+                                         "activity (conditional mean embedding)")
+    ex.add_argument("dataset")
+    ex.add_argument("--activity", default=None)
+    ex.add_argument("--at", type=float, action="append", default=[], metavar="VALUE",
+                    help="an activity at which to give the expected field; repeat for several")
+    ex.add_argument("--kernel-y", default="gauss", choices=["gauss", "linear"],
+                    help="gauss: a smoothed average of molecules with activities near the one "
+                         "asked for, falling back to the mean field outside the training range "
+                         "(default); linear: the mean field plus a straight line in the activity, "
+                         "which extrapolates")
+    ex.add_argument("--out-prefix", default=None, metavar="PREFIX",
+                    help="write <prefix>_pattern_<field>.cube, and for every --at "
+                         "<prefix>_expected_<value>_<field>.cube and "
+                         "<prefix>_departure_<value>_<field>.cube (the expected field minus "
+                         "the mean field)")
+    ex.add_argument("--weights-out", default=None, metavar="CSV",
+                    help="write the weight of every training molecule at every --at")
+    ex.add_argument("--spacing", type=float, default=0.5, metavar="A")
+    ex.add_argument("--margin", type=float, default=3.0, metavar="A")
+    ex.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    ex.add_argument("--cif", action="store_true")
+    ex.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
+    ex.add_argument("--cif-min", type=int, default=5)
+    ex.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    ex.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    ex.add_argument("--alpha", type=float, default=0.5)
+    ex.set_defaults(func=cmd_expected)
 
     kc = sub.add_parser("kcca", help="what the field sees that another view does not (kernel "
                                      "canonical correlation analysis)")

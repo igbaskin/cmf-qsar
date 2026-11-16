@@ -7085,6 +7085,118 @@ fail. What it cannot check is whether two alignments *mean* the same thing, and 
 cosine would reveal that they did not. A cosine is also not a prediction: that two models want the
 same thing does not mean either is right.
 
+## The expected field at an activity, and the pattern of the field
+
+A co-field answers the question "which change of the field changes the prediction?". A chemist
+reading a series often asks a different one: "what does the field of an active molecule look
+like?". `cmf expected` answers the second question. It gives the field expected for a molecule
+with a chosen activity, as a weighted average of the training fields, and a map of how the field
+changes with the activity.
+
+```bash
+python cmf_cli.py expected data.sdf --charges file --at 9 --at 6 --out-prefix series
+```
+
+**The estimate.** A field is the kernel mean embedding of a molecule's weighted atoms, so a set of
+molecules with a given activity has a mean field too. The conditional mean embedding (Song,
+Huang, Smola and Fukumizu, ICML 2009, pp. 961-968) estimates it from the training set as
+
+$$\mu(y^*) = \sum_i \beta_i(y^*)\, x_i, \qquad \beta(y^*) = (L + n\lambda I)^{-1}\, l(y^*),$$
+
+where $x_i$ is the field of training molecule $i$, $L$ is a kernel between the standardised
+activities of the $n$ training molecules and $l(y^*)$ its column at the activity asked for. The
+weights depend on the activities only, so the expected field is a map in the same basis as the
+co-field. The weights are shifted so that they sum to one: where the data say little, the
+expected field falls back to the mean field instead of shrinking to zero. The command reports
+how much of the weight only restores the mean field, how many molecules the average is made of,
+and the molecules with the largest weights. `--weights-out` writes all the weights.
+
+Two kernels on the activity are offered. The Gaussian kernel (the default) gives a smoothed
+average of the molecules with activities near the one asked for, and it can describe an optimum.
+The straight line (`--kernel-y linear`) gives the mean field plus a slope times the activity, and
+it extrapolates. The width and the ridge are chosen by cross-validation, with a loss that is the
+squared distance in the field space between a left-out molecule's field and the expected field
+at its activity (Grünewälder et al., ICML 2012, pp. 1803-1810). The loss needs only the field
+kernel. Divided by the same loss of the plain mean field, it gives the share of the field variance
+that the activity explains out of fold, and the command prints it.
+
+**The pattern.** The slope of the straight line, $\sum_i u_i x_i / n$ with $u$ the standardised
+activity, is the covariance of the field with the activity at every point. The command always
+writes it, as `<prefix>_pattern_<field>.cube`. Its squared norm is the HSIC statistic of
+`cmf dependence`. Haufe et al. (NeuroImage 87, 96-110, 2014) call a map of this kind a *pattern*:
+the data written as a function of the target. The weights of a regression model, which turn the
+data into the target, they call a *filter*. The co-field is a filter. They showed that a filter
+is not a map of where the signal lies, because it also gives weight to regions that only cancel
+noise, and that a pattern is such a map. The two are related: as the ridge of kernel ridge
+regression grows, its dual coefficients become proportional to the centred activities, and the
+co-field turns into the pattern.
+
+**Measured** (`benchmarks/run_cme.py`, `benchmarks/results/cme/table.md`). The eight Sutherland
+sets, the joint kernel of five fields at alpha = 0.3, maps on a 0.8 A grid. Three maps are
+compared: the co-field of kernel ridge regression with its ridge chosen by the evidence, the
+pattern, and the *contrast*, which is the expected field at the 90th percentile of the activity
+minus the one at the 10th, with the Gaussian kernel.
+
+* **The activity explains little of the field: 1 to 8 % out of fold.** Most of the variety of the
+  fields in a series has nothing to do with the activity. The Gaussian kernel explains a little
+  more than the straight line on seven sets (on THER the two are equal), but the width it
+  chooses is mostly wide. So the contrast map is the pattern map in another form: their
+  correlation is 0.92 to 1.00. The co-field and the pattern are different maps, with a
+  correlation of 0.37 to 0.82.
+* **The pattern comes back from the other half of the data, and the co-field less so.** Each set
+  was cut into two random halves 20 times, and the map of one half was correlated with the map
+  of the other:
+
+| set | co-field | pattern | contrast |
+|---|---:|---:|---:|
+| ACE | +0.49 | +0.85 | +0.83 |
+| AChE | +0.41 | +0.53 | +0.45 |
+| BZR | +0.44 | +0.74 | +0.79 |
+| COX2 | +0.72 | +0.84 | +0.85 |
+| DHFR | +0.62 | +0.86 | +0.85 |
+| GPB | +0.55 | +0.74 | +0.74 |
+| THER | +0.39 | +0.70 | +0.73 |
+| THR | +0.57 | +0.60 | +0.57 |
+| mean | +0.52 | +0.73 | +0.73 |
+
+  The pattern is the more reproducible map on all eight sets.
+* **The co-field finds a single source better.** A synthetic activity was made from the steric
+  field at one grid point (five points per set, ten noise draws each, half of the variance from
+  the signal). The peak of the co-field lay within 1.5 A of that point in 36 % of the cases, the
+  pattern's in 26 % and the contrast's in 21 %. The pattern also shows the regions whose field
+  varies together with the source. That is the price of its reproducibility.
+* **The Gaussian kernel recovers a curved relation.** With activities that depend on the field at
+  one point through an optimum, a plateau or a threshold (80 % of the variance from the signal),
+  each method was asked which field value it expects at the 90th and at the 10th percentile of
+  the activity. The answer to compare with was computed by Monte Carlo on the same molecules.
+  The error, in standard deviations of the field value, pooled over the sets:
+
+| shape of the relation | end | Gaussian kernel | straight line | mean of the tenth of the molecules at that end |
+|---|---|---:|---:|---:|
+| optimum | top | 0.13 | 0.24 | 0.15 |
+| optimum | bottom | 0.27 | 0.37 | 0.81 |
+| plateau | top | 0.14 | 0.20 | 0.20 |
+| plateau | bottom | 0.24 | 0.29 | 0.51 |
+| threshold | top | 0.30 | 0.39 | 0.76 |
+| threshold | bottom | 0.12 | 0.21 | 0.14 |
+
+  The Gaussian kernel has the smallest error in all six rows. The mean of the tenth of the
+  molecules at an end, the simplest answer, averages over every activity beyond the percentile
+  instead of the activity at it. It is far off where the field changes quickly across that end.
+* **The distance to an expected field does not rank molecules.** Molecules left out of the fit
+  were ranked by their distance to the expected field at the 90th percentile of the training
+  activities. The mean Spearman correlation with the activity was 0.40 (Gaussian kernel) and 0.37
+  (straight line), against 0.48 for the distance to the mean field of the most active tenth and
+  0.71 for the prediction of kernel ridge regression. Regression was the best ranker on all
+  eight sets.
+
+**When to use it.** To read a series: the pattern is the map to show beside the co-field, because
+it survives a change of the data, while the co-field says more precisely where a single cause
+lies. The expected field at a high activity is a picture of what the field of an active molecule
+looks like, with a Gaussian kernel when the relation may have an optimum. It is an average of
+training fields, not the field of a molecule. Do not use the distance to it to choose compounds:
+a model predicts the activity far better.
+
 ## What the field sees that another view does not
 
 A *view* is one description of the same molecules, which in this program means one kernel over
@@ -17998,6 +18110,9 @@ not every option.
 | `complement` | field complementarity with a protein pocket |
 | `compare` | are two sets the same population? (MMD, with a witness) |
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
+| `pick` | a few molecules that stand for a library (kernel herding) |
+| `dependence` | does the activity depend on the fields, and beyond a count? (conditional HSIC test) |
+| `expected` | the expected field at an activity, and the pattern of the field with the activity |
 | `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
 | `lowrank` | fit in the space of a few hundred landmarks, for a set too large for the exact kernel |
