@@ -2249,10 +2249,10 @@ class CMFModel:
 
     # ----------------------------------------------------------------- low rank
 
-    def fit_low_rank(self, train: AtomTable, y: Sequence[float], landmarks: AtomTable,
-                     lam: Optional[float] = None, kind: str = "landmarks",
-                     folds: int = 10, seed: Optional[int] = 0, block: int = 256,
-                     progress=None) -> "CMFModel":
+    def fit_low_rank(self, train: AtomTable, y: Sequence[float],
+                     landmarks: Optional[AtomTable], lam: Optional[float] = None,
+                     kind: str = "landmarks", folds: int = 10, seed: Optional[int] = 0,
+                     block: int = 256, progress=None, features=None) -> "CMFModel":
         """Fit in the space of the landmarks instead of the space of the molecules (item B6).
 
         The model keeps the landmarks and one weight per feature instead of one coefficient per
@@ -2260,6 +2260,10 @@ class CMFModel:
         :mod:`cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
         number of molecules and the provenance and the contract are read off it; what is never
         built is the n by n kernel.
+
+        `features` is a feature map built elsewhere, in place of the landmarks: the random
+        Fourier features of :meth:`fit_fourier`.  It must carry the field scale of
+        :meth:`_low_rank_scale`, or the fit is another model than the exact one.
         """
         from . import lowrank as LR
         from .model import r2_score, rmse          # local, to keep the import graph flat
@@ -2278,8 +2282,12 @@ class CMFModel:
         specs = [s for s in self.fieldset.specs if s.enabled]
         scale = self._low_rank_scale(train)
         self.scale = scale
-        low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
-                       kind=kind)
+        if features is None:
+            low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
+                           kind=kind)
+        else:
+            low = features
+            kind = str(getattr(low, "kind", kind))
         g = LR.gram(low, train, y, block=block, progress=progress)
         w, b = LR.fit(g, lam, fit_bias=self.fit_bias)
         self.low_rank_ = low
@@ -2293,15 +2301,49 @@ class CMFModel:
         pred, _which = LR.cross_validate(low, train, y, lam, folds=folds, seed=seed,
                                          fit_bias=self.fit_bias, block=block)
         fitted = LR.predict(low.transform(train, block=block), w, b)
+        # The weights lie in the span of the training rows: the first block of the normal
+        # equations gives w = Phi^T a with a = (y - fitted) / lam.  So the model is also a sum
+        # over the training molecules, and for Fourier features, which have no landmarks to draw
+        # a co-field from, the co-field is drawn from these coefficients.
+        self.low_dual_ = ((y - fitted) / lam if kind == "fourier" and lam > 0 else None)
         self.stats = ModelStats(n_train=len(y), r2=float(r2_score(y, fitted)),
                                 rmse_fit=float(rmse(y, fitted)),
                                 q2=float(r2_score(y, pred)), rmse_cv=float(rmse(y, pred)),
                                 cv_folds=int(folds))
         self.stats.extra["y_cv"] = pred
         self.stats.extra["y_fit"] = fitted
-        self.stats.extra["low_rank"] = dict(kind=kind, landmarks=int(landmarks.n_mol),
-                                            rank=int(low.rank))
+        self.stats.extra["low_rank"] = dict(
+            kind=kind, landmarks=int(landmarks.n_mol) if landmarks is not None else 0,
+            rank=int(low.rank))
+        if kind == "fourier":
+            self.stats.extra["low_rank"].update(
+                sampler=str(low.sampler), frequencies=[int(len(w)) for w in low.omegas])
         return self
+
+    def fit_fourier(self, train: AtomTable, y: Sequence[float], n_frequencies: int = 512,
+                    sampler: str = "qmc", lam: Optional[float] = None, folds: int = 10,
+                    seed: Optional[int] = 0, block: int = 256, period: Optional[float] = None,
+                    tol: Optional[float] = None, progress=None) -> "CMFModel":
+        """Fit on random Fourier features of the field kernel instead of landmarks.
+
+        The features are those of :func:`cmfqsar.rff.build`: `n_frequencies` per field, two
+        columns each, drawn by `sampler` (``"qmc"``, the scrambled Sobol sequence, reproduces
+        the kernel best), or every point of a lattice of frequencies (``"lattice"``, exact up to
+        `tol`).  Unlike landmarks they do not depend on the training set, so a library's
+        features are the same for every model in the same frame.  Everything else is
+        :meth:`fit_low_rank`.
+        """
+        from . import rff
+
+        self._require_linear("random Fourier features")
+        if not self.uses_fields:
+            raise ValueError("random Fourier features are features of the overlap kernel; the "
+                             "invariant kernel already has explicit features")
+        features = rff.build(self.fieldset, train, int(n_frequencies), sampler, seed=seed,
+                             scale=self._low_rank_scale(train), normalize=self.normalize,
+                             period=period, tol=rff.LATTICE_TOL if tol is None else float(tol))
+        return self.fit_low_rank(train, y, None, lam=lam, folds=folds, seed=seed, block=block,
+                                 progress=progress, features=features)
 
     def _low_rank_scale(self, train: AtomTable) -> np.ndarray:
         """The per-field scale of the exact path, taken from the training set's self-kernels.
@@ -2786,6 +2828,18 @@ class CMFModel:
         For a model whose alpha lies between the points of ``alpha_grid`` (interpolated
         kernels) the co-field is evaluated with the nominal alpha, an approximation.
         """
+        if self.is_low_rank and getattr(self.low_rank_, "kind", "") == "fourier":
+            # Fourier features have no landmarks.  The weights are a sum over the training
+            # molecules (see fit_low_rank), so the co-field is the exact one with those
+            # coefficients.  Its overlap with a molecule is the prediction with the exact kernel
+            # in place of its estimate, so the two differ by the error of that estimate.
+            dual = getattr(self, "low_dual_", None)
+            if dual is None:
+                raise ValueError("this Fourier model carries no coefficients over its training "
+                                 "molecules, so it has no co-field; fit it again with a ridge "
+                                 "above zero")
+            centres, coeffs, widths, index = self.cofield_basis(f)
+            return centres, coeffs * np.asarray(dual, float)[index], widths
         if self.is_low_rank:
             from . import lowrank as LR
             # the same three arrays, with the index set changed from training molecules to
@@ -2859,14 +2913,24 @@ class CMFModel:
             return None
         low = self.low_rank_
         g = self.low_gram_
-        return dict(landmarks=low.landmarks, whiteners=low.whiteners, weights=low.weights,
-                    normalize=low.normalize, self_landmarks=low.self_landmarks, kind=low.kind,
-                    w=self.low_weights_,
-                    gram=dict(PtP=g.PtP, Pty=g.Pty, Pt1=g.Pt1, n=g.n, sum_y=g.sum_y,
-                              yty=g.yty) if g is not None else None)
+        if getattr(low, "kind", "") == "fourier":
+            # the frequencies themselves: a new molecule's features need exactly these
+            st = dict(kind="fourier", omegas=list(low.omegas), logq=list(low.logq),
+                      group=[int(v) for v in low.group], weights=low.weights,
+                      normalize=low.normalize, sampler=low.sampler,
+                      dual=getattr(self, "low_dual_", None))
+        else:
+            st = dict(landmarks=low.landmarks, whiteners=low.whiteners, weights=low.weights,
+                      normalize=low.normalize, self_landmarks=low.self_landmarks,
+                      kind=low.kind)
+        st.update(w=self.low_weights_,
+                  gram=dict(PtP=g.PtP, Pty=g.Pty, Pt1=g.Pt1, n=g.n, sum_y=g.sum_y,
+                            yty=g.yty) if g is not None else None)
+        return st
 
     def _set_low_rank_state(self, st: Optional[dict]) -> None:
         """Rebuild the low-rank state of a model read from a file."""
+        self.low_dual_ = None
         if not st:
             self.low_rank_ = None
             self.low_gram_ = None
@@ -2874,11 +2938,21 @@ class CMFModel:
             return
         from .lowrank import Gram, LowRank
         specs = [s for s in self.fieldset.specs if s.enabled]
-        self.low_rank_ = LowRank(landmarks=st["landmarks"], specs=specs,
-                                 whiteners=list(st["whiteners"]), weights=st["weights"],
-                                 normalize=bool(st.get("normalize", True)),
-                                 self_landmarks=st.get("self_landmarks"),
-                                 kind=str(st.get("kind", "landmarks")))
+        if st.get("kind") == "fourier":
+            from .rff import FourierFeatures
+            self.low_rank_ = FourierFeatures(
+                specs=specs, omegas=[np.asarray(w, float) for w in st["omegas"]],
+                logq=[np.asarray(q, float) for q in st["logq"]],
+                group=[int(v) for v in st["group"]], weights=np.asarray(st["weights"], float),
+                normalize=bool(st.get("normalize", True)), sampler=str(st.get("sampler", "qmc")))
+            d = st.get("dual")
+            self.low_dual_ = None if d is None else np.asarray(d, float)
+        else:
+            self.low_rank_ = LowRank(landmarks=st["landmarks"], specs=specs,
+                                     whiteners=list(st["whiteners"]), weights=st["weights"],
+                                     normalize=bool(st.get("normalize", True)),
+                                     self_landmarks=st.get("self_landmarks"),
+                                     kind=str(st.get("kind", "landmarks")))
         self.low_weights_ = np.asarray(st["w"], float)
         g = st.get("gram")
         self.low_gram_ = (Gram(PtP=g["PtP"], Pty=g["Pty"], Pt1=g["Pt1"], n=int(g["n"]),

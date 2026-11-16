@@ -75,3 +75,54 @@ Averaging over the conformations changes nothing that can be measured: the bette
 
 The row that says whether that is about averaging or about the geometries themselves is the second one: a single conformation again, the lowest in energy of the same pool, which scores -0.005 [-0.043, +0.035]. One conformation is one conformation whichever it is, so the loss belongs to the averaging rather than to the geometries.
 
+## The reference a spectroscopist would use: a HOSE-code lookup
+
+Added 16 November 2026. The count reference above is the one rule 1 asked for, but it is not how 13C shifts are predicted in practice. The classical method is the HOSE code (Bremser 1978): describe the atom sphere by sphere of bonds, and predict the mean shift of the training atoms that share the deepest sphere the new atom has in common with any of them. It needs no geometry and fits nothing. The codes here are RDKit's Morgan environments, one identifier per atom and number of bonds. Every model below uses the same folds, which hold out whole molecules, and the field models a ridge grid that reaches down to 1e-09. The differences are in q2, against the lookup up to 4 bonds, with a 95 % interval bootstrapped over molecules.
+
+### Every measured carbon: 5096 in 400 molecules
+
+| model | q2 | error (ppm) | mean absolute error (ppm) | ridge | difference against the lookup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| HOSE lookup, up to 2 bonds | +0.975 | 8.36 | 5.00 | -- | -- |
+| HOSE lookup, up to 3 bonds | +0.975 | 8.35 | 4.95 | -- | -- |
+| HOSE lookup, up to 4 bonds | +0.976 | 8.34 | 4.93 | -- | -- |
+| HOSE lookup, up to 5 bonds | +0.976 | 8.34 | 4.92 | -- | -- |
+| atom-centred counts | +0.853 | 20.46 | 14.83 | 0.1 | -0.123 [-0.136, -0.111] |
+| two-point local field, rho 0.5 | +0.962 | 10.40 | 7.20 | 1e-05 | -0.014 [-0.018, -0.009] |
+| two-point local field, rho 1 | +0.973 | 8.82 | 6.08 | 1e-06 | -0.003 [-0.008, +0.001] |
+| three-distance, fields (r_max 5 A, rho 0.5, sigma 0.35) | +0.990 | 5.45 | 3.55 | 0.0001 | +0.014 [+0.011, +0.017] |
+| three-distance, elements (r_max 5 A, rho 0.5, sigma 0.35) | +0.989 | 5.47 | 3.59 | 0.0001 | +0.014 [+0.011, +0.017] |
+| three-distance, fields and elements (r_max 5 A, rho 0.5, sigma 0.35) | +0.992 | 4.83 | 3.24 | 0.0001 | +0.016 [+0.014, +0.019] |
+
+The lookup up to 4 bonds read its prediction at: 8.2 % at 0 bonds, 38.6 % at 1 bonds, 28.9 % at 2 bonds, 12.4 % at 3 bonds, 11.9 % at 4 bonds.
+In the three-distance kernel the five fields against five element channels (H, C, N, O, other) in their place: +0.000 [-0.002, +0.002].
+
+Control: the counts and the two-point rows of this stage against the same rows stored by the stage above, two point default +0.962 against +0.962, two point 1 +0.973 against +0.973, counts +0.853 against +0.853 -- the same.
+
+### Aromatic ring carbons (plan item LP3): 1225 in 170 molecules
+
+The ring carbons and the pose of LP3: the carbon at the origin, the bond that leaves the ring on +x, the ring in the xy plane, both mirror images averaged. The element channels are swapped in before the pose, so both rows go through the same frames.
+
+| model | q2 | error (ppm) | mean absolute error (ppm) | ridge | difference against the lookup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| HOSE lookup, up to 4 bonds | +0.780 | 6.22 | 4.04 | -- | -- |
+| atom-centred counts | +0.768 | 6.38 | 4.59 | 0.01 | -0.012 [-0.052, +0.027] |
+| posed overlap, fields, rho 0.25 | +0.899 | 4.22 | 2.82 | 0.01 | +0.119 [+0.088, +0.153] |
+| posed overlap, elements, rho 0.25 | +0.903 | 4.13 | 2.79 | 0.001 | +0.123 [+0.090, +0.158] |
+
+The five fields against five element channels in the same posed overlap: -0.004 [-0.018, +0.011]. Control: the posed overlap with the fields gives q2 +0.899 here and +0.899 in `results/local_cofield/`.
+
+**What this shows.** **The two-point field of LP2 does not beat the lookup** at its best width (-0.003 [-0.008, +0.001]). The count reference, which it beat by a wide margin, is itself far behind the lookup (-0.123 [-0.136, -0.111]), so that margin measured a weak reference. **The three-distance form of LP5 beats it** (+0.014 [+0.011, +0.017]), and the fields are not why: element channels in their place do as well (+0.000 [-0.002, +0.002]). **On the aromatic ring carbons the posed overlap beats the lookup by +0.119 [+0.088, +0.153]**, and again element channels do as well as the fields (-0.004 [-0.018, +0.011]). What predicts a shift beyond the lookup is where the atoms around the carbon sit, which the envelope, the pose and the three-distance kernel all carry. Put in place of the element of each atom, what the fields say about it does no better. (Added to the elements, the fields gain a little in the three-distance kernel: +0.002 [+0.001, +0.004] in `benchmarks/results/triangles/`.)
+
+### The same ring carbons as the training set grows
+
+Each fold trains on a random share of its training molecules; the test parts are the same as above, and each model's ridge is the one that cross-validates best at that share. 5 random draws per share; the q2 values are their means. The last column counts the draws whose 95 % interval, bootstrapped over molecules, excludes zero.
+
+| share of the training molecules | training molecules per fold | HOSE lookup | posed overlap, element channels | posed overlap, fields | fields minus elements: mean (lowest to highest draw) | draws clear for the fields / for the elements |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.25 | 38 | +0.644 | +0.818 | +0.829 | +0.011 (-0.027 to +0.112) | 1 / 0 |
+| 0.5 | 76 | +0.716 | +0.870 | +0.874 | +0.003 (-0.010 to +0.011) | 0 / 0 |
+| 1 | 153 | +0.780 | +0.903 | +0.899 | -0.004 (-0.004 to -0.004) | 0 / 0 |
+
+With 38 training molecules per fold the fields lead the element channels by +0.011 on average and the lookup by +0.185; with 153 the lead over the elements is -0.004 and over the lookup +0.119. The curve does not show a lead for the fields that grows as the data shrink: at 38 molecules the draws run from -0.027 to +0.112, and the interval is clear for the fields in 1 of 5 draws. What does grow is the lead of either geometric model over the lookup, which needs a near copy of an atom's surroundings among the training atoms and finds fewer of them in a smaller set.
+

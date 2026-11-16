@@ -428,9 +428,10 @@ def registry() -> List[Benchmark]:
                       "guest_atoms", _mod("run_guest_atoms").report(_r("guest_atoms"))),
                   tables=["guest_atoms/table.md"]),
         Benchmark("local",
-                  "does the field around an atom predict a shift or an acidity of that atom",
+                  "does the field around an atom predict a shift or an acidity of that atom, "
+                  "and does it beat a HOSE-code lookup",
                   "run_local.py", "local", compute=[[]],
-                  minutes="45",
+                  minutes="110",
                   report=lambda: _mod("run_local").write_table(_r("local")),
                   tables=["local/table.md"]),
         Benchmark("local_cofield",
@@ -1215,9 +1216,10 @@ def registry() -> List[Benchmark]:
                   "acid among the ORCA spectra of the 189 benzoic acids, with the settings "
                   "fitted on half of the substituents; a control for the start geometry "
                   "(needs xtb); and a kernel canonical correlation analysis of a structural "
-                  "kernel and the spectrum kernel on held-out substituents",
+                  "kernel and the spectrum kernel on held-out substituents; and against the "
+                  "searches a spectroscopist would use: binned spectra and a peak-table search",
                   "run_spectra_bridge.py", "spectra_bridge", compute=[[]],
-                  minutes="15",
+                  minutes="16",
                   report=lambda: _mod("run_spectra_bridge").report(),
                   tables=["spectra_bridge/table.md"]),
         Benchmark("spectra_measured",

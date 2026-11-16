@@ -7923,11 +7923,14 @@ decomposed exactly as before.
 
 **It is a flag on `build`, so the model is an ordinary model.** `--low-rank grid:2.0` or
 `--low-rank molecules:200` fits this way, chooses the ridge by the evidence or on folds, and
-`--save` writes a file that `predict`, `cofield` and the rest read like any other:
+`--save` writes a file that `predict`, `cofield` and the rest read like any other.
+`--low-rank fourier:512` takes random Fourier features instead of landmarks (see the
+subsection *Random Fourier features: features without landmarks* below):
 
 ```bash
 cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
 cmf build series.sdf --activity pKi --low-rank atoms:0.5 --alphas 2 --save narrow.cmf
+cmf build series.sdf --activity pKi --low-rank fourier:512 --alphas 2 --save fourier.cmf
 cmf predict model.cmf new.sdf --out predicted.csv
 cmf cofield model.cmf --out-prefix map
 ```
@@ -8009,14 +8012,36 @@ molecules repeated periodically, so its only error is the overlap of the periodi
 period is chosen so that this overlap is below a tolerance. The number of lattice points then
 follows from the period and the width; it is not chosen.
 
-The map has the same form as the landmark map, so `lowrank.gram`, `lowrank.fit` and
-`lowrank.cross_validate` fit a model on it unchanged:
+**How to use it.** `cmf build --low-rank fourier:N` fits on N Sobol frequencies per field
+(default 512, two columns each). `--low-rank lattice:TOL` puts the frequencies on the lattice,
+cut at the tolerance TOL (default 0.001). The command refuses a map of more than 16 000 columns,
+because the fit holds a square matrix of that size (2 GB); a lattice at a narrow field passes
+that limit. `cmf lowrank --landmarks` takes the same two kinds. From Python,
+`CMFModel.fit_fourier` fits a model, and because the map has the same form as the landmark map,
+`lowrank.gram`, `lowrank.fit` and `lowrank.cross_validate` work on it unchanged:
 
 ```python
 from cmfqsar import rff, lowrank
+model.fit_fourier(train, y, n_frequencies=512, sampler="qmc", lam=0.3)
 features = rff.build(fieldset, train, n_frequencies=256, sampler="qmc")
 pred, _ = lowrank.cross_validate(features, train, y, lam=0.3)
 ```
+
+The model file keeps the frequencies, so a new molecule gets exactly the features the model
+was fitted on. The predictive standard deviation and the conformal interval work as for
+landmarks.
+
+**The co-field of a Fourier model.** A plane wave has no centre, so the co-field cannot be
+drawn from the features the way it is drawn from landmarks. It is drawn from the training
+molecules instead. The first block of the ridge equations gives the feature weights as
+$\mathbf{w} = \Phi^\top \mathbf{a}$ with $\mathbf{a} = (\mathbf{y} - \hat{\mathbf{y}})/\lambda$,
+where $\Phi$ holds the features of the training molecules, $\hat{\mathbf{y}}$ the fitted values
+and $\lambda$ the ridge. So the model is also a sum over the training molecules with the
+coefficients $\mathbf{a}$, and its co-field is the exact co-field with these coefficients. Its
+overlap with a molecule is the prediction with the exact kernel in place of its estimate, so
+the two differ by the error of the kernel estimate: a relative error of 3.5e-3 at 1024 Sobol
+frequencies per field (see the measurements below). On the lattice the coefficients equal those
+of the exact model; the unit tests hold them to $10^{-3}$.
 
 **Measured** (`benchmarks/run_rff.py`, `benchmarks/results/rff/table.md`). The eight Sutherland
 sets at the attenuation and ridge that the exact grid search chose, scored on the folds of the
@@ -8042,8 +8067,11 @@ field: two per frequency, one per landmark.
   on average and 0.006 at worst. The three seeds differ by 0.013 in $q^2$ at 256 frequencies.
 * **Landmark molecules need far fewer columns.** The fewest columns per field that bring the
   $q^2$ within 0.01 of the exact model are 10 to 40 for landmark molecules, 55 to 630 for a grid
-  of Gaussian centres, and 64 to 1024 for Sobol frequencies. The two largest counts, 512 and 1024,
-  were needed on ACE and AChE, which chose an attenuation of 2 and 5.
+  of Gaussian centres, and 64 to 1024 for Sobol frequencies (32 to 512 frequencies). The largest
+  counts were 512 columns on ACE and 1024 on AChE and THER. ACE and AChE chose a narrow field
+  (attenuation 2 and 5), but THER chose an attenuation of 1, so the width does not explain every
+  large count. A single count is also uncertain: on THER, independent draws needed 256 columns,
+  orthogonal triples 32 and the Sobol sequence 1024.
 * **The lattice is cheap only for a broad field.** At a tolerance of $10^{-3}$ it is within
   0.0005 of the exact $q^2$ on every set. It needs 260 to 740 columns per field at an attenuation
   of 0.1 or 0.3, but 4 700 to 30 000 at 2 or 5. The count grows as $(P\sqrt{b})^3$, for a
@@ -8063,8 +8091,7 @@ must not depend on any data set: they are the same functions of the atoms for ev
 same frame, so the features of a library can be computed once and kept for every model built
 later, and they keep working at a narrow field, where a grid of centres does not. Take the Sobol
 sequence and 256 to 1024 frequencies per field. The lattice is exact and deterministic, and is
-worth it for broad fields only. The map is not yet an option of `cmf build`; a model fitted on
-it cannot be saved, and it has no co-field.
+worth it for broad fields only.
 
 ## Screening a library that does not fit in memory
 
@@ -12284,6 +12311,29 @@ three ppm on 13C by using tens of thousands of spectra and often a calculated ge
 has 400 molecules and one force-field conformation each. The question the item asks is
 narrower, and the measurement answers it.
 
+**A reference a spectroscopist would use (added 16 November 2026).** The count above is the
+reference rule 1 asked for, but 13C shifts are predicted in practice by a HOSE-code lookup
+(Bremser 1978): describe the atom sphere by sphere of bonds and take the mean shift of the
+training atoms that share the deepest sphere with it. It needs no geometry and fits nothing.
+`run_local.py --only hose` measures it with RDKit's Morgan environments as the codes, on the same
+folds. Up to four bonds it reaches q2 +0.976 and 8.34 ppm, so the count is 0.123 behind it
+([-0.136, -0.111]), and the local field of this section only ties it: -0.003 [-0.008, +0.001] at
+its best width, -0.014 [-0.018, -0.009] at the default. The +0.120 above measured a weak
+reference. What does beat the lookup is a model that sees where the atoms around the carbon sit:
+the three-distance kernel of *Three atoms at a time* by +0.014 [+0.011, +0.017] (5.45 against 8.34
+ppm) and the posed overlap of the next section by +0.119 [+0.088, +0.153] on the 1,225 ring
+carbons. In both, five element channels (H, C, N, O and the rest) in place of the five fields do
+as well: +0.000 [-0.002, +0.002] and -0.004 [-0.018, +0.011]. For a carbon shift it is the
+positions of the neighbours that count, not their fields. The stage also draws a learning curve on
+the ring carbons (`--only hose-curve`): the fields and the element channels tie at 38, 76 and 153
+training molecules per fold, while the lead of either over the lookup grows as the set shrinks,
+from +0.119 to +0.185. Every row measured before this stage is unchanged.
+
+The twenty-ninth tutorial, `docs/tutorials/29_carbon_shifts.ipynb`, builds the lookup, compares it
+live with the posed overlap on half of the ring carbons, reads the whole set and the learning
+curve from the stored run, and shows a margin of +0.045 on one subset that random subsets of the
+same size do not repeat.
+
 **Carboxylic acid pKa, 912 acids with the value on the carboxyl carbon.**
 
 | descriptor | envelope width rho | q2 | error (pKa units) | mean kernel between two samples | difference in q2 against the counts |
@@ -13694,6 +13744,31 @@ calculation has carried the effect of the substituent to that group. With Gastei
 which are the same on the carboxyl group of every acid, it falls from +0.822 at 10 A to +0.105
 at 1 A: the direction has to reach the substituent. This is the finding of section *A
 vibrational band as the local target*, reached here without a target.
+
+**The searches a spectroscopist would use (added 16 November 2026).** Part (b) compares the kernel
+with the composition and with one band, but a library search compares whole spectra. Stage `--part
+reference` of the benchmark measures two such searches, with their settings chosen on the
+calibration acids by the same rule and on the same splits: binned spectra (a cosine of histograms
+with bins of 5 to 400 cm$^{-1}$, centred or not) and a peak-table search (the share of the lines
+above 5, 10 or 20 % of the strongest that have a partner within 5 to 150 cm$^{-1}$). With a B97-3c
+query the kernel finds the acid in 99.6 % of the cases, the peak tables in 86.8 % and the binned
+spectra in 77.0 %: the kernel is ahead by +12.7 points [+7.3, +18.6] and +22.5 [+17.6, +27.8], in
+all ten splits (intervals from resampling whole substituents). With a GFN2-xTB query: 42.8 %, 8.2
+% and 32.9 %; the kernel is ahead of the binned spectra by +9.9 [+3.4, +16.7], and only slightly
+on the isomer question (74.0 against 71.0 %). The binned search was first offered bins up to 100
+cm$^{-1}$ and chose the widest on the GFN2-xTB queries; with wider bins on offer it rose from 23.5
+to 32.9 % at 200 cm$^{-1}$, so the lead first measured (+19.3) overstated the kernel. The kernel
+wins because its match falls smoothly with the distance between two lines, where a bin edge or a
+tolerance gives all or nothing. For part (a) the stage asks what each description shows without
+the pairing. The carbonyl band itself follows the Hammett constant at r +0.87, and the first
+principal component of the spectra alone, held out, at +0.75: pair 1 is mostly the main direction
+of the spectra. Para against meta is new: no component of the spectra alone follows it beyond 0.45
+and none of the structural kernel alone beyond 0.60, while pair 2 reaches +0.84. The rows measured
+before this stage are unchanged.
+
+The thirtieth tutorial, `docs/tutorials/30_spectrum_to_structure.ipynb`, runs part (b) and the two
+searches live for both query levels, shows why a bin edge costs a match, reads the measured
+queries from the stored runs, and sets the kernel CCA against each description alone.
 
 **What is not done.** No measured spectrum is used. The two functionals compute the same
 object: the harmonic spectrum of one molecule in the gas phase, in the same conformer. A
@@ -18631,7 +18706,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-eight notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Thirty notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18649,8 +18724,10 @@ of point mutants of a protein, read with fields and compared with a count of the
 site, two-phase microstructures on a voxel grid, compared with the phase fraction and the
 correlation lengths of the grains, and one atom of a drug as the sample, with the atom a
 cytochrome P450 attacks read from the field around it and compared with counts of the atom types
-around it, and which groups can replace each other at a position, compared with a model that
-needs no field. Each runs on the
+around it, which groups can replace each other at a position, compared with a model that
+needs no field, the 13C shift of one carbon, compared with a HOSE-code lookup and with element
+channels in place of the fields, and which acid gave an infrared spectrum, compared with binned
+spectra and a peak-table search. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

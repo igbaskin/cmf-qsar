@@ -450,9 +450,20 @@ larger searches in parts C and E.
   directly a sum over the basis, so the contributions, the Shapley values, the pharmacophore and
   the co-field error bars keep their form with the index set changed from training molecules to
   landmarks.
-  *Random Fourier features do not fit.* They need a shift-invariant kernel on vectors, and the
-  CMF kernel has no vector input. The only analogue is sampling the fields on a grid as explicit
-  features, which is the grid dependence the 2013 paper removed and breaks rule 3.
+  *Random Fourier features fit after all (corrected 16 November 2026).* This note first said
+  that they need a shift-invariant kernel on vectors and that the CMF kernel has no vector
+  input. That was wrong: the atom positions are the vector input. By Parseval's theorem the
+  overlap of two fields is an integral over frequencies of their Fourier transforms. Each
+  frequency gives a molecule a cosine and a sine feature, a sum over its atoms, so no grid in
+  space is needed. Like the Nyström features, they approximate the closed-form kernel and do not
+  replace it, so rule 3 holds. `cmfqsar/rff.py` builds the features,
+  `cmf build --low-rank fourier:N` fits on them, and `benchmarks/run_rff.py` measured them (manual,
+  "Random Fourier features: features without landmarks"). With the frequencies on a lattice they
+  reproduce the exact q² to the fourth decimal. They need more columns than landmark molecules:
+  to come within 0.01 of the exact q², a field needs 64 to 1024 columns (32 to 512 Sobol
+  frequencies, two columns each) against 10 to 40 landmark molecules. Their advantages are that
+  they do not depend on any data set and that they keep working at a narrow field, where a grid
+  of centres fails.
   *Matrix-free iterative solvers do not fit.* Every matrix-vector product is a full kernel pass,
   about six hours at 100 000 molecules, and conjugate gradient needs tens of them. Falkon, which
   is Nyström with a preconditioned conjugate gradient, is worth it only when m must exceed about
@@ -6590,6 +6601,15 @@ on the same folds.
   application, and no attempt at the shift sets that would make this a shift predictor: 400
   molecules with one force-field conformation each is far from the one to three ppm that programs
   built for the task reach with tens of thousands of spectra and calculated geometries.
+  **A HOSE-code reference, added 16 November 2026,** while the twenty-ninth tutorial was written.
+  A lookup of the mean shift of the training carbons that share the deepest sphere of bonds (RDKit
+  Morgan environments up to four bonds; no geometry, no fit) reaches q2 +0.976 and 8.34 ppm on the
+  same folds. The count of this item is 0.123 behind it, and the local field only ties it: -0.003
+  [-0.008, +0.001] at its best width. So the gate passed against a weak reference. The three-
+  distance kernel of LP5 does beat the lookup, by +0.014 [+0.011, +0.017], and so does LP3's posed
+  overlap on the ring carbons, by +0.119 [+0.088, +0.153]; in both, five element channels in place
+  of the five fields do as well (+0.000 [-0.002, +0.002] and -0.004 [-0.018, +0.011]).
+  `run_local.py --only hose`; the rows measured before are unchanged.
 * **LP3. Local alignment and the co-field around an atom.** For a congeneric site (the carboxyl
   group, an aromatic carbon with its two neighbours) a superposition on the centre and its first
   shell is well posed, and the overlap kernel in that frame gives what the invariant kernel
@@ -6665,6 +6685,14 @@ on the same folds.
   **Not done:** no panel in the application (the co-field leaves as a cube file), and no quantum
   charges for the shift set, which is what the *electrostatic* co-field would need to carry the
   resonance that the indicator fields carry by type.
+  **Element channels in place of the fields, measured 16 November 2026.** The posed overlap at rho
+  0.25 with five element channels (H, C, N, O and the rest, each with the envelope) instead of the
+  five fields gives q2 +0.903 against +0.899, -0.004 [-0.018, +0.011]; both beat a HOSE-code
+  lookup (+0.780) by about +0.12. A learning curve over 38, 76 and 153 training molecules per fold
+  finds no size at which the fields lead (+0.011, +0.003, -0.004, with one draw of five clear of
+  zero at 38). What the pose carries is where the substituents sit; the five fields add nothing to
+  that over their elements, which agrees with the reading above, where the Sybyl indicator fields,
+  not the electrostatic one, carried the substituent table. `run_local.py --only hose-curve`.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
   first with no extra work once an environment is a field; the second needs members with their
@@ -8462,6 +8490,16 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   *Open:* a model of the hydrogen bonds for the compounds with a donor (a pair of molecules
   or a cluster); a density-functional library for larger compounds; a conformer search; a
   library larger than the set; the co-field of a structural direction in space.
+  *The searches a spectroscopist would use, 16 November 2026* (`run_spectra_bridge.py --part
+  reference`), while the thirtieth tutorial was written. Binned spectra and a peak-table search,
+  with their settings chosen on the calibration acids as the kernel's are: with a B97-3c query the
+  kernel finds 99.6 %, the peak tables 86.8 %, the binned spectra 77.0 %; with a GFN2-xTB query
+  42.8 %, 8.2 % and 32.9 %. The kernel is ahead in all ten splits at both levels; its smallest
+  lead is +9.9 points [+3.4, +16.7] over the binned spectra with GFN2-xTB. That lead was +19.3
+  while the bins stopped at 100 cm⁻¹, the width the reference chose; with wider bins it chose
+  200. In part (a) the carbonyl band itself (r +0.87) and the first principal component of the
+  spectra alone (+0.75) already follow the Hammett constant, so pair 1 adds little; pair 2 (para
+  against meta, +0.84) is what neither description shows alone (0.45 and 0.60).
 
 * **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
   LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two

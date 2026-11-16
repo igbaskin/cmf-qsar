@@ -138,3 +138,46 @@ Which region of the spectrum carries a pair: the correlation, over held-out acid
 
 **Where the first pair lives.** The plan expected the first structural direction on the neighbourhood of the carbonyl group and the first spectral direction on the carbonyl band.  On the spectral side the first pair is carried by the carbonyl stretch and by the O-H stretch about equally.  On the structural side the answer depends on the charges.  With quantum charges the pair is strongest with the narrowest envelope (1.00 A: +0.893), which holds little beyond the carboxyl group: the quantum calculation has carried the effect of the substituent to that group.  With Gasteiger charges, which are the same on the carboxyl group of every acid, the pair vanishes there (+0.105) and needs an envelope that reaches the substituent.  This is the finding of plan item SP2, reached here without a target.
 
+## References a spectroscopist would use first
+
+Part (b) compares the kernel with the composition and with one band.  A spectroscopist who searches a library of spectra uses neither: the search compares whole spectra.  Two such searches are measured here.  Their settings are chosen on the calibration acids by the same rule as the kernel's (the highest mean reciprocal rank), on the same splits.
+
+- **Binned spectra.**  Every spectrum becomes a histogram: the intensities of its lines are summed in bins of one width (5, 10, 20, 50, 100, 200, 400 cm^-1), with the power 1 or 0.5 of the intensity.  The candidates are ranked by the cosine of the histograms, with and without centring.
+- **A peak-table search.**  Every spectrum becomes the list of its lines with at least 5, 10, 20 % of the intensity of the strongest line.  The candidates are ranked by the share of the peaks of both lists that have a partner in the other list within a tolerance (5, 10, 20, 30, 60, 100, 150 cm^-1).
+
+The kernel is the row "centred spectra, the axis as it is" of the tables above, chosen and scored again here.
+
+| query | how the candidates are ranked | first, % of the queries | among the first three, % | the right isomer above the other isomer of the same substituent, % | first among the candidates with the composition of the query, % | settings chosen most often |
+|---|---|---:|---:|---:|---:|---|
+| GFN2-xTB | the spectrum kernel, centred, the axis as it is | 42.8 (2.6) | 67.7 (4.2) | 74.0 (5.3) | 69.8 (4.5) | 100 cm^-1, power 0.5; 50 cm^-1, power 0.5 |
+| GFN2-xTB | binned spectra (a cosine of histograms) | 32.9 (2.6) | 60.3 (2.4) | 71.0 (2.8) | 68.2 (2.5) | bins of 200 cm^-1, power 0.5, centred |
+| GFN2-xTB | a peak-table search | 8.2 (1.9) | 22.1 (2.8) | 63.7 (6.4) | 56.8 (7.8) | lines of 10 % of the strongest or more, within 60 cm^-1; lines of 5 % of the strongest or more, within 20 cm^-1 |
+| B97-3c | the spectrum kernel, centred, the axis as it is | 99.6 (0.5) | 99.7 (0.5) | 100.0 (0.0) | 100.0 (0.0) | 20 cm^-1, power 0.5; 10 cm^-1, power 0.5 |
+| B97-3c | binned spectra (a cosine of histograms) | 77.0 (4.6) | 90.6 (3.2) | 91.3 (1.7) | 90.7 (2.0) | bins of 100 cm^-1, power 0.5, centred; bins of 50 cm^-1, power 0.5, centred |
+| B97-3c | a peak-table search | 86.8 (2.9) | 98.2 (1.5) | 99.1 (0.6) | 99.1 (0.6) | lines of 5 % of the strongest or more, within 20 cm^-1 |
+
+The difference in the share ranked first, in percentage points: the mean over the test queries of all splits, with a 95 % interval from resampling whole substituents.
+
+| query | the kernel minus the binned spectra | splits with the kernel ahead, level, behind | the kernel minus the peak-table search | splits with the kernel ahead, level, behind |
+|---|---:|---|---:|---|
+| GFN2-xTB | +9.9 [+3.4, +16.7] | 10, 0, 0 | +34.6 [+27.1, +42.4] | 10, 0, 0 |
+| B97-3c | +22.5 [+17.6, +27.8] | 10, 0, 0 | +12.7 [+7.3, +18.6] | 10, 0, 0 |
+
+### Part (a): what each view follows on its own
+
+Part (a) pairs a structural direction with a spectral one, and pair 1 follows the Hammett constant.  Without any pairing, the spectrum and the structure may already follow it.  Three references use no target and no pairing:
+
+- **the carbonyl band itself** (the number in the data file of plan item SP2);
+- **the spectra alone**: the first 6 principal components of the spectra of part (a), scored on held-out acids with the folds of part (a);
+- **the structure alone**: the first 6 components of a kernel principal component analysis of the structural kernel of part (a), envelope 10.00 A, on all acids.
+
+A cell gives the correlation with the property; for the components, the component with the largest correlation.  The sign of a component is free.
+
+| property | the carbonyl band itself | the spectra alone | the structure alone | kernel canonical correlation: pair 1, spectrum | pair 2, spectrum |
+|---|---:|---:|---:|---:|---:|
+| the Hammett constant | +0.87 | +0.75 (component 1) | +0.47 (component 4) | -0.83 | -0.18 |
+| para (1) or meta (0) | -0.29 | +0.45 (component 5) | -0.60 (component 2) | +0.03 | +0.84 |
+| the position of the carbonyl band | (the property itself) | +0.84 (component 1) | -0.45 (component 3) | -0.76 | -0.32 |
+
+The carbonyl band itself follows the Hammett constant at +0.87, and the leading component of the spectra alone at +0.75 (component 1).  So pair 1 of part (a) finds what the spectrum already shows without the structure.  Para against meta is different: no component of the spectra alone follows it beyond 0.45, and no component of the structure alone beyond 0.60, while pair 2 reaches +0.84.  This is what the pairing of the two views adds.
+
