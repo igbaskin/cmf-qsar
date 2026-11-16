@@ -6871,7 +6871,7 @@ for.
 
 ### Tutorials
 
-Twenty-six notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Twenty-seven notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -6903,6 +6903,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `24_metal_particles.ipynb` | particles of thousands of atoms with no cell: how the cost of the autocorrelation and of the overlap kernel grows with the size, the EMT energy per atom of 150 particles of six metals against the size law, and a regression on the numbers of neighbours in four lattice shells as the reference, in cross-validation and on larger particles (all computed live) |
 | `25_point_mutants.ipynb` | a protein as the sample: the change of folding stability of single substitutions in four small domains, one mutant built live, the frame of the changed residue, and the count of atoms around the site, with a linear and then a nonlinear model, as the reference that a field of the surroundings has to beat |
 | `26_a_microstructure.ipynb` | a two-phase microstructure on a voxel grid as the sample: 400 cells built and solved live, the overlap of their two-point statistics against the phase fraction and against three measured numbers (the fraction and the correlation lengths along the axes) as the reference, the 3D cells, the elastic label, two scales, the map over the lag vector, and the limit on real micrographs |
+| `27_which_atom_reacts.ipynb` | one atom as the sample: the atom a cytochrome P450 attacks, in 636 drug molecules and 14,488 heavy atoms, with the field around an atom against a count of the atom types over bonds, a count over distance, and a few properties of the atom itself as the references, and the mixture that beats them all |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7355,7 +7356,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         twenty-six notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         twenty-seven notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

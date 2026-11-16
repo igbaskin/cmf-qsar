@@ -26,6 +26,11 @@ How it is measured
 * **Two mixtures.** The count and the field side by side, which asks whether the field adds
   anything the count does not already hold; and the centre atom's own type with the field, which
   asks how much of that is only the name of the atom being asked about.
+* **A reference that needs no field and no geometry** (added 16 November 2026): a few properties
+  of the atom itself -- its element, the hydrogens on it, whether it is aromatic or in a ring,
+  how many heavy neighbours it has, and how far it sits from the middle of the molecule -- alone
+  and beside each count, which asks whether the field is still worth its geometry once the atom
+  is described the way a rule-based predictor describes it.
 * **The folds hold out whole molecules**, and the ridge is searched the same way for all three.
 * Hydrogens are not candidates: the set annotates heavy atoms, so the ranking is over the heavy
   atoms of each molecule.
@@ -87,6 +92,42 @@ def read(path=DATA, max_molecules=0):
 #: the measure itself lives in the package, because `cmf local --rank` reports it too
 per_molecule_hits = top_hits
 
+#: the per-atom properties of the reference below, in the order of the columns
+PROPERTY_NAMES = ("hydrogens on the atom", "aromatic", "in a ring", "heavy-atom neighbours",
+                  "relative span", "carbon", "nitrogen", "sulphur")
+
+
+def atom_properties(mols, targets) -> np.ndarray:
+    """A few numbers per atom, of the kind a rule-based site predictor uses.
+
+    The published rule-based predictors of this field score an atom from its own element, how
+    many hydrogens it carries, whether it is aromatic or in a ring, how many heavy neighbours it
+    has, and how far it sits from the middle of the molecule (SMARTCyp's accessibility, the
+    longest bond path from the atom divided by the longest in the molecule). None of these needs
+    a geometry or a field. The hydrogen count is also given as one column per value, because the
+    effect is not linear in it.
+    """
+    from rdkit import Chem
+
+    rows = np.zeros((len(targets), len(PROPERTY_NAMES)))
+    longest = {}
+    for r in range(len(targets)):
+        m_i, a_i = int(targets.molecule[r]), int(targets.atom[r])
+        mol = mols[m_i]
+        if m_i not in longest:
+            d = Chem.GetDistanceMatrix(mol)
+            longest[m_i] = (d, max(float(d.max()), 1.0))
+        d, far = longest[m_i]
+        a = mol.GetAtomWithIdx(a_i)
+        rows[r] = (a.GetTotalNumHs(), float(a.GetIsAromatic()), float(a.IsInRing()),
+                   a.GetDegree(), float(d[a_i].max()) / far,
+                   float(a.GetAtomicNum() == 6), float(a.GetAtomicNum() == 7),
+                   float(a.GetAtomicNum() == 16))
+    counts = np.eye(4)[np.minimum(rows[:, 0].astype(int), 3)]
+    scaled = (rows - rows.mean(axis=0)) / (rows.std(axis=0) + 1e-12)
+    return np.hstack([scaled, counts])
+
+
 
 def auc(y, pred):
     """The area under the curve over all atoms, by the rank formula."""
@@ -136,8 +177,8 @@ def run(rhos=RHOS, folds=10, seed=0, max_molecules=0, results=RESULTS):
     types = types_of(fields, min_atoms=10)
     rows, hits = [], {}
     topo = topological_features(mols, targets, types)
-    Z, _s = normalised_rows(topo, scale=np.ones(topo.shape[1]))
-    row, h1, h2 = score("count over bonds (2D)", Z, targets, folds, seed)
+    Z_2d, _s = normalised_rows(topo, scale=np.ones(topo.shape[1]))
+    row, h1, h2 = score("count over bonds (2D)", Z_2d, targets, folds, seed)
     rows.append(row)
     hits["2D"] = h2
     base = h2
@@ -149,6 +190,25 @@ def run(rhos=RHOS, folds=10, seed=0, max_molecules=0, results=RESULTS):
     rows.append(row)
     hits["3D"] = h2
     count_hits = h2
+
+    # The reference that needs no field and no geometry: a few properties of the atom itself,
+    # of the kind the published rule-based predictors score an atom with.
+    props = atom_properties(mols, targets)
+    Z_props, _s = normalised_rows(props - props.min(axis=0),
+                                  scale=np.ones(props.shape[1]))
+    row, h1, h2 = score("atom properties", Z_props, targets, folds, seed)
+    row["against_2d"] = paired(h2, base, seed)
+    rows.append(row)
+    for label, block in (("2D count and atom properties", Z_2d),
+                         ("3D count and atom properties", Z_count)):
+        Zm = np.hstack([block, Z_props]) / np.sqrt(2.0)
+        row, h1, h2 = score(label, Zm, targets, folds, seed)
+        row["against_2d"] = paired(h2, base, seed)
+        row["against_count"] = paired(h2, count_hits, seed)
+        rows.append(row)
+        hits[label] = h2
+        d = row["against_count"]
+        _say(f"    against the count alone {d[0]:+.1%} [{d[1]:+.1%}, {d[2]:+.1%}]")
 
     best_rho, best_top2, best_Z = None, -1.0, None
     for rho in rhos:
@@ -174,8 +234,27 @@ def run(rhos=RHOS, folds=10, seed=0, max_molecules=0, results=RESULTS):
     row["against_2d"] = paired(h2, base, seed)
     row["against_count"] = paired(h2, count_hits, seed)
     rows.append(row)
+    mix_hits = h2
     d = row["against_count"]
     _say(f"    against the count alone {d[0]:+.1%} [{d[1]:+.1%}, {d[2]:+.1%}]")
+
+    # The mixture of the item against the best reference that needs no field: does the field
+    # still add once the atom's own properties are given to the count?
+    for label in ("3D count and atom properties", "2D count and atom properties"):
+        row = next(r for r in rows if r["name"] == label)
+        row["against_mix"] = paired(hits[label], mix_hits, seed)
+        d = row["against_mix"]
+        _say(f"  {label} against the count and the field {d[0]:+.1%} [{d[1]:+.1%}, {d[2]:+.1%}]")
+    Z = np.hstack([Z_count, best_Z, Z_props]) / np.sqrt(3.0)
+    row, h1, h2 = score(f"count, field and atom properties, rho {best_rho:g}", Z, targets,
+                        folds, seed)
+    row["rho"] = best_rho
+    row["against_2d"] = paired(h2, base, seed)
+    row["against_count"] = paired(h2, count_hits, seed)
+    row["against_mix"] = paired(h2, mix_hits, seed)
+    rows.append(row)
+    d = row["against_mix"]
+    _say(f"    against the count and the field {d[0]:+.1%} [{d[1]:+.1%}, {d[2]:+.1%}]")
 
     # One column block of the count is the centre's own atom type, which the autocorrelation of
     # an environment does not name.  Giving the field that block alone says how much of what the
@@ -262,6 +341,28 @@ def report(results=RESULTS):
                 "centre is only the atom the envelope weights most. The ease of oxidation "
                 "depends first of all on what the atom is, so the field starts without the one "
                 "variable that matters most and has to recover it indirectly."]
+    props = next((r for r in d["rows"] if r["name"] == "atom properties"), None)
+    with_props = [r for r in d["rows"] if r["name"].endswith("count and atom properties")]
+    joint = next((r for r in d["rows"] if r["name"].startswith("count, field and atom")), None)
+    if props is not None and with_props and mix is not None:
+        best_props = max(with_props, key=lambda r: r["top2"])
+        out += ["",
+                "**A reference that needs no field and no geometry (added 16 November 2026).** "
+                "The published rule-based predictors of this field score an atom from its own "
+                "element, the hydrogens on it, whether it is aromatic or in a ring, how many "
+                "heavy neighbours it has, and how far it sits from the middle of the molecule. "
+                f"Those properties alone reach {props['top2']:.1%}, {verdict(props)} than the "
+                f"two-dimensional baseline ({says(props)}). Added to a count they change little: "
+                + ", ".join(f"{r['name']} {r['top2']:.1%}" for r in with_props)
+                + f". The best of them is {verdict(best_props, 'against_mix')} than the count "
+                f"with the field, {says(best_props, 'against_mix')}. So the field still carries "
+                "what these properties do not, and the item's reading stands."]
+        if joint is not None:
+            out += ["",
+                    f"Giving the mixture the properties as well reaches {joint['top2']:.1%}, "
+                    f"{verdict(joint, 'against_mix')} than the count with the field, "
+                    f"{says(joint, 'against_mix')}. Whatever the properties hold about an atom, "
+                    "the count and the field between them already hold it."]
     widths = [r for r in d["rows"] if r["name"].startswith("local field")]
     if len(widths) >= 3 and widths[0]["top2"] < field["top2"] > widths[-1]["top2"]:
         out += ["",
