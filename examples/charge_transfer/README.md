@@ -11,7 +11,7 @@ porous electrode.
 
 ## The files
 
-* `activation_energies.csv`: one row per value, 109 rows from 19 studies.
+* `activation_energies.csv`: one row per value, 125 rows from 26 studies.
 * `sources.csv`: one row per paper, with its DOI, its licence and what was done with it.
 * `papers/`: the place for the PDF files of the papers. The files are not in the repository:
   `.gitignore` leaves out every PDF except the manual.
@@ -22,11 +22,12 @@ A value is in the table only if it was seen in a document that was read for this
 Nothing was written from memory.
 
 * A row is **primary** (`read_from`) when the number was read in the paper that measured it.
-  There are 109 such rows, from 19 papers. Five of the papers are open: four under CC BY 4.0
-  and one as an open file on the site of its society. The other fourteen were read from
-  files. The author of the program supplied thirteen of them: twelve are behind a paywall,
-  and the file of one (Fukutsuka 2010) does not state a licence. The fourteenth, Zabara
-  2024, is the copy that the repository of its university makes open after an embargo.
+  There are 125 such rows, from 26 papers. Six of the papers are open: four under CC BY 4.0,
+  one under CC BY-NC 4.0 (Fukuma 2024) and one as an open file on the site of its society.
+  The other twenty were read from files. The author of the program supplied nineteen of
+  them: eighteen are behind a paywall, and the file of one (Fukutsuka 2010) does not state a
+  licence. The twentieth, Zabara 2024, is the copy that the repository of its university
+  makes open after an embargo.
 * A row is **secondary** when the number was read in another paper that cites it. No row is
   secondary now. `source` is then the paper that measured the value, and `cited_in` names the
   paper and the place where the number was read. A secondary value has to be checked against
@@ -84,15 +85,17 @@ Nothing was written from memory.
 * The series do not all agree on the pair of solvents that five of them measured, DMC against
   EC:DMC 1:1. With no surface film on lithium titanate, DMC is lower than EC:DMC 1:1 by
   17 kJ/mol in one study and by 1.4 kJ/mol in another. The report prints this comparison for
-  each of the eight pairs of solvents that more than one series measured. On one of them the
+  each of the nine pairs of solvents that more than one series measured. On one of them the
   series agree: DMSO is above PC by 12.6 kJ/mol on a solid electrolyte (Abe 2005) and by
   11.1 kJ/mol on a carbon film (Fukutsuka 2010). Three pairs are the mixtures of Zabara 2024
   on lithium metal: they differ by 0.8 to 1.9 kJ/mol as assembled, and by up to 16.7 kJ/mol
-  after ten cycles.
+  after ten cycles. The ninth pair is water against PC: PC is above water by 26.0 kJ/mol on
+  a LiMn2O4 thin film (Nakayama 2007) and by 46.3 kJ/mol on LiCoO2 (Chekushkin 2021).
 * One paper argues against the hypothesis that desolvation alone sets the barrier:
   Chekushkin 2021 (Electrochim. Acta 372, 137843). Its six values are in the table.
 * The set is not complete. A search of the literature on 14 November 2026 found about 40
-  further studies with measured values that are not read yet. Most of them are named in two
+  further studies with measured values. Eleven of them were read on 16 November, so about
+  30 are not read yet. Most of them are named in two
   reviews: Kondo, Abe, Yamada 2022 (ACS Appl. Mater. Interfaces 14, 22706,
   10.1021/acsami.1c21683), whose three tables hold 57 values from 18 studies, and Weiss and
   others 2020 (Electrochem. Energy Rev. 3, 221, 10.1007/s41918-020-00062-7) for the transfer
@@ -112,6 +115,21 @@ Nothing was written from memory.
   LiMn2O4/LiMn2O4 cells (0.3 to 6.0 kJ/mol) are left out because the authors assign them to
   electron transfer in the cathode and not to the transfer of the ion. `sources.csv` lists
   them.
+* Nine Elsevier papers were read on 16 November 2026 as well. Seven gave rows. Doi 2004
+  (Carbon) gave four: GC-20 and carbon treated by hot isostatic pressing, each in EC:DEC and
+  PC. Its two values for untreated GC-20 are the two that Doi 2005 shows for comparison, so
+  they are rows `DC04-01` and `DC04-02` of Doi 2004 and no longer of Doi 2005. Nakayama 2007
+  gave five rows in one series: LiMn2O4 in water with two salts at two concentrations, and
+  in PC. Yamada 2003 gave one row; the paper does not say which of its two electrolytes
+  (PC or EC:DEC) the figure shows. Yamada 2007 gave two (c-axis and random film), Iriyama
+  2004 two (bare and with MgO), Sagane 2005 two (LLT against PC and against a polymer) and
+  Fukuma 2024 two (lithium titanate without and with a film). Fukuma 2024 also gives 49.6
+  kJ/mol for the resistance of the film, which its authors read as the desolvation step, so
+  the note of its rows says that the label depends on the semicircle that is called charge
+  transfer. The two values of Sagane 2005 for Na+ are not rows. Uhlmann 2016 gave no row,
+  because its interface resistance is assigned to an exchange of H+ and Li+. Uchida 2020
+  gave none yet: its text has only approximate values, and the exact ones are in Tables S2
+  and S3 of its supporting information, which was not read.
 * Five more papers were read on the same day and gave no row. Four of them measured no
   activation energy (Okoshi 2013, Levin 2017, Vassiliev 2019, Motobayashi 2022). The fifth,
   Zhou 2025, prints one value and shows the others only as markers in a figure.

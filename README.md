@@ -3698,7 +3698,7 @@ cell:
   activation energy to about 15 kJ/mol, and nothing more exact. The stage reads the discharge
   capacity only; the energy, the power and the charging of a cold cell were not run.
 - The measured activation energies were then collected from the literature
-  (`examples/charge_transfer/`, 109 values from 19 studies, each with its paper and the place
+  (`examples/charge_transfer/`, 125 values from 26 studies, each with its paper and the place
   in it; `benchmarks/run_charge_transfer.py`). All of them were read in the paper that
   measured them. In carbonate electrolytes the mean is 61.7 kJ/mol for graphite and
   68.0 kJ/mol for layered oxides, against 35 and 17.8 kJ/mol in the cell set. Five studies of
@@ -3712,13 +3712,14 @@ cell:
 - That regression was then run (`--stage binding` and `--stage regression`). The binding
   energy of Li+ with one molecule of each solvent comes from ORCA, because GFN2-xTB agrees
   too poorly with the values of the papers (correlation 0.80 against 0.94). With one solvent
-  held out at a time, the regression lowers the error from 17.2 to 9.3 kJ/mol for the 11
-  solvents that hold the ion with one atom (gain 7.9 kJ/mol, 95 % interval 0.9 to 12.8). It
+  held out at a time, the regression lowers the error from 19.0 to 10.1 kJ/mol for the 11
+  solvents that hold the ion with one atom (gain 8.8 kJ/mol, 95 % interval 2.6 to 12.4). It
   gains nothing when the two solvents that wrap the ion with several oxygen atoms are
   included. On the solvents measured in several series, no model of the solvent alone can
-  have an error below 9.1 kJ/mol where the regression has 9.5. So no field model was built
-  for this target. The 11 values of two studies that were read after the first run did not
-  move the slope (0.559 became 0.556). A fit of this kind on four values of one group is
+  have an error below 7.3 kJ/mol where the regression has 10.3. That room of 3.0 kJ/mol is
+  below the repeatability of 5.0 kJ/mol, so no field model was built for this target. The
+  33 values of ten studies that were read after the first run moved the slope from 0.559
+  to 0.487. A fit of this kind on four values of one group is
   published (Okoshi and others, J. Electrochem. Soc. 160 (2013) A2160); the test across
   laboratories with held-out solvents is what this run adds.
 
