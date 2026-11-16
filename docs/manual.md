@@ -7996,8 +7996,11 @@ field: two per frequency, one per landmark.
   on average and 0.006 at worst. The three seeds differ by 0.013 in $q^2$ at 256 frequencies.
 * **Landmark molecules need far fewer columns.** The fewest columns per field that bring the
   $q^2$ within 0.01 of the exact model are 10 to 40 for landmark molecules, 55 to 630 for a grid
-  of Gaussian centres, and 64 to 1024 for Sobol frequencies. The two largest counts, 512 and 1024,
-  were needed on ACE and AChE, which chose an attenuation of 2 and 5.
+  of Gaussian centres, and 64 to 1024 for Sobol frequencies (32 to 512 frequencies). The largest
+  counts were 512 columns on ACE and 1024 on AChE and THER. ACE and AChE chose a narrow field
+  (attenuation 2 and 5), but THER chose an attenuation of 1, so the width does not explain every
+  large count. A single count is also uncertain: on THER, independent draws needed 256 columns,
+  orthogonal triples 32 and the Sobol sequence 1024.
 * **The lattice is cheap only for a broad field.** At a tolerance of $10^{-3}$ it is within
   0.0005 of the exact $q^2$ on every set. It needs 260 to 740 columns per field at an attenuation
   of 0.1 or 0.3, but 4 700 to 30 000 at 2 or 5. The count grows as $(P\sqrt{b})^3$, for a
