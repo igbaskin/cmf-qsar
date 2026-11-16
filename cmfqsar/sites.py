@@ -325,6 +325,114 @@ def one_site_targets(sites: Sequence[int], values: Sequence[float], n_sites: Seq
     return AtomTargets.from_arrays(per, name=name)
 
 
+def read_site_values(path: str, names: Sequence[str], n_sites: Sequence[int],
+                     column: Optional[str] = None) -> Tuple[AtomTargets, List[str]]:
+    """Per-site targets from a table (plan item NT7): one row per measured site.
+
+    The table is a CSV file with a header row. The first column names the structure, as the
+    structure set names it; the second gives the site, the index of the atom in that structure,
+    counted from 0; the value is the column called `column`, or the third column. A site that is
+    not in the table is not measured. Returns the target index and the structure names of the
+    table that match no structure.
+
+    Two rows for one site, or a site index outside its structure, are refused: the first is
+    usually two tables pasted together and the second a table counted from 1.
+    """
+    import csv
+
+    with open(path, newline="", encoding="utf-8-sig") as fh:
+        rows = list(csv.reader(fh))
+    if len(rows) < 2 or len(rows[0]) < 3:
+        raise ValueError(f"{path}: a site table needs a header row and the columns structure, "
+                         f"site and value")
+    head = [h.strip() for h in rows[0]]
+    if column is None:
+        col = 2
+    elif column in head:
+        col = head.index(column)
+    else:
+        raise ValueError(f"{path} has no column {column!r}; its columns are {', '.join(head)}")
+    index = {str(n): k for k, n in enumerate(names)}
+    per = [np.full(int(n), np.nan) for n in n_sites]
+    unmatched: List[str] = []
+    for line, r in enumerate(rows[1:], start=2):
+        if not r or not r[0].strip():
+            continue
+        name = r[0].strip()
+        if name not in index:
+            if name not in unmatched:
+                unmatched.append(name)
+            continue
+        k = index[name]
+        try:
+            site, value = int(float(r[1])), float(r[col])
+        except (ValueError, IndexError):
+            raise ValueError(f"{path}, line {line}: the site must be a whole number and the "
+                             f"value a number")
+        if not 0 <= site < len(per[k]):
+            raise ValueError(f"{path}, line {line}: {name} has {len(per[k])} atoms, so site "
+                             f"{site} does not exist (sites are counted from 0)")
+        if np.isfinite(per[k][site]):
+            raise ValueError(f"{path}, line {line}: site {site} of {name} is given twice")
+        per[k][site] = value
+    return AtomTargets.from_arrays(per, name=head[col]), unmatched
+
+
+def fit_site_model(model, crystals: Sequence[CrystalFields], targets: AtomTargets,
+                   lams: Sequence[float] = (1e-4, 1e-3, 1e-2, 0.1, 1.0), folds: int = 5,
+                   seed: Optional[int] = 0, progress=None) -> Dict[str, object]:
+    """Fit `model` (``kernel_source="periodic"``) on the measured sites, choosing the ridge
+    parameter on folds that hold out whole structures (plan item NT7).
+
+    The grid search of :mod:`cmfqsar.model` draws its folds over the samples, which for sites
+    would put two sites of one particle on both sides of a split, so that the model is tested on
+    a structure it has seen. Here the folds are :meth:`AtomTargets.folds`, the same folds give the
+    cross-validated statistics stored in ``model.stats``, and the model is then fitted on every
+    measured site. Returns the chosen parameter, the error of every candidate and the
+    cross-validated predictions.
+    """
+    from .model import _Learner, median_gamma_scale
+
+    table = site_table(crystals, targets)
+    y = np.asarray(targets.y, float)
+    if len(y) < 3:
+        raise ValueError(f"{len(y)} measured sites are too few to fit a model")
+    if targets.n_measured_molecules < 2:
+        raise ValueError("every measured site belongs to one structure, so no fold can hold a "
+                         "structure out")
+    K_lin = model.training_kernel(table)
+    d = np.diag(K_lin).copy()
+    if model.kernel_layer == "gauss":
+        model.gamma_scale_ = median_gamma_scale(K_lin)   # what fit() sets first
+    K = model.apply_layer(K_lin, d, d)
+    held = targets.folds(folds, seed)
+    errors: Dict[float, float] = {}
+    best, best_lam, best_pred = np.inf, float(lams[0]), None
+    for lam in lams:
+        params = dict(model.params, lam=float(lam))
+        pred = np.full(len(y), np.nan)
+        for te in held:
+            tr = np.setdiff1d(np.arange(len(y)), te)
+            learner = _Learner(model.method, params, model.fit_bias).fit(K[np.ix_(tr, tr)], y[tr])
+            pred[te] = learner.predict(K[np.ix_(te, tr)])
+        err = float(np.sqrt(np.mean((pred - y) ** 2)))
+        errors[float(lam)] = err
+        if progress is not None:
+            progress(f"ridge parameter {lam:g}: RMSE {err:.4g}")
+        if err < best:
+            best, best_lam, best_pred = err, float(lam), pred
+    model.params = dict(model.params, lam=best_lam)
+    model.fit(table, y, cv_folds=0)
+    st = model.stats
+    st.q2 = 1.0 - float(np.sum((best_pred - y) ** 2)) / float(np.sum((y - y.mean()) ** 2))
+    st.rmse_cv = best
+    st.cv_folds = len(held)
+    st.extra["y_cv"] = best_pred
+    st.extra["cv_folds_hold_out"] = "whole structures"
+    return {"lam": best_lam, "rmse_by_lam": errors, "rmse_cv": best, "q2": st.q2,
+            "y_cv": best_pred, "folds": len(held), "structures": targets.n_measured_molecules}
+
+
 # --------------------------------------------------------------------------- #
 # The reference under rule 1: counts in shells around the site
 # --------------------------------------------------------------------------- #

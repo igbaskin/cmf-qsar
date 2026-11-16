@@ -258,17 +258,42 @@ def check_crystals(model: CMFModel, crystals: Sequence) -> List[Finding]:
         return out
     train = list(getattr(model.train, "molecules", []) or [])
 
-    # 1. a lattice: without one there is no periodic field and no image sum
-    flat = [i for i, c in enumerate(crystals)
-            if getattr(c, "cell", None) is None
-            or abs(float(np.linalg.det(np.asarray(c.cell, float).reshape(3, 3)))) < 1e-9]
+    # 1. a lattice along every direction the structure repeats in: without one there is no
+    # image sum. A particle repeats in no direction and needs none (plan items NT1 and NT2),
+    # and a nanotube as ASE builds it has a lattice vector along its axis only (NT4).
+    def _missing_vector(c) -> bool:
+        pbc = [bool(p) for p in (getattr(c, "pbc", None) or (True, True, True))]
+        cell = getattr(c, "cell", None)
+        if cell is None:
+            return any(pbc)
+        A = np.asarray(cell, float).reshape(3, 3)
+        return any(p and float(np.linalg.norm(A[d])) < 1e-9 for d, p in enumerate(pbc))
+
+    flat = [i for i, c in enumerate(crystals) if _missing_vector(c)]
     if flat:
         out.append(Finding(
             "refuse", "no-cell",
-            f"{len(flat)} of {len(crystals)} structures carry no usable unit cell "
-            f"({_names(crystals, flat)}): a periodic kernel sums over the images of the cell, "
-            f"so there is nothing to predict from. Read them from a CIF, a POSCAR or an "
-            f"extended-XYZ file that holds the lattice."))
+            f"{len(flat)} of {len(crystals)} structures repeat in a direction that has no "
+            f"lattice vector ({_names(crystals, flat)}): a periodic kernel sums over the images "
+            f"of the cell, so there is nothing to predict from. Read them from a CIF, a POSCAR "
+            f"or an extended-XYZ file that holds the lattice, or give a particle as periodic in "
+            f"no direction."))
+    # a structure that repeats in a different number of directions from every training
+    # structure: a particle given to a model of crystals, or a crystal to a model of particles
+    def _n_periodic(c) -> int:
+        return int(sum(bool(p) for p in (getattr(c, "pbc", None) or (True, True, True))))
+
+    trained = sorted({_n_periodic(c) for c in train})
+    other = [i for i, c in enumerate(crystals) if trained and _n_periodic(c) not in trained]
+    if other:
+        kinds = {0: "particles", 1: "chains", 2: "layers", 3: "crystals"}
+        out.append(Finding(
+            "warn", "periodicity",
+            f"{len(other)} of {len(crystals)} structures repeat in a number of directions no "
+            f"training structure repeats in ({_names(crystals, other)}): the model was fitted on "
+            f"{' and '.join(kinds[n] for n in trained)}, and the background term and the "
+            f"neighbours of a site differ between the kinds, so these predictions are "
+            f"extrapolations."))
 
     # 2. the elements: one the field set does not name is invisible, or lands in 'other'
     listed = {sp.name[4:] for sp in model.fieldset.specs if sp.is_cif and sp.enabled}

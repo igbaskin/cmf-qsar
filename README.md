@@ -1139,6 +1139,18 @@ larger than every training particle from 33.7 to 4.4 meV (shell counts: 13.8). O
 two metals they take the mixing energy from 11.2 to 4.6 meV per atom in random folds, but with a
 geometry held out a Gaussian kernel on neighbour counts is better (12.2 against 13.2).
 
+### Sites of a particle
+
+Plan item NT7 (`cmfqsar/sites.py`, `benchmarks/run_particle_sites.py`, `examples/particle_sites`):
+`build-crystals --site-file` fits a model of per-site values with folds that hold out whole
+structures, and `cmf sites` predicts every site of a new particle. On OH binding computed with
+UMA at 1,851 sites of 48 Pt and Au particles, the site profile with the core fields of NT6
+reaches q2 0.929 with particles held out and 0.920 with shapes held out, against 0.902 and 0.855
+for a Gaussian kernel on neighbour counts and 0.736 and 0.711 for the generalized coordination
+number. Every model finds the strongest site of an unseen particle about equally often. A
+whole-particle model read site by site follows the number of neighbours, not the binding. The
+check before a prediction now accepts particles and nanotubes, which it used to refuse.
+
 ### The surface kernel on the surface of a particle
 
 Plan item NT5 (`cmfqsar/invariant.py`, `benchmarks/run_ligand_shells.py`): the surface kernel's

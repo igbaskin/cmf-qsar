@@ -1027,6 +1027,18 @@ def registry() -> List[Benchmark]:
                   minutes="8",
                   report=lambda: _mod("run_core_fields").report(),
                   tables=["core_fields/table.md"]),
+        Benchmark("particle_sites",
+                  "site-resolved models on particles: OH binding at every surface site of 48 "
+                  "Pt and Au particles computed with UMA, the site profile with and without the "
+                  "core fields against the generalized coordination number and counts, the "
+                  "strongest site of an unseen particle, and a whole-particle model read site "
+                  "by site (plan item NT7)",
+                  "run_particle_sites.py", "particle_sites",
+                  compute=[["--stage", "checks"], ["--stage", "model"],
+                           ["--stage", "decomposition"]],
+                  minutes="80",
+                  report=lambda: _mod("run_particle_sites").report(),
+                  tables=["particle_sites/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "

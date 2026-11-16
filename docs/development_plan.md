@@ -4121,6 +4121,32 @@ tests whether the target is reproducible between sources before any kernel is co
   the whole particle. This is M5 applied to particles: per-site rows of the channel tensor,
   per-site targets, and the decomposition that names which site carries the property. Measured
   first on adsorption energies by site on a cluster set. One to two weeks beyond M5.
+  **Built and measured 16-17 November 2026.** The site profile of M5 needed no change for a
+  particle (no background term, the k-d tree neighbours of NT2). What was missing:
+  `sites.read_site_values` (a CSV table of structure, site and value) and `sites.fit_site_model`
+  (the ridge parameter chosen on folds that hold out whole structures, since the grid search
+  draws its folds over the samples), with `build-crystals --site-file`; `cmf sites` already
+  predicted every site of a new structure. **Found on the way:** `contract.check_crystals`
+  refused every structure without a full cell, so no model could predict a particle or a
+  nanotube; it now refuses only a periodic direction with no lattice vector and warns of a
+  periodicity no training structure has.
+  **The data** (`examples/particle_sites`, made with UMA, oc20 head, about five GPU hours): OH
+  atop every surface site of 48 Pt and Au particles of 38 to 147 atoms, eight shapes, each
+  perfect and with 3 or 8 surface atoms removed; metal fixed, O held on the normal of its site
+  (left free, it slid off a quarter of the sites to a bridge); relative to OH atop (111). 1,851
+  of 2,090 distinct sites bind atop; the other 239 are atoms beside a vacancy. Slope on the
+  generalized coordination number +0.22 eV (Pt, r 0.84) and +0.15 eV (Au, r 0.91).
+  **Measured** (`benchmarks/run_particle_sites.py`, about 80 minutes): q2 with particles held out
+  / with each shape held out: site profile with NT6's core fields 0.929 / 0.920; Gaussian kernel
+  on shell counts and both coordination numbers 0.902 / 0.855; linear regression on shell
+  counts 0.830 / 0.802, on the coordination number 0.800 / 0.781, on the generalized
+  coordination number 0.736 / 0.711; site profile without the core fields 0.744 / 0.754. The
+  strongest site of an unseen particle is found (within 0.05 eV) by every model in 31 to 39 of
+  48. The inner folds must hold out what the outer folds hold out: with particles inside and
+  shapes outside, the core-field model fell to 0.843. A whole-particle model of the mean binding
+  (q2 0.921), read site by site, follows the coordination number (rank correlation -0.72) and so
+  runs against the binding (-0.76): the split names where the channels come from, not which site
+  carries an average over sites. Not done here: a measured site property, and Pt-Au alloys.
 
 **Interpretation and display**
 
@@ -9401,7 +9427,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 15 | 15 | -- |
-| H. Nanotechnology | 12 | 7 | NT7, NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 8 | NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
 | H. Local properties | 5 | 5 | -- |
@@ -9413,7 +9439,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 130 finished, 10 partly, 36 open.**
+**176 items: 131 finished, 10 partly, 35 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9438,7 +9464,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** NT7, SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

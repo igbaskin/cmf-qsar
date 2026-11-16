@@ -1160,6 +1160,8 @@ def cmd_build_crystals(args):
     from cmfqsar.structures import guess_target_key, numeric_info_keys, target_csv_column
     t0 = time.time()
     atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+    if getattr(args, "site_file", None):
+        return _build_site_model(args, atoms, names, t0)
     if args.target_file and not args.target_column:
         try:
             args.target_column = target_csv_column(args.target_file)
@@ -1290,6 +1292,88 @@ def cmd_build_crystals(args):
         save_model(args.save, model, extra={"dataset": args.dataset, "task": "regression",
                                             "activity": args.target or args.target_file})
         print(f"Model saved to {args.save}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
+def _build_site_model(args, atoms, names, t0):
+    """build-crystals --site-file: one sample per measured site (plan items M5 and NT7)."""
+    from cmfqsar.periodic import (crystal_table, elements_in, inorganic_fieldset,
+                                  periodic_channel_labels, top_channels)
+    from cmfqsar.sites import fit_site_model, read_site_values, site_names
+
+    for flag, value in (("--target", args.target), ("--target-file", args.target_file),
+                        ("--test-fraction", args.test_fraction), ("--descriptors",
+                                                                  args.descriptors),
+                        ("--descriptor-file", args.descriptor_file),
+                        ("--external-cv", args.external_cv)):
+        if value:
+            raise SystemExit(f"--site-file takes one value per site, so {flag} has no meaning "
+                             f"beside it")
+    try:
+        targets, unmatched = read_site_values(args.site_file, names, [len(a) for a in atoms],
+                                              column=args.target_column)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
+    if unmatched:
+        print(f"  {len(unmatched)} structure names of {args.site_file} match no structure, "
+              f"for example {unmatched[0]}")
+    if not len(targets):
+        raise SystemExit(f"{args.site_file} names no site of these structures")
+    used = sorted(set(int(k) for k in targets.molecule))
+    print(f"Loaded {len(atoms)} structures from {args.dataset}; {len(targets)} measured sites "
+          f"in {len(used)} of them, from {args.site_file} (column {targets.name})")
+    physchem = [f for f in args.fields.split(",") if f]
+    if args.elements == "auto":
+        elements = elements_in([atoms[i] for i in used], args.min_structures)
+    elif args.elements == "none":
+        elements = []
+    else:
+        elements = [e for e in args.elements.split(",") if e]
+    fs = inorganic_fieldset(elements, physchem=physchem, charge_model=args.charges)
+    print(f"  fields: {', '.join(sp.label for sp in fs.specs)}")
+    crystals = list(crystal_table(atoms, fs, names).molecules)
+    model = CMFModel(fieldset=fs, method=args.method, normalize=True, kernel_source="periodic",
+                     ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
+                     pbc_background=not args.no_background, kernel_layer=args.kernel_layer,
+                     ac_block_weights=_block_weights(args.block_weights),
+                     ac_block_groups=_block_groups(args.block_groups, fs),
+                     ac_block_rho=args.block_rho)
+    print(f"Kernel: the profile of every site, neighbours to {args.cutoff:g} A, channels every "
+          f"{args.sigma:g} A. The folds hold out whole structures, so no structure is predicted "
+          f"from its own other sites.")
+    seed = None if args.cv_no_shuffle else args.seed
+    try:
+        res = fit_site_model(model, crystals, targets, lams=_floats(args.lams),
+                             folds=args.folds, seed=seed,
+                             progress=lambda m: print(f"  {m}", flush=True))
+    except ValueError as exc:
+        raise SystemExit(str(exc))
+    print(f"Best ridge parameter {res['lam']:g}: q2 = {res['q2']:.3f}, RMSEcv = "
+          f"{res['rmse_cv']:.4g} ({res['folds']} folds over {res['structures']} structures)")
+    print(model.stats.summary())
+    if model.is_linear:
+        labels = periodic_channel_labels(fs, model._ac_spec())
+        print(f"Co-pattern: the {args.top} channels that move the prediction of a site most "
+              f"(weight x spread over the training sites):")
+        for lab, w, sd in top_channels(model, labels, n=args.top):
+            print(f"  {w * sd:+9.3f}  {lab}")
+    if args.predictions:
+        import csv
+        fit = model.stats.extra.get("y_fit")
+        with open(args.predictions, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(["site", "structure", "index", "measured", "predicted_cv", "fitted"])
+            for r, label in enumerate(site_names(crystals, targets)):
+                w.writerow([label, names[int(targets.molecule[r])], int(targets.atom[r]),
+                            f"{targets.y[r]:.6g}", f"{res['y_cv'][r]:.6g}",
+                            "" if fit is None else f"{fit[r]:.6g}"])
+        print(f"Predictions written to {args.predictions}")
+    if args.save:
+        save_model(args.save, model, extra={"dataset": args.dataset, "task": "regression",
+                                            "activity": f"{targets.name} per site",
+                                            "site_file": args.site_file})
+        print(f"Model saved to {args.save}; `cmf sites` predicts every site of a new "
+              f"structure with it")
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
@@ -4863,7 +4947,14 @@ def main(argv=None):
                          "info key (default name: <formula>_<index>)")
     bc.add_argument("--target-column", default=None, metavar="TITLE",
                     help="with --target-file, the title of the column to read instead of the "
-                         "second one, for a table that holds several properties")
+                         "second one, for a table that holds several properties; with "
+                         "--site-file, instead of the third one")
+    bc.add_argument("--site-file", default=None, metavar="CSV",
+                    help="a value per site instead of per structure (plan item NT7): CSV "
+                         "'structure,site,value' with a header row, the site being the index of "
+                         "the atom counted from 0. One sample per measured site; the folds hold "
+                         "out whole structures. `cmf sites` then predicts every site of a "
+                         "new structure")
     bc.add_argument("--fields", default="electrostatic,steric,prop:electronegativity",
                     help="physico-chemical fields: electrostatic (oxidation states), steric (atomic "
                          "volume), prop:electronegativity, prop:mass, prop:inverse_sqrt_mass (the "

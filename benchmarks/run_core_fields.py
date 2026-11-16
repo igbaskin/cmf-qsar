@@ -416,10 +416,12 @@ COUNT_LAMBDAS = (1e-5, 1e-4, 1e-3, 1e-2, 1e-1)
 CHOSEN: List[Dict] = []
 
 
-def _gaussian_counts(pair, X, y, tr, te, seed, groups=None) -> np.ndarray:
+def _gaussian_counts(pair, X, y, tr, te, seed, groups=None, gammas=None,
+                     lams=None) -> np.ndarray:
     """Kernel ridge regression with a Gaussian kernel on the standardised columns of X, zero
     between particles of different metal pairs, around the training mean; width and ridge
-    parameter from an inner 5-fold cross-validation (grouped when `groups` is given)."""
+    parameter from an inner 5-fold cross-validation (grouped when `groups` is given), on the
+    grids `gammas` and `lams` (default GAMMAS and COUNT_LAMBDAS)."""
     from run_shape import _group_splits
     mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-12
     Z = (X - mu) / sd
@@ -433,8 +435,8 @@ def _gaussian_counts(pair, X, y, tr, te, seed, groups=None) -> np.ndarray:
     inner = (_cv_splits(y[tr], 5, seed) if groups is None
              else _group_splits(np.asarray(groups)[tr], 5, seed))
     best = None
-    for gam in GAMMAS:
-        for lam in COUNT_LAMBDAS:
+    for gam in (GAMMAS if gammas is None else gammas):
+        for lam in (COUNT_LAMBDAS if lams is None else lams):
             p = np.zeros(len(tr))
             for ite, itr in inner:
                 p[ite] = fit(tr[itr], tr[ite], gam, lam)

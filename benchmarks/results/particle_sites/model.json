@@ -1,0 +1,3249 @@
+{
+ "samples": 1851,
+ "n_particles": 48,
+ "moved": 239,
+ "seconds": {
+  "plain": 0.18606290000025183,
+  "core": 0.41055880003841594
+ },
+ "sd": 0.29651670915986256,
+ "sd_by_metal": {
+  "Au": 0.2108364446683016,
+  "Pt": 0.3359966694405991
+ },
+ "particles": {
+  "site profile, steric, electronegativity and one indicator per metal": {
+   "rmse": 0.15003272042252708,
+   "rmse_sd": 0.003343701906141042,
+   "q2": 0.7438529962823763,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.09776095172927295,
+     "q2": 0.7848055901654504
+    },
+    "Pt": {
+     "rmse": 0.18749126561322377,
+     "q2": 0.6883307788576154
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.03401604166666667,
+    "found": 39,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.13069000000000008,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.005630000000000024,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  },
+  "the same and the three core fields of NT6": {
+   "rmse": 0.07900562472551231,
+   "rmse_sd": 0.0038770339077651888,
+   "q2": 0.9288356858520628,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.05620051567417701,
+     "q2": 0.9288474813837613
+    },
+    "Pt": {
+     "rmse": 0.09606992266347583,
+     "q2": 0.9177850914740666
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.04136979166666666,
+    "found": 35,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.021589999999999998,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.013900000000000023,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.0,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.050329999999999986,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.05524999999999991,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.0817699999999999,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.08731,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.24140000000000006,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.062249999999999917,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.20815000000000006,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.036880000000000024,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.12695999999999996,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07913000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.0,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.0,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.046009999999999884,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.015819999999999945,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  },
+  "linear regression on the generalized coordination number, for each metal": {
+   "rmse": 0.15233165596171855,
+   "rmse_sd": 0.0023518148229449954,
+   "q2": 0.7360112086090135,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.0891553503315462,
+     "q2": 0.8211199900094313
+    },
+    "Pt": {
+     "rmse": 0.19522955174269996,
+     "q2": 0.6622753460505182
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.04076541666666667,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.15204000000000018,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.23424999999999996,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07861000000000007,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.09319,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.015819999999999945,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  },
+  "linear regression on the coordination number, for each metal": {
+   "rmse": 0.13254085102488472,
+   "rmse_sd": 0.0019177484597275463,
+   "q2": 0.8001555559238808,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.07517320313937001,
+     "q2": 0.8728476253671559
+    },
+    "Pt": {
+     "rmse": 0.17091648791767192,
+     "q2": 0.7411555140288953
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.03834041666666668,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.06677,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.007080000000000197,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.011560000000000015,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.1442199999999999,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.14724000000000004,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.042770000000000086,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07913000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0315700000000001,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  },
+  "linear regression on the atoms in four distance shells, for each metal": {
+   "rmse": 0.12220317662475728,
+   "rmse_sd": 0.001878434169681691,
+   "q2": 0.8301094389160564,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.08659686974281486,
+     "q2": 0.8310796880058227
+    },
+    "Pt": {
+     "rmse": 0.14898471193082488,
+     "q2": 0.803365729946124
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.05575291666666667,
+    "found": 31,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.12936999999999999,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.06677,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.014610000000000012,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.011560000000000015,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.21404999999999996,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.10434999999999994,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.15549000000000013,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.13030999999999993,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.12695999999999996,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07861000000000007,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.16593999999999998,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0315700000000001,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  },
+  "Gaussian kernel on the shell counts and both coordination numbers, for each metal": {
+   "rmse": 0.0929543671425376,
+   "rmse_sd": 0.0033038755682742293,
+   "q2": 0.9016012563654379,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.0517706999176417,
+     "q2": 0.9396516820272927
+    },
+    "Pt": {
+     "rmse": 0.12027611950698416,
+     "q2": 0.8716816598134326
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.03975854166666667,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.050329999999999986,
+     "sites": 88
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.05567999999999995,
+     "sites": 25
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.08731,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.15900000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.15549000000000013,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.062249999999999917,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.20815000000000006,
+     "sites": 53
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.036880000000000024,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.04510999999999998,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.0,
+     "sites": 18
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.16593999999999998,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0315700000000001,
+     "sites": 85
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    }
+   ]
+  }
+ },
+ "shapes": {
+  "site profile, steric, electronegativity and one indicator per metal": {
+   "rmse": 0.1471042514280565,
+   "rmse_sd": 0.0,
+   "q2": 0.753877053511306,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.09946058389055373,
+     "q2": 0.7774586897439216
+    },
+    "Pt": {
+     "rmse": 0.18199822434353807,
+     "q2": 0.7065971306649808
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.036547291666666676,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.13069000000000008,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.08221,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.08579000000000003,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    }
+   ]
+  },
+  "the same and the three core fields of NT6": {
+   "rmse": 0.0836245778475406,
+   "rmse_sd": 0.0,
+   "q2": 0.9204629400056894,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.057854313101417434,
+     "q2": 0.9247025766555951
+    },
+    "Pt": {
+     "rmse": 0.10274832538714969,
+     "q2": 0.906485370010643
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.026251666666666673,
+    "found": 36,
+    "worst": 0.18408000000000002
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.042770000000000086,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.08731,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.06677,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.05524999999999991,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.12695999999999996,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.062249999999999917,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.013900000000000023,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.01882000000000006,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.15900000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.18408000000000002,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.0,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.0817699999999999,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.08660000000000001,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.016530000000000045,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.050329999999999986,
+     "sites": 88
+    }
+   ]
+  },
+  "linear regression on the generalized coordination number, for each metal": {
+   "rmse": 0.1594567312560826,
+   "rmse_sd": 0.0,
+   "q2": 0.710807269899576,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.09141096516509939,
+     "q2": 0.8120227807682152
+    },
+    "Pt": {
+     "rmse": 0.2052168172735399,
+     "q2": 0.6269595290973989
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.04076541666666667,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07861000000000007,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.15204000000000018,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.015819999999999945,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.23424999999999996,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.09319,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    }
+   ]
+  },
+  "linear regression on the coordination number, for each metal": {
+   "rmse": 0.1386373132049861,
+   "rmse_sd": 0.0,
+   "q2": 0.7813940777544471,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.07807215983510754,
+     "q2": 0.8628799319783264
+    },
+    "Pt": {
+     "rmse": 0.1790275816106183,
+     "q2": 0.716097023918959
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.03834041666666668,
+    "found": 37,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.042770000000000086,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.06677,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07913000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.007080000000000197,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0315700000000001,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.14724000000000004,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.011560000000000015,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.1442199999999999,
+     "sites": 88
+    }
+   ]
+  },
+  "linear regression on the atoms in four distance shells, for each metal": {
+   "rmse": 0.13205166544508248,
+   "rmse_sd": 0.0,
+   "q2": 0.8016695383435075,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.091920718836166,
+     "q2": 0.809920423495503
+    },
+    "Pt": {
+     "rmse": 0.16193889982050824,
+     "q2": 0.7677089784281236
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.0481575,
+    "found": 33,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.06475000000000009,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.12936999999999999,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.06677,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.15549000000000013,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.014990000000000059,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.13030999999999993,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.12695999999999996,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.07861000000000007,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.16593999999999998,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.0,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.08591000000000015,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.10265000000000002,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.0,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.12732,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.011560000000000015,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.32131,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.0,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.01814999999999989,
+     "sites": 88
+    }
+   ]
+  },
+  "Gaussian kernel on the shell counts and both coordination numbers, for each metal": {
+   "rmse": 0.11286705554256775,
+   "rmse_sd": 0.0,
+   "q2": 0.8551107889168881,
+   "by_metal": {
+    "Au": {
+     "rmse": 0.07000359082166488,
+     "q2": 0.8897574457317113
+    },
+    "Pt": {
+     "rmse": 0.14283409476745684,
+     "q2": 0.819285155449098
+    }
+   },
+   "ranking": {
+    "particles": 48,
+    "mean_excess": 0.04392520833333333,
+    "found": 34,
+    "worst": 0.36495
+   },
+   "ranks": [
+    {
+     "particle": "Au_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_cubo55_r3",
+     "excess": 0.036880000000000024,
+     "sites": 39
+    },
+    {
+     "particle": "Au_cubo55_r8",
+     "excess": 0.08731,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_cubo55_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_cubo55_r3",
+     "excess": 0.0857199999999998,
+     "sites": 38
+    },
+    {
+     "particle": "Pt_cubo55_r8",
+     "excess": 0.12745000000000006,
+     "sites": 37
+    },
+    {
+     "particle": "Au_deca147_r0",
+     "excess": 0.0,
+     "sites": 8
+    },
+    {
+     "particle": "Au_deca147_r3",
+     "excess": 0.029890000000000083,
+     "sites": 89
+    },
+    {
+     "particle": "Au_deca147_r8",
+     "excess": 0.05524999999999991,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_deca147_r0",
+     "excess": 0.15549000000000013,
+     "sites": 8
+    },
+    {
+     "particle": "Pt_deca147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Pt_deca147_r8",
+     "excess": 0.06347000000000014,
+     "sites": 84
+    },
+    {
+     "particle": "Au_deca55_r0",
+     "excess": 0.0,
+     "sites": 6
+    },
+    {
+     "particle": "Au_deca55_r3",
+     "excess": 0.0,
+     "sites": 39
+    },
+    {
+     "particle": "Au_deca55_r8",
+     "excess": 0.0,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_deca55_r0",
+     "excess": 0.16593999999999998,
+     "sites": 6
+    },
+    {
+     "particle": "Pt_deca55_r3",
+     "excess": 0.062249999999999917,
+     "sites": 35
+    },
+    {
+     "particle": "Pt_deca55_r8",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Au_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_ico147_r3",
+     "excess": 0.0,
+     "sites": 89
+    },
+    {
+     "particle": "Au_ico147_r8",
+     "excess": 0.0,
+     "sites": 84
+    },
+    {
+     "particle": "Pt_ico147_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_ico147_r3",
+     "excess": 0.0,
+     "sites": 90
+    },
+    {
+     "particle": "Pt_ico147_r8",
+     "excess": 0.01882000000000006,
+     "sites": 85
+    },
+    {
+     "particle": "Au_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_ico55_r3",
+     "excess": 0.01315999999999995,
+     "sites": 35
+    },
+    {
+     "particle": "Au_ico55_r8",
+     "excess": 0.15900000000000003,
+     "sites": 34
+    },
+    {
+     "particle": "Pt_ico55_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_ico55_r3",
+     "excess": 0.0,
+     "sites": 36
+    },
+    {
+     "particle": "Pt_ico55_r8",
+     "excess": 0.36495,
+     "sites": 34
+    },
+    {
+     "particle": "Au_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Au_octa4_r3",
+     "excess": 0.05740000000000001,
+     "sites": 18
+    },
+    {
+     "particle": "Au_octa4_r8",
+     "excess": 0.24824999999999997,
+     "sites": 25
+    },
+    {
+     "particle": "Pt_octa4_r0",
+     "excess": 0.0,
+     "sites": 2
+    },
+    {
+     "particle": "Pt_octa4_r3",
+     "excess": 0.020009999999999972,
+     "sites": 27
+    },
+    {
+     "particle": "Pt_octa4_r8",
+     "excess": 0.0,
+     "sites": 24
+    },
+    {
+     "particle": "Au_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Au_octa5_r3",
+     "excess": 0.0,
+     "sites": 47
+    },
+    {
+     "particle": "Au_octa5_r8",
+     "excess": 0.0,
+     "sites": 52
+    },
+    {
+     "particle": "Pt_octa5_r0",
+     "excess": 0.0,
+     "sites": 3
+    },
+    {
+     "particle": "Pt_octa5_r3",
+     "excess": 0.027710000000000012,
+     "sites": 56
+    },
+    {
+     "particle": "Pt_octa5_r8",
+     "excess": 0.20815000000000006,
+     "sites": 53
+    },
+    {
+     "particle": "Au_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Au_octa6_r3",
+     "excess": 0.008920000000000039,
+     "sites": 93
+    },
+    {
+     "particle": "Au_octa6_r8",
+     "excess": 0.0,
+     "sites": 88
+    },
+    {
+     "particle": "Pt_octa6_r0",
+     "excess": 0.0,
+     "sites": 4
+    },
+    {
+     "particle": "Pt_octa6_r3",
+     "excess": 0.0,
+     "sites": 93
+    },
+    {
+     "particle": "Pt_octa6_r8",
+     "excess": 0.11238999999999999,
+     "sites": 88
+    }
+   ]
+  }
+ },
+ "chosen": {
+  "site_profile_lambda": {
+   "plain": {
+    "1e-06": 1,
+    "1e-05": 1,
+    "0.0001": 1,
+    "0.01": 28,
+    "0.1": 2
+   },
+   "core": {
+    "1e-07": 4,
+    "1e-06": 8,
+    "1e-05": 2,
+    "0.0001": 3,
+    "0.001": 5,
+    "0.01": 10,
+    "0.1": 1
+   }
+  },
+  "site_profile_grid": [
+   1e-08,
+   1e-07,
+   1e-06,
+   1e-05,
+   0.0001,
+   0.001,
+   0.01,
+   0.1
+  ],
+  "count_kernel": {
+   "0.0003/1e-09": 4,
+   "0.001/1e-09": 1,
+   "0.003/1e-09": 5,
+   "0.003/1e-05": 1,
+   "0.01/1e-09": 1,
+   "0.01/1e-08": 5,
+   "0.03/0.001": 1,
+   "0.03/0.01": 2,
+   "0.1/1e-06": 1,
+   "0.1/1e-05": 1,
+   "0.3/0.0001": 2,
+   "0.3/0.1": 1,
+   "1/0.01": 2,
+   "1/0.1": 2,
+   "3/0.01": 2,
+   "10/0.1": 2
+  },
+  "count_kernel_grid": {
+   "gamma": [
+    0.0003,
+    0.001,
+    0.003,
+    0.01,
+    0.03,
+    0.1,
+    0.3,
+    1.0,
+    3.0,
+    10.0,
+    30.0
+   ],
+   "lambda": [
+    1e-09,
+    1e-08,
+    1e-07,
+    1e-06,
+    1e-05,
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1.0
+   ]
+  }
+ }
+}

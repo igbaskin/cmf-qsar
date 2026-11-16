@@ -1261,6 +1261,77 @@ target computed with EMT, whose energy is a sum over atoms of a function of thei
 place where they do beat the counts is a particle larger than any in the training set. The
 tables are in `benchmarks/results/core_fields/table.md`.
 
+**Sites of a particle.** Catalytic activity and binding belong to sites, not to the whole
+particle. The site profile of the section *A site of the cell as the sample* works on a particle
+as it is: a particle repeats in no direction, so its profile has no background term, and its
+neighbours come from the k-d tree route of item NT2. Plan item NT7 adds what was missing to use
+it: a table of per-site values on the command line, and folds that hold out whole particles.
+
+    cmf build-crystals particles.extxyz --site-file sites.csv --fields steric,prop:coordination,prop:generalized_coordination,prop:exposure --cutoff 6 --sigma 0.5 --save sites.cmf
+    cmf sites sites.cmf new_particles.extxyz
+
+The site table is a CSV file with a header row and the columns structure, site and value, the
+site being the index of the atom counted from 0; `--target-column` picks another value column.
+One sample is one measured site. The ridge parameter is chosen on folds that hold out whole
+structures (`sites.fit_site_model`): the grid search of a whole-structure model draws its folds
+over the samples, which for sites would test a particle on its own other sites. `cmf sites` then
+predicts every site of a new particle. On the way, the check that runs before a prediction
+(`contract.check_crystals`) was found to refuse every structure without a full unit cell, so no
+model could predict a particle or a nanotube as ASE builds it. It now refuses only a structure
+that repeats in a direction with no lattice vector, and it warns when a structure repeats in a
+different number of directions from every training structure, such as a particle given to a
+model of crystals.
+
+The data set is in `examples/particle_sites`: the binding energy of an OH group atop every
+surface site of 48 Pt and Au particles of 38 to 147 atoms (eight shapes, each perfect and with 3
+or 8 surface atoms removed), computed with the UMA machine-learned potential with the metal
+held fixed. The energy is relative to OH atop the (111) terrace of the same metal, negative
+where a site binds more strongly. Of 2,090 distinct sites, 1,851 bind the OH atop; at the other
+239, nearly all atoms of 10 or 11 neighbours beside a removed atom, the OH cannot sit atop, and
+they are left out. The binding weakens as the generalized coordination number grows, as
+Calle-Vallejo and co-workers found for OH on Pt: by 0.22 eV per unit on Pt (correlation 0.84)
+and 0.15 eV on Au (0.91).
+
+`benchmarks/run_particle_sites.py` compares the site profile (cutoff 6 Å) with references on the
+same folds; q2 is the cross-validated share of the variance explained:
+
+| Model | q2, particles held out | q2, each shape held out | Strongest site of a particle found |
+|---|---:|---:|---:|
+| Site profile: steric, electronegativity, one indicator per metal | 0.744 | 0.754 | 39 of 48 |
+| The same and the three core fields of item NT6 | **0.929** | **0.920** | 35 of 48 |
+| Linear regression on the generalized coordination number, for each metal | 0.736 | 0.711 | 37 of 48 |
+| Linear regression on the coordination number, for each metal | 0.800 | 0.781 | 37 of 48 |
+| Linear regression on the atoms in four distance shells, for each metal | 0.830 | 0.802 | 31 of 48 |
+| Gaussian kernel on those counts and both coordination numbers, for each metal | 0.902 | 0.855 | 37 of 48 |
+
+The particle folds are repeated with five seeds; the RMSE of the best model is 0.079 eV (spread
+over the seeds 0.004) against 0.093 eV (0.002) for the Gaussian kernel on the counts. The inner
+folds that choose the settings hold out what the outer folds hold out. With shapes held out
+outside and particles inside, the same shape in the other metal led the choice to too little
+regularisation, and the core-field model scored 0.843 instead of 0.920.
+
+Three things follow. **The site profile is the best model of the binding**, by 0.03 in q2 over a
+Gaussian kernel on neighbour counts with particles held out and by 0.07 with a whole shape held
+out, but only with the fields of where an atom sits: without them it is no better than the
+coordination number. **A better model does not pick a better site.** The site each model ranks
+strongest on an unseen particle is within 0.05 eV of the strongest computed one in 31 to 39 of
+the 48 particles, and the plain site profile, the weakest model, picks best. The strongest sites
+are the few least coordinated atoms, which every model ranks first. **The generalized
+coordination number alone is the weakest description here.** It does not tell a site beside a
+vacancy from a corner, and the coordination number itself does better.
+
+The fourth part of the item, the site-by-site reading of a whole-particle model, does not name
+the sites that bind. A model of the mean binding over the surface of each particle (periodic
+autocorrelation with the core fields, q2 0.921 over the 48 particles) splits exactly into one
+number per atom (the sum agrees with the prediction to 1.5e-12), but the numbers follow how many
+neighbours an atom has: rank correlation with the coordination number −0.72 at the median,
+and with the binding −0.76, the binding itself following the coordination number at +0.96. The
+surface atoms carry 72 % of the numbers, about their 75 % share of the atoms. The equation of
+the site split says why: a site's number is its own profile times the weights, and a well
+surrounded atom has the larger profile, whatever it binds. The split says where the model's
+channels come from, not which site carries a property that is an average over sites. For that
+question, fit the sites. The tables are in `benchmarks/results/particle_sites/table.md`.
+
 **Nanotubes.** A nanotube is periodic along its axis only: give it as a chain (`--pbc c`, or
 *Periodic in: a chain*). As ASE builds it, a tube has no lattice vector across its axis, which
 the program takes as it is. Plan item NT4 measured the chain kernel on 147 carbon nanotubes
