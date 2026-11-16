@@ -1,6 +1,6 @@
 {
- "commit": "a9975f1dc59e1108902fdae7238ab7e1a63ba39e",
- "created": "2026-11-16T06:46:06",
+ "commit": "10d44bde4e1b861620ed6159e65d86229b48cf85",
+ "created": "2026-11-16T06:53:49",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2591,7 +2591,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
