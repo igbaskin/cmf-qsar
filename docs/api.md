@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 134 modules, 261 classes with 844 public methods, and 1399 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 135 modules, 264 classes with 851 public methods, and 1408 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -50,6 +50,7 @@ for.
 | [cmfqsar.cellmodel](#cmfqsarcellmodel) | Running a cell model once per drawn parameter set, and saying which deviation matters (plan item MS9). |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
 | [cmfqsar.cli](#cmfqsarcli) | Command-line interface for building CMF 3D-QSAR models (no GUI needed). |
+| [cmfqsar.cme](#cmfqsarcme) | The expected field of a molecule with a given activity: the conditional mean embedding. |
 | [cmfqsar.coalign](#cmfqsarcoalign) | Co-alignment of a training set, treated as what it is: expectation-maximisation over poses. |
 | [cmfqsar.cofields](#cmfqsarcofields) | Molecular co-fields (fields of regression coefficients), molecular fields and their overlap evaluated on a rectangular grid for visualisation (isosurfaces) and export. |
 | [cmfqsar.complementarity](#cmfqsarcomplementarity) | Compatibility of molecular fields and co-fields with the fields of a protein pocket. |
@@ -2153,6 +2154,10 @@ Are two sets of molecules drawn from the same population?  A kernel two-sample t
 
 Does the activity depend on the fields, and beyond a reference? (conditional HSIC test)
 
+### `cmd_expected(args)`
+
+The expected field of a molecule with a given activity (conditional mean embedding).
+
 ### `cmd_pick(args)`
 
 A few molecules that stand for a library: kernel herding and its references.
@@ -2170,6 +2175,162 @@ What the field sees that another view does not: item F6 of the plan.
 Chemical space map and activity landscape (kernel PCA + GTM) from the CMF kernels.
 
 ### `main(argv=None)`
+
+## cmfqsar.cme
+
+Source: `cmfqsar/cme.py`
+
+The expected field of a molecule with a given activity: the conditional mean embedding.
+
+A CMF field is the kernel mean embedding of a molecule's weighted atoms (manual: "CMF and kernel
+mean embeddings"), so a set of molecules has a mean field, and a set of molecules *with a given
+activity* has one too. The conditional mean embedding (Song et al., ICML 2009) estimates it from
+the training set as a weighted sum of training fields:
+
+    mu(y*) = sum_i beta_i(y*) x_i,      beta(y*) = (L + n lam I)^(-1) l(y*)
+
+where L is a kernel on the activities of the n training molecules and l(y*) its column at the
+activity asked for. The weights depend on the activities only; the fields enter as the basis.
+So the expected field at an activity is a map on the same grid and in the same basis as the
+co-field, and it can be drawn, compared and exported in the same way.
+
+**Two kernels on the activity.**
+
+* `linear`: L = 1 + u u^T on the standardised activity u. Then the expected field is the mean
+  field plus a slope times (u* - mean u), the straight-line regression of the field at every
+  point on the activity. The slope `sum_i u_i x_i / n` is the field weighted by the centred
+  activity: the covariance of the field with the activity. Its squared norm is the HSIC
+  statistic of `cmfqsar.hsic`. In the terms of Haufe et al. (NeuroImage 87, 96-110, 2014)
+  it is a forward model, or *pattern*: the field written as a function of the activity. The
+  co-field is a backward model, or *filter*: the weights that turn a field into an activity.
+  They showed that a filter is not a map of where the signal lies, and a pattern is.
+* `gauss`: L_ij = exp(-gamma (u_i - u_j)^2). The expected field at u* is then a smoothed
+  average of the fields of molecules with activities near u*; it can describe an optimum
+  (the field at the best activity lies between those of weaker ones), which a straight line
+  cannot.
+
+**Choosing gamma and lam.** The conditional mean embedding is a regression whose output lives in
+the field space, so it has a loss there (Grunewalder et al., ICML 2012): the squared distance in
+the field space between a left-out molecule's field and the expected field at its activity,
+
+    || x_j - mu(y_j) ||^2 = K_jj - 2 beta(y_j)^T K_{.j} + beta(y_j)^T K beta(y_j),
+
+computed from the field kernel K alone. It is cross-validated over the molecules and minimised
+over a grid. Divided by the same loss of the plain mean field, it gives the out-of-fold share of
+the field variance that the activity explains -- the inverse question to q2.
+
+What this module does not claim: the expected field is an average of the training fields, not
+the field of a molecule. Where the asked activity lies outside the training range the Gaussian
+weights fade, and the expected field falls back to the mean field; `ExpectedField`
+reports how much of it is the mean field, so that this is visible. The straight line instead
+extrapolates, as far as it is asked to.
+
+### `class Standardiser  (dataclass)`
+
+u = (y - mean) / sd, fitted on the training activities.
+
+Attributes:
+
+- `mean: float`
+- `sd: float`
+
+#### `Standardiser.fit(y) -> 'Standardiser'`  (class method)
+
+### `class CMEFit  (dataclass)`
+
+The conditional mean embedding chosen by its cross-validated loss in the field space.
+
+Attributes:
+
+- `kernel_y: str`
+- `gamma: float`
+- `lam: float`
+- `y: np.ndarray`
+- `standardiser: Standardiser`
+- `loss: float`
+- `loss_mean: float`
+- `table: Dict[Tuple[float, float], float]` = `field(default_factory=dict)`
+- `at_edge: List[str]` = `field(default_factory=list)`
+
+#### `CMEFit.explained` -> float  (property)
+
+The out-of-fold share of the field variance that the activity explains.
+
+#### `CMEFit.weights(y_query, centre: bool=True) -> np.ndarray`
+
+(n_train, n_query) weights of the training fields at the activities asked for.
+
+#### `CMEFit.describe() -> str`
+
+### `class ExpectedField  (dataclass)`
+
+The weights of the expected field at one activity, and what they say about it.
+
+Attributes:
+
+- `activity: float`
+- `weights: np.ndarray`
+- `from_mean: float` = `0.0`
+
+#### `ExpectedField.effective_size` -> float  (property)
+
+How many molecules the expected field is an average of, (sum |b|)^2 / sum b^2.
+
+#### `ExpectedField.leading(names: Sequence[str], k: int=5) -> List[Tuple[str, float]]`
+
+The `k` training molecules with the largest weights.
+
+#### `ExpectedField.on(X: np.ndarray) -> np.ndarray`
+
+The expected field on points, from the (n_train, n_points) training fields.
+
+### `activity_kernel(u_a, u_b, kernel_y: str='gauss', gamma: float=1.0) -> np.ndarray`
+
+The kernel between standardised activities: rows `u_a`, columns `u_b`.
+
+### `centre_weights(beta: np.ndarray) -> np.ndarray`
+
+Give the weight a column lacks to the mean field: beta + (1 - sum beta) / n.
+
+The plain estimator shrinks the expected field towards zero -- a large ridge, or an activity
+far from every training activity, gives weights that sum to less than one. Estimating the
+expected *departure from the mean field* instead, `mean + sum_i beta_i (x_i - mean)`, is
+the same as this shift of the weights, and it makes the shrinkage go to the mean field.
+
+### `cme_weights(u_train, u_query, kernel_y: str='gauss', gamma: float=1.0, lam: float=0.01, centre: bool=True) -> np.ndarray`
+
+(n_train, n_query): beta(u*) = (L + n lam I)^(-1) l(u*) for every activity asked for.
+
+With `centre` (the default) the weights are shifted by `centre_weights`, so that they
+sum to one and the expected field falls back to the mean field where the data say nothing.
+With the linear kernel the centred weights are `1/n + u_i u* / (n (1 + lam))`: the mean
+field plus the straight-line slope of the field on the activity.
+
+### `field_loss(K: np.ndarray, test: np.ndarray, train: np.ndarray, beta: np.ndarray) -> np.ndarray`
+
+|| x_j - sum_i beta_ij x_i ||^2 for every molecule j of `test`, from the field kernel.
+
+`beta` is (len(train), len(test)): one column of weights per test molecule.
+
+### `fit_cme(K: np.ndarray, y, kernel_y: str='gauss', gammas: Sequence[float]=GAMMAS, lams: Sequence[float]=LAMS, folds: int=5, seeds: Sequence[int]=(0, 1, 2)) -> CMEFit`
+
+Choose gamma (for `gauss`) and lam by the out-of-fold loss in the field space.
+
+The activities are standardised inside every training part, so the left-out molecules do
+not set the scale of their own weights.
+
+### `expected_fields(fit: CMEFit, activities: Sequence[float]) -> List[ExpectedField]`
+
+### `pattern(y, X: np.ndarray) -> np.ndarray`
+
+The covariance of the field with the standardised activity at every point.
+
+`sum_i u_i x_i(r) / n`: the slope of the linear conditional mean embedding, a forward
+model in the sense of Haufe et al. (2014). It needs no ridge and no choice of width.
+
+### `distance_to(beta: np.ndarray, K_train: np.ndarray, K_test_train: np.ndarray, k_test_self: np.ndarray) -> np.ndarray`
+
+|| x - mu ||^2 in the field space for every test molecule, mu = sum_i beta_i x_i.
 
 ## cmfqsar.coalign
 
