@@ -1,6 +1,6 @@
 {
- "commit": "e7abe032e1ef0d644f4a5ae3d0b338dd7d7e5c53",
- "created": "2026-11-16T12:51:21",
+ "commit": "c4333e32c344c53ba89f46a9d3a32ff772fcc840",
+ "created": "2026-11-16T13:22:26",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -71,16 +71,16 @@
    "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
   },
   "examples/charge_transfer/README.md": {
-   "bytes": 11996,
-   "sha256": "11c8573b984313966583de1db76213b9beae234a36a3a007caef0ea6735a1ca0"
+   "bytes": 13369,
+   "sha256": "bbc8361466bb6bda3b2085faa069c0d9d771b7acd8ee2ac4a96c620ac34773bf"
   },
   "examples/charge_transfer/activation_energies.csv": {
-   "bytes": 59459,
-   "sha256": "c7964e9498074fc3e4c879c8a3c5e575f68b2b2985ed84ef237cb30b0f47f350"
+   "bytes": 75177,
+   "sha256": "27e3382d4a01f8e67890bb2eb733bdd14b9c45a56f922bf32d29e75f073f010d"
   },
   "examples/charge_transfer/sources.csv": {
-   "bytes": 15506,
-   "sha256": "7f410483c9938beecb9a765b99043ce26db3c7bf2c1979e9d232ccebcbc83d2d"
+   "bytes": 18188,
+   "sha256": "1e4dbc30e96d2da5911fe41dfb4e5b1f3c2484412755aa642d24f245727ce366"
   },
   "examples/complexes_fe/fe_redox.sdf": {
    "bytes": 7991354,
@@ -2822,10 +2822,10 @@
   "benchmarks/results/cellmodel_fields/sample_positive_electrode_ocp_v.json": "c06ffa355e06ac0b9bbae4788eeb0ae2400d78264695ec656912464cc6cee452",
   "benchmarks/results/cellmodel_fields/sample_positive_particle_diffusivity_m2_s-1.json": "cf333cc57ed97b305c2f49f0ff2a63b22b828ec47045877092206f3bf9159f5f",
   "benchmarks/results/cellmodel_fields/table.md": "72867ebd17af459e84efe220a4ab3c41cb080b846f7e600d77b0e7aff55c8c59",
-  "benchmarks/results/charge_transfer/binding.json": "2988bbc325b083fbe5f182581451b94be4855cf5373f0d03b10a05bf6af05d8c",
-  "benchmarks/results/charge_transfer/regression.json": "e3cd6da4abd17e1b4627a02793077a4b8fde312b0d6e376e971918e23c783c2c",
-  "benchmarks/results/charge_transfer/summary.json": "245ef459da1b64aaa6a69fa4bb84a9de6e5b62882e2c62307129003a44665e9f",
-  "benchmarks/results/charge_transfer/table.md": "5e99bd601ada569f0fdc18a53ab41551512b9ce4a9cc25504240e549ef5703d4",
+  "benchmarks/results/charge_transfer/binding.json": "a2126dc0f767373ba99a534f0ae2016ba0cc19532a66304eb3739d3023a03150",
+  "benchmarks/results/charge_transfer/regression.json": "2785772977ecc11827cd0a65891be0054ffdd293b5164c251bb89b2ff3d194e8",
+  "benchmarks/results/charge_transfer/summary.json": "7da0cdfdd865d8afb92051d6cb6ecbdc5ae37197fde8618ec9fbfb1031ae7a4f",
+  "benchmarks/results/charge_transfer/table.md": "2b456c51f45e02c73ef978cbdc3f1698adc1d42102b7574bfee9be79df1b6d71",
   "benchmarks/results/chirality/AChE.json": "10e7a623ec9b3b197d05ea0304d18c92770a79a43643abd19a9ee785fdc29d93",
   "benchmarks/results/chirality/BZR.json": "0438391fa0e690de37e9afd66b03a5d4b857b24aba79be3917e9b6be23e88730",
   "benchmarks/results/chirality/COX2.json": "f1c60ac48e3c153829fdd7e77e2ebdfcba9448a1f697de86140feb04db2e4d4d",
@@ -3472,8 +3472,9 @@
   "benchmarks/results/microstructure/gate_3d21_n400_c10.json": "130df8683b687f91764b673e6019abafdb1f61114de491f4fbccb1615409ac46",
   "benchmarks/results/microstructure/map_2d51_n400_c100.json": "efadd84ced36ebbdc19fecab7b1304a2c2361a29c27aec0f921019e39e7df02e",
   "benchmarks/results/microstructure/map_2d51_n400_c100.png": "ca45a4cc871fc883e80717294b5d2de549ec60ea07051a6d5ada8c74425b1c1b",
-  "benchmarks/results/microstructure/notes.md": "e5e05f667528cd487778cfbb41917f64ce929268b7a87764ed6291b0d4cd63b4",
-  "benchmarks/results/microstructure/table.md": "cc8c66ed4b8999a1dc6adb5c204a94d532eda18555c4f1ad8bbd33f154530f11",
+  "benchmarks/results/microstructure/notes.md": "61e9620ad0f5bbfd7e8a093e5b8ef0ac37d91629e3ee91879d72065f8c217875",
+  "benchmarks/results/microstructure/shape.json": "46fe58c63143db24780102bd755eeb6256be9312c4adafd7c72d627ade1f1489",
+  "benchmarks/results/microstructure/table.md": "ea1e02917cdcf971d08c9427bd2a3e831790bdcadbc7d861a8a81c9d3b0c4203",
   "benchmarks/results/microstructure/twoscale_2d51_n400_c10.json": "cfd52877caad3e24cc1cbe13a4af5a5c2e356a26f8884fe7c38ef4582a02eea5",
   "benchmarks/results/microstructure/uhcs.json": "c20899e972cbe056c114c6299a99bba37e2a98bbc47f1c0542585a2de117b813",
   "benchmarks/results/mixing/ACE.json": "aa0af912fcb9eb98ebb5aa34802ede38f267b31f15c93ef40770b04e4662b53f",

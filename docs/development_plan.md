@@ -6321,6 +6321,46 @@ concentration was driven, and the stage counts only discharges that ended at the
   two mixtures of a series hold the same two solvents, so holding one solvent out removes
   both and the series gives no held-out value. The room for a field model, 3.0 and 1.5
   kJ/mol, is below the repeatability of 4.6 kJ/mol.
+  *An eighth reading, 16 November 2026.* Nine more papers were supplied as files and read:
+  Nasara 2020, Ishihara 2014 (J. Electrochem. Soc.), Yamada 2010, Sagane 2012, Xu 2007
+  (J. Electrochem. Soc.), Mehrotra 2014, Son 2025, Doi 2022 and Busche 2016. Seven gave 33
+  rows. Xu 2007 gave none, because its values are only points of a figure and the plot of its
+  Figure 5 is missing in the file; Mehrotra 2014 gives no activation energy. The table holds
+  162 values from 34 studies, in 23 series with 74 values; the file of the Kyoto repository
+  is Yamada 2010 and is read. Nasara 2020 measured lithium titanate in EC:DEC, FEC:DMC and
+  PC: 56, 36 and 66 kJ/mol without a film and 67, 44 and 67 with a film formed at 0.5 V.
+  The film raises EC:DEC by 11 and FEC:DMC by 8 kJ/mol and does not change PC. Yamada 2010
+  measured SiO in four solvents and found 29 to 32 kJ/mol whatever the solvent, where the
+  regression predicts 23 kJ/mol between DMSO and DMC. Son 2025 (graphite, EC:EMC, LiPF6 from
+  0.12 to 4.8 mol/L: 58.9, 53.6, 45.1, 44.2) and Doi 2022 (a solid electrolyte, LiBF4 in PC:
+  70.4 to 34) show that the concentration of the salt matters as much as the solvent. Such
+  concentration series would have changed the reference system, so the reference and the
+  electrode means now take the salt concentrations 0.8 to 1.5 mol/L (or none given in mol/L);
+  this rule was added to the benchmark. The reference system now has 7 studies (53.6 to
+  68.5 kJ/mol, mean 59.2, standard deviation 4.8), and the mean for graphite is 61.4 kJ/mol
+  over 21 values. The repeatability is 4.8 kJ/mol. The regression was run again. Without
+  the two solvents that wrap the ion the held-out error is 17.0 kJ/mol for the mean of the
+  series and 9.4 for the regression on 28 values of single solvents (gain +7.7 [+0.8,
+  +12.8]), and 11.7 and 6.9 on 72 values with mixtures (gain +4.8 [+3.1, +7.3]); with the
+  two it gains nothing (-0.2 [-5.9, +2.8] and -1.1 [-3.9, +1.2]). The slope moved from
+  0.487 to 0.430 and from 0.459 to 0.443. On the electrolytes held out in two or more series
+  the regression has 9.1 kJ/mol and a model of the solvent alone at least 8.0 (7.1 and 5.3
+  with mixtures). The room for a field model was 0.4 and 0.5 kJ/mol at the first run, 3.0 and
+  1.5 kJ/mol after the sixth reading, and is now 1.1 and 1.8 kJ/mol, which is below the
+  repeatability of 4.8 kJ/mol. The verdict does not change.
+  *The binding energy of one donor group, 16 November 2026.* The two solvents that wrap
+  the ion break the regression with their total binding energy (363 and 488 kJ/mol). They
+  were given the binding energy of one dimethyl ether instead (173.4 kJ/mol, ORCA, the
+  pipeline of the other solvents; THF 196.7, water 155.5). The regression on all 30
+  single-solvent values then gains +6.7 [-0.8, +12.9] kJ/mol (slope 0.41, error 16.2 to
+  9.5, 0.2 % of the random exchanges do as well), against -0.2 with the total. With the
+  mixtures the gain is +3.4 [+0.7, +7.5]. The total divided by the donors at the ion (121
+  and 98) gives -0.2 [-5.7, +3.2] and puts both solvents below water. The two solvents are
+  still above the prediction of one donor group, by 13 (diglyme, measured 34.7) and 15
+  kJ/mol (the polyether, 50.2), so the binding energy that fits them is about 206 and
+  210 kJ/mol. Only two measured values stand behind this. The failure for solvents that
+  wrap the ion is therefore a failure of the descriptor and not of the rule; both
+  variants are in the benchmark (`single_one_donor` and `mixtures_one_donor`).
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
@@ -6351,18 +6391,18 @@ capacity tolerates a factor of 10 on the exchange-current density under every co
 the item is not needed at room temperature. In a cold cell the activation energy has to be
 known to about 15 kJ/mol for each electrode, which is a far looser requirement than the 4 to
 10 % of BT9. BT12 therefore comes after BT9 and BT11. Its labels were collected on 13 and 14
-November: 129 measured values from 27 studies, all of them read in the paper that measured
+November: 162 measured values from 34 studies, all of them read in the paper that measured
 them. Part (a) of its gate is met, because the measured means, 62 kJ/mol for graphite and
 68 kJ/mol for layered oxides, are 27 and 50 kJ/mol above the constants of the cell set. For a
 carbonate electrolyte the mean is accurate enough and no model is needed. For a model across
-classes of solvent the table holds 20 series with 13 single solvents. That is enough to test
+classes of solvent the table holds 23 series with 13 single solvents. That is enough to test
 the regression on the binding energy, and not enough to separate a field model from it: the
 one pair of solvents that two laboratories measured on the same electrode material differs
 by 16 kJ/mol between them. The regression was run the same day, with binding energies from
 ORCA. For solvents that hold the ion with one atom it lowers the held-out error from 12 to
-19 kJ/mol to 6.5 to 10 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
-ion. A model of the solvent alone can gain 1.5 to 3 kJ/mol more, which is below the
-repeatability of 4.6 kJ/mol, so no field model is built and part (c) of the gate is closed.
+17 kJ/mol to 7 to 9 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
+ion. A model of the solvent alone can gain 1 to 2 kJ/mol more, which is below the
+repeatability of 4.8 kJ/mol, so no field model is built and part (c) of the gate is closed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -9347,12 +9387,12 @@ equally blocked.
   cold cells. BT12, the activation energy of charge transfer at an electrode, was opened the
   same day. Its first stage says that the item is not needed at room temperature, and that a
   cold cell needs the activation energy of each electrode to about 15 kJ/mol. The collection
-  of 129 measured values (13 to 16 November) says that the constants of the cell set are 27
+  of 162 measured values (13 to 16 November) says that the constants of the cell set are 27
   and 50 kJ/mol too low, and that the mean per electrode is accurate enough for a carbonate
   electrolyte. The 13 single solvents of the table are enough to test the regression on the
   binding energy and not enough to separate a field model from it. The regression was run:
-  it lowers the held-out error to 6.5 to 10 kJ/mol for solvents that hold the ion with one
-  atom, it fails for solvents that wrap the ion, and it leaves 1.5 to 3 kJ/mol for a model of
+  it lowers the held-out error to 7 to 9 kJ/mol for solvents that hold the ion with one
+  atom, it fails for solvents that wrap the ion, and it leaves 1 to 2 kJ/mol for a model of
   the solvent alone. Part (c) of the gate is closed without a field model.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published

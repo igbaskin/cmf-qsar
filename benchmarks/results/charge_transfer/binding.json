@@ -270,6 +270,24 @@
    "binding_xtb": 249.7130366415182,
    "spread_of_xtb_starts": 3.402635820129575,
    "in_a_series": true
+  },
+  {
+   "solvent": "dimethyl ether",
+   "smiles": "COC",
+   "wraps": false,
+   "atoms": 9,
+   "geometry": "ORCA",
+   "binding": 173.41761154829382,
+   "ways_of_binding": [
+    173.41761154829382
+   ],
+   "binding_at_xtb_geometry": 172.46751264291763,
+   "binding_of_the_same_start": 173.41761154829382,
+   "donors_at_ion": 1,
+   "nearest_donor": 1.8464094671954348,
+   "binding_xtb": 192.90792197785044,
+   "spread_of_xtb_starts": 0.0,
+   "in_a_series": false
   }
  ],
  "level_geometry": "B97-3c TightSCF",
@@ -278,13 +296,13 @@
  "starts": 5,
  "opt_limit": 20,
  "xtb_geometry_shift": {
-  "n": 12,
-  "mean": -1.9152075914224629,
-  "sd": 1.3169951617770748,
+  "n": 13,
+  "mean": -1.8409684617265962,
+  "sd": 1.2890249792173158,
   "largest": 5.755060511302759
  },
- "species": 32,
- "orca_seconds": 14303.880000000005,
+ "species": 34,
+ "orca_seconds": 14575.632000000005,
  "check": {
   "n": 11,
   "pairs": [

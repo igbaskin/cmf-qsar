@@ -452,6 +452,28 @@ principal components, and the components of a two-point statistic are not lags.
 That is the interpretation a materials scientist would ask for: which correlation lengths, and
 in which directions, the model credits, in the units of the property, on one figure.
 
+## 5. A reference that needs no field (added 16 November 2026)
+
+The cells are made from four numbers, and three of them can be measured on each 2D cell: the
+phase fraction and the correlation length of phase 1 along x and along y (the lag at which the
+normalised two-point statistic falls below 1/e; half the grid when it never does within half the
+grid). `--stage shape` fits a polynomial of degree 1 to 3 or a Gaussian kernel on these numbers,
+whichever the inner cross-validation prefers, on the draws of the gate, and pairs it with the
+stored methods (`shape.json`, and the last section of `table.md`).
+
+- In 2D the numbers match or beat the autocorrelation kernel on k_xx and C_xx at every size
+  (ahead in 11 to 20 of 20 draws, by up to 0.06 in q2) and beat the Gaussian process by up to
+  0.18. On the direction-free labels all methods are level from 50 samples on.
+- In 3D the kernel keeps a lead of 0.003 to 0.020 on k_xx; 177 of the 1,200 lengths reach the
+  half-grid limit of the 21-voxel cells, which weakens the reference there.
+- With the defect concentration added, the numbers equal the product kernel from 100 samples on;
+  with 20 or 50 samples the product kernel is ahead, by up to 0.10 on the mean label.
+
+So the conclusion of scope stands, and it is narrower: on cells made from four numbers, the
+kernel and the established statistic reach what a regression on those numbers, measured, also
+reaches. Where the kernel could add is a structure not made from a few numbers, and the one real
+set here, the UHCS micrographs, is the case where a trained network is far ahead.
+
 ## The tables
 
 What follows is `table.md` of this folder, as `run_microstructure.py --report` writes it: the gate first, then the other three tests, then the pilot.

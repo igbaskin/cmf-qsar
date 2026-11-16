@@ -11148,6 +11148,32 @@ statistic with the same accuracy as the current baseline, is steadier below 100 
 combines scales by a product, carries a continuous interpretation map, and shares the limit
 of that statistic on real micrographs, where a trained network sees more.
 
+**A reference that needs no field (added 16 November 2026).** The cells of this benchmark are made
+from four numbers: the phase fraction, the grain size, the elongation and the direction of the
+grains. `run_microstructure.py --stage shape` measures three of them on each 2D cell (four on a 3D
+cell): the phase fraction and the correlation length of phase 1 along each axis, the lag at which
+the normalised two-point statistic falls below 1/e. A polynomial of degree 1 to 3 or a Gaussian
+kernel on these numbers, chosen by the inner cross-validation (32 settings), runs on the draws of
+the gate. In 2D it matches or beats the autocorrelation kernel on the direction-dependent labels
+at every size: by +0.001 to +0.036 at contrast 10 and +0.005 to +0.041 at contrast 100 on k_xx,
+ahead in 11 to 20 of 20 draws, and by up to +0.061 on the elastic C_xx; it beats the Gaussian
+process on the principal components by up to +0.18. In 3D the kernel keeps a lead of 0.003 to
+0.020 on k_xx, in 16 to 18 of 20 draws; there 177 of the 1,200 lengths do not fall below 1/e
+within half the 21-voxel cell and are given that largest value, so the 3D reference is the weaker
+measurement. On the two-scale property, the numbers with the defect concentration added equal the
+product kernel from 100 cells on (differences 0.001 to 0.005); with 20 or 50 cells the product
+kernel is ahead, by up to 0.10 on the mean label. So on these synthetic cells the kernel does not
+beat what a materials scientist would measure: the earlier conclusion, that the kernel lands on
+the established statistic with the accuracy of the current baseline, stands, and the cheap
+reference reaches the same accuracy or better. A first version of the length measurement divided
+by almost zero for cells whose two-point statistic never fell below 1/e within half the grid; the
+stage now gives such a cell half the grid, and only that version is reported.
+
+The twenty-sixth tutorial, `docs/tutorials/26_a_microstructure.ipynb`, builds and solves the 2D
+cells live, runs the kernel, the phase fraction and the three numbers on the draws of the gate,
+and reads the 3D cells, the elastic label, the two-scale property and the map from the stored
+runs.
+
 ## Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above is a **two-point** one. It counts how much field weight sits
@@ -15767,20 +15793,21 @@ reaction was expected to raise it. This was not examined.
 #### The measured activation energies of charge transfer
 
 Plan item BT12 collects the measured activation energies from the literature
-(`examples/charge_transfer/`, 129 values from 27 studies) and
+(`examples/charge_transfer/`, 162 values from 34 studies) and
 `benchmarks/run_charge_transfer.py` reports what they say before any model is fitted. A value
 is *primary* when it was read in the paper that measured it and *secondary* when it was read
-in a paper that cites it. All 129 values are primary now. The file names the paper and the
+in a paper that cites it. All 162 values are primary now. The file names the paper and the
 place for every value.
 
-Six studies measured the same reference system: graphite with a formed surface film, in a
-carbonate electrolyte with ethylene carbonate and LiPF6 or LiClO4, with no additive. Their
-values are 56.0 to 68.5 kJ/mol, with a mean of 60.1 and a standard deviation of 4.6 kJ/mol. That spread is the
+Seven studies measured the same reference system: graphite with a formed surface film, in a
+carbonate electrolyte with ethylene carbonate and LiPF6 or LiClO4 at 0.8 to 1.5 mol/L, with
+no additive. Their values are 53.6 to 68.5 kJ/mol, with a mean of 59.2 and a standard
+deviation of 4.8 kJ/mol. That spread is the
 repeatability between laboratories, as an upper estimate.
 
 | Electrode, carbonate electrolyte, formed film | Values | Mean, kJ/mol | Standard deviation | Cell set, kJ/mol | Difference |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Negative: graphite | 20 | 61.8 | 6.5 | 35.0 | +26.8 |
+| Negative: graphite | 21 | 61.4 | 6.5 | 35.0 | +26.4 |
 | Positive: layered oxides | 12 | 68.0 | 13.0 | 17.8 | +50.2 |
 
 The constants of the published cell set are far below the measured values. With 60 kJ/mol on
@@ -15789,7 +15816,7 @@ conditions. The mean per electrode is accurate enough for a cold cell with a car
 electrolyte, because the cell needs about 15 kJ/mol.
 
 A *series* is a set of values of one study that share the electrode and the surface film and
-differ in the solvent. The table holds 20 series with 64 values and 13 single solvents. Inside
+differ in the solvent. The table holds 23 series with 74 values and 13 single solvents. Inside
 most series the solvent changes the value by far more than the repeatability. The four
 series on glassy carbon, two of Doi 2004 and two of Doi 2005, hold two electrolytes only, EC:DEC
 and propylene carbonate, whose solvents bind the ion almost equally. Three of them differ by 1 to 4
@@ -15800,9 +15827,11 @@ changes the value by 11 kJ/mol.
 | Series | Solvents | Lowest, kJ/mol | Highest, kJ/mol | Range |
 | --- | ---: | ---: | ---: | ---: |
 | Solid electrolyte, no film (Abe 2005) | 3 | 31.5 | 69.9 | 38.4 |
+| Lithium titanate thin film, no film (Nasara 2020) | 3 | 36.0 | 66.0 | 30.0 |
 | Graphite in concentrated electrolytes (Sawayama 2025) | 5 | 28.5 | 57.6 | 29.1 |
 | Lithium titanate thin film, no film (Ishihara 2014) | 3 | 37.0 | 64.0 | 27.0 |
 | LiMn2O4 thin film, in water and in PC (Nakayama 2007) | 2 (5 values) | 23.0 | 50.0 | 27.0 |
+| Lithium titanate thin film, film formed in each electrolyte (Nasara 2020) | 3 | 44.0 | 67.0 | 23.0 |
 | Carbon thin film, one film formed in EC:DEC (Fukutsuka 2010) | 3 | 60.2 | 82.3 | 22.1 |
 | Solid electrolyte, no film (Yamada, Sagane 2009) | 4 | 32.0 | 53.0 | 21.0 |
 | Graphite with LiPF6, film formed in each electrolyte (Uchida 2020) | 2 | 53.0 | 71.2 | 18.2 |
@@ -15814,12 +15843,13 @@ changes the value by 11 kJ/mol.
 | Graphite with LiFSA, film formed in each electrolyte (Uchida 2020) | 2 | 36.6 | 50.0 | 13.4 |
 | Carbon treated by hot isostatic pressing (Doi 2004, Carbon) | 2 | 55.8 | 61.5 | 5.7 |
 | Glassy carbon GC-20 after a heat treatment (Doi 2005) | 2 | 47.9 | 51.6 | 3.7 |
+| SiO, film formed in each electrolyte (Yamada 2010) | 4 | 29.0 | 32.0 | 3.0 |
 | Lithium metal, as assembled (Zabara 2024) | 3 | 67.6 | 69.5 | 1.9 |
 | Glassy carbon GC-10 (Doi 2005) | 2 | 47.5 | 49.0 | 1.5 |
 | Glassy carbon GC-20 as received (Doi 2004, Carbon) | 2 | 68.7 | 70.0 | 1.3 |
 
-The series do not all agree with each other. Nine pairs of solvents were measured in more
-than one series. Five series share one pair: dimethyl carbonate (DMC) against its 1:1 mixture
+The series do not all agree with each other. Thirteen pairs of solvents were measured in more
+than one series. Six series share one pair: dimethyl carbonate (DMC) against its 1:1 mixture
 with ethylene carbonate (EC).
 
 | Series | DMC minus EC:DMC 1:1, kJ/mol |
@@ -15829,6 +15859,7 @@ with ethylene carbonate (EC).
 | Graphite, one film formed with pentafluorostyrene (Yamada 2009) | -4.0 |
 | Lithium titanate composite, no film (Xu 2010) | -1.4 |
 | Solid electrolyte, no film (Yamada, Sagane 2009) | -19.0 |
+| SiO, film formed in each electrolyte (Yamada 2010) | -1.0 |
 
 Three series give 17 to 19 kJ/mol on three different solids, and all three come from one
 group of authors. Two laboratories measured this pair on the same electrode material with no
@@ -15854,6 +15885,18 @@ a LiMn2O4 thin film, and by 46.3 kJ/mol on LiCoO2 (Chekushkin 2021). The binding
 the two solvents differ by 71 kJ/mol, which the slope of the regression below turns into
 35 kJ/mol.
 
+Four more pairs came with Nasara 2020 and Yamada 2010. Nasara 2020 measured EC:DEC, FEC:DMC
+and PC on lithium titanate. Without a film, PC is above EC:DEC by 10 kJ/mol and FEC:DMC is
+below it by 20 kJ/mol. With a film formed in each electrolyte, PC and EC:DEC are equal (67
+kJ/mol) and FEC:DMC is 23 kJ/mol below. So a film raises EC:DEC by 11 and FEC:DMC by 8
+kJ/mol and does not change PC. The regression below gives the order but not the size: it
+predicts 9 kJ/mol between EC:DEC and FEC:DMC where 20 to 23 were measured, which is about
+the 20 kJ/mol of the computed enthalpies that Nasara 2020 quotes. Yamada 2010 measured DMC,
+EC:DMC, PC and DMSO on SiO and found 29 to 32 kJ/mol, although the binding energies of the
+solvents span 53 kJ/mol. The regression predicts 23 kJ/mol between DMSO and DMC, and -2 was
+measured. The authors say that desolvation does not set the rate at SiO. On SiO the
+difference between DMC and EC:DMC is 1 kJ/mol, which makes six series for that pair.
+
 The four values of Uchida 2020 (graphite, EC:DMC 50:50 and 10:90) form two series, one with
 LiPF6 and one with LiFSA. In EC:DMC 10:90 LiPF6 gives 71.2 and LiFSA 36.6 kJ/mol, so the
 salt changes the value by 35 kJ/mol at a fixed solvent, and a description of the solvent
@@ -15864,8 +15907,20 @@ both. The four values are counted in the values of the table and not in the held
 errors, and the regression results do not change. The rows with LiFSA are not counted in
 the reference system, whose salts are LiPF6 and LiClO4.
 
-The value of one solvent also moves between the series: propylene carbonate gives 46 to 71
-kJ/mol in ten series. So only differences inside a series can be modelled.
+Nine more studies gave rows that are in no regression series, because they vary the salt or
+the concentration, or measure an ionic liquid or an interface with no binding energy: Son 2025,
+Doi 2022, Sagane 2012, Ishihara 2014 (J. Electrochem. Soc.), Busche 2016, Yamada 2003 and
+2007, Iriyama 2004 and Fukuma 2024. They show how much the electrolyte matters beyond the
+solvent. In EC:EMC the concentration of LiPF6 changes the value from 58.9 (0.12 mol/L) to 44.2
+kJ/mol (4.8 mol/L; Son 2025). In propylene carbonate the concentration of LiBF4 at a solid
+electrolyte changes it from 70.4 (PC/Li 3.0) through 34 (PC/Li 9.0) to 47.3 kJ/mol (1 mol/L;
+Doi 2022). At a solid electrolyte, ionic liquids give 25 to 72 kJ/mol with the anion and the
+cation (Sagane 2012), and at lithium titanate 69 to 73 kJ/mol (Ishihara 2014). Only the Son
+value at 1.2 mol/L counts in the reference system, which takes the salt concentrations 0.8 to
+1.5 mol/L.
+
+The value of one solvent also moves between the series: propylene carbonate gives 30 to 71
+kJ/mol in thirteen series. So only differences inside a series can be modelled.
 
 #### The regression of the activation energy on the binding energy of Li+
 
@@ -15881,8 +15936,10 @@ computed energies, with R² = 0.97. Sawayama 2025 shows a line for five solvents
 study. What is added here is the test: series from several laboratories and on several
 electrodes, each series with its own level, and every solvent held out once.
 
-`--stage binding` computes the binding energy for the 13 single solvents of the series, and
-for diethyl carbonate (DEC), which the series hold only inside the mixture EC:DEC. The
+`--stage binding` computes the binding energy for the 13 single solvents of the series, for
+diethyl carbonate (DEC), which the series hold only inside the mixture EC:DEC, and for
+dimethyl ether, which is in no series and has the one ether group that the glymes have
+three or five times. The
 builder of the solvation complexes places the ion at the donor atom of the molecule, and
 GFN2-xTB optimises five starts. ORCA then optimises the complex of lowest energy with B97-3c
 and gives the energy with B3LYP-D3 and the def2-TZVPP basis set. The binding energy is the
@@ -15900,31 +15957,49 @@ energies at random between the solvents and gives the share of the exchanges tha
 
 | Points of the regression | Values | Solvents | Error of the series mean, kJ/mol | Error of the regression, kJ/mol | Gain, 95 % interval | Exchanges that do as well |
 | --- | ---: | ---: | ---: | ---: | --- | ---: |
-| Single solvents | 27 | 13 | 17.9 | 18.0 | -0.1 [-6.5, +3.1] | 28.7 % |
-| Single solvents, without the two that wrap the ion | 25 | 11 | 19.0 | 10.1 | +8.8 [+2.6, +12.4] | 0.1 % |
-| Single solvents and mixtures | 64 | 14 | 11.0 | 12.4 | -1.4 [-4.8, +1.3] | 72.4 % |
-| The same, without the two that wrap the ion | 62 | 12 | 11.8 | 6.5 | +5.3 [+3.4, +7.9] | 0.0 % |
-| Single solvents, binding energies of the papers | 14 | 8 | 14.4 | 9.2 | +5.2 [+1.4, +9.3] | 0.7 % |
+| Single solvents | 30 | 13 | 16.2 | 16.5 | -0.2 [-5.9, +2.8] | 27.5 % |
+| Single solvents, without the two that wrap the ion | 28 | 11 | 17.0 | 9.4 | +7.7 [+0.8, +12.8] | 0.1 % |
+| Single solvents and mixtures | 74 | 14 | 11.0 | 12.2 | -1.1 [-3.9, +1.2] | 68.3 % |
+| The same, without the two that wrap the ion | 72 | 12 | 11.7 | 6.9 | +4.8 [+3.1, +7.3] | 0.1 % |
+| Single solvents, the two that wrap the ion with the binding energy of one dimethyl ether | 30 | 13 | 16.2 | 9.5 | +6.7 [-0.8, +12.9] | 0.2 % |
+| Single solvents and mixtures, the same | 74 | 14 | 11.0 | 7.7 | +3.4 [+0.7, +7.5] | 0.0 % |
+| Single solvents, binding energies of the papers | 17 | 8 | 12.1 | 9.3 | +2.8 [+0.1, +6.7] | 0.6 % |
 
 Two solvents, diglyme and a polyether, wrap the ion with several oxygen atoms. Their binding
 energies are 363 and 488 kJ/mol, against 155 to 250 kJ/mol for the other solvents, and their
 activation energies are not higher than those of the others. With them the regression is no
-better than the mean of the series. Without them it lowers the held-out error by 5.3 to 8.8
-kJ/mol, with a slope of 0.49 kJ/mol of activation energy per kJ/mol of binding energy. So the
-regression is a usable estimate for a solvent that holds the ion with one atom, and it must
-not be used for a solvent that wraps the ion.
+better than the mean of the series. Without them it lowers the held-out error by 4.8 to 7.7
+kJ/mol, with a slope of 0.43 kJ/mol of activation energy per kJ/mol of binding energy. So the
+regression is a usable estimate for a solvent that holds the ion with one atom. It must
+not be used with the total binding energy of a solvent that wraps the ion; the next
+paragraph gives the binding energy of one donor group instead.
 
-The error that the regression leaves, 6.5 to 10 kJ/mol, is above the repeatability of 4.6 kJ/mol.
+The binding energy of a molecule is the sum over its donor atoms, so the number for a solvent
+that wraps the ion does not say what one donor group costs to detach. The two solvents were
+therefore also given the binding energy of one donor group, that of one dimethyl ether
+(173.4 kJ/mol; THF 196.7, water 155.5), and all 30 single-solvent values were fitted. The
+gain is +6.7 kJ/mol with an interval of -0.8 to +12.9 (the error falls from 16.2 to 9.5
+kJ/mol, and 0.2 % of the random exchanges do as well), against -0.2 with the total binding
+energy. With the mixtures it is +3.4 [+0.7, +7.5]. So the failure is a failure of the
+descriptor and not of the rule. Dividing the total by the number of donors at the ion (121
+and 98 kJ/mol) does not work: it puts both solvents below water and gives -0.2 [-5.7, +3.2].
+The two solvents are still above the prediction of one donor group, by 13 kJ/mol (diglyme,
+measured 34.7) and 15 kJ/mol (the polyether, measured 50.2). The binding energy that fits them
+is about 206 and 210 kJ/mol, 33 to 36 kJ/mol above one ether group and far below the total.
+Only two measured values stand behind this, so it is a hint and not a result; a series of
+diglyme, triglyme and tetraglyme on one electrode would settle it.
+
+The error that the regression leaves, 7 to 9 kJ/mol, is above the repeatability of 4.8 kJ/mol.
 A field model of the solvent cannot be shown to remove it. Six solvents were held out in two
-or more series, and the errors for one solvent differ between its series. On these 20 values
-the regression has an error of 10.3 kJ/mol, and no model that depends on the solvent alone
-can have less than 7.3 kJ/mol (6.6 and 5.1 kJ/mol with the mixtures). So a field model of the
-solvent could remove 3.0 kJ/mol at most (1.5 kJ/mol with the mixtures), which is less than the
-repeatability of 4.6 kJ/mol, and it could not be shown to do so. For this reason no field
-model was built for this target. Before the last 16 values the room was 0.4 and 0.5 kJ/mol;
-the five values of Nakayama 2007 are among the 20.
+or more series, and the errors for one solvent differ between its series. On these 23 values
+the regression has an error of 9.1 kJ/mol, and no model that depends on the solvent alone
+can have less than 8.0 kJ/mol (7.1 and 5.3 kJ/mol with the mixtures). So a field model of the
+solvent could remove 1.1 kJ/mol at most (1.8 kJ/mol with the mixtures), which is less than the
+repeatability of 4.8 kJ/mol, and it could not be shown to do so. For this reason no field
+model was built for this target. The room was 0.4 and 0.5 kJ/mol at the first run, 3.0 and
+1.5 kJ/mol after the values of Nakayama 2007 and Doi 2004, and is 1.1 and 1.8 kJ/mol now.
 
-The regression was first run on 92 values, and the table was extended three times after
+The regression was first run on 92 values, and the table was extended four times after
 that, so each extension is a test of the earlier run. The 11 values of Fukutsuka 2010 and
 Doi 2005 moved the slope from 0.559 to 0.556 for single solvents and from 0.491 to 0.498
 with mixtures. In the series of Fukutsuka 2010 the two single solvents are predicted from
@@ -15947,6 +16022,13 @@ slope predicts 35 kJ/mol and 26 kJ/mol was measured. At glassy carbon GC-20 it p
 by hot isostatic pressing it predicts +3.0 and -5.7 was measured, the wrong sign. The error
 of the series mean grew from 17.2 to 19.0 kJ/mol and that of the regression from 9.3 to 10.1
 kJ/mol, so the gain is +8.8 kJ/mol with an interval of +2.6 to +12.4.
+
+The last reading added 33 values; 10 of them are in series (Nasara 2020, 6; Yamada 2010, 4).
+They moved the slope from 0.487 to 0.430 for single solvents and from 0.459 to 0.443 with
+mixtures. The SiO series is the main reason: it is flat over a range of 53 kJ/mol of
+binding energy. The error of the series mean fell from 19.0 to 17.0 kJ/mol and that of the
+regression from 10.1 to 9.4, so the gain is +7.7 kJ/mol with an interval of +0.8 to +12.8.
+With the mixtures it is +4.8 [+3.1, +7.3].
 
 ```bash
 python benchmarks/run_cellmodel.py      # 54 minutes, after run_nebdft.py
@@ -18085,7 +18167,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Twenty-five notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Twenty-six notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -18100,7 +18182,8 @@ spectrum, a model of one near-infrared spectrometer read on the spectra of anoth
 with a count of the atoms near the metal, the hops of a lithium ion in crystals, with
 the barrier of a hop read from the environment of its path, the formation energy of defect arrangements on one lattice, compared with a pair expansion, a design loop that looks for the best structure with few calculations, compared with the same loop on the names of the elements and the counts of the defects, fields computed by DFT on a grid, compared with the total energy of the same calculation, metal particles of thousands of atoms, compared with the numbers of their neighbours, and the change of folding stability
 of point mutants of a protein, read with fields and compared with a count of the atoms around the
-site. Each runs on the
+site, and two-phase microstructures on a voxel grid, compared with the phase fraction and the
+correlation lengths of the grains. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

@@ -54,8 +54,14 @@ each, the rest of the set held out; q2 is R2 on the held-out samples and RMSE is
 of the label (the conductivity of phase 0 is one). The mean and the spread over the five draws
 are reported.
 
+**A reference that needs no field (added 16 November 2026).** Stage ``shape`` gives a few
+numbers measured on each cell -- the phase fraction and the correlation length of phase 1 along
+each axis -- to a polynomial or a Gaussian kernel, on the draws of the gate, and pairs it with
+the stored gate methods. For the two-scale property the defect concentration is added.
+
 Usage
 -----
+    python benchmarks/run_microstructure.py --stage shape    # the reference, about 5 minutes
     python benchmarks/run_microstructure.py                 # 2D 51x51 at contrast 10 and 100,
                                                             # 3D 21^3 at contrast 10, then the table
     python benchmarks/run_microstructure.py --dim 2 --grid 51 --n 400 --contrast 10
@@ -930,6 +936,196 @@ def run_twoscale(dim: int = 2, grid: int = 51, n: int = 400, contrast: float = C
 
 
 # --------------------------------------------------------------------------- #
+# The reference that needs no field: a few numbers that describe the cell
+# --------------------------------------------------------------------------- #
+
+SHAPE_METHOD = "fraction and correlation lengths"
+SHAPE_DEGREES: Tuple[int, ...] = (1, 2, 3)
+SHAPE_GAMMAS: Tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 4.0)     # times 1 / the median distance
+SHAPE_LAMS: Tuple[float, ...] = (1e-6, 1e-4, 1e-2, 1.0)
+#: the methods of the gate the reference is paired with
+SHAPE_AGAINST = ("autocorrelation, linear", "autocorrelation, normalised",
+                 "two-point statistics + GP", "phase fraction")
+
+
+def correlation_lengths(phase: np.ndarray) -> np.ndarray:
+    """The correlation length of phase 1 along each axis of the grid, in voxels.
+
+    The normalised autocovariance of the indicator, (S_11(r) - f^2) / (f (1 - f)), is read
+    along each axis; the length is the lag at which it first falls below 1/e, interpolated
+    linearly between two lags. Measured on the cell, not taken from the generator. When it
+    stays above 1/e up to half the grid, the length is longer than the cell can show, and it is
+    set to half the grid, the largest value the grid can measure.
+    """
+    n = phase.shape[0]
+    dim = phase.ndim - 1
+    axes = tuple(range(1, dim + 1))
+    x = phase.astype(float)
+    f = x.reshape(n, -1).mean(axis=1)
+    F = np.fft.fftn(x, axes=axes)
+    S = np.fft.ifftn(F * np.conj(F), axes=axes).real / float(np.prod(phase.shape[1:]))
+    shape = (n,) + (1,) * dim
+    C = (S - (f ** 2).reshape(shape)) / np.maximum(f * (1.0 - f), 1e-12).reshape(shape)
+    half = phase.shape[1] // 2
+    out = np.zeros((n, dim))
+    level = np.exp(-1.0)
+    for ax in range(dim):
+        index = [slice(None)] + [0] * dim
+        index[1 + ax] = slice(0, half)
+        line = C[tuple(index)]                                  # (n, half)
+        for i in range(n):
+            below = np.flatnonzero(line[i] < level)
+            if not len(below):
+                out[i, ax] = float(half)
+                continue
+            k = int(below[0])
+            if k == 0:
+                out[i, ax] = 0.0
+            else:
+                a, b = line[i, k - 1], line[i, k]
+                out[i, ax] = (k - 1) + (a - level) / max(a - b, 1e-12)
+    return out
+
+
+def shape_numbers(phase: np.ndarray) -> np.ndarray:
+    """The phase fraction and the logarithm of the correlation length along each axis."""
+    n = phase.shape[0]
+    f = phase.reshape(n, -1).mean(axis=1)
+    return np.column_stack([f, np.log(np.maximum(correlation_lengths(phase), 0.3))])
+
+
+def fit_shape(Z: np.ndarray, y: np.ndarray, tr: np.ndarray, te: np.ndarray) -> dict:
+    """A polynomial of degree 1 to 3 (ridge) or kernel ridge regression with a Gaussian kernel
+    on the standardised numbers, whichever setting has the smallest inner RMSE."""
+    folds = _inner_folds(len(tr))
+
+    def gaussian(Zs, gamma):
+        d2 = np.sum((Zs[:, None, :] - Zs[None, :, :]) ** 2, axis=-1)
+        return d2, gamma
+
+    best = None
+    for degree in SHAPE_DEGREES:
+        if not _poly_fits(Z.shape[1], degree, len(tr)):
+            continue
+        for alpha in RIDGES:
+            p = np.full(len(tr), np.nan)
+            for a, b in folds:
+                mu, sd = Z[tr[a]].mean(0), Z[tr[a]].std(0) + 1e-12
+                P = _poly((Z - mu) / sd, degree)
+                p[b] = P[tr[b]] @ _ridge(P[tr[a]], y[tr[a]], alpha)
+            err = rmse(y[tr], p)
+            if best is None or err < best[0]:
+                best = (err, ("polynomial", degree, alpha))
+    mu, sd = Z[tr].mean(0), Z[tr].std(0) + 1e-12
+    Zs = (Z - mu) / sd
+    d2 = np.sum((Zs[:, None, :] - Zs[None, :, :]) ** 2, axis=-1)
+    med = float(np.median(d2[np.ix_(tr, tr)][~np.eye(len(tr), dtype=bool)]))
+    for g in SHAPE_GAMMAS:
+        K = np.exp(-g * d2 / max(med, 1e-12))
+        K_tr = K[np.ix_(tr, tr)]
+        for lam in SHAPE_LAMS:
+            p = cv_predict(K_tr, y[tr], "krr", {"lam": lam}, folds=INNER, seed=0)
+            err = rmse(y[tr], p)
+            if err < best[0]:
+                best = (err, ("gauss", g, lam))
+    err, (kind, a, b) = best
+    if kind == "polynomial":
+        P = _poly(Zs, a)
+        pred = P[te] @ _ridge(P[tr], y[tr], b)
+        setting = f"polynomial of degree {a}, ridge {b:g}"
+    else:
+        K = np.exp(-a * d2 / max(med, 1e-12))
+        learner = _Learner("krr", {"lam": b}, True).fit(K[np.ix_(tr, tr)], y[tr])
+        pred = learner.predict(K[np.ix_(te, tr)])
+        setting = f"Gaussian kernel, gamma {a:g}, ridge {b:g}"
+    return {"setting": setting, "inner_rmse": float(err), "pred": pred}
+
+
+def run_shape(protocol: Protocol = GATE) -> dict:
+    """The reference on the draws of the gate, paired with the stored gate methods."""
+    out = {}
+    for dim, grid, n, contrast in DEFAULT_SETS:
+        tag = tag_of(dim, grid, n, contrast)
+        path = os.path.join(RESULTS, protocol.prefix() + tag + ".json")
+        if not os.path.isfile(path):
+            log(f"  {tag}: no stored gate results, skipped")
+            continue
+        with open(path, encoding="utf-8") as fh:
+            stored = json.load(fh)["runs"]
+        data = build_data(dim, grid, n, contrast)
+        ys = labels(data, tag)
+        t0 = time.time()
+        Z = shape_numbers(data["phase"])
+        rec = {"numbers": "phase fraction and log correlation length along each of the "
+                          f"{dim} axes", "labels": {}}
+        for label, by_size in stored.items():
+            y = ys[label]
+            for size, by_m in by_size.items():
+                size_i = int(size)
+                runs = []
+                for rep in range(len(next(iter(by_m.values())))):
+                    perm = np.random.RandomState(1000 * size_i + rep).permutation(len(y))
+                    tr, te = perm[:size_i], perm[size_i:]
+                    r = fit_shape(Z, y, tr, te)
+                    r["q2"] = float(r2_score(y[te], r["pred"]))
+                    r["rmse"] = float(rmse(y[te], r["pred"]))
+                    del r["pred"]
+                    runs.append(r)
+                block = {"q2": float(np.mean([r["q2"] for r in runs])),
+                         "settings": sorted({r["setting"].split(",")[0] for r in runs}),
+                         "against": {m: paired(runs, by_m[m]) for m in SHAPE_AGAINST
+                                     if m in by_m},
+                         "runs": runs}
+                rec["labels"].setdefault(label, {})[size] = block
+            log(f"  {tag}, {label}: " + ", ".join(
+                f"n {s} {b['q2']:+.3f} (autocorrelation {b['against']['autocorrelation, linear']['q2']:+.3f})"
+                for s, b in rec["labels"][label].items()))
+        rec["seconds"] = round(time.time() - t0, 1)
+        out[tag] = rec
+    # the two-scale property: the same numbers and the lower-scale descriptor together
+    tag = tag_of(2, 51, 400, CONTRAST)
+    path = os.path.join(RESULTS, "twoscale_" + tag + ".json")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as fh:
+            stored = json.load(fh)["runs"]
+        data = build_data(2, 51, 400, CONTRAST)
+        two = build_twoscale(data, tag)
+        ys = {"xx": two["tensor"][:, 0, 0].copy(),
+              "mean": np.trace(two["tensor"], axis1=1, axis2=2) / 2}
+        Z = np.column_stack([shape_numbers(data["phase"]), two["c"]])
+        rec = {"numbers": "phase fraction, log correlation lengths and the defect "
+                          "concentration c", "labels": {}}
+        for label, by_size in stored.items():
+            y = ys[label]
+            for size, by_m in by_size.items():
+                size_i = int(size)
+                runs = []
+                for rep in range(len(next(iter(by_m.values())))):
+                    perm = np.random.RandomState(1000 * size_i + rep).permutation(len(y))
+                    tr, te = perm[:size_i], perm[size_i:]
+                    r = fit_shape(Z, y, tr, te)
+                    r["q2"] = float(r2_score(y[te], r["pred"]))
+                    r["rmse"] = float(rmse(y[te], r["pred"]))
+                    del r["pred"]
+                    runs.append(r)
+                rec["labels"].setdefault(label, {})[size] = {
+                    "q2": float(np.mean([r["q2"] for r in runs])),
+                    "settings": sorted({r["setting"].split(",")[0] for r in runs}),
+                    "against": {m: paired(runs, by_m[m]) for m in
+                                ("product kernel", "phase fraction + descriptor",
+                                 "two-point statistics + descriptor + PCA") if m in by_m},
+                    "runs": runs}
+            log(f"  two-scale, {label}: " + ", ".join(
+                f"n {s} {b['q2']:+.3f} (product {b['against']['product kernel']['q2']:+.3f})"
+                for s, b in rec["labels"][label].items()))
+        out["twoscale_" + tag] = rec
+    os.makedirs(RESULTS, exist_ok=True)
+    with open(os.path.join(RESULTS, "shape.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # Item 4: the coefficient map over the lag vector
 # --------------------------------------------------------------------------- #
 
@@ -1303,7 +1499,7 @@ def _load_results(prefix: str = "") -> List[dict]:
     if not os.path.isdir(RESULTS):
         return found
     for name in sorted(os.listdir(RESULTS)):
-        if not name.endswith(".json") or name.startswith(("twoscale", "map", "uhcs")):
+        if not name.endswith(".json") or name.startswith(("twoscale", "map", "uhcs", "shape")):
             continue
         has_prefix = name.startswith(tuple(p.prefix() for p in PROTOCOLS.values() if p.prefix()))
         if (prefix and not name.startswith(prefix)) or (not prefix and has_prefix):
@@ -1549,6 +1745,42 @@ def _uhcs_lines() -> List[str]:
     return lines
 
 
+def _shape_lines() -> List[str]:
+    """The reference that needs no field, paired with the gate methods on the same draws."""
+    path = os.path.join(RESULTS, "shape.json")
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        S = json.load(fh)
+    lines = ["## A reference that needs no field: the fraction and the correlation lengths", "",
+             "A few numbers measured on each cell: the phase fraction and the logarithm of the "
+             "correlation length of phase 1 along each axis (the lag at which the normalised "
+             "autocovariance falls below 1/e). The model is a polynomial of degree 1 to 3 or a "
+             "Gaussian kernel on these numbers, whichever the inner cross-validation prefers. "
+             "Same draws as the gate; 'minus' is the reference minus the method, mean q2 over "
+             "the draws with its standard deviation, and 'wins' counts the draws in which the "
+             "reference is better. For the two-scale property the defect concentration c is "
+             "added to the numbers.", ""]
+    for tag, rec in S.items():
+        two = tag.startswith("twoscale_")
+        against = (("product kernel", "phase fraction + descriptor") if two else
+                   ("autocorrelation, linear", "two-point statistics + GP", "phase fraction"))
+        lines += [f"### {tag}" + (" (two-scale property)" if two else ""), "",
+                  "| label | training size | reference q2 | " + " | ".join(
+                      f"minus {m} (wins)" for m in against) + " |",
+                  "|---|---:|---:|" + "---:|" * len(against)]
+        for label, by_size in rec["labels"].items():
+            for size, b in by_size.items():
+                cells = []
+                for m in against:
+                    a = b["against"].get(m)
+                    cells.append("--" if a is None else
+                                 f"{a['q2']:+.3f} ({a['q2_sd']:.3f}) ({a['wins']} of {a['draws']})")
+                lines.append(f"| {label} | {size} | {b['q2']:+.3f} | " + " | ".join(cells) + " |")
+        lines.append("")
+    return lines
+
+
 def report(out: str = "") -> str:
     pilot = _load_results()
     gate = _load_results(GATE.prefix())
@@ -1576,7 +1808,7 @@ def report(out: str = "") -> str:
                   "a baseline on the same draws.", ""]
         for r in gate:
             lines += _block_lines(r, BASELINES + KERNEL_METHODS, show_paired=True)
-    extra = _twoscale_lines() + _map_lines() + _uhcs_lines()
+    extra = _twoscale_lines() + _map_lines() + _uhcs_lines() + _shape_lines()
     if extra:
         lines += ["# The other three tests of the gate", ""] + extra
     if pilot:
@@ -1600,9 +1832,11 @@ def main(argv=None) -> int:
     ap.add_argument("--n", type=int, default=None, help="number of samples")
     ap.add_argument("--contrast", type=float, default=None,
                     help="conductivity of phase 1 over that of phase 0 (default %g)" % CONTRAST)
-    ap.add_argument("--stage", choices=("data", "fit", "twoscale", "map", "uhcs"), default=None,
+    ap.add_argument("--stage", choices=("data", "fit", "twoscale", "map", "uhcs", "shape"),
+                    default=None,
                     help="data and fit are the benchmark; twoscale, map and uhcs are items 3, "
-                         "4 and 2 of the gate")
+                         "4 and 2 of the gate; shape is the reference that needs no field, on "
+                         "the draws of the gate")
     ap.add_argument("--protocol", choices=tuple(PROTOCOLS), default="pilot",
                     help="pilot: 5 draws, 140 settings per kernel method; gate: 20 draws, 40 "
                          "settings for every method and the GP baseline")
@@ -1626,6 +1860,10 @@ def main(argv=None) -> int:
         default = next((s for s in DEFAULT_SETS if s[0] == dim), DEFAULT_SETS[0])
         sets = ((dim, args.grid or default[1], args.n or default[2],
                  args.contrast or CONTRAST),)
+    if args.stage == "shape":
+        run_shape()
+        report()
+        return 0
     if args.stage == "twoscale":
         run_twoscale(args.dim or 2, args.grid or 51, args.n or 400, args.contrast or CONTRAST,
                      protocol=PROTOCOLS[args.protocol], jobs=args.jobs, force=args.force)

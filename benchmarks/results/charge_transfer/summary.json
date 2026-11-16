@@ -1,17 +1,18 @@
 {
- "n_rows": 129,
- "n_primary": 129,
+ "n_rows": 162,
+ "n_primary": 162,
  "n_secondary": 0,
- "n_studies": 27,
+ "n_studies": 34,
  "classes": {
   "carbonaceous thin film": 3,
-  "graphite": 43,
+  "graphite": 47,
   "layered oxide": 25,
   "lithium metal": 6,
-  "lithium titanate": 16,
+  "lithium titanate": 27,
   "non-graphitizable carbon": 13,
   "olivine": 1,
-  "solid electrolyte": 11,
+  "silicon monoxide": 4,
+  "solid electrolyte": 25,
   "spinel oxide": 11
  },
  "repeatability": {
@@ -19,14 +20,15 @@
    "Abe2004": 56.0,
    "Jow2018": 57.7,
    "Keefe2020": 58.373425,
+   "Son2025": 53.6,
    "Uchida2020": 62.1,
    "Xu2007": 68.5,
    "Yamada2009": 58.0
   },
-  "n": 6,
-  "mean": 60.11223749999999,
-  "sd": 4.572092796350212,
-  "low": 56.0,
+  "n": 7,
+  "mean": 59.18191785714286,
+  "sd": 4.845460719123154,
+  "low": 53.6,
   "high": 68.5
  },
  "within_study": [
@@ -168,6 +170,18 @@
    ]
   },
   {
+   "source": "Doi2022",
+   "electrode_class": "solid electrolyte",
+   "n": 6,
+   "low": 34.0,
+   "high": 70.4,
+   "range": 36.400000000000006,
+   "varied": [],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Fukuma2024",
    "electrode_class": "lithium titanate",
    "n": 2,
@@ -219,6 +233,21 @@
    "range": 27.0,
    "varied": [
     "solvent"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Ishihara2014JES",
+   "electrode_class": "lithium titanate",
+   "n": 5,
+   "low": 69.0,
+   "high": 73.0,
+   "range": 4.0,
+   "varied": [
+    "solvent",
+    "salt"
    ],
    "read_from": [
     "primary"
@@ -314,6 +343,22 @@
    ]
   },
   {
+   "source": "Nasara2020",
+   "electrode_class": "lithium titanate",
+   "n": 6,
+   "low": 36.0,
+   "high": 67.0,
+   "range": 31.0,
+   "varied": [
+    "solvent",
+    "film",
+    "state"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Sagane2005",
    "electrode_class": "solid electrolyte",
    "n": 2,
@@ -329,6 +374,21 @@
    ]
   },
   {
+   "source": "Sagane2012",
+   "electrode_class": "solid electrolyte",
+   "n": 7,
+   "low": 25.0,
+   "high": 72.0,
+   "range": 47.0,
+   "varied": [
+    "solvent",
+    "salt"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "Sawayama2025",
    "electrode_class": "graphite",
    "n": 5,
@@ -338,6 +398,18 @@
    "varied": [
     "solvent"
    ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "source": "Son2025",
+   "electrode_class": "graphite",
+   "n": 4,
+   "low": 44.2,
+   "high": 58.9,
+   "range": 14.699999999999996,
+   "varied": [],
    "read_from": [
     "primary"
    ]
@@ -414,6 +486,21 @@
    ]
   },
   {
+   "source": "Yamada2010",
+   "electrode_class": "silicon monoxide",
+   "n": 4,
+   "low": 29.0,
+   "high": 32.0,
+   "range": 3.0,
+   "varied": [
+    "solvent",
+    "salt"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "source": "YamadaSagane2009",
    "electrode_class": "solid electrolyte",
    "n": 4,
@@ -447,13 +534,13 @@
  ],
  "means": {
   "negative": {
-   "n": 20,
-   "mean": 61.7746025,
-   "sd": 6.454068135750851,
+   "n": 21,
+   "mean": 61.385335714285716,
+   "sd": 6.538680827623849,
    "low": 48.2425,
    "high": 71.2,
    "published": 35.0,
-   "shift": 26.7746025
+   "shift": 26.385335714285716
   },
   "positive": {
    "n": 12,
@@ -767,6 +854,52 @@
    ]
   },
   {
+   "series": "Nasara2020: lithium titanate thin film, film formed in each electrolyte",
+   "n": 3,
+   "solvents": [
+    "FEC:DMC 3:7",
+    "EC:DEC 1:1",
+    "PC"
+   ],
+   "values": [
+    44.0,
+    67.0,
+    67.0
+   ],
+   "low": 44.0,
+   "high": 67.0,
+   "range": 23.0,
+   "one_solvent": [
+    "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
+   "series": "Nasara2020: lithium titanate thin film, no film",
+   "n": 3,
+   "solvents": [
+    "FEC:DMC 3:7",
+    "EC:DEC 1:1",
+    "PC"
+   ],
+   "values": [
+    36.0,
+    56.0,
+    66.0
+   ],
+   "low": 36.0,
+   "high": 66.0,
+   "range": 30.0,
+   "one_solvent": [
+    "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
    "n": 5,
    "solvents": [
@@ -941,6 +1074,33 @@
    ]
   },
   {
+   "series": "Yamada2010: SiO, film formed in each electrolyte",
+   "n": 4,
+   "solvents": [
+    "DMSO",
+    "PC",
+    "DMC",
+    "EC:DMC 1:1"
+   ],
+   "values": [
+    29.0,
+    30.0,
+    31.0,
+    32.0
+   ],
+   "low": 29.0,
+   "high": 32.0,
+   "range": 3.0,
+   "one_solvent": [
+    "DMC",
+    "DMSO",
+    "PC"
+   ],
+   "read_from": [
+    "primary"
+   ]
+  },
+  {
    "series": "YamadaSagane2009: solid electrolyte, no film",
    "n": 4,
    "solvents": [
@@ -1009,8 +1169,8 @@
   }
  ],
  "solvent_count": {
-  "n_series": 20,
-  "n_rows": 64,
+  "n_series": 23,
+  "n_rows": 74,
   "largest": 8,
   "solvents": [
    "2,2,2-trifluoroethyl acetate",
@@ -1032,6 +1192,7 @@
    "EC:EMC 7:3",
    "EMC",
    "FEC",
+   "FEC:DMC 3:7",
    "PC",
    "THF",
    "acetonitrile",
@@ -1084,11 +1245,15 @@
      "value": 52.0
     },
     {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "value": 31.0
+    },
+    {
      "series": "YamadaSagane2009: solid electrolyte, no film",
      "value": 32.0
     }
    ],
-   "range": 20.0
+   "range": 21.0
   },
   {
    "solvent": "DMSO",
@@ -1100,9 +1265,13 @@
     {
      "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
      "value": 82.3
+    },
+    {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "value": 29.0
     }
    ],
-   "range": 12.399999999999991
+   "range": 53.3
   },
   {
    "solvent": "PC",
@@ -1144,11 +1313,23 @@
      "value": 50.0
     },
     {
+     "series": "Nasara2020: lithium titanate thin film, film formed in each electrolyte",
+     "value": 67.0
+    },
+    {
+     "series": "Nasara2020: lithium titanate thin film, no film",
+     "value": 66.0
+    },
+    {
      "series": "Sawayama2025: graphite, film formed in each electrolyte with ethylene sulfite",
      "value": 45.7
+    },
+    {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "value": 30.0
     }
    ],
-   "range": 25.5
+   "range": 41.2
   },
   {
    "solvent": "THF",
@@ -1219,6 +1400,10 @@
      "difference": -4.0
     },
     {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "difference": -1.0
+    },
+    {
      "series": "YamadaSagane2009: solid electrolyte, no film",
      "difference": -19.0
     }
@@ -1239,6 +1424,20 @@
    ]
   },
   {
+   "first": "DMC",
+   "second": "PC",
+   "differences": [
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "difference": -27.0
+    },
+    {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "difference": 1.0
+    }
+   ]
+  },
+  {
    "first": "DMSO",
    "second": "PC",
    "differences": [
@@ -1249,6 +1448,10 @@
     {
      "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
      "difference": 11.099999999999994
+    },
+    {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "difference": -1.0
     }
    ]
   },
@@ -1282,6 +1485,20 @@
   },
   {
    "first": "EC:DEC 1:1",
+   "second": "FEC:DMC 3:7",
+   "differences": [
+    {
+     "series": "Nasara2020: lithium titanate thin film, film formed in each electrolyte",
+     "difference": 23.0
+    },
+    {
+     "series": "Nasara2020: lithium titanate thin film, no film",
+     "difference": 20.0
+    }
+   ]
+  },
+  {
+   "first": "EC:DEC 1:1",
    "second": "PC",
    "differences": [
     {
@@ -1303,6 +1520,14 @@
     {
      "series": "Fukutsuka2010: carbonaceous thin film, one film formed in EC:DEC 1:1",
      "difference": -11.0
+    },
+    {
+     "series": "Nasara2020: lithium titanate thin film, film formed in each electrolyte",
+     "difference": 0.0
+    },
+    {
+     "series": "Nasara2020: lithium titanate thin film, no film",
+     "difference": -10.0
     }
    ]
   },
@@ -1343,6 +1568,34 @@
    ]
   },
   {
+   "first": "EC:DMC 1:1",
+   "second": "PC",
+   "differences": [
+    {
+     "series": "Ishihara2014: lithium titanate, no film",
+     "difference": -10.0
+    },
+    {
+     "series": "Yamada2010: SiO, film formed in each electrolyte",
+     "difference": 2.0
+    }
+   ]
+  },
+  {
+   "first": "FEC:DMC 3:7",
+   "second": "PC",
+   "differences": [
+    {
+     "series": "Nasara2020: lithium titanate thin film, film formed in each electrolyte",
+     "difference": -23.0
+    },
+    {
+     "series": "Nasara2020: lithium titanate thin film, no film",
+     "difference": -30.0
+    }
+   ]
+  },
+  {
    "first": "PC",
    "second": "water",
    "differences": [
@@ -1357,7 +1610,5 @@
    ]
   }
  ],
- "to_read": [
-  "KyotoRepository"
- ]
+ "to_read": []
 }
