@@ -1,0 +1,20 @@
+{
+ "argv": [
+  "examples/slab_adsorption/solvents.csv",
+  "--surface",
+  "li100",
+  "-o",
+  "benchmarks/cache/slab_adsorption/li100.sdf",
+  "--results",
+  "benchmarks/results/slab_adsorption"
+ ],
+ "surface": "li100",
+ "lattice": 3.440837612062312,
+ "cell": [
+  5,
+  5,
+  4
+ ],
+ "model": "uma-s-1p2p1/oc20",
+ "written": "2026-11-17 23:19:50"
+}

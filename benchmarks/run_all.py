@@ -104,6 +104,9 @@ class Benchmark:
     needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | "xtb"
                                                  # | "pybamm" (not in requirements-lock.txt)
                                                  # | "vasp" (VASP and ORCA grids in the cache)
+                                                 # | "uma" (the UMA potential in the WSL
+                                                 # environment of examples/corrosion_fe110,
+                                                 # with a GPU)
                                                  # | None: a file or a program the machine
                                                  # may not have
     minutes: str = "?"                           # what a full run costs on the author's machine
@@ -728,6 +731,26 @@ def registry() -> List[Benchmark]:
                   minutes="35",
                   report=lambda: _mod("run_sac_clusters").write_table(_r("sac_clusters")),
                   tables=["sac_clusters/table.md"]),
+        Benchmark("slab_adsorption",
+                  "the slab generator of the adsorption benchmarks (plan item BT8): the pose "
+                  "rules of the Fe(110) script on any slab, checked against the stored Fe(110) "
+                  "energies, and eleven electrolyte solvents on Li(100) and graphite (0001) "
+                  "with the UMA potential",
+                  "run_slab_adsorption.py", "slab_adsorption",
+                  compute=[["examples/corrosion/157_c1ccc2_nH_cnc2c1.csv", "--surface", "fe110",
+                            "--limit", "3", "-o",
+                            "benchmarks/cache/slab_adsorption/fe110_check.sdf",
+                            "--results", "benchmarks/results/slab_adsorption"],
+                           ["examples/slab_adsorption/solvents.csv", "--surface", "li100", "-o",
+                            "benchmarks/cache/slab_adsorption/li100.sdf",
+                            "--results", "benchmarks/results/slab_adsorption"],
+                           ["examples/slab_adsorption/solvents.csv", "--surface",
+                            "graphite0001", "-o",
+                            "benchmarks/cache/slab_adsorption/graphite0001.sdf",
+                            "--results", "benchmarks/results/slab_adsorption"]],
+                  needs="uma", minutes="90",
+                  report=lambda: _mod("run_slab_adsorption").write_table(_r("slab_adsorption")),
+                  tables=["slab_adsorption/table.md"]),
         Benchmark("fluctuation",
                   "is the variance of a field across conformations worth a block of its own",
                   "run_fluctuation.py", "fluctuation", compute=[[]],

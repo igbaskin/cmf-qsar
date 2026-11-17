@@ -1,0 +1,4 @@
+name,smiles,E_ads_eV,E_ads_far_eV,offset_eV,gas_energy_difference_eV
+Benzimidazole,c1ccc2[nH]cnc2c1,-1.2966,-1.3693,0.0805,0.0010
+2-Methylbenzimidazole,Cc1nc2ccccc2[nH]1,-0.7815,-0.8035,0.0322,0.0007
+5-Nitrobenzimidazole,O=[N+]([O-])c1ccc2nc[nH]c2c1,-1.1338,-1.2793,0.1528,0.0002

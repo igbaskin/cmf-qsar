@@ -1,0 +1,22 @@
+{
+ "argv": [
+  "examples/corrosion/157_c1ccc2_nH_cnc2c1.csv",
+  "--surface",
+  "fe110",
+  "--limit",
+  "3",
+  "-o",
+  "benchmarks/cache/slab_adsorption/fe110_check.sdf",
+  "--results",
+  "benchmarks/results/slab_adsorption"
+ ],
+ "surface": "fe110",
+ "lattice": 2.78,
+ "cell": [
+  6,
+  6,
+  4
+ ],
+ "model": "uma-s-1p2p1/oc20",
+ "written": "2026-11-17 23:18:26"
+}

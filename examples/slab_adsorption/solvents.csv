@@ -1,0 +1,12 @@
+name,smiles,solvent
+PC,CC1COC(=O)O1,propylene carbonate
+EC,C1COC(=O)O1,ethylene carbonate
+DMC,COC(=O)OC,dimethyl carbonate
+DEC,CCOC(=O)OCC,diethyl carbonate
+EMC,CCOC(=O)OC,ethyl methyl carbonate
+EA,CCOC(C)=O,ethyl acetate
+MA,COC(C)=O,methyl acetate
+DME,COCCOC,"1,2-dimethoxyethane"
+DOL,C1COCO1,"1,3-dioxolane"
+THF,C1CCOC1,tetrahydrofuran
+AN,CC#N,acetonitrile

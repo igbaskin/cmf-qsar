@@ -5604,6 +5604,15 @@ value this repository had already published for them — while the six slab term
 drag the field model down to +0.190 when added to it. On the measured free energy they are −0.057.
 On iron, at a pose the method can produce, a slab receptor adds nothing.
 
+**Molecules on any slab (plan item BT8).** `benchmarks/run_slab_adsorption.py` runs the pose rules
+of the Fe(110) script on Fe(110), Li(100), graphite (0001) or a slab file, and reproduces the
+stored Fe(110) energies to 0.6 meV. It found that UMA's oc20 head does not add over parts that do
+not interact: a molecule 20 Å above a slab differs from the slab plus the molecule alone by -0.10
+to -0.33 eV for electrolyte solvents. So it also reports the adsorption energy against the
+molecule far above. With that reference, ethylene carbonate (-0.50 eV), acetonitrile (-0.41) and
+propylene carbonate (-0.36) bind to Li(100), the open-chain carbonates and ethers barely do, and
+nothing binds to graphite, as a model without dispersion predicts.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

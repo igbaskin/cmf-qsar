@@ -1,0 +1,20 @@
+{
+ "argv": [
+  "examples/slab_adsorption/solvents.csv",
+  "--surface",
+  "graphite0001",
+  "-o",
+  "benchmarks/cache/slab_adsorption/graphite0001.sdf",
+  "--results",
+  "benchmarks/results/slab_adsorption"
+ ],
+ "surface": "graphite0001",
+ "lattice": 2.46,
+ "cell": [
+  7,
+  4,
+  3
+ ],
+ "model": "uma-s-1p2p1/oc20",
+ "written": "2026-11-17 23:21:16"
+}

@@ -5763,6 +5763,22 @@ values and a computed oxidation potential is a descriptor, not a target.
   benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium,
   part (a) of BT13 without a surface).
   Script code under rule 6, not a module.
+  **Done 17 November 2026.** `benchmarks/run_slab_adsorption.py` imports the Fe(110) script and
+  replaces its three slab functions (top layer, cell size for a molecule, clean slab and its
+  energy), so the pose rules exist once. Recipes `fe110`, `li100` (lattice from the model's bulk
+  minimum, 3.441 A) and `graphite0001` (measured lattice, rigid), or any slab file; layers found
+  from the heights; rigid by default. *Checked:* three benzimidazoles on Fe(110) reproduce the
+  stored energies within 0.6 meV and the same poses. *Found:* UMA's oc20 head does not add over
+  parts that do not interact; the slab with the molecule 20 A above differs from slab plus
+  molecule alone by -0.10 to -0.33 eV (solvents on Li and graphite) and +0.03 to +0.15 eV
+  (benzimidazoles on Fe), so the script also reports E_ads against the molecule far above, the
+  same atoms in the same cell. *Measured:* eleven electrolyte solvents: on Li(100) EC -0.50, AN
+  -0.41, PC -0.36, MA -0.17, DOL -0.16 eV, the open-chain carbonates and ethers -0.02 to -0.08;
+  on graphite nothing binds (-0.00 to -0.05, no dispersion in the model). Registered with a new
+  requirement `needs="uma"`. *Not done:* a layered-oxide facet (no oxide structure in the
+  repository; it goes in as a slab file); and the Fe(110) corrosion series of
+  `examples/corrosion_fe110` still uses the molecule-alone reference, whose offset differs by
+  molecule (+0.03 to +0.15 eV on the three checked).
 
 **Medium and large: the three electrolyte parameters a cell model reads and this program does not predict (opened 13 November 2026)**
 
@@ -9735,7 +9751,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 11 | 10 | EC9 |
-| H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
+| H. Battery science | 13 | 8 | BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 5 | SC4, SC5 (partly), SC8 |
 | H. Physical organic | 9 | 9 | -- |
@@ -9745,7 +9761,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 136 finished, 8 partly, 35 open.**
+**179 items: 137 finished, 8 partly, 34 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

@@ -3736,6 +3736,63 @@ than chemisorption, where the image term is the right size rather than a hundred
 Neither case has a measured series here, and after this item that is the only open question left
 in it — the machinery has been measured on everything the repository holds.
 
+### Molecules on any slab (plan item BT8)
+
+`examples/uma_fe110_adsorption.py` was written for one slab. `benchmarks/run_slab_adsorption.py`
+runs its pose rules -- flat, upright on the anchor atom, random; a docking stage with the heavy
+atoms held at their height; a free relaxation with the UMA potential; the lowest-energy intact
+pose -- on any slab. It imports the Fe(110) script and replaces only the three functions that
+know the slab: where the top layer is, how large the cell must be for a molecule, and the clean
+slab with its energy. `--surface` takes a recipe or a slab file:
+
+| Recipe | Slab | Lattice constant |
+|---|---|---|
+| `fe110` | bcc Fe(110), 6 x 6 x 4, the Fe(110) script's own slab | 2.78 Å, the minimum of the model |
+| `li100` | bcc Li(100), 5 x 5 x 4 | 3.441 Å, the minimum of the model's bulk, found by the script |
+| `graphite0001` | the basal plane of AB-stacked graphite, 7 x 4 x 3 | 2.46 Å and 3.35 Å between layers, as measured |
+| a file | any slab with the normal along z; its cell is the repeat unit | that of the file |
+
+Run with `--surface fe110` on three benzimidazoles, the script gives the energies the Fe(110)
+script stored to within 0.6 meV, with the same poses. The table is in
+`benchmarks/results/slab_adsorption/table.md`.
+
+**A second reference, and why it is needed.** UMA's oc20 head was trained on molecules on
+surfaces, and its energy does not add over two parts that do not interact. A slab with a molecule
+20 Å above it differs from the slab plus the same molecule alone in a box by -0.10 to -0.33 eV
+for the eleven electrolyte solvents on Li(100) and graphite, and by +0.03 to +0.15 eV for three
+benzimidazoles on Fe(110). So the reference of the Fe(110) script carries that offset into every
+adsorption energy. The script also reports the adsorption energy against the same relaxed
+molecule 20 Å above the slab: two systems with the same atoms in the same cell, where any such
+term cancels. The pose choice does not change, because all poses of one molecule on one surface
+share the offset.
+
+**Eleven electrolyte solvents** (`examples/slab_adsorption/solvents.csv`, the solvents of
+`cmfqsar/electrolyte.py`), adsorption energy against the molecule far above, in eV:
+
+| Solvent | Li(100) | Graphite (0001) |
+|---|---:|---:|
+| ethylene carbonate (EC) | -0.50 | -0.05 |
+| acetonitrile (AN) | -0.41 | -0.02 |
+| propylene carbonate (PC) | -0.36 | -0.05 |
+| methyl acetate (MA) | -0.17 | -0.02 |
+| 1,3-dioxolane (DOL) | -0.16 | -0.02 |
+| dimethyl carbonate (DMC) | -0.08 | -0.00 |
+| tetrahydrofuran (THF) | -0.07 | -0.02 |
+| 1,2-dimethoxyethane (DME) | -0.06 | -0.01 |
+| diethyl carbonate (DEC) | -0.06 | -0.02 |
+| ethyl methyl carbonate (EMC) | -0.04 | -0.00 |
+| ethyl acetate (EA) | -0.02 | -0.01 |
+
+Every molecule stays intact. On lithium, the two cyclic carbonates and acetonitrile bind through
+an oxygen or a nitrogen less than 2 Å above the surface; the open-chain carbonates and the ethers
+stay about 3 Å away and barely bind. On graphite nothing binds: the model has no dispersion,
+which is what holds a molecule on graphite. Against the molecule alone, the same graphite
+energies read -0.15 to -0.28 eV and would look like weak binding; that is the offset. These are
+adsorption energies, not reduction potentials. They say which molecule meets the lithium surface
+first, which is one part of the question of plan item BT13 and not its answer. A layered-oxide
+facet needs a structure of the oxide, which the repository does not carry, and goes in as a
+slab file.
+
 ## A kinetic selectivity as the activity: a catalyst series in the frame of its reaction centre
 
 A rate constant across a congeneric series is a free-energy difference, as a binding constant

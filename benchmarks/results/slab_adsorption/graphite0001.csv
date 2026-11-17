@@ -1,0 +1,12 @@
+name,smiles,E_ads_eV,E_ads_kJmol,pose_label,n_steps,intact,bound,gas_intact,height_A,E_slab_eV,E_mol_eV,cell,poses_eV,time_s,solvent
+PC,CC1COC(=O)O1,-0.2108,-20.33,flat,104,1,0,1,4.46,-2961.8485,-76.6479,7x4x3,flat:-0.211~;upright:-0.201~;random:-0.195~,417,propylene carbonate
+EC,C1COC(=O)O1,-0.2138,-20.62,random,34,1,1,1,3.65,-2961.8485,-60.1870,7x4x3,flat:-0.179~;upright:-0.180;random:-0.214,1081,ethylene carbonate
+DMC,COC(=O)OC,-0.2055,-19.83,upright,93,1,0,1,4.33,-2961.8485,-67.9324,7x4x3,flat:-0.164~;upright:-0.205~;random:-0.185~,1182,dimethyl carbonate
+DEC,CCOC(=O)OCC,-0.2699,-26.05,flat,110,1,0,1,4.73,-2961.8485,-100.7606,7x4x3,flat:-0.270~;upright:-0.259~;random:-0.219,1047,diethyl carbonate
+EMC,CCOC(=O)OC,-0.2269,-21.89,random,55,1,0,1,5.00,-2961.8485,-84.3582,7x4x3,flat:-0.224~;upright:-0.193~;random:-0.227~,488,ethyl methyl carbonate
+EA,CCOC(C)=O,-0.2009,-19.38,flat,98,1,0,1,5.11,-2961.8485,-78.1269,7x4x3,flat:-0.201~;upright:-0.188~;random:-0.192~,1056,ethyl acetate
+MA,COC(C)=O,-0.1546,-14.92,flat,83,1,0,1,5.25,-2961.8485,-61.7363,7x4x3,flat:-0.155~;upright:-0.150~;random:-0.144~,777,methyl acetate
+DME,COCCOC,-0.2838,-27.39,upright,115,1,0,1,4.02,-2961.8485,-84.2358,7x4x3,flat:-0.240~;upright:-0.284~;random:-0.279~,1166,"1,2-dimethoxyethane"
+DOL,C1COCO1,-0.2164,-20.88,random,43,1,0,1,4.13,-2961.8485,-60.4558,7x4x3,flat:-0.200~;upright:-0.212;random:-0.216~,573,"1,3-dioxolane"
+THF,C1CCOC1,-0.2284,-22.04,upright,58,1,1,1,3.91,-2961.8485,-70.7738,7x4x3,flat:-0.212~;upright:-0.228;random:-0.222~,1280,tetrahydrofuran
+AN,CC#N,-0.1550,-14.96,upright,41,1,1,1,3.86,-2961.8485,-35.9989,7x4x3,flat:-0.140~;upright:-0.155;random:-0.141,531,acetonitrile
