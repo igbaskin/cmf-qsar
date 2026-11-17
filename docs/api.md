@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 138 modules, 267 classes with 864 public methods, and 1441 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 139 modules, 268 classes with 865 public methods, and 1443 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -50,6 +50,7 @@ for.
 | [cmfqsar.cellmodel](#cmfqsarcellmodel) | Running a cell model once per drawn parameter set, and saying which deviation matters (plan item MS9). |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
 | [cmfqsar.cli](#cmfqsarcli) | Command-line interface for building CMF 3D-QSAR models (no GUI needed). |
+| [cmfqsar.clusters](#cmfqsarclusters) | A finite cluster cut from a periodic structure around one site, its cut bonds capped with hydrogen, read as a metal complex (plan item EC8). |
 | [cmfqsar.cme](#cmfqsarcme) | The expected field of a molecule with a given activity: the conditional mean embedding. |
 | [cmfqsar.coalign](#cmfqsarcoalign) | Co-alignment of a training set, treated as what it is: expectation-maximisation over poses. |
 | [cmfqsar.cofields](#cmfqsarcofields) | Molecular co-fields (fields of regression coefficients), molecular fields and their overlap evaluated on a rectangular grid for visualisation (isosurfaces) and export. |
@@ -2178,6 +2179,77 @@ What the field sees that another view does not: item F6 of the plan.
 Chemical space map and activity landscape (kernel PCA + GTM) from the CMF kernels.
 
 ### `main(argv=None)`
+
+## cmfqsar.clusters
+
+Source: `cmfqsar/clusters.py`
+
+A finite cluster cut from a periodic structure around one site, its cut bonds capped with
+hydrogen, read as a metal complex (plan item EC8).
+
+A single-atom catalyst is a metal held by four atoms of a graphene sheet: a molecular active
+site inside a solid.  The molecular side of the program -- the five classical fields, the
+Gasteiger charges, the metal parameters of plan item EC4 -- reads a molecule, not a cell.  This
+module makes the molecule:
+
+1. **The cut.** The atoms within a number of bonds (`hops`) of the site are kept, the bonds
+   being found from the covalent radii over the periodic images, so a site at the edge of the
+   cell is cut whole. The site itself is bonded to its first coordination shell only (the atoms
+   within `FIRST_SHELL` times its nearest distance): the covalent radius of a large metal such
+   as La reaches the second shell of a graphene sheet, and the cluster would then grow with the
+   metal instead of being the same cut for the whole series. An atom left with a single
+   neighbour inside the cluster is removed, again and again, so that no chain dangles from the
+   edge.
+2. **The caps.**  Every bond the cut breaks becomes a hydrogen atom on the kept atom, placed
+   along the broken bond at the C-H (1.09 A) or N-H (1.01 A) length, which is the usual way a
+   cluster model of a surface or a sheet is terminated.
+3. **The complex.**  `cmfqsar.complexes.build_complex` turns the coordinates into an RDKit
+   molecule with dative metal-ligand bonds.  The ligand -- everything but the metal -- needs a
+   charge before its bond orders can be found, and that charge decides the formal charge the
+   metal gets, since the cluster as a whole is neutral.  The charges are tried in turn and the
+   first that lets the ligand sanitise is kept.  For a capped divacancy that is minus the number
+   of carbon donors: each carbon that holds the metal is a carbanion with a lone pair, and a
+   pyridine-like nitrogen has one of its own.  So the metal of an M@C4 site is +4 and that of an
+   M@N4 site 0, whatever the metal: the formal charge counts the donors, it is not an oxidation
+   state.  A charge that cannot close the shell is not offered (the ligand of an M@C4 site has
+   no closed-shell form at -2), so `ligand_charge` is a request, and the report of
+   `cluster_complex` says which charge was used.
+
+The cluster keeps the coordinates of the structure, so a series cut from one template stays in
+the frame of that template.
+
+### `class Cluster  (dataclass)`
+
+A cut and capped cluster: element symbols and coordinates, the site first.
+
+Attributes:
+
+- `symbols: List[str]`
+- `coords: np.ndarray`
+- `kept: List[int]`
+- `n_caps: int`
+- `hops: int`
+- `notes: List[str]` = `field(default_factory=list)`
+
+#### `Cluster.n_atoms` -> int  (property)
+
+### `cut_cluster(atoms, site: int, hops: int=4, factor: float=BOND_FACTOR) -> Cluster`
+
+The atoms within `hops` bonds of `site`, the dangling ones pruned, the cut bonds capped.
+
+Coordinates are unwrapped from the site outwards, so a cluster that crosses the boundary of
+the cell comes out whole and next to the site.
+
+### `cluster_complex(atoms, site: int, hops: int=4, ligand_charge: Optional[int]=LIGAND_CHARGE, total_charge: int=0, name: str='', origin: Optional[Sequence[float]]=None, flip_z: bool=False)`
+
+The capped cluster as an RDKit metal complex: (molecule or None, cluster, report).
+
+`origin` moves the coordinates so that this point of the structure becomes the origin, and
+`flip_z` turns the cluster over (z to -z), which is how a series of sheets is put in one
+frame with the metal on the +z side.  The molecule is None when the complex cannot be built,
+and the report says why.  `ligand_charge` is tried first when it is given; when the ligand
+has no closed shell at that charge, the others are tried, and `report.ligand_charges` and
+`report.metal_charge` say what was used.
 
 ## cmfqsar.cme
 
