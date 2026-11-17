@@ -4212,6 +4212,47 @@ def fig_rule3(path):
     save(fig, path)
 
 
+def fig_properties(path):
+    """Chapter 11: six models on the clean test of each of the four physical properties, as in
+    tutorial 31. Read from the results of the four benchmarks and of run_property_pairs.py."""
+    import matplotlib.pyplot as plt
+    props = ("logp", "solubility", "boiling", "vapour")
+    bench = {p: json.load(open(os.path.join(RESULTS, p, f"{p}.json"), encoding="utf-8"))
+             for p in props}
+    pairs = json.load(open(os.path.join(RESULTS, "property_pairs", "pairs.json"), encoding="utf-8"))
+    classic = {"logp": "linear regression on clogP", "solubility": "ESOL refitted",
+               "boiling": "Joback refitted", "vapour": "Joback refitted"}
+    clean = {"logp": "huuskonen", "solubility": "delaney", "boiling": "opera_test",
+             "vapour": "opera_test"}
+    shown = [("classic reference", None), ("eight counts", "eight counts"),
+             ("topological kernel", "topological autocorrelation"),
+             ("field kernel", "invariant, cosine"),
+             ("topological kernel + counts", "topological + eight counts"),
+             ("field kernel + counts", "invariant + eight counts")]
+
+    def score(p, model):
+        source = pairs if model == "topological + eight counts" else bench
+        r = source[p]["models"][model][clean[p]]
+        return r["q2_mean"] if "q2_mean" in r else r["r2"]
+
+    fig, ax = plt.subplots(figsize=(WIDTH, 2.9))
+    width = 0.13
+    for k, (label, model) in enumerate(shown):
+        values = [score(p, model or classic[p]) for p in props]
+        ax.bar(np.arange(len(props)) + (k - 2.5) * width, values, width, label=label,
+               color=f"C{k}")
+    ax.set_xticks(range(len(props)))
+    ax.set_xticklabels(["logP\n(Huuskonen set, CV)", "water solubility\n(Delaney set, CV)",
+                        "boiling point\n(OPERA test part)", "vapour pressure\n(OPERA test part)"])
+    ax.set_ylim(0.6, 1.0)
+    ax.set_ylabel("q² or R²")
+    ax.grid(True, axis="y", lw=0.4, alpha=0.5)
+    ax.set_axisbelow(True)
+    ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.22))
+    fig.tight_layout()
+    save(fig, path)
+
+
 FIGURES = {
     "idea.png": fig_idea,
     "fields.png": fig_fields,
@@ -4276,6 +4317,7 @@ FIGURES = {
     "envelope.svg": fig_envelope,
     "scale.svg": fig_scale,
     "sutherland.svg": fig_sutherland,
+    "properties.svg": fig_properties,
 }
 
 
