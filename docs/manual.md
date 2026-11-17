@@ -12036,18 +12036,19 @@ does not read.
 python benchmarks/run_molcrystals.py     # about 2 hours from scratch, minutes with the cache
 ```
 
-## Two physical properties of molecules: logP and water solubility
+## Three physical properties of molecules: logP, water solubility and boiling point
 
 The section *Molecules inside crystals* found that eight counts predict a melting point better
 than any field model. A melting point belongs to the crystal. This section asks the same question
-for two properties that belong mostly to the molecule: the octanol-water partition coefficient
-(logP) and the water solubility (logS, the decimal logarithm of the solubility in mol/L).
+for three properties that belong mostly to the molecule: the octanol-water partition coefficient
+(logP), the water solubility (logS, the decimal logarithm of the solubility in mol/L) and the
+normal boiling point.
 
-Both benchmarks use the program as it stands: the invariant field kernel of the five classical
+The three benchmarks use the program as it stands: the invariant field kernel of the five classical
 fields (`cmf build --kernel autocorrelation`), one conformer per compound (ETKDG, then MMFF94),
 and kernel ridge regression with the smoothing width and the ridge chosen by the evidence on each
 training block. Each property has two sets. Five folds are repeated three times on each set, and
-a third test fits on one set and predicts the other, which it has never seen. A difference of q²
+an external test fits on one set and predicts the other, which it has never seen. A difference of q²
 carries a 95 % paired bootstrap interval over the compounds.
 
 **The references.** The hydrophobic field puts the Wildman-Crippen increments on the atoms, so
@@ -12065,14 +12066,22 @@ if it beats a linear regression on clogP. Three more references ask where a gain
 For solubility the main reference is Delaney's ESOL equation: a linear regression on clogP,
 molecular weight, the number of rotatable bonds and the aromatic proportion (aromatic atoms over
 heavy atoms). Here it is refitted in each fold, with the four descriptors as RDKit computes them.
+For boiling points it is the group contribution method of Joback and Reid (1987): the boiling
+point in K is 198.2 plus one increment for each of 41 groups. Here the increments are refitted in
+each fold, with one more column for the heavy atoms that no group matches. The groups are matched
+with the SMARTS patterns of J. Biggs, as the thermo library gives them.
 
 **The data.** For logP: the Huuskonen set (1,847 compounds) and 2,999 compounds sampled from
 class P of SangsterLogP (CC BY 4.0), which holds the values their authors reported as logP
 (`examples/logp`, made by `benchmarks/prepare_logp.py`). For solubility: the Delaney set (1,114
 compounds) and the 1,002 compounds of AqSolDB (CC0) that were measured more than once with a
 standard deviation below 0.5 log units (`examples/solubility`, made by
-`benchmarks/prepare_solubility.py`). The two sets of each property share no compound. The README
-of each folder lists what was refused and why.
+`benchmarks/prepare_solubility.py`). For boiling points: the 5,412 PHYSPROP boiling points curated
+for the OPERA models (Mansouri et al., *J. Cheminform.* 10 (2018) 10; MIT licence), with the
+paper's split into a training part (4,059) and a test part (1,353), and 1,617 boiling points from
+registration dossiers on the OECD eChemPortal that OPERA added later (`examples/boiling`, made by
+`benchmarks/prepare_boiling.py`). The two sets of each property share no compound. The README of
+each folder lists what was refused and why.
 
 **logP** (`benchmarks/run_logp.py`). The standard deviation of the measured values is 1.49 on the
 Huuskonen set and 1.78 on class P. Each cell gives q², with the RMSE in log units in brackets.
@@ -12141,17 +12150,70 @@ review by Llompart et al. (*Scientific Data* 11 (2024) 303) quotes 0.58 for a gr
 network of 2013 in 10-fold cross-validation, without saying on which set, so the two numbers are
 not strictly comparable.
 
-**What the two benchmarks say together.** For a property of the molecule that is close to
-additive, the field kernel is a good model: it beats refitted increments, a fingerprint and
-counts. The 3D geometry adds about 0.02 in q² on logP and almost nothing on solubility. Before a
-gain is read as an effect of the geometry, compare the field kernel with the field totals and
-with the topological version, as these benchmarks do.
+**Boiling point** (`benchmarks/run_boiling.py`). The standard deviation of the measured values is
+85.3 C on the training part of PHYSPROP and 85.6 C on eChemPortal. Five folds are repeated three
+times on the training part of PHYSPROP and on the eChemPortal set. Two external tests fit on the
+whole training part: one predicts the test part, which is the test of the OPERA paper, and one
+predicts the eChemPortal set. Each cell gives q² (cross-validation) or R² (external test), with
+the RMSE in C in brackets.
+
+| Model | PHYSPROP training part, CV | OPERA test part | eChemPortal, CV | PHYSPROP to eChemPortal |
+|---|---:|---:|---:|---:|
+| invariant field kernel + Joback groups | +0.945 (20.1) | +0.947 (19.3) | +0.514 (59.7) | -0.165 (92.4) |
+| topological autocorrelation + Joback groups | +0.927 (23.1) | +0.928 (22.5) | +0.549 (57.5) | -0.331 (98.7) |
+| invariant field kernel | +0.909 (25.7) | +0.915 (24.5) | +0.448 (63.6) | +0.291 (72.1) |
+| invariant field kernel, not normalised | +0.895 (27.6) | +0.892 (27.6) | +0.393 (66.6) | -0.316 (98.2) |
+| refitted Crippen increments | +0.889 (28.4) | +0.890 (27.8) | +0.447 (63.6) | -0.970 (120.1) |
+| Joback refitted (ridge regression on 41 group counts) | +0.882 (29.3) | +0.881 (29.0) | +0.459 (62.9) | -0.963 (119.9) |
+| eight counts | +0.856 (32.4) | +0.862 (31.2) | +0.517 (59.5) | +0.534 (58.4) |
+| ECFP4 fingerprint | +0.762 (41.6) | +0.785 (38.9) | +0.471 (62.2) | +0.252 (74.0) |
+| topological autocorrelation (distances in bonds) | +0.750 (42.7) | +0.762 (40.9) | +0.477 (61.9) | +0.258 (73.7) |
+| field totals (five sums per molecule) | +0.670 (49.0) | +0.677 (47.7) | +0.377 (67.6) | +0.352 (68.9) |
+| linear regression on molecular weight | +0.303 (71.2) | +0.218 (74.2) | +0.183 (77.4) | -0.039 (87.3) |
+
+| Difference of q² or R² | PHYSPROP training part, CV | OPERA test part | eChemPortal, CV | PHYSPROP to eChemPortal |
+|---|---|---|---|---|
+| invariant minus Joback refitted | +0.030 [+0.020, +0.039] | +0.034 [+0.019, +0.048] | +0.020 [-0.018, +0.060] | +1.253 [+0.942, +1.611] |
+| invariant + Joback groups minus Joback refitted | +0.064 [+0.057, +0.072] | +0.066 [+0.056, +0.077] | +0.073 [+0.048, +0.098] | +0.798 [+0.617, +1.006] |
+| invariant minus topological autocorrelation | +0.161 [+0.146, +0.176] | +0.153 [+0.127, +0.180] | -0.007 [-0.044, +0.032] | +0.033 [-0.029, +0.094] |
+| both + Joback groups: invariant minus topological | +0.019 [+0.014, +0.023] | +0.019 [+0.011, +0.026] | -0.027 [-0.056, +0.004] | +0.166 [+0.089, +0.249] |
+| invariant minus field totals | +0.236 [+0.218, +0.255] | +0.238 [+0.205, +0.275] | +0.095 [+0.050, +0.139] | -0.062 [-0.172, +0.039] |
+| invariant minus eight counts | +0.054 [+0.042, +0.067] | +0.053 [+0.033, +0.074] | -0.053 [-0.100, -0.007] | -0.243 [-0.349, -0.146] |
+
+On the OPERA test part the field kernel with the Joback groups reaches R² 0.947 and RMSE
+19.3 C. The OPERA paper reports R² 0.93 and RMSE 22.08 C on the same test part, with a
+training part of 4,077 compounds (4,059 here, after the refusals). The field kernel alone beats
+the refitted Joback groups and the refitted Crippen increments on the PHYSPROP tests, and the
+group counts add to it. Unlike logP and solubility, the 3D distances matter here: the invariant
+kernel is about 0.15 ahead of the topological one. Once the Joback groups are added to both, the
+difference shrinks to 0.02, so the group counts carry most of what the topological kernel lacks.
+The field totals are far behind, so for a boiling point the five sums do not hold what the
+distances hold. The published Joback equation, with no fitting, gives R² 0.76 on the
+1,268 compounds of the test part whose atoms all fall into its groups.
+
+The eChemPortal set says much less. Every model reaches only about q² 0.5 there, with an RMSE near
+60 C, so most of its spread is not explained by any structure. Its compounds boil about 70 C higher
+than those of PHYSPROP, and additive models extrapolate badly to them: the published Joback
+equation gives R² -2.7, and the refitted Joback and Crippen models fall below zero. A
+Gaussian kernel on eight counts extrapolates best (0.53). The width chosen for the invariant kernel is
+0.05 Å on PHYSPROP.
+
+**What the three benchmarks say together.** For a property of the molecule that is close to
+additive, the field kernel is a good model when the data are clean: it beats refitted
+increments, a fingerprint and counts, and on boiling points it beats a published model on that
+model's own test. What the 3D geometry adds depends on the property: about 0.02 in q² on logP,
+almost nothing on solubility, and about 0.15 on boiling points. Before a gain is read as an
+effect of the geometry, compare the field kernel with the field totals and with the topological
+version, as these benchmarks do. On noisy data, or on compounds outside the range of the
+training set, a kernel on a few counts can be the safer model.
 
 ```bash
 python benchmarks/run_logp.py           # about 100 minutes; the 3D structures are in the repository
 python benchmarks/run_solubility.py     # about 20 minutes
 python benchmarks/prepare_logp.py       # only to rebuild examples/logp from SangsterLogP
 python benchmarks/prepare_solubility.py # only to rebuild examples/solubility
+python benchmarks/run_boiling.py        # about 80 minutes
+python benchmarks/prepare_boiling.py    # only to rebuild examples/boiling from the OPERA data
 ```
 
 ## Designing a crystal: a prototype, a budget and a loop

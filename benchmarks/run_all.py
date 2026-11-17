@@ -989,6 +989,18 @@ def registry() -> List[Benchmark]:
                   minutes="21",
                   report=lambda: _mod("run_solubility").report(),
                   tables=["solubility/table.md"]),
+        Benchmark("boiling",
+                  "measured normal boiling points with the invariant field kernel, against "
+                  "Joback's groups refitted in each fold, the published Joback equation and "
+                  "the references of the logP benchmark, on the PHYSPROP set curated for "
+                  "OPERA (with its test part, to compare with the paper) and 1,617 boiling "
+                  "points from eChemPortal",
+                  "run_boiling.py", "boiling", compute=[[]],
+                  prepare=["prepare_boiling.py (the OPERA data from GitHub, then one 3D "
+                           "structure per compound)"],
+                  minutes="80",
+                  report=lambda: _mod("run_boiling").report(),
+                  tables=["boiling/table.md"]),
         Benchmark("structures",
                   "structures that are not molecules -- crystals, layers, chains and metal "
                   "particles -- written in six file formats and read back: what each format "

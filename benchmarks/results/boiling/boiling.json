@@ -1,0 +1,849 @@
+{
+ "comparisons": [
+  {
+   "against": "Joback refitted",
+   "hi": 0.03927661434889484,
+   "lo": 0.020029482662113594,
+   "mean": 0.029571269784407495,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 0.05980373692078073,
+   "lo": -0.017943303217264835,
+   "mean": 0.020484785162255492,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 0.04846116528024469,
+   "lo": 0.019415423642883407,
+   "mean": 0.03415144973201756,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 1.6110261479918428,
+   "lo": 0.9416106582250935,
+   "mean": 1.2533447561391466,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 0.0716915238550925,
+   "lo": 0.05652314521196,
+   "mean": 0.06401112388300678,
+   "model": "invariant + Joback groups",
+   "test": "physprop_train"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 0.09772137320690472,
+   "lo": 0.0478462515329621,
+   "mean": 0.07272868379196995,
+   "model": "invariant + Joback groups",
+   "test": "echemportal"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 0.07699534666771701,
+   "lo": 0.05571266068955356,
+   "mean": 0.06637480768676907,
+   "model": "invariant + Joback groups",
+   "test": "opera_test"
+  },
+  {
+   "against": "Joback refitted",
+   "hi": 1.0064376442602012,
+   "lo": 0.6166083148450642,
+   "mean": 0.7978407251726625,
+   "model": "invariant + Joback groups",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "linear regression on molecular weight",
+   "hi": 0.6483051853706271,
+   "lo": 0.5703689220301122,
+   "mean": 0.6085135486093984,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "linear regression on molecular weight",
+   "hi": 0.3523049973730644,
+   "lo": 0.2487938739600679,
+   "mean": 0.2987166685232059,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "linear regression on molecular weight",
+   "hi": 0.7903563264786988,
+   "lo": 0.613614494272704,
+   "mean": 0.6965775397723749,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "linear regression on molecular weight",
+   "hi": 0.425283328406636,
+   "lo": 0.24099625625895219,
+   "mean": 0.32973972599780976,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.005641100469942597,
+   "lo": -0.02458762154055597,
+   "mean": -0.007480232533859432,
+   "model": "invariant, not normalised",
+   "test": "physprop_train"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.003752266855135139,
+   "lo": -0.09894251870898223,
+   "mean": -0.04490467009440724,
+   "model": "invariant, not normalised",
+   "test": "echemportal"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.00043545435329799003,
+   "lo": -0.05261674521530208,
+   "mean": -0.023408361691363178,
+   "model": "invariant, not normalised",
+   "test": "opera_test"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": -0.4109404593526901,
+   "lo": -0.815450108991925,
+   "mean": -0.606523740876571,
+   "model": "invariant, not normalised",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.2547671459369795,
+   "lo": 0.21799832072682837,
+   "mean": 0.23595064946522448,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.13900484667793545,
+   "lo": 0.05005526472031203,
+   "mean": 0.09496183437749806,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.275453240481126,
+   "lo": 0.20465126056412308,
+   "mean": 0.23779124623795123,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.03903791304241724,
+   "lo": -0.17226865616880885,
+   "mean": -0.06172963367141748,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.06723195081322456,
+   "lo": 0.042139784642861305,
+   "mean": 0.05374669160774659,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "eight counts",
+   "hi": -0.007369095971490558,
+   "lo": -0.09979496162725496,
+   "mean": -0.052861786546222755,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.0735013751534422,
+   "lo": 0.03310611997630247,
+   "mean": 0.05299358928766329,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "eight counts",
+   "hi": -0.1459096419054109,
+   "lo": -0.3485455059681555,
+   "mean": -0.24347382244521076,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.15984321349950154,
+   "lo": 0.13442064396368814,
+   "mean": 0.14732248143836157,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.040713924142136905,
+   "lo": -0.045536098753742926,
+   "mean": -0.0018483578993176986,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.15617923543230192,
+   "lo": 0.10648106883095788,
+   "mean": 0.12988364465220825,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.14646145820101675,
+   "lo": -0.07339517854671818,
+   "mean": 0.038816493455123835,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.03222708628448519,
+   "lo": 0.012467022036081793,
+   "mean": 0.022322999994631387,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.07431317615576251,
+   "lo": -0.009884637236003049,
+   "mean": 0.03136052122445809,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.039949281203067386,
+   "lo": 0.010218676254524666,
+   "mean": 0.024716682583981076,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 1.6100339634642058,
+   "lo": 0.956723818608673,
+   "mean": 1.2602081477137421,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.17570127199847535,
+   "lo": 0.14609347224212707,
+   "mean": 0.16055012295000892,
+   "model": "invariant, cosine",
+   "test": "physprop_train"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.03221002608394415,
+   "lo": -0.04356971298608349,
+   "mean": -0.006776615712817624,
+   "model": "invariant, cosine",
+   "test": "echemportal"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.18022585594185295,
+   "lo": 0.1274598014234361,
+   "mean": 0.1527447100871302,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.0938140381216918,
+   "lo": -0.028953120852603622,
+   "mean": 0.03270099219444944,
+   "model": "invariant, cosine",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "topological + Joback groups",
+   "hi": 0.022831985987619263,
+   "lo": 0.014445009778376683,
+   "mean": 0.018506121182084057,
+   "model": "invariant + Joback groups",
+   "test": "physprop_train"
+  },
+  {
+   "against": "topological + Joback groups",
+   "hi": 0.0041903105094841546,
+   "lo": -0.056299182332835165,
+   "mean": -0.027001995085492947,
+   "model": "invariant + Joback groups",
+   "test": "echemportal"
+  },
+  {
+   "against": "topological + Joback groups",
+   "hi": 0.026112543476999605,
+   "lo": 0.01136821781101915,
+   "mean": 0.01886381130149939,
+   "model": "invariant + Joback groups",
+   "test": "opera_test"
+  },
+  {
+   "against": "topological + Joback groups",
+   "hi": 0.2485443517497667,
+   "lo": 0.08917808491457527,
+   "mean": 0.16564450254565033,
+   "model": "invariant + Joback groups",
+   "test": "to_echemportal"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": -0.12059429766340307,
+   "lo": -0.1571524006011477,
+   "mean": -0.13822712295537753,
+   "model": "topological autocorrelation",
+   "test": "physprop_train"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.09026146494152594,
+   "lo": -0.013263413029371906,
+   "mean": 0.03813713693727572,
+   "model": "topological autocorrelation",
+   "test": "echemportal"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": -0.10266781960182188,
+   "lo": -0.15645828991197627,
+   "mean": -0.12802802750314912,
+   "model": "topological autocorrelation",
+   "test": "opera_test"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 1.5991939467997454,
+   "lo": 0.9003779584352958,
+   "mean": 1.2275071555192927,
+   "model": "topological autocorrelation",
+   "test": "to_echemportal"
+  }
+ ],
+ "compounds": {
+  "echemportal": 1617,
+  "physprop_test": 1353,
+  "physprop_train": 4059
+ },
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0,
+  8.0
+ ],
+ "crippen_types": 64,
+ "d_max": 12.0,
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0
+ ],
+ "joback_groups": 41,
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4": {
+   "echemportal": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 12,
+     "Tanimoto, ridge 1": 3
+    },
+    "q2_mean": 0.47119273331571027,
+    "q2_sd": 0.004377028653142132,
+    "rmse_mean": 62.24764669674922
+   },
+   "opera_test": {
+    "chosen": {
+     "Tanimoto, ridge 1": 1
+    },
+    "r2": 0.7850400136766984,
+    "rmse": 38.9164143311112
+   },
+   "physprop_train": {
+    "chosen": {
+     "Tanimoto, ridge 1": 15
+    },
+    "q2_mean": 0.7624923003153156,
+    "q2_sd": 0.00103789536599096,
+    "rmse_mean": 41.580470001103194
+   },
+   "to_echemportal": {
+    "chosen": {
+     "Tanimoto, ridge 1": 1
+    },
+    "r2": 0.2517702459280996,
+    "rmse": 74.04494852116625
+   }
+  },
+  "Joback refitted": {
+   "echemportal": {
+    "chosen": {
+     "linear, ridge 1": 15
+    },
+    "q2_mean": 0.45946283946025535,
+    "q2_sd": 0.0033951791205257837,
+    "rmse_mean": 62.93447054113912
+   },
+   "opera_test": {
+    "chosen": {
+     "linear, ridge 0.01": 1
+    },
+    "r2": 0.8807722085968891,
+    "rmse": 28.98296118377194
+   },
+   "physprop_train": {
+    "chosen": {
+     "linear, ridge 0.01": 15
+    },
+    "q2_mean": 0.8819521159204408,
+    "q2_sd": 0.0003824034886509563,
+    "rmse_mean": 29.31433977862112
+   },
+   "to_echemportal": {
+    "chosen": {
+     "linear, ridge 0.01": 1
+    },
+    "r2": -0.9627580167559233,
+    "rmse": 119.92544213955601
+   }
+  },
+  "eight counts": {
+   "echemportal": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.5168909483784633,
+    "q2_sd": 0.014252577767919614,
+    "rmse_mean": 59.49133192186172
+   },
+   "opera_test": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "r2": 0.8619300690412434,
+    "rmse": 31.18915146709932
+   },
+   "physprop_train": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.8556685454290217,
+    "q2_sd": 0.0013685129036161332,
+    "rmse_mean": 32.41359504099338
+   },
+   "to_echemportal": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "r2": 0.5340605618284342,
+    "rmse": 58.430914593979196
+   }
+  },
+  "field totals": {
+   "echemportal": {
+    "chosen": {
+     "width 0.5, ridge 1": 14,
+     "width 4, ridge 0.01": 1
+    },
+    "q2_mean": 0.3766930194871912,
+    "q2_sd": 0.004424859406304144,
+    "rmse_mean": 67.5812471048957
+   },
+   "opera_test": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 1
+    },
+    "r2": 0.6771324120909554,
+    "rmse": 47.69427266792433
+   },
+   "physprop_train": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 14,
+     "width 0.5, ridge 0.1": 1
+    },
+    "q2_mean": 0.6696735410507877,
+    "q2_sd": 0.003864339847064781,
+    "rmse_mean": 49.03609268178976
+   },
+   "to_echemportal": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 1
+    },
+    "r2": 0.3523163730546409,
+    "rmse": 68.89051122560596
+   }
+  },
+  "invariant + Joback groups": {
+   "echemportal": {
+    "chosen": {
+     "sigma 0.01, h 0.3, ridge 0.1": 1,
+     "sigma 0.01, h 1, ridge 0.1": 1,
+     "sigma 0.01, h 1, ridge 1": 1,
+     "sigma 0.02, h 0.3, ridge 0.1": 1,
+     "sigma 0.02, h 1, ridge 1": 1,
+     "sigma 0.02, h 3, ridge 1": 1,
+     "sigma 0.03, h 1, ridge 0.1": 1,
+     "sigma 0.03, h 1, ridge 1": 3,
+     "sigma 0.03, h 3, ridge 1": 1,
+     "sigma 0.05, h 1, ridge 1": 3,
+     "sigma 0.1, h 1, ridge 1": 1
+    },
+    "q2_mean": 0.5139022832147616,
+    "q2_sd": 0.00987245475678655,
+    "rmse_mean": 59.67841487622389
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.05, h 10, ridge 0.1": 1
+    },
+    "r2": 0.9471470162836582,
+    "rmse": 19.29695395021142
+   },
+   "physprop_train": {
+    "chosen": {
+     "sigma 0.05, h 10, ridge 0.1": 15
+    },
+    "q2_mean": 0.9445922278594349,
+    "q2_sd": 0.0004217850486055855,
+    "rmse_mean": 20.08324007924295
+   },
+   "to_echemportal": {
+    "chosen": {
+     "sigma 0.05, h 10, ridge 0.1": 1
+    },
+    "r2": -0.16491729158326085,
+    "rmse": 92.39011214342074
+   }
+  },
+  "invariant, cosine": {
+   "echemportal": {
+    "chosen": {
+     "sigma 0.01, ridge 0.1": 3,
+     "sigma 0.02, ridge 0.1": 3,
+     "sigma 0.03, ridge 0.1": 5,
+     "sigma 0.05, ridge 0.1": 3,
+     "sigma 0.1, ridge 0.1": 1
+    },
+    "q2_mean": 0.44778334693459715,
+    "q2_sd": 0.001574524232476634,
+    "rmse_mean": 63.611004878835956
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 1
+    },
+    "r2": 0.9149236583289067,
+    "rmse": 24.48264915433604
+   },
+   "physprop_train": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 15
+    },
+    "q2_mean": 0.909480052605104,
+    "q2_sd": 0.00048434397202260144,
+    "rmse_mean": 25.66978184083922
+   },
+   "to_echemportal": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 1
+    },
+    "r2": 0.29058673938322344,
+    "rmse": 72.09872745155094
+   }
+  },
+  "invariant, not normalised": {
+   "echemportal": {
+    "chosen": {
+     "sigma 0.03, ridge 0.1": 13,
+     "sigma 0.05, ridge 0.1": 2
+    },
+    "q2_mean": 0.39341713534322365,
+    "q2_sd": 0.03484280876841207,
+    "rmse_mean": 66.64186145216566
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.03, ridge 0.01": 1
+    },
+    "r2": 0.8915152966375435,
+    "rmse": 27.646379073012614
+   },
+   "physprop_train": {
+    "chosen": {
+     "sigma 0.03, ridge 0.01": 14,
+     "sigma 0.05, ridge 0.01": 1
+    },
+    "q2_mean": 0.8951955939036149,
+    "q2_sd": 0.005559165044151227,
+    "rmse_mean": 27.611547662672184
+   },
+   "to_echemportal": {
+    "chosen": {
+     "sigma 0.03, ridge 0.01": 1
+    },
+    "r2": -0.3159370014933476,
+    "rmse": 98.19638447295854
+   }
+  },
+  "linear regression on molecular weight": {
+   "echemportal": {
+    "chosen": {
+     "linear, ridge 10": 15
+    },
+    "q2_mean": 0.1829536770593462,
+    "q2_sd": 0.0004527246546132,
+    "rmse_mean": 77.37510860240752
+   },
+   "opera_test": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": 0.21834611855653174,
+    "rmse": 74.20979810435341
+   },
+   "physprop_train": {
+    "chosen": {
+     "linear, ridge 1": 15
+    },
+    "q2_mean": 0.30317393380516083,
+    "q2_sd": 0.00018583242988215795,
+    "rmse_mean": 71.22193572329502
+   },
+   "to_echemportal": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": -0.03915298661458633,
+    "rmse": 87.26049925108538
+   }
+  },
+  "refitted Crippen increments": {
+   "echemportal": {
+    "chosen": {
+     "linear, ridge 0.1": 15
+    },
+    "q2_mean": 0.44744615248014896,
+    "q2_sd": 0.001808861695019034,
+    "rmse_mean": 63.63040240546268
+   },
+   "opera_test": {
+    "chosen": {
+     "linear, ridge 0.001": 1
+    },
+    "r2": 0.8902069757449256,
+    "rmse": 27.81258653695365
+   },
+   "physprop_train": {
+    "chosen": {
+     "linear, ridge 0.001": 15
+    },
+    "q2_mean": 0.8889264831742555,
+    "q2_sd": 0.0003731714240174002,
+    "rmse_mean": 28.435196333341462
+   },
+   "to_echemportal": {
+    "chosen": {
+     "linear, ridge 0.001": 1
+    },
+    "r2": -0.9696214083305188,
+    "rmse": 120.13493739204077
+   }
+  },
+  "topological + Joback groups": {
+   "echemportal": {
+    "chosen": {
+     "up to 20 bonds, h 0.1, ridge 0.1": 2,
+     "up to 20 bonds, h 1, ridge 1": 1,
+     "up to 30 bonds, h 0.1, ridge 0.1": 2,
+     "up to 30 bonds, h 0.3, ridge 0.1": 1,
+     "up to 30 bonds, h 1, ridge 1": 1,
+     "up to 40 bonds, h 0.1, ridge 0.1": 5,
+     "up to 40 bonds, h 0.3, ridge 0.1": 2,
+     "up to 40 bonds, h 1, ridge 1": 1
+    },
+    "q2_mean": 0.5490130524223518,
+    "q2_sd": 0.0018812604778012264,
+    "rmse_mean": 57.48558972471691
+   },
+   "opera_test": {
+    "chosen": {
+     "up to 40 bonds, h 10, ridge 0.1": 1
+    },
+    "r2": 0.9282832049821588,
+    "rmse": 22.478350672610368
+   },
+   "physprop_train": {
+    "chosen": {
+     "up to 40 bonds, h 10, ridge 0.1": 15
+    },
+    "q2_mean": 0.9268596044104741,
+    "q2_sd": 0.00042052965492559655,
+    "rmse_mean": 23.074295197768866
+   },
+   "to_echemportal": {
+    "chosen": {
+     "up to 40 bonds, h 10, ridge 0.1": 1
+    },
+    "r2": -0.3305617941289112,
+    "rmse": 98.74053427427872
+   }
+  },
+  "topological autocorrelation": {
+   "echemportal": {
+    "chosen": {
+     "up to 20 bonds, ridge 0.1": 3,
+     "up to 30 bonds, ridge 0.1": 4,
+     "up to 40 bonds, ridge 0.1": 8
+    },
+    "q2_mean": 0.4774309289649856,
+    "q2_sd": 0.007628110360122981,
+    "rmse_mean": 61.878287651077905
+   },
+   "opera_test": {
+    "chosen": {
+     "up to 40 bonds, ridge 0.1": 1
+    },
+    "r2": 0.7621789482417765,
+    "rmse": 40.933525729648935
+   },
+   "physprop_train": {
+    "chosen": {
+     "up to 40 bonds, ridge 0.1": 15
+    },
+    "q2_mean": 0.7499283463309084,
+    "q2_sd": 0.0002477466627263444,
+    "rmse_mean": 42.66618014432294
+   },
+   "to_echemportal": {
+    "chosen": {
+     "up to 40 bonds, ridge 0.1": 1
+    },
+    "r2": 0.257885747188774,
+    "rmse": 73.74173213882354
+   }
+  }
+ },
+ "published_joback": {
+  "echemportal": {
+   "covered": 1324,
+   "of": 1617,
+   "r2": -2.6827010177077475,
+   "rmse": 161.27896214372538
+  },
+  "physprop_test": {
+   "covered": 1268,
+   "of": 1353,
+   "r2": 0.7604482920097165,
+   "rmse": 40.93327183172184
+  },
+  "physprop_train": {
+   "covered": 3761,
+   "of": 4059,
+   "r2": 0.7376776815476226,
+   "rmse": 43.90129349845068
+  }
+ },
+ "quick": 0,
+ "repeats": 3,
+ "seconds": 4567.3,
+ "sigmas": [
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  4.0,
+  6.0
+ ],
+ "topo_max": [
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "y": {
+  "echemportal": {
+   "max": 574.63,
+   "mean": 260.512645983646,
+   "min": -191.56,
+   "sd": 85.6008246114398
+  },
+  "physprop_test": {
+   "max": 512.0,
+   "mean": 187.7371766444937,
+   "min": -128.0,
+   "sd": 83.9371087454708
+  },
+  "physprop_train": {
+   "max": 548.0,
+   "mean": 189.21935661492978,
+   "min": -103.7,
+   "sd": 85.32014462728137
+  }
+ }
+}

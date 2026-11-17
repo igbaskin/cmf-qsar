@@ -1,0 +1,50 @@
+{
+ "source": "OPERA data (Mansouri et al., J. Cheminform. 10 (2018) 10), github.com/kmansouri/OPERA, MIT licence",
+ "url": "https://github.com/kmansouri/OPERA/raw/master/OPERA_Data.zip",
+ "archive_md5": "9dcab9aa52bf2b5abf027889afd2dfda",
+ "files_md5": {
+  "BP_QR.sdf": "7926851f24d5ad9db8d1575803aee56b",
+  "BP_2.9_update_checked_targeted.xlsx": "c341a72bd363bb6c3281182c5d161296"
+ },
+ "physprop": {
+  "read": 5434,
+  "refused": {
+   "fewer than two heavy atoms": 1,
+   "molecular weight above 700": 2,
+   "an element outside the organic set": 18
+  },
+  "duplicate_skeletons": 1,
+  "kept_before_embedding": 5412,
+  "train": 4059,
+  "test": 1353,
+  "embedded": 5412,
+  "embedding_failed": []
+ },
+ "echemportal": {
+  "read": 2426,
+  "refused": {
+   "no eChemPortal value among the sources": 699,
+   "duplicate skeleton": 30,
+   "molecular weight above 700": 15,
+   "flagged or left for a manual review by the curators": 6,
+   "a zwitterion": 3,
+   "a net charge": 50,
+   "RDKit cannot read the SMILES": 1
+  },
+  "in_physprop": 4,
+  "curation_status_of_echemportal_rows": {
+   "retained_original_not_externally_checked": 1720,
+   "confirmed_by_external_non_chemicalbook_exact_500": 1,
+   "multi_cas_pressure_not_comparable_manual_review": 1,
+   "manual_review_external_difference_no_chemicalbook_value": 2,
+   "manual_review_major_discrepancy_no_confident_finite_BP": 1,
+   "flag_no_clean_finite_BP_decomposition_or_NA": 1,
+   "manual_review_external_difference_predicted": 1
+  },
+  "kept_before_embedding": 1618,
+  "embedded": 1617,
+  "embedding_failed": [
+   "echem-DTXSID20951444"
+  ]
+ }
+}
