@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 136 modules, 265 classes with 858 public methods, and 1419 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 137 modules, 266 classes with 860 public methods, and 1430 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -167,6 +167,7 @@ for.
 | [cmfqsar.gui.app](#cmfqsarguiapp) | Application entry point. |
 | [cmfqsar.gui.copattern_panel](#cmfqsarguicopattern_panel) | The co-pattern chart: weight against distance for one pair of field types (plan item NT9). |
 | [cmfqsar.gui.crystal_window](#cmfqsarguicrystal_window) | A periodic structure as the sample, in the application (plan item M13). |
+| [cmfqsar.gui.instanced](#cmfqsarguiinstanced) | Drawing many copies of one shape at once, for structures of ten thousand atoms (plan item NT8). |
 | [cmfqsar.gui.main_window](#cmfqsarguimain_window) | Main window of the CMF 3D-QSAR desktop application. |
 | [cmfqsar.gui.panels](#cmfqsarguipanels) | Dock panels of the CMF application: data set table, model settings, results, viewer controls. |
 | [cmfqsar.gui.surface_view](#cmfqsarguisurface_view) | A surface behind the molecules, in the application (plan item EC10). |
@@ -22730,6 +22731,118 @@ per-site split does, so both are offered and the window shows whichever the user
 
 The sites of one cell that move its prediction most, largest magnitude first.
 
+## cmfqsar.gui.instanced
+
+Source: `cmfqsar/gui/instanced.py`
+
+Drawing many copies of one shape at once, for structures of ten thousand atoms (plan item NT8).
+
+The viewer used to draw N atoms as one mesh of N spheres.  Two things made that slow for a large
+structure, and only the second one was visible in the code:
+
+* the mesh holds every vertex of every sphere, so it grows with N times the size of one sphere;
+* pyqtgraph computes the normal of each vertex (the direction its shading is taken from) in a
+  Python loop over the vertices, once, on the first frame.  Four thousand atoms took half a
+  minute before anything appeared.
+
+Two repairs follow.  `vertex_normals` computes the same normals with array operations, and
+`mesh_item` hands them to pyqtgraph, so every mesh the viewer draws (isosurfaces, arrows,
+molecules) skips the loop.  `InstancedMeshItem` goes further for the shapes that repeat:
+one sphere, or one cylinder, is sent to the graphics card once with its normals, and every atom
+or bond is a row of 16 numbers -- where the copy stands, the three columns of the matrix that
+scales and turns it, and its colour.  The card draws all copies in one call
+(`glDrawElementsInstanced`, the OpenGL name for this "instanced drawing").
+
+A card or driver without instanced drawing (it needs OpenGL 3.3) gets the same picture another
+way: the item builds the merged mesh itself, with `expand_instances`, and draws that.  The
+two ways give the same vertices, which the tests check.
+
+### `class InstancedMeshItem(verts, normals, faces, instances, glOptions='opaque', parentItem=None)  — bases: GLGraphicsItem`
+
+One base mesh drawn once per instance row, in one call to the graphics card.
+
+`verts`, `normals` and `faces` are the base shape (`unit_sphere`,
+`unit_cylinder`); `instances` are rows from `sphere_instances` or
+`cylinder_instances`.  `mode` says how the last frame was drawn: "instanced",
+"merged" (the fallback) or "" before the first frame.
+
+#### `InstancedMeshItem.n_instances` -> int  (property)
+
+#### `InstancedMeshItem.paint()`
+
+### `vertex_normals(verts: np.ndarray, faces: np.ndarray) -> np.ndarray`
+
+The normal of each vertex: the sum of the normals of the faces around it, made unit.
+
+This is what `pyqtgraph`'s `MeshData.vertexNormals` returns -- the face normals are not
+made unit before the sum, so a large face counts more -- but computed with array operations
+instead of a Python loop over the vertices.  A vertex that belongs to no face, or whose
+faces cancel, gets the zero vector, as there.
+
+### `mesh_item(verts: np.ndarray, faces: np.ndarray, colors=None, color=None, smooth: bool=True, **kwargs) -> GLMeshItem`
+
+A `GLMeshItem` whose vertex normals are computed here, not by pyqtgraph's loop.
+
+`colors` are per-vertex RGBA rows; `color` is one RGBA for the whole mesh.  The other
+keyword arguments go to `GLMeshItem` unchanged.
+
+### `unit_sphere(rows: int=10, cols: int=18) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(vertices, normals, faces) of a sphere of radius 1 at the origin.
+
+The normals are taken from the faces (`vertex_normals`), as pyqtgraph takes them.
+That is not only for speed: their sign follows the order of the corners of each face, and
+pyqtgraph's spheres are wound so that it points *into* the sphere.  The lighting of the
+'shaded' program is set up for that sign, so a sphere with normals pointing out is lit from
+behind and looks dark.  Taking them the same way keeps the old picture.
+
+### `unit_cylinder(cols: int=10) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(vertices, normals, faces) of an open cylinder of radius 1 from z = 0 to z = 1.
+
+The normals are taken from the faces, as for `unit_sphere`.  The ends are open, as
+the sticks of the viewer have always been: a sphere or the next stick covers them.
+
+### `sphere_detail(n: int) -> Tuple[int, int]`
+
+The (rows, columns) of the sphere used for `n` copies; see `SPHERE_DETAIL`.
+
+### `sphere_instances(centers: np.ndarray, radii: Sequence[float], colors, alpha: Optional[float]=None, min_radius: float=0.0001) -> np.ndarray`
+
+One row of `INSTANCE_WIDTH` numbers per sphere: centre, radius times the unit matrix,
+colour.  A sphere of radius `min_radius` or less is left out, as the viewer always did.
+
+### `cylinder_instances(starts: np.ndarray, ends: np.ndarray, radius, colors, alpha: Optional[float]=None, min_length: float=1e-06) -> np.ndarray`
+
+One row per cylinder from `starts` to `ends`: start, the turned and scaled matrix, colour.
+
+The matrix maps the unit cylinder (radius 1, z from 0 to 1) onto the stick: its first two
+columns are the radius times two directions across the stick, its third the vector from the
+start to the end.  A stick shorter than `min_length` is left out.
+
+### `instance_matrices(instances: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(offsets, matrices, colours) of instance rows; matrices are (n, 3, 3).
+
+### `expand_instances(verts: np.ndarray, normals: np.ndarray, faces: np.ndarray, instances: np.ndarray)`
+
+The merged mesh the instances stand for: (vertices, normals, faces, colours).
+
+This is what the graphics card computes for each copy, done on the processor: the vertex is
+`M v + offset` and the normal is `M (n / s)` made unit, where `s` holds the squared
+lengths of the columns of `M`.  For a matrix whose columns are at right angles (a sphere,
+a stick) that is the inverse transpose, which is the matrix that keeps a normal at right
+angles to its surface.  It is the fallback of `InstancedMeshItem` and the reference
+the vertex shader is tested against.
+
+### `spheres_item(centers, radii, colors, alpha: Optional[float]=None, glOptions: str='opaque', detail: Optional[Tuple[int, int]]=None)`
+
+An `InstancedMeshItem` of spheres, or None when no sphere is left to draw.
+
+### `sticks_item(starts, ends, radius, colors, alpha: Optional[float]=None, glOptions: str='opaque', cols: int=8)`
+
+An `InstancedMeshItem` of open cylinders, or None when none is left to draw.
+
 ## cmfqsar.gui.main_window
 
 Source: `cmfqsar/gui/main_window.py`
@@ -23549,6 +23662,13 @@ One item per label, so this is meant for the tens of labels of a molecule or a b
 site rather than for a whole structure.
 
 #### `Viewer3D.add_spheres(centers: np.ndarray, radii: Sequence[float], colors, group: str, alpha: float=0.55) -> None`
+
+One sphere per centre, all drawn as copies of one sphere in one call.
+
+This is the instanced drawing of plan item NT8: the graphics card holds one sphere and a
+row of 16 numbers per copy, so ten thousand atoms cost ten thousand rows rather than ten
+thousand meshes (`cmfqsar.gui.instanced`).  The sphere is coarser above two thousand
+copies (`SPHERE_DETAIL`).  A sphere of radius 1e-4 A or less is left out.
 
 #### `Viewer3D.add_arrows(points: np.ndarray, vectors: np.ndarray, group: str, scale: float=1.0, color=(0.95, 0.85, 0.2), alpha: float=0.95, shaft_radius: float=0.07, head_radius: float=0.2, head_fraction: float=0.35, min_length: float=0.15) -> None`
 
