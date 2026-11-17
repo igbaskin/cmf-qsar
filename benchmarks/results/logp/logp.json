@@ -311,6 +311,102 @@
    "mean": 0.039883927140615394,
    "model": "topological autocorrelation",
    "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.008246854899473651,
+   "lo": -0.00017983641305974185,
+   "mean": 0.004144822927807157,
+   "model": "invariant + topological",
+   "test": "huuskonen"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.01911659727515853,
+   "lo": 0.0072519386142194,
+   "mean": 0.013514064578370899,
+   "model": "invariant + topological",
+   "test": "sangster_p"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.014031613006325206,
+   "lo": -0.00120161905650083,
+   "mean": 0.006792643753418481,
+   "model": "invariant + topological",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.029206864445668494,
+   "lo": 0.013978551710654647,
+   "mean": 0.021289216357092355,
+   "model": "invariant + eight counts",
+   "test": "huuskonen"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.04422635844700233,
+   "lo": 0.02617530516313464,
+   "mean": 0.035154419466425946,
+   "model": "invariant + eight counts",
+   "test": "sangster_p"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.04824950008869927,
+   "lo": 0.029279075780554494,
+   "mean": 0.03878567740708183,
+   "model": "invariant + eight counts",
+   "test": "external"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.11692632064570423,
+   "lo": 0.0887881616468882,
+   "mean": 0.10245245268087311,
+   "model": "invariant + eight counts",
+   "test": "huuskonen"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.14860053369059456,
+   "lo": 0.11707767114481422,
+   "mean": 0.13285321249086723,
+   "model": "invariant + eight counts",
+   "test": "sangster_p"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.1764331206907497,
+   "lo": 0.13814549051244734,
+   "mean": 0.15691265331651172,
+   "model": "invariant + eight counts",
+   "test": "external"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": 0.0005146919285001047,
+   "lo": -0.01467708819031068,
+   "mean": -0.006944918501630926,
+   "model": "invariant + clogP",
+   "test": "huuskonen"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": -0.008746639647980932,
+   "lo": -0.031133683019087234,
+   "mean": -0.02032077659779774,
+   "model": "invariant + clogP",
+   "test": "sangster_p"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": -0.001780630437347314,
+   "lo": -0.021511146301599747,
+   "mean": -0.011620949885505216,
+   "model": "invariant + clogP",
+   "test": "external"
   }
  ],
  "compounds": {
@@ -460,6 +556,36 @@
     "rmse_mean": 0.8009750603179201
    }
   },
+  "invariant + eight counts": {
+   "external": {
+    "chosen": {
+     "sigma 0.05, width 0.5, h 3, ridge 1": 1
+    },
+    "r2": 0.8414174665847922,
+    "rmse": 0.5950210596894465
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.03, width 0.5, h 3, ridge 0.1": 5,
+     "sigma 0.05, width 0.5, h 1, ridge 0.1": 5,
+     "sigma 0.05, width 0.5, h 3, ridge 0.1": 2,
+     "sigma 0.1, width 0.5, h 1, ridge 0.1": 3
+    },
+    "q2_mean": 0.9059578122220175,
+    "q2_sd": 0.002253492767498167,
+    "rmse_mean": 0.4581788848192891
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+     "sigma 0.05, width 0.5, h 3, ridge 1": 11,
+     "sigma 0.05, width 1, h 10, ridge 1": 2
+    },
+    "q2_mean": 0.8103087482144967,
+    "q2_sd": 0.003397321287752351,
+    "rmse_mean": 0.7751652933772754
+   }
+  },
   "invariant + five descriptors": {
    "external": {
     "chosen": {
@@ -487,6 +613,38 @@
     "q2_mean": 0.7880183887291903,
     "q2_sd": 0.0019543017586699674,
     "rmse_mean": 0.8194692566692888
+   }
+  },
+  "invariant + topological": {
+   "external": {
+    "chosen": {
+     "sigma 0.05, up to 30 bonds, h 3, ridge 1": 1
+    },
+    "r2": 0.8094244329311289,
+    "rmse": 0.6522863218034735
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.03, up to 20 bonds, h 1, ridge 0.1": 5,
+     "sigma 0.05, up to 20 bonds, h 1, ridge 0.1": 7,
+     "sigma 0.1, up to 20 bonds, h 1, ridge 0.1": 3
+    },
+    "q2_mean": 0.8881078582449294,
+    "q2_sd": 0.002747828529058473,
+    "rmse_mean": 0.49977181407660765
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.01, up to 20 bonds, h 3, ridge 1": 1,
+     "sigma 0.01, up to 30 bonds, h 3, ridge 1": 1,
+     "sigma 0.05, up to 20 bonds, h 1, ridge 1": 1,
+     "sigma 0.05, up to 20 bonds, h 3, ridge 1": 3,
+     "sigma 0.05, up to 30 bonds, h 3, ridge 1": 8,
+     "sigma 0.05, up to 40 bonds, h 3, ridge 1": 1
+    },
+    "q2_mean": 0.7953080317016067,
+    "q2_sd": 0.0009451571426289084,
+    "rmse_mean": 0.8052623916097978
    }
   },
   "invariant, cosine": {
@@ -678,7 +836,7 @@
  },
  "quick": 0,
  "repeats": 3,
- "seconds": 3723.1,
+ "seconds": 6092.6,
  "sigmas": [
   0.01,
   0.02,

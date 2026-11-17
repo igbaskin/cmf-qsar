@@ -1,0 +1,65 @@
+{
+ "source": "OPERA data (Mansouri et al., J. Cheminform. 10 (2018) 10), github.com/kmansouri/OPERA, MIT licence",
+ "url": "https://github.com/kmansouri/OPERA/raw/master/OPERA_Data.zip",
+ "archive_md5": "9dcab9aa52bf2b5abf027889afd2dfda",
+ "files_md5": {
+  "VP_QR.sdf": "44b1af96469196937cf74ed3a3a003a3",
+  "VP_2.9_update_checked_chemicalbook_log10mmHg.xlsx": "f2c17e459977591b2bd6bb044ba09695"
+ },
+ "unit": "log10 mmHg",
+ "physprop": {
+  "read": 2819,
+  "refused": {
+   "fewer than two heavy atoms": 1,
+   "an element outside the organic set": 9,
+   "a net charge": 2,
+   "molecular weight above 700": 3,
+   "in neither part of the OPERA split, and no temperature recorded": 108,
+   "a zwitterion": 1
+  },
+  "duplicate_skeletons": 2,
+  "temperatures_C": {
+   "25": 2355,
+   "20": 283,
+   "30": 10,
+   "23": 9,
+   "24": 7,
+   "21": 4,
+   "26": 4,
+   "31": 1,
+   "22": 7,
+   "29": 4,
+   "15": 2,
+   "19": 1,
+   "27": 5,
+   "28": 1
+  },
+  "kept_before_embedding": 2693,
+  "train": 2016,
+  "test": 677,
+  "embedded": 2693,
+  "embedding_failed": []
+ },
+ "echemportal": {
+  "read": 3945,
+  "refused": {
+   "no eChemPortal value among the sources": 793,
+   "molecular weight above 700": 65,
+   "duplicate skeleton": 97,
+   "a zwitterion": 18,
+   "a net charge": 77,
+   "RDKit cannot read the SMILES": 3,
+   "curation status chemicalbook_practical_zero_no_finite_log": 1,
+   "curation status chemicalbook_no_vp_found_high_implausibility_flag": 1,
+   "curation status chemicalbook_multi_cas_values_differ;chemicalbook_numeric_correction": 1,
+   "curation status chemicalbook_range_correction": 1,
+   "curation status chemicalbook_numeric_correction_temperature_50C": 1
+  },
+  "in_physprop": 2,
+  "kept_before_embedding": 2885,
+  "embedded": 2884,
+  "embedding_failed": [
+   "echem-DTXSID9061835"
+  ]
+ }
+}

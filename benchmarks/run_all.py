@@ -974,7 +974,7 @@ def registry() -> List[Benchmark]:
                   "run_logp.py", "logp", compute=[[]],
                   prepare=["prepare_logp.py (SangsterLogP from Zenodo, then one 3D "
                            "structure per compound)"],
-                  minutes="100",
+                  minutes="102",
                   report=lambda: _mod("run_logp").report(),
                   tables=["logp/table.md"]),
         Benchmark("solubility",
@@ -998,9 +998,20 @@ def registry() -> List[Benchmark]:
                   "run_boiling.py", "boiling", compute=[[]],
                   prepare=["prepare_boiling.py (the OPERA data from GitHub, then one 3D "
                            "structure per compound)"],
-                  minutes="80",
+                  minutes="90",
                   report=lambda: _mod("run_boiling").report(),
                   tables=["boiling/table.md"]),
+        Benchmark("vapour",
+                  "measured vapour pressures near 25 C with the invariant field kernel, against "
+                  "Joback's groups refitted in each fold and the references of the boiling "
+                  "point benchmark, on the PHYSPROP set curated for OPERA (with its test part, "
+                  "to compare with the paper) and 2,884 vapour pressures from eChemPortal",
+                  "run_vapour.py", "vapour", compute=[[]],
+                  prepare=["prepare_vapour.py (the OPERA data from GitHub, then one 3D "
+                           "structure per compound)"],
+                  minutes="46",
+                  report=lambda: _mod("run_vapour").report(),
+                  tables=["vapour/table.md"]),
         Benchmark("structures",
                   "structures that are not molecules -- crystals, layers, chains and metal "
                   "particles -- written in six file formats and read back: what each format "

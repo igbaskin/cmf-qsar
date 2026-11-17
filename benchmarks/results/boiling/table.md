@@ -13,6 +13,8 @@ Measured normal boiling points, C: the PHYSPROP set curated for OPERA, its train
 | refitted Crippen increments | +0.889 (28.4) | +0.447 (63.6) | +0.890 (27.8) | -0.970 (120.1) |
 | topological autocorrelation | +0.750 (42.7) | +0.477 (61.9) | +0.762 (40.9) | +0.258 (73.7) |
 | topological + Joback groups | +0.927 (23.1) | +0.549 (57.5) | +0.928 (22.5) | -0.331 (98.7) |
+| invariant + topological | +0.921 (23.9) | +0.531 (58.6) | +0.927 (22.7) | +0.332 (70.0) |
+| invariant + eight counts | +0.943 (20.4) | +0.543 (57.9) | +0.957 (17.4) | +0.569 (56.2) |
 
 | Published Joback equation, no fitting | Compounds covered | R² | RMSE, C |
 |---|---:|---:|---:|
@@ -66,3 +68,19 @@ Measured normal boiling points, C: the PHYSPROP set curated for OPERA, its train
 | topological autocorrelation minus refitted Crippen increments | eChemPortal, CV | +0.038 [-0.013, +0.090] |
 | topological autocorrelation minus refitted Crippen increments | PHYSPROP test part (the OPERA test) | -0.128 [-0.156, -0.103] |
 | topological autocorrelation minus refitted Crippen increments | PHYSPROP training part to eChemPortal | +1.228 [+0.900, +1.599] |
+| invariant + topological minus invariant, cosine | PHYSPROP training part, CV | +0.012 [+0.009, +0.015] |
+| invariant + topological minus invariant, cosine | eChemPortal, CV | +0.074 [+0.053, +0.097] |
+| invariant + topological minus invariant, cosine | PHYSPROP test part (the OPERA test) | +0.012 [+0.003, +0.019] |
+| invariant + topological minus invariant, cosine | PHYSPROP training part to eChemPortal | +0.042 [+0.006, +0.078] |
+| invariant + eight counts minus invariant, cosine | PHYSPROP training part, CV | +0.034 [+0.029, +0.039] |
+| invariant + eight counts minus invariant, cosine | eChemPortal, CV | +0.090 [+0.053, +0.127] |
+| invariant + eight counts minus invariant, cosine | PHYSPROP test part (the OPERA test) | +0.042 [+0.032, +0.053] |
+| invariant + eight counts minus invariant, cosine | PHYSPROP training part to eChemPortal | +0.279 [+0.206, +0.361] |
+| invariant + eight counts minus eight counts | PHYSPROP training part, CV | +0.087 [+0.077, +0.099] |
+| invariant + eight counts minus eight counts | eChemPortal, CV | +0.037 [+0.009, +0.064] |
+| invariant + eight counts minus eight counts | PHYSPROP test part (the OPERA test) | +0.095 [+0.080, +0.113] |
+| invariant + eight counts minus eight counts | PHYSPROP training part to eChemPortal | +0.035 [-0.004, +0.074] |
+| invariant + Joback groups minus invariant + eight counts | PHYSPROP training part, CV | +0.001 [-0.004, +0.006] |
+| invariant + Joback groups minus invariant + eight counts | eChemPortal, CV | -0.038 [-0.075, +0.001] |
+| invariant + Joback groups minus invariant + eight counts | PHYSPROP test part (the OPERA test) | -0.010 [-0.016, -0.003] |
+| invariant + Joback groups minus invariant + eight counts | PHYSPROP training part to eChemPortal | -0.734 [-0.946, -0.543] |

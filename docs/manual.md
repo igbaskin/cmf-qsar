@@ -12036,15 +12036,16 @@ does not read.
 python benchmarks/run_molcrystals.py     # about 2 hours from scratch, minutes with the cache
 ```
 
-## Three physical properties of molecules: logP, water solubility and boiling point
+## Four physical properties of molecules: logP, water solubility, boiling point and vapour pressure
 
 The section *Molecules inside crystals* found that eight counts predict a melting point better
 than any field model. A melting point belongs to the crystal. This section asks the same question
-for three properties that belong mostly to the molecule: the octanol-water partition coefficient
-(logP), the water solubility (logS, the decimal logarithm of the solubility in mol/L) and the
-normal boiling point.
+for four properties that belong mostly to the molecule: the octanol-water partition coefficient
+(logP), the water solubility (logS, the decimal logarithm of the solubility in mol/L), the
+normal boiling point and the vapour pressure near 25 C (logVP, the decimal logarithm of the
+vapour pressure in mmHg).
 
-The three benchmarks use the program as it stands: the invariant field kernel of the five classical
+The four benchmarks use the program as it stands: the invariant field kernel of the five classical
 fields (`cmf build --kernel autocorrelation`), one conformer per compound (ETKDG, then MMFF94),
 and kernel ridge regression with the smoothing width and the ridge chosen by the evidence on each
 training block. Each property has two sets. Five folds are repeated three times on each set, and
@@ -12062,6 +12063,17 @@ if it beats a linear regression on clogP. Three more references ask where a gain
   tells whether the gain comes from the 3D geometry.
 * *Field totals*: the five sums of the field weights of a molecule (total charge, bulk, clogP,
   acceptor and donor strength), with no distances.
+* *Eight counts*: a Gaussian kernel on eight simple descriptors of a molecule, as in the section
+  *Molecules inside crystals*: the molecular weight, the numbers of hydrogen-bond donors,
+  acceptors, rotatable bonds, rings and aromatic rings, the polar surface area and the fraction
+  of sp3 carbons.
+
+Two more models add a second kernel to the field kernel: the cosine field kernel plus h times
+the topological kernel, and plus h times the Gaussian kernel on the eight counts. In each fold the
+field width, the largest bond distance and the count width are the ones the single models chose
+on the same training block; only the weight h and the ridge are chosen for the sum. The
+combinations with the classic descriptors of each property (clogP, the ESOL descriptors, the
+Joback groups) add them in the same way, as a linear kernel.
 
 For solubility the main reference is Delaney's ESOL equation: a linear regression on clogP,
 molecular weight, the number of rotatable bonds and the aromatic proportion (aromatic atoms over
@@ -12069,7 +12081,9 @@ heavy atoms). Here it is refitted in each fold, with the four descriptors as RDK
 For boiling points it is the group contribution method of Joback and Reid (1987): the boiling
 point in K is 198.2 plus one increment for each of 41 groups. Here the increments are refitted in
 each fold, with one more column for the heavy atoms that no group matches. The groups are matched
-with the SMARTS patterns of J. Biggs, as the thermo library gives them.
+with the SMARTS patterns of J. Biggs, as the thermo library gives them. Joback's method has no
+equation for the vapour pressure, so for vapour pressures the same 41 group counts are only
+refitted.
 
 **The data.** For logP: the Huuskonen set (1,847 compounds) and 2,999 compounds sampled from
 class P of SangsterLogP (CC BY 4.0), which holds the values their authors reported as logP
@@ -12080,7 +12094,10 @@ standard deviation below 0.5 log units (`examples/solubility`, made by
 for the OPERA models (Mansouri et al., *J. Cheminform.* 10 (2018) 10; MIT licence), with the
 paper's split into a training part (4,059) and a test part (1,353), and 1,617 boiling points from
 registration dossiers on the OECD eChemPortal that OPERA added later (`examples/boiling`, made by
-`benchmarks/prepare_boiling.py`). The two sets of each property share no compound. The README of
+`benchmarks/prepare_boiling.py`). For vapour pressures: the 2,693 PHYSPROP vapour pressures of
+the same OPERA data, with the paper's training part (2,016) and test part (677), and 2,884 values
+from eChemPortal (`examples/vapour`, made by `benchmarks/prepare_vapour.py`). The two sets of each
+property share no compound. The README of
 each folder lists what was refused and why.
 
 **logP** (`benchmarks/run_logp.py`). The standard deviation of the measured values is 1.49 on the
@@ -12089,7 +12106,9 @@ Huuskonen set and 1.78 on class P. Each cell gives q², with the RMSE in log uni
 | Model | Huuskonen, CV | class P, CV | class P to Huuskonen |
 |---|---:|---:|---:|
 | invariant field kernel | +0.884 (0.51) | +0.778 (0.84) | +0.803 (0.66) |
+| invariant field kernel + eight counts | +0.906 (0.46) | +0.810 (0.78) | +0.841 (0.60) |
 | invariant field kernel + clogP | +0.899 (0.47) | +0.797 (0.80) | +0.830 (0.62) |
+| invariant field kernel + topological autocorrelation | +0.888 (0.50) | +0.795 (0.81) | +0.809 (0.65) |
 | topological autocorrelation (distances in bonds) | +0.871 (0.54) | +0.761 (0.87) | +0.782 (0.70) |
 | topological autocorrelation + clogP | +0.884 (0.51) | +0.774 (0.85) | +0.820 (0.63) |
 | refitted Crippen increments | +0.848 (0.58) | +0.745 (0.90) | +0.743 (0.76) |
@@ -12104,6 +12123,9 @@ Huuskonen set and 1.78 on class P. Each cell gives q², with the RMSE in log uni
 | invariant minus refitted Crippen increments | +0.042 [+0.030, +0.054] | +0.039 [+0.027, +0.052] | +0.060 [+0.043, +0.078] |
 | invariant minus topological autocorrelation | +0.019 [+0.010, +0.027] | +0.022 [+0.013, +0.033] | +0.020 [+0.008, +0.034] |
 | invariant minus field totals | +0.036 [+0.021, +0.050] | +0.030 [+0.017, +0.043] | -0.018 [-0.030, -0.006] |
+| invariant + eight counts minus invariant | +0.021 [+0.014, +0.029] | +0.035 [+0.026, +0.044] | +0.039 [+0.029, +0.048] |
+| invariant + eight counts minus invariant + clogP | +0.007 [-0.001, +0.015] | +0.020 [+0.009, +0.031] | +0.012 [+0.002, +0.022] |
+| invariant + topological minus invariant | +0.004 [-0.000, +0.008] | +0.014 [+0.007, +0.019] | +0.007 [-0.001, +0.014] |
 
 The invariant kernel beats every reference in cross-validation. Better increments explain only
 part of its gain over clogP: the kernel is still 0.04 ahead of the refitted increments. The 3D
@@ -12122,7 +12144,9 @@ measurements, which may include these compounds.
 | Model | Delaney, CV | AqSolDB, CV | AqSolDB to Delaney |
 |---|---:|---:|---:|
 | invariant field kernel | +0.875 (0.74) | +0.831 (0.95) | +0.827 (0.87) |
+| invariant field kernel + eight counts | +0.906 (0.64) | +0.879 (0.80) | +0.867 (0.76) |
 | invariant field kernel + ESOL descriptors | +0.896 (0.68) | +0.859 (0.86) | +0.856 (0.79) |
+| invariant field kernel + topological autocorrelation | +0.879 (0.73) | +0.843 (0.91) | +0.843 (0.83) |
 | topological autocorrelation (distances in bonds) | +0.847 (0.82) | +0.815 (0.99) | +0.811 (0.91) |
 | topological autocorrelation + ESOL descriptors | +0.884 (0.71) | +0.852 (0.89) | +0.855 (0.80) |
 | field totals (five sums per molecule) | +0.861 (0.78) | +0.818 (0.98) | +0.816 (0.90) |
@@ -12138,6 +12162,9 @@ measurements, which may include these compounds.
 | invariant minus field totals | +0.017 [+0.001, +0.033] | +0.015 [-0.005, +0.035] | +0.010 [-0.011, +0.032] |
 | invariant minus topological autocorrelation | +0.032 [+0.019, +0.045] | +0.021 [+0.005, +0.037] | +0.016 [+0.000, +0.031] |
 | both + ESOL descriptors: invariant minus topological | +0.015 [+0.005, +0.025] | +0.007 [-0.000, +0.015] | +0.001 [-0.006, +0.009] |
+| invariant + eight counts minus invariant | +0.031 [+0.022, +0.040] | +0.047 [+0.034, +0.062] | +0.040 [+0.024, +0.056] |
+| invariant + eight counts minus invariant + ESOL descriptors | +0.011 [+0.001, +0.022] | +0.026 [+0.013, +0.039] | +0.011 [-0.002, +0.022] |
+| invariant + topological minus invariant | +0.005 [+0.001, +0.010] | +0.011 [+0.005, +0.017] | +0.016 [+0.009, +0.025] |
 
 The invariant kernel beats ESOL clearly, by 0.06 to 0.12, and it also beats the published
 equation. Most of that gain, however, is already in the five field totals: they come within 0.010
@@ -12159,7 +12186,9 @@ the RMSE in C in brackets.
 
 | Model | PHYSPROP training part, CV | OPERA test part | eChemPortal, CV | PHYSPROP to eChemPortal |
 |---|---:|---:|---:|---:|
+| invariant field kernel + eight counts | +0.943 (20.4) | +0.957 (17.4) | +0.543 (57.9) | +0.569 (56.2) |
 | invariant field kernel + Joback groups | +0.945 (20.1) | +0.947 (19.3) | +0.514 (59.7) | -0.165 (92.4) |
+| invariant field kernel + topological autocorrelation | +0.921 (23.9) | +0.927 (22.7) | +0.531 (58.6) | +0.332 (70.0) |
 | topological autocorrelation + Joback groups | +0.927 (23.1) | +0.928 (22.5) | +0.549 (57.5) | -0.331 (98.7) |
 | invariant field kernel | +0.909 (25.7) | +0.915 (24.5) | +0.448 (63.6) | +0.291 (72.1) |
 | invariant field kernel, not normalised | +0.895 (27.6) | +0.892 (27.6) | +0.393 (66.6) | -0.316 (98.2) |
@@ -12179,6 +12208,10 @@ the RMSE in C in brackets.
 | both + Joback groups: invariant minus topological | +0.019 [+0.014, +0.023] | +0.019 [+0.011, +0.026] | -0.027 [-0.056, +0.004] | +0.166 [+0.089, +0.249] |
 | invariant minus field totals | +0.236 [+0.218, +0.255] | +0.238 [+0.205, +0.275] | +0.095 [+0.050, +0.139] | -0.062 [-0.172, +0.039] |
 | invariant minus eight counts | +0.054 [+0.042, +0.067] | +0.053 [+0.033, +0.074] | -0.053 [-0.100, -0.007] | -0.243 [-0.349, -0.146] |
+| invariant + eight counts minus invariant | +0.034 [+0.029, +0.039] | +0.042 [+0.032, +0.053] | +0.090 [+0.053, +0.127] | +0.279 [+0.206, +0.361] |
+| invariant + eight counts minus invariant + Joback groups | -0.001 [-0.006, +0.004] | +0.010 [+0.003, +0.016] | +0.038 [-0.001, +0.075] | +0.734 [+0.543, +0.946] |
+| invariant + eight counts minus eight counts | +0.087 [+0.077, +0.099] | +0.095 [+0.080, +0.113] | +0.037 [+0.009, +0.064] | +0.035 [-0.004, +0.074] |
+| invariant + topological minus invariant | +0.012 [+0.009, +0.015] | +0.012 [+0.003, +0.019] | +0.074 [+0.053, +0.097] | +0.042 [+0.006, +0.078] |
 
 On the OPERA test part the field kernel with the Joback groups reaches R² 0.947 and RMSE
 19.3 C. The OPERA paper reports R² 0.93 and RMSE 22.08 C on the same test part, with a
@@ -12198,22 +12231,83 @@ equation gives R² -2.7, and the refitted Joback and Crippen models fall below z
 Gaussian kernel on eight counts extrapolates best (0.53). The width chosen for the invariant kernel is
 0.05 Å on PHYSPROP.
 
-**What the three benchmarks say together.** For a property of the molecule that is close to
+The field kernel plus the eight counts keeps both strengths. On PHYSPROP it equals the
+combination with the Joback groups in cross-validation, and on the OPERA test it reaches R²
+0.957 and RMSE 17.4 C, the best result here. On the extrapolation to eChemPortal it reaches 0.569,
+slightly above the eight counts alone, while the combination with the Joback groups falls below
+zero.
+
+**Vapour pressure** (`benchmarks/run_vapour.py`). The standard deviation of the measured values is
+3.55 log units on the training part of PHYSPROP and 3.36 on eChemPortal. The tests are those of the
+boiling points. Not all PHYSPROP values are at 25 C: 283 are at 20 C and 55 at other temperatures
+between 15 and 31 C. They are used as they are, as in the OPERA paper. Each cell gives q²
+(cross-validation) or R² (external test), with the RMSE in log units in brackets.
+
+| Model | PHYSPROP training part, CV | OPERA test part | eChemPortal, CV | PHYSPROP to eChemPortal |
+|---|---:|---:|---:|---:|
+| invariant field kernel + eight counts | +0.913 (1.05) | +0.921 (1.00) | +0.590 (2.15) | +0.441 (2.52) |
+| invariant field kernel + Joback groups | +0.915 (1.03) | +0.902 (1.11) | +0.559 (2.23) | -0.162 (3.63) |
+| topological autocorrelation + Joback groups | +0.909 (1.07) | +0.900 (1.12) | +0.548 (2.26) | -0.093 (3.52) |
+| eight counts | +0.893 (1.16) | +0.907 (1.08) | +0.578 (2.19) | +0.477 (2.43) |
+| invariant field kernel + topological autocorrelation | +0.880 (1.23) | +0.885 (1.21) | +0.552 (2.25) | +0.147 (3.11) |
+| invariant field kernel | +0.874 (1.26) | +0.873 (1.27) | +0.549 (2.26) | +0.276 (2.86) |
+| Joback refitted (ridge regression on 41 group counts) | +0.897 (1.14) | +0.876 (1.25) | +0.459 (2.47) | -0.367 (3.93) |
+| refitted Crippen increments | +0.894 (1.16) | +0.882 (1.22) | +0.469 (2.45) | -0.387 (3.96) |
+| invariant field kernel, not normalised | +0.851 (1.37) | +0.848 (1.38) | +0.339 (2.73) | -0.699 (4.38) |
+| field totals (five sums per molecule) | +0.793 (1.62) | +0.778 (1.67) | +0.428 (2.54) | +0.261 (2.89) |
+| ECFP4 fingerprint | +0.791 (1.62) | +0.768 (1.71) | +0.518 (2.33) | +0.394 (2.62) |
+| topological autocorrelation (distances in bonds) | +0.789 (1.63) | +0.808 (1.56) | +0.495 (2.39) | +0.209 (2.99) |
+| linear regression on molecular weight | +0.585 (2.29) | +0.553 (2.37) | +0.258 (2.90) | -0.003 (3.37) |
+
+| Difference of q² or R² | PHYSPROP training part, CV | OPERA test part | eChemPortal, CV | PHYSPROP to eChemPortal |
+|---|---|---|---|---|
+| invariant minus Joback refitted | -0.019 [-0.031, -0.006] | -0.003 [-0.027, +0.026] | +0.093 [+0.072, +0.116] | +0.643 [+0.531, +0.766] |
+| invariant + Joback groups minus Joback refitted | +0.021 [+0.014, +0.029] | +0.027 [+0.010, +0.048] | +0.103 [+0.084, +0.123] | +0.205 [+0.160, +0.254] |
+| invariant minus topological autocorrelation | +0.088 [+0.071, +0.105] | +0.065 [+0.039, +0.092] | +0.057 [+0.042, +0.073] | +0.067 [+0.029, +0.108] |
+| invariant minus eight counts | -0.017 [-0.031, -0.001] | -0.034 [-0.054, -0.014] | -0.030 [-0.048, -0.010] | -0.201 [-0.257, -0.150] |
+| invariant + eight counts minus invariant | +0.040 [+0.030, +0.050] | +0.048 [+0.032, +0.064] | +0.046 [+0.030, +0.060] | +0.165 [+0.122, +0.210] |
+| invariant + eight counts minus invariant + Joback groups | +0.000 [-0.009, +0.009] | +0.019 [+0.003, +0.035] | +0.035 [+0.020, +0.050] | +0.603 [+0.497, +0.717] |
+| invariant + eight counts minus eight counts | +0.023 [+0.015, +0.032] | +0.014 [+0.002, +0.026] | +0.016 [+0.006, +0.026] | -0.036 [-0.057, -0.018] |
+| invariant + topological minus invariant | +0.007 [-0.001, +0.015] | +0.012 [+0.001, +0.024] | +0.004 [-0.004, +0.012] | -0.129 [-0.162, -0.096] |
+
+The OPERA paper reports, for its vapour pressure model, Q² 0.91 and RMSE 1.08 in cross-validation
+on the training part, and R² 0.92 and RMSE 1.00 on the test part. The field kernel plus the eight
+counts gives the same numbers on the same split: q² 0.913 and RMSE 1.05, R² 0.921 and RMSE 1.00.
+Here, unlike for the other three properties, the field kernel alone is weaker than the eight
+counts, by 0.02 to 0.03 on the PHYSPROP tests and by 0.20 on the extrapolation to eChemPortal. It
+still beats the topological kernel on every test. As for the boiling points, the models with
+refitted increments extrapolate badly to eChemPortal, and the eight counts do not. 236 of the
+eChemPortal values are a whole power of ten in pascals. In a registration dossier such a value is
+often a limit ("below 0.001 Pa") rather than a measurement, and the data do not say which ones
+are limits.
+
+**What the four benchmarks say together.** For a property of the molecule that is close to
 additive, the field kernel is a good model when the data are clean: it beats refitted
-increments, a fingerprint and counts, and on boiling points it beats a published model on that
-model's own test. What the 3D geometry adds depends on the property: about 0.02 in q² on logP,
-almost nothing on solubility, and about 0.15 on boiling points. Before a gain is read as an
-effect of the geometry, compare the field kernel with the field totals and with the topological
-version, as these benchmarks do. On noisy data, or on compounds outside the range of the
-training set, a kernel on a few counts can be the safer model.
+increments and a fingerprint, and on boiling points it beats a published model on that model's
+own test. What the 3D geometry adds depends on the property: about 0.02 in q² on logP, almost
+nothing on solubility, about 0.15 on boiling points and about 0.07 on vapour pressures. Before a
+gain is read as an effect of the geometry, compare the field kernel with the field totals and
+with the topological version, as these benchmarks do.
+
+The best model on all four properties is the field kernel plus a Gaussian kernel on the eight
+counts. It beats the field kernel alone on every test, by 0.02 to 0.05 in q² on clean data and by
+0.17 to 0.28 on the extrapolations to eChemPortal. It equals or beats the combination with the
+classic descriptors of each property (clogP, the ESOL descriptors, the Joback groups). Unlike
+those combinations, it does not fail on compounds outside the range of the training set. The
+eight descriptors give the size, the polarity and the flexibility of the molecule, and a Gaussian
+kernel on them extrapolates well. The field adds how the atoms are arranged. The sum with the topological kernel adds little: 0.004 to 0.016 in most tests. On
+noisy data, or on compounds outside the range of the training set, a kernel on a few counts alone
+remains a safe model.
 
 ```bash
-python benchmarks/run_logp.py           # about 100 minutes; the 3D structures are in the repository
+python benchmarks/run_logp.py           # about 102 minutes; the 3D structures are in the repository
 python benchmarks/run_solubility.py     # about 20 minutes
 python benchmarks/prepare_logp.py       # only to rebuild examples/logp from SangsterLogP
 python benchmarks/prepare_solubility.py # only to rebuild examples/solubility
-python benchmarks/run_boiling.py        # about 80 minutes
+python benchmarks/run_boiling.py        # about 90 minutes
 python benchmarks/prepare_boiling.py    # only to rebuild examples/boiling from the OPERA data
+python benchmarks/run_vapour.py         # about 46 minutes
+python benchmarks/prepare_vapour.py     # only to rebuild examples/vapour from the OPERA data
 ```
 
 ## Designing a crystal: a prototype, a budget and a loop

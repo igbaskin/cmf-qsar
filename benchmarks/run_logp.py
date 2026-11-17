@@ -63,6 +63,11 @@ The models
   is cosine-normalised and scaled exactly as the 3D one. It needs no conformer.
 * **topological + clogP** -- as *invariant + clogP*, with the maximum distance the topological
   model chose in each fold.
+* **invariant + topological** and **invariant + eight counts** (added 17 November 2026) -- the
+  cosine kernel plus h times the topological kernel, or plus h times the Gaussian kernel on the
+  eight counts. In each block the width, the largest distance and the count width are those the
+  single models chose there by the evidence on the same training block; only h and the ridge
+  are chosen here.
 
 How the numbers are made
 ------------------------
@@ -140,7 +145,8 @@ MAIN = ("invariant, cosine", "linear regression on clogP")
 MODELS = ("invariant, cosine", "invariant, not normalised", "invariant + clogP",
           "invariant + five descriptors", "linear regression on clogP", "field totals",
           "eight counts", "ECFP4", "refitted Crippen increments", "refitted increments + clogP",
-          "topological autocorrelation", "topological + clogP")
+          "topological autocorrelation", "topological + clogP", "invariant + topological",
+          "invariant + eight counts")
 
 
 def log(msg: str) -> None:
@@ -346,6 +352,51 @@ def gaussian_stack(Z: np.ndarray):
         yield np.exp(-d2 / (2.0 * w * w))
 
 
+def gaussian_at(Z: np.ndarray, w: float) -> np.ndarray:
+    """The Gaussian kernel of :func:`gaussian_stack` at one width."""
+    sq = np.sum(Z * Z, axis=1)
+    d2 = np.maximum(sq[:, None] + sq[None, :] - 2.0 * (Z @ Z.T), 0.0) / Z.shape[1]
+    return np.exp(-d2 / (2.0 * w * w))
+
+
+def add_pairs(models, y, blocks, width, reach, cwidth, field_kernel, topo_kernel,
+              count_kernel) -> None:
+    """The models "invariant + topological" and "invariant + eight counts".
+
+    The cosine field kernel plus h times the topological kernel, and plus h times the Gaussian
+    kernel on the eight counts. In each block the field width (`width`), the largest distance
+    (`reach`) and the count width (`cwidth`) are the labels the single models chose there by the
+    evidence on the same training block; only h and the ridge are chosen here, as for the other
+    combined models. `field_kernel(s)`, `topo_kernel(dm)` and `count_kernel(w)` build the kernels.
+    """
+    n = len(blocks)
+    for s in SIGMAS:
+        here = {k for k in range(n) if width[k] == f"sigma {s:g}"}
+        if not here:
+            continue
+        Kc = field_kernel(s)
+        for dm in TOPO_MAX:
+            only = {k for k in here if reach[k] == f"up to {dm} bonds"}
+            if not only:
+                continue
+            Kt = topo_kernel(dm)
+            for h in HS:
+                models["invariant + topological"].add(f"sigma {s:g}, up to {dm} bonds, h {h:g}",
+                                                      Kc + h * Kt, y, blocks, only)
+            del Kt
+        for w in COUNT_WIDTHS:
+            only = {k for k in here if cwidth[k] == f"width {w:g}"}
+            if not only:
+                continue
+            Kg = count_kernel(w)
+            for h in HS:
+                models["invariant + eight counts"].add(f"sigma {s:g}, width {w:g}, h {h:g}",
+                                                       Kc + h * Kg, y, blocks, only)
+            del Kg
+        del Kc
+        log(f"pair models at sigma {s:g}, {len(here)} blocks")
+
+
 def eight_counts(mols) -> np.ndarray:
     rows = [[Descriptors.MolWt(m), Lipinski.NumHDonors(m), Lipinski.NumHAcceptors(m),
              rdMolDescriptors.CalcNumRotatableBonds(m), rdMolDescriptors.CalcNumRings(m),
@@ -491,6 +542,13 @@ def run(quick: int = 0) -> Dict[str, object]:
             models["invariant + five descriptors"].add(f"sigma {s:g}, h {h:g}", Kc + h * Kdesc,
                                                        y, blocks, only)
         log(f"combined models at sigma {s:g}, {len(only)} blocks ({time.time() - t0:.0f} s)")
+    cwidth = [models["eight counts"].best_label(k) for k in range(len(blocks))]
+    Z8 = eight_counts(heavy)
+    add_pairs(models, y, blocks, width, reach, cwidth,
+              lambda s: invariant_kernels(features(mfs, fs, s, names, use_cache=True), s,
+                                          len(fs.specs))[0],
+              topo, lambda w: gaussian_at(Z8, w))
+    log(f"pair models done ({time.time() - t0:.0f} s)")
 
     res, preds = {}, {}
     for name, m in models.items():
@@ -527,7 +585,11 @@ def run(quick: int = 0) -> Dict[str, object]:
              ("invariant + clogP", "refitted increments + clogP"),
              ("invariant, cosine", "topological autocorrelation"),
              ("invariant + clogP", "topological + clogP"),
-             ("topological autocorrelation", "refitted Crippen increments")]
+             ("topological autocorrelation", "refitted Crippen increments"),
+             ("invariant + topological", "invariant, cosine"),
+             ("invariant + eight counts", "invariant, cosine"),
+             ("invariant + eight counts", "eight counts"),
+             ("invariant + clogP", "invariant + eight counts")]
     comps = []
     for a, b in pairs:
         for test in SETS + ("external",):

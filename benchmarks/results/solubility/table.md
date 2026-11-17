@@ -14,6 +14,8 @@ Measured water solubility, logS in mol/L: the Delaney set (1114 compounds, sprea
 | refitted increments + ESOL descriptors | +0.818 | 0.892 | +0.805 | 1.018 | +0.765 | 1.014 |
 | topological autocorrelation | +0.847 | 0.819 | +0.815 | 0.992 | +0.811 | 0.910 |
 | topological + ESOL descriptors | +0.884 | 0.714 | +0.852 | 0.885 | +0.855 | 0.797 |
+| invariant + topological | +0.879 | 0.727 | +0.843 | 0.914 | +0.843 | 0.829 |
+| invariant + eight counts | +0.906 | 0.640 | +0.879 | 0.802 | +0.867 | 0.763 |
 
 | Difference of q² | Test | Mean [95 % interval] |
 |---|---|---|
@@ -56,3 +58,15 @@ Measured water solubility, logS in mol/L: the Delaney set (1114 compounds, sprea
 | topological autocorrelation minus refitted Crippen increments | Delaney, CV | +0.024 [+0.003, +0.046] |
 | topological autocorrelation minus refitted Crippen increments | AqSolDB, CV | +0.016 [-0.012, +0.047] |
 | topological autocorrelation minus refitted Crippen increments | AqSolDB to Delaney | +0.045 [+0.018, +0.073] |
+| invariant + topological minus invariant, cosine | Delaney, CV | +0.005 [+0.001, +0.010] |
+| invariant + topological minus invariant, cosine | AqSolDB, CV | +0.011 [+0.005, +0.017] |
+| invariant + topological minus invariant, cosine | AqSolDB to Delaney | +0.016 [+0.009, +0.025] |
+| invariant + eight counts minus invariant, cosine | Delaney, CV | +0.031 [+0.022, +0.040] |
+| invariant + eight counts minus invariant, cosine | AqSolDB, CV | +0.047 [+0.034, +0.062] |
+| invariant + eight counts minus invariant, cosine | AqSolDB to Delaney | +0.040 [+0.024, +0.056] |
+| invariant + eight counts minus eight counts | Delaney, CV | +0.054 [+0.041, +0.068] |
+| invariant + eight counts minus eight counts | AqSolDB, CV | +0.050 [+0.036, +0.064] |
+| invariant + eight counts minus eight counts | AqSolDB to Delaney | +0.089 [+0.070, +0.110] |
+| invariant + ESOL descriptors minus invariant + eight counts | Delaney, CV | -0.011 [-0.022, -0.001] |
+| invariant + ESOL descriptors minus invariant + eight counts | AqSolDB, CV | -0.026 [-0.039, -0.013] |
+| invariant + ESOL descriptors minus invariant + eight counts | AqSolDB to Delaney | -0.011 [-0.022, +0.002] |

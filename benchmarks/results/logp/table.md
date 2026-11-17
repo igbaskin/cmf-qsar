@@ -14,6 +14,8 @@ Measured logP: Huuskonen set (1847 compounds, spread 1.49) and a class P sample 
 | refitted increments + clogP | +0.845 | 0.587 | +0.745 | 0.898 | +0.755 | 0.740 |
 | topological autocorrelation | +0.871 | 0.537 | +0.761 | 0.870 | +0.782 | 0.697 |
 | topological + clogP | +0.884 | 0.509 | +0.774 | 0.846 | +0.820 | 0.634 |
+| invariant + topological | +0.888 | 0.500 | +0.795 | 0.805 | +0.809 | 0.652 |
+| invariant + eight counts | +0.906 | 0.458 | +0.810 | 0.775 | +0.841 | 0.595 |
 
 | Difference of q² | Test | Mean [95 % interval] |
 |---|---|---|
@@ -56,3 +58,15 @@ Measured logP: Huuskonen set (1847 compounds, spread 1.49) and a class P sample 
 | topological autocorrelation minus refitted Crippen increments | Huuskonen, CV | +0.023 [+0.011, +0.034] |
 | topological autocorrelation minus refitted Crippen increments | class P, CV | +0.017 [+0.004, +0.029] |
 | topological autocorrelation minus refitted Crippen increments | class P to Huuskonen | +0.040 [+0.022, +0.057] |
+| invariant + topological minus invariant, cosine | Huuskonen, CV | +0.004 [-0.000, +0.008] |
+| invariant + topological minus invariant, cosine | class P, CV | +0.014 [+0.007, +0.019] |
+| invariant + topological minus invariant, cosine | class P to Huuskonen | +0.007 [-0.001, +0.014] |
+| invariant + eight counts minus invariant, cosine | Huuskonen, CV | +0.021 [+0.014, +0.029] |
+| invariant + eight counts minus invariant, cosine | class P, CV | +0.035 [+0.026, +0.044] |
+| invariant + eight counts minus invariant, cosine | class P to Huuskonen | +0.039 [+0.029, +0.048] |
+| invariant + eight counts minus eight counts | Huuskonen, CV | +0.102 [+0.089, +0.117] |
+| invariant + eight counts minus eight counts | class P, CV | +0.133 [+0.117, +0.149] |
+| invariant + eight counts minus eight counts | class P to Huuskonen | +0.157 [+0.138, +0.176] |
+| invariant + clogP minus invariant + eight counts | Huuskonen, CV | -0.007 [-0.015, +0.001] |
+| invariant + clogP minus invariant + eight counts | class P, CV | -0.020 [-0.031, -0.009] |
+| invariant + clogP minus invariant + eight counts | class P to Huuskonen | -0.012 [-0.022, -0.002] |

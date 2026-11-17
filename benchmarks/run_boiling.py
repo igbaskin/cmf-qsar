@@ -47,6 +47,11 @@ SMARTS patterns of J. Biggs as the thermo library gives them (C. Bell, github.co
 thermo, MIT licence), with the boiling point increments of K. G. Joback and R. C. Reid, Chem.
 Eng. Commun. 57 (1987) 233-243. thermo resolves an atom matched by two groups by keeping the
 larger match; here such a compound counts as not covered.
+* **invariant + topological** and **invariant + eight counts** (added 17 November 2026) -- the
+  cosine kernel plus h times the topological kernel, or plus h times the Gaussian kernel on the
+  eight counts. In each block the width, the largest distance and the count width are those the
+  single models chose there by the evidence on the same training block; only h and the ridge
+  are chosen here.
 
 How the numbers are made
 ------------------------
@@ -89,7 +94,8 @@ from cmfqsar.model import r2_score, rmse  # noqa: E402
 
 import run_logp as L  # noqa: E402
 from run_logp import (COUNT_WIDTHS, D_MAX, FIELDS, HS, LAMS, REPEATS, SIGMAS,  # noqa: E402
-                      TOPO_MAX, crippen_counts, eight_counts, gaussian_stack, invariant_kernels,
+                      TOPO_MAX, add_pairs, crippen_counts, eight_counts, gaussian_at,
+                      gaussian_stack, invariant_kernels,
                       jdump, linear_block, log, selfcheck, standardise, topological_features,
                       topological_kernel)
 import run_resolution as RS  # noqa: E402
@@ -113,7 +119,8 @@ TITLES = {"physprop_train": "PHYSPROP training part, CV", "echemportal": "eChemP
 MODELS = ("invariant, cosine", "invariant, not normalised", "invariant + Joback groups",
           "linear regression on molecular weight", "Joback refitted", "field totals",
           "eight counts", "ECFP4", "refitted Crippen increments", "topological autocorrelation",
-          "topological + Joback groups")
+          "topological + Joback groups", "invariant + topological",
+          "invariant + eight counts")
 
 #: Joback's 41 groups: the name, the SMARTS of J. Biggs and the boiling point increment in K,
 #: as the thermo library gives them (thermo/group_contribution/joback.py, MIT licence,
@@ -314,7 +321,6 @@ def run(quick: int = 0) -> Dict[str, object]:
         for h in HS:
             models["topological + Joback groups"].add(f"up to {dm} bonds, h {h:g}",
                                                       Kt + h * Kjob, y, blocks, only)
-    del Ftop
     log(f"topological models done ({time.time() - t0:.0f} s)")
     for w, K in zip(COUNT_WIDTHS, gaussian_stack(standardise(totals[:, totals.std(axis=0) > 0]))):
         models["field totals"].add(f"width {w:g}", K, y, blocks)
@@ -338,6 +344,13 @@ def run(quick: int = 0) -> Dict[str, object]:
             models["invariant + Joback groups"].add(f"sigma {s:g}, h {h:g}", Kc + h * Kjob,
                                                     y, blocks, only)
         log(f"combined model at sigma {s:g}, {len(only)} blocks ({time.time() - t0:.0f} s)")
+    cwidth = [models["eight counts"].best_label(k) for k in range(len(blocks))]
+    Z8 = eight_counts(heavy)
+    add_pairs(models, y, blocks, width, reach, cwidth,
+              lambda s: invariant_kernels(features(mfs, fs, s, names, use_cache=not quick), s,
+                                          n_f)[0],
+              topo, lambda w: gaussian_at(Z8, w))
+    log(f"pair models done ({time.time() - t0:.0f} s)")
 
     res, preds = {}, {}
     for name in MODELS:
@@ -382,7 +395,11 @@ def run(quick: int = 0) -> Dict[str, object]:
              ("invariant, cosine", "refitted Crippen increments"),
              ("invariant, cosine", "topological autocorrelation"),
              ("invariant + Joback groups", "topological + Joback groups"),
-             ("topological autocorrelation", "refitted Crippen increments")]
+             ("topological autocorrelation", "refitted Crippen increments"),
+             ("invariant + topological", "invariant, cosine"),
+             ("invariant + eight counts", "invariant, cosine"),
+             ("invariant + eight counts", "eight counts"),
+             ("invariant + Joback groups", "invariant + eight counts")]
     comps = []
     for a, b in pairs:
         for test in TESTS:

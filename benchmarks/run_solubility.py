@@ -51,6 +51,11 @@ The models
 The value of the published ESOL equation, which the Delaney file gives for each compound, is
 reported for the Delaney set as a fixed prediction with no fitting. Delaney fitted the equation
 on a larger set of 2,874 measurements, which may include these compounds.
+* **invariant + topological** and **invariant + eight counts** (added 17 November 2026) -- the
+  cosine kernel plus h times the topological kernel, or plus h times the Gaussian kernel on the
+  eight counts. In each block the width, the largest distance and the count width are those the
+  single models chose there by the evidence on the same training block; only h and the ridge
+  are chosen here.
 
 How the numbers are made
 ------------------------
@@ -90,7 +95,8 @@ from cmfqsar.model import r2_score, rmse  # noqa: E402
 
 import run_logp as L  # noqa: E402
 from run_logp import (COUNT_WIDTHS, D_MAX, FIELDS, HS, LAMS, REPEATS, SIGMAS,  # noqa: E402
-                      TOPO_MAX, crippen_counts, eight_counts, gaussian_stack, invariant_kernels,
+                      TOPO_MAX, add_pairs, crippen_counts, eight_counts, gaussian_at,
+                      gaussian_stack, invariant_kernels,
                       jdump, linear_block, log, selfcheck, standardise, topological_features,
                       topological_kernel)
 import run_resolution as RS  # noqa: E402
@@ -107,7 +113,8 @@ TITLES = {"delaney": "Delaney", "aqsoldb_reliable": "AqSolDB G3+G5"}
 MODELS = ("invariant, cosine", "invariant, not normalised", "invariant + ESOL descriptors",
           "linear regression on clogP", "ESOL refitted", "field totals", "eight counts",
           "ECFP4", "refitted Crippen increments", "refitted increments + ESOL descriptors",
-          "topological autocorrelation", "topological + ESOL descriptors")
+          "topological autocorrelation", "topological + ESOL descriptors",
+          "invariant + topological", "invariant + eight counts")
 
 
 class Model(L.Model):
@@ -255,6 +262,13 @@ def run(quick: int = 0) -> Dict[str, object]:
             models["invariant + ESOL descriptors"].add(f"sigma {s:g}, h {h:g}", Kc + h * Kesol,
                                                        y, blocks, only)
         log(f"combined model at sigma {s:g}, {len(only)} blocks ({time.time() - t0:.0f} s)")
+    cwidth = [models["eight counts"].best_label(k) for k in range(len(blocks))]
+    Z8 = eight_counts(heavy)
+    add_pairs(models, y, blocks, width, reach, cwidth,
+              lambda s: invariant_kernels(features(mfs, fs, s, names, use_cache=not quick), s,
+                                          n_f)[0],
+              topo, lambda w: gaussian_at(Z8, w))
+    log(f"pair models done ({time.time() - t0:.0f} s)")
 
     res, preds = {}, {}
     for name, m in models.items():
@@ -297,7 +311,11 @@ def run(quick: int = 0) -> Dict[str, object]:
              ("invariant + ESOL descriptors", "refitted increments + ESOL descriptors"),
              ("invariant, cosine", "topological autocorrelation"),
              ("invariant + ESOL descriptors", "topological + ESOL descriptors"),
-             ("topological autocorrelation", "refitted Crippen increments")]
+             ("topological autocorrelation", "refitted Crippen increments"),
+             ("invariant + topological", "invariant, cosine"),
+             ("invariant + eight counts", "invariant, cosine"),
+             ("invariant + eight counts", "eight counts"),
+             ("invariant + ESOL descriptors", "invariant + eight counts")]
     comps = []
     for a, b in pairs:
         for test in SETS + ("external",):

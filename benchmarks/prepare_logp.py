@@ -82,8 +82,10 @@ def read_sheets(path: str):
     depend on a spreadsheet package.
     """
     z = zipfile.ZipFile(path)
-    strings = ["".join(t.text or "" for t in si.iter(_M + "t"))
-               for si in ET.fromstring(z.read("xl/sharedStrings.xml"))]
+    # a workbook may keep its text in a shared table or inline in each cell ("inlineStr")
+    strings = (["".join(t.text or "" for t in si.iter(_M + "t"))
+                for si in ET.fromstring(z.read("xl/sharedStrings.xml"))]
+               if "xl/sharedStrings.xml" in z.namelist() else [])
     names = [s.get("name") for s in ET.fromstring(z.read("xl/workbook.xml")).find(_M + "sheets")]
     out = {}
     for k, title in enumerate(names, 1):
@@ -93,8 +95,11 @@ def read_sheets(path: str):
             for c in r:
                 v = c.find(_M + "v")
                 col = "".join(ch for ch in c.get("r") if ch.isalpha())
-                d[col] = None if v is None else (strings[int(v.text)] if c.get("t") == "s"
-                                                 else v.text)
+                if c.get("t") == "inlineStr":
+                    d[col] = "".join(t.text or "" for t in c.iter(_M + "t"))
+                else:
+                    d[col] = None if v is None else (strings[int(v.text)] if c.get("t") == "s"
+                                                     else v.text)
             rows.append(d)
         head = rows[0]
         out[title] = [{head[c]: r.get(c) for c in head if head[c]} for r in rows[1:]]
