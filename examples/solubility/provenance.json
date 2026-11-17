@@ -1,0 +1,45 @@
+{
+ "delaney": {
+  "source": "J. S. Delaney, J. Chem. Inf. Comput. Sci. 44 (2004) 1000-1005, as distributed by MoleculeNet; no licence stated",
+  "url": "https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/delaney-processed.csv",
+  "md5": "0c90a51668d446b9e3ab77e67662bd1c",
+  "read": 1128,
+  "refused": {
+   "fewer than two heavy atoms": 1
+  },
+  "duplicate_skeletons": 13,
+  "kept_before_embedding": 1114,
+  "embedded": 1114,
+  "embedding_failed": []
+ },
+ "aqsoldb_reliable": {
+  "source": "AqSolDB, Sorkun, Khetan and Er, Sci. Data 6 (2019) 143; Harvard Dataverse doi:10.7910/DVN/OVHAW8, CC0 1.0",
+  "url": "https://dataverse.harvard.edu/api/access/datafile/3407241?format=original",
+  "md5": "02f732e52de921b8adaf4ef03cf747bf",
+  "groups": [
+   "G3",
+   "G5"
+  ],
+  "read": 9982,
+  "groups_in_file": {
+   "G1": 7746,
+   "G3": 1182,
+   "G5": 636,
+   "G4": 183,
+   "G2": 235
+  },
+  "in_reliable_groups": 1818,
+  "refused": {
+   "more than one component": 175,
+   "molecular weight above 700": 7,
+   "an element outside the organic set": 8,
+   "fewer than two heavy atoms": 1,
+   "a net charge": 2,
+   "duplicate skeleton": 7
+  },
+  "in_delaney": 616,
+  "kept_before_embedding": 1002,
+  "embedded": 1002,
+  "embedding_failed": []
+ }
+}

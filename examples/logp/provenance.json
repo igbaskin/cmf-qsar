@@ -1,0 +1,34 @@
+{
+ "source": "SangsterLogP, Zenodo record 19387552 (doi:10.5281/zenodo.19387552), CC BY 4.0; Cirino et al., Scientific Data 2026, doi:10.1038/s41597-026-07357-2",
+ "url": "https://zenodo.org/records/19387552/files/Datasets.xlsx?download=1",
+ "md5": "afd61550974867a8a0a57d69d5867dcd",
+ "bytes": 2657854,
+ "sheets": {
+  "SangsterLogP (N=23,520)": 23520,
+  "Huuskonen (N=1,870)": 1871,
+  "Prospective (N=327)": 328
+ },
+ "huuskonen": {
+  "read": 1871,
+  "refused": {
+   "no logP value in the row (a comma in the name shifted the columns)": 21,
+   "an empty row": 1
+  },
+  "duplicate_skeletons": 2,
+  "kept_before_embedding": 1847,
+  "embedded": 1847,
+  "embedding_failed": []
+ },
+ "sangster_p": {
+  "class_P_rows": 13812,
+  "refused": {},
+  "in_huuskonen": 1389,
+  "pool": 12423,
+  "sampled": 3000,
+  "seed": 0,
+  "embedded": 2999,
+  "embedding_failed": [
+   "R38338679"
+  ]
+ }
+}

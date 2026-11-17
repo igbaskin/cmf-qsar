@@ -1,0 +1,731 @@
+{
+ "comparisons": [
+  {
+   "against": "ESOL refitted",
+   "hi": 0.14405119516237985,
+   "lo": 0.0956209998703155,
+   "mean": 0.11884611380500243,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "ESOL refitted",
+   "hi": 0.08050832018182302,
+   "lo": 0.03114079666313055,
+   "mean": 0.05529011426634978,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "ESOL refitted",
+   "hi": 0.10824063957500048,
+   "lo": 0.05910761545334289,
+   "mean": 0.08287563204314752,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ESOL refitted",
+   "hi": 0.16162142656744513,
+   "lo": 0.117567312260368,
+   "mean": 0.13846957437664953,
+   "model": "invariant + ESOL descriptors",
+   "test": "delaney"
+  },
+  {
+   "against": "ESOL refitted",
+   "hi": 0.09307935410445035,
+   "lo": 0.06174757821123815,
+   "mean": 0.07642085188404102,
+   "model": "invariant + ESOL descriptors",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "ESOL refitted",
+   "hi": 0.1322604585208016,
+   "lo": 0.09469478745563155,
+   "mean": 0.11242377178132279,
+   "model": "invariant + ESOL descriptors",
+   "test": "external"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.23757552507770885,
+   "lo": 0.16774332042835757,
+   "mean": 0.1993708181188607,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.1868573371483985,
+   "lo": 0.11883296280489444,
+   "mean": 0.15122680240841835,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.17931782485037764,
+   "lo": 0.12246976334253218,
+   "mean": 0.14807353443692928,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": -0.0153594172471016,
+   "lo": -0.05895542005414207,
+   "mean": -0.03572206287119217,
+   "model": "invariant, not normalised",
+   "test": "delaney"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.011845949715868295,
+   "lo": -0.07700065369545499,
+   "mean": -0.026340983687085595,
+   "model": "invariant, not normalised",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": -0.003282974062316853,
+   "lo": -0.07843294772222856,
+   "mean": -0.03557927865460275,
+   "model": "invariant, not normalised",
+   "test": "external"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.032687407648181135,
+   "lo": 0.000995801445925615,
+   "mean": 0.016696857371073404,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.035367341072565395,
+   "lo": -0.00484110827075622,
+   "mean": 0.015271202372534987,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.03182985839304515,
+   "lo": -0.010946298169899666,
+   "mean": 0.010389559770916934,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.041638128275917556,
+   "lo": 0.005725446113801105,
+   "mean": 0.02343744047317864,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.022167481110312994,
+   "lo": -0.01731094038895865,
+   "mean": 0.003114895857571298,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.07471055115161879,
+   "lo": 0.024954068888505643,
+   "mean": 0.04918731790169717,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.12386058114005366,
+   "lo": 0.08171237592119308,
+   "mean": 0.10126643666947943,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.1415633396530564,
+   "lo": 0.08991661518185469,
+   "mean": 0.11540085179099613,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.19647984706858188,
+   "lo": 0.1351901561294368,
+   "mean": 0.16409928680522934,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.1440625241693278,
+   "lo": 0.09925918054144706,
+   "mean": 0.12088989724112653,
+   "model": "invariant + ESOL descriptors",
+   "test": "delaney"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.16564719388753574,
+   "lo": 0.10963032046155334,
+   "mean": 0.13653158940868737,
+   "model": "invariant + ESOL descriptors",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.22347954874452292,
+   "lo": 0.16774126061257252,
+   "mean": 0.1936474265434046,
+   "model": "invariant + ESOL descriptors",
+   "test": "external"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.07597234329455411,
+   "lo": 0.03629791290392717,
+   "mean": 0.05584013771777374,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.0670210465427809,
+   "lo": 0.009465649190531477,
+   "mean": 0.0373973768571364,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.08842661651176065,
+   "lo": 0.035303362441337485,
+   "mean": 0.06086926815786098,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "refitted increments + ESOL descriptors",
+   "hi": 0.09744291846564954,
+   "lo": 0.06577311253809537,
+   "mean": 0.08099117484246587,
+   "model": "invariant + ESOL descriptors",
+   "test": "delaney"
+  },
+  {
+   "against": "refitted increments + ESOL descriptors",
+   "hi": 0.0746239875817169,
+   "lo": 0.03529339614195576,
+   "mean": 0.05425447381670834,
+   "model": "invariant + ESOL descriptors",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "refitted increments + ESOL descriptors",
+   "hi": 0.11277907599994741,
+   "lo": 0.0715543540641858,
+   "mean": 0.09107597317774863,
+   "model": "invariant + ESOL descriptors",
+   "test": "external"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.045425397827722605,
+   "lo": 0.018961022909112314,
+   "mean": 0.03199591064347462,
+   "model": "invariant, cosine",
+   "test": "delaney"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.036740575958908867,
+   "lo": 0.005262861337070654,
+   "mean": 0.021183878115676014,
+   "model": "invariant, cosine",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.031016533443351906,
+   "lo": 0.0003092470935314701,
+   "mean": 0.01590245478932617,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "topological + ESOL descriptors",
+   "hi": 0.024972261641664807,
+   "lo": 0.00498947037186357,
+   "mean": 0.014982200564213621,
+   "model": "invariant + ESOL descriptors",
+   "test": "delaney"
+  },
+  {
+   "against": "topological + ESOL descriptors",
+   "hi": 0.01515207961519621,
+   "lo": -0.00034279394591201217,
+   "mean": 0.007377700069725268,
+   "model": "invariant + ESOL descriptors",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "topological + ESOL descriptors",
+   "hi": 0.008664386142871626,
+   "lo": -0.005918893250969582,
+   "mean": 0.0012333501983984307,
+   "model": "invariant + ESOL descriptors",
+   "test": "external"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.04585572543668297,
+   "lo": 0.0033010020908004673,
+   "mean": 0.023844227074299118,
+   "model": "topological autocorrelation",
+   "test": "delaney"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.046801406985526574,
+   "lo": -0.012395408200214517,
+   "mean": 0.016213498741460386,
+   "model": "topological autocorrelation",
+   "test": "aqsoldb_reliable"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.07280877562789663,
+   "lo": 0.018442199966463898,
+   "mean": 0.04496681336853481,
+   "model": "topological autocorrelation",
+   "test": "external"
+  }
+ ],
+ "compounds": {
+  "aqsoldb_reliable": 1002,
+  "delaney": 1114
+ },
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0,
+  8.0
+ ],
+ "crippen_types": 65,
+ "d_max": 12.0,
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0
+ ],
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "q2_mean": 0.7182405843482326,
+    "q2_sd": 0.0030718484941419707,
+    "rmse_mean": 1.2227504218875156
+   },
+   "delaney": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "q2_mean": 0.7745325167897065,
+    "q2_sd": 0.0026282121092264686,
+    "rmse_mean": 0.9938596695396474
+   },
+   "external": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 1
+    },
+    "r2": 0.662771687162656,
+    "rmse": 1.2154931655654624
+   }
+  },
+  "ESOL refitted": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "linear, ridge 0.1": 4,
+     "linear, ridge 1": 11
+    },
+    "q2_mean": 0.7842122834452784,
+    "q2_sd": 0.00156900713316629,
+    "rmse_mean": 1.070078252647829
+   },
+   "delaney": {
+    "chosen": {
+     "linear, ridge 0.1": 12,
+     "linear, ridge 1": 3
+    },
+    "q2_mean": 0.7622722738571562,
+    "q2_sd": 0.0011400745457913058,
+    "rmse_mean": 1.0205379944094501
+   },
+   "external": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": 0.7439953419247378,
+    "rmse": 1.0590450633158934
+   }
+  },
+  "eight counts": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1,
+     "width 1, ridge 0.1": 14
+    },
+    "q2_mean": 0.8318445417807601,
+    "q2_sd": 0.002467927085822386,
+    "rmse_mean": 0.9446020064949984
+   },
+   "delaney": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.8525124264227619,
+    "q2_sd": 0.005144518412093583,
+    "rmse_mean": 0.8037155669269399
+   },
+   "external": {
+    "chosen": {
+     "width 1, ridge 0.1": 1
+    },
+    "r2": 0.7776836560661882,
+    "rmse": 0.9869069383089529
+   }
+  },
+  "field totals": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 6,
+     "width 1, ridge 0.1": 9
+    },
+    "q2_mean": 0.8177411503076609,
+    "q2_sd": 0.005615833549774693,
+    "rmse_mean": 0.9833256917305425
+   },
+   "delaney": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.8609450790190505,
+    "q2_sd": 0.003216530690749548,
+    "rmse_mean": 0.7804672901133012
+   },
+   "external": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "r2": 0.8164814141969684,
+    "rmse": 0.896665650934138
+   }
+  },
+  "invariant + ESOL descriptors": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "sigma 0.1, h 3, ridge 1": 5,
+     "sigma 0.2, h 1, ridge 1": 4,
+     "sigma 0.2, h 3, ridge 1": 6
+    },
+    "q2_mean": 0.8591121383011436,
+    "q2_sd": 0.0017207468947858756,
+    "rmse_mean": 0.8646367823446012
+   },
+   "delaney": {
+    "chosen": {
+     "sigma 0.05, h 1, ridge 0.1": 9,
+     "sigma 0.1, h 1, ridge 0.1": 6
+    },
+    "q2_mean": 0.895682616091095,
+    "q2_sd": 0.002857302670055083,
+    "rmse_mean": 0.6759704524193012
+   },
+   "external": {
+    "chosen": {
+     "sigma 0.2, h 1, ridge 1": 1
+    },
+    "r2": 0.8564191137060606,
+    "rmse": 0.7931198533885753
+   }
+  },
+  "invariant, cosine": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "sigma 0.1, ridge 0.1": 5,
+     "sigma 0.2, ridge 0.1": 10
+    },
+    "q2_mean": 0.8314224517512033,
+    "q2_sd": 0.0018820292462104677,
+    "rmse_mean": 0.945797509803071
+   },
+   "delaney": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 9,
+     "sigma 0.1, ridge 0.1": 6
+    },
+    "q2_mean": 0.875162959473306,
+    "q2_sd": 0.0034546833786995605,
+    "rmse_mean": 0.7394699029621212
+   },
+   "external": {
+    "chosen": {
+     "sigma 0.2, ridge 0.1": 1
+    },
+    "r2": 0.8268709739678853,
+    "rmse": 0.8709143556929734
+   }
+  },
+  "invariant, not normalised": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 3,
+     "sigma 0.1, ridge 0.1": 4,
+     "sigma 0.2, ridge 0.1": 8
+    },
+    "q2_mean": 0.8005649459952586,
+    "q2_sd": 0.009115037339360773,
+    "rmse_mean": 1.0284678934062896
+   },
+   "delaney": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 15
+    },
+    "q2_mean": 0.8379394734903464,
+    "q2_sd": 0.001671199798351332,
+    "rmse_mean": 0.842603723032303
+   },
+   "external": {
+    "chosen": {
+     "sigma 0.1, ridge 0.1": 1
+    },
+    "r2": 0.7912916953132826,
+    "rmse": 0.9562256113247594
+   }
+  },
+  "linear regression on clogP": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "linear, ridge 1": 15
+    },
+    "q2_mean": 0.6884179661609858,
+    "q2_sd": 0.001265897890739006,
+    "rmse_mean": 1.2858501209414344
+   },
+   "delaney": {
+    "chosen": {
+     "linear, ridge 0.1": 11,
+     "linear, ridge 1": 4
+    },
+    "q2_mean": 0.6818712239830876,
+    "q2_sd": 0.0007876828103433399,
+    "rmse_mean": 1.1805697493636664
+   },
+   "external": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": 0.6787974395309561,
+    "rmse": 1.186260325549871
+   }
+  },
+  "refitted Crippen increments": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "linear, ridge 0.01": 15
+    },
+    "q2_mean": 0.7990568425577673,
+    "q2_sd": 0.0051020296940623945,
+    "rmse_mean": 1.0325393146995936
+   },
+   "delaney": {
+    "chosen": {
+     "linear, ridge 0.01": 15
+    },
+    "q2_mean": 0.8241961875546728,
+    "q2_sd": 0.0013063903507910862,
+    "rmse_mean": 0.8776101754036946
+   },
+   "external": {
+    "chosen": {
+     "linear, ridge 0.01": 1
+    },
+    "r2": 0.7660017058100244,
+    "rmse": 1.0125042436330038
+   }
+  },
+  "refitted increments + ESOL descriptors": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "h 0.3, ridge 0.1": 15
+    },
+    "q2_mean": 0.804700451441339,
+    "q2_sd": 0.004261251194821712,
+    "rmse_mean": 1.0179575318581742
+   },
+   "delaney": {
+    "chosen": {
+     "h 0.03, ridge 0.01": 2,
+     "h 0.3, ridge 0.1": 13
+    },
+    "q2_mean": 0.8183618129536633,
+    "q2_sd": 0.0012867272544082604,
+    "rmse_mean": 0.8920544499648564
+   },
+   "external": {
+    "chosen": {
+     "h 0.3, ridge 0.1": 1
+    },
+    "r2": 0.765343140528312,
+    "rmse": 1.0139280395689327
+   }
+  },
+  "topological + ESOL descriptors": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "up to 12 bonds, h 1, ridge 1": 1,
+     "up to 12 bonds, h 3, ridge 1": 1,
+     "up to 20 bonds, h 1, ridge 1": 2,
+     "up to 20 bonds, h 3, ridge 1": 4,
+     "up to 30 bonds, h 1, ridge 1": 2,
+     "up to 30 bonds, h 3, ridge 1": 2,
+     "up to 40 bonds, h 1, ridge 1": 1,
+     "up to 40 bonds, h 3, ridge 1": 1,
+     "up to 8 bonds, h 3, ridge 1": 1
+    },
+    "q2_mean": 0.8522765634978148,
+    "q2_sd": 0.00220558911640283,
+    "rmse_mean": 0.885355339269727
+   },
+   "delaney": {
+    "chosen": {
+     "up to 40 bonds, h 0.3, ridge 0.1": 14,
+     "up to 40 bonds, h 1, ridge 0.1": 1
+    },
+    "q2_mean": 0.8837304770375302,
+    "q2_sd": 0.0011525161417170156,
+    "rmse_mean": 0.7137039492389551
+   },
+   "external": {
+    "chosen": {
+     "up to 20 bonds, h 3, ridge 1": 1
+    },
+    "r2": 0.8551857635076622,
+    "rmse": 0.7965189926175208
+   }
+  },
+  "topological autocorrelation": {
+   "aqsoldb_reliable": {
+    "chosen": {
+     "up to 12 bonds, ridge 0.1": 2,
+     "up to 20 bonds, ridge 0.1": 6,
+     "up to 30 bonds, ridge 0.1": 4,
+     "up to 40 bonds, ridge 0.1": 2,
+     "up to 8 bonds, ridge 0.1": 1
+    },
+    "q2_mean": 0.814698941323213,
+    "q2_sd": 0.003412044227243152,
+    "rmse_mean": 0.9915748654976415
+   },
+   "delaney": {
+    "chosen": {
+     "up to 40 bonds, ridge 0.1": 15
+    },
+    "q2_mean": 0.8468106664039746,
+    "q2_sd": 0.001653405092725538,
+    "rmse_mean": 0.8192160114496202
+   },
+   "external": {
+    "chosen": {
+     "up to 20 bonds, ridge 0.1": 1
+    },
+    "r2": 0.8109685191785592,
+    "rmse": 0.910033908252875
+   }
+  }
+ },
+ "published_esol_on_delaney": {
+  "r2": 0.8097887551372082,
+  "rmse": 0.9128692966590369
+ },
+ "quick": 0,
+ "repeats": 3,
+ "seconds": 1227.8,
+ "sigmas": [
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  4.0,
+  6.0
+ ],
+ "topo_max": [
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "y": {
+  "aqsoldb_reliable": {
+   "max": 1.5363390032,
+   "mean": -2.7906221447679638,
+   "min": -12.0605,
+   "sd": 2.3035892388115173
+  },
+  "delaney": {
+   "max": 1.58,
+   "mean": -3.055704667863555,
+   "min": -11.6,
+   "sd": 2.0931025479736265
+  }
+ }
+}

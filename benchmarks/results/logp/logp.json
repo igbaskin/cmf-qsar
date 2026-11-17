@@ -1,0 +1,724 @@
+{
+ "comparisons": [
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.08369899409583136,
+   "lo": 0.059056657151422415,
+   "mean": 0.07129215315020077,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.09024621149438455,
+   "lo": 0.06054953309387267,
+   "mean": 0.07608164665425621,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.03619427286408536,
+   "lo": 0.009505832139677494,
+   "mean": 0.022953545633804584,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.001283094083306721,
+   "lo": -0.021423659437219,
+   "mean": -0.009591703137156515,
+   "model": "invariant, not normalised",
+   "test": "huuskonen"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.006470880965093512,
+   "lo": -0.023405596316417778,
+   "mean": -0.0083161340857687,
+   "model": "invariant, not normalised",
+   "test": "sangster_p"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.04340593953367913,
+   "lo": 0.015930575208005927,
+   "mean": 0.028999181962755083,
+   "model": "invariant, not normalised",
+   "test": "external"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.09665524459220493,
+   "lo": 0.07510025602177936,
+   "mean": 0.0856364510056622,
+   "model": "invariant + clogP",
+   "test": "huuskonen"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.10182739927633408,
+   "lo": 0.07980217165553076,
+   "mean": 0.09091528952288441,
+   "model": "invariant + clogP",
+   "test": "sangster_p"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.0608158906178167,
+   "lo": 0.03964678886720863,
+   "mean": 0.0501182731553812,
+   "model": "invariant + clogP",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.015609045611139622,
+   "lo": 0.007252043598250444,
+   "mean": 0.011305503783045623,
+   "model": "invariant + five descriptors",
+   "test": "huuskonen"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.015241927210135304,
+   "lo": 0.004385286176763712,
+   "mean": 0.009559400793590744,
+   "model": "invariant + five descriptors",
+   "test": "sangster_p"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.029823431527630256,
+   "lo": 0.018303876163063934,
+   "mean": 0.02393027673696635,
+   "model": "invariant + five descriptors",
+   "test": "external"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.05032845687477111,
+   "lo": 0.020881913418245957,
+   "mean": 0.03551659293644038,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.04264757175647268,
+   "lo": 0.01694278347875623,
+   "mean": 0.02998575411862625,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "field totals",
+   "hi": -0.00588571067283045,
+   "lo": -0.030350703877493883,
+   "mean": -0.01780875197187015,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.09865685327386313,
+   "lo": 0.06509745298420358,
+   "mean": 0.08116323632378075,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.11892317582026271,
+   "lo": 0.0761442569397882,
+   "mean": 0.09769879302444129,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.14020865280426248,
+   "lo": 0.09660368832517462,
+   "mean": 0.11812697590942989,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.08126408725428533,
+   "lo": 0.047390723449159775,
+   "mean": 0.06402789061873282,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.03182350753034188,
+   "lo": -0.0025488727485574432,
+   "mean": 0.014238421379382027,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.08790869538800761,
+   "lo": 0.047503917194104295,
+   "mean": 0.06678592993280241,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.09572963696277738,
+   "lo": 0.06184880772084658,
+   "mean": 0.07837218847419425,
+   "model": "invariant + clogP",
+   "test": "huuskonen"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.047463649797433664,
+   "lo": 0.011628855745642375,
+   "mean": 0.029072064248010232,
+   "model": "invariant + clogP",
+   "test": "sangster_p"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.11479158914369218,
+   "lo": 0.07465859953318024,
+   "mean": 0.09395065745437903,
+   "model": "invariant + clogP",
+   "test": "external"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.05397766989566527,
+   "lo": 0.029622829616006072,
+   "mean": 0.04174717516312665,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.05154987556161127,
+   "lo": 0.02704201130378626,
+   "mean": 0.03922894336268001,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.07768297610234487,
+   "lo": 0.042515317237628206,
+   "mean": 0.06005087261180975,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "refitted increments + clogP",
+   "hi": 0.06877873987324606,
+   "lo": 0.04880101168896081,
+   "mean": 0.05868979751921943,
+   "model": "invariant + clogP",
+   "test": "huuskonen"
+  },
+  {
+   "against": "refitted increments + clogP",
+   "hi": 0.06338896396790858,
+   "lo": 0.04586243896015367,
+   "mean": 0.0543946201080574,
+   "model": "invariant + clogP",
+   "test": "sangster_p"
+  },
+  {
+   "against": "refitted increments + clogP",
+   "hi": 0.0895076228618351,
+   "lo": 0.06132844834767934,
+   "mean": 0.0750028647417561,
+   "model": "invariant + clogP",
+   "test": "external"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.02734209798932969,
+   "lo": 0.010482711496824351,
+   "mean": 0.01917935991913078,
+   "model": "invariant, cosine",
+   "test": "huuskonen"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.032662159185705676,
+   "lo": 0.012629932546887901,
+   "mean": 0.022188177146651222,
+   "model": "invariant, cosine",
+   "test": "sangster_p"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.03357952352743944,
+   "lo": 0.007797033695616468,
+   "mean": 0.020166945471194353,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.027722615544740984,
+   "lo": 0.013325491149439797,
+   "mean": 0.020585565175394338,
+   "model": "invariant + clogP",
+   "test": "huuskonen"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.032687176550638006,
+   "lo": 0.01832594277144068,
+   "mean": 0.0253535916615949,
+   "model": "invariant + clogP",
+   "test": "sangster_p"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.019385922660964186,
+   "lo": 0.0006584561976992059,
+   "mean": 0.009871267936550465,
+   "model": "invariant + clogP",
+   "test": "external"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.034098461433701335,
+   "lo": 0.011117517597960161,
+   "mean": 0.02256781524399587,
+   "model": "topological autocorrelation",
+   "test": "huuskonen"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.02918465336200691,
+   "lo": 0.004267625397443781,
+   "mean": 0.01704076621602879,
+   "model": "topological autocorrelation",
+   "test": "sangster_p"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.05700289502744862,
+   "lo": 0.02172396058471338,
+   "mean": 0.039883927140615394,
+   "model": "topological autocorrelation",
+   "test": "external"
+  }
+ ],
+ "compounds": {
+  "huuskonen": 1847,
+  "sangster_p": 2999
+ },
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0,
+  8.0
+ ],
+ "crippen_types": 62,
+ "d_max": 12.0,
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0
+ ],
+ "hydrophobic_sum_minus_clogp_max": 0.0,
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4": {
+   "external": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 1
+    },
+    "r2": 0.735845859244908,
+    "rmse": 0.7679507567771197
+   },
+   "huuskonen": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "q2_mean": 0.8230535952796109,
+    "q2_sd": 0.0016685266707661419,
+    "rmse_mean": 0.6285223198009898
+   },
+   "sangster_p": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "q2_mean": 0.7638504672985867,
+    "q2_sd": 0.004729011290477088,
+    "rmse_mean": 0.8648881274338648
+   }
+  },
+  "eight counts": {
+   "external": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "r2": 0.6845048132682805,
+    "rmse": 0.8392687068849203
+   },
+   "huuskonen": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.8061964677621218,
+    "q2_sd": 0.0010846900162543261,
+    "rmse_mean": 0.6577847532005064
+   },
+   "sangster_p": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 11,
+     "width 1, ridge 0.1": 4
+    },
+    "q2_mean": 0.672359447569962,
+    "q2_sd": 0.005199978553347736,
+    "rmse_mean": 1.0187632503334705
+   }
+  },
+  "field totals": {
+   "external": {
+    "chosen": {
+     "width 1, ridge 0.1": 1
+    },
+    "r2": 0.8204405411495805,
+    "rmse": 0.633153198595663
+   },
+   "huuskonen": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 13,
+     "width 0.5, ridge 0.1": 2
+    },
+    "q2_mean": 0.8469096364661537,
+    "q2_sd": 0.0022846233438676513,
+    "rmse_mean": 0.5846104086601834
+   },
+   "sangster_p": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1,
+     "width 1, ridge 0.1": 14
+    },
+    "q2_mean": 0.7523817655430621,
+    "q2_sd": 0.002858760937358612,
+    "rmse_mean": 0.8856706926371345
+   }
+  },
+  "invariant + clogP": {
+   "external": {
+    "chosen": {
+     "sigma 0.05, h 3, ridge 1": 1
+    },
+    "r2": 0.829796516699287,
+    "rmse": 0.6164372626078911
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.03, h 3, ridge 0.1": 5,
+     "sigma 0.05, h 3, ridge 0.1": 7,
+     "sigma 0.1, h 1, ridge 0.1": 1,
+     "sigma 0.1, h 3, ridge 0.1": 2
+    },
+    "q2_mean": 0.8994935290673155,
+    "q2_sd": 0.0022481058174254514,
+    "rmse_mean": 0.4736687356530261
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.01, h 3, ridge 1": 2,
+     "sigma 0.05, h 3, ridge 1": 13
+    },
+    "q2_mean": 0.7974795175067189,
+    "q2_sd": 0.0016617737341788354,
+    "rmse_mean": 0.8009750603179201
+   }
+  },
+  "invariant + five descriptors": {
+   "external": {
+    "chosen": {
+     "sigma 0.05, h 1, ridge 1": 1
+    },
+    "r2": 0.8265620659146767,
+    "rmse": 0.622266909762042
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.03, h 3, ridge 0.1": 5,
+     "sigma 0.05, h 1, ridge 0.1": 7,
+     "sigma 0.1, h 1, ridge 0.1": 3
+    },
+    "q2_mean": 0.8959690973432105,
+    "q2_sd": 0.0026682620756273354,
+    "rmse_mean": 0.4818927852429559
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.01, h 0.3, ridge 0.1": 1,
+     "sigma 0.01, h 1, ridge 0.1": 1,
+     "sigma 0.05, h 1, ridge 1": 13
+    },
+    "q2_mean": 0.7880183887291903,
+    "q2_sd": 0.0019543017586699674,
+    "rmse_mean": 0.8194692566692888
+   }
+  },
+  "invariant, cosine": {
+   "external": {
+    "chosen": {
+     "sigma 0.05, ridge 1": 1
+    },
+    "r2": 0.8026317891777104,
+    "rmse": 0.6638091941662484
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.03, ridge 0.1": 5,
+     "sigma 0.05, ridge 0.1": 7,
+     "sigma 0.1, ridge 0.1": 3
+    },
+    "q2_mean": 0.8836160970914854,
+    "q2_sd": 0.0024732211386913555,
+    "rmse_mean": 0.5097140155691136
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.01, ridge 0.1": 2,
+     "sigma 0.05, ridge 1": 13
+    },
+    "q2_mean": 0.7780679190875789,
+    "q2_sd": 0.002244115042320502,
+    "rmse_mean": 0.8384798831350766
+   }
+  },
+  "invariant, not normalised": {
+   "external": {
+    "chosen": {
+     "sigma 0.02, ridge 0.1": 1
+    },
+    "r2": 0.8316309711404655,
+    "rmse": 0.6131062801951329
+   },
+   "huuskonen": {
+    "chosen": {
+     "sigma 0.02, ridge 0.01": 11,
+     "sigma 0.03, ridge 0.01": 4
+    },
+    "q2_mean": 0.8681599537803185,
+    "q2_sd": 0.003923616725901208,
+    "rmse_mean": 0.5424758502623183
+   },
+   "sangster_p": {
+    "chosen": {
+     "sigma 0.02, ridge 0.1": 15
+    },
+    "q2_mean": 0.7641017317450286,
+    "q2_sd": 0.004142907882338849,
+    "rmse_mean": 0.8644378744881377
+   }
+  },
+  "linear regression on clogP": {
+   "external": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": 0.7796782435439058,
+    "rmse": 0.7013476625017249
+   },
+   "huuskonen": {
+    "chosen": {
+     "linear, ridge 0.1": 15
+    },
+    "q2_mean": 0.8199767359176793,
+    "q2_sd": 0.0002336790271610146,
+    "rmse_mean": 0.633970260594751
+   },
+   "sangster_p": {
+    "chosen": {
+     "linear, ridge 1": 15
+    },
+    "q2_mean": 0.7095934908053314,
+    "q2_sd": 0.0002870709192318639,
+    "rmse_mean": 0.9591605129920956
+   }
+  },
+  "refitted Crippen increments": {
+   "external": {
+    "chosen": {
+     "linear, ridge 0.01": 1
+    },
+    "r2": 0.7425809165659006,
+    "rmse": 0.7580974417466522
+   },
+   "huuskonen": {
+    "chosen": {
+     "linear, ridge 0.001": 1,
+     "linear, ridge 0.01": 14
+    },
+    "q2_mean": 0.8483264965919672,
+    "q2_sd": 0.0005369415652550543,
+    "rmse_mean": 0.5819140465833014
+   },
+   "sangster_p": {
+    "chosen": {
+     "linear, ridge 0.01": 15
+    },
+    "q2_mean": 0.7454437716887687,
+    "q2_sd": 0.001460488925775013,
+    "rmse_mean": 0.898003958845767
+   }
+  },
+  "refitted increments + clogP": {
+   "external": {
+    "chosen": {
+     "h 0.3, ridge 0.1": 1
+    },
+    "r2": 0.7547936519575309,
+    "rmse": 0.7398957213454685
+   },
+   "huuskonen": {
+    "chosen": {
+     "h 0.1, ridge 0.01": 11,
+     "h 1, ridge 0.1": 4
+    },
+    "q2_mean": 0.8454277452006438,
+    "q2_sd": 0.002374125452250994,
+    "rmse_mean": 0.5874321235225041
+   },
+   "sangster_p": {
+    "chosen": {
+     "h 0.3, ridge 0.1": 15
+    },
+    "q2_mean": 0.7453635569130274,
+    "q2_sd": 0.0012149788942185443,
+    "rmse_mean": 0.8981465712864193
+   }
+  },
+  "topological + clogP": {
+   "external": {
+    "chosen": {
+     "up to 30 bonds, h 1, ridge 1": 1
+    },
+    "r2": 0.8199252487627365,
+    "rmse": 0.6340610463055363
+   },
+   "huuskonen": {
+    "chosen": {
+     "up to 20 bonds, h 1, ridge 0.1": 15
+    },
+    "q2_mean": 0.8837362141373402,
+    "q2_sd": 0.00034348738271031923,
+    "rmse_mean": 0.509479152552433
+   },
+   "sangster_p": {
+    "chosen": {
+     "up to 20 bonds, h 1, ridge 1": 5,
+     "up to 30 bonds, h 1, ridge 1": 5,
+     "up to 30 bonds, h 3, ridge 1": 4,
+     "up to 40 bonds, h 1, ridge 1": 1
+    },
+    "q2_mean": 0.7741996647902596,
+    "q2_sd": 0.0006605500040177395,
+    "rmse_mean": 0.845765563219787
+   }
+  },
+  "topological autocorrelation": {
+   "external": {
+    "chosen": {
+     "up to 30 bonds, ridge 0.1": 1
+    },
+    "r2": 0.782464843706516,
+    "rmse": 0.6968982731097014
+   },
+   "huuskonen": {
+    "chosen": {
+     "up to 20 bonds, ridge 0.1": 15
+    },
+    "q2_mean": 0.8706677293447714,
+    "q2_sd": 0.00028761782789350966,
+    "rmse_mean": 0.5373507307315116
+   },
+   "sangster_p": {
+    "chosen": {
+     "up to 20 bonds, ridge 0.1": 5,
+     "up to 30 bonds, ridge 0.1": 9,
+     "up to 40 bonds, ridge 0.1": 1
+    },
+    "q2_mean": 0.7610596023481531,
+    "q2_sd": 0.001832392168032435,
+    "rmse_mean": 0.8700210721150564
+   }
+  }
+ },
+ "quick": 0,
+ "repeats": 3,
+ "seconds": 3723.1,
+ "sigmas": [
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  4.0,
+  6.0
+ ],
+ "topo_max": [
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "y": {
+  "huuskonen": {
+   "max": 5.9,
+   "mean": 1.7076881429344886,
+   "min": -4.22,
+   "sd": 1.4941859943791373
+  },
+  "sangster_p": {
+   "max": 10.89,
+   "mean": 2.5625941980660216,
+   "min": -3.0,
+   "sd": 1.7798695413543926
+  }
+ }
+}
