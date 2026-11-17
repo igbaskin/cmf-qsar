@@ -18379,6 +18379,51 @@ displaces, and this measurement is the clearest statement of that the repository
 nothing else here has a thousand ligands in one pocket to say it with. Read the score as a check
 on a pose -- does this molecule fit, does it clash -- and not as an affinity.
 
+## What a binding constant means for a formulation
+
+A host such as a cyclodextrin carries a guest in solution, and three questions a delivery
+formulation asks are functions of the 1:1 association constant K alone (plan item SC2,
+`cmfqsar/delivery.py`). `cmf predict --host-conc` reads every prediction as K and answers them
+for a total host concentration in mol/L:
+
+| Quantity | Formula | What it assumes |
+|---|---|---|
+| Solubility gain S_t / S0 | 1 + K H_t / (1 + K S0) | solid guest in excess, a 1:1 complex: the straight line of an A_L phase-solubility diagram; S0 is the solubility of the guest without host (`--intrinsic-solubility`) |
+| The same without S0 | 1 + K H_t | an upper bound, reached when K S0 is small |
+| Fraction of the guest bound after diluting D times | C / G, with C the smaller root of K (G - C)(H - C) = C, G = G_t / D, H = H_t / D | `--guest-conc`, or the dissolved guest when S0 is given, or a guest much more dilute than the host |
+| Release half-life | ln 2 · K / k_on | association at the diffusion limit 8RT/(3η) (7.4e9 L/(mol s) in water at 25 °C) unless `--kon` gives the rate; a slower association means a longer life, so this is a lower bound |
+
+The activity is log10 K in L/mol by default, which is the scale of the cyclodextrin sets;
+`--activity-scale` takes ln K, K itself or a binding free energy in kJ/mol instead. Every
+quantity grows with K, so when the model carries a conformal calibration the ends of the
+interval of K give the ends of the interval of each quantity, and both are printed and written:
+
+    cmf build examples/cyclodextrin/hydroxypropyl_beta_cyclodextrin.csv --kernel autocorrelation --conformal 0.9 --save hp_beta.cmf
+    cmf predict hp_beta.cmf examples/cyclodextrin/hydroxypropyl_beta_cyclodextrin.csv --host-conc 0.05 --intrinsic-solubility 1e-4 --dilution 50 --out hp_delivery.csv
+
+The model reaches q2 = 0.571 on the 135 guests of hydroxypropyl-β-cyclodextrin, and its 90 %
+interval is ±0.883 log units. With 0.05 mol/L of host (about 7 % by weight), a guest of
+intrinsic solubility 1e-4 mol/L and a dilution of 50 times, the first rows read:
+
+| Guest | K (L/mol) | Solubility gain | Bound after dilution | Half-life (lower bound) |
+|---|---:|---|---|---|
+| 3-carene | 1897 | 80.7 [13.1, 297] | 63.0 % [19.8 %, 87.4 %] | 177 ns [23.2 ns, 1.35 µs] |
+| alpha-isomethylionone | 6651 | 201 [41.1, 419] | 81.7 % [45.6 %, 92.1 %] | 621 ns [81.3 ns, 4.74 µs] |
+| alpha-pinene | 1355 | 60.7 [9.72, 255] | 55.8 % [15.0 %, 85.4 %] | 126 ns [16.6 ns, 966 ns] |
+
+These guests are training molecules, so the rows show the arithmetic and not a prediction. They
+also show what the interval means for a formulation. An interval of ±0.88 in log K is an
+interval of a factor of about 20 in the solubility gain, which is the difference between a
+formulation that works and one that does not. A complex that lasts a microsecond releases its
+guest at once on the time scale of a dose. What it carries after dilution is set by the mass
+balance, not by its lifetime.
+
+**What this is and is not.** The formulas are standard, and the tests check them against the
+mass balance solved numerically. No phase-solubility set is in the repository to test the
+predicted gains against measured ones. So, by rule 5, this is a display tool and not a measured
+result. A 1:2 complex, a host that self-aggregates and a guest that ionises with pH are outside
+all three formulas.
+
 ## A porous framework as a pocket
 
 A zeolite or a metal-organic framework (MOF) is a rigid host, as a cyclodextrin is, but it

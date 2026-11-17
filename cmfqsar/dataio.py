@@ -790,11 +790,14 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                           domain_threshold: Optional[float] = None,
                           interval: Optional[Sequence[Sequence[float]]] = None,
                           truth_header: str = "experimental",
-                          extra_columns: Optional[Dict[str, Sequence[float]]] = None) -> None:
+                          extra_columns: Optional[Dict[str, Sequence[float]]] = None,
+                          extra_formats: Optional[Dict[str, str]] = None) -> None:
     """Write the predictions table.
 
     `extra_columns` adds one column per entry at the end, in order; a two-endpoint model writes
-    the second endpoint and the difference of the two there (plan item SC1).
+    the second endpoint and the difference of the two there (plan item SC1).  An extra column is
+    written with four decimals unless `extra_formats` gives it another format: a half-life of
+    nanoseconds in seconds needs significant digits, not decimals (plan item SC2).
     """
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
@@ -828,9 +831,10 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                 for bound in interval:
                     v = bound[i]
                     row.append("" if v is None or not np.isfinite(v) else f"{v:.4f}")
-            for col in (extra_columns or {}).values():
+            for key, col in (extra_columns or {}).items():
                 v = col[i]
-                row.append("" if v is None or not np.isfinite(v) else f"{v:.4f}")
+                fmt = (extra_formats or {}).get(key, ".4f")
+                row.append("" if v is None or not np.isfinite(v) else format(v, fmt))
             w.writerow(row)
 
 

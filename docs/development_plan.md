@@ -7116,6 +7116,21 @@ the numbers above; on a series of hosts, the five-field aligned model.
   conformal interval of K carried through. Under rule 5 this is a display tool unless a
   phase-solubility set is found to test it. The formulas are standard and a spreadsheet does the
   same, so the item is convenience and is kept small.
+  **Done 17 November 2026.** `cmfqsar/delivery.py`: the solubility gain of an A_L
+  phase-solubility diagram, 1 + K H_t / (1 + K S0), or its upper bound 1 + K H_t without S0; the
+  fraction of the guest bound after diluting D times, the smaller root of the mass balance; the
+  release half-life ln 2 K / k_on with k_on at the diffusion limit 8RT/(3 eta) (7.4e9 L/(mol s)
+  in water at 25 C) unless given, which makes it a lower bound. `predict --host-conc` with
+  `--intrinsic-solubility`, `--guest-conc`, `--dilution`, `--kon`, `--temperature`,
+  `--viscosity` and `--activity-scale` (log10 K, ln K, K or dG in kJ/mol) prints them and writes
+  them to `--out`, each with the ends of the conformal interval of K when the model has one.
+  `write_predictions_csv` takes a format per extra column, because a half-life of nanoseconds in
+  seconds printed as 0.0000. Tests (`tests/test_delivery.py`): the gain and the fraction bound
+  equal the mass balance solved by bisection; the gain without S0 bounds the gain with any; the
+  interval ends are ordered on every scale, the free-energy scale turned round. On
+  hydroxypropyl-beta-cyclodextrin (q2 0.571, 90 % interval +/-0.883) the solubility gain of a
+  guest at 0.05 mol/L host spans a factor of about 20 across the interval. Still a display
+  tool: no phase-solubility set has been found.
 * **SC3. A macrocyclic host as a pocket.** `complement` reads proteins. A cyclodextrin,
   cucurbituril or calixarene comes as an SDF file or as a CIF file from the Cambridge Structural
   Database, with no residues. Needed: a reader in `cmfqsar/protein.py` for a host given as a
@@ -9700,7 +9715,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Electrochemistry | 11 | 9 | EC8 (partly), EC9 |
 | H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
-| H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
+| H. Supramolecular and host-guest | 8 | 5 | SC4, SC5 (partly), SC8 |
 | H. Physical organic | 9 | 9 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
@@ -9708,7 +9723,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 134 finished, 9 partly, 36 open.**
+**179 items: 135 finished, 9 partly, 35 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9733,7 +9748,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5 extends.
-* **Open on their own merits.** SC2, SC8, MC10, E11's remaining three
+* **Open on their own merits.** SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the

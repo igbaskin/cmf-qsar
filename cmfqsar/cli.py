@@ -2501,17 +2501,67 @@ def _report_predictions(args, model, extra, names, activity, table):
     if getattr(args, "shift", False):
         bounds, shift_cols = _shifted_intervals(model, table, conf, names, yp,
                                                 seed=getattr(args, "seed", 0) or 0)
+    delivery_cols = None
+    if getattr(args, "host_conc", None) is not None:
+        delivery_cols = _delivery_report(args, names, yp, bounds)
     if args.out:
         extra_columns = {}
         if shift_cols:
             extra_columns.update(shift_cols)
+        if delivery_cols:
+            extra_columns.update(delivery_cols)
         if yp2 is not None:
             extra_columns.update({second["names"][1]: yp2, "difference": sel})
         if sd_cols:
             extra_columns.update(sd_cols)
         write_predictions_csv(args.out, names, activity, yp, ["test"] * len(names), var=var,
-                              interval=bounds, extra_columns=extra_columns or None)
+                              interval=bounds, extra_columns=extra_columns or None,
+                              extra_formats={k: ".6g" for k in (delivery_cols or {})})
         print(f"Predictions written to {args.out}")
+
+
+def _delivery_report(args, names, yp, bounds):
+    """Print what each predicted constant means for a formulation, and return the CSV columns.
+
+    Plan item SC2: the solubility gain, the fraction bound after a dilution and the release
+    half-life, each from the 1:1 association constant (:mod:`cmfqsar.delivery`).  The ends of
+    the conformal interval of the prediction, when the model carries one, give the ends of the
+    interval of every quantity, because every quantity grows with the constant.
+    """
+    from cmfqsar.delivery import Delivery, format_time, rows
+
+    try:
+        d = Delivery(host_total=float(args.host_conc), intrinsic=args.intrinsic_solubility,
+                     guest_total=args.guest_conc, dilution=float(args.dilution),
+                     k_on=args.kon, temperature=float(args.temperature),
+                     viscosity=float(args.viscosity), scale=args.activity_scale)
+        lo, hi = bounds if bounds is not None else (None, None)
+        recs = rows(names, yp, d, lo, hi)
+    except ValueError as exc:
+        raise SystemExit(f"--host-conc: {exc}")
+    print()
+    print(f"Delivery (plan item SC2), the prediction read as {args.activity_scale}: "
+          f"{d.describe()}.")
+    with_iv = bounds is not None
+    if not with_iv:
+        print("  The model carries no conformal calibration, so the quantities have no interval "
+              "(build the model with --conformal to get one).")
+    print(f"{'molecule':30s} {'K (L/mol)':>12s} {'solubility gain':>24s} "
+          f"{'bound after dilution':>24s} {'half-life':>26s}")
+
+    def cell(r, key, fmt):
+        text = fmt(r[key])
+        if with_iv:
+            text += f" [{fmt(r[key + '_lo'])}, {fmt(r[key + '_hi'])}]"
+        return text
+
+    for r in recs:
+        print(f"{r['name']:30s} {r['K']:12.4g} "
+              f"{cell(r, 'solubility_gain', lambda v: f'{v:.3g}'):>24s} "
+              f"{cell(r, 'bound_fraction', lambda v: f'{100 * v:.1f} %'):>24s} "
+              f"{cell(r, 'half_life_s', format_time):>26s}")
+    keys = [k for k in recs[0] if k != "name"] if recs else []
+    return {k: [r[k] for r in recs] for k in keys}
 
 
 def cmd_report(args):
@@ -5305,6 +5355,38 @@ def main(argv=None):
     q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="report the model's calibrated interval at this level instead of the "
                         "one it was calibrated at; the model must carry a calibration")
+    q.add_argument("--host-conc", type=float, default=None, metavar="MOL_PER_L",
+                   help="read every prediction as the association constant of a 1:1 host-guest "
+                        "complex and report, at this total host concentration (mol/L), the "
+                        "solubility gain, the fraction of the guest bound after --dilution and "
+                        "the release half-life (plan item SC2), with the conformal interval of "
+                        "the model carried through when it has one")
+    q.add_argument("--activity-scale", default="log10K", choices=["log10K", "lnK", "K", "dG"],
+                   help="with --host-conc, what the activity is: log10 of K in L/mol (the "
+                        "default, the scale of the cyclodextrin sets), its natural logarithm, "
+                        "K itself, or the binding free energy dG in kJ/mol")
+    q.add_argument("--intrinsic-solubility", type=float, default=None, metavar="MOL_PER_L",
+                   help="with --host-conc, the solubility of the guest without host (mol/L): "
+                        "the solubility gain is then that of an A_L phase-solubility diagram; "
+                        "without it the gain is the upper bound 1 + K [host]")
+    q.add_argument("--guest-conc", type=float, default=None, metavar="MOL_PER_L",
+                   help="with --host-conc, the total guest concentration of the formulation "
+                        "before dilution (mol/L); without it, the solubility the host gives the "
+                        "guest when --intrinsic-solubility is known, else a guest much more "
+                        "dilute than the host")
+    q.add_argument("--dilution", type=float, default=1.0, metavar="D",
+                   help="with --host-conc, how many times the formulation is diluted before the "
+                        "fraction bound is reported (default 1: not diluted)")
+    q.add_argument("--kon", type=float, default=None, metavar="RATE",
+                   help="with --host-conc, the association rate constant in L/(mol s); without "
+                        "it, the diffusion limit 8RT/(3 eta), which makes the half-life a lower "
+                        "bound")
+    q.add_argument("--temperature", type=float, default=298.15, metavar="KELVIN",
+                   help="with --host-conc, the temperature of the diffusion limit and of the dG "
+                        "scale (default 298.15 K)")
+    q.add_argument("--viscosity", type=float, default=0.890, metavar="MPA_S",
+                   help="with --host-conc, the viscosity of the solvent in mPa s for the "
+                        "diffusion limit (default 0.890, water at 25 C)")
     q.add_argument("--shift", action="store_true",
                    help="weight the model's calibration errors by how typical each training "
                         "molecule is of the molecules being predicted (weighted conformal "

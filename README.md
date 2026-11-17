@@ -2971,6 +2971,17 @@ driven by the water that leaves the cavity, and an overlap between the guest's f
 host's has no term for the solvent it displaces. The score is a check on a pose — does this
 molecule fit, does it clash — and not an affinity.
 
+### What a binding constant means for a formulation
+
+`cmf predict --host-conc 0.05` reads each prediction as the 1:1 association constant K of a
+host-guest complex (log10 K by default) and reports the solubility gain (with
+`--intrinsic-solubility`, that of an A_L phase-solubility diagram; without it, the upper bound
+1 + K [host]), the fraction of the guest bound after `--dilution`, and the release half-life
+when association is diffusion-limited, which is a lower bound. When the model carries a
+conformal calibration, the interval of K is carried through to all three (plan item SC2,
+`cmfqsar/delivery.py`). No phase-solubility set is here to test the predicted gains, so this is
+a display tool.
+
 ### A porous framework as a pocket
 
 Plan item M7 (`cmfqsar/frameworks.py`, `benchmarks/run_frameworks.py`): a zeolite or a MOF read
