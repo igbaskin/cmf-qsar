@@ -1012,6 +1012,19 @@ def registry() -> List[Benchmark]:
                   minutes="46",
                   report=lambda: _mod("run_vapour").report(),
                   tables=["vapour/table.md"]),
+        Benchmark("porphyrin",
+                  "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
+                  "the ORR limiting potential) of substituted cobalt and iron porphyrins, "
+                  "computed with ORCA: the field kernels in three frames against the count of "
+                  "the substituents and a linear regression on the Hammett constants, on 21 "
+                  "cobalt and 19 iron complexes, with and without the phthalocyanine",
+                  "run_porphyrin.py", "porphyrin", compute=[[]],
+                  prepare=["examples/make_porphyrin_examples.py --build --orca --thermo "
+                           "--collect (GFN2-xTB and ORCA r2SCAN-3c, about 50 hours with 8 to 12 "
+                           "jobs; the result is kept in examples/porphyrin)"],
+                  minutes="4",
+                  report=lambda: _mod("run_porphyrin").write_table(),
+                  tables=["porphyrin/table.md"]),
         Benchmark("structures",
                   "structures that are not molecules -- crystals, layers, chains and metal "
                   "particles -- written in six file formats and read back: what each format "
