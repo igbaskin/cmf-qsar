@@ -1,6 +1,6 @@
 {
- "commit": "ebde7963eec178b6f38b1f43ae638ac022bab3ce",
- "created": "2026-11-17T15:43:34",
+ "commit": "8f6bca04989f4366015ffa8f47069d8b84bb103d",
+ "created": "2026-11-17T16:49:04",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -97,6 +97,18 @@
   "examples/charge_transfer/sources.csv": {
    "bytes": 18188,
    "sha256": "1e4dbc30e96d2da5911fe41dfb4e5b1f3c2484412755aa642d24f245727ce366"
+  },
+  "examples/coated_particles/README.md": {
+   "bytes": 2480,
+   "sha256": "cdb0f86b811d3748e6eb6cf1557503c5cd25478e06f9661cbe9a2d327f31f56a"
+  },
+  "examples/coated_particles/make_coated_particles.py": {
+   "bytes": 2328,
+   "sha256": "a1a329880f130c90c57e48ef99be59892865919e4e3241418eb00450298e086c"
+  },
+  "examples/coated_particles/particles.extxyz": {
+   "bytes": 1067425,
+   "sha256": "a5e24835c073e93429920b678824ab697305c096b823727159c51f94e0971008"
   },
   "examples/complexes_fe/fe_redox.sdf": {
    "bytes": 7991354,
