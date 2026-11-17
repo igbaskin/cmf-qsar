@@ -1157,12 +1157,13 @@ def registry() -> List[Benchmark]:
                   "site-resolved models on particles: OH binding at every surface site of 48 "
                   "Pt and Au particles computed with UMA, the site profile with and without the "
                   "core fields against the generalized coordination number and counts, the "
-                  "strongest site of an unseen particle, and a whole-particle model read site "
-                  "by site (plan item NT7)",
+                  "strongest site of an unseen particle, numbers of the site that come close to "
+                  "the profile (tutorial 32), and a whole-particle model read site by site "
+                  "(plan item NT7)",
                   "run_particle_sites.py", "particle_sites",
                   compute=[["--stage", "checks"], ["--stage", "model"],
-                           ["--stage", "decomposition"]],
-                  minutes="80",
+                           ["--stage", "references"], ["--stage", "decomposition"]],
+                  minutes="150",
                   report=lambda: _mod("run_particle_sites").report(),
                   tables=["particle_sites/table.md"]),
         Benchmark("threebody",

@@ -1334,6 +1334,29 @@ surrounded atom has the larger profile, whatever it binds. The split says where 
 channels come from, not which site carries a property that is an average over sites. For that
 question, fit the sites. The tables are in `benchmarks/results/particle_sites/table.md`.
 
+**Numbers of the site against the profile (added 18 November 2026).** The Gaussian kernel on the
+counts lacks two things the profile with the core fields has: the exposure of the site, the third
+core field, and the core values of the atoms around it. Stage `--stage references` of the
+benchmark adds them as plain numbers, in a Gaussian kernel for each metal on the same folds. With
+the exposure of the site added (11 columns), the kernel reaches q2 0.927 with particles held out
+and 0.904 with shapes held out; the profile is ahead by +0.004 [-0.021, +0.021] and +0.016
+[-0.002, +0.033], intervals from a bootstrap over whole particles that both include zero. With the
+sums of the coordination number, the generalized coordination number and the exposure over each
+distance shell added as well (23 columns), the kernel reaches 0.933 and 0.900: level with the
+profile on new particles (-0.005 [-0.025, +0.009]) and 0.020 [+0.007, +0.037] behind it on a new
+shape. Against the counts alone the profile's lead was +0.025 [-0.005, +0.052] and +0.065 [+0.029,
++0.107]. So most of what the core fields add is one number of the site, its exposure; the profile
+over the distances adds about 0.02 in q2, and only on a shape the model has not seen. The two new
+references were given grids of the width and the ridge parameter wider at both ends than the model
+stage's, because a first run chose that grid's edge in a few folds; the wider grid changed their
+q2 by less than 0.001. The control, the counts with the model stage's grids, reproduces 0.902 and
+0.855 exactly.
+
+The thirty-second tutorial, `docs/tutorials/32_sites_on_a_particle.ipynb`, runs the profile and
+the references live with the shapes held out, draws one particle coloured by the computed and the
+predicted binding, and reads the strongest sites and the whole-particle split from the stored
+results.
+
 **Nanotubes.** A nanotube is periodic along its axis only: give it as a chain (`--pbc c`, or
 *Periodic in: a chain*). As ASE builds it, a tube has no lattice vector across its axis, which
 the program takes as it is. Plan item NT4 measured the chain kernel on 147 carbon nanotubes
@@ -19327,7 +19350,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Thirty-one notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Thirty-two notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -19348,9 +19371,10 @@ cytochrome P450 attacks read from the field around it and compared with counts o
 around it, which groups can replace each other at a position, compared with a model that
 needs no field, the 13C shift of one carbon, compared with a HOSE-code lookup and with element
 channels in place of the fields, which acid gave an infrared spectrum, compared with binned
-spectra and a peak-table search, and four physical properties of diverse compounds, compared
-with clogP, ESOL, Joback's groups and the same autocorrelation with distances counted in bonds.
-Each runs on the
+spectra and a peak-table search, four physical properties of diverse compounds, compared
+with clogP, ESOL, Joback's groups and the same autocorrelation with distances counted in bonds,
+and the binding of OH at every surface site of metal particles, compared with neighbour counts
+and numbers of the site. Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes

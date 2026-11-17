@@ -6998,7 +6998,7 @@ for.
 
 ### Tutorials
 
-Thirty-one notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Thirty-two notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository (the eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twentieth reads the prepared set of the hop benchmark, the twenty-first downloads 5 MB of defect data on its first run, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer). Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -7035,6 +7035,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `29_carbon_shifts.ipynb` | the 13C shift of one carbon: a HOSE-code lookup built sphere by sphere, the posed overlap of the ring carbons with fields and with element channels in their place, the whole set and a learning curve from the stored run, and a margin on one subset that random subsets do not repeat |
 | `30_spectrum_to_structure.ipynb` | which acid gave an infrared spectrum: the spectrum kernel against binned spectra and a peak-table search for a B97-3c and a GFN2-xTB query, why a bin edge costs a match, measured queries from the stored runs, and a kernel CCA of structure and spectrum against each description alone |
 | `31_physical_properties.ipynb` | logP, water solubility, boiling point and vapour pressure of diverse compounds: the field kernel, eight counts and their sum against clogP, ESOL and Joback's groups; what the 3D geometry adds over the same autocorrelation with distances in bonds, with and without the counts; and which models fail on compounds outside the range of the training set |
+| `32_sites_on_a_particle.ipynb` | one surface site of a Pt or Au particle as the sample: OH binding against the generalized coordination number, the site profile with the core fields against neighbour counts and numbers of the site, one particle coloured by computed and predicted binding, the strongest site of a new particle, and why a whole-particle model read site by site does not name it |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
@@ -7487,7 +7488,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         thirty-one notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         thirty-two notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

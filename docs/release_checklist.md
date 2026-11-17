@@ -117,7 +117,7 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 157 benchmarks and 136.7 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 157 benchmarks and 137.9 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
@@ -301,11 +301,11 @@ machines at all.
 
 ### What is covered
 
-**The 64 benchmarks left out** are of seven kinds. Fifty are long, 96.9 hours together:
-`poses` 16 h, `compas` 15 h, `buchwald` 7.4 h, `spectra` 3.5 h, `host_pocket` 2.8 h, `gntk_compas`
-2.2 h, `litraj` 2.1 h, `2dmd`, `battery`, `microstructure` and `scattering` 2.0 h each,
+**The 64 benchmarks left out** are of seven kinds. Fifty are long, 98.1 hours together:
+`poses` 16 h, `compas` 15 h, `buchwald` 7.4 h, `spectra` 3.5 h, `host_pocket` 2.8 h, `particle_sites`
+2.5 h, `gntk_compas` 2.2 h, `litraj` 2.1 h, `2dmd`, `battery`, `microstructure` and `scattering` 2.0 h each,
 `molcrystals` 1.9 h, `local` 1.8 h, `logp` 1.7 h, `cmc` 1.6 h, `boiling`, `fieldae`, `increments`, `rowlength`,
-`threebody` and `topomer_mittal` 1.5 h each, and twenty-nine more between 32 and 80 minutes. Five
+`threebody` and `topomer_mittal` 1.5 h each, and twenty-eight more between 32 and 80 minutes. Five
 need ORCA, which no runner has (`am_eu`, `anisotropic`, `cdft_kernels`, `charge_transfer`,
 `corrosion_qm`). Two need xtb (`shells`, `xtb`). Three need PyBaMM, which `requirements-lock.txt`
 does not pin (`cellmodel`, `cellmodel_fields`, `diffusion`). Two need files the repository does not

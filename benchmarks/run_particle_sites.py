@@ -42,6 +42,23 @@ particle the site each model predicts to bind most strongly is compared with the
 energies: the excess of its computed binding over the strongest computed one (0 when the model
 names the right site), and how often that excess is below 0.05 eV.
 
+Stage references (added 17 November 2026, with tutorial 32)
+------------------------------------------------------------
+The site profile with the core fields led the Gaussian kernel on the counts. That reference
+lacks two things the profile has: the exposure of the site, which is the third core field, and
+the core values of the atoms around the site. The stage adds them as plain numbers:
+
+* the counts and both coordination numbers (the reference of stage model, as a control);
+* the same and the exposure of the site;
+* the same and, for each distance shell of the counts, the sums of the coordination number, the
+  generalized coordination number and the exposure over the atoms in the shell.
+
+Each is a Gaussian kernel for each metal, with its width and ridge parameter chosen as in stage
+model, on the same two splits; the two new ones on grids wider at both ends, because a first run
+chose the edge of the stage's grids in a few blocks; the site profile with the core fields is fitted again beside them.
+The difference of q2 carries a 95 % interval from a bootstrap over whole particles, on the
+predictions averaged over the seeds.
+
 Stage decomposition
 -------------------
 A whole-particle model: the target is the mean binding energy over all surface atoms of a
@@ -55,6 +72,7 @@ Usage
 -----
     python benchmarks/run_particle_sites.py --stage checks          # seconds
     python benchmarks/run_particle_sites.py --stage model           # about 78 minutes
+    python benchmarks/run_particle_sites.py --stage references      # about 70 minutes
     python benchmarks/run_particle_sites.py --stage decomposition   # about 2 minutes
     python benchmarks/run_particle_sites.py --report
 """
@@ -342,6 +360,162 @@ def stage_model() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Stage references
+# --------------------------------------------------------------------------- #
+#: the core values of every atom that the references sum over a distance shell
+CORE_NAMES = ("prop:coordination", "prop:generalized_coordination", "prop:exposure")
+PROFILE = "site profile with the core fields"
+REFERENCES = ("counts and both coordination numbers",
+              "the same and the exposure of the site",
+              "the same and the core values summed over each distance shell")
+DRAWS = 2000
+#: the grids of the two new references: those of stage model, extended at both ends, because a
+#: first run chose the smallest width (0.0003) in 6 of 33 blocks and the largest ridge (1) in 2;
+#: the control keeps the grids of stage model, so that it reproduces that stage
+WIDE_GAMMAS = (0.00001, 0.00003, 0.0001) + COUNT_GAMMAS + (100.0,)
+WIDE_LAMBDAS = (1e-11, 1e-10) + COUNT_LAMBDAS + (10.0, 100.0)
+
+
+def site_numbers(D: Dict, counts: np.ndarray, shells) -> Dict[str, np.ndarray]:
+    """The columns of the three references, one row per sample."""
+    t = D["targets"]
+    C = site_columns(D)
+    core = [core_columns(p, CORE_NAMES) for p in D["particles"]]
+    exposure = np.zeros(len(t))
+    sums = np.zeros((len(t), len(CORE_NAMES) * len(shells)))
+    for r in range(len(t)):
+        k, s = int(t.molecule[r]), int(t.atom[r])
+        pos = D["particles"][k].get_positions()
+        d = np.linalg.norm(pos - pos[s], axis=1)
+        exposure[r] = core[k]["prop:exposure"][s]
+        low = 0.0
+        for j, edge in enumerate(shells):
+            m = (d > low + 1e-9) & (d <= edge)
+            for f, name in enumerate(CORE_NAMES):
+                sums[r, len(CORE_NAMES) * j + f] = core[k][name][m].sum()
+            low = edge
+    base = np.column_stack([C["cn"], C["gcn"], counts])
+    return {REFERENCES[0]: base,
+            REFERENCES[1]: np.column_stack([base, exposure]),
+            REFERENCES[2]: np.column_stack([base, exposure, sums])}
+
+
+def gaussian_per_metal(X, y, metal, tr, te, seed, groups, gammas=COUNT_GAMMAS,
+                       lambdas=COUNT_LAMBDAS):
+    """Kernel ridge regression with a Gaussian kernel on the standardised columns of X, zero
+    between sites of different metals, around the training mean; width and ridge parameter from
+    an inner 5-fold cross-validation over `groups`, on the grids `gammas` and `lambdas`. The same
+    model and choice as
+    run_core_fields._gaussian_counts, with one eigendecomposition per width and inner fold
+    instead of one solve per ridge parameter. Returns the predictions and (width, ridge)."""
+    from run_shape import _group_splits
+    mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-12
+    Z = (X - mu) / sd
+    sq = (Z * Z).sum(1)
+    d2 = np.maximum(sq[:, None] + sq[None, :] - 2.0 * (Z @ Z.T), 0.0) / Z.shape[1]
+    same = (metal[:, None] == metal[None, :]).astype(float)
+    inner = _group_splits(np.asarray(groups)[tr], 5, seed)
+    best = None
+    for gam in gammas:
+        K = np.exp(-gam * d2) * same
+        errs = np.zeros(len(lambdas))
+        for ite, itr in inner:
+            a, b = tr[itr], tr[ite]
+            s, U = np.linalg.eigh(K[np.ix_(a, a)])
+            r = U.T @ (y[a] - y[a].mean())
+            Kb = K[np.ix_(b, a)] @ U
+            for j, lam in enumerate(lambdas):
+                errs[j] += float(np.sum((Kb @ (r / (s + lam)) + y[a].mean() - y[b]) ** 2))
+        for j, lam in enumerate(lambdas):
+            err = errs[j] / len(tr)
+            if best is None or err < best[0]:
+                best = (err, gam, lam)
+    K = np.exp(-best[1] * d2) * same
+    alpha = np.linalg.solve(K[np.ix_(tr, tr)] + best[2] * np.eye(len(tr)), y[tr] - y[tr].mean())
+    return K[np.ix_(te, tr)] @ alpha + y[tr].mean(), (float(best[1]), float(best[2]))
+
+
+def paired_over_particles(y, a, b, particle, draws: int = DRAWS, seed: int = 0) -> Dict:
+    """q2 of `a` minus q2 of `b`, with a 95 % bootstrap interval that resamples whole particles."""
+    def q2(i, p):
+        return 1.0 - float(np.sum((p[i] - y[i]) ** 2)) / float(np.sum((y[i] - y[i].mean()) ** 2))
+    groups = sorted(set(particle))
+    idx = [np.flatnonzero(particle == g) for g in groups]
+    rng = np.random.default_rng(seed)
+    every = np.arange(len(y))
+    diffs = []
+    for _ in range(draws):
+        i = np.concatenate([idx[k] for k in rng.integers(0, len(groups), len(groups))])
+        diffs.append(q2(i, a) - q2(i, b))
+    lo, hi = np.percentile(diffs, [2.5, 97.5])
+    return {"mean": q2(every, a) - q2(every, b), "lo": float(lo), "hi": float(hi)}
+
+
+def stage_references() -> None:
+    warnings.filterwarnings("ignore")
+    from collections import Counter
+
+    from run_shape import _group_splits, _scores
+    from cmfqsar.sites import SHELLS
+    D = load()
+    t, y = D["targets"], D["targets"].y
+    metal, shape, particle = D["metal"], D["shape"], D["particle"]
+    plain = inorganic_fieldset(list(METALS), physchem=PHYSCHEM, other=False)
+    crystals = list(crystal_table(D["particles"], plain, D["names"]).molecules)
+    counts = shell_count_features(crystals, t, elements=list(METALS))
+    counts = counts[:, counts.any(axis=0)]
+    X = site_numbers(D, counts, SHELLS)
+    kern = SiteKernels(D, {"core": inorganic_fieldset(list(METALS), physchem=PHYSCHEM,
+                                                      other=False, core=True)})
+    shapes = sorted(set(shape))
+    schemes = {"particles": lambda seed: _group_splits(particle, 5, seed),
+               "shapes": lambda seed: [(np.flatnonzero(shape == g), np.flatnonzero(shape != g))
+                                       for g in shapes]}
+    out = {"shells": [float(v) for v in SHELLS], "columns": {k: int(v.shape[1])
+                                                             for k, v in X.items()},
+           "draws": DRAWS, "grids": {"gamma": list(COUNT_GAMMAS), "lambda": list(COUNT_LAMBDAS)},
+           "wide_grids": {"gamma": list(WIDE_GAMMAS), "lambda": list(WIDE_LAMBDAS)}}
+    for scheme, splits in schemes.items():
+        seeds = SEEDS if scheme == "particles" else (0,)
+        groups = particle if scheme == "particles" else shape
+        res, mean_pred = {}, {}
+        for name in (PROFILE,) + REFERENCES:
+            q2s, rmses, preds, chosen = [], [], [], []
+            for seed in seeds:
+                p = np.full(len(y), np.nan)
+                for te, tr in splits(seed):
+                    if not len(te):
+                        continue
+                    if name == PROFILE:
+                        p[te] = kern.predict("core", y, tr, te, seed, groups)
+                    else:
+                        grids = ((COUNT_GAMMAS, COUNT_LAMBDAS) if name == REFERENCES[0]
+                                 else (WIDE_GAMMAS, WIDE_LAMBDAS))
+                        p[te], ch = gaussian_per_metal(X[name], y, metal, tr, te, seed, groups,
+                                                       *grids)
+                        chosen.append(ch)
+                sc = _scores(y, p, float(y.mean()))
+                q2s.append(sc["q2"])
+                rmses.append(sc["rmse"])
+                preds.append(p)
+            mean_pred[name] = np.mean(preds, axis=0)
+            res[name] = {"q2": float(np.mean(q2s)), "rmse": float(np.mean(rmses)),
+                         "q2_by_seed": [float(v) for v in q2s],
+                         "chosen": {f"{g:g}/{l:g}": n for (g, l), n in
+                                    sorted(Counter(chosen).items())}}
+            print(scheme, name, {k: v for k, v in res[name].items() if k != "chosen"},
+                  flush=True)
+        comps = []
+        for name in REFERENCES:
+            g = paired_over_particles(y, mean_pred[PROFILE], mean_pred[name], particle)
+            comps.append({"model": PROFILE, "against": name, **g,
+                          "by_seed": [a - b for a, b in zip(res[PROFILE]["q2_by_seed"],
+                                                            res[name]["q2_by_seed"])]})
+        out[scheme] = {"models": res, "comparisons": comps}
+    jdump(out, os.path.join(RESULTS, "references.json"))
+
+
+# --------------------------------------------------------------------------- #
 # Stage decomposition
 # --------------------------------------------------------------------------- #
 def stage_decomposition() -> None:
@@ -453,6 +627,38 @@ def report() -> str:
                       f"{', '.join(ch['count_kernel'])} (grids "
                       f"{', '.join(f'{v:g}' for v in ch['count_kernel_grid']['gamma'])} and "
                       f"{', '.join(f'{v:g}' for v in ch['count_kernel_grid']['lambda'])}).", ""]
+    rp = os.path.join(RESULTS, "references.json")
+    if os.path.isfile(rp):
+        R = jload(rp)
+        lines += ["## The site profile against numbers of the site", "",
+                  "Gaussian kernels for each metal on numbers of the site, against the site "
+                  "profile with the core fields, on the same splits. The difference of q2 is "
+                  "taken on the predictions averaged over the seeds, with a 95 % interval from a "
+                  f"bootstrap over whole particles ({R['draws']} draws).", "",
+                  "| Model | Columns | q2, particles held out | q2, shapes held out | "
+                  "Profile minus model, particles held out | Profile minus model, shapes held "
+                  "out |", "|---|---:|---:|---:|---|---|"]
+        for name in (PROFILE,) + REFERENCES:
+            cells = []
+            for scheme in ("particles", "shapes"):
+                c = next((c for c in R[scheme]["comparisons"] if c["against"] == name), None)
+                cells.append("" if c is None else
+                             f"{c['mean']:+.3f} [{c['lo']:+.3f}, {c['hi']:+.3f}]")
+            cols = R["columns"].get(name, "")
+            lines.append(f"| {name} | {cols} | {R['particles']['models'][name]['q2']:.3f} | "
+                         f"{R['shapes']['models'][name]['q2']:.3f} | {cells[0]} | {cells[1]} |")
+        lines += ["", "Width and ridge parameter chosen for each reference. The first uses the "
+                  "grids of the model stage, "
+                  f"{', '.join(f'{v:g}' for v in R['grids']['gamma'])} and "
+                  f"{', '.join(f'{v:g}' for v in R['grids']['lambda'])}; the other two use "
+                  f"{', '.join(f'{v:g}' for v in R['wide_grids']['gamma'])} and "
+                  f"{', '.join(f'{v:g}' for v in R['wide_grids']['lambda'])}:", ""]
+        for scheme in ("particles", "shapes"):
+            for name in REFERENCES:
+                ch = R[scheme]["models"][name]["chosen"]
+                lines.append(f"* {scheme} held out, {name}: "
+                             + ", ".join(f"{k} ({n})" for k, n in ch.items()))
+        lines.append("")
     dp = os.path.join(RESULTS, "decomposition.json")
     if os.path.isfile(dp):
         X = jload(dp)
@@ -487,13 +693,14 @@ def report() -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", choices=("checks", "model", "decomposition"), action="append",
+    ap.add_argument("--stage", choices=("checks", "model", "references", "decomposition"),
+                    action="append",
                     help="stages to run (default: all)")
     ap.add_argument("--report", action="store_true", help="only rebuild the table")
     args = ap.parse_args(argv)
     if not args.report:
-        for stage in args.stage or ("checks", "model", "decomposition"):
-            {"checks": stage_checks, "model": stage_model,
+        for stage in args.stage or ("checks", "model", "references", "decomposition"):
+            {"checks": stage_checks, "model": stage_model, "references": stage_references,
              "decomposition": stage_decomposition}[stage]()
     print(report())
     return 0

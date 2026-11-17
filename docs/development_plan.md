@@ -4213,7 +4213,8 @@ tests whether the target is reproducible between sources before any kernel is co
   (left free, it slid off a quarter of the sites to a bridge); relative to OH atop (111). 1,851
   of 2,090 distinct sites bind atop; the other 239 are atoms beside a vacancy. Slope on the
   generalized coordination number +0.22 eV (Pt, r 0.84) and +0.15 eV (Au, r 0.91).
-  **Measured** (`benchmarks/run_particle_sites.py`, about 80 minutes): q2 with particles held out
+  **Measured** (`benchmarks/run_particle_sites.py`, about 80 minutes without the stage of the
+  references): q2 with particles held out
   / with each shape held out: site profile with NT6's core fields 0.929 / 0.920; Gaussian kernel
   on shell counts and both coordination numbers 0.902 / 0.855; linear regression on shell
   counts 0.830 / 0.802, on the coordination number 0.800 / 0.781, on the generalized
@@ -4224,6 +4225,13 @@ tests whether the target is reproducible between sources before any kernel is co
   (q2 0.921), read site by site, follows the coordination number (rank correlation -0.72) and so
   runs against the binding (-0.76): the split names where the channels come from, not which site
   carries an average over sites. Not done here: a measured site property, and Pt-Au alloys.
+  *Numbers of the site, 18 November 2026* (`run_particle_sites.py --stage references`), while the
+  thirty-second tutorial was written. A Gaussian kernel on the counts, both coordination numbers
+  and the exposure of the site reaches 0.927 / 0.904; with the core values summed over each
+  distance shell, 0.933 / 0.900. The profile with the core fields leads by +0.004 [-0.021, +0.021]
+  and +0.016 [-0.002, +0.033] over the first, -0.005 [-0.025, +0.009] and +0.020 [+0.007, +0.037]
+  over the second: most of what the core fields add is the exposure of the site, and the profile
+  over the distances adds about 0.02, on a new shape only. The stage takes about 70 minutes.
 
 **Interpretation and display**
 
