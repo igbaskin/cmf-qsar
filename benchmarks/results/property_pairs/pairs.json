@@ -1,0 +1,935 @@
+{
+ "boiling": {
+  "comparisons": [
+   {
+    "against": "eight counts",
+    "hi": 0.08051210606559227,
+    "lo": 0.05967068756654783,
+    "mean": 0.06941960414943416,
+    "model": "topological + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.09548425655128787,
+    "lo": 0.036578449799292964,
+    "mean": 0.0657654796445557,
+    "model": "topological + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.0888182329739936,
+    "lo": 0.05486018226260534,
+    "mean": 0.07113664861814484,
+    "model": "topological + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "eight counts",
+    "hi": -0.038323642306953884,
+    "lo": -0.1815102299452851,
+    "mean": -0.10687015015420787,
+    "model": "topological + eight counts",
+    "test": "to_echemportal"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.19198764896163675,
+    "lo": 0.16144025920701371,
+    "mean": 0.1762230354916965,
+    "model": "topological + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.15018905371792324,
+    "lo": 0.07531548997893298,
+    "mean": 0.11185065047796083,
+    "model": "topological + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.19628417921995273,
+    "lo": 0.1481253795048186,
+    "mean": 0.17088776941761175,
+    "model": "topological + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.21348426627097697,
+    "lo": 0.12729356610499035,
+    "mean": 0.16930466448545234,
+    "model": "topological + eight counts",
+    "test": "to_echemportal"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.02245867744221193,
+    "lo": 0.013819941555613701,
+    "mean": 0.01805555320970409,
+    "model": "invariant + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": -0.006903864794562026,
+    "lo": -0.05104808639034583,
+    "mean": -0.02835930971426337,
+    "model": "invariant + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.032290218912922615,
+    "lo": 0.016844071493168047,
+    "mean": 0.023895872643552973,
+    "model": "invariant + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.19441384137698686,
+    "lo": 0.09615072673080383,
+    "mean": 0.1422935809996907,
+    "model": "invariant + eight counts",
+    "test": "to_echemportal"
+   }
+  ],
+  "compounds": {
+   "echemportal": 1617,
+   "physprop_test": 1353,
+   "physprop_train": 4059
+  },
+  "control_max_difference": {
+   "eight counts": 0.0,
+   "topological autocorrelation": 0.0
+  },
+  "models": {
+   "eight counts": {
+    "echemportal": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 15
+     },
+     "q2_mean": 0.5168909483784633,
+     "rmse_mean": 59.49133192186172
+    },
+    "opera_test": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1
+     },
+     "r2": 0.8619300690412434,
+     "rmse": 31.18915146709932
+    },
+    "physprop_train": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 15
+     },
+     "q2_mean": 0.8556685454290217,
+     "rmse_mean": 32.41359504099338
+    },
+    "to_echemportal": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1
+     },
+     "r2": 0.5340605618284342,
+     "rmse": 58.430914593979196
+    }
+   },
+   "invariant + eight counts": {
+    "echemportal": {
+     "chosen": {
+      "sigma 0.01, width 0.5, h 3, ridge 0.1": 3,
+      "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+      "sigma 0.02, width 0.5, h 3, ridge 0.1": 2,
+      "sigma 0.03, width 0.5, h 1, ridge 0.1": 1,
+      "sigma 0.03, width 0.5, h 3, ridge 0.1": 4,
+      "sigma 0.05, width 0.5, h 1, ridge 0.1": 1,
+      "sigma 0.05, width 0.5, h 10, ridge 1": 1,
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 1,
+      "sigma 0.1, width 0.5, h 1, ridge 0.1": 1
+     },
+     "q2_mean": 0.54291787078639,
+     "q2_sd": 0.015402131584042168,
+     "rmse_mean": 57.8646873686707
+    },
+    "opera_test": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.9569625903029412,
+     "rmse": 17.413139043987268
+    },
+    "physprop_train": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 15
+     },
+     "q2_mean": 0.9428920582265053,
+     "q2_sd": 0.0012453481567859803,
+     "rmse_mean": 20.387972154431097
+    },
+    "to_echemportal": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.569483992673917,
+     "rmse": 56.165884210754605
+    }
+   },
+   "topological + eight counts": {
+    "echemportal": {
+     "chosen": {
+      "up to 20 bonds, width 0.5, h 1, ridge 0.1": 3,
+      "up to 30 bonds, width 0.5, h 1, ridge 0.1": 4,
+      "up to 40 bonds, width 0.5, h 1, ridge 0.1": 8
+     },
+     "q2_mean": 0.5819673033097269,
+     "rmse_mean": 55.343886834141806
+    },
+    "opera_test": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 0.3, ridge 0.01": 1
+     },
+     "r2": 0.9330667176593882,
+     "rmse": 21.715761692767682
+    },
+    "physprop_train": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 0.1, ridge 0.01": 8,
+      "up to 40 bonds, width 0.5, h 0.3, ridge 0.01": 5,
+      "up to 40 bonds, width 0.5, h 1, ridge 0.1": 2
+     },
+     "q2_mean": 0.9247887249519803,
+     "rmse_mean": 23.39874174053588
+    },
+    "to_echemportal": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 0.3, ridge 0.01": 1
+     },
+     "r2": 0.42719041167422633,
+     "rmse": 64.7862865969824
+    }
+   },
+   "topological autocorrelation": {
+    "echemportal": {
+     "chosen": {
+      "up to 20 bonds, ridge 0.1": 3,
+      "up to 30 bonds, ridge 0.1": 4,
+      "up to 40 bonds, ridge 0.1": 8
+     },
+     "q2_mean": 0.4774309289649856,
+     "rmse_mean": 61.878287651077905
+    },
+    "opera_test": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 1
+     },
+     "r2": 0.7621789482417765,
+     "rmse": 40.933525729648935
+    },
+    "physprop_train": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 15
+     },
+     "q2_mean": 0.7499283463309084,
+     "rmse_mean": 42.66618014432294
+    },
+    "to_echemportal": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 1
+     },
+     "r2": 0.257885747188774,
+     "rmse": 73.74173213882354
+    }
+   }
+  },
+  "seconds": 1326.7,
+  "tests": [
+   "physprop_train",
+   "echemportal",
+   "opera_test",
+   "to_echemportal"
+  ],
+  "titles": {
+   "echemportal": "eChemPortal, CV",
+   "opera_test": "PHYSPROP test part (the OPERA test)",
+   "physprop_train": "PHYSPROP training part, CV",
+   "to_echemportal": "PHYSPROP training part to eChemPortal"
+  }
+ },
+ "logp": {
+  "comparisons": [
+   {
+    "against": "eight counts",
+    "hi": 0.10677233899798574,
+    "lo": 0.07821000092655737,
+    "mean": 0.09199030819269416,
+    "model": "topological + eight counts",
+    "test": "huuskonen"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.1411018976034717,
+    "lo": 0.10629818684140709,
+    "mean": 0.12355803434255619,
+    "model": "topological + eight counts",
+    "test": "sangster_p"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.15796472284103508,
+    "lo": 0.11737661432365316,
+    "mean": 0.1367775738015733,
+    "model": "topological + eight counts",
+    "test": "external"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.03763644268001029,
+    "lo": 0.02176922880897785,
+    "mean": 0.030006431788044186,
+    "model": "topological + eight counts",
+    "test": "huuskonen"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.05789381686649743,
+    "lo": 0.03823351738601187,
+    "mean": 0.04804741846476612,
+    "model": "topological + eight counts",
+    "test": "sangster_p"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.049727921963851666,
+    "lo": 0.02873144218313203,
+    "mean": 0.03881754336333776,
+    "model": "topological + eight counts",
+    "test": "external"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.016795318225624953,
+    "lo": 0.004307794993161654,
+    "mean": 0.010462144488178948,
+    "model": "invariant + eight counts",
+    "test": "huuskonen"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.017056939107815902,
+    "lo": 0.0018861331641731455,
+    "mean": 0.009295178148311045,
+    "model": "invariant + eight counts",
+    "test": "sangster_p"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.03135484844860192,
+    "lo": 0.010015716058865873,
+    "mean": 0.020135079514938425,
+    "model": "invariant + eight counts",
+    "test": "external"
+   }
+  ],
+  "compounds": {
+   "huuskonen": 1847,
+   "sangster_p": 2999
+  },
+  "control_max_difference": {
+   "eight counts": 0.0,
+   "topological autocorrelation": 0.0
+  },
+  "models": {
+   "eight counts": {
+    "external": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1
+     },
+     "r2": 0.6845048132682805,
+     "rmse": 0.8392687068849203
+    },
+    "huuskonen": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 15
+     },
+     "q2_mean": 0.8061964677621218,
+     "rmse_mean": 0.6577847532005064
+    },
+    "sangster_p": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 11,
+      "width 1, ridge 0.1": 4
+     },
+     "q2_mean": 0.672359447569962,
+     "rmse_mean": 1.0187632503334705
+    }
+   },
+   "invariant + eight counts": {
+    "external": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 1": 1
+     },
+     "r2": 0.8414174665847922,
+     "rmse": 0.5950210596894465
+    },
+    "huuskonen": {
+     "chosen": {
+      "sigma 0.03, width 0.5, h 3, ridge 0.1": 5,
+      "sigma 0.05, width 0.5, h 1, ridge 0.1": 5,
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 2,
+      "sigma 0.1, width 0.5, h 1, ridge 0.1": 3
+     },
+     "q2_mean": 0.9059578122220175,
+     "q2_sd": 0.002253492767498167,
+     "rmse_mean": 0.4581788848192891
+    },
+    "sangster_p": {
+     "chosen": {
+      "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+      "sigma 0.05, width 0.5, h 3, ridge 1": 11,
+      "sigma 0.05, width 1, h 10, ridge 1": 2
+     },
+     "q2_mean": 0.8103087482144967,
+     "q2_sd": 0.003397321287752351,
+     "rmse_mean": 0.7751652933772754
+    }
+   },
+   "topological + eight counts": {
+    "external": {
+     "chosen": {
+      "up to 30 bonds, width 0.5, h 0.3, ridge 0.1": 1
+     },
+     "r2": 0.8212823870698538,
+     "rmse": 0.6316672182450254
+    },
+    "huuskonen": {
+     "chosen": {
+      "up to 20 bonds, width 0.5, h 1, ridge 0.1": 15
+     },
+     "q2_mean": 0.8987006601665465,
+     "rmse_mean": 0.4755517607947923
+    },
+    "sangster_p": {
+     "chosen": {
+      "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+      "up to 20 bonds, width 1, h 1, ridge 0.1": 3,
+      "up to 30 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+      "up to 30 bonds, width 1, h 1, ridge 0.1": 1,
+      "up to 40 bonds, width 0.5, h 0.3, ridge 0.1": 1
+     },
+     "q2_mean": 0.8044883826292241,
+     "rmse_mean": 0.7869854681954883
+    }
+   },
+   "topological autocorrelation": {
+    "external": {
+     "chosen": {
+      "up to 30 bonds, ridge 0.1": 1
+     },
+     "r2": 0.782464843706516,
+     "rmse": 0.6968982731097014
+    },
+    "huuskonen": {
+     "chosen": {
+      "up to 20 bonds, ridge 0.1": 15
+     },
+     "q2_mean": 0.8706677293447714,
+     "rmse_mean": 0.5373507307315116
+    },
+    "sangster_p": {
+     "chosen": {
+      "up to 20 bonds, ridge 0.1": 5,
+      "up to 30 bonds, ridge 0.1": 9,
+      "up to 40 bonds, ridge 0.1": 1
+     },
+     "q2_mean": 0.7610596023481531,
+     "rmse_mean": 0.8700210721150564
+    }
+   }
+  },
+  "seconds": 555.2,
+  "tests": [
+   "huuskonen",
+   "sangster_p",
+   "external"
+  ],
+  "titles": {
+   "external": "class P to Huuskonen",
+   "huuskonen": "Huuskonen, CV",
+   "sangster_p": "class P, CV"
+  }
+ },
+ "solubility": {
+  "comparisons": [
+   {
+    "against": "eight counts",
+    "hi": 0.062378226472263335,
+    "lo": 0.035600026949045224,
+    "mean": 0.04844629003405854,
+    "model": "topological + eight counts",
+    "test": "delaney"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.05305311456979652,
+    "lo": 0.026818890383371922,
+    "mean": 0.03982912198910149,
+    "model": "topological + eight counts",
+    "test": "aqsoldb_reliable"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.11012871470710728,
+    "lo": 0.07193730672853689,
+    "mean": 0.08989018516687608,
+    "model": "topological + eight counts",
+    "test": "external"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.06952232748725409,
+    "lo": 0.044652925522104044,
+    "mean": 0.05700476020435452,
+    "model": "topological + eight counts",
+    "test": "delaney"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.07298474510090307,
+    "lo": 0.042715217346917765,
+    "mean": 0.057898104247206206,
+    "model": "topological + eight counts",
+    "test": "aqsoldb_reliable"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.07486019975907007,
+    "lo": 0.03765172968850453,
+    "mean": 0.05660532205450508,
+    "model": "topological + eight counts",
+    "test": "external"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.012297919079677177,
+    "lo": -0.0009693123815484926,
+    "mean": 0.005513010580581845,
+    "model": "invariant + eight counts",
+    "test": "delaney"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.019612902311901395,
+    "lo": 0.0014572587482447718,
+    "mean": 0.01058837468989915,
+    "model": "invariant + eight counts",
+    "test": "aqsoldb_reliable"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.008668327380052491,
+    "lo": -0.009390881894596022,
+    "mean": -0.0005235124888911535,
+    "model": "invariant + eight counts",
+    "test": "external"
+   }
+  ],
+  "compounds": {
+   "aqsoldb_reliable": 1002,
+   "delaney": 1114
+  },
+  "control_max_difference": {
+   "eight counts": 0.0,
+   "topological autocorrelation": 0.0
+  },
+  "models": {
+   "eight counts": {
+    "aqsoldb_reliable": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1,
+      "width 1, ridge 0.1": 14
+     },
+     "q2_mean": 0.8318445417807601,
+     "rmse_mean": 0.9446020064949984
+    },
+    "delaney": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 15
+     },
+     "q2_mean": 0.8525124264227619,
+     "rmse_mean": 0.8037155669269399
+    },
+    "external": {
+     "chosen": {
+      "width 1, ridge 0.1": 1
+     },
+     "r2": 0.7776836560661882,
+     "rmse": 0.9869069383089529
+    }
+   },
+   "invariant + eight counts": {
+    "aqsoldb_reliable": {
+     "chosen": {
+      "sigma 0.1, width 1, h 10, ridge 1": 2,
+      "sigma 0.1, width 1, h 3, ridge 0.1": 3,
+      "sigma 0.2, width 0.5, h 1, ridge 0.1": 1,
+      "sigma 0.2, width 1, h 3, ridge 0.1": 9
+     },
+     "q2_mean": 0.8788369338352465,
+     "q2_sd": 0.0020816148395696567,
+     "rmse_mean": 0.8018148042067894
+    },
+    "delaney": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 1, ridge 0.1": 9,
+      "sigma 0.1, width 0.5, h 1, ridge 0.1": 6
+     },
+     "q2_mean": 0.9064965319900625,
+     "q2_sd": 0.0028405544848122306,
+     "rmse_mean": 0.6399616986751625
+    },
+    "external": {
+     "chosen": {
+      "sigma 0.2, width 1, h 3, ridge 0.1": 1
+     },
+     "r2": 0.8670503287441731,
+     "rmse": 0.7631925815838416
+    }
+   },
+   "topological + eight counts": {
+    "aqsoldb_reliable": {
+     "chosen": {
+      "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+      "up to 12 bonds, width 1, h 10, ridge 1": 1,
+      "up to 20 bonds, width 1, h 1, ridge 0.1": 3,
+      "up to 20 bonds, width 1, h 3, ridge 0.1": 3,
+      "up to 30 bonds, width 0.5, h 1, ridge 0.1": 1,
+      "up to 30 bonds, width 1, h 1, ridge 0.1": 1,
+      "up to 30 bonds, width 1, h 10, ridge 1": 1,
+      "up to 30 bonds, width 1, h 3, ridge 0.1": 1,
+      "up to 40 bonds, width 1, h 10, ridge 1": 1,
+      "up to 40 bonds, width 1, h 3, ridge 0.1": 1,
+      "up to 8 bonds, width 1, h 10, ridge 1": 1
+     },
+     "q2_mean": 0.8690964892186184,
+     "rmse_mean": 0.8333535126234737
+    },
+    "delaney": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 1, ridge 0.1": 15
+     },
+     "q2_mean": 0.9019416932327845,
+     "rmse_mean": 0.6554105485176741
+    },
+    "external": {
+     "chosen": {
+      "up to 20 bonds, width 1, h 3, ridge 0.1": 1
+     },
+     "r2": 0.8675738412330642,
+     "rmse": 0.7616884976104983
+    }
+   },
+   "topological autocorrelation": {
+    "aqsoldb_reliable": {
+     "chosen": {
+      "up to 12 bonds, ridge 0.1": 2,
+      "up to 20 bonds, ridge 0.1": 6,
+      "up to 30 bonds, ridge 0.1": 4,
+      "up to 40 bonds, ridge 0.1": 2,
+      "up to 8 bonds, ridge 0.1": 1
+     },
+     "q2_mean": 0.814698941323213,
+     "rmse_mean": 0.9915748654976415
+    },
+    "delaney": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 15
+     },
+     "q2_mean": 0.8468106664039746,
+     "rmse_mean": 0.8192160114496202
+    },
+    "external": {
+     "chosen": {
+      "up to 20 bonds, ridge 0.1": 1
+     },
+     "r2": 0.8109685191785592,
+     "rmse": 0.910033908252875
+    }
+   }
+  },
+  "seconds": 944.3,
+  "tests": [
+   "delaney",
+   "aqsoldb_reliable",
+   "external"
+  ],
+  "titles": {
+   "aqsoldb_reliable": "AqSolDB, CV",
+   "delaney": "Delaney, CV",
+   "external": "AqSolDB to Delaney"
+  }
+ },
+ "vapour": {
+  "comparisons": [
+   {
+    "against": "eight counts",
+    "hi": 0.022351421574288866,
+    "lo": 0.0075049661903947296,
+    "mean": 0.014384208643880791,
+    "model": "topological + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.02114759204572844,
+    "lo": 0.003540863831407284,
+    "mean": 0.012274945301226525,
+    "model": "topological + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "eight counts",
+    "hi": 0.01387311307087708,
+    "lo": -0.006075430458225423,
+    "mean": 0.00391977518688813,
+    "model": "topological + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "eight counts",
+    "hi": -0.06728365306821144,
+    "lo": -0.12290734404994419,
+    "mean": -0.09438602307905797,
+    "model": "topological + eight counts",
+    "test": "to_echemportal"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.13709720671822007,
+    "lo": 0.10227359707062982,
+    "mean": 0.11894571997499981,
+    "model": "topological + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.1178793531303714,
+    "lo": 0.08009721765371354,
+    "mean": 0.09864687166314257,
+    "model": "topological + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.12939789121736964,
+    "lo": 0.07410547287001658,
+    "mean": 0.10320554638790225,
+    "model": "topological + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "topological autocorrelation",
+    "hi": 0.2171493427399139,
+    "lo": 0.1319355058056978,
+    "mean": 0.17432316543410276,
+    "model": "topological + eight counts",
+    "test": "to_echemportal"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.014163336519737883,
+    "lo": 0.003042972979058692,
+    "mean": 0.008477756573374906,
+    "model": "invariant + eight counts",
+    "test": "physprop_train"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.012690169876206654,
+    "lo": -0.004977284307019042,
+    "mean": 0.0038190954666308397,
+    "model": "invariant + eight counts",
+    "test": "echemportal"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.019074269934314655,
+    "lo": 0.0011944434233981283,
+    "mean": 0.010098376735657832,
+    "model": "invariant + eight counts",
+    "test": "opera_test"
+   },
+   {
+    "against": "topological + eight counts",
+    "hi": 0.07887190308163594,
+    "lo": 0.03617829333914623,
+    "mean": 0.05806695954518537,
+    "model": "invariant + eight counts",
+    "test": "to_echemportal"
+   }
+  ],
+  "compounds": {
+   "echemportal": 2884,
+   "physprop_test": 677,
+   "physprop_train": 2016
+  },
+  "control_max_difference": {
+   "eight counts": 0.0,
+   "topological autocorrelation": 0.0
+  },
+  "models": {
+   "eight counts": {
+    "echemportal": {
+     "chosen": {
+      "width 0.5, ridge 1": 12,
+      "width 1, ridge 1": 3
+     },
+     "q2_mean": 0.578054952991173,
+     "rmse_mean": 2.1851774877718273
+    },
+    "opera_test": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1
+     },
+     "r2": 0.9070745920864124,
+     "rmse": 1.0828420270904096
+    },
+    "physprop_train": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 15
+     },
+     "q2_mean": 0.8933261320581846,
+     "rmse_mean": 1.1592231606664414
+    },
+    "to_echemportal": {
+     "chosen": {
+      "width 0.5, ridge 0.1": 1
+     },
+     "r2": 0.47737454215871244,
+     "rmse": 2.431949359036859
+    }
+   },
+   "invariant + eight counts": {
+    "echemportal": {
+     "chosen": {
+      "sigma 0.03, width 0.5, h 1, ridge 1": 7,
+      "sigma 0.03, width 0.5, h 3, ridge 1": 2,
+      "sigma 0.03, width 1, h 1, ridge 1": 2,
+      "sigma 0.05, width 0.5, h 1, ridge 1": 3,
+      "sigma 0.05, width 1, h 3, ridge 1": 1
+     },
+     "q2_mean": 0.5902038694563044,
+     "q2_sd": 0.0005410241249054599,
+     "rmse_mean": 2.153491087966163
+    },
+    "opera_test": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.9210927440089584,
+     "rmse": 0.9978294913883182
+    },
+    "physprop_train": {
+     "chosen": {
+      "sigma 0.03, width 0.5, h 10, ridge 0.1": 1,
+      "sigma 0.05, width 0.5, h 10, ridge 0.1": 4,
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 9,
+      "sigma 0.1, width 0.5, h 3, ridge 0.1": 1
+     },
+     "q2_mean": 0.913114883723574,
+     "q2_sd": 0.0031825609078179385,
+     "rmse_mean": 1.0460395145839467
+    },
+    "to_echemportal": {
+     "chosen": {
+      "sigma 0.05, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.44105547862483985,
+     "rmse": 2.515032483265059
+    }
+   },
+   "topological + eight counts": {
+    "echemportal": {
+     "chosen": {
+      "up to 20 bonds, width 0.5, h 1, ridge 1": 8,
+      "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+      "up to 20 bonds, width 1, h 1, ridge 1": 1,
+      "up to 30 bonds, width 0.5, h 1, ridge 1": 3,
+      "up to 30 bonds, width 1, h 1, ridge 1": 1,
+      "up to 30 bonds, width 1, h 3, ridge 1": 1
+     },
+     "q2_mean": 0.5882542492687087,
+     "rmse_mean": 2.1585975254818264
+    },
+    "opera_test": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.9109943672733005,
+     "rmse": 1.059757773883621
+    },
+    "physprop_train": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 3, ridge 0.1": 15
+     },
+     "q2_mean": 0.9058469547910603,
+     "rmse_mean": 1.0890895823772333
+    },
+    "to_echemportal": {
+     "chosen": {
+      "up to 40 bonds, width 0.5, h 3, ridge 0.1": 1
+     },
+     "r2": 0.3829885190796545,
+     "rmse": 2.642444468955397
+    }
+   },
+   "topological autocorrelation": {
+    "echemportal": {
+     "chosen": {
+      "up to 20 bonds, ridge 1": 10,
+      "up to 30 bonds, ridge 1": 5
+     },
+     "q2_mean": 0.49460053875680904,
+     "rmse_mean": 2.3915303520095157
+    },
+    "opera_test": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 1
+     },
+     "r2": 0.8077888208853983,
+     "rmse": 1.5573534401282942
+    },
+    "physprop_train": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 15
+     },
+     "q2_mean": 0.7893639184742257,
+     "rmse_mean": 1.6289735028746903
+    },
+    "to_echemportal": {
+     "chosen": {
+      "up to 40 bonds, ridge 0.1": 1
+     },
+     "r2": 0.20866535364555172,
+     "rmse": 2.9925356788611404
+    }
+   }
+  },
+  "seconds": 1494.9,
+  "tests": [
+   "physprop_train",
+   "echemportal",
+   "opera_test",
+   "to_echemportal"
+  ],
+  "titles": {
+   "echemportal": "eChemPortal, CV",
+   "opera_test": "PHYSPROP test part (the OPERA test)",
+   "physprop_train": "PHYSPROP training part, CV",
+   "to_echemportal": "PHYSPROP training part to eChemPortal"
+  }
+ }
+}
