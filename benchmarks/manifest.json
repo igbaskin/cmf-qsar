@@ -1,6 +1,6 @@
 {
- "commit": "a64307ceb0210a45636774eeb1b7b99d9a11df6f",
- "created": "2026-11-17T15:31:26",
+ "commit": "15000dbe98a4e5f5158edd3b44f72d5b831fae94",
+ "created": "2026-11-17T14:39:02",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2186,6 +2186,18 @@
    "bytes": 40831,
    "sha256": "3405b34c2b38dead2a61e8a2d83e4eed230d1df74d2f0159e456791928548e22"
   },
+  "examples/porphyrin/README.md": {
+   "bytes": 5568,
+   "sha256": "5252004d6b7b8a74f747616c23fbac494f5bae56194e5ccfaddfc67493cbd0ff"
+  },
+  "examples/porphyrin/porphyrins.csv": {
+   "bytes": 24187,
+   "sha256": "154689bce49a7b2db3be3765a93904a4ec5ec9d788dd6f6ed2c0cab160f2bc5e"
+  },
+  "examples/porphyrin/structures.extxyz": {
+   "bytes": 391642,
+   "sha256": "9dbf8116400e3f3a81326d2144d73baba24e30e83a94b4d6c742ad79787c992e"
+  },
   "examples/ross/LICENSE_schrodinger_benchmark.txt": {
    "bytes": 1072,
    "sha256": "5711cdb7ab7a4b3889514af93f16bd81ba61519e0eb2cc7c94813c6bb40bd0cf"
@@ -2679,7 +2691,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3504,11 +3516,6 @@
   "benchmarks/results/lapkrr/screen_ESR1_ant.json": "d94ecf2a7ff8886802759c508e37de9773702071317951ab7dc0788609aa1ced",
   "benchmarks/results/lapkrr/screen_TP53.json": "9f47b6e5e1becaeef7c05fdb33f082fcb22d264511e4a99de6bc78c5d2854d73",
   "benchmarks/results/lapkrr/table.md": "7af9315ff2a6ba4a94ee715306b4e62d3855f58f5bb73ef23aa2d0a40bfff7a6",
-  "benchmarks/results/large_view/draw.json": "fbb48b6cfa340785e8cbbda33ea2ff20ddbbcae993fadfc1b24764c166c76bd5",
-  "benchmarks/results/large_view/log.txt": "2dff249eae78d4f8ab5780ebfff366c3c4fdaf7b1aa800fe4845fab9bfac6933",
-  "benchmarks/results/large_view/normals.json": "db48f94e7f9700d98243d3836f0079586c62613ba823c077538f276610b85818",
-  "benchmarks/results/large_view/run.json": "eb1e864f20ea6158ab477632ccf3d1c82ddd786299d2401327d007fd461421c2",
-  "benchmarks/results/large_view/table.md": "6681dcfb2d93331aa7effcc16f3a9ec9855f1ec34b8b2b5d2aebce833fbcdbc7",
   "benchmarks/results/ligand_shells/checks.json": "cef2859e7f6c505318d861572e32ccfa4115605b2bc8ea6cd2c9189a2fb648a9",
   "benchmarks/results/ligand_shells/model.json": "3355514bec21de7adc29fdb279b3ec22c7efcfeb1c19c21d7ced85667d6abd96",
   "benchmarks/results/ligand_shells/table.md": "86d428932ef5fd2b3d1a6e9fa1ec35271b247326b85d48db263eea535e1f1a06",
@@ -3784,6 +3791,10 @@
   "benchmarks/results/pooled_mixing/posteriors/VATP.npz": "3457805da5fb1859c107a0afc892383db1515c3b5b80dccbf61ce16fb2343608",
   "benchmarks/results/pooled_mixing/posteriors/YOPH.npz": "ec320c85d8aa262b2fa4444268070fcbabb86ea8940196e05717c850f00030b1",
   "benchmarks/results/pooled_mixing/table.md": "e504d3f55ef0da77af5cea3dd5b1716ae633c8da359f02d7733975193cb277cb",
+  "benchmarks/results/porphyrin/data.json": "bb2b9a7ee2aa555415d452cf98a03b9183ff5d1e1e856f24dac5783ed7c511c9",
+  "benchmarks/results/porphyrin/models.json": "7e7287fd725c8dd021c2d564b26659ed2b6ff10354d453704ac9c0bdda61bc61",
+  "benchmarks/results/porphyrin/models_no-phthalocyanine.json": "53b0d9c8d43c8403ef76a81a83c63681d17aa22518cbbb2e31cfac94795e18ee",
+  "benchmarks/results/porphyrin/table.md": "9ca368d28690528136b79ddbd19dde83a6ff589b2a1b83a68f9b9cfd154609ad",
   "benchmarks/results/poses/bace.json": "f1db30650cc61116bfa3d9a76dadddc837f21ba7d8d20914573409d42dcfe368",
   "benchmarks/results/poses/bace_fg.json": "712e473787fd33b7a0f492980d4a56fe740a24851ca89b155739436082f175fc",
   "benchmarks/results/poses/bace_flex.json": "1e3774ecb6da9ee3ea235a7373d1ab749f839a9bd1ddb025736428c3160ec79d",

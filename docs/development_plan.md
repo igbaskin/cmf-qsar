@@ -7392,6 +7392,32 @@ What it leaves open, in order:
   reflection although the gap is. A kernel averaged over the two faces (the z-flip of one
   molecule) is one line and was not run.
 
+* **EC11. A computed series of substituted porphyrins for HER and ORR, first batch done 17 November
+  2026.** EC8 found a single-atom site too symmetric for a frame on the metal to resolve, and no
+  machine-readable series of molecular catalysts gave a hydrogen and an oxygen descriptor with the
+  ring varied, so the series is computed (`examples/make_porphyrin_examples.py`, data in
+  `examples/porphyrin/`, benchmark `benchmarks/run_porphyrin.py`). Each of 54 listed porphyrins
+  has Co or Fe in the ring and one adsorbate (none, H, OH, O or OOH) on one face. Geometries come
+  from GFN2-xTB, energies from ORCA at r2SCAN-3c with a water model, the lowest spin state of each
+  species, and the descriptors from the computational hydrogen electrode (ΔG_H, ΔG_OH, ΔG_O,
+  ΔG_OOH, the ORR limiting potential). **Done:** the first batch of 21 porphyrins (about 22 hours;
+  21 Co and 19 Fe complexes have all descriptors; two bare iron triplets did not converge, and
+  seven cobalt-oxygen doublets use the quartet). **Measured:** the overlap kernel in a frame fitted
+  to the 24 core atoms (mean distance 0.08 Å), the same kernel in the principal-axes frame and in
+  the file's frame, the invariant kernel, a count of the substituents by position and a linear
+  regression on the Hammett constants, with the ridge and the width chosen inside each training
+  part, on random folds, leave-one-out and substituent-out folds, with and without the
+  phthalocyanine. **No field kernel is clearly better than the Hammett regression.** For cobalt
+  the Hammett regression is better than the overlap kernel for ΔG_H, ΔG_OH and ΔG_O (intervals
+  exclude zero); for iron the overlap kernel is slightly ahead on the ORR limiting potential
+  (0.024 V against 0.030 V, interval contains zero). The spread of the descriptors is small
+  (cobalt ΔG_OH sd 0.17 eV with the phthalocyanine, 0.08 without; iron limiting potential sd
+  0.04 V), below the usual error of one functional. **Not done, by decision:** the other 33
+  porphyrins (about 25 hours more); the first batch gives no sign that they would change the
+  verdict. **Open:** the spin order of iron is uncertain at this level (OH and OOH states within
+  0.1 eV); the sign of the normal of the ring is arbitrary for out-of-plane substituents; there is
+  no measured activity for these complexes.
+
 * **PO1. A catalytic series with a shared frame, done 5 November 2026.** The catalysis bullet of
   H named ligand libraries with a shared frame and a rate or a selectivity as the activity, and
   EC4, EC8 and EC9 recorded that no such series could be found in machine-readable form. One
@@ -9652,7 +9678,7 @@ own text has to stop before it, and five entries state their status in a form of
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 9 | NT10, NT11, NT12 |
-| H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
+| H. Electrochemistry | 11 | 9 | EC8 (partly), EC9 |
 | H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
@@ -9663,7 +9689,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**178 items: 132 finished, 9 partly, 37 open.**
+**179 items: 133 finished, 9 partly, 37 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
