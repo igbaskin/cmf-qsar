@@ -965,6 +965,30 @@ def registry() -> List[Benchmark]:
                   minutes="115",
                   report=lambda: _mod("run_molcrystals").report(),
                   tables=["molcrystals/table.md"]),
+        Benchmark("logp",
+                  "measured logP with the invariant field kernel, against the linear "
+                  "regression on clogP (the sum of the hydrophobic field), Crippen increments "
+                  "refitted in each fold, the same autocorrelation with distances counted in "
+                  "bonds, the field totals, ECFP4 and eight counts, on the Huuskonen set and "
+                  "2,999 compounds of class P of SangsterLogP",
+                  "run_logp.py", "logp", compute=[[]],
+                  prepare=["prepare_logp.py (SangsterLogP from Zenodo, then one 3D "
+                           "structure per compound)"],
+                  minutes="100",
+                  report=lambda: _mod("run_logp").report(),
+                  tables=["logp/table.md"]),
+        Benchmark("solubility",
+                  "measured water solubility with the invariant field kernel, against ESOL "
+                  "refitted in each fold and the references of the logP benchmark, on the "
+                  "Delaney set and the 1,002 AqSolDB compounds measured more than once with "
+                  "agreeing results",
+                  "run_solubility.py", "solubility", compute=[[]],
+                  prepare=["prepare_solubility.py (the Delaney set from MoleculeNet and "
+                           "AqSolDB from Harvard Dataverse, then one 3D structure per "
+                           "compound)"],
+                  minutes="21",
+                  report=lambda: _mod("run_solubility").report(),
+                  tables=["solubility/table.md"]),
         Benchmark("structures",
                   "structures that are not molecules -- crystals, layers, chains and metal "
                   "particles -- written in six file formats and read back: what each format "

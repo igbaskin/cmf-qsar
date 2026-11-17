@@ -103,6 +103,11 @@ SETS = ("delaney", "aqsoldb_reliable")
 #: the external test fits on the first and predicts the second
 EXTERNAL = ("aqsoldb_reliable", "delaney")
 TITLES = {"delaney": "Delaney", "aqsoldb_reliable": "AqSolDB G3+G5"}
+#: the models in the order of the table; the json stores them with sorted keys
+MODELS = ("invariant, cosine", "invariant, not normalised", "invariant + ESOL descriptors",
+          "linear regression on clogP", "ESOL refitted", "field totals", "eight counts",
+          "ECFP4", "refitted Crippen increments", "refitted increments + ESOL descriptors",
+          "topological autocorrelation", "topological + ESOL descriptors")
 
 
 class Model(L.Model):
@@ -196,11 +201,7 @@ def run(quick: int = 0) -> Dict[str, object]:
 
     Kclogp = linear_block(standardise(clogp[:, None]))
     Kesol = linear_block(standardise(esol_descriptors(heavy)))
-    names_m = ("invariant, cosine", "invariant, not normalised", "invariant + ESOL descriptors",
-               "linear regression on clogP", "ESOL refitted", "field totals", "eight counts",
-               "ECFP4", "refitted Crippen increments", "refitted increments + ESOL descriptors",
-               "topological autocorrelation", "topological + ESOL descriptors")
-    models = {k: Model(k) for k in names_m}
+    models = {k: Model(k) for k in MODELS}
     models["linear regression on clogP"].add("linear", Kclogp, y, blocks)
     models["ESOL refitted"].add("linear", Kesol, y, blocks)
     C, crippen_types = crippen_counts(mols)
@@ -318,8 +319,7 @@ def run(quick: int = 0) -> Dict[str, object]:
     np.savez(os.path.join(CACHE, "predictions_quick.npz" if quick else "predictions.npz"),
              names=names, y=y, **{f"{m}|{t}": p for (m, t), p in preds.items()})
     if not quick:
-        with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(report(payload))
+        report(payload)
     return payload
 
 
@@ -341,7 +341,8 @@ def report(payload: Optional[dict] = None) -> str:
              "| Model | q², Delaney | RMSE, Delaney | q², AqSolDB | RMSE, AqSolDB | "
              "R², AqSolDB to Delaney | RMSE, AqSolDB to Delaney |",
              "|---|---:|---:|---:|---:|---:|---:|"]
-    for name, r in payload["models"].items():
+    for name in MODELS:
+        r = payload["models"][name]
         lines.append(f"| {name} | {r['delaney']['q2_mean']:+.3f} | "
                      f"{r['delaney']['rmse_mean']:.3f} | "
                      f"{r['aqsoldb_reliable']['q2_mean']:+.3f} | "
@@ -353,7 +354,11 @@ def report(payload: Optional[dict] = None) -> str:
     for c in payload["comparisons"]:
         lines.append(f"| {c['model']} minus {c['against']} | {tests[c['test']]} | "
                      f"{c['mean']:+.3f} [{c['lo']:+.3f}, {c['hi']:+.3f}] |")
-    return "\n".join(lines) + "\n"
+    text = "\n".join(lines) + "\n"
+    # the table is written here, so that run_all.py --tables and --check can rebuild it
+    with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return text
 
 
 def main(argv=None) -> int:

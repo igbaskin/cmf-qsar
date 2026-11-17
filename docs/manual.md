@@ -12036,6 +12036,124 @@ does not read.
 python benchmarks/run_molcrystals.py     # about 2 hours from scratch, minutes with the cache
 ```
 
+## Two physical properties of molecules: logP and water solubility
+
+The section *Molecules inside crystals* found that eight counts predict a melting point better
+than any field model. A melting point belongs to the crystal. This section asks the same question
+for two properties that belong mostly to the molecule: the octanol-water partition coefficient
+(logP) and the water solubility (logS, the decimal logarithm of the solubility in mol/L).
+
+Both benchmarks use the program as it stands: the invariant field kernel of the five classical
+fields (`cmf build --kernel autocorrelation`), one conformer per compound (ETKDG, then MMFF94),
+and kernel ridge regression with the smoothing width and the ridge chosen by the evidence on each
+training block. Each property has two sets. Five folds are repeated three times on each set, and
+a third test fits on one set and predicts the other, which it has never seen. A difference of q²
+carries a 95 % paired bootstrap interval over the compounds.
+
+**The references.** The hydrophobic field puts the Wildman-Crippen increments on the atoms, so
+its sum over a molecule is exactly RDKit's clogP. A field model of logP is worth something only
+if it beats a linear regression on clogP. Three more references ask where a gain comes from.
+
+* *Refitted Crippen increments*: a ridge regression on the counts of the Crippen atom types,
+  fitted in each fold. It tells whether the gain is only a better set of increments.
+* *Topological autocorrelation*: the same autocorrelation of the same five fields, with the
+  distance between two atoms counted in bonds instead of ångströms. It needs no conformer, and it
+  tells whether the gain comes from the 3D geometry.
+* *Field totals*: the five sums of the field weights of a molecule (total charge, bulk, clogP,
+  acceptor and donor strength), with no distances.
+
+For solubility the main reference is Delaney's ESOL equation: a linear regression on clogP,
+molecular weight, the number of rotatable bonds and the aromatic proportion (aromatic atoms over
+heavy atoms). Here it is refitted in each fold, with the four descriptors as RDKit computes them.
+
+**The data.** For logP: the Huuskonen set (1,847 compounds) and 2,999 compounds sampled from
+class P of SangsterLogP (CC BY 4.0), which holds the values their authors reported as logP
+(`examples/logp`, made by `benchmarks/prepare_logp.py`). For solubility: the Delaney set (1,114
+compounds) and the 1,002 compounds of AqSolDB (CC0) that were measured more than once with a
+standard deviation below 0.5 log units (`examples/solubility`, made by
+`benchmarks/prepare_solubility.py`). The two sets of each property share no compound. The README
+of each folder lists what was refused and why.
+
+**logP** (`benchmarks/run_logp.py`). The standard deviation of the measured values is 1.49 on the
+Huuskonen set and 1.78 on class P. Each cell gives q², with the RMSE in log units in brackets.
+
+| Model | Huuskonen, CV | class P, CV | class P to Huuskonen |
+|---|---:|---:|---:|
+| invariant field kernel | +0.884 (0.51) | +0.778 (0.84) | +0.803 (0.66) |
+| invariant field kernel + clogP | +0.899 (0.47) | +0.797 (0.80) | +0.830 (0.62) |
+| topological autocorrelation (distances in bonds) | +0.871 (0.54) | +0.761 (0.87) | +0.782 (0.70) |
+| topological autocorrelation + clogP | +0.884 (0.51) | +0.774 (0.85) | +0.820 (0.63) |
+| refitted Crippen increments | +0.848 (0.58) | +0.745 (0.90) | +0.743 (0.76) |
+| field totals (five sums per molecule) | +0.847 (0.58) | +0.752 (0.89) | +0.820 (0.63) |
+| ECFP4 fingerprint | +0.823 (0.63) | +0.764 (0.86) | +0.736 (0.77) |
+| linear regression on clogP | +0.820 (0.63) | +0.710 (0.96) | +0.780 (0.70) |
+| eight counts | +0.806 (0.66) | +0.672 (1.02) | +0.685 (0.84) |
+
+| Difference of q² | Huuskonen, CV | class P, CV | class P to Huuskonen |
+|---|---|---|---|
+| invariant minus the linear regression on clogP | +0.071 [+0.059, +0.084] | +0.076 [+0.061, +0.090] | +0.023 [+0.010, +0.036] |
+| invariant minus refitted Crippen increments | +0.042 [+0.030, +0.054] | +0.039 [+0.027, +0.052] | +0.060 [+0.043, +0.078] |
+| invariant minus topological autocorrelation | +0.019 [+0.010, +0.027] | +0.022 [+0.013, +0.033] | +0.020 [+0.008, +0.034] |
+| invariant minus field totals | +0.036 [+0.021, +0.050] | +0.030 [+0.017, +0.043] | -0.018 [-0.030, -0.006] |
+
+The invariant kernel beats every reference in cross-validation. Better increments explain only
+part of its gain over clogP: the kernel is still 0.04 ahead of the refitted increments. The 3D
+distances add a small amount over the bond counts, about 0.02 on all three tests, and every
+interval is above zero. On the external test the field totals are 0.018 ahead of the kernel.
+The same kernel without the cosine normalisation reaches +0.832 there, so the loss is mostly the
+size of the molecule, which the normalisation divides out. The widths chosen are 0.03 to 0.05 Å.
+At such a width the channels separate single bond lengths, and the kernel is close to a count of
+atom pairs at given distances, typed by their field values.
+
+**Water solubility** (`benchmarks/run_solubility.py`). The standard deviation of the measured
+values is 2.09 on the Delaney set and 2.30 on AqSolDB. The published ESOL equation, with no
+fitting, gives R² 0.810 (RMSE 0.91) on the Delaney set. Delaney fitted it on a larger set of 2,874
+measurements, which may include these compounds.
+
+| Model | Delaney, CV | AqSolDB, CV | AqSolDB to Delaney |
+|---|---:|---:|---:|
+| invariant field kernel | +0.875 (0.74) | +0.831 (0.95) | +0.827 (0.87) |
+| invariant field kernel + ESOL descriptors | +0.896 (0.68) | +0.859 (0.86) | +0.856 (0.79) |
+| topological autocorrelation (distances in bonds) | +0.847 (0.82) | +0.815 (0.99) | +0.811 (0.91) |
+| topological autocorrelation + ESOL descriptors | +0.884 (0.71) | +0.852 (0.89) | +0.855 (0.80) |
+| field totals (five sums per molecule) | +0.861 (0.78) | +0.818 (0.98) | +0.816 (0.90) |
+| eight counts | +0.853 (0.80) | +0.832 (0.94) | +0.778 (0.99) |
+| refitted Crippen increments | +0.824 (0.88) | +0.799 (1.03) | +0.766 (1.01) |
+| ESOL refitted (linear regression on four descriptors) | +0.762 (1.02) | +0.784 (1.07) | +0.744 (1.06) |
+| ECFP4 fingerprint | +0.775 (0.99) | +0.718 (1.22) | +0.663 (1.22) |
+| linear regression on clogP | +0.682 (1.18) | +0.688 (1.29) | +0.679 (1.19) |
+
+| Difference of q² | Delaney, CV | AqSolDB, CV | AqSolDB to Delaney |
+|---|---|---|---|
+| invariant minus ESOL refitted | +0.119 [+0.096, +0.144] | +0.055 [+0.031, +0.081] | +0.083 [+0.059, +0.108] |
+| invariant minus field totals | +0.017 [+0.001, +0.033] | +0.015 [-0.005, +0.035] | +0.010 [-0.011, +0.032] |
+| invariant minus topological autocorrelation | +0.032 [+0.019, +0.045] | +0.021 [+0.005, +0.037] | +0.016 [+0.000, +0.031] |
+| both + ESOL descriptors: invariant minus topological | +0.015 [+0.005, +0.025] | +0.007 [-0.000, +0.015] | +0.001 [-0.006, +0.009] |
+
+The invariant kernel beats ESOL clearly, by 0.06 to 0.12, and it also beats the published
+equation. Most of that gain, however, is already in the five field totals: they come within 0.010
+to 0.017 of the kernel, and the interval excludes zero only on the Delaney set. With the ESOL
+descriptors added to both, the 3D kernel and the topological kernel are equal on two of the three
+tests. Solubility also depends on the crystal, and none of these models sees it. This is why
+Yalkowsky's general solubility equation has a melting-point term beside logP. The widths chosen
+are 0.05 to 0.2 Å, wider than for logP. The lowest RMSE on the Delaney set is 0.68 log units. A
+review by Llompart et al. (*Scientific Data* 11 (2024) 303) quotes 0.58 for a graph neural
+network of 2013 in 10-fold cross-validation, without saying on which set, so the two numbers are
+not strictly comparable.
+
+**What the two benchmarks say together.** For a property of the molecule that is close to
+additive, the field kernel is a good model: it beats refitted increments, a fingerprint and
+counts. The 3D geometry adds about 0.02 in q² on logP and almost nothing on solubility. Before a
+gain is read as an effect of the geometry, compare the field kernel with the field totals and
+with the topological version, as these benchmarks do.
+
+```bash
+python benchmarks/run_logp.py           # about 100 minutes; the 3D structures are in the repository
+python benchmarks/run_solubility.py     # about 20 minutes
+python benchmarks/prepare_logp.py       # only to rebuild examples/logp from SangsterLogP
+python benchmarks/prepare_solubility.py # only to rebuild examples/solubility
+```
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

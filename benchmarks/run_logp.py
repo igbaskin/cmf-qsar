@@ -136,6 +136,11 @@ LAMS = (1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1.0, 10.0)
 FOLDS, REPEATS, SEED = 5, 3, 0
 SETS = ("huuskonen", "sangster_p")
 MAIN = ("invariant, cosine", "linear regression on clogP")
+#: the models in the order of the table; the json stores them with sorted keys
+MODELS = ("invariant, cosine", "invariant, not normalised", "invariant + clogP",
+          "invariant + five descriptors", "linear regression on clogP", "field totals",
+          "eight counts", "ECFP4", "refitted Crippen increments", "refitted increments + clogP",
+          "topological autocorrelation", "topological + clogP")
 
 
 def log(msg: str) -> None:
@@ -434,12 +439,7 @@ def run(quick: int = 0) -> Dict[str, object]:
 
     Kclogp = linear_block(standardise(clogp[:, None]))
     Kdesc = linear_block(five_descriptors(heavy))
-    models = {k: Model(k) for k in ("invariant, cosine", "invariant, not normalised",
-                                    "invariant + clogP", "invariant + five descriptors",
-                                    "linear regression on clogP", "field totals",
-                                    "eight counts", "ECFP4", "refitted Crippen increments",
-                                    "refitted increments + clogP", "topological autocorrelation",
-                                    "topological + clogP")}
+    models = {k: Model(k) for k in MODELS}
     models["linear regression on clogP"].add("linear", Kclogp, y, blocks)
     C, crippen_types = crippen_counts(mols)
     Kcounts = linear_block(C)
@@ -550,8 +550,7 @@ def run(quick: int = 0) -> Dict[str, object]:
     np.savez(os.path.join(CACHE, "predictions_quick.npz" if quick else "predictions.npz"),
              names=names, y=y, **{f"{m}|{t}": p for (m, t), p in preds.items()})
     if not quick:
-        with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(report(payload))
+        report(payload)
     return payload
 
 
@@ -570,7 +569,8 @@ def report(payload: Optional[dict] = None) -> str:
              "| Model | q², Huuskonen | RMSE, Huuskonen | q², class P | RMSE, class P | "
              "R², class P to Huuskonen | RMSE, class P to Huuskonen |",
              "|---|---:|---:|---:|---:|---:|---:|"]
-    for name, r in payload["models"].items():
+    for name in MODELS:
+        r = payload["models"][name]
         lines.append(f"| {name} | {r['huuskonen']['q2_mean']:+.3f} | "
                      f"{r['huuskonen']['rmse_mean']:.3f} | {r['sangster_p']['q2_mean']:+.3f} | "
                      f"{r['sangster_p']['rmse_mean']:.3f} | {r['external']['r2']:+.3f} | "
@@ -581,7 +581,11 @@ def report(payload: Optional[dict] = None) -> str:
     for c in payload["comparisons"]:
         lines.append(f"| {c['model']} minus {c['against']} | {tests[c['test']]} | "
                      f"{c['mean']:+.3f} [{c['lo']:+.3f}, {c['hi']:+.3f}] |")
-    return "\n".join(lines) + "\n"
+    text = "\n".join(lines) + "\n"
+    # the table is written here, so that run_all.py --tables and --check can rebuild it
+    with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return text
 
 
 def main(argv=None) -> int:
