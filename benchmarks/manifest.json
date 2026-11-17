@@ -1,6 +1,6 @@
 {
- "commit": "69c814703a53b467320c8ab371f5c5fcd83b933c",
- "created": "2026-11-17T19:49:00",
+ "commit": "cc63d7df9a5bfb57489747db340a31e7e210f24f",
+ "created": "2026-11-17T23:37:57",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2586,6 +2586,10 @@
    "bytes": 189864,
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
+  "examples/slab_adsorption/solvents.csv": {
+   "bytes": 359,
+   "sha256": "06428acc8ef9e745b70e0a72401d8bcafcb39617118493b9df81406c60716ea7"
+  },
   "examples/solubility/README.md": {
    "bytes": 3998,
    "sha256": "015af0c38d0fc169d7670b944ae4691e7086586e0036bc28341b174fe6fc9c3c"
@@ -4180,6 +4184,19 @@
   "benchmarks/results/slab/receptor.json": "853f0ce5213a47aa336bece30a79984abb877070821be87879edd8988c623910",
   "benchmarks/results/slab/score.json": "58b4438ce2706d675a5b5109c7ffc6bd9956be9aace45b17f790c64a4a86c06f",
   "benchmarks/results/slab/table.md": "d3ca08fa8639f34ac4e82e530adb6b519dd6c8391ed96725d12e0d5ec95c2653",
+  "benchmarks/results/slab_adsorption/fe110_check.csv": "38033c5329dca75fbde2c7aee355183b066deb8fac1e595e0ee4105f7247dfdf",
+  "benchmarks/results/slab_adsorption/fe110_check.sdf": "fbaa27045c6e2f15dfbb45d2b36038dc5b833a1d646691ed4610d7739cf9e194",
+  "benchmarks/results/slab_adsorption/fe110_check_far.csv": "b3a7859b212f85aac0a3a788bf3edc49bc5d9486d20c898c0580191e37c12852",
+  "benchmarks/results/slab_adsorption/fe110_check_run.json": "a709a908e5f82eed45bd883f318497197cc2e5a9cbfe9e97d373a700895cdd2d",
+  "benchmarks/results/slab_adsorption/graphite0001.csv": "3e6bde18ee0be134412e35c38058fc2185840ae38e790a08a799045404d0dd71",
+  "benchmarks/results/slab_adsorption/graphite0001.sdf": "d53b3ab01275af281a6c6acca555408192f96349b882629a72d982f319d95827",
+  "benchmarks/results/slab_adsorption/graphite0001_far.csv": "5c69d69393070cd5f762fa24b38ed63b18dbdf24b96d6ba4bd98d27c22401c0b",
+  "benchmarks/results/slab_adsorption/graphite0001_run.json": "6f560c340e458c0379cfeb660c2760318fecb8e401f15e00377744d5c1d280d4",
+  "benchmarks/results/slab_adsorption/li100.csv": "fc64f855bd3cbe222b5af43deffae0e8d351995a832453a1f9e4d11a213f1a6e",
+  "benchmarks/results/slab_adsorption/li100.sdf": "7db30e5ef9e8f571b07ff200b0bf07d16d736e794669d15a2ee4fb9330a67255",
+  "benchmarks/results/slab_adsorption/li100_far.csv": "6fc7485cdb385156edc05e6332dfcb833e1b9a3730d423f4fe7eb7f354003946",
+  "benchmarks/results/slab_adsorption/li100_run.json": "0e94f4519dee19ee5371159b673dccc7a2b4828d9f6ade330b74025ca0b43c94",
+  "benchmarks/results/slab_adsorption/table.md": "fa2647fb9e3b58ec89e49af4be7549f44961a3b2d8cff3b098534c349d7f28cd",
   "benchmarks/results/soap_gate/aromatic.json": "7f0acfc06ac20053d4189384cfb1ab5bf74134359f75003b140a8918924c4792",
   "benchmarks/results/soap_gate/shifts.json": "8289c9c691fc78e7adb2625f0dff85ce7da926ec544929ab6a55883fe2a2c626",
   "benchmarks/results/soap_gate/table.md": "3dc65f3cf4438927747fc0040b20d01470b04f9574a6db25de30434f9a6b7f05",
