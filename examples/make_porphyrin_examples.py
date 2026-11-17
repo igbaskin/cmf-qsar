@@ -470,18 +470,28 @@ def checked_geometry(sp: Species) -> Tuple[Optional[Tuple[List[str], np.ndarray]
     return (sym, xyz), geometry_problems(sym, xyz, n_lig, sp.ads, ref)
 
 
-def orca_input(mult: int, maxcore: int) -> str:
+def orca_input(mult: int, maxcore: int, careful: bool = False) -> str:
+    """Input of a single point.
+
+    `careful` is the second try for a job that did not converge in the time allowed: slow
+    convergence settings, a level shift and a lower iteration limit. It has its own input text
+    and its own folder, so it never reuses the output of the first try.
+    """
     kw = LEVEL + (" UKS" if mult > 1 else "")
-    return (f"! {kw}\n%maxcore {maxcore}\n%scf MaxIter 500 end\n"
+    scf = "%scf MaxIter 500 end"
+    if careful:
+        kw += " SlowConv"
+        scf = "%scf MaxIter 300\n  Shift Shift 0.3 ErrOff 0.1 end\nend"
+    return (f"! {kw}\n%maxcore {maxcore}\n{scf}\n"
             f"* xyzfile 0 {mult} geom.xyz\n")
 
 
-def orca_species(sp: Species, cfg: O.Config) -> Tuple[Species, str, float]:
-    d = os.path.join(sp.folder, "dft")
+def orca_species(sp: Species, cfg: O.Config, careful: bool = False) -> Tuple[Species, str, float]:
+    d = os.path.join(sp.folder, "dft_careful" if careful else "dft")
     os.makedirs(d, exist_ok=True)
     shutil.copy(os.path.join(sp.folder, "xtbopt.xyz"), os.path.join(d, "geom.xyz"))
     try:
-        r = O.run_job(d, "sp", orca_input(sp.mult, cfg.maxcore), cfg)
+        r = O.run_job(d, "sp", orca_input(sp.mult, cfg.maxcore, careful), cfg)
     except O.OrcaError as exc:
         return sp, str(exc)[:300], float("nan")
     return sp, "", r.energy
@@ -523,8 +533,24 @@ def series_spins() -> Dict[Tuple[str, str], Tuple[int, ...]]:
     return out
 
 
-def run_orca(jobs: int = 8, maxcore: int = 1500, only: Optional[Sequence[str]] = None) -> None:
-    cfg = O.Config(maxcore=maxcore, timeout=6 * 3600)
+#: states that are not tried again: the doublet of a cobalt oxo complex does not converge, and the
+#: quartet is the lowest state of the parent (the doublet is 0.14 eV higher)
+NO_RETRY = {("Co", "O", 2)}
+
+
+def has_energy(sp: Species) -> bool:
+    for sub in ("dft", "dft_careful"):
+        f = os.path.join(sp.folder, sub, "sp.out")
+        if os.path.isfile(f) and "ORCA TERMINATED NORMALLY" in open(f, errors="replace").read():
+            return True
+    return False
+
+
+def run_orca(jobs: int = 8, maxcore: int = 1500, only: Optional[Sequence[str]] = None,
+             retry: bool = False) -> None:
+    """The DFT single points. With `retry`, only the species without an energy are run, once
+    more with the careful settings of :func:`orca_input` and a limit of 3 hours per job."""
+    cfg = O.Config(maxcore=maxcore, timeout=(3 if retry else 6) * 3600)
     gas = orca_gas(cfg)
     print("gas references (Eh):", {k: round(v, 6) for k, v in gas.items()}, flush=True)
     spins = series_spins()
@@ -538,12 +564,14 @@ def run_orca(jobs: int = 8, maxcore: int = 1500, only: Optional[Sequence[str]] =
         geo, bad = checked_geometry(sp)
         if geo is None or bad:
             continue
+        if retry and (has_energy(sp) or (sp.metal, sp.ads, sp.mult) in NO_RETRY):
+            continue
         todo.append((len(geo[0]), sp))
     todo.sort(key=lambda t: -t[0])          # the largest first, so the tail is short
     t0 = time.time()
     failed = 0
     with ThreadPoolExecutor(jobs) as ex:
-        futs = [ex.submit(orca_species, sp, cfg) for _, sp in todo]
+        futs = [ex.submit(orca_species, sp, cfg, retry) for _, sp in todo]
         for k, f in enumerate(as_completed(futs), 1):
             sp, err, _ = f.result()
             if err:
@@ -619,11 +647,13 @@ def thermo() -> Dict[str, Dict[str, float]]:
 def dft_energies() -> Dict[Tuple[str, str, str, int], float]:
     out = {}
     for sp in all_species():
-        f = os.path.join(sp.folder, "dft", "sp.out")
-        if os.path.isfile(f):
-            r = O.parse_orca_output(open(f, errors="replace").read())
-            if r.terminated and np.isfinite(r.energy):
-                out[(sp.porphyrin, sp.metal, sp.ads, sp.mult)] = r.energy
+        for sub in ("dft", "dft_careful"):
+            f = os.path.join(sp.folder, sub, "sp.out")
+            if os.path.isfile(f):
+                r = O.parse_orca_output(open(f, errors="replace").read())
+                if r.terminated and np.isfinite(r.energy):
+                    out[(sp.porphyrin, sp.metal, sp.ads, sp.mult)] = r.energy
+                    break
     return out
 
 
@@ -749,6 +779,8 @@ def main() -> None:
     ap.add_argument("--thermo", action="store_true", help="xtb corrections from the parents")
     ap.add_argument("--collect", action="store_true", help="write porphyrin/porphyrins.csv")
     ap.add_argument("--summary", action="store_true", help="what has been computed")
+    ap.add_argument("--retry", action="store_true",
+                    help="ORCA stage: only the species without an energy, with careful SCF settings")
     ap.add_argument("--only", default=None, help="one porphyrin by name (ORCA stage)")
     ap.add_argument("--batch", choices=("first", "all"), default="all",
                     help="'first': the parent and the 20 members of FIRST_BATCH (ORCA stage)")
@@ -759,7 +791,7 @@ def main() -> None:
         build(a.jobs)
     if a.orca:
         only = FIRST_BATCH if a.batch == "first" else ([a.only] if a.only else None)
-        run_orca(a.jobs, a.maxcore, only)
+        run_orca(a.jobs, a.maxcore, only, a.retry)
     if a.thermo:
         thermo()
     if a.collect:
