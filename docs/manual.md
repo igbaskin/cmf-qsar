@@ -12518,6 +12518,100 @@ python benchmarks/prepare_vapour.py     # only to rebuild examples/vapour from t
 python benchmarks/run_property_pairs.py # about 72 minutes, after the four benchmarks above
 ```
 
+## The critical micelle concentration of surfactants
+
+A surfactant molecule has a polar head and a long non-polar tail. Above a certain concentration
+in water, the critical micelle concentration (CMC), the molecules gather into micelles. The CMC
+is a property of the molecule, like the four above, but surfactants differ from those molecules
+in three ways. Most of them carry a charge. Many weigh more than 700. And their tails are long
+and flexible, so one conformer is one arbitrary choice among very many. This section asks whether
+the field kernel still works on such molecules (`benchmarks/run_cmc.py`).
+
+**The data.** SurfPro (Hoedl et al., *Digital Discovery* 4 (2025) 1176), in the second version of
+its authors, which corrected many structures after the paper: 1,203 surfactants in the training
+part and the 140 surfactants of the paper's test set (`examples/cmc`, made by
+`benchmarks/prepare_cmc.py`). The target is pCMC, the negative decimal logarithm of the CMC in
+mol/L. Its standard deviation is 1.08 in the training part. Six classes are given by the source:
+anionic, cationic, gemini cationic (two heads and two tails), non-ionic, sugar-based non-ionic
+and zwitterionic. The structure is the surfactant ion with its net charge, without the
+counterion; the counterion is kept as a text property. **The data are under the licence CC
+BY-NC-SA 4.0, not under the MIT licence of the program**: they may be used and shared only for
+non-commercial purposes, with attribution, and an adapted version must carry the same licence
+(`examples/cmc/LICENSE_SurfPro.md`).
+
+**The tests.** Besides random folds and the paper's test set, there is a third test. Many
+surfactants belong to homologous series that differ only in the length of the tail. Random folds
+put close members of one series on both sides of the split. So a second cross-validation keeps
+every series in one fold: a series is the set of surfactants that are the same once the carbons
+of every pure hydrocarbon or fluorocarbon chain are removed. The training part has 405 series;
+187 of them have one member, and the largest has 48. The bootstrap of this test draws whole
+series.
+
+**The reference.** Klevens's rule: within one class of surfactants, log CMC falls linearly with
+the number of carbons in the tail. Here it is a ridge regression refitted in each fold, on the
+class, the counterion, the length of the longest carbon chain, that length once more for each
+class (so that each class has its own slope), the length of the second chain, the number of
+fluorinated carbons and the number of ether oxygens.
+
+**The grids are wider here.** A C16 tail is about 20 Å long and a gemini surfactant about twice
+that. With the settings of the logP benchmark (distances up to 12 Å, widths up to 6 Å, 40 bonds)
+a first run chose the edge of every grid almost everywhere. The run reported here counts
+distances up to 30 Å, with widths up to 12 Å, topological distances up to 80 bonds and weights h
+from 0.001. The widths chosen are then mostly 1.5 to 3 Å. 80 bonds still leaves out the longest
+pairs of 11 of the 1,343 surfactants (the longest has 128 bonds).
+
+Each cell gives q² (cross-validation) or R² (test set), with the RMSE in pCMC units in brackets;
+the last column is the mean absolute error (MAE) on the test set.
+
+| Model | training part, CV, random folds | training part, CV, series held out | SurfPro test set | MAE, test set |
+|---|---:|---:|---:|---:|
+| invariant field kernel + eight counts | +0.732 (0.56) | +0.550 (0.73) | +0.836 (0.45) | 0.331 |
+| field totals (five sums per molecule) | +0.684 (0.61) | +0.613 (0.67) | +0.791 (0.51) | 0.383 |
+| eight counts | +0.675 (0.62) | +0.413 (0.83) | +0.823 (0.47) | 0.339 |
+| topological autocorrelation + Klevens descriptors | +0.681 (0.61) | +0.480 (0.78) | +0.762 (0.54) | 0.395 |
+| invariant field kernel + topological autocorrelation | +0.657 (0.64) | +0.441 (0.81) | +0.737 (0.57) | 0.442 |
+| invariant field kernel + Klevens descriptors | +0.641 (0.65) | +0.557 (0.72) | +0.693 (0.62) | 0.476 |
+| topological autocorrelation (distances in bonds) | +0.628 (0.66) | +0.384 (0.85) | +0.720 (0.59) | 0.463 |
+| invariant field kernel | +0.585 (0.70) | +0.516 (0.75) | +0.629 (0.68) | 0.544 |
+| invariant field kernel, not normalised | +0.547 (0.73) | +0.445 (0.81) | +0.601 (0.70) | 0.533 |
+| refitted Crippen increments | +0.526 (0.75) | +0.433 (0.82) | +0.574 (0.73) | 0.569 |
+| Klevens refitted (ridge regression on the tail and the class) | +0.478 (0.78) | +0.445 (0.81) | +0.522 (0.77) | 0.601 |
+| ECFP4 fingerprint | +0.395 (0.84) | +0.288 (0.91) | +0.414 (0.85) | 0.646 |
+| linear regression on the tail length | +0.164 (0.99) | +0.153 (1.00) | +0.249 (0.96) | 0.763 |
+
+| Difference of q² or R² | random folds | series held out | SurfPro test set |
+|---|---|---|---|
+| invariant minus Klevens refitted | +0.139 [+0.096, +0.182] | +0.105 [+0.025, +0.180] | +0.107 [+0.008, +0.212] |
+| invariant minus field totals | -0.069 [-0.101, -0.036] | -0.072 [-0.123, -0.024] | -0.162 [-0.258, -0.070] |
+| invariant minus eight counts | -0.069 [-0.107, -0.033] | +0.112 [+0.015, +0.214] | -0.194 [-0.304, -0.100] |
+| invariant minus topological autocorrelation | -0.014 [-0.039, +0.011] | +0.133 [+0.046, +0.236] | -0.091 [-0.152, -0.033] |
+| invariant minus ECFP4 | +0.218 [+0.172, +0.268] | +0.255 [+0.158, +0.349] | +0.215 [+0.069, +0.362] |
+| invariant + eight counts minus invariant | +0.131 [+0.105, +0.158] | +0.031 [-0.042, +0.098] | +0.207 [+0.126, +0.305] |
+| invariant + eight counts minus eight counts | +0.062 [+0.041, +0.082] | +0.143 [+0.076, +0.214] | +0.013 [-0.025, +0.051] |
+
+The paper reports, on the same 140 test surfactants but on the first version of the data, MAE
+0.235 and RMSE 0.346 for its best graph neural network (AttentiveFP trained on all six
+properties, an ensemble of ten models), and MAE 0.630 and RMSE 0.840 for an RDKit fingerprint
+with a random forest.
+
+The field kernel beats the refitted Klevens rule on every test, by 0.10 to 0.14, and it beats
+ECFP4 by 0.22 to 0.26. But the five field totals beat it on every test, by 0.07 to 0.16, and so do
+the eight counts, except on the series held out. As for solubility, most of what the field
+kernel knows about the CMC is already in the five sums of the field weights. The field kernel
+plus the eight counts is again the best model on random folds and on the test set: its MAE of
+0.331 is half that of the fingerprint models of the paper, but its RMSE of 0.45 is about 0.1
+higher than that of the graph networks, which also see the counterion. The series held out
+change the order. There the eight counts lose 0.26 against random folds, the topological kernel
+0.24 and the field kernel only 0.07. The field totals are the best model on new head groups
+(0.613), and adding the counts to the field kernel gains nothing there (+0.031, with zero inside
+the interval). A model that reads the size of a surfactant from its counts learns the
+homologous series. A new head group asks for what the fields hold.
+
+```bash
+python benchmarks/run_cmc.py            # about 99 minutes; the 3D structures are in the repository
+python benchmarks/prepare_cmc.py        # only to rebuild examples/cmc from SurfPro
+```
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

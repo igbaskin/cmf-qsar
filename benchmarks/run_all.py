@@ -1065,6 +1065,18 @@ def registry() -> List[Benchmark]:
                   minutes="72",
                   report=lambda: _mod("run_property_pairs").report(),
                   tables=["property_pairs/table.md"]),
+        Benchmark("cmc",
+                  "measured critical micelle concentrations of surfactants with the invariant "
+                  "field kernel, against Klevens's rule refitted in each fold and the references "
+                  "of the logP benchmark, on the SurfPro set (1,203 surfactants, with folds that "
+                  "hold out whole homologous series, and the 140 of the paper's test set); the "
+                  "data are under CC BY-NC-SA 4.0",
+                  "run_cmc.py", "cmc", compute=[[]],
+                  prepare=["prepare_cmc.py (SurfPro from GitHub, then one 3D structure per "
+                           "surfactant ion)"],
+                  minutes="99",
+                  report=lambda: _mod("run_cmc").report(),
+                  tables=["cmc/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

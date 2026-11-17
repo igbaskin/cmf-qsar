@@ -1,0 +1,852 @@
+{
+ "comparisons": [
+  {
+   "against": "Klevens refitted",
+   "hi": 0.18219654869598262,
+   "lo": 0.09630420169200721,
+   "mean": 0.1392708277746848,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "Klevens refitted",
+   "hi": 0.1797233295503125,
+   "lo": 0.02518200217649531,
+   "mean": 0.10468047549558013,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "Klevens refitted",
+   "hi": 0.21201063505763398,
+   "lo": 0.00792804885453301,
+   "mean": 0.1068017088167248,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "Klevens refitted",
+   "hi": 0.219964572725962,
+   "lo": 0.15283348413871684,
+   "mean": 0.1861872630600383,
+   "model": "invariant + Klevens descriptors",
+   "test": "random"
+  },
+  {
+   "against": "Klevens refitted",
+   "hi": 0.20953268096776684,
+   "lo": 0.08612064919667829,
+   "mean": 0.14637683867741424,
+   "model": "invariant + Klevens descriptors",
+   "test": "series"
+  },
+  {
+   "against": "Klevens refitted",
+   "hi": 0.2574237978974742,
+   "lo": 0.0958507360939279,
+   "mean": 0.17050635097765887,
+   "model": "invariant + Klevens descriptors",
+   "test": "external"
+  },
+  {
+   "against": "linear regression on the tail length",
+   "hi": 0.5051905825707282,
+   "lo": 0.40844176255118403,
+   "mean": 0.4562199568936436,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "linear regression on the tail length",
+   "hi": 0.4966965506049009,
+   "lo": 0.3040883890455888,
+   "mean": 0.4018104499551949,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "linear regression on the tail length",
+   "hi": 0.5000028527584243,
+   "lo": 0.26755066636331365,
+   "mean": 0.3804433797744041,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": -0.030351013219764314,
+   "lo": -0.08942049048382675,
+   "mean": -0.05957078894602974,
+   "model": "invariant, not normalised",
+   "test": "random"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": -0.03044766244532166,
+   "lo": -0.1379821689496698,
+   "mean": -0.07881536242827858,
+   "model": "invariant, not normalised",
+   "test": "series"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.03340485290095343,
+   "lo": -0.10782871265325297,
+   "mean": -0.027827790015989118,
+   "model": "invariant, not normalised",
+   "test": "external"
+  },
+  {
+   "against": "field totals",
+   "hi": -0.03635079804342413,
+   "lo": -0.1014253782150419,
+   "mean": -0.06876089431508359,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "field totals",
+   "hi": -0.023964189214576714,
+   "lo": -0.12285049159485008,
+   "mean": -0.07220561323416808,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "field totals",
+   "hi": -0.0701056045071617,
+   "lo": -0.25839049293110494,
+   "mean": -0.16191314409033342,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "eight counts",
+   "hi": -0.033040559229795353,
+   "lo": -0.10657573746780448,
+   "mean": -0.06943097407784726,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.2143130458721229,
+   "lo": 0.015224121934688977,
+   "mean": 0.11198727978961631,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "eight counts",
+   "hi": -0.1004769662461284,
+   "lo": -0.3036308037272154,
+   "mean": -0.19382432652065162,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.26781643959384605,
+   "lo": 0.17213208967523705,
+   "mean": 0.21825312159766075,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.3487839935749319,
+   "lo": 0.15764096568309865,
+   "mean": 0.25523354827274103,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.3624217404152238,
+   "lo": 0.06856722316840666,
+   "mean": 0.21504890298881618,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.13029496170957786,
+   "lo": 0.05544953942007881,
+   "mean": 0.09198091892337534,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.18350272529780226,
+   "lo": 0.018818896647051084,
+   "mean": 0.10522724666815453,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.15033427062972568,
+   "lo": -0.0517609310435967,
+   "mean": 0.05562190400956846,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.010982552477818782,
+   "lo": -0.039140469166500304,
+   "mean": -0.01417201707590654,
+   "model": "invariant, cosine",
+   "test": "random"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.23649252130946435,
+   "lo": 0.04574713285414501,
+   "mean": 0.13251478168101904,
+   "model": "invariant, cosine",
+   "test": "series"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": -0.032572750319592815,
+   "lo": -0.15192314702560702,
+   "mean": -0.09062196736119887,
+   "model": "invariant, cosine",
+   "test": "external"
+  },
+  {
+   "against": "topological + Klevens descriptors",
+   "hi": 0.0012703061782824107,
+   "lo": -0.043224757602505826,
+   "mean": -0.020751331787242977,
+   "model": "invariant + Klevens descriptors",
+   "test": "random"
+  },
+  {
+   "against": "topological + Klevens descriptors",
+   "hi": 0.1587186754374777,
+   "lo": 0.027567014981214374,
+   "mean": 0.08607217733376515,
+   "model": "invariant + Klevens descriptors",
+   "test": "series"
+  },
+  {
+   "against": "topological + Klevens descriptors",
+   "hi": -0.022057992407538224,
+   "lo": -0.11934628047748252,
+   "mean": -0.06940569014870623,
+   "model": "invariant + Klevens descriptors",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.07737096667359271,
+   "lo": 0.03422179005889124,
+   "mean": 0.055955640812233254,
+   "model": "invariant + topological",
+   "test": "random"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.012805592913082397,
+   "lo": -0.17203800833186383,
+   "mean": -0.06840495736834473,
+   "model": "invariant + topological",
+   "test": "series"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.16196205765948865,
+   "lo": 0.0632618408202349,
+   "mean": 0.1079744116692587,
+   "model": "invariant + topological",
+   "test": "external"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.1577331709686792,
+   "lo": 0.1050227861108612,
+   "mean": 0.13099857427549033,
+   "model": "invariant + eight counts",
+   "test": "random"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.09831150989029257,
+   "lo": -0.04162624334964999,
+   "mean": 0.030652002929942856,
+   "model": "invariant + eight counts",
+   "test": "series"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.3051543200334159,
+   "lo": 0.12601805664190247,
+   "mean": 0.20710964469164939,
+   "model": "invariant + eight counts",
+   "test": "external"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.0824947250444238,
+   "lo": 0.04100095888892631,
+   "mean": 0.06156760019764307,
+   "model": "invariant + eight counts",
+   "test": "random"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.21431427617448434,
+   "lo": 0.07572977200096466,
+   "mean": 0.14263928271955917,
+   "model": "invariant + eight counts",
+   "test": "series"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.05058666679551156,
+   "lo": -0.0245582287549947,
+   "mean": 0.013285318170997762,
+   "model": "invariant + eight counts",
+   "test": "external"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": -0.05918982634974065,
+   "lo": -0.10885968012084048,
+   "mean": -0.08408213899013683,
+   "model": "invariant + Klevens descriptors",
+   "test": "random"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": 0.07794068268629906,
+   "lo": -0.05165970393832249,
+   "mean": 0.011044360251891261,
+   "model": "invariant + Klevens descriptors",
+   "test": "series"
+  },
+  {
+   "against": "invariant + eight counts",
+   "hi": -0.0625377236738185,
+   "lo": -0.2375206778760209,
+   "mean": -0.1434050025307153,
+   "model": "invariant + Klevens descriptors",
+   "test": "external"
+  }
+ ],
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0,
+  8.0
+ ],
+ "crippen_types": 56,
+ "d_max": 30.0,
+ "folds": 5,
+ "hs": [
+  0.001,
+  0.003,
+  0.01,
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0
+ ],
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4": {
+   "external": {
+    "chosen": {
+     "Tanimoto, ridge 1": 1
+    },
+    "mae": 0.6458306300156224,
+    "r2": 0.4140997700348118,
+    "rmse": 0.8506214281460683
+   },
+   "random": {
+    "chosen": {
+     "Tanimoto, ridge 1": 15
+    },
+    "q2_mean": 0.3948999225932279,
+    "q2_sd": 0.002833938749325296,
+    "rmse_mean": 0.8431124618570575
+   },
+   "series": {
+    "chosen": {
+     "Tanimoto, ridge 1": 15
+    },
+    "q2_mean": 0.2884086237395072,
+    "q2_sd": 0.015334520091958822,
+    "rmse_mean": 0.9142459133712627
+   }
+  },
+  "Klevens refitted": {
+   "external": {
+    "chosen": {
+     "linear, ridge 0.1": 1
+    },
+    "mae": 0.6007816458305091,
+    "r2": 0.5223469642069032,
+    "rmse": 0.7680345475838803
+   },
+   "random": {
+    "chosen": {
+     "linear, ridge 0.1": 9,
+     "linear, ridge 1": 6
+    },
+    "q2_mean": 0.4777656749666089,
+    "q2_sd": 0.0018094917260507305,
+    "rmse_mean": 0.7832585620316216
+   },
+   "series": {
+    "chosen": {
+     "linear, ridge 0.1": 8,
+     "linear, ridge 1": 7
+    },
+    "q2_mean": 0.4453826771827097,
+    "q2_sd": 0.010895695136992106,
+    "rmse_mean": 0.8071401706316276
+   }
+  },
+  "eight counts": {
+   "external": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 1
+    },
+    "mae": 0.33893835016714163,
+    "r2": 0.8229729995442796,
+    "rmse": 0.4675674178901844
+   },
+   "random": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 15
+    },
+    "q2_mean": 0.674815592842374,
+    "q2_sd": 0.0035583417249952028,
+    "rmse_mean": 0.6180611793513733
+   },
+   "series": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 15
+    },
+    "q2_mean": 0.4125194265757042,
+    "q2_sd": 0.03632290480097119,
+    "rmse_mean": 0.8303426854675321
+   }
+  },
+  "field totals": {
+   "external": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "mae": 0.38340197911858925,
+    "r2": 0.7910618171139614,
+    "rmse": 0.5079645344432991
+   },
+   "random": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "q2_mean": 0.6838217545804591,
+    "q2_sd": 0.0017012773727334456,
+    "rmse_mean": 0.6094492093777532
+   },
+   "series": {
+    "chosen": {
+     "width 0.25, ridge 0.1": 1,
+     "width 0.5, ridge 0.1": 14
+    },
+    "q2_mean": 0.6130338369745175,
+    "q2_sd": 0.009305157851011839,
+    "rmse_mean": 0.674184024430036
+   }
+  },
+  "invariant + Klevens descriptors": {
+   "external": {
+    "chosen": {
+     "sigma 3, h 0.01, ridge 0.01": 1
+    },
+    "mae": 0.4758154117918898,
+    "r2": 0.6928533151845621,
+    "rmse": 0.6158818430274057
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, h 0.3, ridge 0.01": 1,
+     "sigma 0.01, h 1, ridge 0.01": 2,
+     "sigma 1.5, h 0.1, ridge 0.1": 3,
+     "sigma 2, h 0.1, ridge 0.1": 1,
+     "sigma 3, h 0.01, ridge 0.01": 5,
+     "sigma 4, h 0.01, ridge 0.01": 1,
+     "sigma 6, h 0.01, ridge 0.01": 2
+    },
+    "q2_mean": 0.6412998333346037,
+    "q2_sd": 0.0031678044942997858,
+    "rmse_mean": 0.6491344553697618
+   },
+   "series": {
+    "chosen": {
+     "sigma 0.01, h 0.3, ridge 0.01": 1,
+     "sigma 0.01, h 1, ridge 0.01": 2,
+     "sigma 0.01, h 1, ridge 0.1": 1,
+     "sigma 1, h 0.1, ridge 0.1": 1,
+     "sigma 1.5, h 0.1, ridge 0.1": 2,
+     "sigma 2, h 0.01, ridge 0.01": 1,
+     "sigma 3, h 0.01, ridge 0.01": 5,
+     "sigma 6, h 0.01, ridge 0.01": 2
+    },
+    "q2_mean": 0.5572096673430231,
+    "q2_sd": 0.025728065329125895,
+    "rmse_mean": 0.7209162890331351
+   }
+  },
+  "invariant + eight counts": {
+   "external": {
+    "chosen": {
+     "sigma 3, width 0.25, h 1, ridge 0.1": 1
+    },
+    "mae": 0.3314356935690149,
+    "r2": 0.8362583177152774,
+    "rmse": 0.44968055539715845
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, width 0.25, h 1, ridge 0.1": 3,
+     "sigma 1.5, width 0.25, h 0.3, ridge 0.1": 3,
+     "sigma 2, width 0.25, h 0.3, ridge 0.1": 1,
+     "sigma 3, width 0.25, h 0.3, ridge 0.1": 4,
+     "sigma 3, width 0.25, h 1, ridge 0.1": 1,
+     "sigma 4, width 0.25, h 1, ridge 0.1": 1,
+     "sigma 6, width 0.25, h 0.03, ridge 0.01": 2
+    },
+    "q2_mean": 0.7315841731071814,
+    "q2_sd": 0.0036305575395356006,
+    "rmse_mean": 0.5615225166164498
+   },
+   "series": {
+    "chosen": {
+     "sigma 0.01, width 0.25, h 1, ridge 0.1": 3,
+     "sigma 0.01, width 0.25, h 3, ridge 0.1": 1,
+     "sigma 1, width 0.25, h 0.3, ridge 0.1": 1,
+     "sigma 1.5, width 0.25, h 0.3, ridge 0.1": 1,
+     "sigma 1.5, width 0.25, h 1, ridge 0.1": 1,
+     "sigma 2, width 0.25, h 0.3, ridge 0.1": 1,
+     "sigma 3, width 0.25, h 0.3, ridge 0.1": 3,
+     "sigma 3, width 0.25, h 1, ridge 0.1": 2,
+     "sigma 6, width 0.25, h 0.03, ridge 0.01": 1,
+     "sigma 6, width 0.25, h 1, ridge 0.1": 1
+    },
+    "q2_mean": 0.5500287386810288,
+    "q2_sd": 0.046502154590746456,
+    "rmse_mean": 0.7260808548776841
+   }
+  },
+  "invariant + topological": {
+   "external": {
+    "chosen": {
+     "sigma 3, up to 80 bonds, h 1, ridge 0.1": 1
+    },
+    "mae": 0.441702616673002,
+    "r2": 0.7371230846928867,
+    "rmse": 0.5697714837692403
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, up to 80 bonds, h 3, ridge 0.1": 3,
+     "sigma 1.5, up to 80 bonds, h 1, ridge 0.1": 3,
+     "sigma 2, up to 80 bonds, h 1, ridge 0.1": 1,
+     "sigma 3, up to 80 bonds, h 1, ridge 0.1": 5,
+     "sigma 4, up to 80 bonds, h 1, ridge 0.1": 1,
+     "sigma 6, up to 80 bonds, h 1, ridge 0.1": 2
+    },
+    "q2_mean": 0.6567452208209869,
+    "q2_sd": 0.002357985962103768,
+    "rmse_mean": 0.6350074721476732
+   },
+   "series": {
+    "chosen": {
+     "sigma 0.01, up to 80 bonds, h 10, ridge 0.1": 1,
+     "sigma 0.01, up to 80 bonds, h 3, ridge 0.1": 3,
+     "sigma 1, up to 80 bonds, h 1, ridge 0.1": 1,
+     "sigma 1.5, up to 80 bonds, h 0.3, ridge 0.1": 1,
+     "sigma 1.5, up to 80 bonds, h 1, ridge 0.1": 1,
+     "sigma 2, up to 80 bonds, h 1, ridge 0.1": 1,
+     "sigma 3, up to 80 bonds, h 1, ridge 0.1": 5,
+     "sigma 6, up to 80 bonds, h 0.3, ridge 0.01": 1,
+     "sigma 6, up to 80 bonds, h 1, ridge 0.1": 1
+    },
+    "q2_mean": 0.440801433134538,
+    "q2_sd": 0.014763341936423188,
+    "rmse_mean": 0.8104353679500865
+   }
+  },
+  "invariant, cosine": {
+   "external": {
+    "chosen": {
+     "sigma 3, ridge 0.01": 1
+    },
+    "mae": 0.5435484767021806,
+    "r2": 0.629148673023628,
+    "rmse": 0.6767439833628838
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, ridge 0.01": 3,
+     "sigma 1.5, ridge 0.1": 3,
+     "sigma 2, ridge 0.01": 1,
+     "sigma 3, ridge 0.01": 5,
+     "sigma 4, ridge 0.01": 1,
+     "sigma 6, ridge 0.01": 2
+    },
+    "q2_mean": 0.5845061764892381,
+    "q2_sd": 0.0023090203199330936,
+    "rmse_mean": 0.6986404160422625
+   },
+   "series": {
+    "chosen": {
+     "sigma 0.01, ridge 0.01": 3,
+     "sigma 0.01, ridge 0.1": 1,
+     "sigma 1, ridge 0.1": 1,
+     "sigma 1.5, ridge 0.1": 2,
+     "sigma 2, ridge 0.01": 1,
+     "sigma 3, ridge 0.01": 5,
+     "sigma 6, ridge 0.01": 2
+    },
+    "q2_mean": 0.5162057506818573,
+    "q2_sd": 0.02407913315838385,
+    "rmse_mean": 0.7536513178954637
+   }
+  },
+  "invariant, not normalised": {
+   "external": {
+    "chosen": {
+     "sigma 2, ridge 0.01": 1
+    },
+    "mae": 0.5334589129127099,
+    "r2": 0.6013208830076389,
+    "rmse": 0.7016753638540251
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.5, ridge 0.1": 1,
+     "sigma 2, ridge 0.01": 14
+    },
+    "q2_mean": 0.5474793287520306,
+    "q2_sd": 0.009440428130489998,
+    "rmse_mean": 0.7290689512026356
+   },
+   "series": {
+    "chosen": {
+     "sigma 0.03, ridge 0.1": 1,
+     "sigma 0.5, ridge 0.1": 1,
+     "sigma 1.5, ridge 0.01": 2,
+     "sigma 2, ridge 0.01": 11
+    },
+    "q2_mean": 0.44546243839544725,
+    "q2_sd": 0.036974759120653164,
+    "rmse_mean": 0.8066820115963056
+   }
+  },
+  "linear regression on the tail length": {
+   "external": {
+    "chosen": {
+     "linear, ridge 10": 1
+    },
+    "mae": 0.7629112036251541,
+    "r2": 0.24870529324922386,
+    "rmse": 0.9632292212076675
+   },
+   "random": {
+    "chosen": {
+     "linear, ridge 10": 15
+    },
+    "q2_mean": 0.1635042648208752,
+    "q2_sd": 0.001540873069350951,
+    "rmse_mean": 0.9912992484188731
+   },
+   "series": {
+    "chosen": {
+     "linear, ridge 1": 1,
+     "linear, ridge 10": 14
+    },
+    "q2_mean": 0.1531596294466814,
+    "q2_sd": 0.009200907997763828,
+    "rmse_mean": 0.9973956271114203
+   }
+  },
+  "refitted Crippen increments": {
+   "external": {
+    "chosen": {
+     "linear, ridge 0.001": 1
+    },
+    "mae": 0.5692490177658618,
+    "r2": 0.5735267690140595,
+    "rmse": 0.7257221405582267
+   },
+   "random": {
+    "chosen": {
+     "linear, ridge 0.001": 15
+    },
+    "q2_mean": 0.5258327242059363,
+    "q2_sd": 0.007069779279252271,
+    "rmse_mean": 0.7463229825618766
+   },
+   "series": {
+    "chosen": {
+     "linear, ridge 0.001": 15
+    },
+    "q2_mean": 0.43278936477935465,
+    "q2_sd": 0.018390147861202518,
+    "rmse_mean": 0.8161850603112676
+   }
+  },
+  "topological + Klevens descriptors": {
+   "external": {
+    "chosen": {
+     "up to 80 bonds, h 0.3, ridge 0.1": 1
+    },
+    "mae": 0.3950236572731611,
+    "r2": 0.7622590053332683,
+    "rmse": 0.5418468118196141
+   },
+   "random": {
+    "chosen": {
+     "up to 80 bonds, h 0.1, ridge 0.1": 3,
+     "up to 80 bonds, h 0.3, ridge 0.1": 12
+    },
+    "q2_mean": 0.6812655377225223,
+    "q2_sd": 0.004755543432692067,
+    "rmse_mean": 0.611893073732258
+   },
+   "series": {
+    "chosen": {
+     "up to 80 bonds, h 0.1, ridge 0.1": 5,
+     "up to 80 bonds, h 0.3, ridge 0.1": 10
+    },
+    "q2_mean": 0.4797735335334575,
+    "q2_sd": 0.026274989167325007,
+    "rmse_mean": 0.78150154257434
+   }
+  },
+  "topological autocorrelation": {
+   "external": {
+    "chosen": {
+     "up to 80 bonds, ridge 0.1": 1
+    },
+    "mae": 0.46347922116656465,
+    "r2": 0.7197706403848269,
+    "rmse": 0.5882762317349863
+   },
+   "random": {
+    "chosen": {
+     "up to 80 bonds, ridge 0.1": 15
+    },
+    "q2_mean": 0.6278652091596942,
+    "q2_sd": 0.0050298426607837095,
+    "rmse_mean": 0.6611702126957214
+   },
+   "series": {
+    "chosen": {
+     "up to 80 bonds, ridge 0.01": 1,
+     "up to 80 bonds, ridge 0.1": 14
+    },
+    "q2_mean": 0.38430747374301033,
+    "q2_sd": 0.019411735242218855,
+    "rmse_mean": 0.8503576928191782
+   }
+  }
+ },
+ "published_test_errors": {
+  "AttentiveFP, best (all properties, 96 channels)": {
+   "mae": 0.235,
+   "rmse": 0.346
+  },
+  "AttentiveFP, one property, 64 channels": {
+   "mae": 0.25,
+   "rmse": 0.382
+  },
+  "RDKit fingerprint, random forest": {
+   "mae": 0.63,
+   "rmse": 0.84
+  }
+ },
+ "quick": 0,
+ "repeats": 3,
+ "seconds": 5944.1,
+ "series": {
+  "count": 405,
+  "largest": 48,
+  "single_members": 187
+ },
+ "sigmas": [
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  4.0,
+  6.0,
+  8.0,
+  12.0
+ ],
+ "surfactants": {
+  "test": 140,
+  "train": 1203
+ },
+ "topo_max": [
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40,
+  60,
+  80
+ ],
+ "y": {
+  "test": {
+   "max": 6.300162274,
+   "mean": 3.17158796111315,
+   "min": 0.376957566,
+   "sd": 1.1112825239202968
+  },
+  "train": {
+   "max": 6.795880017,
+   "mean": 3.1361699215438956,
+   "min": 0.009,
+   "sd": 1.0838597670420602
+  }
+ }
+}
