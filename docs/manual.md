@@ -12444,6 +12444,8 @@ pressures. So a model that needs no conformer comes within 0.025 of the best one
 and a likely reason is the size of a molecule: the cosine normalisation of both kernels divides it
 out, and the first of the eight counts is the molecular weight.
 
+![Six models on the clean test of each property: q² in cross-validation for logP (the Huuskonen set) and water solubility (the Delaney set), R² on the test part of the OPERA paper for the boiling point and the vapour pressure. The classic reference is the linear regression on clogP for logP, the refitted ESOL equation for solubility and the refitted Joback groups for the other two. The axis starts at 0.6. The field kernel plus the eight counts is the best model in all four groups, and the topological kernel plus the counts, which needs no conformer, comes close to it. The same chart is drawn in tutorial 31. Drawn by `docs/make_figures.py`.](docs/figures/properties.svg)
+
 The thirty-first tutorial, `docs/tutorials/31_physical_properties.ipynb`, runs five of these
 models live on the Delaney set and reads the stored results of all four properties.
 
