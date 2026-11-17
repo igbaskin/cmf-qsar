@@ -1023,6 +1023,15 @@ def registry() -> List[Benchmark]:
                   minutes="46",
                   report=lambda: _mod("run_vapour").report(),
                   tables=["vapour/table.md"]),
+        Benchmark("property_pairs",
+                  "the four physical-property benchmarks with a model that needs no conformer: "
+                  "the topological autocorrelation plus the eight counts, against the field "
+                  "kernel plus the eight counts (tutorial 31); it reads the predictions that "
+                  "logp, solubility, boiling and vapour leave in the cache, so it runs after them",
+                  "run_property_pairs.py", "property_pairs", compute=[[]],
+                  minutes="72",
+                  report=lambda: _mod("run_property_pairs").report(),
+                  tables=["property_pairs/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

@@ -12357,6 +12357,26 @@ kernel on them extrapolates well. The field adds how the atoms are arranged. The
 noisy data, or on compounds outside the range of the training set, a kernel on a few counts alone
 remains a safe model.
 
+**A model without a conformer (added 17 November 2026).** The four benchmarks compare the field
+kernel with the topological kernel alone, and the field kernel plus the eight counts with each of
+its two parts. Neither comparison tells whether the best model needs the 3D distances.
+`benchmarks/run_property_pairs.py` adds the topological kernel plus the eight counts, with the
+same folds and the same selection rule. It reads the predictions that the four benchmarks leave in
+`benchmarks/cache`, so it runs after them. As a control it computes the topological kernel and the
+eight counts again, and their predictions equal the stored ones exactly. With the counts added to
+both kernels, the lead of the field kernel shrinks to 0.009 to 0.020 on logP, to about zero on
+solubility (-0.001 to +0.011), to 0.018 to 0.024 on the PHYSPROP boiling points (0.161 without the
+counts) and to 0.004 to 0.010 on the vapour pressures in cross-validation and on the OPERA test.
+Of the 14 intervals, 10 lie above zero, three include zero, and one lies below zero (the
+eChemPortal boiling points, -0.028 [-0.051, -0.007]). The geometry adds more on the extrapolation
+to eChemPortal: +0.142 [+0.096, +0.194] on boiling points and +0.058 [+0.036, +0.079] on vapour
+pressures. So a model that needs no conformer comes within 0.025 of the best one on clean data,
+and a likely reason is the size of a molecule: the cosine normalisation of both kernels divides it
+out, and the first of the eight counts is the molecular weight.
+
+The thirty-first tutorial, `docs/tutorials/31_physical_properties.ipynb`, runs five of these
+models live on the Delaney set and reads the stored results of all four properties.
+
 ```bash
 python benchmarks/run_logp.py           # about 102 minutes; the 3D structures are in the repository
 python benchmarks/run_solubility.py     # about 20 minutes
@@ -12366,6 +12386,7 @@ python benchmarks/run_boiling.py        # about 90 minutes
 python benchmarks/prepare_boiling.py    # only to rebuild examples/boiling from the OPERA data
 python benchmarks/run_vapour.py         # about 46 minutes
 python benchmarks/prepare_vapour.py     # only to rebuild examples/vapour from the OPERA data
+python benchmarks/run_property_pairs.py # about 72 minutes, after the four benchmarks above
 ```
 
 ## Designing a crystal: a prototype, a budget and a loop
@@ -19038,7 +19059,7 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Thirty notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Thirty-one notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
 that say how far a prediction can be trusted, two endpoints with their selectivity, screening
 a library against a model of one series, the diagnosis of a data set before any model is
@@ -19058,8 +19079,10 @@ correlation lengths of the grains, and one atom of a drug as the sample, with th
 cytochrome P450 attacks read from the field around it and compared with counts of the atom types
 around it, which groups can replace each other at a position, compared with a model that
 needs no field, the 13C shift of one carbon, compared with a HOSE-code lookup and with element
-channels in place of the fields, and which acid gave an infrared spectrum, compared with binned
-spectra and a peak-table search. Each runs on the
+channels in place of the fields, which acid gave an infrared spectrum, compared with binned
+spectra and a peak-table search, and four physical properties of diverse compounds, compared
+with clogP, ESOL, Joback's groups and the same autocorrelation with distances counted in bonds.
+Each runs on the
 example data of the repository, locally
 or in Google Colab from the link at its top. The eighteenth downloads 6.5 MB of near-infrared spectra on its first run, the twenty-first downloads 5 MB of defect data, the twenty-second and the twenty-third download 4 MB of perovskites, and the twenty-fifth needs OpenMM and PDBFixer
 (`pip install openmm pdbfixer`). `python docs/tutorials/run_tutorials.py` executes
