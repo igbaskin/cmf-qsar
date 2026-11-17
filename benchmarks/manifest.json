@@ -1,6 +1,6 @@
 {
- "commit": "cc63d7df9a5bfb57489747db340a31e7e210f24f",
- "created": "2026-11-17T23:37:57",
+ "commit": "09140674e6fe23b500656b06287b38df72983589",
+ "created": "2026-11-18T00:18:11",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -97,6 +97,26 @@
   "examples/charge_transfer/sources.csv": {
    "bytes": 18188,
    "sha256": "1e4dbc30e96d2da5911fe41dfb4e5b1f3c2484412755aa642d24f245727ce366"
+  },
+  "examples/cmc/LICENSE_SurfPro.md": {
+   "bytes": 20850,
+   "sha256": "e66c269d4819aaab34b49ef5220c4ddab6756f21bb5180761a4eb8561f2b7bbd"
+  },
+  "examples/cmc/README.md": {
+   "bytes": 4455,
+   "sha256": "66dbe35b28bb7d62bc351bc7cebc19d2a2aef4d84895ec0940018816f82a8fb4"
+  },
+  "examples/cmc/provenance.json": {
+   "bytes": 1368,
+   "sha256": "69501221d8fc53ff64f1ca08c7938dedeee013d7dc0a02b5905a212f14ab8075"
+  },
+  "examples/cmc/test.sdf": {
+   "bytes": 1081767,
+   "sha256": "97b5b801dd5d5ba812ae309812403eef5554ad761b76c1cde5105cc0f009a70b"
+  },
+  "examples/cmc/train.sdf": {
+   "bytes": 9348074,
+   "sha256": "0ca589aee67c933c70d013d402ad96b7bc805ac7c4181768bc2b4bbda18869d2"
   },
   "examples/coated_particles/README.md": {
    "bytes": 2480,
@@ -2707,7 +2727,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2967,6 +2987,8 @@
   "benchmarks/results/cif_data/ameu-activity.txt": "9534065cbe2af07602ecb22d11d1d90427c357a9f77888e3314a254b864d7a36",
   "benchmarks/results/cif_data/dyes-activity.txt": "4e8c78e188652587cf2da392009d214c50276f78270f0c69646b1aa1755fe147",
   "benchmarks/results/cif_data/thrombin-activity.txt": "3a4cefcba1b6d9d21536c177b0205585d1b2ef277a91d395f93b179699a7be40",
+  "benchmarks/results/cmc/cmc.json": "cb3a5ea7e62b1787479b195c33fe9619e791349bac8cee8a3432a3e0dffcc573",
+  "benchmarks/results/cmc/table.md": "34f1bd78af9a13390538e0132df81fa8ec02367a56e1277da5420432c4343162",
   "benchmarks/results/cme/ACE.json": "e549e3e1312926706131f9032b0ad66eb7da2784bd162f59713fbaaa0dfb6819",
   "benchmarks/results/cme/AChE.json": "2af27222411978e42b105a8ef84d165cc8a7985953fa830b8044df9269427073",
   "benchmarks/results/cme/BZR.json": "410af19ca3d618f7d127350f57aa7689769472884725ffecbba51520224d883a",
