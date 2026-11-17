@@ -1,6 +1,6 @@
 {
- "commit": "e6f257810b3e45d3930a84476503de6969fbaebb",
- "created": "2026-11-17T01:29:14",
+ "commit": "25df7cfa8f432c58c520eadb4cc954db64fb0c19",
+ "created": "2026-11-17T06:39:30",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1350,6 +1350,22 @@
    "bytes": 1577980,
    "sha256": "3cb947885d62789f35e4fbb53914232900b733817494199f55e8eea20cea11d0"
   },
+  "examples/logp/README.md": {
+   "bytes": 3636,
+   "sha256": "5fb4f6b261ea056f7ec3cf712a7a6c84908c575a24312082a462f2380159fb4c"
+  },
+  "examples/logp/huuskonen.sdf": {
+   "bytes": 4010890,
+   "sha256": "013b9bf9a0ef2d2daea4599cfeaf17fb5f1ed1c6c41b0e7da3494a9bd6be5f87"
+  },
+  "examples/logp/provenance.json": {
+   "bytes": 877,
+   "sha256": "db79116d0675ea4b3f8c4f56b7bd33dbf80a086596eb064bdd89f6a65a71dbfa"
+  },
+  "examples/logp/sangster_p.sdf": {
+   "bytes": 10112240,
+   "sha256": "4bbe200550cb3d8c06ba94b105e68a3afc6b51e58425edb1d279486b4b313866"
+  },
   "examples/make_antitarget_examples.py": {
    "bytes": 19719,
    "sha256": "8f4399137a784fdcdd9df34770450ff7ad0dece23aa6f1a94d06867975757884"
@@ -2530,6 +2546,22 @@
    "bytes": 189864,
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
+  "examples/solubility/README.md": {
+   "bytes": 3998,
+   "sha256": "015af0c38d0fc169d7670b944ae4691e7086586e0036bc28341b174fe6fc9c3c"
+  },
+  "examples/solubility/aqsoldb_reliable.sdf": {
+   "bytes": 2653772,
+   "sha256": "6d1a03489669dda608efcf72070b7e6ff2f45395369f5c5f7d2574fbc581f237"
+  },
+  "examples/solubility/delaney.sdf": {
+   "bytes": 2719844,
+   "sha256": "1ca5d9f654def2e064e8db68453deeeb58d0cabf7864d021aa4ba02b09f9ae20"
+  },
+  "examples/solubility/provenance.json": {
+   "bytes": 1240,
+   "sha256": "122b28bedfe9ded7173f43d561d30c31845e4aecd17326660d74fdc71af0251b"
+  },
   "examples/spectra/README.md": {
    "bytes": 13220,
    "sha256": "19fd0637b017a438c46c7c551671d1c1a7986ca58af574d4bf3baa2fbefd8d85"
@@ -2615,7 +2647,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3463,6 +3495,8 @@
   "benchmarks/results/local_scale/landmarks.json": "38b4a3134148cf8a2b25b2521c7a199e2efac09f88cd93755ab7ece8e79aeae3",
   "benchmarks/results/local_scale/routes.json": "1f486ee996b84c23bcadbab0ea58a3ad613c399b45b4455fd697bf0c9315deb4",
   "benchmarks/results/local_scale/table.md": "777da8877b13b34b63d66b3c4d8dec6f2b8d316ecb4ee3ad5203de6aef98cede",
+  "benchmarks/results/logp/logp.json": "45522d7bc58f7388a887757599b0ebf847318031c1e36af4b77e6ef05fc9ec23",
+  "benchmarks/results/logp/table.md": "49a74ccba85bf7ca30e5908c8318bfadfcde10fd02198115f6ac191e264947f2",
   "benchmarks/results/lowrank/summary.json": "92a28390fb91b843fd969cf7d4be74cd9ff0927ef15adf16f6a882f7a2cb604c",
   "benchmarks/results/lowrank/table.md": "1912eb194016c1632b57c3c96bf80576d06e3e553eea9cd967381a933297f659",
   "benchmarks/results/maskedmatch/ACE.json": "0d9dd880f11e361d0a4b8fafbcc642984e7f31a241422c2b9caf20005586e14a",
@@ -4074,6 +4108,8 @@
   "benchmarks/results/soap_gate/aromatic.json": "7f0acfc06ac20053d4189384cfb1ab5bf74134359f75003b140a8918924c4792",
   "benchmarks/results/soap_gate/shifts.json": "8289c9c691fc78e7adb2625f0dff85ce7da926ec544929ab6a55883fe2a2c626",
   "benchmarks/results/soap_gate/table.md": "3dc65f3cf4438927747fc0040b20d01470b04f9574a6db25de30434f9a6b7f05",
+  "benchmarks/results/solubility/solubility.json": "6ce46ac3efd031d0a753c1d166b96198733b44a1dc89fb495ec512fca9051cfa",
+  "benchmarks/results/solubility/table.md": "ab76027b2ac50840772a5af3b5f8bacfd33258a427d790736319f75ec8b93928",
   "benchmarks/results/solvation/builder.json": "d1277c84ea55d7c2009cf18c811ef1e4fa8419e50da4c2d09cb2402238d868cc",
   "benchmarks/results/solvation/gate.json": "a43844510969735f053b852b924d814a2a5d40dcda56ce3c99e66885f794cfe5",
   "benchmarks/results/solvation/series.json": "57c244283a9782b2626c1fc37dba123d3612097a5f3bfc86d1a58607f7263e12",
