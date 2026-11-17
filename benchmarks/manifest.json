@@ -1,6 +1,6 @@
 {
- "commit": "c570f61dd653caee45d7237215b32784008d7f2d",
- "created": "2026-11-17T15:32:39",
+ "commit": "ebde7963eec178b6f38b1f43ae638ac022bab3ce",
+ "created": "2026-11-17T15:43:34",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3947,6 +3947,8 @@
   "benchmarks/results/poses/tnks2_pocket_w4.json": "22594b795a645852ddd3f608c6062830804f2b33050966d80b54779b1737edef",
   "benchmarks/results/poses/tnks2_pocket_w4_r20.json": "525c0a3bab445503937e88a6d2d38efc41b81a2836ab0be9b7606428f735de83",
   "benchmarks/results/poses/tnks2_r20.json": "30227c5565cfa19273ba2e1ad02b6029c606a81cee746c2c112cc9a7c2fc9d12",
+  "benchmarks/results/property_pairs/pairs.json": "a999f4488d8adcc9a3c6fa7d5b16e295fcaa536500fbd8e788663eb525af8c76",
+  "benchmarks/results/property_pairs/table.md": "3b048da4f55a47f2bba26f9eb973f5236bd21c962f6aeb16936021cceddfe8a4",
   "benchmarks/results/protonation/0_c1ccccc1__ph0.json": "68a24f95ccb129f82b28a090e62c486eb3150c2abfec81f80d3bed0c913ec1fb",
   "benchmarks/results/protonation/0_c1ccccc1__ph3.json": "3b564b4915793f94beb583dbdd43d142be0fdcc7b278b5e6d89b5a4983ebea09",
   "benchmarks/results/protonation/11_c1c_nH_c_nH_1__ph0.json": "99d768ee8c296e08fda542f4efe08460be92c947fee873a67a548cd7319c854d",
