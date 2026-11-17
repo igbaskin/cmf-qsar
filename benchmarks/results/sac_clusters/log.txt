@@ -1,0 +1,139 @@
+gate: 139 catalysts
+  3 shells: 25 atoms with 10 hydrogen caps; metal charge by motif C2N2 +2, C3N +3, C4 +4, CN3 +1, N4 +0; 1 s
+  4 shells: 45 atoms with 14 hydrogen caps; metal charge by motif C2N2 +2, C3N +3, C4 +4, CN3 +1, N4 +0; 9 s
+  5 shells: 57 atoms with 16 hydrogen caps; metal charge by motif C2N2 +2, C3N +3, C4 +4, CN3 +1, N4 +0; 21 s
+  references built in 516 s
+  capped cluster, overlap (EC4 path) | random    | dE_H   | q2 +0.250 rmse 0.829 mae 0.628 eV
+           capped cluster, invariant | random    | dE_H   | q2 +0.256 rmse 0.826 mae 0.636 eV
+  capped cluster overlap + metal properties | random    | dE_H   | q2 +0.566 rmse 0.630 mae 0.465 eV
+          whole cell autocorrelation | random    | dE_H   | q2 +0.583 rmse 0.618 mae 0.466 eV
+                   site profile (M5) | random    | dE_H   | q2 +0.581 rmse 0.620 mae 0.470 eV
+      site overlap, extended (pilot) | random    | dE_H   | q2 +0.520 rmse 0.663 mae 0.522 eV
+        metal properties and N count | random    | dE_H   | q2 +0.520 rmse 0.663 mae 0.492 eV
+  capped cluster, overlap (EC4 path) | random    | dE_O   | q2 +0.632 rmse 1.342 mae 1.108 eV
+           capped cluster, invariant | random    | dE_O   | q2 +0.613 rmse 1.376 mae 1.154 eV
+  capped cluster overlap + metal properties | random    | dE_O   | q2 +0.921 rmse 0.620 mae 0.406 eV
+          whole cell autocorrelation | random    | dE_O   | q2 +0.906 rmse 0.680 mae 0.489 eV
+                   site profile (M5) | random    | dE_O   | q2 +0.927 rmse 0.597 mae 0.429 eV
+      site overlap, extended (pilot) | random    | dE_O   | q2 +0.858 rmse 0.834 mae 0.640 eV
+        metal properties and N count | random    | dE_O   | q2 +0.915 rmse 0.645 mae 0.427 eV
+  capped cluster, overlap (EC4 path) | random    | dE_OH  | q2 +0.814 rmse 0.633 mae 0.504 eV
+           capped cluster, invariant | random    | dE_OH  | q2 +0.746 rmse 0.739 mae 0.622 eV
+  capped cluster overlap + metal properties | random    | dE_OH  | q2 +0.906 rmse 0.449 mae 0.332 eV
+          whole cell autocorrelation | random    | dE_OH  | q2 +0.941 rmse 0.357 mae 0.277 eV
+                   site profile (M5) | random    | dE_OH  | q2 +0.939 rmse 0.363 mae 0.295 eV
+      site overlap, extended (pilot) | random    | dE_OH  | q2 +0.924 rmse 0.405 mae 0.319 eV
+        metal properties and N count | random    | dE_OH  | q2 +0.886 rmse 0.496 mae 0.345 eV
+  capped cluster, overlap (EC4 path) | random    | dE_OOH | q2 +0.673 rmse 0.773 mae 0.548 eV
+           capped cluster, invariant | random    | dE_OOH | q2 +0.600 rmse 0.854 mae 0.648 eV
+  capped cluster overlap + metal properties | random    | dE_OOH | q2 +0.743 rmse 0.684 mae 0.442 eV
+          whole cell autocorrelation | random    | dE_OOH | q2 +0.757 rmse 0.666 mae 0.420 eV
+                   site profile (M5) | random    | dE_OOH | q2 +0.750 rmse 0.676 mae 0.413 eV
+      site overlap, extended (pilot) | random    | dE_OOH | q2 +0.734 rmse 0.697 mae 0.467 eV
+        metal properties and N count | random    | dE_OOH | q2 +0.697 rmse 0.744 mae 0.471 eV
+  capped cluster, overlap (EC4 path) | metal-out | dE_H   | q2 +0.291 rmse 0.806 mae 0.617 eV
+           capped cluster, invariant | metal-out | dE_H   | q2 +0.096 rmse 0.910 mae 0.700 eV
+  capped cluster overlap + metal properties | metal-out | dE_H   | q2 +0.525 rmse 0.660 mae 0.499 eV
+          whole cell autocorrelation | metal-out | dE_H   | q2 +0.487 rmse 0.686 mae 0.506 eV
+                   site profile (M5) | metal-out | dE_H   | q2 +0.452 rmse 0.708 mae 0.545 eV
+      site overlap, extended (pilot) | metal-out | dE_H   | q2 +0.456 rmse 0.706 mae 0.532 eV
+        metal properties and N count | metal-out | dE_H   | q2 +0.551 rmse 0.641 mae 0.488 eV
+  capped cluster, overlap (EC4 path) | metal-out | dE_O   | q2 +0.591 rmse 1.415 mae 1.193 eV
+           capped cluster, invariant | metal-out | dE_O   | q2 +0.525 rmse 1.523 mae 1.259 eV
+  capped cluster overlap + metal properties | metal-out | dE_O   | q2 +0.883 rmse 0.756 mae 0.519 eV
+          whole cell autocorrelation | metal-out | dE_O   | q2 +0.870 rmse 0.798 mae 0.617 eV
+                   site profile (M5) | metal-out | dE_O   | q2 +0.894 rmse 0.720 mae 0.539 eV
+      site overlap, extended (pilot) | metal-out | dE_O   | q2 +0.704 rmse 1.202 mae 0.911 eV
+        metal properties and N count | metal-out | dE_O   | q2 +0.865 rmse 0.813 mae 0.577 eV
+  capped cluster, overlap (EC4 path) | metal-out | dE_OH  | q2 +0.815 rmse 0.631 mae 0.507 eV
+           capped cluster, invariant | metal-out | dE_OH  | q2 +0.716 rmse 0.782 mae 0.661 eV
+  capped cluster overlap + metal properties | metal-out | dE_OH  | q2 +0.910 rmse 0.440 mae 0.333 eV
+          whole cell autocorrelation | metal-out | dE_OH  | q2 +0.904 rmse 0.454 mae 0.353 eV
+                   site profile (M5) | metal-out | dE_OH  | q2 +0.906 rmse 0.451 mae 0.355 eV
+      site overlap, extended (pilot) | metal-out | dE_OH  | q2 +0.890 rmse 0.487 mae 0.390 eV
+        metal properties and N count | metal-out | dE_OH  | q2 +0.890 rmse 0.487 mae 0.363 eV
+  capped cluster, overlap (EC4 path) | metal-out | dE_OOH | q2 +0.580 rmse 0.875 mae 0.622 eV
+           capped cluster, invariant | metal-out | dE_OOH | q2 +0.560 rmse 0.896 mae 0.698 eV
+  capped cluster overlap + metal properties | metal-out | dE_OOH | q2 +0.660 rmse 0.787 mae 0.496 eV
+          whole cell autocorrelation | metal-out | dE_OOH | q2 +0.715 rmse 0.720 mae 0.473 eV
+                   site profile (M5) | metal-out | dE_OOH | q2 +0.583 rmse 0.872 mae 0.595 eV
+      site overlap, extended (pilot) | metal-out | dE_OOH | q2 +0.664 rmse 0.783 mae 0.536 eV
+        metal properties and N count | metal-out | dE_OOH | q2 +0.655 rmse 0.793 mae 0.511 eV
+  capped cluster, overlap (EC4 path) | motif-out | dE_H   | q2 -0.397 rmse 1.131 mae 0.839 eV
+           capped cluster, invariant | motif-out | dE_H   | q2 -0.008 rmse 0.961 mae 0.772 eV
+  capped cluster overlap + metal properties | motif-out | dE_H   | q2 +0.383 rmse 0.752 mae 0.550 eV
+          whole cell autocorrelation | motif-out | dE_H   | q2 +0.510 rmse 0.670 mae 0.499 eV
+                   site profile (M5) | motif-out | dE_H   | q2 +0.523 rmse 0.661 mae 0.465 eV
+      site overlap, extended (pilot) | motif-out | dE_H   | q2 +0.501 rmse 0.676 mae 0.522 eV
+        metal properties and N count | motif-out | dE_H   | q2 +0.508 rmse 0.671 mae 0.497 eV
+  capped cluster, overlap (EC4 path) | motif-out | dE_O   | q2 -0.611 rmse 2.807 mae 1.848 eV
+           capped cluster, invariant | motif-out | dE_O   | q2 +0.126 rmse 2.067 mae 1.729 eV
+  capped cluster overlap + metal properties | motif-out | dE_O   | q2 +0.848 rmse 0.861 mae 0.557 eV
+          whole cell autocorrelation | motif-out | dE_O   | q2 +0.893 rmse 0.723 mae 0.502 eV
+                   site profile (M5) | motif-out | dE_O   | q2 +0.909 rmse 0.666 mae 0.424 eV
+      site overlap, extended (pilot) | motif-out | dE_O   | q2 +0.817 rmse 0.945 mae 0.705 eV
+        metal properties and N count | motif-out | dE_O   | q2 +0.915 rmse 0.646 mae 0.435 eV
+  capped cluster, overlap (EC4 path) | motif-out | dE_OH  | q2 -4.258 rmse 3.363 mae 1.889 eV
+           capped cluster, invariant | motif-out | dE_OH  | q2 +0.272 rmse 1.252 mae 1.038 eV
+  capped cluster overlap + metal properties | motif-out | dE_OH  | q2 +0.838 rmse 0.590 mae 0.414 eV
+          whole cell autocorrelation | motif-out | dE_OH  | q2 +0.907 rmse 0.447 mae 0.357 eV
+                   site profile (M5) | motif-out | dE_OH  | q2 +0.932 rmse 0.383 mae 0.311 eV
+      site overlap, extended (pilot) | motif-out | dE_OH  | q2 +0.860 rmse 0.549 mae 0.435 eV
+        metal properties and N count | motif-out | dE_OH  | q2 +0.904 rmse 0.453 mae 0.343 eV
+  capped cluster, overlap (EC4 path) | motif-out | dE_OOH | q2 -1.227 rmse 2.015 mae 1.475 eV
+           capped cluster, invariant | motif-out | dE_OOH | q2 +0.306 rmse 1.125 mae 0.848 eV
+  capped cluster overlap + metal properties | motif-out | dE_OOH | q2 +0.693 rmse 0.748 mae 0.477 eV
+          whole cell autocorrelation | motif-out | dE_OOH | q2 +0.635 rmse 0.816 mae 0.537 eV
+                   site profile (M5) | motif-out | dE_OOH | q2 +0.692 rmse 0.749 mae 0.465 eV
+      site overlap, extended (pilot) | motif-out | dE_OOH | q2 +0.668 rmse 0.778 mae 0.546 eV
+        metal properties and N count | motif-out | dE_OOH | q2 +0.726 rmse 0.707 mae 0.455 eV
+  site kernels with and without the average: 48 s
+  cluster kernels with and without the average: 31 s
+   site overlap, extended, one frame | random    | dE_H   | q2 +0.590 rmse 0.613 mae 0.470 eV
+  site overlap, extended, averaged over D2h | random    | dE_H   | q2 +0.559 rmse 0.636 mae 0.470 eV
+  capped cluster (4 shells), one frame | random    | dE_H   | q2 +0.244 rmse 0.832 mae 0.655 eV
+  capped cluster (4 shells), averaged over D2h | random    | dE_H   | q2 +0.313 rmse 0.794 mae 0.612 eV
+   site overlap, extended, one frame | random    | dE_O   | q2 +0.883 rmse 0.756 mae 0.567 eV
+  site overlap, extended, averaged over D2h | random    | dE_O   | q2 +0.887 rmse 0.742 mae 0.525 eV
+  capped cluster (4 shells), one frame | random    | dE_O   | q2 +0.653 rmse 1.303 mae 1.090 eV
+  capped cluster (4 shells), averaged over D2h | random    | dE_O   | q2 +0.694 rmse 1.224 mae 1.005 eV
+   site overlap, extended, one frame | random    | dE_OH  | q2 +0.932 rmse 0.383 mae 0.301 eV
+  site overlap, extended, averaged over D2h | random    | dE_OH  | q2 +0.939 rmse 0.361 mae 0.286 eV
+  capped cluster (4 shells), one frame | random    | dE_OH  | q2 +0.827 rmse 0.610 mae 0.490 eV
+  capped cluster (4 shells), averaged over D2h | random    | dE_OH  | q2 +0.830 rmse 0.604 mae 0.484 eV
+   site overlap, extended, one frame | random    | dE_OOH | q2 +0.733 rmse 0.697 mae 0.457 eV
+  site overlap, extended, averaged over D2h | random    | dE_OOH | q2 +0.737 rmse 0.693 mae 0.444 eV
+  capped cluster (4 shells), one frame | random    | dE_OOH | q2 +0.670 rmse 0.776 mae 0.560 eV
+  capped cluster (4 shells), averaged over D2h | random    | dE_OOH | q2 +0.698 rmse 0.742 mae 0.529 eV
+   site overlap, extended, one frame | metal-out | dE_H   | q2 +0.458 rmse 0.705 mae 0.534 eV
+  site overlap, extended, averaged over D2h | metal-out | dE_H   | q2 +0.435 rmse 0.720 mae 0.528 eV
+  capped cluster (4 shells), one frame | metal-out | dE_H   | q2 +0.245 rmse 0.832 mae 0.646 eV
+  capped cluster (4 shells), averaged over D2h | metal-out | dE_H   | q2 +0.189 rmse 0.862 mae 0.662 eV
+   site overlap, extended, one frame | metal-out | dE_O   | q2 +0.801 rmse 0.988 mae 0.765 eV
+  site overlap, extended, averaged over D2h | metal-out | dE_O   | q2 +0.818 rmse 0.944 mae 0.717 eV
+  capped cluster (4 shells), one frame | metal-out | dE_O   | q2 +0.565 rmse 1.458 mae 1.193 eV
+  capped cluster (4 shells), averaged over D2h | metal-out | dE_O   | q2 +0.569 rmse 1.451 mae 1.190 eV
+   site overlap, extended, one frame | metal-out | dE_OH  | q2 +0.876 rmse 0.516 mae 0.414 eV
+  site overlap, extended, averaged over D2h | metal-out | dE_OH  | q2 +0.886 rmse 0.496 mae 0.391 eV
+  capped cluster (4 shells), one frame | metal-out | dE_OH  | q2 +0.809 rmse 0.641 mae 0.523 eV
+  capped cluster (4 shells), averaged over D2h | metal-out | dE_OH  | q2 +0.782 rmse 0.685 mae 0.564 eV
+   site overlap, extended, one frame | metal-out | dE_OOH | q2 +0.661 rmse 0.787 mae 0.528 eV
+  site overlap, extended, averaged over D2h | metal-out | dE_OOH | q2 +0.649 rmse 0.800 mae 0.552 eV
+  capped cluster (4 shells), one frame | metal-out | dE_OOH | q2 +0.576 rmse 0.880 mae 0.631 eV
+  capped cluster (4 shells), averaged over D2h | metal-out | dE_OOH | q2 +0.570 rmse 0.886 mae 0.644 eV
+   site overlap, extended, one frame | motif-out | dE_H   | q2 +0.537 rmse 0.652 mae 0.510 eV
+  site overlap, extended, averaged over D2h | motif-out | dE_H   | q2 +0.566 rmse 0.630 mae 0.470 eV
+  capped cluster (4 shells), one frame | motif-out | dE_H   | q2 -0.719 rmse 1.255 mae 0.996 eV
+  capped cluster (4 shells), averaged over D2h | motif-out | dE_H   | q2 +0.154 rmse 0.880 mae 0.689 eV
+   site overlap, extended, one frame | motif-out | dE_O   | q2 +0.611 rmse 1.379 mae 0.983 eV
+  site overlap, extended, averaged over D2h | motif-out | dE_O   | q2 +0.861 rmse 0.825 mae 0.582 eV
+  capped cluster (4 shells), one frame | motif-out | dE_O   | q2 +0.439 rmse 1.656 mae 1.276 eV
+  capped cluster (4 shells), averaged over D2h | motif-out | dE_O   | q2 +0.491 rmse 1.578 mae 1.303 eV
+   site overlap, extended, one frame | motif-out | dE_OH  | q2 +0.855 rmse 0.558 mae 0.449 eV
+  site overlap, extended, averaged over D2h | motif-out | dE_OH  | q2 +0.937 rmse 0.368 mae 0.290 eV
+  capped cluster (4 shells), one frame | motif-out | dE_OH  | q2 +0.500 rmse 1.037 mae 0.723 eV
+  capped cluster (4 shells), averaged over D2h | motif-out | dE_OH  | q2 +0.716 rmse 0.782 mae 0.640 eV
+   site overlap, extended, one frame | motif-out | dE_OOH | q2 +0.723 rmse 0.710 mae 0.453 eV
+  site overlap, extended, averaged over D2h | motif-out | dE_OOH | q2 +0.685 rmse 0.758 mae 0.492 eV
+  capped cluster (4 shells), one frame | motif-out | dE_OOH | q2 +0.582 rmse 0.873 mae 0.635 eV
+  capped cluster (4 shells), averaged over D2h | motif-out | dE_OOH | q2 +0.594 rmse 0.861 mae 0.651 eV

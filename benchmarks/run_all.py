@@ -718,6 +718,16 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_sac").write_table(_r("sac")),
                   tables=["sac/table.md"]),
+        Benchmark("sac_clusters",
+                  "the rest of plan item EC8 on the single-atom catalysts: a cluster cut from the "
+                  "sheet and capped with hydrogen, read as a metal complex, against the whole "
+                  "cell, M5's site profile and the metal properties; the co-field of the H minus "
+                  "OH binding at a smooth and at a sharp kernel over random halves; and the "
+                  "overlap kernel averaged over the symmetry of the divacancy",
+                  "run_sac_clusters.py", "sac_clusters", compute=[[]],
+                  minutes="35",
+                  report=lambda: _mod("run_sac_clusters").write_table(_r("sac_clusters")),
+                  tables=["sac_clusters/table.md"]),
         Benchmark("fluctuation",
                   "is the variance of a field across conformations worth a block of its own",
                   "run_fluctuation.py", "fluctuation", compute=[[]],

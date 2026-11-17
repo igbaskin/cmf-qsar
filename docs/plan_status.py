@@ -50,7 +50,6 @@ STOP = re.compile(r"^(?:\*\*Order\.\*\*|#{2,3} |\*\*(?:Small|Medium|Large) )")
 #: the entries that do not follow the convention, and what their own text says
 OVERRIDES: Dict[str, Tuple[str, str]] = {
     "E11": ("partly", "version (i) of four built and measured 31 October 2026"),
-    "EC8": ("partly", "pilot measured 1 November 2026, without the cut step and without M5"),
     "SC5": ("partly", "the radii of EC7 are done; the frame convention and the data are left"),
     "M15": ("done", "both halves measured 7 November 2026: the row length on five series, "
                     "the weighted distance over the columns on three"),

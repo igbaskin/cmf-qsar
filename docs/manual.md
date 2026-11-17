@@ -11197,6 +11197,51 @@ more of them, to about +0.70, so the differences between the methods are worth r
 absolute values are not. The full
 table is in `benchmarks/results/sites/table.md` (`benchmarks/run_sites.py`).
 
+**The cluster capped with hydrogen (plan item EC8).** The item's own route was never the one
+measured above: a finite cluster cut from the sheet around the metal, every cut bond capped with
+hydrogen, read as a metal complex by the path of plan item EC4 -- the five molecular fields,
+Gasteiger charges, the EC4 metal parameters. `cmfqsar/clusters.py` makes the cluster
+(`cut_cluster`, `cluster_complex`): the atoms within 3, 4 or 5 bonds of the metal (25, 45 and 57
+atoms), no atom left hanging by one bond, a hydrogen at the C-H or N-H length along every cut
+bond, the metal bonded to its first shell only, so that a large metal such as La does not
+enlarge the cut. One fact of the bookkeeping decides what such a cluster can say. The ligand has
+a closed shell only at minus its number of carbon donors, since each carbon that holds the metal
+is a carbanion. So the metal's formal charge is +4 on an M@C4 site and 0 on an M@N4 site,
+whatever the metal: it counts the donors and is not an oxidation state.
+`benchmarks/run_sac_clusters.py` measures it on the same 133 catalysts, targets and fold designs
+as the table above, mean q² over the four endpoints:
+
+| Descriptor | Random catalysts | One metal held out | One motif held out |
+| --- | ---: | ---: | ---: |
+| capped cluster, overlap kernel | +0.592 | +0.569 | -1.623 |
+| capped cluster, invariant kernel | +0.554 | +0.474 | +0.174 |
+| capped cluster overlap and the metal properties | +0.784 | +0.744 | +0.691 |
+| the whole cell, autocorrelation | +0.797 | +0.744 | +0.736 |
+| site profile of the cell (M5) | +0.799 | +0.709 | +0.764 |
+| the metal properties and the nitrogen count | +0.754 | +0.740 | +0.763 |
+
+**The gate of EC8 is not passed, and the capped cluster is the weakest description measured on
+this set.** The molecular fields see the metal only through its radius and a formal charge that
+counts the donors. So a new metal is close to unseen, and a new motif brings a metal charge the
+model has never met: the overlap kernel falls to q² -4.3 on the OH binding with a motif held out.
+With the tabulated metal properties added to its kernel, the cluster is level with the
+references on random folds and on new metals, and worse than all of them by 0.04 to 0.09 on the
+O and OH binding with a motif held out. What the cut and the caps add is nothing that the
+metal's own properties do not.
+
+The same script measures the two other questions the rerun of the pilot left open. **A co-field
+is read at a smooth kernel.** At the pilot's smooth kernel the co-field of dE_H - dE_OH at the
+metal, electrostatic field, is +0.226 eV per unit on all 133 catalysts, and fitted on 100 random
+halves it keeps its sign in all of them (5 to 95 %: +0.071 to +0.238). At the kernel chosen for
+accuracy it is +0.341 on all of them, from -4.41 to +3.28 on the halves, and keeps its sign in
+50 of 100, which is no better than chance. **A frame averaged over the symmetry of the site helps
+only a new motif.** The overlap kernel averaged over the four operations of the divacancy that
+keep the normal (the identity, the turn by 180 degrees, the two mirrors), as in plan item M14,
+changes the mean q² by -0.004 and -0.002 on random folds and on new metals. With a motif held
+out it lifts the site overlap kernel from +0.682 to +0.762 (O +0.25 [+0.15, +0.39], OH +0.08
+[+0.05, +0.12]), level with the site profile, and the capped cluster from +0.201 to +0.489.
+The full tables are in `benchmarks/results/sac_clusters/table.md`.
+
 **Many sites in one cell.** The second set is the bond-valence site energy of every lithium site
 of the three solid electrolytes of `examples/hops`: 104 sites in beta-Li3PO4, Li3BP2O8 and
 alpha-LiBO2, where a fold is a whole compound the model has never seen. There the site profile

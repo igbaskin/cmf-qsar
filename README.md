@@ -3948,6 +3948,18 @@ at that kernel are not readable. A co-field is read at a kernel smooth enough to
 the accuracy does not choose that kernel. The table, the co-field maps in the plane of the sheet
 and the scatter plots are in `benchmarks/results/sac/`.
 
+**The rest of EC8 (17 November 2026).** `cmfqsar/clusters.py` cuts the item's own cluster: the
+atoms within a few bonds of the metal, every cut bond capped with hydrogen, read as a metal
+complex with the molecular fields of EC4. On the same catalysts and folds
+(`benchmarks/run_sac_clusters.py`) it is the weakest description measured, mean q² +0.59 on
+random folds against +0.80 for the whole cell, because the molecular fields hardly see the metal
+and the metal's formal charge only counts its carbon donors; with the metal properties added it
+is level with the references, so the gate is not passed. The same script shows that the
+co-field of dE_H - dE_OH at the metal keeps its sign in 100 of 100 random halves at the smooth
+kernel and in 50 at the sharp one, and that averaging the frame over the symmetry of the
+divacancy lifts the site overlap kernel from +0.68 to +0.76 when a whole motif is held out and
+changes nothing otherwise.
+
 ### A site of a cell as the sample, without cutting it out
 
 The pilot above cuts the site out of the sheet. It does not have to. The periodic autocorrelation

@@ -4966,6 +4966,28 @@ for anything molecular.
   averaged over the point symmetry of the site (the D2h of the divacancy), which is the M14
   device and is what the frame kernel lacks against the invariant one; the EC4 metal types so
   that the same measurement runs on the molecular macrocycles.
+  **Done 17 November 2026, gate not passed.** The three steps above and the item's own
+  cut-and-terminate route, measured by `benchmarks/run_sac_clusters.py` on the same 133
+  catalysts and fold designs. *The capped cluster:* `cmfqsar/clusters.py` cuts the atoms within
+  3, 4 or 5 bonds of the metal (25, 45, 57 atoms), prunes atoms hanging by one bond, caps every
+  cut bond with hydrogen along it, bonds the metal to its first shell only (a covalent radius
+  rule let La reach the second shell and grow its cluster), and builds the complex by EC4's
+  `build_complex`. The ligand closes its shell only at minus its number of carbon donors, so
+  the metal's formal charge is +4 on M@C4 and 0 on M@N4 whatever the metal; asking for -2 was
+  silently replaced by that charge, which is why the module now reports the charge used rather
+  than fixing one. Mean q2 random / metal-out / motif-out: capped cluster overlap +0.59 / +0.57
+  / -1.62, invariant +0.55 / +0.47 / +0.17, overlap with the metal properties +0.78 / +0.74 /
+  +0.69, against the whole cell +0.80 / +0.74 / +0.74, M5's site profile +0.80 / +0.71 / +0.76
+  and the metal properties +0.75 / +0.74 / +0.76; the combination is worse than every reference
+  by 0.04 to 0.09 on O and OH with a motif held out. *The co-field at a fixed smoothness:* the
+  electrostatic co-field of dE_H - dE_OH at the metal keeps its sign in 100 of 100 random halves
+  at the pilot's smooth kernel (+0.226 on all, 5 to 95 % +0.071 to +0.238) and in 50 of 100 at
+  the kernel accuracy chose. *The frame averaged over D2h:* no change on random folds or new
+  metals; with a motif held out the site overlap kernel goes from +0.68 to +0.76 (O +0.25,
+  OH +0.08, intervals clear of zero), level with the site profile. *The molecular macrocycles:*
+  measured by EC11 on cobalt and iron porphyrins, where no field kernel beat a Hammett
+  regression. What EC8 leaves: the site is too symmetric and too metal-dominated for a frame or
+  a cluster to add to the metal's own properties; a co-field of it is read at a smooth kernel.
 * **EC9. Potential-dependent targets.** A catalyst is a curve, turnover frequency against
   overpotential, not a number. The descriptor block already admits the applied potential as a
   condition, which covers a fixed set of overpotentials; a product kernel over catalysts and
@@ -9712,7 +9734,7 @@ own text has to stop before it, and five entries state their status in a form of
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
-| H. Electrochemistry | 11 | 9 | EC8 (partly), EC9 |
+| H. Electrochemistry | 11 | 10 | EC9 |
 | H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 5 | SC4, SC5 (partly), SC8 |
@@ -9723,7 +9745,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 135 finished, 9 partly, 35 open.**
+**179 items: 136 finished, 8 partly, 35 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

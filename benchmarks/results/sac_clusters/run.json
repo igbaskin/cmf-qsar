@@ -1,0 +1,10 @@
+{
+ "argv": [
+  "--stage",
+  "gate",
+  "symmetry",
+  "--force"
+ ],
+ "minutes": 19.0,
+ "written": "2026-11-17 19:19:54"
+}
