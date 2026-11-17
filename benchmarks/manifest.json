@@ -1,6 +1,6 @@
 {
- "commit": "223fb5e3cc80483ee661c956f8059c37a74195f9",
- "created": "2026-11-17T13:33:10",
+ "commit": "a64307ceb0210a45636774eeb1b7b99d9a11df6f",
+ "created": "2026-11-17T15:31:26",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2679,7 +2679,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3504,6 +3504,11 @@
   "benchmarks/results/lapkrr/screen_ESR1_ant.json": "d94ecf2a7ff8886802759c508e37de9773702071317951ab7dc0788609aa1ced",
   "benchmarks/results/lapkrr/screen_TP53.json": "9f47b6e5e1becaeef7c05fdb33f082fcb22d264511e4a99de6bc78c5d2854d73",
   "benchmarks/results/lapkrr/table.md": "7af9315ff2a6ba4a94ee715306b4e62d3855f58f5bb73ef23aa2d0a40bfff7a6",
+  "benchmarks/results/large_view/draw.json": "fbb48b6cfa340785e8cbbda33ea2ff20ddbbcae993fadfc1b24764c166c76bd5",
+  "benchmarks/results/large_view/log.txt": "2dff249eae78d4f8ab5780ebfff366c3c4fdaf7b1aa800fe4845fab9bfac6933",
+  "benchmarks/results/large_view/normals.json": "db48f94e7f9700d98243d3836f0079586c62613ba823c077538f276610b85818",
+  "benchmarks/results/large_view/run.json": "eb1e864f20ea6158ab477632ccf3d1c82ddd786299d2401327d007fd461421c2",
+  "benchmarks/results/large_view/table.md": "6681dcfb2d93331aa7effcc16f3a9ec9855f1ec34b8b2b5d2aebce833fbcdbc7",
   "benchmarks/results/ligand_shells/checks.json": "cef2859e7f6c505318d861572e32ccfa4115605b2bc8ea6cd2c9189a2fb648a9",
   "benchmarks/results/ligand_shells/model.json": "3355514bec21de7adc29fdb279b3ec22c7efcfeb1c19c21d7ced85667d6abd96",
   "benchmarks/results/ligand_shells/table.md": "86d428932ef5fd2b3d1a6e9fa1ec35271b247326b85d48db263eea535e1f1a06",
