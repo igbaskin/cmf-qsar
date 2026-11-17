@@ -1,6 +1,6 @@
 {
- "commit": "e421f8536f7defb62ebac0e6d172674fc12e2801",
- "created": "2026-11-17T19:13:16",
+ "commit": "69c814703a53b467320c8ab371f5c5fcd83b933c",
+ "created": "2026-11-17T19:49:00",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -4109,6 +4109,12 @@
   "benchmarks/results/sac/cv_scatter.png": "e52a78ebd4814757da948261ccbf881b606069418ff745b8d1f2a5f4dbf48f3c",
   "benchmarks/results/sac/results.json": "36b8183bc663f0528c5c8c2c605446c38ad938f06f9873a03182038dfe56669f",
   "benchmarks/results/sac/table.md": "1eb46745bba8e88325811e413c522d2d0ca3ecefdcb8f1698ffb4ebf1d123e77",
+  "benchmarks/results/sac_clusters/cofield.json": "6095939e9cab549433563a09e094935bd74e2994d4ab40b2f762492cc3ab98db",
+  "benchmarks/results/sac_clusters/gate.json": "f8fc5b9cda0d2d6749030d9e5adaf4525b4a601439267fa4c3ac50ca63cbee83",
+  "benchmarks/results/sac_clusters/log.txt": "9651c761677cf2fe6c6a24385ef519b7952eacd2d83ce863ad34cfc6aa5c7bc9",
+  "benchmarks/results/sac_clusters/run.json": "b0dde20726c2e7b136f9babd97028130419c820a447e6dd259a3a17dd436b6f0",
+  "benchmarks/results/sac_clusters/symmetry.json": "60835f4aee54407822556f6b823517c017d1ce548d085070fd5dac5067b5c1e5",
+  "benchmarks/results/sac_clusters/table.md": "09188afd2e06b3ea5f172e1a09f4c6103c09a9a0646d1c4ff9585c39b9bd8292",
   "benchmarks/results/scattering/concept.json": "4d0eaa28c441cbba95f9a92537b9f3e96480166eda4d43e254bf6d0d2b293fd0",
   "benchmarks/results/scattering/concept.png": "dd2085f7c1ab066daa2c5989f4c9fa4dfb3f4ed7b9f6123ca27857ddbb259073",
   "benchmarks/results/scattering/fit.json": "6695b08aa18b8d698a1ab68f81aae310f506dd7c88240ec1a5e8fe2fc5852ad6",
