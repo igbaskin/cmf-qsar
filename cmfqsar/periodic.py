@@ -2166,6 +2166,89 @@ def crystal_table(structures: Sequence, fieldset: FieldSet,
 
 
 # --------------------------------------------------------------------------- #
+# A coated particle: the core and the ligand shell (plan item NT11)
+# --------------------------------------------------------------------------- #
+#: which atoms of a coated particle form the core, unless the caller says otherwise
+DEFAULT_CORE = "metals"
+
+
+def core_mask(atoms, core: str = DEFAULT_CORE) -> np.ndarray:
+    """Which atoms of a structure belong to its core, as a boolean array.
+
+    `core` is one of three rules:
+
+    * ``"metals"`` -- every atom of an element that gets no bonds in the drawing
+      (:func:`cmfqsar.bonds.is_bonding`): the metal core of a thiolate-coated gold particle,
+      with the sulfur, carbon and hydrogen of the ligands outside it;
+    * a list of elements, ``"Au"`` or ``"Cd,Se"``, for a core that is not a metal;
+    * ``"array:NAME"`` -- a per-atom array of the file, non-zero for the core atoms, for a
+      structure in which the same element is found in the core and in the shell.
+    """
+    from .bonds import is_bonding
+    symbols = atoms.get_chemical_symbols()
+    rule = str(core or DEFAULT_CORE).strip()
+    if rule.lower() == "metals":
+        return np.array([not is_bonding(s) for s in symbols], bool)
+    if rule.lower().startswith("array:"):
+        key = rule.split(":", 1)[1]
+        if key not in atoms.arrays:
+            raise ValueError(f"the structure has no per-atom array {key!r} to take the core from; "
+                             f"its arrays are {', '.join(sorted(atoms.arrays))}")
+        return np.asarray(atoms.arrays[key]).astype(float) != 0
+    elements = {e.strip().capitalize() for e in rule.split(",") if e.strip()}
+    return np.array([s in elements for s in symbols], bool)
+
+
+def split_core(atoms, core: str = DEFAULT_CORE, name: str = ""):
+    """(shell, core positions): the ligand shell as a structure of its own, and the core atoms.
+
+    The particle surface kernel (plan item NT5) reads the fields of the shell and measures them
+    on the surface of the core, so the two have to be told apart.  A structure in which `core`
+    finds no core atom, or nothing but core atoms, is refused, with its name.
+    """
+    mask = core_mask(atoms, core)
+    label = f"{name}: " if name else ""
+    if not mask.any():
+        raise ValueError(f"{label}no atom matches the core rule {core!r}; name the core "
+                         f"elements (for example Au) or a per-atom array (array:NAME)")
+    if mask.all():
+        raise ValueError(f"{label}every atom matches the core rule {core!r}, so there is no "
+                         f"ligand shell for the particle surface kernel")
+    shell = atoms[np.flatnonzero(~mask)]
+    shell.info = dict(atoms.info)
+    return shell, np.asarray(atoms.positions[mask], float)
+
+
+def particle_table(structures: Sequence, fieldset: FieldSet,
+                   names: Optional[Sequence[str]] = None, core: str = DEFAULT_CORE) -> AtomTable:
+    """An :class:`fields.AtomTable` of coated particles for ``kernel_source="particle"``.
+
+    Every record holds the fields of the ligand shell (:func:`crystal_fields`) with the core's
+    positions attached (:func:`cmfqsar.invariant.with_core`).  This is what the benchmark of
+    plan item NT5 built by hand; the command line, the crystal window and ``cmf predict`` build
+    it here, so that a model fitted on one is applied to the same split.
+    """
+    from .invariant import with_core
+    names = list(names) if names is not None else [""] * len(structures)
+    recs = []
+    for a, nm in zip(structures, names):
+        shell, centre = split_core(a, core, nm)
+        recs.append(with_core(crystal_fields(shell, fieldset, nm), centre))
+    return AtomTable.from_molecules(recs)
+
+
+def structure_table(model, structures: Sequence, names: Optional[Sequence[str]] = None,
+                    fieldset: Optional[FieldSet] = None) -> AtomTable:
+    """The table a structure model takes: shells on their cores for the particle surface
+    kernel, whole structures for every other kernel."""
+    fs = fieldset if fieldset is not None else model.fieldset
+    if getattr(model, "kernel_source", "") == "particle":
+        return particle_table(structures, fs, names,
+                              core=getattr(model, "particle_core", DEFAULT_CORE))
+    return crystal_table(structures, fs, names)
+
+
+# --------------------------------------------------------------------------- #
 # Input
 # --------------------------------------------------------------------------- #
 def read_structures(path: str, index: str = ":") -> list:

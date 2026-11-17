@@ -1133,6 +1133,8 @@ Measured values of each structure, such as a hydrodynamic size or a zeta potenti
 from a table whose first column holds the structure names: *File → Read descriptor values from a
 CSV…* in the crystal window, `--descriptor-file` for `build-crystals`. The names go into the
 *Descriptors* box of the window (`--descriptors` on the command line), separated by commas.
+The *Descriptor weight* box beside it is the mixing coefficient of that block
+(`--descriptor-h`).
 
 Before this item the invariant kernels — the periodic autocorrelation among them — ignored the
 descriptor block without a word; it now enters beside them as it does beside the overlap kernel.
@@ -10202,7 +10204,30 @@ The sphere's centre is the centroid of the core and its radius the mean distance
 on the core's convex hull. The cylinder's axis is the core's longest direction. Each sample
 carries its own core: `cmfqsar.invariant.with_core(record, core_positions)` attaches it, and
 `CMFModel(kernel_source="particle", particle_shape="sphere")` uses it, with the same grid
-settings as the surface kernel. Neither the command line nor the model panel offers it yet.
+settings as the surface kernel.
+
+**From structure files (plan item NT11).** A coated particle is usually one structure file with
+the core and the shell together. `cmf build-crystals --kernel particle-surface` splits every
+structure by a core rule (`periodic.split_core`): `--core metals` (the default) takes every metal
+atom, `--core Au` or `--core Cd,Se` takes those elements, and `--core array:NAME` takes the
+atoms where a per-atom array of the file is non-zero, for a core and a shell that share an
+element. A structure in which the rule finds no core, or nothing but core, is refused by name.
+`--core-shape` chooses the sphere, the cylinder or the plane, `--shell-heights 2,12` the range of
+heights and `--height-step` their spacing; `--cutoff` and `--sigma` are the distances along the
+surface. The rule is saved with the model, so `cmf predict` splits new structures the same way.
+`examples/coated_particles` holds 72 of the generated shells of the benchmark below, each with its
+gold core (55 or 147 atoms):
+
+    cmf build-crystals examples/coated_particles/particles.extxyz --kernel particle-surface --core Au --charges electronegativity --pbc none --cutoff 12 --sigma 1 --height-step 2 --folds 5 --save shells.cmf
+    cmf predict shells.cmf examples/coated_particles/particles.extxyz
+
+The first command gives q2 = 0.402 in 5-fold cross-validation. The same command with
+`--kernel autocorrelation`, the autocorrelation of the core and the shell together with open
+boundaries, gives 0.569, which is the order the benchmark below found on its larger set. The
+crystal window offers the same kernel as *particle surface (a ligand shell on its core)*, with
+its core, shape and height controls; taper and background are switched off for it, because they
+belong to the periodic kernel. Its reading is the co-pattern over the channels; it has no
+co-field and no split over the sites, and both the window and `cmf sites` say so.
 
 `benchmarks/run_ligand_shells.py` checks the kernel and measures it:
 

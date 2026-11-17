@@ -1139,6 +1139,17 @@ larger than every training particle from 33.7 to 4.4 meV (shell counts: 13.8). O
 two metals they take the mixing energy from 11.2 to 4.6 meV per atom in random folds, but with a
 geometry held out a Gaussian kernel on neighbour counts is better (12.2 against 13.2).
 
+### Coated particles from structure files
+
+Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle
+surface kernel of NT5 is now a choice of `cmf build-crystals --kernel particle-surface`, of
+`cmf predict` and of the crystal window. A core rule (`--core metals`, a list of elements, or a
+per-atom array) splits each structure into the core and the ligand shell, and is saved with the
+model. `--pbc none` and the window's *none: a particle or a molecule* give open boundaries, and
+the window has a control for the weight of the descriptor block. On the 72 coated gold particles
+of `examples/coated_particles`, the particle kernel gives q2 0.402 and the autocorrelation of the
+whole particle 0.569.
+
 ### Large structures on screen
 
 Plan item NT8 (`cmfqsar/gui/instanced.py`, `benchmarks/run_large_view.py`): the 3D view draws

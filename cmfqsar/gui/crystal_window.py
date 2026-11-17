@@ -50,9 +50,9 @@ from ..cofields import Grid, cofield_volume, isosurface
 from ..dataio import save_model, write_predictions_csv
 from ..fields import FieldSet
 from ..model import CMFModel, grid_search
-from ..periodic import (crystal_fields, crystal_table, crystal_targets, elements_in,
-                        inorganic_fieldset, overlap_cutoff, periodic_channel_labels,
-                        top_channels)
+from ..periodic import (core_mask, crystal_fields, crystal_table, crystal_targets,
+                        elements_in, inorganic_fieldset, overlap_cutoff, particle_table,
+                        periodic_channel_labels, split_core, top_channels)
 from .copattern_panel import CoPatternChart
 from .viewer3d import (ATOM_RADIUS_SCALE, Viewer3D, cofield_colors, color_name as _cname,
                        element_color, signed_spheres)
@@ -75,6 +75,13 @@ MAX_GRID_POINTS = 400_000
 ATOM_STYLES = ("balls", "dots", "ball and stick", "sticks")
 #: how the periodic images can be drawn
 IMAGE_STYLES = ("dots", "balls")
+#: the kernels of the Model dock, in the order of its box
+KERNELS = ("periodic field autocorrelation (any cells)",
+           "periodic overlap (cells on one lattice)",
+           "particle surface (a ligand shell on its core)")
+#: the periodic directions the Model dock offers, with the letters each stands for
+PBC_CHOICES = (("as the files say", None), ("abc: a crystal", "abc"), ("ab: a layer", "ab"),
+               ("a: a chain", "a"), ("none: a particle or a molecule", "none"))
 #: radius of a drawn atom in the two bonded styles, as a fraction of its covalent radius
 BONDED_ATOM_SCALE = 0.26
 
@@ -123,6 +130,9 @@ def site_contributions_of(model: CMFModel, crystal) -> Tuple[np.ndarray, str]:
     over the sites of the cell (plan item M5).  The sum of the numbers is the prediction less
     the bias either way.
     """
+    if getattr(model, "kernel_source", "") == "particle":
+        raise ValueError("the particle surface kernel has no split of a prediction over the "
+                         "sites; its reading is the co-pattern over the channels")
     if getattr(model, "pbc_overlap", False):
         values = np.asarray(model.atom_contributions(crystal), float)
         how = ("one contribution per atom of the cell (decomposition rule 3 of the overlap "
@@ -142,8 +152,12 @@ def reading_rows(model: CMFModel, fieldset: FieldSet, n: int = 20) -> Tuple[List
     channels is the model's own reading and does not depend on which structure is selected; the
     per-site split does, so both are offered and the window shows whichever the user asks for.
     """
-    labels = periodic_channel_labels(fieldset, model._ac_spec())
-    rows = [[lab, f"{w:+.4f}", f"{sd:.4f}", f"{w * sd:+.4f}"]
+    if getattr(model, "kernel_source", "") == "particle":
+        from ..invariant import surface_channel_labels
+        labels = surface_channel_labels(fieldset, model._ac_spec())
+    else:
+        labels = periodic_channel_labels(fieldset, model._ac_spec())
+    rows = [[lab, f"{w:+.4g}", f"{sd:.4g}", f"{w * sd:+.4g}"]
             for lab, w, sd in top_channels(model, labels, n=n)]
     return ["Channel", "Weight", "Spread over the training set", "Weight x spread"], rows
 
@@ -410,12 +424,13 @@ class CrystalWindow(QMainWindow):
             "that always works; 'file' and 'dft' read the charges a calculation wrote into the "
             "structure (Bader charges, for example)")
         self.cmb_pbc = QComboBox()
-        self.cmb_pbc.addItems(["as the files say", "abc: a crystal", "ab: a layer",
-                               "a: a chain"])
+        self.cmb_pbc.addItems([text for text, _ in PBC_CHOICES])
         self.cmb_pbc.setToolTip("Which lattice directions are periodic. A layer or a chain is "
                                 "summed only along its own directions, so no pair is counted "
                                 "across the vacuum, and the uniform background is taken per "
-                                "unit area or repeat length instead of per volume")
+                                "unit area or repeat length instead of per volume. 'none' is a "
+                                "particle or a molecule with open boundaries: no periodic image "
+                                "and no background, whatever cell the file gives")
         self.cmb_pbc.currentIndexChanged.connect(self._pbc_changed)
         form.addRow("Indicator fields", self.cmb_elements)
         form.addRow("In at least", self.spin_min_structures)
@@ -431,15 +446,58 @@ class CrystalWindow(QMainWindow):
             "calc:surface_area. Any other name is read from the structures' info fields, or "
             "from a table (File -> Read descriptor values from a CSV).")
         form.addRow("Descriptors", self.ed_descriptors)
+        self.spin_descriptor_h = QDoubleSpinBox()
+        self.spin_descriptor_h.setRange(0.0, 100.0)
+        self.spin_descriptor_h.setDecimals(2)
+        self.spin_descriptor_h.setSingleStep(0.1)
+        self.spin_descriptor_h.setValue(1.0)
+        self.spin_descriptor_h.setToolTip(
+            "The mixing coefficient of the descriptor block: how much the descriptors weigh in "
+            "the kernel against the fields (--descriptor-h on the command line). 1 gives them "
+            "the weight of one block of channels")
+        form.addRow("Descriptor weight", self.spin_descriptor_h)
         ff.addLayout(form)
         lay.addWidget(fields)
 
         kernel = QGroupBox("Kernel")
         kf = QFormLayout(kernel)
         self.cmb_kernel = QComboBox()
-        self.cmb_kernel.addItems(["periodic field autocorrelation (any cells)",
-                                  "periodic overlap (cells on one lattice)"])
+        self.cmb_kernel.addItems(list(KERNELS))
+        self.cmb_kernel.setToolTip("\n".join([
+            "The periodic field autocorrelation works on any set of cells, layers, chains and "
+            "particles.",
+            "The periodic overlap kernel compares two cells point by point and needs them on "
+            "one lattice; it is the only one with a co-field.",
+            "The particle surface kernel is for coated particles (plan item NT5): the fields of "
+            "the ligand shell, measured on the surface of the core, with the height above "
+            "that surface and the distance along it as its two axes."]))
         self.cmb_kernel.currentIndexChanged.connect(self._kernel_changed)
+        self.ed_core = QLineEdit("metals")
+        self.ed_core.setToolTip("Which atoms are the core: 'metals' (every metal atom), a list "
+                                "of elements such as Au or Cd,Se, or array:NAME for a per-atom "
+                                "array of the file that is non-zero on the core")
+        self.cmb_core_shape = QComboBox()
+        self.cmb_core_shape.addItems(["sphere", "cylinder", "plane"])
+        self.cmb_core_shape.setToolTip("The surface fitted through the outer core atoms: a "
+                                       "sphere (a particle), a cylinder (a rod or a wire) or a "
+                                       "plane (a flat facet or a slab)")
+        self.spin_zmin = QDoubleSpinBox()
+        self.spin_zmin.setRange(0.0, 30.0)
+        self.spin_zmin.setValue(2.0)
+        self.spin_zmin.setSuffix(" A")
+        self.spin_zmax = QDoubleSpinBox()
+        self.spin_zmax.setRange(0.5, 40.0)
+        self.spin_zmax.setValue(12.0)
+        self.spin_zmax.setSuffix(" A")
+        self.spin_zstep = QDoubleSpinBox()
+        self.spin_zstep.setRange(0.1, 10.0)
+        self.spin_zstep.setSingleStep(0.5)
+        self.spin_zstep.setValue(1.0)
+        self.spin_zstep.setSuffix(" A")
+        for w, tip in ((self.spin_zmin, "the lowest height above the core surface resolved"),
+                       (self.spin_zmax, "the highest height above the core surface resolved"),
+                       (self.spin_zstep, "the spacing and width of the height channels")):
+            w.setToolTip(tip)
         self.spin_cutoff = QDoubleSpinBox()
         self.spin_cutoff.setRange(2.0, 30.0)
         self.spin_cutoff.setValue(10.0)
@@ -462,6 +520,15 @@ class CrystalWindow(QMainWindow):
         kf.addRow("Channel width", self.spin_sigma)
         kf.addRow("Taper", self.spin_taper)
         kf.addRow("", self.chk_background)
+        kf.addRow("Core atoms", self.ed_core)
+        kf.addRow("Core surface", self.cmb_core_shape)
+        kf.addRow("Heights from", self.spin_zmin)
+        kf.addRow("Heights to", self.spin_zmax)
+        kf.addRow("Height step", self.spin_zstep)
+        self._kernel_form = kf
+        self._particle_rows = (self.ed_core, self.cmb_core_shape, self.spin_zmin,
+                               self.spin_zmax, self.spin_zstep)
+        self._kernel_changed()
         kf.addRow("Attenuation a", self.ed_alphas)
         kf.addRow("Ridge l", self.ed_lams)
         lay.addWidget(kernel)
@@ -626,8 +693,16 @@ class CrystalWindow(QMainWindow):
 
     def _kernel_changed(self, *_):
         overlap = self.cmb_kernel.currentIndex() == 1
-        for w in (self.spin_cutoff, self.spin_sigma, self.spin_taper, self.chk_background):
+        particle = self.cmb_kernel.currentIndex() == 2
+        for w in (self.spin_cutoff, self.spin_sigma):
             w.setEnabled(not overlap)
+        # the particle surface kernel has no periodic images, so no taper and no background
+        for w in (self.spin_taper, self.chk_background):
+            w.setEnabled(not overlap and not particle)
+        form = getattr(self, "_kernel_form", None)
+        if form is not None:
+            for w in self._particle_rows:
+                form.setRowVisible(w, particle)
         if overlap and self.ed_alphas.text().strip() == "1":
             self.ed_alphas.setText("0.5,1,2")
         self.chk_cofield.setEnabled(overlap)
@@ -657,7 +732,7 @@ class CrystalWindow(QMainWindow):
 
     def _pbc_text(self) -> Optional[str]:
         """The letters the periodic-directions box stands for, or None for 'as the files say'."""
-        return [None, "abc", "ab", "a"][self.cmb_pbc.currentIndex()]
+        return PBC_CHOICES[self.cmb_pbc.currentIndex()][1]
 
     def _pbc_changed(self, *_):
         """Re-read the set, because changing the periodic directions can move the atoms.
@@ -802,14 +877,18 @@ class CrystalWindow(QMainWindow):
     def _fieldset(self, indices: Sequence[int]) -> FieldSet:
         physchem = [name for name, _ in PHYSCHEM if self.chk_physchem[name].isChecked()]
         if self.cmb_elements.currentIndex() == 0:
-            elements = elements_in([self.atoms[i] for i in indices],
-                                   self.spin_min_structures.value())
+            structures = [self.atoms[i] for i in indices]
+            if self.cmb_kernel.currentIndex() == 2:
+                # the particle surface kernel reads the shell alone: no indicator for the core
+                structures = [split_core(a, self.ed_core.text())[0] for a in structures]
+            elements = elements_in(structures, self.spin_min_structures.value())
         else:
             elements = []
         fs = inorganic_fieldset(elements, physchem=physchem,
                                 charge_model=self.cmb_charges.currentText(), alpha=1.0)
         fs.descriptors = tuple(d.strip() for d in self.ed_descriptors.text().split(",")
                                if d.strip())
+        fs.descriptor_h = float(self.spin_descriptor_h.value())
         return fs
 
     def build_model(self):
@@ -836,6 +915,28 @@ class CrystalWindow(QMainWindow):
             perm = rng.permutation(idx)
             n_te = int(round(self.spin_test.value() * len(idx)))
             te, idx = np.sort(perm[:n_te]), np.sort(perm[n_te:])
+        particle = self.cmb_kernel.currentIndex() == 2
+        core = self.ed_core.text().strip() or "metals"
+        if particle:
+            # the split is checked here, before any field is computed, so that a rule that
+            # finds no core (or nothing but core) names the structure at once
+            used = [int(i) for i in np.concatenate([idx, te])]
+            for i in used:
+                try:
+                    mask = core_mask(self.atoms[i], core)
+                except ValueError as exc:
+                    self._tell("The core", str(exc))
+                    return
+                if not mask.any() or mask.all():
+                    what = "no atom" if not mask.any() else "every atom"
+                    self._tell("The core",
+                               f"In {self.names[i]}, {what} matches the core rule '{core}'. "
+                               f"Name the core elements (for example Au), or a per-atom array "
+                               f"of the file (array:NAME).")
+                    return
+            if not self.spin_zmin.value() < self.spin_zmax.value():
+                self._tell("Heights", "The lowest height must be below the highest.")
+                return
         fs = self._fieldset(idx)
         if not fs.specs:
             self._tell("No fields", "Select at least one field.")
@@ -857,14 +958,24 @@ class CrystalWindow(QMainWindow):
         cutoff, sigma, taper = (self.spin_cutoff.value(), self.spin_sigma.value(),
                                 self.spin_taper.value())
         background = self.chk_background.isChecked()
+        shape = self.cmb_core_shape.currentText()
+        zmin, zmax, zstep = (self.spin_zmin.value(), self.spin_zmax.value(),
+                             self.spin_zstep.value())
         atoms, names, y = list(self.atoms), list(self.names), self.y.copy()
 
         def task(progress, cancel):
             progress("Computing the fields of every cell", 0.05)
-            table = crystal_table(atoms, fs, names)
-            if overlap:
+            if particle:
+                table = particle_table(atoms, fs, names, core=core)
+                model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                                 kernel_source="particle", ac_sigma=sigma, ac_d_max=cutoff,
+                                 surf_z_min=zmin, surf_z_max=zmax, surf_z_step=zstep,
+                                 particle_shape=shape, particle_core=core)
+            elif overlap:
+                table = crystal_table(atoms, fs, names)
                 model = CMFModel(fieldset=fs, method="krr", normalize=True, pbc_overlap=True)
             else:
+                table = crystal_table(atoms, fs, names)
                 model = CMFModel(fieldset=fs, method="krr", normalize=True,
                                  kernel_source="periodic", ac_sigma=sigma, ac_d_max=cutoff,
                                  pbc_taper=taper, pbc_background=background)
@@ -882,7 +993,7 @@ class CrystalWindow(QMainWindow):
                 test_pred = np.asarray(model.stats.extra.get("y_test_pred"), float)
             return {"model": model, "fieldset": fs, "res": res, "train": list(map(int, idx)),
                     "test": list(map(int, te)), "fitted": fitted, "test_pred": test_pred,
-                    "overlap": overlap}
+                    "overlap": overlap, "particle": particle}
 
         self.run_task(task, self._model_built, "Building the model")
 
@@ -904,10 +1015,17 @@ class CrystalWindow(QMainWindow):
         self.cmb_reading.model().item(0).setEnabled(not out["overlap"])
         if out["overlap"]:
             self.cmb_reading.setCurrentIndex(1)
-        kernel = ("the periodic overlap kernel, which compares two cells point by point"
-                  if out["overlap"] else
-                  "the periodic field autocorrelation, which is invariant to the choice of "
-                  "cell, origin and orientation")
+        if out.get("particle"):
+            m = self.model
+            kernel = (f"the particle surface kernel: the ligand shell measured on the "
+                      f"{m.particle_shape} through its core ({m.particle_core}), heights "
+                      f"{m.surf_z_min:g} to {m.surf_z_max:g} A every {m.surf_z_step:g} A, "
+                      f"distances along the surface to {m.ac_d_max:g} A")
+        elif out["overlap"]:
+            kernel = "the periodic overlap kernel, which compares two cells point by point"
+        else:
+            kernel = ("the periodic field autocorrelation, which is invariant to the choice of "
+                      "cell, origin and orientation")
         self.text_stats.setPlainText(
             f"{len(out['train'])} training cells, {len(out['test'])} test cells; {kernel}.\n"
             f"Best: {res.best_params}, attenuation {res.best_alpha:g}\n\n"
@@ -924,6 +1042,8 @@ class CrystalWindow(QMainWindow):
             return float(self.spin_images.value())
         if getattr(self.model, "pbc_overlap", False):
             return overlap_cutoff([s for s in self.model.fieldset.specs if s.enabled])
+        if self.model.kernel_source == "particle":
+            return float(self.model.ac_d_max)
         return float(self.model._ac_spec().r_max)
 
     # ------------------------------------------------------------------ reading
@@ -979,6 +1099,12 @@ class CrystalWindow(QMainWindow):
         if self.model is None or cur < 0:
             self._tell("No model", "Build a model on the overlap kernel first, then select "
                        "a structure.")
+            return
+        if self.model.kernel_source == "particle":
+            self._tell("No co-field",
+                       "The particle surface kernel is a distribution of heights and distances "
+                       "along the surface, so it has no co-field in the cell. Its reading is the "
+                       "co-pattern over the channels, in the Reading tab.")
             return
         if not getattr(self.model, "pbc_overlap", False):
             self._tell(

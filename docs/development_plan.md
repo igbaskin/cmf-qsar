@@ -4319,6 +4319,25 @@ tests whether the target is reproducible between sources before any kernel is co
   `build-crystals` needs the open-boundary and lower-dimensional options and the descriptor table,
   and `predict` needs a path that accepts structure files, since `cmd_predict` reads molecules
   only. Four days.
+  **Done 17 November 2026.** Most of the item had arrived with other items: the crystal window
+  of M13 is the Model panel of structures, with the periodic kernel and its cutoff, width, taper
+  and background; `--pbc` and the window's *Periodic in* (layers, chains) came with M13 and M4,
+  the descriptor block and table (`--descriptors`, `--descriptor-file`, the *Descriptors* box)
+  with NT3, and `cmf predict` on structure files with M13. What was left: the particle surface
+  kernel of NT5, which only Python could use. `periodic.core_mask`, `split_core`,
+  `particle_table` and `structure_table` split a structure into its core and ligand shell by a
+  rule (metals, a list of elements, or a per-atom array) that is saved with the model
+  (`CMFModel.particle_core`); `build-crystals --kernel particle-surface` with `--core`,
+  `--core-shape` and `--shell-heights`, refusing the options of the periodic kernel; `predict`
+  applies the saved split; `cmf sites` refuses the model. The window offers the kernel with its
+  controls, open boundaries (*none: a particle or a molecule*, `--pbc none` named in the help),
+  and a *Descriptor weight* box (`--descriptor-h`). The indicator fields of a particle model are
+  taken from the shells, so the core metal gets none. `examples/coated_particles` holds 72
+  shells of the NT5 generator with their cores: the particle kernel gives q2 0.402 and the
+  autocorrelation of the whole particle 0.569 (5 folds), the order NT5 found. Tests:
+  `tests/test_particle_kernel_cli.py`; the table built by the rule gives exactly the kernel NT5
+  built by hand, and the window fits the model of the command line to the same q2. No
+  measurement was needed.
 * **NT12. Benchmarks and tests.** Rule 5 requires a benchmark per module. Candidate sets with public
   atomic structures: metal clusters from the Cambridge Cluster Database for energies, a nanotube
   set for band gaps, and a MOF uptake set such as CoRE MOF with simulated loadings. Each needs a
@@ -9677,7 +9696,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 16 | 15 | M16 |
-| H. Nanotechnology | 12 | 9 | NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 11 | 9 | EC8 (partly), EC9 |
 | H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
@@ -9689,7 +9708,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 133 finished, 9 partly, 37 open.**
+**179 items: 134 finished, 9 partly, 36 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9703,16 +9722,17 @@ equally blocked.
   EC9's. The search is written up in `docs/public_3dqsar_datasets.md`. MC3 was on this list
   until 13 November 2026, when its series of enantiomers measured in one assay was built
   from ChEMBL.
-* **Waiting for the application.** G5 and NT11 are what is left of this block: the
-  particle side of the window, where a structure that is neither a molecule nor a cell needs a
-  data model of its own (NT1, built 16 November 2026), and the model panel and command line that
-  would offer it. Neither needs a new measurement. NT8 was finished on 17 November 2026 with
-  instanced drawing for ten thousand atoms. Four of the six are done. M13 closed the crystal side on
+* **Waiting for the application.** G5 is what is left of this block: the particle side of
+  the window, where a structure that is neither a molecule nor a cell needs a data model of its
+  own (NT1, built 16 November 2026). It needs no new measurement. NT8 was finished on
+  17 November 2026 with instanced drawing for ten thousand atoms, and NT11 on the same day with
+  the particle surface kernel on the command line and in the crystal window. Five of the six are
+  done. M13 closed the crystal side on
   6 November 2026; **EC10 and NT9 closed the surface side and the reading on the same day** --
   the slab behind the molecules, the surface frame with its two numbers, the vector co-field as
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
-  G5 and NT11 extend.
+  G5 extends.
 * **Open on their own merits.** SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were

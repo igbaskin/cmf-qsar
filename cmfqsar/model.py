@@ -1196,6 +1196,9 @@ class CMFModel:
     # along it.  Every sample carries its core (cmfqsar.invariant.with_core); the surface fitted
     # to the core atoms is a "plane", a "sphere" or a "cylinder".
     particle_shape: str = "sphere"
+    # which atoms of a structure are the core, when the samples are read from structure files
+    # (cmfqsar.periodic.core_mask): "metals", a list of elements, or "array:NAME" (plan item NT11)
+    particle_core: str = "metals"
     # "periodic": the autocorrelation of a crystal, summed over a neighbour list with periodic
     # images, per atom of the cell, with the uniform background removed and a tapered cutoff
     # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
@@ -1559,6 +1562,7 @@ class CMFModel:
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
                         surf_z_step=self.surf_z_step, particle_shape=self.particle_shape,
+                        particle_core=self.particle_core,
                         pbc_background=self.pbc_background,
                         pbc_taper=self.pbc_taper, pbc_overlap=self.pbc_overlap,
                         pbc_z_max=self.pbc_z_max, pbc_z_step=self.pbc_z_step,
@@ -2999,6 +3003,7 @@ class CMFModel:
             "surf_z_max": self.surf_z_max,
             "surf_z_step": self.surf_z_step,
             "particle_shape": self.particle_shape,
+            "particle_core": self.particle_core,
             "pbc_background": self.pbc_background,
             "pbc_taper": self.pbc_taper,
             "pbc_z_max": self.pbc_z_max,
@@ -3061,6 +3066,7 @@ class CMFModel:
         m.surf_z_max = float(st.get("surf_z_max", 6.0))
         m.surf_z_step = float(st.get("surf_z_step", 1.0))
         m.particle_shape = str(st.get("particle_shape", "sphere"))
+        m.particle_core = str(st.get("particle_core", "metals"))
         m.pbc_background = bool(st.get("pbc_background", True))
         m.pbc_taper = float(st.get("pbc_taper", 2.0))
         m.pbc_z_max = float(st.get("pbc_z_max", 0.0))

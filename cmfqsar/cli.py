@@ -1200,11 +1200,16 @@ def _fit_second_endpoint(model, ds, tr, train, y, args):
 
 def cmd_build_crystals(args):
     """A model on periodic structures: the periodic field autocorrelation of cmfqsar/periodic.py."""
-    from cmfqsar.periodic import (crystal_table, crystal_targets, elements_in, inorganic_fieldset,
-                                  periodic_channel_labels, read_crystal_set, top_channels)
+    from cmfqsar.invariant import surface_channel_labels
+    from cmfqsar.periodic import (crystal_targets, elements_in, inorganic_fieldset,
+                                  periodic_channel_labels, read_crystal_set, split_core,
+                                  structure_table, top_channels)
     from cmfqsar.structures import guess_target_key, numeric_info_keys, target_csv_column
     t0 = time.time()
     atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+    particle = getattr(args, "kernel", "autocorrelation") == "particle-surface"
+    if particle:
+        _check_particle_options(args)
     if getattr(args, "site_file", None):
         return _build_site_model(args, atoms, names, t0)
     if args.target_file and not args.target_column:
@@ -1250,7 +1255,14 @@ def cmd_build_crystals(args):
         te, idx = np.sort(perm[:n_te]), np.sort(perm[n_te:])
     physchem = [f for f in args.fields.split(",") if f]
     if args.elements == "auto":
-        elements = elements_in([atoms[i] for i in idx], args.min_structures)
+        base = [atoms[i] for i in idx]
+        if particle:
+            # the particle surface kernel reads the shell alone: no indicator for the core
+            try:
+                base = [split_core(a, args.core, names[i])[0] for a, i in zip(base, idx)]
+            except ValueError as exc:
+                raise SystemExit(str(exc))
+        elements = elements_in(base, args.min_structures)
     elif args.elements == "none":
         elements = []
     else:
@@ -1263,30 +1275,58 @@ def cmd_build_crystals(args):
     if descriptors:
         print(f"  descriptors beside the channels: {', '.join(descriptors)}")
     print(f"  training set: {len(idx)} structures" + (f", test set: {len(te)}" if len(te) else ""))
-    train = crystal_table([atoms[i] for i in idx], fs, [names[i] for i in idx])
+    if particle:
+        model = CMFModel(fieldset=fs, method=args.method, normalize=True,
+                         kernel_source="particle", ac_sigma=args.sigma, ac_d_max=args.cutoff,
+                         surf_z_min=args.shell_heights[0], surf_z_max=args.shell_heights[1],
+                         surf_z_step=args.height_step, particle_shape=args.core_shape,
+                         particle_core=args.core, kernel_layer=args.kernel_layer,
+                         ac_block_weights=_block_weights(args.block_weights),
+                         ac_block_groups=_block_groups(args.block_groups, fs),
+                         ac_block_rho=args.block_rho)
+    else:
+        model = CMFModel(fieldset=fs, method=args.method, normalize=True,
+                         kernel_source="periodic",
+                         ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
+                         pbc_background=not args.no_background, kernel_layer=args.kernel_layer,
+                         pbc_z_max=args.heights, pbc_z_step=args.height_step,
+                         pbc_oriented=args.oriented,
+                         ac_block_weights=_block_weights(args.block_weights),
+                         ac_block_groups=_block_groups(args.block_groups, fs),
+                         ac_block_rho=args.block_rho)
+    try:
+        train = structure_table(model, [atoms[i] for i in idx], [names[i] for i in idx], fs)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     sources = sorted({m.charge_source for m in train.molecules if m.charge_source})
     if sources:
         print(f"  electrostatic weights from: {', '.join(sources)}")
-    model = CMFModel(fieldset=fs, method=args.method, normalize=True, kernel_source="periodic",
-                     ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
-                     pbc_background=not args.no_background, kernel_layer=args.kernel_layer,
-                     pbc_z_max=args.heights, pbc_z_step=args.height_step,
-                     pbc_oriented=args.oriented,
-                     ac_block_weights=_block_weights(args.block_weights),
-                     ac_block_groups=_block_groups(args.block_groups, fs),
-                     ac_block_rho=args.block_rho)
-    taper = "no taper" if args.taper <= 0 else f"{args.taper:g} A taper"
-    print(f"Kernel: periodic field autocorrelation, neighbours to {args.cutoff:g} A, channels every "
-          f"{args.sigma:g} A, {taper}, background {'kept' if args.no_background else 'removed'}; "
-          f"per atom of the cell. Invariant to the choice of cell, origin and orientation; no "
-          f"co-fields, but a co-pattern over the channels.")
+    if particle:
+        n_shell = [m.n_atoms for m in train.molecules]
+        n_core = [len(m.core) for m in train.molecules]
+        print(f"Kernel: particle surface (plan item NT5): the fields of the ligand shell, "
+              f"{min(n_shell)} to {max(n_shell)} atoms, on the surface of the core, "
+              f"{min(n_core)} to {max(n_core)} atoms ({args.core}), fitted as a "
+              f"{args.core_shape}. Heights every {args.height_step:g} A from "
+              f"{args.shell_heights[0]:g} to {args.shell_heights[1]:g} A above that surface; "
+              f"distances along it to {args.cutoff:g} A, every {args.sigma:g} A. Invariant to "
+              f"turning and moving the particle; no taper and no background, which belong to "
+              f"the periodic kernel.")
+    else:
+        taper = "no taper" if args.taper <= 0 else f"{args.taper:g} A taper"
+        print(f"Kernel: periodic field autocorrelation, neighbours to {args.cutoff:g} A, "
+              f"channels every {args.sigma:g} A, {taper}, background "
+              f"{'kept' if args.no_background else 'removed'}; per atom of the cell. "
+              f"Invariant to the choice of cell, origin and orientation; no co-fields, but a "
+              f"co-pattern over the channels.")
     words = {3: "three directions (crystals): the background is per unit volume",
              2: "two directions (layers): the background is per unit area and no pair crosses "
                 "the vacuum",
              1: "one direction (chains): the background is per repeat length",
              0: "no direction (molecules in a box): no background"}
     dims = sorted({int(sum(bool(p) for p in a.get_pbc())) for a in atoms})
-    print("  structures periodic in " + "; ".join(words[d] for d in dims))
+    if not particle:
+        print("  structures periodic in " + "; ".join(words[d] for d in dims))
     if args.heights > 0:
         print(f"  height channels every {args.height_step:g} A from -{args.heights:g} to "
               f"{args.heights:g} A about the mean plane of the layer, "
@@ -1315,15 +1355,19 @@ def cmd_build_crystals(args):
         model.stats.extra["external_cv"] = {"q2_ex": ncv.q2_ex, "rmse_ex": ncv.rmse_ex,
                                             "q2_ex_sd": ncv.q2_ex_sd, "rmse_ex_sd": ncv.rmse_ex_sd}
     if len(te):
-        test = crystal_table([atoms[i] for i in te], fs, [names[i] for i in te])
+        try:
+            test = structure_table(model, [atoms[i] for i in te], [names[i] for i in te], fs)
+        except ValueError as exc:
+            raise SystemExit(str(exc))
         model.evaluate_test(test, y[te])
         print(model.stats.summary())
     if model.is_linear:
-        labels = periodic_channel_labels(fs, model._ac_spec())
+        labels = (surface_channel_labels(fs, model._ac_spec()) if particle
+                  else periodic_channel_labels(fs, model._ac_spec()))
         print(f"Co-pattern: the {args.top} channels that move the prediction most "
               f"(weight x spread over the training set):")
         for lab, w, sd in top_channels(model, labels, n=args.top):
-            print(f"  {w * sd:+9.3f}  {lab}")
+            print(f"  {w * sd:+10.3g}  {lab}")
     if args.predictions:
         pred = np.full(len(atoms), np.nan)
         pred[idx] = model.stats.extra["y_fit"]
@@ -1338,6 +1382,30 @@ def cmd_build_crystals(args):
                                             "activity": args.target or args.target_file})
         print(f"Model saved to {args.save}")
     print(f"Elapsed {time.time() - t0:.1f} s")
+
+
+def _check_particle_options(args):
+    """Refuse the options of `build-crystals` that the particle surface kernel has no use for.
+
+    The particle surface kernel (plan item NT5) measures the ligand shell on the surface of its
+    core: it has heights above that surface, but no periodic images, so no taper, no background
+    and no layer heights; and it is a model of whole particles, not of sites.
+    """
+    bad = []
+    if getattr(args, "site_file", None):
+        bad.append("--site-file (the particle surface kernel is a model of whole particles)")
+    if args.heights:
+        bad.append("--heights (the heights of this kernel are --shell-heights, measured from "
+                   "the surface of the core)")
+    if args.oriented:
+        bad.append("--oriented")
+    if args.no_background:
+        bad.append("--no-background (the kernel has no periodic background)")
+    if bad:
+        raise SystemExit("--kernel particle-surface does not take " + "; ".join(bad))
+    lo, hi = args.shell_heights
+    if not (0 <= lo < hi):
+        raise SystemExit(f"--shell-heights needs 0 <= MIN < MAX, not {lo:g},{hi:g}")
 
 
 def _build_site_model(args, atoms, names, t0):
@@ -1401,7 +1469,7 @@ def _build_site_model(args, atoms, names, t0):
         print(f"Co-pattern: the {args.top} channels that move the prediction of a site most "
               f"(weight x spread over the training sites):")
         for lab, w, sd in top_channels(model, labels, n=args.top):
-            print(f"  {w * sd:+9.3f}  {lab}")
+            print(f"  {w * sd:+10.3g}  {lab}")
     if args.predictions:
         import csv
         fit = model.stats.extra.get("y_fit")
@@ -2136,6 +2204,15 @@ def _is_crystal_model(model) -> bool:
     return bool(getattr(model, "pbc_overlap", False)) or model.kernel_source == "periodic"
 
 
+def _is_structure_model(model) -> bool:
+    """Does this model read structure files rather than molecules? (plan item NT11)
+
+    The two crystal kernels do, and so does the particle surface kernel when it is fitted with
+    `build-crystals`, which splits every structure into its core and its ligand shell.
+    """
+    return _is_crystal_model(model) or model.kernel_source == "particle"
+
+
 def _is_site_model(model) -> bool:
     """A model whose training samples are sites of a cell (plan item M5), not whole cells."""
     mols = list(getattr(model.train, "molecules", []) or [])
@@ -2149,7 +2226,7 @@ def _crystal_predict_inputs(args, model):
     ``name,value`` CSV matched on the structure names, which is what `build-crystals` takes as
     ``--target`` and ``--target-file``.
     """
-    from cmfqsar.periodic import crystal_table, crystal_targets, read_crystal_set
+    from cmfqsar.periodic import crystal_targets, read_crystal_set, structure_table
 
     if _is_site_model(model):
         raise SystemExit("this model was fitted on sites of a cell (plan item M5), not on whole "
@@ -2161,19 +2238,26 @@ def _crystal_predict_inputs(args, model):
     atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
     y = crystal_targets(atoms, names, key=args.activity, csv=args.activity_file,
                         column=args.activity_column)
-    kind = ("the periodic overlap kernel, which compares two cells point by point"
-            if getattr(model, "pbc_overlap", False)
-            else "the periodic field autocorrelation, which is invariant to the choice of cell, "
-                 "origin and orientation")
-    print(f"Read {len(atoms)} periodic structures from {args.dataset}; the model uses {kind}.")
-    table = crystal_table(atoms, model.fieldset, names)
+    if model.kernel_source == "particle":
+        kind = (f"the particle surface kernel, with the core taken as "
+                f"'{getattr(model, 'particle_core', 'metals')}' as when it was fitted")
+    elif getattr(model, "pbc_overlap", False):
+        kind = "the periodic overlap kernel, which compares two cells point by point"
+    else:
+        kind = ("the periodic field autocorrelation, which is invariant to the choice of cell, "
+                "origin and orientation")
+    print(f"Read {len(atoms)} structures from {args.dataset}; the model uses {kind}.")
+    try:
+        table = structure_table(model, atoms, names)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     _check_contract(model, table.molecules, allow=args.allow_mismatch, crystals=True)
     return list(names), y, table
 
 
 def cmd_predict(args):
     model, extra = load_model(args.model)
-    if _is_crystal_model(model):
+    if _is_structure_model(model):
         names, activity, table = _crystal_predict_inputs(args, model)
         return _report_predictions(args, model, extra, names, activity, table)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
@@ -3224,6 +3308,10 @@ def cmd_sites(args):
     from cmfqsar import sitemap as SM
 
     model, extra = load_model(args.model)
+    if model.kernel_source == "particle":
+        raise SystemExit("this model uses the particle surface kernel, which has no split into "
+                         "sites here: `cmf sites` reads the autocorrelation and the overlap "
+                         "kernels. `cmf predict` gives the prediction of each particle")
     periodic = _is_crystal_model(model)
     if periodic:
         from cmfqsar.periodic import crystal_table, read_crystal_set
@@ -5060,14 +5148,35 @@ def main(argv=None):
     bc.add_argument("--pbc", default=None, metavar="AXES",
                     help="which lattice directions are periodic, as letters: 'abc' for a crystal "
                          "(the default of most files), 'ab' for a layer with the vacuum along c, "
-                         "'a' for a chain. The background is then taken per unit volume, area or "
+                         "'a' for a chain, 'none' for a particle or a molecule with open "
+                         "boundaries. The background is then taken per unit volume, area or "
                          "length and no pair is counted across the vacuum; a layer split across "
                          "the cell boundary is gathered")
+    bc.add_argument("--kernel", default="autocorrelation",
+                    choices=["autocorrelation", "particle-surface"],
+                    help="'autocorrelation': the periodic field autocorrelation, for crystals, "
+                         "layers, chains and particles. 'particle-surface': for coated "
+                         "particles (plan item NT5): the fields of the ligand shell, measured "
+                         "on the surface of the core, with the height above that surface and "
+                         "the distance along it as the two axes")
+    bc.add_argument("--core", default="metals", metavar="RULE",
+                    help="--kernel particle-surface: which atoms are the core. 'metals' (every "
+                         "metal atom), a list of elements (Au or Cd,Se), or 'array:NAME' for a "
+                         "per-atom array of the file that is non-zero on the core")
+    bc.add_argument("--core-shape", default="sphere", choices=["sphere", "cylinder", "plane"],
+                    help="--kernel particle-surface: the surface fitted through the outer core "
+                         "atoms: a sphere (a particle), a cylinder (a rod or a wire) or a plane "
+                         "(a flat facet or a slab)")
+    bc.add_argument("--shell-heights", default="2,12", metavar="MIN,MAX",
+                    type=lambda s: tuple(float(x) for x in s.split(",")),
+                    help="--kernel particle-surface: the heights above the core surface the "
+                         "channels resolve, in angstrom (default 2,12), every --height-step")
     bc.add_argument("--heights", type=float, default=0.0, metavar="Z",
                     help="layers only: resolve the channels by the heights of both atoms above the "
                          "mean plane of the layer, from -Z to Z angstrom (0: distances only)")
     bc.add_argument("--height-step", type=float, default=1.0, metavar="DZ",
-                    help="spacing and width of the height channels (angstrom)")
+                    help="spacing and width of the height channels (angstrom), of --heights "
+                         "and of --shell-heights")
     bc.add_argument("--oriented", action="store_true",
                     help="the third lattice vector is a physical 'up' (a layer on a substrate, a "
                          "Janus layer with a known face); otherwise the two faces are averaged")
