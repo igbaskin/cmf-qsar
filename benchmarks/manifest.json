@@ -1,6 +1,6 @@
 {
- "commit": "a01409991bdcefe8d1979467e6807b7ad16f5b5f",
- "created": "2026-11-17T08:26:38",
+ "commit": "223fb5e3cc80483ee661c956f8059c37a74195f9",
+ "created": "2026-11-17T13:33:10",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1471,8 +1471,8 @@
    "sha256": "d93e026f22db1681f86cf8e04359e92c509f8fdf5d7552d4e3ce52f5b5ba6cd3"
   },
   "examples/make_porphyrin_examples.py": {
-   "bytes": 33327,
-   "sha256": "34c56540ef47ca6137be80f338c7745878ffb6ffaa24892eeca2c7eb5aa28008"
+   "bytes": 34912,
+   "sha256": "eb197c4d03d134e8caa89c9427c598c58b694dafb88bbad5d6cbc762bc84472d"
   },
   "examples/make_property_example.py": {
    "bytes": 3372,
@@ -2658,6 +2658,22 @@
    "bytes": 36483,
    "sha256": "ae21e57833b6eef2a99dc8562e02a462dc79f5b44122063068c2e674b4ae6eb4"
   },
+  "examples/vapour/README.md": {
+   "bytes": 4068,
+   "sha256": "a09dd85100d81337132009abe2299eea48d4689728c358160bd64950349bcd54"
+  },
+  "examples/vapour/echemportal.sdf": {
+   "bytes": 10137246,
+   "sha256": "940c6de528370124555b2e63cbb9408217a0d2402e1e1020ed8de242d03a554a"
+  },
+  "examples/vapour/physprop.sdf": {
+   "bytes": 6536978,
+   "sha256": "2bc082d2f34a67369c1ab34d204d1f72441af6b19b92ee6919945ffce977b6c7"
+  },
+  "examples/vapour/provenance.json": {
+   "bytes": 1798,
+   "sha256": "1aed4c9e9b043f423b4b2d7ee34a2a533b52b11d8ddac43d0ea9298f185b6472"
+  },
   "examples/xtb_atom_properties.py": {
    "bytes": 5112,
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
@@ -2791,8 +2807,8 @@
   "benchmarks/results/bioisostere/table_GPB.csv": "87ebac844efe2a7e695b911ebcfbc7e441e3bb9c138da489b14d448b55db3e13",
   "benchmarks/results/bioisostere/table_THER.csv": "95aae23b4c50ea2accba37024ed489fbaf5f52497080cde76453689029f17d3e",
   "benchmarks/results/bioisostere/table_THR.csv": "4ff3a0a78f490af8fe78dda071b68be72af6a77b3a2606a884a3bb62e9fc4234",
-  "benchmarks/results/boiling/boiling.json": "5d4bab3a318a5b62b6437fb9a88aa84e07cf771ff5d648e7b13676a7a2a4b407",
-  "benchmarks/results/boiling/table.md": "d771f0ee70fed21ad0f03b4596d13b7e42295b53a782f4c94af5448d5a1f955b",
+  "benchmarks/results/boiling/boiling.json": "f5fcd0a3a4f0f7bd1a1b4e32d5f2ebb652f0fd4b9011d9f06183874307ab02fa",
+  "benchmarks/results/boiling/table.md": "80667df3dd311a1b5ef212fb0e24b56abcb3c65b8a5ca077e3dc3ed3a826ec70",
   "benchmarks/results/bound/ACE.json": "53d203b4697abcbb94d49e043665cf36031462d6831753bd3c08aa6f346f15d2",
   "benchmarks/results/bound/AChE.json": "0c8d1c5edf469cec2c3180067dcb76e2c988d5c32dffa9d04c26bd8a16bbde43",
   "benchmarks/results/bound/BZR.json": "ed6e5dabf2b1a194e4d0a4ef340b0baf334b6eea55e53b501444ba02ce85d7d7",
@@ -3513,8 +3529,8 @@
   "benchmarks/results/local_scale/landmarks.json": "38b4a3134148cf8a2b25b2521c7a199e2efac09f88cd93755ab7ece8e79aeae3",
   "benchmarks/results/local_scale/routes.json": "1f486ee996b84c23bcadbab0ea58a3ad613c399b45b4455fd697bf0c9315deb4",
   "benchmarks/results/local_scale/table.md": "777da8877b13b34b63d66b3c4d8dec6f2b8d316ecb4ee3ad5203de6aef98cede",
-  "benchmarks/results/logp/logp.json": "45522d7bc58f7388a887757599b0ebf847318031c1e36af4b77e6ef05fc9ec23",
-  "benchmarks/results/logp/table.md": "49a74ccba85bf7ca30e5908c8318bfadfcde10fd02198115f6ac191e264947f2",
+  "benchmarks/results/logp/logp.json": "ff7b33d8a37ccf0d50114839a9fe7b5e76d1e29b955040d2844af433cf86d51f",
+  "benchmarks/results/logp/table.md": "9130f6752ddc9300633ebb27ab2236d9df9398f6aaff865c6aeaa3b3a14d3bbb",
   "benchmarks/results/lowrank/summary.json": "92a28390fb91b843fd969cf7d4be74cd9ff0927ef15adf16f6a882f7a2cb604c",
   "benchmarks/results/lowrank/table.md": "1912eb194016c1632b57c3c96bf80576d06e3e553eea9cd967381a933297f659",
   "benchmarks/results/maskedmatch/ACE.json": "0d9dd880f11e361d0a4b8fafbcc642984e7f31a241422c2b9caf20005586e14a",
@@ -4126,8 +4142,8 @@
   "benchmarks/results/soap_gate/aromatic.json": "7f0acfc06ac20053d4189384cfb1ab5bf74134359f75003b140a8918924c4792",
   "benchmarks/results/soap_gate/shifts.json": "8289c9c691fc78e7adb2625f0dff85ce7da926ec544929ab6a55883fe2a2c626",
   "benchmarks/results/soap_gate/table.md": "3dc65f3cf4438927747fc0040b20d01470b04f9574a6db25de30434f9a6b7f05",
-  "benchmarks/results/solubility/solubility.json": "6ce46ac3efd031d0a753c1d166b96198733b44a1dc89fb495ec512fca9051cfa",
-  "benchmarks/results/solubility/table.md": "ab76027b2ac50840772a5af3b5f8bacfd33258a427d790736319f75ec8b93928",
+  "benchmarks/results/solubility/solubility.json": "f7bab9bf7c74717d8d8cb7c7a212331fbdb085d4fbcff60de143bb8d454dc4f1",
+  "benchmarks/results/solubility/table.md": "dba53bc619ee72f521ce8c6321dfe1c3b8bf9f5aeaf5ce3f6b0ca8f841f0f685",
   "benchmarks/results/solvation/builder.json": "d1277c84ea55d7c2009cf18c811ef1e4fa8419e50da4c2d09cb2402238d868cc",
   "benchmarks/results/solvation/gate.json": "a43844510969735f053b852b924d814a2a5d40dcda56ce3c99e66885f794cfe5",
   "benchmarks/results/solvation/series.json": "57c244283a9782b2626c1fc37dba123d3612097a5f3bfc86d1a58607f7263e12",
@@ -4286,6 +4302,8 @@
   "benchmarks/results/two_endpoints/beta_alpha.json": "a186c8e706011669cae3d00d7df211f472bb60f004fb39fbcc8ef4b38e2a6901",
   "benchmarks/results/two_endpoints/beta_gamma.json": "f8729fb11067924dbbd21a865b7415250af656127e130eaa6436197bbc13057a",
   "benchmarks/results/two_endpoints/table.md": "aaaf425a64a2c86a28d184da20215b6d9362e447928dc8c34b9482da8e0572d9",
+  "benchmarks/results/vapour/table.md": "200571334bb4e0a25a594818c85cab5ee2bdcdf542f1d12b7156c23a5a77e68c",
+  "benchmarks/results/vapour/vapour.json": "857638bbb41b57e8c0acbad44a8ad397ae5ee7797599c131b7eadc9455a7ab1f",
   "benchmarks/results/warped/ACE.json": "949aed3ea29f711c3363975256fd0ec6ade2ff34eb1e5893fd5eb4fde697122b",
   "benchmarks/results/warped/AChE.json": "323ebcfdaf2ab04453f98c21d78b841ed56d2095ef00d3053a2e4264ed7f4b63",
   "benchmarks/results/warped/BZR.json": "2f96d32929a6b9552238703b3b2da80ae52e5d38a38d5395f1144a448c8dc752",
