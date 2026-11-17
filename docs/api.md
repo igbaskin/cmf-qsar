@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 137 modules, 266 classes with 860 public methods, and 1434 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 138 modules, 267 classes with 864 public methods, and 1441 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -62,6 +62,7 @@ for.
 | [cmfqsar.copattern](#cmfqsarcopattern) | The co-pattern of an invariant kernel as a curve: weight against distance (plan item NT9). |
 | [cmfqsar.dataio](#cmfqsardataio) | Reading structure-activity data sets (SDF / MOL2 / SMILES), saving models and exporting results. |
 | [cmfqsar.decoys](#cmfqsardecoys) | Preparing a background (decoy) set for field-based virtual screening. |
+| [cmfqsar.delivery](#cmfqsardelivery) | What a predicted binding constant means for a delivery formulation (plan item SC2). |
 | [cmfqsar.descriptors](#cmfqsardescriptors) | Non-field descriptors: one number per molecule, beside the fields rather than instead of them. |
 | [cmfqsar.design](#cmfqsardesign) | The last step of the design cycle: what to put at a position, ranked by the model (E3). |
 | [cmfqsar.diagnose](#cmfqsardiagnose) | What to ask of a data set before modelling it, and which route it should take. |
@@ -3904,12 +3905,14 @@ needs, plus the record that `cmfqsar.contract` checks new molecules against.
 
 Read a model file; refuses one written by a newer version of the program.
 
-### `write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], yp: Sequence[float], subset: Sequence[str], y_cv: Optional[Sequence[float]]=None, var: Optional[Sequence[float]]=None, value_header: str='predicted', domain: Optional[Sequence[float]]=None, domain_threshold: Optional[float]=None, interval: Optional[Sequence[Sequence[float]]]=None, truth_header: str='experimental', extra_columns: Optional[Dict[str, Sequence[float]]]=None) -> None`
+### `write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], yp: Sequence[float], subset: Sequence[str], y_cv: Optional[Sequence[float]]=None, var: Optional[Sequence[float]]=None, value_header: str='predicted', domain: Optional[Sequence[float]]=None, domain_threshold: Optional[float]=None, interval: Optional[Sequence[Sequence[float]]]=None, truth_header: str='experimental', extra_columns: Optional[Dict[str, Sequence[float]]]=None, extra_formats: Optional[Dict[str, str]]=None) -> None`
 
 Write the predictions table.
 
 `extra_columns` adds one column per entry at the end, in order; a two-endpoint model writes
-the second endpoint and the difference of the two there (plan item SC1).
+the second endpoint and the difference of the two there (plan item SC1).  An extra column is
+written with four decimals unless `extra_formats` gives it another format: a half-life of
+nanoseconds in seconds needs significant digits, not decimals (plan item SC2).
 
 ### `write_sdf(path: str, ds: Dataset, activity_prop: str='activity') -> None`
 
@@ -3996,6 +3999,107 @@ is why the restarts default lower here than in `align_decoys`.
 Returns (fields, results): the chosen `MoleculeFields` of every decoy, already in the
 frame of the reference, and one `DecoyAlignResult` each, saying which conformation was
 chosen.
+
+## cmfqsar.delivery
+
+Source: `cmfqsar/delivery.py`
+
+What a predicted binding constant means for a delivery formulation (plan item SC2).
+
+A host such as a cyclodextrin carries a guest (a drug) in solution.  Three questions a
+formulation asks are functions of the 1:1 association constant K of the complex alone, and this
+module answers them from K:
+
+* **Solubility gain.**  A guest of intrinsic solubility S0 (its solubility without host) is
+  dissolved in a solution of host at total concentration H_t, with solid guest in excess.  The
+  mass balance of the 1:1 complex gives the total dissolved guest
+
+      S_t = S0 + K S0 H_t / (1 + K S0)
+
+  which is the straight line of an A_L phase-solubility diagram (Higuchi and Connors).  Its slope
+  K S0 / (1 + K S0) is the fraction of the host that carries a guest.  Without S0 the gain
+  S_t / S0 can only be bounded: 1 + K H_t, reached when K S0 is small.
+* **Fraction bound after dilution.**  A solution of guest G_t and host H_t is diluted D times,
+  as a formulation is when it is injected.  The complex concentration C solves the mass balance
+  K (G - C)(H - C) = C with G = G_t / D and H = H_t / D, whose root in [0, min(G, H)] is
+
+      C = (G + H + 1/K - sqrt((G + H + 1/K)^2 - 4 G H)) / 2
+
+  and the fraction of the guest still bound is C / G.  With a guest much more dilute than the
+  host this tends to K H / (1 + K H).
+* **Release half-life.**  K = k_on / k_off.  Two spheres of radii r_A and r_B that diffuse
+  freely meet at k_D = (2 R T / 3 eta) (r_A + r_B)^2 / (r_A r_B) (Smoluchowski, with the
+  Stokes-Einstein diffusion coefficients).  It is smallest, 8 R T / (3 eta), for equal radii;
+  in water at 25 C that is about 7.4e9 per molar per second, and it is the default here.  Then
+  k_off = k_on / K, and a complex releases its guest with a half-life t_1/2 = ln 2 / k_off.  An
+  association slower than k_D makes k_off smaller and the complex longer-lived, so the
+  half-life from k_D is a lower bound.  A guest much smaller than its host can meet it somewhat
+  faster than 8RT/(3 eta) -- 12.5 % faster at a ratio of radii of 2 -- which lowers that bound
+  by the same factor; `k_on` sets the rate when it is known.
+
+Every quantity grows with K, so the ends of an interval of K give the ends of the interval of
+each quantity.  The concentrations are in mol/L, the constant in L/mol, the times in seconds.
+
+### `class Delivery  (dataclass)`
+
+The conditions of a formulation, and what a constant means under them.
+
+Attributes:
+
+- `host_total: float`
+- `intrinsic: Optional[float]` = `None`
+- `guest_total: Optional[float]` = `None`
+- `dilution: float` = `1.0`
+- `k_on: Optional[float]` = `None`
+- `temperature: float` = `298.15`
+- `viscosity: float` = `WATER_VISCOSITY`
+- `scale: str` = `'log10K'`
+- `notes: List[str]` = `field(default_factory=list)`
+
+#### `Delivery.rate` -> float  (property)
+
+#### `Delivery.guest_for_dilution(K) -> Optional[np.ndarray]`
+
+The guest concentration before dilution: the one given, else the saturated
+solubility of the formulation when S0 is known, else None (a dilute guest).
+
+#### `Delivery.quantities(activity) -> Dict[str, np.ndarray]`
+
+Every quantity, one value per activity.
+
+#### `Delivery.describe() -> str`
+
+The conditions in words, with what each quantity assumes.
+
+### `constant_from_activity(values, scale: str='log10K', temperature: float=298.15)`
+
+The association constant K (L/mol) from activities on `scale` (see `SCALES`).
+
+### `diffusion_limit(temperature: float=298.15, viscosity_mpas: float=WATER_VISCOSITY) -> float`
+
+The diffusion-limited rate constant 8RT/(3 eta) of two equal spheres, in L/(mol s).
+
+### `solubility_gain(K, host_total: float, intrinsic: Optional[float]=None)`
+
+S_t / S0 for an A_L phase-solubility diagram; without S0, the bound 1 + K H_t.
+
+### `bound_fraction(K, guest_total: Optional[float], host_total: float, dilution: float=1.0)`
+
+The fraction of the guest in the complex after diluting `dilution` times.
+
+`guest_total` None is the limit of a guest much more dilute than the host.
+
+### `half_life(K, k_on: float)`
+
+ln 2 / k_off with k_off = k_on / K, in seconds.
+
+### `format_time(seconds: float) -> str`
+
+A time in the largest unit that keeps it above 1, for a reader.
+
+### `rows(names: Sequence[str], activity, delivery: Delivery, low=None, high=None) -> List[Dict]`
+
+One record per molecule: the quantities, with their interval when the ends are given.
 
 ## cmfqsar.descriptors
 
