@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 137 modules, 266 classes with 860 public methods, and 1430 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 137 modules, 266 classes with 860 public methods, and 1434 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -11690,6 +11690,7 @@ Attributes:
 - `surf_z_max: float` = `6.0`
 - `surf_z_step: float` = `1.0`
 - `particle_shape: str` = `'sphere'`
+- `particle_core: str` = `'metals'`
 - `pbc_background: bool` = `True`
 - `pbc_taper: float` = `2.0`
 - `pbc_z_max: float` = `0.0`
@@ -14990,6 +14991,41 @@ periodic autocorrelation needs; see the module docstring.
 ### `crystal_table(structures: Sequence, fieldset: FieldSet, names: Optional[Sequence[str]]=None) -> AtomTable`
 
 An `fields.AtomTable` of periodic structures, which the model takes like any other.
+
+### `core_mask(atoms, core: str=DEFAULT_CORE) -> np.ndarray`
+
+Which atoms of a structure belong to its core, as a boolean array.
+
+`core` is one of three rules:
+
+* `"metals"` -- every atom of an element that gets no bonds in the drawing
+  (`cmfqsar.bonds.is_bonding`): the metal core of a thiolate-coated gold particle,
+  with the sulfur, carbon and hydrogen of the ligands outside it;
+* a list of elements, `"Au"` or `"Cd,Se"`, for a core that is not a metal;
+* `"array:NAME"` -- a per-atom array of the file, non-zero for the core atoms, for a
+  structure in which the same element is found in the core and in the shell.
+
+### `split_core(atoms, core: str=DEFAULT_CORE, name: str='')`
+
+(shell, core positions): the ligand shell as a structure of its own, and the core atoms.
+
+The particle surface kernel (plan item NT5) reads the fields of the shell and measures them
+on the surface of the core, so the two have to be told apart.  A structure in which `core`
+finds no core atom, or nothing but core atoms, is refused, with its name.
+
+### `particle_table(structures: Sequence, fieldset: FieldSet, names: Optional[Sequence[str]]=None, core: str=DEFAULT_CORE) -> AtomTable`
+
+An `fields.AtomTable` of coated particles for `kernel_source="particle"`.
+
+Every record holds the fields of the ligand shell (`crystal_fields`) with the core's
+positions attached (`cmfqsar.invariant.with_core`).  This is what the benchmark of
+plan item NT5 built by hand; the command line, the crystal window and `cmf predict` build
+it here, so that a model fitted on one is applied to the same split.
+
+### `structure_table(model, structures: Sequence, names: Optional[Sequence[str]]=None, fieldset: Optional[FieldSet]=None) -> AtomTable`
+
+The table a structure model takes: shells on their cores for the particle surface
+kernel, whole structures for every other kernel.
 
 ### `read_structures(path: str, index: str=':') -> list`
 
