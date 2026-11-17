@@ -3889,12 +3889,78 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   agrees with the library's block rule when a block is one column, that a weight of zero removes a
   column exactly, and that no weight is ever computed from a row outside the training part.
 
+* **M16. An interface between two phases: is it an object of its own, or a cell with a frame and
+  a difference?** (added 13 November 2026, from a design question). Every interface this program
+  has met so far was handled by one of two existing objects. A fixed partner stood for one side
+  of it: the slab of EC6, the protein site of PP1. Or a periodic cell contained the junction
+  and the kernel never knew where it was: the three-phase Li₃PO₄/Li₃BP₂O₈/LiBO₂ cells of the
+  hop model. The question is whether a third object is needed, and the plan's own results say
+  what such an object would have to contain and what it would have to beat.
+  **What an interface is, in the terms of this program.** Three things, and each maps onto code
+  that exists. *A frame:* the normal to the dividing plane and the position of the plane are
+  physically defined, which breaks the isotropy the invariant kernel assumes. Where a frame
+  exists the program has mostly found it worth something (PO1: +0.13 in q2 over the invariant
+  kernel; EC4: +0.20 V), but not always (PO2: -0.13 in R2 on new additives), and
+  `cmfqsar/anisotropic.py` already weights a direction separately. *Two
+  sides:* the property of an interface usually depends on the mismatch across the plane (lattice
+  strain, work-function or band offset, the charge transfer and the dipole it leaves), which is a
+  difference field (`cmfqsar/celldiff.py`, `cmfqsar/fielddiff.py`) or a profile of the field along
+  the normal, a one-dimensional field as SP1 treats a spectrum. *Per-area normalisation:* an
+  interfacial energy is per unit of area, and M15 measured what the kernel's division by the row
+  length removes, so the row length is set deliberately here and both choices are reported.
+  **The two cautions the plan already carries.** EC3 showed that fields read at a few chosen
+  places lose to fields read everywhere, so the field sampled on the dividing surface alone is
+  the description most likely to fail, and it is tried last. BT1 to BT3 and PP1 showed that a
+  composition or a count often matches a field. The reference of rule 1 is therefore the two bulk
+  phases plus the geometry, which is a strong reference: for a grain boundary the misorientation
+  angle and the element's surface or cohesive energy; for a band offset between two monolayers,
+  the difference of the two electron affinities (Anderson's rule); for a work of separation, the
+  two surface energies.
+  **The data.** No new electronic-structure calculation: the item is judged on published sets
+  whose structures are known, and the first step is to confirm each set and its licence before
+  anything is built (the duplication of M15 is the reason for the order). Candidates, in the
+  order of trying: (a) the DFT grain-boundary energies of elemental metals (Zheng et al., Acta
+  Materialia 2020: 327 boundaries of 58 metals, with relaxed cells), where a cell holds two
+  grains of one element and the only difference across the plane is orientation; (b) the C2DB
+  bilayers, named under M1 already, where the band alignment across the vacuum gap is the target
+  and Anderson's rule is the reference; (c) a published table of the work of separation at a
+  solid-electrolyte/lithium-metal contact, if one with structures is found; if none is, (c) is
+  dropped and said to be dropped. The 128-atom three-phase cells of the hop model are already in
+  hand and give a fourth, free test: the vacancy energy against the distance of the site from the
+  nearest dividing plane, which is the profile of (ii) below with a label the repository holds.
+  **What is compared, on the same folds.** (i) The cell as it stands: the periodic
+  autocorrelation kernel on the whole cell, with no knowledge of the plane. (ii) The cell with
+  the declared normal: the same channels with the along-normal direction weighted separately, and
+  the profile of each field along the normal. (iii) The difference field: the interface cell minus
+  the two bulk phases that make it, in the cell. (iv) The field on the dividing surface only. Each
+  against the reference of rule 1 and against (i). Before any fitting, the kernel correlation of
+  (ii), (iii) and (iv) with (i) is reported, since that number predicts whether the new
+  description can gain anything (EC5 against EC3). The folds hold out whole materials: an element
+  with all its boundaries, a monolayer with every bilayer it enters.
+  **Gate, three parts.** (a) One of (ii) or (iii) beats the two-bulk-phase reference of rule 1 by
+  more than the bootstrap interval of rule 4 on at least one of the sets. (b) The same
+  description beats (i), the plain cell, by more than that interval on the same set: a gain that
+  (i) already has is a gain of the periodic kernel and not of an interface object. (c) The gain
+  holds on a second set of folds, as the SP2 margin did not until the folds were repeated. If all
+  three hold, the interface earns a class: a cell with a declared normal and plane, its two bulk
+  phases, and the derived difference and profile fields, written under rule 5 with its benchmark
+  script. If (a) holds and (b) does not, the finding is that an interface is a periodic cell and
+  the kernel already sees it. If (a) fails, the finding is that an interface is a frame plus a
+  difference, the reference already says so, and nothing is added to the code. Either negative is
+  written into the plan with its table. What this item does not claim: the charge-transfer
+  activation energy of BT12 and the exchange-current density stay out of reach for the reason
+  BT12 states, that the atomic structure of that interface is not known; this item is about
+  interfaces whose structure is.
+  **Cost.** Data fetching and the benchmark script only; the largest grain-boundary cells are a
+  few hundred atoms, which the neighbour-list path of the periodic kernel handles. About a week
+  if the first set confirms, and it waits for no other item.
+
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
 by those three. M9 after M6 has reported; ~~M10~~ and ~~M11~~ **done 2 November 2026**, and what they now need is data and not more code -- a set of chiral crystals with a measured property for M10, and a design space whose candidates are not already computed for M11; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
 nothing else in this part waits for it. M15 came out of item BT7's external check on 6 November
 2026 and needs no new data: it is a measurement on the benchmarks that already exist, and it
-touches every kernel this part builds, so it comes before any further channel is added.
+touches every kernel this part builds, so it comes before any further channel is added. M16 was added on 13 November 2026 out of a design question and waits for no other item; its first step is to confirm a public data set, and until one is confirmed nothing of it is built.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
 
@@ -5635,7 +5701,8 @@ values and a computed oxidation potential is a descriptor, not a target.
 * **BT8. A slab generator for the adsorption benchmarks.** `examples/uma_fe110_adsorption.py` is
   written for one slab. A version under `benchmarks/` that takes any slab (Li(100), a layered
   oxide facet, graphite) and the pose rules of the Fe(110) script is the generator for the EC6
-  benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium).
+  benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium,
+  part (a) of BT13 without a surface).
   Script code under rule 6, not a module.
 
 **Medium and large: the three electrolyte parameters a cell model reads and this program does not predict (opened 13 November 2026)**
@@ -6446,6 +6513,103 @@ concentration was driven, and the stage counts only discharges that ended at the
   wrap the ion is therefore a failure of the descriptor and not of the rule; both
   variants are in the benchmark (`single_one_donor` and `mixtures_one_donor`).
 
+* **BT13. The interphase films: the molecule that reacts first, and the barrier through the
+  film (opened 14 November 2026).** The solid electrolyte interphase (SEI) is the film that the
+  reduction products of the electrolyte form on the negative electrode. The cathode electrolyte
+  interphase (CEI) is the film of oxidation products on the positive electrode. A cell model
+  reads each film as a few parameters and does not give them: in PyBaMM's SEI submodels
+  (`reaction limited`, `solvent-diffusion limited`, `electron-migration limited`,
+  `interstitial-diffusion limited`, `ec reaction limited`) the parameters are a kinetic rate
+  constant of the film-forming reaction, the diffusivity of the solvent through the film, the
+  electron conductivity and the resistivity of the film, its partial molar volume and the
+  activation energy of its growth; the `OKane2022` set holds one value of each, and none has a
+  source in a structure. The literature models a film at three scales: the first electron
+  transfers (quantum chemistry on the solvated molecule), the growth of the film (reactive
+  dynamics, kinetic Monte Carlo and continuum growth laws), and the transport of Li⁺ through
+  the phases it is made of (barriers in Li₂CO₃, LiF, Li₂O and lithium ethylene dicarbonate).
+  CMF is a surrogate for a property of a given structure. It has a place at the first scale and
+  at the third, and none at the second: it cannot build a reaction network, grow a film or
+  predict a thickness. The item has two parts that share nothing but the question, and a
+  tolerance stage that says whether either is needed.
+  *The tolerance first (rule 1 of the electrolyte section, applied to the film).* The stress
+  stage of MS9 runs one discharge, and a film shows in the capacity lost over cycles. The stage
+  is therefore extended by an ageing run: the published cell with the `OKane2022` degradation
+  parameters, cycled under the eight conditions of MS9, with each SEI parameter changed over a
+  fixed set of points around its published value. The result is the deviation of each
+  parameter the capacity fade tolerates. If the film's resistivity and the barrier behind it
+  are tolerated loosely, part (b) ends at its check; if the rate constant of the film-forming
+  reaction is tolerated loosely, part (a) answers a question of chemistry and not of the cell
+  model, and its entry says so.
+  *Part (a), the molecule that reacts first.* The first step of the SEI is the reduction of a
+  solvent, an anion or an additive coordinated to Li⁺; the first step of the CEI is the
+  oxidation of the same species. The label is the computed reduction potential (a1) or
+  oxidation potential (a2) of the species, which is the quantity EC1 and EC4 already model on
+  phenazines and nickel complexes, with the complex built by BT4 in the cation frame. This is
+  the thermodynamic order of the reactions, which is what the screening literature computes.
+  It is not the measured window: the limit at the head of this section stands, a measured
+  onset is kinetic and set by passivation, so measured onsets check the computed order and are
+  not trained on.
+  *Data:* the Lithium-Ion Battery Electrolyte set (LIBE; Spotte-Smith and co-workers,
+  Scientific Data 2021; figshare 10.6084/m9.figshare.14226464, CC BY 4.0, one JSON file of
+  272 MB, licence and size confirmed at the record on 14 November 2026). It holds 17,190 species
+  at the ωB97X-V/def2-TZVPPD level in an SMD solvent with ε = 18.5, the value for EC:EMC 3:7.
+  The principal molecules are LiPF₆, LiTFSI, LiFSI, EC, FEC, DMC, DEC and EMC; the rest are
+  their fragments and recombination products, which include the SEI products. Many species
+  carry a free energy at charges −1, 0 and +1, so an adiabatic reduction or oxidation
+  potential follows as a free-energy difference against a reference that the item has to fix
+  and state (the set does not publish the potentials). The set has no vinylene carbonate and
+  no ethers, and most of its members are fragments and radicals. The series for this item is
+  therefore the subset of closed-shell species with a free energy at two charges, read from the
+  file and not recomputed, and the lithium-coordinated species of that subset are the
+  sub-series with a frame. *Measured values*, as in BT12, are collected by hand: reduction
+  onsets of solvents and additives on graphite or lithium, oxidation onsets on platinum or a
+  cathode, each read in the paper that measured it, with one system measured by two
+  laboratories giving the repeatability. Tens of values are expected. They test the computed
+  order of the species they cover and are not the training label.
+  *Reference of its own:* a linear regression on the LUMO energy (a1) or the HOMO energy (a2)
+  of the same species, which is the one-number version of the question and the descriptor the
+  screening literature uses; the Li⁺ binding energy of BT4 for the coordinated species; the
+  counts of fluorine and oxygen atoms; the composition model; and, for the coordinated
+  species, the same model on the free molecule, which is BT4's gate restated.
+  *Models:* the five fields with the Fukui and charge fields of EC1 (the electron-accepting
+  Fukui function for a1 and the electron-donating one for a2), in the cation frame of BT4
+  where Li⁺ is bound and in the planar frame of EC2 otherwise; the kernel-correlation test of
+  EC5 before any field is added; Gaussian-process regression for the deviation.
+  *Gate (a):* with whole chemical families held out together (the carbonates, the fluorinated
+  species, the phosphorus species from PF₆⁻, the sulfonimide fragments), on repeated folds, the
+  field model is ahead of the regression on the frontier-orbital energy by more than the
+  interval of plan rule 4, and the co-field names the atom that takes or gives the electron.
+  On the measured onsets the computed order and the measured order agree in rank within what
+  the repeatability allows.
+  *Part (b), the barrier through the film.* After the film has formed, the SEI matters through
+  the Li⁺ barrier of its phases. Li₂CO₃, LiF, Li₂O and lithium ethylene dicarbonate are
+  crystals, and BT7's hop model predicts barriers in crystals at 0.21 to 0.29 eV on the public
+  sets. An error of 0.23 eV is a factor of about 7,000 in a hop rate at room temperature, so
+  the model ranks the phases and does not give a film resistivity. The part is only the check
+  of the domain: the hops of the four phases (vacancy and interstitial mechanisms, the
+  published elastic-band barriers read from the papers that computed them) are computed
+  through the VASP route of BT7 on this machine, and the hop model trained on the public
+  conductors predicts them. *Gate (b):* the predicted barriers of the four phases lie within
+  the model's own calibrated deviation (the z of MS1 near 1 on these cells). If they do not,
+  the phases are outside the model's domain and the entry says so. Grain boundaries and the
+  amorphous outer layer of the film are not describable by the hop model and are not
+  attempted.
+  *What to expect, and what the item is not.* Part (a) is a place where fields have a reason
+  over a composition descriptor: the electron goes to one place on the molecule, the Fukui
+  field shows that place, and the co-field names the atom where the decomposition starts. The
+  likely result is still that the frontier-orbital energy of the solvated species is the model
+  within the interval, as the Hammett constant was on the carbonyl band (SP2) and one ring
+  charge was on the Hammett sets (tutorial 7). Four battery items in a row did not beat a
+  one-number reference on a property of the liquid. The item does not predict the composition,
+  thickness, porosity or growth rate of a film, nor the capacity fade of a cell; the film's
+  parameters stay stated spreads in the cell model unless the tolerance stage says a part
+  matters and that part passes its gate. It does not use a slab: EC6 found that a clean surface
+  offers shape only, and the generator BT8 is not written, so the electrode enters as a task of
+  the multi-task kernel of E1, as in BT12. Size: medium for part (a), most of it the parse of
+  the LIBE file, the choice of the sub-series and the reading of the measured onsets; small for
+  part (b), four cells through the VASP route and one prediction; the ageing run of the
+  tolerance stage is to be timed on one condition before all eight are run.
+
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
 same day**, and it does not pay: the difference of the two cells is
@@ -6487,6 +6651,10 @@ ORCA. For solvents that hold the ion with one atom it lowers the held-out error 
 17 kJ/mol to 7 to 9 kJ/mol, which a cold cell accepts. It fails for solvents that wrap the
 ion. A model of the solvent alone can gain 1 to 2 kJ/mol more, which is below the
 repeatability of 4.8 kJ/mol, so no field model is built and part (c) of the gate is closed.
+BT13 was opened on 14 November 2026 from the question whether CMF has a place in models of the
+interphase films. Its tolerance stage needs an ageing run that the stress stage of MS9 does
+not have, so it comes after BT9 and BT11 and beside BT12; its part (a) can start on the
+existing routes as soon as the LIBE file is parsed.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -9464,10 +9632,10 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 15 | 15 | -- |
+| H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 8 | NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
-| H. Battery science | 12 | 7 | BT8, BT9 (partly), BT10, BT11, BT12 |
+| H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 9 | 9 | -- |
@@ -9477,7 +9645,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**176 items: 131 finished, 10 partly, 35 open.**
+**178 items: 131 finished, 10 partly, 37 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
