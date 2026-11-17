@@ -1382,6 +1382,10 @@ example sets: a 256-atom cell of the garnet Li$_{6.5}$La$_3$Zr$_{1.5}$Ta$_{0.5}$
 836 images and draws in 3 ms. The thirteen CIF files of `examples/hops/disordered/` are read
 in half a second.
 
+Those times are the time to *build* the view. That benchmark runs without a screen, and without
+a screen nothing is drawn, so the first frame is not in them. Plan item NT8 measured the first
+frame on a screen and found that it was the larger part: see *Large structures on screen* below.
+
 **How the atoms are drawn, and the bonds.** The *Atoms* box offers four representations. *balls*
 is one sphere per atom, coloured by element and sized by its covalent radius, and *dots* is one
 point per atom, which stays fast for a cell of thousands. Those two show the atoms alone, which
@@ -1406,6 +1410,60 @@ This perception is **for drawing only**. No bond order is assigned, no molecule 
 no charge is perceived from it; a stick on screen never reaches a field, a kernel or a
 prediction. Turning a periodic structure into a molecule is a different job (plan item M8) and
 this is not it.
+
+**Large structures on screen.** A particle of ten thousand atoms, or a cell with its images
+out to the kernel's cutoff, is many spheres. The view used to draw N atoms as one mesh of N
+spheres, and the cost of that was hidden in the first frame. pyqtgraph shades a mesh from one
+*normal* per vertex (the direction the surface faces there), and it computes those normals in a
+Python loop over the vertices before the first frame is shown. Plan item NT8 replaced that
+drawing in two steps (`cmfqsar/gui/instanced.py`):
+
+* **Copies of one shape.** A sphere is sent to the graphics card once, and every atom is a row
+  of 16 numbers: where the copy stands, the matrix that scales and turns it, and its colour. The
+  card draws all copies in one call. This is called *instanced drawing*. Sticks are copies of one
+  cylinder in the same way. A card without instanced drawing (it needs OpenGL 3.3) gets the same
+  picture from a mesh that the item builds itself.
+* **Normals by array operations.** Every other mesh of the view (isosurfaces, arrows, molecules)
+  gets its normals from `instanced.vertex_normals`, which computes the same sum as pyqtgraph's
+  loop without the loop.
+
+`benchmarks/results/large_view/table.md` measures both on Intel(R) RaptorLake-S Mobile Graphics Controller, the graphics built into a
+laptop processor:
+
+| What is drawn | Before NT8: first frame | Now: first frame | Data sent to the graphics card, before and now |
+|---|---:|---:|---:|
+| Pt particle of 10,179 atoms as spheres | 67.37 s | 11 ms | 106 MB and 0.7 MB |
+| Graphene sheet of 9,800 atoms with its 14,491 bonds as sticks | 31.62 s, after 11.86 s to build | 5 ms | 24 MB and 1.9 MB |
+| The normals of 4,000 spheres (656,000 vertices) | 4.69 s | 312 ms | not sent |
+| The normals of the isosurface of a 923-atom particle (78,360 vertices) | 539 ms | 23 ms | not sent |
+
+The old first frames vary with what else the machine is doing. The machine ran other jobs while
+this was measured, and in seven runs the 10,179-atom particle took between 9 s and 124 s the
+old way and at most 11 ms as copies. The table is the stored run, each time the
+fastest of three repeats.
+
+Once the first frame is shown, a turn of the view costs about the same both ways: 7.3 ms
+and 10.1 ms a frame for the 10,179 atoms. A particle of 49,049 atoms draws its first
+frame in 23 ms and turns at 16.8 ms a frame. The picture is the same: drawn the old
+way and as copies, 300 spheres of different sizes and colours and 60 sticks cover exactly the
+same pixels, and at most 3 of the 269,498 drawn pixels differ by more than 8 of 255
+colour levels. The normals of the two computations agree to 0.03 degrees.
+
+In the crystal window, the 10,179-atom particle appears 108 ms after it is chosen. The periodic
+images can now be drawn as *balls* as well as *dots* (the *as* box beside the image radius):
+they are half the size of the cell's own atoms and translucent, so the cell stays in front, and
+the 256-atom garnet cell with its images to 14.9 Å appears in 195 ms. A cell whose bonds number
+up to 50,000 keeps its sticks; the limit used to be 4,000, above which they became lines. A
+particle, which repeats in no direction, is now centred on its atoms; it used to be centred on
+the corners of its box, which for a structure read without a cell are all at the origin.
+
+**A second 3D view drew nothing.** pyqtgraph compiles each of its shader programs (the small
+programs the graphics card runs to shade a surface) once and keeps it. Each 3D view has its own
+OpenGL context, and a program compiled in one context does not exist in another. So once the
+main window had drawn a mesh, the crystal window drew none of its spheres or surfaces, and
+pyqtgraph wrote "Error while drawing item" to the console. The benchmark shows it with two views
+in one application: the second view drew 0 pixels. The application now shares one set of
+OpenGL objects between all its views (`Qt.AA_ShareOpenGLContexts`), and both views draw.
 
 **What a metal gets instead: coordination polyhedra.** *Coordination polyhedra* draws the first
 coordination shell of every metal atom as a translucent polyhedron. The shell is found without

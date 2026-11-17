@@ -54,8 +54,8 @@ from ..periodic import (crystal_fields, crystal_table, crystal_targets, elements
                         inorganic_fieldset, overlap_cutoff, periodic_channel_labels,
                         top_channels)
 from .copattern_panel import CoPatternChart
-from .viewer3d import (Viewer3D, cofield_colors, color_name as _cname, element_color,
-                       signed_spheres)
+from .viewer3d import (ATOM_RADIUS_SCALE, Viewer3D, cofield_colors, color_name as _cname,
+                       element_color, signed_spheres)
 from .workers import TaskWorker
 
 #: the file types the open dialog offers; a folder is opened with the other entry of the menu
@@ -73,6 +73,8 @@ MAX_GRID_POINTS = 400_000
 #: structure file states; the last two add the bonds of :mod:`cmfqsar.bonds`, perceived from the
 #: distances for drawing only, which an organic molecule on a surface needs to be readable
 ATOM_STYLES = ("balls", "dots", "ball and stick", "sticks")
+#: how the periodic images can be drawn
+IMAGE_STYLES = ("dots", "balls")
 #: radius of a drawn atom in the two bonded styles, as a fraction of its covalent radius
 BONDED_ATOM_SCALE = 0.26
 
@@ -272,6 +274,17 @@ class CrystalWindow(QMainWindow):
         self.spin_images.setSingleStep(0.5)
         self.spin_images.setValue(6.0)
         self.spin_images.setSuffix(" A")
+        self.cmb_images = QComboBox()
+        self.cmb_images.addItems(IMAGE_STYLES)
+        self.cmb_images.setToolTip("\n".join([
+            "How the periodic images are drawn.",
+            "",
+            "'dots' draws each image atom as a small translucent dot, so the cell itself stays",
+            "the thing one looks at.",
+            "",
+            "'balls' draws them as translucent spheres, as many as there are: the spheres are",
+            "drawn as copies of one sphere in one call to the graphics card, so tens of",
+            "thousands of image atoms stay quick to turn."]))
         self.cmb_atoms = QComboBox()
         self.cmb_atoms.addItems(ATOM_STYLES)
         self.cmb_atoms.setToolTip("\n".join([
@@ -305,7 +318,8 @@ class CrystalWindow(QMainWindow):
         btn_reset = QPushButton("Reset view")
         btn_reset.clicked.connect(self.viewer.reset_view)
         for widget in (self.chk_cell, self.chk_images, QLabel("to"), self.spin_images,
-                       QLabel("  Atoms:"), self.cmb_atoms, self.chk_polyhedra, self.chk_labels,
+                       QLabel("as"), self.cmb_images, QLabel("  Atoms:"), self.cmb_atoms,
+                       self.chk_polyhedra, self.chk_labels,
                        self.chk_dark, btn_reset):
             row1.addWidget(widget)
         row1.addStretch(1)
@@ -345,6 +359,7 @@ class CrystalWindow(QMainWindow):
         self.spin_level.valueChanged.connect(self.update_display)
         self.spin_opacity.valueChanged.connect(self.update_display)
         self.cmb_atoms.currentIndexChanged.connect(self.update_display)
+        self.cmb_images.currentIndexChanged.connect(self.update_display)
         self.cmb_field.currentIndexChanged.connect(self.update_display)
         return w
 
@@ -1015,6 +1030,11 @@ class CrystalWindow(QMainWindow):
         if cur < 0:
             return
         crystal = self._crystal(cur)
+        if crystal.n_periodic == 0:
+            # a particle or a molecule: its box, if it has one, is mostly vacuum, and without
+            # one every corner is the origin, so the view is centred on the atoms themselves
+            self.viewer.center_on(np.asarray(crystal.coords, float))
+            return
         corners = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)],
                            float) @ np.asarray(crystal.cell, float)
         self.viewer.center_on(corners)
@@ -1045,8 +1065,14 @@ class CrystalWindow(QMainWindow):
             coords, index = cell_image_indices(crystal, float(self.spin_images.value()))
             n_cell = crystal.n_atoms
             image_coords, image_index = coords[n_cell:], index[n_cell:]
-            v.add_points(image_coords, [crystal.symbols[i] for i in image_index], "images",
-                         size=5.0, alpha=0.40)
+            image_symbols = [crystal.symbols[i] for i in image_index]
+            if self.cmb_images.currentText() == "balls":
+                # half the size of the cell's own atoms, so the cell stays in front
+                v.add_atoms(image_coords, image_symbols, "images",
+                            radii=np.asarray(crystal.radii, float)[image_index],
+                            scale=0.5 * ATOM_RADIUS_SCALE, alpha=0.30)
+            else:
+                v.add_points(image_coords, image_symbols, "images", size=5.0, alpha=0.40)
             reach = ("the kernel's own cutoff" if self.model is not None
                      and abs(self.spin_images.value() - self._kernel_cutoff()) < 0.05
                      else "the radius on the control strip")

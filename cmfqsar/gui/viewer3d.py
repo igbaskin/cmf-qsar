@@ -14,6 +14,7 @@ from PySide6.QtGui import QVector3D
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from ..fields import MoleculeFields
+from .instanced import mesh_item, spheres_item, sticks_item
 
 CPK = {
     "C": (0.45, 0.45, 0.45), "H": (0.90, 0.90, 0.90), "N": (0.20, 0.30, 0.95), "O": (0.95, 0.15, 0.15),
@@ -216,8 +217,8 @@ class Viewer3D(QWidget):
         if mesh is None:
             return
         v, f, c = mesh
-        item = gl.GLMeshItem(vertexes=v, faces=f, vertexColors=c, smooth=True, shader="shaded",
-                             drawEdges=False, glOptions="translucent" if alpha < 1 else "opaque")
+        item = mesh_item(v, f, colors=c, smooth=True, shader="shaded", drawEdges=False,
+                         glOptions="translucent" if alpha < 1 else "opaque")
         self._add(group, item)
 
     def _add_molecule_lines(self, mol: MoleculeFields, group: str, carbon_color=None, alpha: float = 1.0,
@@ -273,28 +274,15 @@ class Viewer3D(QWidget):
             return element_color(s)
 
         if style == "sticks" and len(bonds):
-            verts, faces, cols = [], [], []
-            off = 0
-            cyl = MeshData.cylinder(rows=1, cols=8, radius=[radius, radius], length=1.0)
-            cv, cf = cyl.vertexes(), cyl.faces()
-            for a, b in bonds:
-                p1, p2 = coords[a], coords[b]
-                for start, end, sym in ((p1, 0.5 * (p1 + p2), symbols[a]),
-                                        (0.5 * (p1 + p2), p2, symbols[b])):
-                    d = end - start
-                    L = float(np.linalg.norm(d))
-                    if L < 1e-6:
-                        continue
-                    R = _rotation_to(d / L)
-                    v = (cv * np.array([1.0, 1.0, L])) @ R.T + start
-                    verts.append(v)
-                    faces.append(cf + off)
-                    cols.append(np.tile(np.array(col(sym) + (alpha,)), (len(cv), 1)))
-                    off += len(cv)
-            if verts:
-                item = gl.GLMeshItem(vertexes=np.concatenate(verts), faces=np.concatenate(faces),
-                                     vertexColors=np.concatenate(cols), smooth=True, shader="shaded",
-                                     glOptions="translucent" if alpha < 1 else "opaque")
+            # every bond is two half sticks, each in the colour of the atom it starts from, all
+            # drawn as copies of one cylinder (instanced drawing, plan item NT8)
+            p1, p2 = coords[bonds[:, 0]], coords[bonds[:, 1]]
+            mid = 0.5 * (p1 + p2)
+            cols = ([col(symbols[int(a)]) for a in bonds[:, 0]]
+                    + [col(symbols[int(b)]) for b in bonds[:, 1]])
+            item = sticks_item(np.vstack([p1, mid]), np.vstack([mid, p2]), radius, cols,
+                               alpha=alpha, glOptions="translucent" if alpha < 1 else "opaque")
+            if item is not None:
                 self._add(group, item)
             return
         pos, cols = [], []
@@ -406,8 +394,8 @@ class Viewer3D(QWidget):
         cols[pos, :3] = nu + (up - nu) * t[pos][:, None]
         cols[~pos, :3] = nu + (dn - nu) * (-t[~pos])[:, None]
         cols[:, 3] = alpha
-        item = gl.GLMeshItem(vertexes=v, faces=f, vertexColors=cols, smooth=True, shader="shaded",
-                             glOptions="translucent" if alpha < 1 else "opaque")
+        item = mesh_item(v, f, colors=cols, smooth=True, shader="shaded",
+                         glOptions="translucent" if alpha < 1 else "opaque")
         self._add(group, item)
 
     def add_labels(self, positions: np.ndarray, texts: Sequence[str], group: str,
@@ -434,23 +422,21 @@ class Viewer3D(QWidget):
 
     def add_spheres(self, centers: np.ndarray, radii: Sequence[float], colors, group: str,
                     alpha: float = 0.55) -> None:
-        sphere = MeshData.sphere(rows=10, cols=18, radius=1.0)
-        sv, sf = sphere.vertexes(), sphere.faces()
-        verts, faces, cols = [], [], []
-        off = 0
-        for xyz, r, c in zip(centers, radii, colors):
-            if r <= 1e-4:
-                continue
-            verts.append(sv * r + xyz)
-            faces.append(sf + off)
-            cols.append(np.tile(np.array(tuple(c[:3]) + (alpha,)), (len(sv), 1)))
-            off += len(sv)
-        if not verts:
+        """One sphere per centre, all drawn as copies of one sphere in one call.
+
+        This is the instanced drawing of plan item NT8: the graphics card holds one sphere and a
+        row of 16 numbers per copy, so ten thousand atoms cost ten thousand rows rather than ten
+        thousand meshes (:mod:`cmfqsar.gui.instanced`).  The sphere is coarser above two thousand
+        copies (``SPHERE_DETAIL``).  A sphere of radius 1e-4 A or less is left out.
+        """
+        centers = np.asarray(centers, float).reshape(-1, 3)
+        if not len(centers):
             return
-        item = gl.GLMeshItem(vertexes=np.concatenate(verts), faces=np.concatenate(faces),
-                             vertexColors=np.concatenate(cols), smooth=True, shader="shaded",
-                             glOptions="translucent")
-        self._add(group, item)
+        cols = np.array([tuple(c[:3]) for c in colors], float).reshape(-1, 3)
+        item = spheres_item(centers, radii, cols, alpha=alpha,
+                            glOptions="translucent" if alpha < 1 else "opaque")
+        if item is not None:
+            self._add(group, item)
 
     # -------------------------------------------------------------- arrows
     def add_arrows(self, points: np.ndarray, vectors: np.ndarray, group: str,
@@ -500,9 +486,9 @@ class Viewer3D(QWidget):
             off += len(nv)
         if not verts:
             return
-        item = gl.GLMeshItem(vertexes=np.concatenate(verts), faces=np.concatenate(faces),
-                             vertexColors=np.concatenate(cols), smooth=True, shader="shaded",
-                             glOptions="translucent" if alpha < 1 else "opaque")
+        item = mesh_item(np.concatenate(verts), np.concatenate(faces),
+                         colors=np.concatenate(cols), smooth=True, shader="shaded",
+                         glOptions="translucent" if alpha < 1 else "opaque")
         self._add(group, item)
 
     def add_polyhedra(self, verts: np.ndarray, faces: np.ndarray, group: str,
@@ -558,9 +544,8 @@ class Viewer3D(QWidget):
             item = gl.GLMeshItem(vertexes=verts, faces=faces, drawFaces=False, drawEdges=True,
                                  edgeColor=tuple(color[:3]) + (min(1.0, alpha + 0.3),), glOptions="translucent")
         else:
-            md = MeshData(vertexes=verts, faces=faces)
-            item = gl.GLMeshItem(meshdata=md, color=tuple(color[:3]) + (alpha,), smooth=True,
-                                 shader="shaded", drawEdges=False, glOptions="translucent")
+            item = mesh_item(verts, faces, color=tuple(color[:3]) + (alpha,), smooth=True,
+                             shader="shaded", drawEdges=False, glOptions="translucent")
         self._add(group, item)
 
     # --------------------------------------------------------------- misc

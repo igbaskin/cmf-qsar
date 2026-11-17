@@ -892,6 +892,17 @@ def registry() -> List[Benchmark]:
                   minutes="1",
                   report=lambda: _mod("run_surface_view").write_table(_r("surface_view")),
                   tables=["surface_view/table.md"]),
+        Benchmark("large_view",
+                  "a structure of ten thousand atoms on screen (plan item NT8): pyqtgraph's "
+                  "loop over the vertex normals against array operations, atoms and bonds "
+                  "drawn as one mesh against copies of one sphere or stick, whether the two "
+                  "give the same picture pixel by pixel, the crystal window on a particle and "
+                  "on a cell with its images as balls, and whether a second 3D view draws "
+                  "(the drawing part needs a screen; without one the stored part is kept)",
+                  "run_large_view.py", "large_view", compute=[[]],
+                  minutes="12",
+                  report=lambda: _mod("run_large_view").write_table(_r("large_view")),
+                  tables=["large_view/table.md"]),
         Benchmark("reciprocal",
                   "reciprocal-space channels of a crystal against the real-space "
                   "autocorrelation: the typed structure factors added to a short and a long "

@@ -1,0 +1,27 @@
+normals: the processor is 27 % busy
+  256 spheres: 41984 vertices, loop 0.28 s, arrays 0.015 s, largest angle 2.81e-02 degrees
+  2048 spheres: 335872 vertices, loop 2.50 s, arrays 0.135 s, largest angle 2.81e-02 degrees
+  4000 spheres: 656000 vertices, loop 4.69 s, arrays 0.312 s, largest angle 2.82e-02 degrees
+  isosurface of a 923-atom particle: 78360 vertices, loop 0.54 s, arrays 0.023 s, largest angle 3.12e-02 degrees
+draw: Intel(R) RaptorLake-S Mobile Graphics Controller, OpenGL 4.6.0 - Build 32.0.101.7088
+draw: the processor is 21 % busy
+particles
+  Pt icosahedron of 923 atoms, one mesh (before NT8): build 0.05 s, first frame 6.20 s, later frames 3.0 ms, 9.6 MB to the card (mesh)
+  Pt icosahedron of 923 atoms, copies of one sphere: build 0.00 s, first frame 0.00 s, later frames 3.5 ms, 0.1 MB to the card (instanced)
+  Pt icosahedron of 10179 atoms, one mesh (before NT8): build 0.62 s, first frame 67.37 s, later frames 7.3 ms, 106.4 MB to the card (mesh)
+  Pt icosahedron of 10179 atoms, copies of one sphere: build 0.01 s, first frame 0.01 s, later frames 10.1 ms, 0.7 MB to the card (instanced)
+  Pt icosahedron of 49049 atoms, copies of one sphere: build 0.09 s, first frame 0.02 s, later frames 16.8 ms, 3.1 MB to the card (instanced)
+sticks
+  graphene sheet, 9800 atoms, 14491 bonds, one mesh (before NT8): build 11.86 s, first frame 31.62 s, later frames 2.8 ms, 24.1 MB to the card (mesh)
+  graphene sheet, 9800 atoms, 14491 bonds, copies of one stick: build 0.05 s, first frame 0.01 s, later frames 3.7 ms, 1.9 MB to the card (instanced)
+  graphene sheet, 9800 atoms, 14491 bonds, lines: build 0.01 s, first frame 0.00 s, later frames 2.4 ms, 0.8 MB to the card (lines)
+the same picture
+  old against instanced: {'pair': 'old / instanced', 'drawn': 269498, 'differ_8': 2, 'isolated': 2, 'largest': 166, 'coverage': 0}
+  old against fallback: {'pair': 'old / fallback', 'drawn': 269498, 'differ_8': 3, 'isolated': 3, 'largest': 170, 'coverage': 0}
+  instanced against fallback: {'pair': 'instanced / fallback', 'drawn': 269498, 'differ_8': 1, 'isolated': 1, 'largest': 170, 'coverage': 0}
+windows
+  crystal window, a Pt particle of 10179 atoms as balls: to the first frame 0.11 s, later frames 12.7 ms, 327299 pixels drawn
+  crystal window, cod_1545083.cif (256 atoms) with its images to 14.9 A as dots: to the first frame 0.22 s, later frames 4.9 ms, 445844 pixels drawn
+  crystal window, cod_1545083.cif (256 atoms) with its images to 14.9 A as balls: to the first frame 0.19 s, later frames 10.8 ms, 1817669 pixels drawn
+  two views, contexts shared: pixels drawn [28835, 28835], drawing errors 0
+  two views, contexts separate: pixels drawn [28835, 0], drawing errors 2

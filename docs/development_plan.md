@@ -4257,6 +4257,24 @@ tests whether the target is reproducible between sources before any kernel is co
   **What is left of the item** is the first clause: instanced drawing for ten thousand atoms. The
   images are still drawn as points and the spheres are still one mesh per call, so a particle of
   that size is the open part.
+  **Done 17 November 2026.** `cmfqsar/gui/instanced.py`: one sphere or one cylinder on the
+  graphics card and 16 numbers per atom or half bond, drawn with `glDrawElementsInstanced`; a
+  card without OpenGL 3.3 gets the merged mesh built by the item itself. Measured first
+  (`benchmarks/run_large_view.py`): the cost of the old drawing was not the drawing but
+  pyqtgraph's Python loop over the vertex normals before the first frame, 4.69 s for 4,000
+  spheres, which `instanced.vertex_normals` does in 312 ms and which every other mesh of the
+  view now skips. On Intel(R) RaptorLake-S Mobile Graphics Controller: first frame of a 10,179-atom particle 67.37 s before (9 s
+  to 124 s over seven runs, as other jobs shared the machine),
+  11 ms now, 106 MB against 0.7 MB sent to the card; 49,049 atoms turn at
+  16.8 ms a frame; graphene with 14,491 bonds as sticks 31.62 s before (after
+  11.86 s to build), 5 ms now. The pictures cover the same pixels, and at most
+  3 of 269,498 pixels differ by more than 8 levels. The crystal window draws the images as
+  balls if asked, keeps sticks up to 50,000 bonds (was 4,000) and centres a particle on its
+  atoms. **Found on the way:** a second 3D view drew none of its meshes, because pyqtgraph's
+  shader programs were compiled in the first view's OpenGL context; `app.py` now shares the
+  contexts, and the benchmark shows 0 pixels without and the full picture with. The `cell_view`
+  table's drawing times were taken without a screen and so never contained the first frame; the
+  manual says so now.
 * **NT9. The co-pattern as a plot.** The invariant kernels have no co-field. `top_channels` returns
   the ranked channels; the Results panel needs a chart of weight against distance for the chosen
   pair of field types, and the viewer needs site colouring by contribution (NT7). Three days.
@@ -9633,7 +9651,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 16 | 15 | M16 |
-| H. Nanotechnology | 12 | 8 | NT8 (partly), NT10, NT11, NT12 |
+| H. Nanotechnology | 12 | 9 | NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 13 | 7 | BT8, BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
@@ -9645,7 +9663,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**178 items: 131 finished, 10 partly, 37 open.**
+**178 items: 132 finished, 9 partly, 37 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -9659,17 +9677,16 @@ equally blocked.
   EC9's. The search is written up in `docs/public_3dqsar_datasets.md`. MC3 was on this list
   until 13 November 2026, when its series of enantiomers measured in one assay was built
   from ChEMBL.
-* **Waiting for the application.** G5, NT8 and NT11 are what is left of this block: the
+* **Waiting for the application.** G5 and NT11 are what is left of this block: the
   particle side of the window, where a structure that is neither a molecule nor a cell needs a
-  data model of its own (NT1, built 16 November 2026), and the model panel and command line that would offer it. Two of
-  NT8's three parts are already done (the cell outline with its images, and the bonds with the
-  metal rule); what it still asks for is instanced drawing for ten thousand atoms. Neither
-  needs a new measurement. Three of the six are done. M13 closed the crystal side on
+  data model of its own (NT1, built 16 November 2026), and the model panel and command line that
+  would offer it. Neither needs a new measurement. NT8 was finished on 17 November 2026 with
+  instanced drawing for ten thousand atoms. Four of the six are done. M13 closed the crystal side on
   6 November 2026; **EC10 and NT9 closed the surface side and the reading on the same day** --
   the slab behind the molecules, the surface frame with its two numbers, the vector co-field as
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
-  G5, NT8 and NT11 extend.
+  G5 and NT11 extend.
 * **Open on their own merits.** SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were

@@ -1,0 +1,178 @@
+{
+ "renderer": {
+  "renderer": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+  "version": "4.6.0 - Build 32.0.101.7088"
+ },
+ "view": [
+  900,
+  700
+ ],
+ "busy_percent": 20.6,
+ "particles": [
+  {
+   "what": "Pt icosahedron of 923 atoms",
+   "how": "one mesh (before NT8)",
+   "atoms": 923,
+   "build_s": 0.05022380000445992,
+   "first_frame_s": 6.195830299984664,
+   "frame_ms": 2.9685500194318593,
+   "card_mb": 9.643504,
+   "mode": "mesh"
+  },
+  {
+   "what": "Pt icosahedron of 923 atoms",
+   "how": "copies of one sphere",
+   "atoms": 923,
+   "build_s": 0.002849400043487549,
+   "first_frame_s": 0.004330400028266013,
+   "frame_ms": 3.543949977029115,
+   "card_mb": 0.066896,
+   "mode": "instanced"
+  },
+  {
+   "what": "Pt icosahedron of 10179 atoms",
+   "how": "one mesh (before NT8)",
+   "atoms": 10179,
+   "build_s": 0.6159116999479011,
+   "first_frame_s": 67.3702392000705,
+   "frame_ms": 7.27255002129823,
+   "card_mb": 106.350192,
+   "mode": "mesh"
+  },
+  {
+   "what": "Pt icosahedron of 10179 atoms",
+   "how": "copies of one sphere",
+   "atoms": 10179,
+   "build_s": 0.011957400012761354,
+   "first_frame_s": 0.010942299966700375,
+   "frame_ms": 10.149150039069355,
+   "card_mb": 0.656208,
+   "mode": "instanced"
+  },
+  {
+   "what": "Pt icosahedron of 49049 atoms",
+   "how": "copies of one sphere",
+   "atoms": 49049,
+   "build_s": 0.09304960002191365,
+   "first_frame_s": 0.02272919996175915,
+   "frame_ms": 16.817899944726378,
+   "card_mb": 3.141584,
+   "mode": "instanced"
+  }
+ ],
+ "sticks": [
+  {
+   "what": "graphene sheet, 9800 atoms, 14491 bonds",
+   "how": "one mesh (before NT8)",
+   "atoms": 9800,
+   "build_s": 11.86052240000572,
+   "first_frame_s": 31.61653550004121,
+   "frame_ms": 2.832000027410686,
+   "card_mb": 24.113024,
+   "mode": "mesh"
+  },
+  {
+   "what": "graphene sheet, 9800 atoms, 14491 bonds",
+   "how": "copies of one stick",
+   "atoms": 9800,
+   "build_s": 0.052926499978639185,
+   "first_frame_s": 0.005310600041411817,
+   "frame_ms": 3.6682000500150025,
+   "card_mb": 1.855424,
+   "mode": "instanced"
+  },
+  {
+   "what": "graphene sheet, 9800 atoms, 14491 bonds",
+   "how": "lines",
+   "atoms": 9800,
+   "build_s": 0.0050345000345259905,
+   "first_frame_s": 0.004128000000491738,
+   "frame_ms": 2.425000013317913,
+   "card_mb": 0.811496,
+   "mode": "lines"
+  }
+ ],
+ "same": {
+  "rows": [
+   {
+    "pair": "old / instanced",
+    "drawn": 269498,
+    "differ_8": 2,
+    "isolated": 2,
+    "largest": 166,
+    "coverage": 0
+   },
+   {
+    "pair": "old / fallback",
+    "drawn": 269498,
+    "differ_8": 3,
+    "isolated": 3,
+    "largest": 170,
+    "coverage": 0
+   },
+   {
+    "pair": "instanced / fallback",
+    "drawn": 269498,
+    "differ_8": 1,
+    "isolated": 1,
+    "largest": 170,
+    "coverage": 0
+   }
+  ],
+  "modes": {
+   "old": [
+    "mesh"
+   ],
+   "instanced": [
+    "instanced"
+   ],
+   "fallback": [
+    "merged"
+   ]
+  }
+ },
+ "windows": [
+  {
+   "what": "crystal window, a Pt particle of 10179 atoms as balls",
+   "atoms": 10179,
+   "first_frame_s": 0.10805140004958957,
+   "frame_ms": 12.747949978802353,
+   "drawn_pixels": 327299,
+   "legend": "Pt10179: 10179 atoms, cell 86.02 x 86.02 x 86.02 A, periodic in 0 directions (a red, b green, c blue)"
+  },
+  {
+   "what": "crystal window, cod_1545083.cif (256 atoms) with its images to 14.9 A as dots",
+   "atoms": 256,
+   "first_frame_s": 0.2179639000678435,
+   "frame_ms": 4.882300039753318,
+   "drawn_pixels": 445844,
+   "legend": "cod_1545083.cif: 256 atoms, cell 12.95 x 12.95 x 12.95 A, periodic in 3 directions (a red, b green, c blue)   |   6617 image atoms within 14.9 A of the cell (the radius on the control strip)"
+  },
+  {
+   "what": "crystal window, cod_1545083.cif (256 atoms) with its images to 14.9 A as balls",
+   "atoms": 256,
+   "first_frame_s": 0.19495829998049885,
+   "frame_ms": 10.809249943122268,
+   "drawn_pixels": 1817669,
+   "legend": "cod_1545083.cif: 256 atoms, cell 12.95 x 12.95 x 12.95 A, periodic in 3 directions (a red, b green, c blue)   |   6617 image atoms within 14.9 A of the cell (the radius on the control strip)"
+  }
+ ],
+ "two_viewers": [
+  {
+   "share": true,
+   "drawn": [
+    28835,
+    28835
+   ],
+   "drawing_errors": 0
+  },
+  {
+   "share": false,
+   "drawn": [
+    28835,
+    0
+   ],
+   "drawing_errors": 2
+  }
+ ]
+}

@@ -54,8 +54,6 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "SC5": ("partly", "the radii of EC7 are done; the frame convention and the data are left"),
     "M15": ("done", "both halves measured 7 November 2026: the row length on five series, "
                     "the weighted distance over the columns on three"),
-    "NT8": ("partly", "the cell outline came with M13 and the bonds on 7 November 2026; "
-                      "instanced drawing for ten thousand atoms is left"),
     "PBH1": ("done", "the title records it: done on COMPAS-1x"),
     "PBH2": ("done", "the title records it: replaced by a geometric field and calibrated"),
     "SP1": ("partly", "half (a), a calculated spectrum as the sample, built and measured "

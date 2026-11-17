@@ -1,0 +1,37 @@
+{
+ "rows": [
+  {
+   "mesh": "256 spheres",
+   "vertices": 41984,
+   "faces": 82944,
+   "loop_s": 0.2750852999743074,
+   "arrays_s": 0.01537759997881949,
+   "angle_max_deg": 0.028114999250032923
+  },
+  {
+   "mesh": "2048 spheres",
+   "vertices": 335872,
+   "faces": 663552,
+   "loop_s": 2.5021834999788553,
+   "arrays_s": 0.13523989997338504,
+   "angle_max_deg": 0.028114999250032923
+  },
+  {
+   "mesh": "4000 spheres",
+   "vertices": 656000,
+   "faces": 1296000,
+   "loop_s": 4.694522599922493,
+   "arrays_s": 0.31230820005293936,
+   "angle_max_deg": 0.028179920148978386
+  },
+  {
+   "mesh": "isosurface of a 923-atom particle",
+   "vertices": 78360,
+   "faces": 153028,
+   "loop_s": 0.5385699999751523,
+   "arrays_s": 0.023063600063323975,
+   "angle_max_deg": 0.031155654222629003
+  }
+ ],
+ "busy_percent": 27.0
+}

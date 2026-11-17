@@ -18,11 +18,16 @@ def main(argv=None):
 
     from PySide6.QtGui import QSurfaceFormat
     from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QTimer
+    from PySide6.QtCore import QCoreApplication, Qt, QTimer
 
     fmt = QSurfaceFormat()
     fmt.setSamples(4)
     QSurfaceFormat.setDefaultFormat(fmt)
+    # Every 3D view shares one set of OpenGL objects.  pyqtgraph compiles a shader program once
+    # and keeps it; without sharing, a program compiled for the view of the main window does not
+    # exist for the view of the crystal window, and that view draws none of its meshes (found in
+    # plan item NT8).  The attribute has to be set before the application is created.
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv[:1])
     app.setApplicationName("CMF 3D-QSAR")
     try:

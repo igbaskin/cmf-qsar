@@ -57,8 +57,10 @@ BOND_TOLERANCE = 0.45
 MAX_BOND = 2.4
 #: covalent radius used for an element no table knows, in angstrom
 DEFAULT_RADIUS = 0.77
-#: a drawing of more sticks than this is built from lines instead of cylinders
-MANY_BONDS = 4000
+#: a drawing of more sticks than this is built from lines instead of cylinders.  The sticks are
+#: copies of one cylinder (plan item NT8); 14,491 bonds turned at about 2 ms a frame on a laptop's
+#: built-in graphics (benchmarks/results/large_view), where the limit used to be 4,000
+MANY_BONDS = 50000
 #: the first coordination shell of a metal reaches this far times its shortest neighbour distance
 SHELL_RATIO = 1.30
 #: polyhedra drawn at most, so that a large cell does not spend a second on them

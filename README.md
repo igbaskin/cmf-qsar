@@ -1139,6 +1139,20 @@ larger than every training particle from 33.7 to 4.4 meV (shell counts: 13.8). O
 two metals they take the mixing energy from 11.2 to 4.6 meV per atom in random folds, but with a
 geometry held out a Gaussian kernel on neighbour counts is better (12.2 against 13.2).
 
+### Large structures on screen
+
+Plan item NT8 (`cmfqsar/gui/instanced.py`, `benchmarks/run_large_view.py`): the 3D view draws
+atoms and bonds as copies of one sphere or one stick, in one call to the graphics card
+(instanced drawing), and computes the normals of every other mesh with array operations instead
+of pyqtgraph's loop. On a laptop's built-in graphics, a particle of 10,179 atoms showed its first
+frame after 67.37 s (9 s to 124 s in seven runs on a machine that ran other jobs) and now
+after 11 ms; a particle of 49,049 atoms turns at
+16.8 ms a frame. The picture is the same pixel for pixel, apart from at most 3
+single pixels in 269,498. The crystal window can draw the periodic images as balls, keeps sticks
+up to 50,000 bonds, and centres a particle on its atoms. A bug found on the way: a second 3D
+view, such as the crystal window beside the main window, drew none of its meshes, because each
+view had its own OpenGL context; the application now shares them.
+
 ### Sites of a particle
 
 Plan item NT7 (`cmfqsar/sites.py`, `benchmarks/run_particle_sites.py`, `examples/particle_sites`):
