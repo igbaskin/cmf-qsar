@@ -19052,6 +19052,58 @@ So the gate of PP3 is not passed. A field model of a protein's own stability, me
 is worth less than the accessible area and a substitution table, and the rest of the protein
 section stops here unless a new description is found.
 
+**The energy of the built mutant (added 18 November 2026).** Plan item PP4 asked whether
+the force-field energy of a built mutant adds to these descriptions. The wild type of PP1 was
+completed but never minimised, while every mutant was minimised with its residue and the side
+chains around it free. So `cmfqsar.mutants.relax_wild_type` relaxes the wild type at each
+position in exactly the same way, and `cmfqsar.mutants.energy_terms` splits the energy of a
+structure into three parts: the terms of the residue alone, the terms of all other atoms, and
+the interaction between the two. Relaxing the wild type lowered its energy by 183 kJ/mol at the
+median site, so a mutant compared with the unrelaxed wild type would have counted that drop as
+part of the substitution. Five columns follow for each mutant, each the mutant minus the wild
+type at the same position (kJ/mol): the van der Waals, electrostatic and bonded parts of the
+interaction; the strain of the surroundings, whose atoms are the same in both structures; and
+the strain of the residue, its own energy minus the median of its residue type. The plain
+difference of the two total energies changes with the atoms of the residue, so it mostly names
+the substitution.
+
+`benchmarks/run_strain.py` uses the 657 substitutions at 174 positions that have built
+mutants (two draws of four per position). Every description is joined with the three
+substitution columns. Each energy description is offered as it is and on a logarithmic scale,
+and the inner folds choose. Stage 1 (`--compute`) takes about 7 minutes on eight processes;
+the measurement takes about 13 minutes (`benchmarks/results/strain/table.md`).
+
+| Description, joined with the three columns | q2, segments held out | q2, domains held out |
+|---|---:|---:|
+| one count | +0.428, +0.426 | +0.380, +0.408 |
+| solvent-accessible area | +0.479, +0.493 | +0.421, +0.455 |
+| field of the surroundings | +0.383, +0.399 | +0.284, +0.280 |
+| total energy difference | +0.201, +0.208 | +0.169, +0.170 |
+| energy terms | +0.305, +0.278 | +0.293, +0.291 |
+| one count and energy terms | +0.516, +0.488 | +0.494, +0.470 |
+| solvent-accessible area and energy terms | +0.503, +0.500 | +0.475, +0.469 |
+| field and energy terms | +0.440, +0.452 | +0.380, +0.397 |
+
+The two numbers in each cell are the two draws. The energy terms alone are worth less than a
+count, by 0.09 to 0.15, and every interval excludes zero. Of the five columns, the van der
+Waals part of the interaction correlates best with ddG (r -0.39 and -0.36). Added to a
+description, the energy behaves in two different ways:
+
+* it adds to the count, by +0.06 to +0.12 under every hold-out, with every interval excluding
+  zero; and to the field of the surroundings, by +0.05 to +0.12 with segments or domains held
+  out;
+* it adds almost nothing to the accessible area: +0.007 to +0.055, and only one of six
+  intervals excludes zero.
+
+The count joined with the energy is level with the accessible area (+0.037 and -0.005 with
+segments held out; the intervals contain zero in five of six cases). So the energy carries what
+the area has and the count lacks: how well the new side chain packs against the protein, which
+an atom count cannot say. A force-field energy completes a field model or a count, but where
+the accessible area is in the model, the energy adds nothing that the interval resolves. The
+evidence of `cmfqsar.mixing.drop_one`, computed on all samples rather than held out, gives the
+energy a log Bayes factor of +32 and +39 next to the area. It is a reminder that an in-sample
+evidence says a block is used, not that it predicts.
+
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And
 **holding out one position does not hold out its surroundings**, because the surroundings of

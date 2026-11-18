@@ -285,14 +285,45 @@ def build_mutant(wt_pdb: str, mutation: Mutation, chain: Optional[str] = None, p
     f.findMissingAtoms()
     f.addMissingAtoms()
     f.addMissingHydrogens(ph)
-    top, pos = f.topology, f.positions
+    return _relax_starts(f.topology, f.positions, chain, mutation.position, mutation.label,
+                         steps, tolerance, platform, shell, rotamers, threads)
+
+
+def relax_wild_type(wt_pdb: str, position: int, chain: Optional[str] = None, steps: int = 1000,
+                    tolerance: float = 1.0, platform: str = "CPU", shell: float = 6.0,
+                    threads: int = 1) -> Structure:
+    """The wild type relaxed exactly as a mutant at `position` is relaxed (plan item PP4).
+
+    :func:`prepare_wild_type` completes the wild type but does not minimise it, while every
+    mutant is minimised with its residue and the side chains around it free.  An energy of a
+    mutant minus that of the unrelaxed wild type would therefore mostly measure the relaxation.
+    This function frees the same atoms around the wild-type residue (:func:`_free_atoms`) and
+    minimises them with the same force field, tolerance and number of steps, starting from the
+    native side chain only.  The difference of the two structures is then the substitution.
+    """
+    app, unit, mm, _ = _openmm()
+    chain = chain or first_chain(wt_pdb)
+    pdb = app.PDBFile(wt_pdb)
+    found = [r for r in pdb.topology.residues() if r.chain.id == chain and r.id == str(position)]
+    if not found:
+        raise ValueError(f"residue {position} of chain {chain} is not in {wt_pdb}")
+    one = AA1.get(found[0].name, "X")
+    return _relax_starts(pdb.topology, pdb.positions, chain, int(position),
+                         f"{one}{position}{one}", steps, tolerance, platform, shell, 1, threads)
+
+
+def _relax_starts(top, pos, chain: str, position: int, label: str, steps: int, tolerance: float,
+                  platform: str, shell: float, rotamers: int, threads: int) -> Structure:
+    """Minimise the residue at `position` and the side chains around it from `rotamers`
+    starting turns of its first torsion, and keep the lowest energy that is a structure."""
+    app, unit, mm, _ = _openmm()
     system = _forcefield().createSystem(top, nonbondedMethod=app.NoCutoff, constraints=None)
-    free = set(_free_atoms(top, pos, unit, chain, mutation.position, shell))
+    free = set(_free_atoms(top, pos, unit, chain, position, shell))
     for atom in top.atoms():
         if atom.index not in free:
             system.setParticleMass(atom.index, 0.0)
     own = {a.name: a.index for a in top.atoms()
-           if a.residue.chain.id == chain and a.residue.id == str(mutation.position)}
+           if a.residue.chain.id == chain and a.residue.id == str(position)}
     side = [i for n, i in own.items() if n not in BACKBONE]
     # one thread per context: a build of several thousand mutants runs as several processes
     # side by side, and without this each of them takes a thread for every core, which makes
@@ -322,11 +353,116 @@ def build_mutant(wt_pdb: str, mutation: Mutation, chain: Optional[str] = None, p
             best = (e1, state.getPositions())
     del ctx
     if best is None:
-        raise ValueError(f"{mutation.label}: every one of the {len(turns)} starting turns of the "
+        raise ValueError(f"{label}: every one of the {len(turns)} starting turns of the "
                          f"side chain ended with two atoms on top of each other, so there is no "
                          f"structure to keep")
     text = _pdb_text(app, top, best[1])
-    return Structure(mutation.label, text, _charges_of(system, unit, mm), e0, best[0], collapsed)
+    return Structure(label, text, _charges_of(system, unit, mm), e0, best[0], collapsed)
+
+
+#: the force-field terms :func:`energy_terms` reports, in the order of its force groups
+ENERGY_KINDS = ("bond", "angle", "torsion", "van der Waals", "electrostatic")
+
+
+def _energy_by_kind(system, positions, keep: Optional[set], mm, unit) -> np.ndarray:
+    """The energy of each kind of term (kJ/mol) counting only terms whose atoms are all in
+    `keep` (every term when `keep` is None).  Terms that touch another atom are switched off,
+    not removed, so the system keeps its atoms and the positions need no change."""
+    import copy
+    system = copy.deepcopy(system)
+    inside = (lambda *atoms: True) if keep is None else (lambda *atoms: all(a in keep for a in atoms))
+    vdw_only = None
+    for force in list(system.getForces()):
+        name = type(force).__name__
+        if name == "CMMotionRemover":
+            continue
+        if name == "HarmonicBondForce":
+            force.setForceGroup(0)
+            for i in range(force.getNumBonds()):
+                a, b, r0, k = force.getBondParameters(i)
+                if not inside(a, b):
+                    force.setBondParameters(i, a, b, r0, 0.0)
+        elif name == "HarmonicAngleForce":
+            force.setForceGroup(1)
+            for i in range(force.getNumAngles()):
+                a, b, c, t0, k = force.getAngleParameters(i)
+                if not inside(a, b, c):
+                    force.setAngleParameters(i, a, b, c, t0, 0.0)
+        elif name == "PeriodicTorsionForce":
+            force.setForceGroup(2)
+            for i in range(force.getNumTorsions()):
+                a, b, c, d, n, ph, k = force.getTorsionParameters(i)
+                if not inside(a, b, c, d):
+                    force.setTorsionParameters(i, a, b, c, d, n, ph, 0.0)
+        elif name == "NonbondedForce":
+            for i in range(force.getNumParticles()):
+                if not inside(i):
+                    q, s, e = force.getParticleParameters(i)
+                    force.setParticleParameters(i, 0.0, s, 0.0)
+            for i in range(force.getNumExceptions()):
+                a, b, qq, s, e = force.getExceptionParameters(i)
+                if not inside(a, b):
+                    force.setExceptionParameters(i, a, b, 0.0, s, 0.0)
+            # a copy with every charge at zero gives the van der Waals part alone
+            vdw_only = copy.deepcopy(force)
+            for i in range(vdw_only.getNumParticles()):
+                q, s, e = vdw_only.getParticleParameters(i)
+                vdw_only.setParticleParameters(i, 0.0, s, e)
+            for i in range(vdw_only.getNumExceptions()):
+                a, b, qq, s, e = vdw_only.getExceptionParameters(i)
+                vdw_only.setExceptionParameters(i, a, b, 0.0, s, e)
+            force.setForceGroup(3)
+            vdw_only.setForceGroup(4)
+        else:
+            raise ValueError(f"energy_terms does not know how to split a {name}")
+    if vdw_only is not None:
+        system.addForce(vdw_only)
+    ctx = mm.Context(system, mm.VerletIntegrator(0.001), mm.Platform.getPlatformByName("CPU"),
+                     {"Threads": "1"})
+    ctx.setPositions(positions)
+    e = [ctx.getState(getEnergy=True, groups={g}).getPotentialEnergy().value_in_unit(
+        unit.kilojoule_per_mole) for g in range(5)]
+    del ctx
+    nonbonded, vdw = e[3], e[4]
+    return np.array([e[0], e[1], e[2], vdw, nonbonded - vdw])
+
+
+def energy_terms(structure: Structure, position: int, chain: Optional[str] = None) -> dict:
+    """The force-field energy of a structure split by where it acts (plan item PP4).
+
+    Three parts, each split into the kinds of :data:`ENERGY_KINDS` (kJ/mol, Amber ff14SB in
+    vacuum with no cutoff, as the structures were relaxed):
+
+    * ``site``: the terms among the atoms of the residue at `position` only;
+    * ``surroundings``: the terms among all other atoms only;
+    * ``interaction``: the rest, which is every term with atoms on both sides, including the
+      bonds, angles and torsions that join the residue to its neighbours in the chain.
+
+    The surroundings have the same atoms in a mutant and in the wild type, so their difference
+    is the strain the substitution leaves in the protein around it.  The interaction is the
+    quantity a substitution changes directly.  The site has different atoms in the two, so its
+    difference mixes the residue's own composition with its strain.  ``total`` is the sum of
+    everything and ``residue`` the force-field name of the residue (HID, HIE and HIP are
+    different residues to it).
+    """
+    app, unit, mm, _ = _openmm()
+    pdb = app.PDBFile(io.StringIO(structure.pdb_block))
+    top = pdb.topology
+    chain = chain or next(iter(top.chains())).id
+    residues = [r for r in top.residues() if r.chain.id == chain and r.id == str(position)]
+    if not residues:
+        raise ValueError(f"residue {position} of chain {chain} is not in {structure.name}")
+    site = {a.index for a in residues[0].atoms()}
+    rest = {a.index for a in top.atoms()} - site
+    system = _forcefield().createSystem(top, nonbondedMethod=app.NoCutoff, constraints=None)
+    full = _energy_by_kind(system, pdb.positions, None, mm, unit)
+    own = _energy_by_kind(system, pdb.positions, site, mm, unit)
+    around = _energy_by_kind(system, pdb.positions, rest, mm, unit)
+    parts = {"site": own, "surroundings": around, "interaction": full - own - around}
+    out = {p: {k: float(v[i]) for i, k in enumerate(ENERGY_KINDS)} for p, v in parts.items()}
+    out["total"] = float(full.sum())
+    out["residue"] = residues[0].name
+    return out
 
 
 #: the shortest distance two atoms may have, in angstrom.  A bond from carbon to hydrogen is

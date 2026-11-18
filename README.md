@@ -1149,6 +1149,16 @@ residue is the best description: q2 +0.522 against +0.450 for the count with seg
 chain held out, and the margin over every field description excludes zero. Keeping the size of
 a field in the kernel instead of dividing it out does not close the gap.
 
+### The energy of a point mutant
+
+Plan item PP4 (`cmfqsar/mutants.py`, `benchmarks/run_strain.py`): `relax_wild_type` relaxes
+the wild type at a position in the same way a mutant there is relaxed, and `energy_terms`
+splits a force-field energy into the residue, its surroundings and the interaction between
+them. On 657 substitutions at 174 positions, the change of these energies adds +0.06 to
++0.12 in q2 to a count of the atoms around the site, and to the field of the surroundings,
+but almost nothing to the solvent-accessible area. A count joined with the energy is level
+with the area.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle

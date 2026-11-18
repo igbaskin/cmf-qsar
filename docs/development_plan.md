@@ -9170,6 +9170,22 @@ correlation of its whole kernel with the target before any accuracy is measured.
   which is the honest way to ask whether a field model competes with a force field or completes
   it. The energy is already stored on every structure `build_mutant` writes, so the item costs a
   fit and no new data.
+
+  **Done 18 November 2026.** The last sentence above was wrong: the wild type was completed
+  but never minimised, so it had no energy to compare with. `relax_wild_type` relaxes it at
+  each of the 174 positions with built mutants exactly as a mutant there is relaxed (relaxation
+  lowers its energy by 183 kJ/mol at the median site), and `energy_terms` splits every energy
+  into the residue, its surroundings and their interaction (`benchmarks/run_strain.py`, about
+  20 minutes). On 657 substitutions, two draws, every description joined with the three
+  substitution columns, with segments held out: the energy terms alone reach q2 +0.305 and
+  +0.278, below one count (+0.428, +0.426). Joined with the count they reach +0.516 and +0.488,
+  a gain of +0.06 to +0.12 under every hold-out with every interval excluding zero; joined with
+  the field of the surroundings they gain +0.05 to +0.12 with segments or domains held out.
+  Joined with the accessible area (+0.479, +0.493) they gain +0.007 to +0.055, and only one
+  interval of six excludes zero. The count with the energy is level with the area. So a
+  force-field energy completes a field model or a count, and carries about what the accessible
+  area carries; next to the area it adds nothing the interval resolves. The plain difference of
+  the total energies (+0.201, +0.208) is mostly a label of the substitution, as expected.
 * **PP5. The co-field around a generic residue.** PP1 builds the frame in which every position of
   every domain is one sample, so the co-field solver gives a map of what a site wants: where
   volume helps, where a charge hurts, where a donor is worth having. The item is the readout, the
@@ -9817,10 +9833,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
-| H. Protein physics | 6 | 2 | PP2, PP4, PP5, PP6 |
+| H. Protein physics | 6 | 3 | PP2, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 138 finished, 8 partly, 33 open.**
+**179 items: 139 finished, 8 partly, 32 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

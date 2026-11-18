@@ -1459,6 +1459,19 @@ def registry() -> List[Benchmark]:
                   minutes="75",
                   report=lambda: _mod("run_site_fields").write_table(_r("site_fields")),
                   tables=["site_fields/table.md"]),
+        Benchmark("strain",
+                  "the strain a point mutation leaves (plan item PP4): the force-field energy "
+                  "of every built mutant against the wild type relaxed in the same way at the "
+                  "same position, split into the residue, its surroundings and their "
+                  "interaction, as a description of the site next to one count of atoms, the "
+                  "solvent-accessible area and the field of the surroundings (the structures "
+                  "are those of the mutants benchmark, in benchmarks/cache)",
+                  "run_strain.py", "strain", compute=[["--compute"]],
+                  prepare=["../examples/make_mutant_examples.py --build",
+                           "run_mutants.py --prepare"],
+                  minutes="20",        # measured: 6.5 for stage 1, 13 for stage 2
+                  report=lambda: _mod("run_strain").write_table(_r("strain")),
+                  tables=["strain/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

@@ -1,0 +1,1043 @@
+{
+ "wild_type_sites": 174,
+ "mutants": 2436,
+ "repeats": 3,
+ "log_scale": 4.184,
+ "residue_references": {
+  "VAL": 26.68,
+  "PRO": 95.82,
+  "SER": 97.13,
+  "ASN": -179.78,
+  "GLU": 179.48,
+  "GLN": -115.73,
+  "ILE": 105.11,
+  "LYS": 275.85,
+  "LEU": 14.84,
+  "GLY": 80.88,
+  "ALA": 101.0,
+  "HIS": 164.49,
+  "ASP": 156.36,
+  "PHE": 115.82,
+  "TRP": 154.68,
+  "THR": 17.35,
+  "ARG": -422.43,
+  "TYR": 50.07,
+  "MET": 104.6,
+  "CYS": 125.78
+ },
+ "relaxation_of_the_wild_type": {
+  "sites": 174,
+  "median": 182.8,
+  "5th percentile": 32.2,
+  "95th percentile": 486.1
+ },
+ "draws": {
+  "0": {
+   "n": 657,
+   "missing": 0,
+   "positions": 174,
+   "sd_y": 1.2331,
+   "correlation_with_ddG": {
+    "interaction, van der Waals": {
+     "pearson": -0.392,
+     "spearman": -0.296,
+     "median": 0.34,
+     "spread": [
+      -25.2,
+      38.6
+     ]
+    },
+    "interaction, electrostatic": {
+     "pearson": -0.041,
+     "spearman": -0.066,
+     "median": -3.63,
+     "spread": [
+      -778.6,
+      681.1
+     ]
+    },
+    "interaction, bonded": {
+     "pearson": -0.251,
+     "spearman": -0.157,
+     "median": 0.26,
+     "spread": [
+      -17.6,
+      29.4
+     ]
+    },
+    "strain of the surroundings": {
+     "pearson": -0.056,
+     "spearman": -0.146,
+     "median": -0.03,
+     "spread": [
+      -143.3,
+      107.3
+     ]
+    },
+    "strain of the residue": {
+     "pearson": -0.12,
+     "spearman": -0.19,
+     "median": 3.31,
+     "spread": [
+      -19.9,
+      33.7
+     ]
+    },
+    "total energy difference": {
+     "pearson": -0.084,
+     "spearman": -0.098,
+     "median": 6.73,
+     "spread": [
+      -831.8,
+      784.0
+     ]
+    }
+   },
+   "evidence": {
+    "accessible area": 119.59,
+    "energy terms": 31.95
+   },
+   "holdout": {
+    "segment": {
+     "rows": {
+      "mean": {
+       "q2": -0.0149,
+       "sd": 0.0058,
+       "rmse": 1.2423,
+       "mae": 0.9843,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.1927,
+       "sd": 0.0099,
+       "rmse": 1.108,
+       "mae": 0.8431,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "one count": {
+       "q2": 0.428,
+       "sd": 0.0071,
+       "rmse": 0.9326,
+       "mae": 0.6888,
+       "chosen": {
+        "count": 30
+       }
+      },
+      "accessible area": {
+       "q2": 0.4788,
+       "sd": 0.0083,
+       "rmse": 0.8903,
+       "mae": 0.6498,
+       "chosen": {
+        "area": 30
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.3831,
+       "sd": 0.0033,
+       "rmse": 0.9686,
+       "mae": 0.7517,
+       "chosen": {
+        "field, weight 0.5": 27,
+        "field, weight 0.25": 3
+       }
+      },
+      "total energy difference": {
+       "q2": 0.2012,
+       "sd": 0.0014,
+       "rmse": 1.1021,
+       "mae": 0.838,
+       "chosen": {
+        "total, log scale": 27,
+        "total, as it is": 3
+       }
+      },
+      "energy terms": {
+       "q2": 0.3055,
+       "sd": 0.0059,
+       "rmse": 1.0277,
+       "mae": 0.7672,
+       "chosen": {
+        "energy, log scale": 28,
+        "energy, as it is": 2
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.5157,
+       "sd": 0.0069,
+       "rmse": 0.8582,
+       "mae": 0.6484,
+       "chosen": {
+        "log scale": 30
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.5033,
+       "sd": 0.0056,
+       "rmse": 0.8691,
+       "mae": 0.6544,
+       "chosen": {
+        "log scale": 30
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.4396,
+       "sd": 0.0109,
+       "rmse": 0.9232,
+       "mae": 0.7132,
+       "chosen": {
+        "field, weight 0.5, energy, as it is": 17,
+        "field, weight 0.5, energy, log scale": 13
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.1226,
+       -0.2181,
+       -0.0311
+      ],
+      "energy terms - accessible area": [
+       -0.1733,
+       -0.2519,
+       -0.109
+      ],
+      "energy terms - total energy difference": [
+       0.1043,
+       -0.0046,
+       0.1838
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0245,
+       -0.016,
+       0.0636
+      ],
+      "one count and energy terms - one count": [
+       0.0876,
+       0.032,
+       0.1423
+      ],
+      "one count and energy terms - accessible area": [
+       0.0369,
+       -0.0222,
+       0.0898
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.0565,
+       0.0029,
+       0.1085
+      ],
+      "accessible area - one count": [
+       0.0507,
+       -0.0037,
+       0.1027
+      ],
+      "field of the surroundings - one count": [
+       -0.0449,
+       -0.1649,
+       0.0628
+      ]
+     },
+     "n_groups": 23,
+     "folds": 10
+    },
+    "domain": {
+     "rows": {
+      "mean": {
+       "q2": -0.0257,
+       "sd": 0.0,
+       "rmse": 1.2489,
+       "mae": 0.9962,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.188,
+       "sd": 0.0,
+       "rmse": 1.1112,
+       "mae": 0.8526,
+       "chosen": {
+        "columns": 12
+       }
+      },
+      "one count": {
+       "q2": 0.3795,
+       "sd": 0.0,
+       "rmse": 0.9713,
+       "mae": 0.7383,
+       "chosen": {
+        "count": 12
+       }
+      },
+      "accessible area": {
+       "q2": 0.4206,
+       "sd": 0.0,
+       "rmse": 0.9387,
+       "mae": 0.6979,
+       "chosen": {
+        "area": 12
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.2838,
+       "sd": 0.0,
+       "rmse": 1.0436,
+       "mae": 0.7945,
+       "chosen": {
+        "field, weight 0.5": 12
+       }
+      },
+      "total energy difference": {
+       "q2": 0.1691,
+       "sd": 0.0,
+       "rmse": 1.124,
+       "mae": 0.8893,
+       "chosen": {
+        "total, as it is": 6,
+        "total, log scale": 6
+       }
+      },
+      "energy terms": {
+       "q2": 0.2926,
+       "sd": 0.0,
+       "rmse": 1.0372,
+       "mae": 0.7902,
+       "chosen": {
+        "energy, log scale": 12
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.4942,
+       "sd": 0.0,
+       "rmse": 0.877,
+       "mae": 0.663,
+       "chosen": {
+        "log scale": 12
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.4754,
+       "sd": 0.0,
+       "rmse": 0.8932,
+       "mae": 0.6707,
+       "chosen": {
+        "log scale": 12
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.3795,
+       "sd": 0.0,
+       "rmse": 0.9714,
+       "mae": 0.746,
+       "chosen": {
+        "field, weight 0.5, energy, log scale": 12
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.087,
+       -0.1907,
+       -0.0407
+      ],
+      "energy terms - accessible area": [
+       -0.128,
+       -0.2091,
+       -0.0929
+      ],
+      "energy terms - total energy difference": [
+       0.1234,
+       0.0611,
+       0.2524
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0548,
+       0.034,
+       0.066
+      ],
+      "one count and energy terms - one count": [
+       0.1147,
+       0.0642,
+       0.1571
+      ],
+      "one count and energy terms - accessible area": [
+       0.0736,
+       0.0458,
+       0.0966
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.0957,
+       0.0385,
+       0.1505
+      ],
+      "accessible area - one count": [
+       0.041,
+       0.0146,
+       0.0624
+      ],
+      "field of the surroundings - one count": [
+       -0.0957,
+       -0.18,
+       -0.054
+      ]
+     },
+     "n_groups": 4,
+     "folds": 4
+    },
+    "position": {
+     "rows": {
+      "mean": {
+       "q2": -0.0098,
+       "sd": 0.0019,
+       "rmse": 1.2392,
+       "mae": 0.9825,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.1971,
+       "sd": 0.0134,
+       "rmse": 1.105,
+       "mae": 0.8399,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "one count": {
+       "q2": 0.4415,
+       "sd": 0.0091,
+       "rmse": 0.9216,
+       "mae": 0.6732,
+       "chosen": {
+        "count": 30
+       }
+      },
+      "accessible area": {
+       "q2": 0.496,
+       "sd": 0.0173,
+       "rmse": 0.8755,
+       "mae": 0.6382,
+       "chosen": {
+        "area": 30
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.4217,
+       "sd": 0.0111,
+       "rmse": 0.9378,
+       "mae": 0.7254,
+       "chosen": {
+        "field, weight 0.5": 26,
+        "field, weight 0.25": 4
+       }
+      },
+      "total energy difference": {
+       "q2": 0.2198,
+       "sd": 0.0022,
+       "rmse": 1.0893,
+       "mae": 0.823,
+       "chosen": {
+        "total, log scale": 28,
+        "total, as it is": 2
+       }
+      },
+      "energy terms": {
+       "q2": 0.3193,
+       "sd": 0.002,
+       "rmse": 1.0174,
+       "mae": 0.7538,
+       "chosen": {
+        "energy, log scale": 28,
+        "energy, as it is": 2
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.5335,
+       "sd": 0.0064,
+       "rmse": 0.8423,
+       "mae": 0.6323,
+       "chosen": {
+        "log scale": 30
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.513,
+       "sd": 0.004,
+       "rmse": 0.8605,
+       "mae": 0.6483,
+       "chosen": {
+        "log scale": 30
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.457,
+       "sd": 0.0237,
+       "rmse": 0.9087,
+       "mae": 0.6967,
+       "chosen": {
+        "field, weight 0.5, energy, log scale": 12,
+        "field, weight 0.5, energy, as it is": 18
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.1222,
+       -0.234,
+       -0.0092
+      ],
+      "energy terms - accessible area": [
+       -0.1767,
+       -0.2664,
+       -0.0921
+      ],
+      "energy terms - total energy difference": [
+       0.0995,
+       0.028,
+       0.1652
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0171,
+       -0.0361,
+       0.069
+      ],
+      "one count and energy terms - one count": [
+       0.092,
+       0.0242,
+       0.1673
+      ],
+      "one count and energy terms - accessible area": [
+       0.0375,
+       -0.0185,
+       0.0949
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.0353,
+       -0.0241,
+       0.0946
+      ],
+      "accessible area - one count": [
+       0.0545,
+       -0.0076,
+       0.1177
+      ],
+      "field of the surroundings - one count": [
+       -0.0198,
+       -0.1485,
+       0.1078
+      ]
+     },
+     "n_groups": 174,
+     "folds": 10
+    }
+   }
+  },
+  "1": {
+   "n": 657,
+   "missing": 0,
+   "positions": 174,
+   "sd_y": 1.2344,
+   "correlation_with_ddG": {
+    "interaction, van der Waals": {
+     "pearson": -0.36,
+     "spearman": -0.284,
+     "median": -1.12,
+     "spread": [
+      -26.8,
+      39.3
+     ]
+    },
+    "interaction, electrostatic": {
+     "pearson": -0.041,
+     "spearman": -0.078,
+     "median": -1.46,
+     "spread": [
+      -613.2,
+      693.1
+     ]
+    },
+    "interaction, bonded": {
+     "pearson": -0.225,
+     "spearman": -0.12,
+     "median": 0.29,
+     "spread": [
+      -18.4,
+      26.7
+     ]
+    },
+    "strain of the surroundings": {
+     "pearson": -0.058,
+     "spearman": -0.154,
+     "median": -0.19,
+     "spread": [
+      -143.4,
+      89.8
+     ]
+    },
+    "strain of the residue": {
+     "pearson": -0.1,
+     "spearman": -0.184,
+     "median": 3.73,
+     "spread": [
+      -16.9,
+      32.2
+     ]
+    },
+    "total energy difference": {
+     "pearson": -0.074,
+     "spearman": -0.1,
+     "median": 6.47,
+     "spread": [
+      -687.8,
+      773.5
+     ]
+    }
+   },
+   "evidence": {
+    "accessible area": 132.09,
+    "energy terms": 38.82
+   },
+   "holdout": {
+    "segment": {
+     "rows": {
+      "mean": {
+       "q2": -0.0134,
+       "sd": 0.005,
+       "rmse": 1.2427,
+       "mae": 1.0018,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.1965,
+       "sd": 0.0089,
+       "rmse": 1.1065,
+       "mae": 0.8686,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "one count": {
+       "q2": 0.4262,
+       "sd": 0.0064,
+       "rmse": 0.9351,
+       "mae": 0.7094,
+       "chosen": {
+        "count": 30
+       }
+      },
+      "accessible area": {
+       "q2": 0.4929,
+       "sd": 0.0028,
+       "rmse": 0.879,
+       "mae": 0.6611,
+       "chosen": {
+        "area": 30
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.3989,
+       "sd": 0.0043,
+       "rmse": 0.9571,
+       "mae": 0.7492,
+       "chosen": {
+        "field, weight 0.5": 28,
+        "field, weight 0.25": 2
+       }
+      },
+      "total energy difference": {
+       "q2": 0.2085,
+       "sd": 0.0039,
+       "rmse": 1.0982,
+       "mae": 0.8554,
+       "chosen": {
+        "total, log scale": 30
+       }
+      },
+      "energy terms": {
+       "q2": 0.278,
+       "sd": 0.0042,
+       "rmse": 1.0489,
+       "mae": 0.8074,
+       "chosen": {
+        "energy, log scale": 18,
+        "energy, as it is": 12
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.4876,
+       "sd": 0.0031,
+       "rmse": 0.8837,
+       "mae": 0.6785,
+       "chosen": {
+        "log scale": 28,
+        "as it is": 2
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.5003,
+       "sd": 0.0064,
+       "rmse": 0.8726,
+       "mae": 0.6713,
+       "chosen": {
+        "log scale": 27,
+        "as it is": 3
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.4522,
+       "sd": 0.0096,
+       "rmse": 0.9137,
+       "mae": 0.7083,
+       "chosen": {
+        "field, weight 0.5, energy, log scale": 13,
+        "field, weight 0.5, energy, as it is": 17
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.1482,
+       -0.25,
+       -0.0604
+      ],
+      "energy terms - accessible area": [
+       -0.215,
+       -0.3014,
+       -0.1452
+      ],
+      "energy terms - total energy difference": [
+       0.0695,
+       0.0096,
+       0.1199
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0074,
+       -0.0254,
+       0.0404
+      ],
+      "one count and energy terms - one count": [
+       0.0614,
+       0.0184,
+       0.1068
+      ],
+      "one count and energy terms - accessible area": [
+       -0.0053,
+       -0.0625,
+       0.0451
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.0533,
+       0.0176,
+       0.09
+      ],
+      "accessible area - one count": [
+       0.0667,
+       0.0105,
+       0.1287
+      ],
+      "field of the surroundings - one count": [
+       -0.0273,
+       -0.1173,
+       0.05
+      ]
+     },
+     "n_groups": 23,
+     "folds": 10
+    },
+    "domain": {
+     "rows": {
+      "mean": {
+       "q2": -0.0221,
+       "sd": 0.0,
+       "rmse": 1.248,
+       "mae": 1.0138,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.186,
+       "sd": 0.0,
+       "rmse": 1.1137,
+       "mae": 0.8835,
+       "chosen": {
+        "columns": 12
+       }
+      },
+      "one count": {
+       "q2": 0.408,
+       "sd": 0.0,
+       "rmse": 0.9498,
+       "mae": 0.7295,
+       "chosen": {
+        "count": 12
+       }
+      },
+      "accessible area": {
+       "q2": 0.4547,
+       "sd": 0.0,
+       "rmse": 0.9116,
+       "mae": 0.6858,
+       "chosen": {
+        "area": 12
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.2795,
+       "sd": 0.0,
+       "rmse": 1.0478,
+       "mae": 0.8179,
+       "chosen": {
+        "field, weight 0.25": 3,
+        "field, weight 0.5": 9
+       }
+      },
+      "total energy difference": {
+       "q2": 0.1698,
+       "sd": 0.0,
+       "rmse": 1.1248,
+       "mae": 0.9025,
+       "chosen": {
+        "total, as it is": 6,
+        "total, log scale": 6
+       }
+      },
+      "energy terms": {
+       "q2": 0.2907,
+       "sd": 0.0,
+       "rmse": 1.0397,
+       "mae": 0.8015,
+       "chosen": {
+        "energy, log scale": 12
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.4704,
+       "sd": 0.0,
+       "rmse": 0.8984,
+       "mae": 0.6929,
+       "chosen": {
+        "log scale": 12
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.469,
+       "sd": 0.0,
+       "rmse": 0.8995,
+       "mae": 0.6933,
+       "chosen": {
+        "log scale": 12
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.3968,
+       "sd": 0.0,
+       "rmse": 0.9587,
+       "mae": 0.7426,
+       "chosen": {
+        "field, weight 0.5, energy, as it is": 3,
+        "field, weight 0.5, energy, log scale": 9
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.1173,
+       -0.2517,
+       -0.0734
+      ],
+      "energy terms - accessible area": [
+       -0.164,
+       -0.3153,
+       -0.1032
+      ],
+      "energy terms - total energy difference": [
+       0.1209,
+       0.0595,
+       0.2341
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0143,
+       -0.0388,
+       0.0441
+      ],
+      "one count and energy terms - one count": [
+       0.0624,
+       0.0125,
+       0.0877
+      ],
+      "one count and energy terms - accessible area": [
+       0.0156,
+       -0.0308,
+       0.056
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.1173,
+       0.0253,
+       0.186
+      ],
+      "accessible area - one count": [
+       0.0468,
+       0.0228,
+       0.0843
+      ],
+      "field of the surroundings - one count": [
+       -0.1284,
+       -0.2122,
+       -0.0344
+      ]
+     },
+     "n_groups": 4,
+     "folds": 4
+    },
+    "position": {
+     "rows": {
+      "mean": {
+       "q2": -0.0112,
+       "sd": 0.0031,
+       "rmse": 1.2414,
+       "mae": 1.0012,
+       "chosen": {}
+      },
+      "three columns kernel": {
+       "q2": 0.1996,
+       "sd": 0.0095,
+       "rmse": 1.1044,
+       "mae": 0.8666,
+       "chosen": {
+        "columns": 30
+       }
+      },
+      "one count": {
+       "q2": 0.4264,
+       "sd": 0.002,
+       "rmse": 0.9349,
+       "mae": 0.7039,
+       "chosen": {
+        "count": 30
+       }
+      },
+      "accessible area": {
+       "q2": 0.4895,
+       "sd": 0.0083,
+       "rmse": 0.882,
+       "mae": 0.6618,
+       "chosen": {
+        "area": 30
+       }
+      },
+      "field of the surroundings": {
+       "q2": 0.4396,
+       "sd": 0.006,
+       "rmse": 0.9241,
+       "mae": 0.7227,
+       "chosen": {
+        "field, weight 0.5": 29,
+        "field, weight 0.25": 1
+       }
+      },
+      "total energy difference": {
+       "q2": 0.2104,
+       "sd": 0.0201,
+       "rmse": 1.0969,
+       "mae": 0.8534,
+       "chosen": {
+        "total, log scale": 28,
+        "total, as it is": 2
+       }
+      },
+      "energy terms": {
+       "q2": 0.2964,
+       "sd": 0.0194,
+       "rmse": 1.0355,
+       "mae": 0.7937,
+       "chosen": {
+        "energy, log scale": 19,
+        "energy, as it is": 11
+       }
+      },
+      "one count and energy terms": {
+       "q2": 0.5064,
+       "sd": 0.0097,
+       "rmse": 0.8672,
+       "mae": 0.6632,
+       "chosen": {
+        "log scale": 29,
+        "as it is": 1
+       }
+      },
+      "accessible area and energy terms": {
+       "q2": 0.5063,
+       "sd": 0.0211,
+       "rmse": 0.8673,
+       "mae": 0.6658,
+       "chosen": {
+        "log scale": 29,
+        "as it is": 1
+       }
+      },
+      "field and energy terms": {
+       "q2": 0.4657,
+       "sd": 0.0093,
+       "rmse": 0.9023,
+       "mae": 0.7005,
+       "chosen": {
+        "field, weight 0.5, energy, log scale": 10,
+        "field, weight 0.5, energy, as it is": 20
+       }
+      }
+     },
+     "differences": {
+      "energy terms - one count": [
+       -0.1301,
+       -0.2333,
+       -0.0308
+      ],
+      "energy terms - accessible area": [
+       -0.1931,
+       -0.2873,
+       -0.1139
+      ],
+      "energy terms - total energy difference": [
+       0.086,
+       0.0172,
+       0.1438
+      ],
+      "accessible area and energy terms - accessible area": [
+       0.0168,
+       -0.026,
+       0.06
+      ],
+      "one count and energy terms - one count": [
+       0.08,
+       0.0221,
+       0.1406
+      ],
+      "one count and energy terms - accessible area": [
+       0.0169,
+       -0.0465,
+       0.0779
+      ],
+      "field and energy terms - field of the surroundings": [
+       0.0261,
+       -0.023,
+       0.0773
+      ],
+      "accessible area - one count": [
+       0.0631,
+       0.0043,
+       0.1257
+      ],
+      "field of the surroundings - one count": [
+       0.0132,
+       -0.0958,
+       0.131
+      ]
+     },
+     "n_groups": 174,
+     "folds": 10
+    }
+   }
+  }
+ },
+ "seconds": 761.5,
+ "written": "2026-11-18 15:37:35"
+}
