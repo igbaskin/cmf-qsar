@@ -9255,7 +9255,41 @@ Open after PL1:
   and density of the Open Polymer Prediction set (computed by molecular dynamics, about 7,000
   labels) and gas permeabilities depend on how chains pack, which is closer to what a field
   describes. Gate: the field plus counts above the bond-count kernel plus counts by more than the
-  interval.
+  interval. **Done 18 November 2026; the gate is met on gas permeability with groups held out
+  and not on density.** The Open Polymer Prediction data need a Kaggle sign-in and the acceptance
+  of its rules, so two open sets stand in (`benchmarks/prepare_polymer_packing.py`,
+  `run_polymer_packing.py`): the density of 1,077 polymers from RadonPy PI1070 (molecular
+  dynamics, BSD 3-Clause, 20 classes) and the measured permeability to CH4, CO2, H2, N2 and O2
+  of 742 polymers (torch-molecule, MIT; 31 ladder polymers refused by the builder). Five random
+  folds and five folds of whole groups (classes; ECFP4 Butina clusters for permeability), ten
+  repeats each. Central unit plus counts minus bond-count kernel plus counts: on permeability
+  +0.059 to +0.084 with groups held out, every interval above zero; on random folds +0.039 to
+  +0.043 for CH4, N2 and O2, and +0.031 [-0.004, +0.068] for CO2 and +0.012 [-0.010, +0.034]
+  for H2. On density -0.009 [-0.030, +0.009] and +0.043 [-0.023, +0.134]. The whole trimer
+  plus counts is a little better (+0.08 to +0.12 with groups held out). ECFP4 is the best
+  permeability model, 0.03 to 0.10 ahead. The field widths settle at 0.005 A (0.0025 and
+  0.001 A were offered and lose). Details in the manual, *Density and gas permeability:
+  properties set by how chains pack*.
+* **PL5. What the field sees in a permeable polymer.** PL2 shows that the 3D distances add to
+  the graph on permeability, not what they carry. Candidates with one number each: the
+  end-to-end distance and the radius of gyration of the extended trimer per unit mass (chain
+  stiffness), and the bulk of the side groups. Test each as a fourth kernel beside the counts,
+  as the count references of the other items were tested, before reading the co-pattern.
+  **Done 18 November 2026; one graph number accounts for the margin**
+  (`benchmarks/run_polymer_permeability.py`). Five candidates were added as columns of the
+  counts: span and radius of gyration per mass, side-chain fraction, largest side group and van
+  der Waals volume per mass. With the side-chain fraction or the largest side group, the margin
+  of central unit plus counts over the reference falls to -0.015 to +0.007 on random folds and
+  -0.086 to -0.007 with clusters held out, on every gas. With all five the reference is ahead
+  on N2 and O2 with clusters held out, within 0.02 of ECFP4 on three gases. The field cut to distances below
+  3 Å keeps the whole margin (+0.025 to +0.042 random, +0.058 to +0.098 clusters); the full
+  field adds -0.015 to +0.017 to it, and the part from 3 Å on is no better than the reference.
+  The margin comes from near neighbours typed by exact distance, not from packing, so the
+  co-pattern was not read. Details in the manual, *What the field sees in a permeable
+  polymer*.
+* **PL6. Ladder polymers.** A repeat unit with four attachment points (the polymers of intrinsic
+  microporosity) needs a builder that joins two strands; PL2 had to leave out 31 of them, the
+  most permeable class.
 * **PL3. The periodic chain against the trimer.** Item M1 computes the field of a chain per
   repeat length, but needs a cell with the right repeat distance. A builder that takes it from
   the extended trimer would make the comparison possible.

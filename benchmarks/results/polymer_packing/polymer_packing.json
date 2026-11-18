@@ -1,0 +1,3247 @@
+{
+ "built": 1725,
+ "cluster_distance": 0.6,
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0,
+  100.0
+ ],
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "not_embedded": {
+  "u0043": "ValueError: ETKDG could not embed the oligomer",
+  "u0229": "ValueError: ETKDG could not embed the oligomer",
+  "u0232": "ValueError: ETKDG could not embed the oligomer",
+  "u1261": "ValueError: ETKDG could not embed the oligomer",
+  "u1277": "ValueError: ETKDG could not embed the oligomer",
+  "u1303": "ValueError: ETKDG could not embed the oligomer",
+  "u1386": "ValueError: ETKDG could not embed the oligomer",
+  "u1532": "ValueError: ETKDG could not embed the oligomer",
+  "u1533": "ValueError: ETKDG could not embed the oligomer"
+ },
+ "repeats": 10,
+ "seconds": 831.0,
+ "sigmas": [
+  0.001,
+  0.0025,
+  0.005,
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "targets": {
+  "CH4": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06452302772438447,
+     "lo": 0.012971230308360697,
+     "mean": 0.039150573172005876,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1034047502806564,
+     "lo": 0.016591515486443578,
+     "mean": 0.05875259955775225,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07281058916485385,
+     "lo": 0.01931972965328099,
+     "mean": 0.04624918341779871,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.12566580932496013,
+     "lo": 0.0335959811783514,
+     "mean": 0.07802099611253988,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.08628289171647138,
+     "lo": 0.013441673910473196,
+     "mean": 0.047114183716475466,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.16205695433942674,
+     "lo": -0.05472471828376423,
+     "mean": 0.02628816220233865,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.12539698011063105,
+     "lo": 0.06053177880829361,
+     "mean": 0.09061272296608025,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.1854939173348464,
+     "lo": 0.05494877248909552,
+     "mean": 0.10121280240594999,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.044764637349009116,
+     "lo": -0.09445350868250012,
+     "mean": -0.06840353702646695,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.05307400644110198,
+     "lo": -0.21910747685189463,
+     "mean": -0.09898050570178829,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.0013477939284027036,
+     "lo": -0.029175827579710455,
+     "mean": -0.013674247987185417,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": -0.001484422472891378,
+     "lo": -0.03994885166148401,
+     "mean": -0.020834562862251604,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 102,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 37,
+       "Tanimoto, ridge 0.1": 13
+      },
+      "q2_by_repeat": [
+       0.6339244156044059,
+       0.6476317459712708,
+       0.6588570997097756,
+       0.6966826370911947,
+       0.6525236835957025,
+       0.6861395393685684,
+       0.6793551446161139,
+       0.6904195586632959,
+       0.6935762335019828,
+       0.6495307563484514
+      ],
+      "q2_mean": 0.6688640814470762,
+      "q2_range": 0.06275822148678878,
+      "rmse_mean": 0.8133889795069218
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 32,
+       "Tanimoto, ridge 0.1": 18
+      },
+      "q2_by_repeat": [
+       0.8541939441473283,
+       0.8568217221218172,
+       0.8525978784161705,
+       0.8492997750925771,
+       0.8478336575221868,
+       0.8612053008546063,
+       0.8536521053711387,
+       0.8676548438360285,
+       0.856218105145149,
+       0.8623372105829086
+      ],
+      "q2_mean": 0.8561814543089911,
+      "q2_range": 0.019821186313841777,
+      "rmse_mean": 0.5362217850408892
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 34,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.4070980053263461,
+       0.4571534630125035,
+       0.454946423342514,
+       0.44774819967227264,
+       0.4758946943588134,
+       0.5165934497819202,
+       0.4824108630304632,
+       0.5119908127762687,
+       0.5498223981395978,
+       0.4937788209745302
+      ],
+      "q2_mean": 0.4797437130415229,
+      "q2_range": 0.14272439281325167,
+      "rmse_mean": 1.0193739590142727
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 49,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7567842031696184,
+       0.7293812680580143,
+       0.7535664699963638,
+       0.7226024019784961,
+       0.7510179764069174,
+       0.7587123110744285,
+       0.7453468802701809,
+       0.7550269433203067,
+       0.7431347192087222,
+       0.7493023862551382
+      ],
+      "q2_mean": 0.7464875559738187,
+      "q2_range": 0.03610990909593237,
+      "rmse_mean": 0.7119008756564477
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 1,
+       "up to 20 bonds, ridge 0.1": 1,
+       "up to 4 bonds, ridge 0.1": 2,
+       "up to 6 bonds, ridge 0.1": 3,
+       "up to 8 bonds, ridge 0.1": 43
+      },
+      "q2_by_repeat": [
+       0.39310014730148535,
+       0.4569645760153892,
+       0.4305826574106669,
+       0.4098646671956151,
+       0.458360058166706,
+       0.44023370023278097,
+       0.4115218806942367,
+       0.4149906150097371,
+       0.4876017574325425,
+       0.4139192557531517
+      ],
+      "q2_mean": 0.43171393152123116,
+      "q2_range": 0.09450161013105718,
+      "rmse_mean": 1.0658130578532081
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, ridge 0.1": 50
+      },
+      "q2_by_repeat": [
+       0.6777675491380444,
+       0.6583746497058353,
+       0.6642548099897794,
+       0.6617223280792524,
+       0.6607268659727485,
+       0.6711370201722473,
+       0.6570947616521174,
+       0.6624281294433438,
+       0.6630349452157445,
+       0.6645457239935123
+      ],
+      "q2_mean": 0.6641086783362626,
+      "q2_range": 0.020672787485926936,
+      "rmse_mean": 0.819613052765433
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.0001": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.0001": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 34,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.0001": 3,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 2
+      },
+      "q2_by_repeat": [
+       0.4837318121342299,
+       0.5429906546472684,
+       0.5161815718414426,
+       0.5508025884355026,
+       0.5578301059162211,
+       0.5894450398941415,
+       0.5669772550596874,
+       0.5867981246698601,
+       0.6083119069030163,
+       0.5656948320062966
+      ],
+      "q2_mean": 0.5568763891507666,
+      "q2_range": 0.1245800947687864,
+      "rmse_mean": 0.9407247065717982
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 31,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.1": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1
+      },
+      "q2_by_repeat": [
+       0.788008026803092,
+       0.7870581049872803,
+       0.780581870571967,
+       0.7841731934772922,
+       0.7839074920633913,
+       0.7874505764254647,
+       0.793262706893133,
+       0.7899219090208109,
+       0.7887641290794558,
+       0.7928806865367903
+      ],
+      "q2_mean": 0.7876008695858678,
+      "q2_range": 0.012680836321166011,
+      "rmse_mean": 0.6517563917125202
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 2,
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 41,
+       "width 1, ridge 0.1": 5
+      },
+      "q2_by_repeat": [
+       0.3380354556951777,
+       0.4271878426148179,
+       0.45081377101536935,
+       0.4504222822017361,
+       0.4150497268785023,
+       0.47599523622424267,
+       0.43974669326669946,
+       0.4732702408322347,
+       0.47836948564258264,
+       0.45208035144447545
+      ],
+      "q2_mean": 0.4400971085815838,
+      "q2_range": 0.14033402994740496,
+      "rmse_mean": 1.0576155005037482
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 48,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7014822050860196,
+       0.6967584157694062,
+       0.696397429666556,
+       0.6692309103344927,
+       0.700111156632512,
+       0.6945884756440519,
+       0.6970583417343936,
+       0.7051841734630677,
+       0.6872776426062279,
+       0.6929223994478251
+      ],
+      "q2_mean": 0.6941011150384553,
+      "q2_range": 0.03595326312857505,
+      "rmse_mean": 0.782102825718296
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 40,
+       "sigma 0.005, ridge 1e-08": 10
+      },
+      "q2_by_repeat": [
+       0.40441318342299126,
+       0.4839348730729828,
+       0.4095539275942037,
+       0.4834706447469024,
+       0.48545122540649,
+       0.5059817206217254,
+       0.49228582065479576,
+       0.49042186190088655,
+       0.5207007202206873,
+       0.4741846215110076
+      ],
+      "q2_mean": 0.4750398599152672,
+      "q2_range": 0.11628753679769599,
+      "rmse_mean": 1.0240922577966811
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 0.0001": 2,
+       "sigma 0.0025, ridge 1e-08": 1,
+       "sigma 0.005, ridge 0.0001": 30,
+       "sigma 0.005, ridge 0.01": 2,
+       "sigma 0.005, ridge 1e-08": 15
+      },
+      "q2_by_repeat": [
+       0.7145197387480021,
+       0.7136792561955319,
+       0.7023783517603592,
+       0.7110778305930228,
+       0.7059296598924449,
+       0.7149083554977118,
+       0.7014902523748705,
+       0.7124348882111042,
+       0.7053103780124726,
+       0.7198133068185553
+      ],
+      "q2_mean": 0.7101542018104074,
+      "q2_range": 0.01832305444368476,
+      "rmse_mean": 0.7613566567196202
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 0.0001": 12,
+       "sigma 0.0025, ridge 1e-08": 2,
+       "sigma 0.005, ridge 0.0001": 28,
+       "sigma 0.005, ridge 1e-08": 8
+      },
+      "q2_by_repeat": [
+       0.4247371198608205,
+       0.504921103837138,
+       0.42185955075602455,
+       0.5110789926184119,
+       0.5021715942433731,
+       0.5158406071010426,
+       0.5185252507158532,
+       0.5016462378622213,
+       0.5435382337213941,
+       0.4968211163616105
+      ],
+      "q2_mean": 0.49411398070778895,
+      "q2_range": 0.12167868296536954,
+      "rmse_mean": 1.0052264816150962
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 0.0001": 20,
+       "sigma 0.0025, ridge 1e-08": 9,
+       "sigma 0.005, ridge 0.0001": 12,
+       "sigma 0.005, ridge 0.001": 1,
+       "sigma 0.005, ridge 0.01": 3,
+       "sigma 0.005, ridge 1e-08": 5
+      },
+      "q2_by_repeat": [
+       0.7208348722218706,
+       0.7232470440020173,
+       0.7202007129304695,
+       0.7201526902546211,
+       0.7204514187087631,
+       0.7310174364640474,
+       0.7194868414686653,
+       0.7303430002779105,
+       0.7173875703823056,
+       0.732677408322804
+      ],
+      "q2_mean": 0.7235798995033474,
+      "q2_range": 0.01528983794049843,
+      "rmse_mean": 0.7435168021047653
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, width 0.25, h 0.3, ridge 0.0001": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 0.0001": 11,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.0001": 2,
+       "sigma 0.005, width 0.25, h 1, ridge 0.0001": 1,
+       "sigma 0.005, width 0.5, h 0.3, ridge 0.0001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 21,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.0001": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1
+      },
+      "q2_by_repeat": [
+       0.4952588629368183,
+       0.5639825693345085,
+       0.5126340450337055,
+       0.5788497248379394,
+       0.5677674289040493,
+       0.6146183850429618,
+       0.5939816133482861,
+       0.607452449326298,
+       0.6256131536152957,
+       0.5875602838601383
+      ],
+      "q2_mean": 0.5747718516240001,
+      "q2_range": 0.13035429067847737,
+      "rmse_mean": 0.9212275294240715
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 1, ridge 0.0001": 20,
+       "sigma 0.0025, width 0.5, h 1, ridge 0.01": 3,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 12,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 0.1": 4,
+       "sigma 0.005, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7904764860672819,
+       0.7953631737912743,
+       0.7883590879055641,
+       0.7829508253032823,
+       0.7903330958518835,
+       0.8012753634280887,
+       0.7992625663454949,
+       0.7987774409726407,
+       0.7965167930685214,
+       0.8020299806080236
+      ],
+      "q2_mean": 0.7945344813342056,
+      "q2_range": 0.019079155304741247,
+      "rmse_mean": 0.6409886532065123
+     }
+    }
+   },
+   "polymers": 600,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 0.1790703333333333,
+    "sd": 1.4142493057755252
+   }
+  },
+  "CO2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0677543524766557,
+     "lo": -0.004151701111732375,
+     "mean": 0.03134933536753326,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13413310144675825,
+     "lo": 0.030864488252491704,
+     "mean": 0.08340159058218921,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06859559671391742,
+     "lo": -0.0030376942119182543,
+     "mean": 0.031196683248267854,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.15186723488998682,
+     "lo": 0.04432012112334054,
+     "mean": 0.10088030119223834,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.11502682060724788,
+     "lo": 0.016497370205703733,
+     "mean": 0.06511615159797668,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.2122175174355505,
+     "lo": 0.019605787672067568,
+     "mean": 0.0954027295450578,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.20106210983155548,
+     "lo": 0.11840913769645518,
+     "mean": 0.1587496451819781,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.2472165504298922,
+     "lo": 0.1201777465900199,
+     "mean": 0.16969426988048786,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.06967054377143758,
+     "lo": -0.1370971903125927,
+     "mean": -0.10224632895201302,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.0200271895847605,
+     "lo": -0.1424113499757747,
+     "mean": -0.06797840062745797,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": -0.0012391649548706529,
+     "lo": -0.04588907260952255,
+     "mean": -0.022168610315252968,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.00036260683362300555,
+     "lo": -0.07854966232280107,
+     "mean": -0.041848375885806144,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 116,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.6140769967509957,
+       0.6238659278712482,
+       0.5566053584442927,
+       0.6265067736280616,
+       0.5831275951065216,
+       0.6229460992121936,
+       0.6116079564204154,
+       0.6270961037400626,
+       0.6052117079028316,
+       0.6121203378230196
+      ],
+      "q2_mean": 0.6083164856899642,
+      "q2_range": 0.07049074529576993,
+      "rmse_mean": 0.7297133983633189
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.7979960678705926,
+       0.792718312867599,
+       0.7719633356111586,
+       0.7929667325220793,
+       0.7973949917113861,
+       0.8022539753329971,
+       0.7895806363843288,
+       0.8154185796504052,
+       0.7964473575987636,
+       0.7896712986530301
+      ],
+      "q2_mean": 0.794641128820234,
+      "q2_range": 0.04345524403924661,
+      "rmse_mean": 0.5283924600084026
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 20,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 5,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 5
+      },
+      "q2_by_repeat": [
+       0.3243109705074231,
+       0.5092689855117114,
+       0.3913696416703921,
+       0.4170373659182909,
+       0.3778807278997385,
+       0.40457829345646557,
+       0.3905565661204424,
+       0.4326730171941945,
+       0.37961588890244846,
+       0.41931572787352667
+      ],
+      "q2_mean": 0.40466071850546337,
+      "q2_range": 0.18495801500428832,
+      "rmse_mean": 0.8992911963972066
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 24,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.6321803949755664,
+       0.6363410313314228,
+       0.6026534502876326,
+       0.6393070021139591,
+       0.6215029231399734,
+       0.6305066519723341,
+       0.6551907725071509,
+       0.6336877101686309,
+       0.6443878923432609,
+       0.6447892951317438
+      ],
+      "q2_mean": 0.6340547123971675,
+      "q2_range": 0.052537322219518234,
+      "rmse_mean": 0.7054603747338766
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 32,
+       "up to 20 bonds, ridge 0.1": 8,
+       "up to 6 bonds, ridge 0.01": 2,
+       "up to 6 bonds, ridge 0.1": 1,
+       "up to 8 bonds, ridge 0.1": 7
+      },
+      "q2_by_repeat": [
+       0.17903377326900816,
+       0.3579932496396846,
+       0.22865962556502117,
+       0.33885996085317505,
+       0.25725001982917295,
+       0.30949045215329984,
+       0.2888946542363202,
+       0.2556288733469577,
+       0.23858195002000082,
+       0.28933460107773623
+      ],
+      "q2_mean": 0.2743727159990377,
+      "q2_range": 0.17895947637067644,
+      "rmse_mean": 0.9929520500275583
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 39,
+       "up to 6 bonds, ridge 0.01": 1,
+       "up to 6 bonds, ridge 0.1": 1,
+       "up to 8 bonds, ridge 0.1": 9
+      },
+      "q2_by_repeat": [
+       0.5442652927519332,
+       0.5351648683969168,
+       0.48551468507025874,
+       0.5293264519548029,
+       0.5178386634454192,
+       0.5351882196600048,
+       0.5510491938913593,
+       0.5314879586275272,
+       0.5298770419457659,
+       0.5178202389849462
+      ],
+      "q2_mean": 0.5277532614728935,
+      "q2_range": 0.06553450882110057,
+      "rmse_mean": 0.8014078285167319
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 15,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 2,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 6,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 4,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 3,
+       "sigma 0.01, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.001": 3,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.5514156347759731,
+       0.5888527712529047,
+       0.49059344906413427,
+       0.5068972830868546,
+       0.5182565873048776,
+       0.5015154732157947,
+       0.49387025746621527,
+       0.5265496608289757,
+       0.49495195298300765,
+       0.5317234181233303
+      ],
+      "q2_mean": 0.5204626488102068,
+      "q2_range": 0.09825932218877043,
+      "rmse_mean": 0.8073082812846367
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 13,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 4,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 0.3, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 3,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 8,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.6865778023868658,
+       0.6894245859952028,
+       0.6772454189187778,
+       0.6867328366017262,
+       0.6513508355710363,
+       0.6652613170494721,
+       0.6857664453401877,
+       0.6846173046332966,
+       0.7044538631488777,
+       0.6740118816955454
+      ],
+      "q2_mean": 0.6805442291340988,
+      "q2_range": 0.053103027577841355,
+      "rmse_mean": 0.6590885303607287
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 3,
+       "width 0.25, ridge 1": 25,
+       "width 0.5, ridge 0.1": 5,
+       "width 0.5, ridge 1": 6,
+       "width 1, ridge 0.1": 11
+      },
+      "q2_by_repeat": [
+       0.3758851126920931,
+       0.3862813315698779,
+       0.36321539510628864,
+       0.31551769474142133,
+       0.317970416279332,
+       0.3566810223925718,
+       0.2894436451185982,
+       0.3311068470753875,
+       0.298725604497588,
+       0.3613724514966904
+      ],
+      "q2_mean": 0.3396199520969849,
+      "q2_range": 0.09683768645127966,
+      "rmse_mean": 0.9475673917999885
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 1": 29,
+       "width 0.5, ridge 0.1": 3,
+       "width 0.5, ridge 1": 14,
+       "width 1, ridge 0.1": 4
+      },
+      "q2_by_repeat": [
+       0.504020567483989,
+       0.545556397381655,
+       0.5041023239597712,
+       0.5503406794895077,
+       0.481945334631215,
+       0.5147595624006287,
+       0.5293384185778814,
+       0.5313213199925715,
+       0.531446154634212,
+       0.514529618739978
+      ],
+      "q2_mean": 0.5207360377291409,
+      "q2_range": 0.06839534485829268,
+      "rmse_mean": 0.80729815743691
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 23,
+       "sigma 0.005, ridge 1e-08": 3,
+       "sigma 0.01, ridge 0.001": 15,
+       "sigma 0.01, ridge 0.01": 4,
+       "sigma 0.01, ridge 0.1": 1,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.02, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.4240378154174711,
+       0.44487871965447556,
+       0.36874039807459735,
+       0.387486066162142,
+       0.4086635785631113,
+       0.42102040722974443,
+       0.4068492880291946,
+       0.39929254925300195,
+       0.3606038369450054,
+       0.46373609194762344
+      ],
+      "q2_mean": 0.4085308751276367,
+      "q2_range": 0.10313225500261802,
+      "rmse_mean": 0.8967301892602224
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 22,
+       "sigma 0.005, ridge 1e-08": 9,
+       "sigma 0.01, ridge 0.001": 10,
+       "sigma 0.01, ridge 0.01": 4,
+       "sigma 0.01, ridge 0.1": 2,
+       "sigma 0.02, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.6083512210026885,
+       0.6072434573090932,
+       0.6024611037815729,
+       0.6048456642626436,
+       0.5763967253079938,
+       0.5771330852710057,
+       0.6013619761207727,
+       0.6044751070399212,
+       0.6257773783287348,
+       0.6110280606709626
+      ],
+      "q2_mean": 0.601907377909539,
+      "q2_range": 0.04938065302074102,
+      "rmse_mean": 0.7358055218949485
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 13,
+       "sigma 0.01, ridge 0.001": 29,
+       "sigma 0.01, ridge 0.01": 5,
+       "sigma 0.01, ridge 1e-08": 2,
+       "sigma 0.02, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.4776837390868144,
+       0.4794815623643156,
+       0.4107205753365898,
+       0.4433016937904384,
+       0.4520718315410567,
+       0.4508607212320612,
+       0.4366032724889224,
+       0.4472331935753715,
+       0.41414117344911383,
+       0.48477153350099034
+      ],
+      "q2_mean": 0.44968692963656737,
+      "q2_range": 0.07405095816440055,
+      "rmse_mean": 0.865043691162558
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 15,
+       "sigma 0.005, ridge 1e-08": 7,
+       "sigma 0.01, ridge 0.001": 20,
+       "sigma 0.01, ridge 0.01": 7,
+       "sigma 0.01, ridge 1e-08": 1
+      },
+      "q2_by_repeat": [
+       0.6205196882528772,
+       0.6245478174220123,
+       0.6235257513118061,
+       0.6239220921168281,
+       0.5953523434075596,
+       0.610398723861528,
+       0.6317184217292522,
+       0.6327507793804181,
+       0.6518949753444887,
+       0.6324474063115826
+      ],
+      "q2_mean": 0.6247077999138353,
+      "q2_range": 0.0565426319369291,
+      "rmse_mean": 0.7144089841886091
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 7,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 3,
+       "sigma 0.005, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 18,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 5,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.001": 6,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.5680794212809279,
+       0.5828190993876082,
+       0.5130486067924283,
+       0.5378774861140294,
+       0.5343349633541662,
+       0.5212539703019949,
+       0.5214971976560592,
+       0.533723876198495,
+       0.5266233207444666,
+       0.5464041906836916
+      ],
+      "q2_mean": 0.5385662132513868,
+      "q2_range": 0.06977049259517998,
+      "rmse_mean": 0.7921018426168447
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 10,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 0.3, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 0.3, ridge 1e-08": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.01, width 0.25, h 0.1, ridge 0.001": 2,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 11,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 2,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 5,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 3,
+       "sigma 0.01, width 1, h 1, ridge 0.001": 2,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 1
+      },
+      "q2_by_repeat": [
+       0.666445718935432,
+       0.6917916027506525,
+       0.6791860439254392,
+       0.6895999936414827,
+       0.6525288479152151,
+       0.6660811361560401,
+       0.6801706491558149,
+       0.692606390224618,
+       0.707820245641369,
+       0.6780421417692684
+      ],
+      "q2_mean": 0.6804272770115333,
+      "q2_range": 0.05529139772615388,
+      "rmse_mean": 0.6591763382897633
+     }
+    }
+   },
+   "polymers": 674,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 1.3742563798219585,
+    "sd": 1.1663770162863374
+   }
+  },
+  "H2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03400731638522698,
+     "lo": -0.010041642074131524,
+     "mean": 0.011886166841354906,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1348686944670745,
+     "lo": 0.015161084390869698,
+     "mean": 0.07219419960349593,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.046286503798533496,
+     "lo": -0.004030485804965125,
+     "mean": 0.02107194444341587,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.19104444114697308,
+     "lo": 0.03132262919484781,
+     "mean": 0.10610946531118082,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.09179776384255049,
+     "lo": -0.003010340018597868,
+     "mean": 0.045897575085441567,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.22688504765397735,
+     "lo": -0.026647654584192992,
+     "mean": 0.056258301031889446,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.08914143556122478,
+     "lo": 0.03520265055790234,
+     "mean": 0.06017085432893521,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.2079349798632484,
+     "lo": 0.07050024366317366,
+     "mean": 0.10963214629575224,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.017428536624533357,
+     "lo": -0.08160226203868087,
+     "mean": -0.04922523920578736,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": 0.04671506464756558,
+     "lo": -0.17981002106817573,
+     "mean": -0.03967997259088418,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 3.5091072717024236e-05,
+     "lo": -0.042228734658842124,
+     "mean": -0.02084167140990445,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.02057462178522967,
+     "lo": -0.08842086480999756,
+     "mean": -0.04553006574086427,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 79,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.5840500489676936,
+       0.584244455429888,
+       0.3294858245934852,
+       0.5648307091885503,
+       0.5537367840335309,
+       0.5516808146689247,
+       0.5838518467390064,
+       0.5595775692283851,
+       0.5314575379750064,
+       0.5988717509686472
+      ],
+      "q2_mean": 0.5441787341793118,
+      "q2_range": 0.269385926375162,
+      "rmse_mean": 0.6460110600849256
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.001": 1,
+       "Tanimoto, ridge 0.01": 49
+      },
+      "q2_by_repeat": [
+       0.8127277576209213,
+       0.8235189140654875,
+       0.829831709146844,
+       0.8207686978750395,
+       0.8333577142082054,
+       0.8206629246057642,
+       0.8228227256232465,
+       0.8259709615063522,
+       0.8265106108445497,
+       0.8296112695410772
+      ],
+      "q2_mean": 0.8245783285037487,
+      "q2_range": 0.02062995658728406,
+      "rmse_mean": 0.40184151906728555
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.125, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4
+      },
+      "q2_by_repeat": [
+       0.40328080008906164,
+       0.39454028933465946,
+       0.17621553317191108,
+       0.38602887044976397,
+       0.369166129090456,
+       0.4514970832816818,
+       0.4498660728610514,
+       0.3938181027060208,
+       0.451610015809665,
+       0.5081063574198277
+      ],
+      "q2_mean": 0.3984129254214099,
+      "q2_range": 0.3318908242479166,
+      "rmse_mean": 0.7425773845070529
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 28,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.753282348756682,
+       0.7394556701423359,
+       0.761918823802009,
+       0.7547223207852114,
+       0.757876082035616,
+       0.7257516181916053,
+       0.7537919776876745,
+       0.7504861269744562,
+       0.7638999856456536,
+       0.7304144463165028
+      ],
+      "q2_mean": 0.7491599400337746,
+      "q2_range": 0.03814836745404837,
+      "rmse_mean": 0.4804375757457865
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 19,
+       "up to 20 bonds, ridge 0.1": 2,
+       "up to 6 bonds, ridge 0.01": 2,
+       "up to 6 bonds, ridge 0.1": 2,
+       "up to 8 bonds, ridge 0.01": 4,
+       "up to 8 bonds, ridge 0.1": 21
+      },
+      "q2_by_repeat": [
+       0.2646634369298738,
+       0.30063684854622175,
+       0.07805313503508493,
+       0.15939794180931632,
+       0.1938050965318412,
+       0.29757121664147557,
+       0.3330753359928257,
+       0.30968837895086,
+       0.2637799645332778,
+       0.39383894750558246
+      ],
+      "q2_mean": 0.25945103024763594,
+      "q2_range": 0.31578581247049753,
+      "rmse_mean": 0.8243411691144619
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 19,
+       "up to 6 bonds, ridge 0.01": 1,
+       "up to 8 bonds, ridge 0.01": 2,
+       "up to 8 bonds, ridge 0.1": 28
+      },
+      "q2_by_repeat": [
+       0.6168395955491948,
+       0.582215786076183,
+       0.629584365089604,
+       0.6544457007666163,
+       0.6498598801996149,
+       0.5878271933121446,
+       0.6319214667854928,
+       0.6200308329754146,
+       0.6272184637633831,
+       0.5458638362753916
+      ],
+      "q2_mean": 0.6145807120793041,
+      "q2_range": 0.10858186449122476,
+      "rmse_mean": 0.5952200226208915
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.125, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 22,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 9,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.001": 1
+      },
+      "q2_by_repeat": [
+       0.5053829187286116,
+       0.5117150127331171,
+       0.3532839655112362,
+       0.5028134883445292,
+       0.48901350410780153,
+       0.5145890920333378,
+       0.5193625923227814,
+       0.50059791240805,
+       0.4835782167618826,
+       0.5791112670173664
+      ],
+      "q2_mean": 0.49594479699687144,
+      "q2_range": 0.22582730150613017,
+      "rmse_mean": 0.68034589103383
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 25,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 18,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 3,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.0001": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1
+      },
+      "q2_by_repeat": [
+       0.7631234436743488,
+       0.7553695542459222,
+       0.7894422738490445,
+       0.7794457969098866,
+       0.7785680441500122,
+       0.7687392658099735,
+       0.7751726553135203,
+       0.7657777803874901,
+       0.780785455630787,
+       0.7613293882563935
+      ],
+      "q2_mean": 0.7717753658227379,
+      "q2_range": 0.0340727196031223,
+      "rmse_mean": 0.45829323567333147
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.125, ridge 0.1": 1,
+       "width 0.25, ridge 0.1": 37,
+       "width 0.5, ridge 0.1": 12
+      },
+      "q2_by_repeat": [
+       0.3465847747614461,
+       0.3488297840799274,
+       0.26704610895657277,
+       0.39778657305289356,
+       0.3221783354871963,
+       0.40389825444898364,
+       0.3792679477845955,
+       0.37087483697931545,
+       0.43962386769898465,
+       0.47416684644776974
+      ],
+      "q2_mean": 0.37502573296976854,
+      "q2_range": 0.20712073749119697,
+      "rmse_mean": 0.7578126419417355
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 47,
+       "width 0.5, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.6833574264595643,
+       0.6910202613210048,
+       0.7143629075976077,
+       0.7040599391013711,
+       0.6936934320881674,
+       0.6876679631666507,
+       0.7055035327943151,
+       0.6901364728726203,
+       0.715090671630609,
+       0.7083575978222607
+      ],
+      "q2_mean": 0.6993250204854171,
+      "q2_range": 0.0317332451710447,
+      "rmse_mean": 0.5260710234863547
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 32,
+       "sigma 0.005, ridge 1e-08": 5,
+       "sigma 0.01, ridge 0.0001": 8,
+       "sigma 0.01, ridge 1e-08": 5
+      },
+      "q2_by_repeat": [
+       0.4007836965978999,
+       0.42056827704163013,
+       0.23712586876878683,
+       0.38093404051379653,
+       0.3929890769979417,
+       0.37002207351258076,
+       0.38673277622707425,
+       0.40059274081614515,
+       0.3471492696965286,
+       0.4468379391273123
+      ],
+      "q2_mean": 0.3783735759299696,
+      "q2_range": 0.20971207035852546,
+      "rmse_mean": 0.7558774801074912
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 26,
+       "sigma 0.005, ridge 1e-08": 18,
+       "sigma 0.01, ridge 0.0001": 4,
+       "sigma 0.01, ridge 1e-08": 2
+      },
+      "q2_by_repeat": [
+       0.6646699896520099,
+       0.669581234425288,
+       0.6868012250739985,
+       0.6883744730964508,
+       0.6890494493720782,
+       0.6909903355948123,
+       0.681149936132271,
+       0.6862305324463199,
+       0.6796927427807768,
+       0.6844258138098965
+      ],
+      "q2_mean": 0.6820965732383902,
+      "q2_range": 0.026320345942802414,
+      "rmse_mean": 0.5409774501644187
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 25,
+       "sigma 0.005, ridge 1e-08": 2,
+       "sigma 0.01, ridge 0.0001": 15,
+       "sigma 0.01, ridge 0.001": 1,
+       "sigma 0.01, ridge 1e-08": 7
+      },
+      "q2_by_repeat": [
+       0.44323454393407535,
+       0.43605845979060165,
+       0.311634480531381,
+       0.44157767785383817,
+       0.4332076385278203,
+       0.41704001297743665,
+       0.41710046167682524,
+       0.4586103822812203,
+       0.38511640810759407,
+       0.4676288845844353
+      ],
+      "q2_mean": 0.42112089502652283,
+      "q2_range": 0.15599440405305431,
+      "rmse_mean": 0.7295946463442151
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 22,
+       "sigma 0.005, ridge 1e-08": 15,
+       "sigma 0.01, ridge 0.0001": 8,
+       "sigma 0.01, ridge 0.001": 2,
+       "sigma 0.01, ridge 0.01": 1,
+       "sigma 0.01, ridge 1e-08": 2
+      },
+      "q2_by_repeat": [
+       0.6874111358508799,
+       0.6763176782451539,
+       0.7065869056703459,
+       0.7008384626159976,
+       0.7050730797248951,
+       0.7143850848261326,
+       0.704012019803219,
+       0.7095405734571378,
+       0.7065084123865911,
+       0.7060436247450694
+      ],
+      "q2_mean": 0.7016716977325422,
+      "q2_range": 0.038067406580978735,
+      "rmse_mean": 0.5240176639405434
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.125, h 0.3, ridge 0.0001": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.0001": 6,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 12,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 6,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 6,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 5,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 5,
+       "sigma 0.01, width 0.25, h 1, ridge 0.1": 3,
+       "sigma 0.01, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.5406610495818984,
+       0.5364201434592577,
+       0.4231092124261534,
+       0.5469912390724836,
+       0.5175753967052467,
+       0.5466554656577556,
+       0.5484754906007167,
+       0.5460508393432608,
+       0.511415591603857,
+       0.5898770868131349
+      ],
+      "q2_mean": 0.5307231515263765,
+      "q2_range": 0.16676787438698149,
+      "rmse_mean": 0.6567342688920138
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 22,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 6,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 3,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7767121450120898,
+       0.7625546664423457,
+       0.7952512334423905,
+       0.7707677346854197,
+       0.7857431350984478,
+       0.777165605773865,
+       0.783336404653928,
+       0.7769873704317429,
+       0.7897768168859349,
+       0.7749191883327947
+      ],
+      "q2_mean": 0.7793214300758959,
+      "q2_range": 0.03269656700004475,
+      "rmse_mean": 0.45066836396050275
+     }
+    }
+   },
+   "polymers": 444,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 1.6987466216216218,
+    "sd": 0.9595498385538745
+   }
+  },
+  "N2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07204796322851269,
+     "lo": 0.01576196571589637,
+     "mean": 0.043244018693965214,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1368427806516339,
+     "lo": 0.02352678485642706,
+     "mean": 0.084326049618481,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07945259010450004,
+     "lo": 0.023488802708844243,
+     "mean": 0.05125236325349625,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1867808775220217,
+     "lo": 0.03487142545135413,
+     "mean": 0.11565221172652707,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.11026181419071569,
+     "lo": 0.018855561149159754,
+     "mean": 0.0627638554992439,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.18937862601286556,
+     "lo": -0.02510913796189759,
+     "mean": 0.050049733890633386,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.1507526234075403,
+     "lo": 0.08605496300695711,
+     "mean": 0.11798090685316509,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.24131951733042611,
+     "lo": 0.11518004318489398,
+     "mean": 0.15540878401725344,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.045560803421321856,
+     "lo": -0.10201930892382034,
+     "mean": -0.07375839148094288,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.03166183486506805,
+     "lo": -0.17887137083200055,
+     "mean": -0.07852421905997686,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": -0.0185336115305407,
+     "lo": -0.058146662774489745,
+     "mean": -0.037226438152552666,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": -0.02415962787242069,
+     "lo": -0.08203590421853302,
+     "mean": -0.05522280189848683,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 124,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.6346048159902609,
+       0.6479473367829411,
+       0.6394600896650886,
+       0.5936899327170768,
+       0.63182317358323,
+       0.6411733053892301,
+       0.6392101707545172,
+       0.6475699495567594,
+       0.6622218926738088,
+       0.6114439312938772
+      ],
+      "q2_mean": 0.634914459840679,
+      "q2_range": 0.068531959956732,
+      "rmse_mean": 0.7580873888772846
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.8341679383377234,
+       0.8210474666459634,
+       0.822436296701311,
+       0.8257069762536958,
+       0.8258395328911312,
+       0.8175770506740807,
+       0.8233289764159752,
+       0.8226765247843899,
+       0.8386347689205975,
+       0.8312623719486373
+      ],
+      "q2_mean": 0.8262677903573505,
+      "q2_range": 0.02105771824651681,
+      "rmse_mean": 0.5230330186494271
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.44481582604699554,
+       0.3817786285056961,
+       0.42049438904001957,
+       0.4263319275588606,
+       0.4558254866357869,
+       0.4564567425057756,
+       0.47445471243909665,
+       0.37600264789739835,
+       0.43246414974721537,
+       0.3783587221965342
+      ],
+      "q2_mean": 0.4246983232573379,
+      "q2_range": 0.0984520645416983,
+      "rmse_mean": 0.9515282251004585
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.6849370200593414,
+       0.6788431298773758,
+       0.6678600857649082,
+       0.6748172487799757,
+       0.6769316422882564,
+       0.6762482113388554,
+       0.6978698206000054,
+       0.6904897185941953,
+       0.6872062029892911,
+       0.7007893938143277
+      ],
+      "q2_mean": 0.6835992474106533,
+      "q2_range": 0.032929308049419515,
+      "rmse_mean": 0.7058655186420353
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 22,
+       "up to 20 bonds, ridge 0.1": 16,
+       "up to 6 bonds, ridge 0.1": 2,
+       "up to 8 bonds, ridge 0.1": 10
+      },
+      "q2_by_repeat": [
+       0.3473451105807325,
+       0.2818495050012665,
+       0.32812084518416573,
+       0.32929124715891656,
+       0.3213778592609212,
+       0.3399872483240778,
+       0.36466810560826046,
+       0.32708200005508403,
+       0.3158341777749166,
+       0.282117682622152
+      ],
+      "q2_mean": 0.3237673781570493,
+      "q2_range": 0.08281860060699398,
+      "rmse_mean": 1.0318915987642483
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 23,
+       "up to 20 bonds, ridge 0.1": 7,
+       "up to 6 bonds, ridge 0.1": 6,
+       "up to 8 bonds, ridge 0.1": 14
+      },
+      "q2_by_repeat": [
+       0.5657160090655863,
+       0.5497877760895235,
+       0.5611815540910046,
+       0.5655763482846807,
+       0.5398244753836333,
+       0.5762117477875096,
+       0.5811331826082349,
+       0.5850035810131229,
+       0.5642897440994785,
+       0.5717826130710824
+      ],
+      "q2_mean": 0.5660507031493857,
+      "q2_range": 0.04517910562948957,
+      "rmse_mean": 0.8266637341365444
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 21,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 15,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.5663838488626352,
+       0.5546021294864887,
+       0.5495493116322682,
+       0.5299450822556397,
+       0.5645313612944464,
+       0.5166259921575842,
+       0.5511446210076829,
+       0.549802724726022,
+       0.5373611008844092,
+       0.4775773873543867
+      ],
+      "q2_mean": 0.5397523559661563,
+      "q2_range": 0.08880646150824845,
+      "rmse_mean": 0.8511300614937373
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 3,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 18,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 12,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7480126686621109,
+       0.7380679958509448,
+       0.7476850349121903,
+       0.7273345222257726,
+       0.7415692530697574,
+       0.7457977541191783,
+       0.7469670778083259,
+       0.7532304436674756,
+       0.7429137495108229,
+       0.7428131117569768
+      ],
+      "q2_mean": 0.7434391611583555,
+      "q2_range": 0.02589592144170305,
+      "rmse_mean": 0.6356485795153038
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 1,
+       "width 0.25, ridge 1": 21,
+       "width 0.5, ridge 0.1": 25,
+       "width 0.5, ridge 1": 2,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.37802180129623475,
+       0.38250010971873105,
+       0.36752050380785617,
+       0.3524057162258081,
+       0.38176434947648485,
+       0.4026248205852876,
+       0.3914681669422754,
+       0.3382525213696397,
+       0.3770038295274777,
+       0.3510029760737381
+      ],
+      "q2_mean": 0.37225647950235335,
+      "q2_range": 0.06437229921564791,
+      "rmse_mean": 0.9942607580189696
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 1": 23,
+       "width 0.5, ridge 0.1": 26,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.6154204000871679,
+       0.6074723344367332,
+       0.6222063578278041,
+       0.6277859767474592,
+       0.602205851284852,
+       0.6224581174266055,
+       0.6466083930872285,
+       0.622283180206222,
+       0.6353138213597995,
+       0.6288864237446168
+      ],
+      "q2_mean": 0.6230640856208489,
+      "q2_range": 0.04440254180237646,
+      "rmse_mean": 0.7704322895747997
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 36,
+       "sigma 0.005, ridge 0.01": 8,
+       "sigma 0.005, ridge 0.1": 1,
+       "sigma 0.005, ridge 1e-08": 2,
+       "sigma 0.01, ridge 0.01": 1,
+       "sigma 0.01, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.4492491274409215,
+       0.4176564930747977,
+       0.42363022022068253,
+       0.37898803780938783,
+       0.45092851163749326,
+       0.39492829074683333,
+       0.4149225174430521,
+       0.4228670631597061,
+       0.43649381172209634,
+       0.32013680554961144
+      ],
+      "q2_mean": 0.4109800878804582,
+      "q2_range": 0.13079170608788182,
+      "rmse_mean": 0.9627594656559652
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 0.001": 2,
+       "sigma 0.005, ridge 0.001": 26,
+       "sigma 0.005, ridge 0.01": 14,
+       "sigma 0.005, ridge 0.1": 5,
+       "sigma 0.005, ridge 1e-08": 2,
+       "sigma 0.02, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.651666222605447,
+       0.6515707453564052,
+       0.6541751004453431,
+       0.6489063542728171,
+       0.6581125786105131,
+       0.6533903232775222,
+       0.643178018776092,
+       0.6722652630328638,
+       0.6434035724699131,
+       0.6457052757298694
+      ],
+      "q2_mean": 0.6522373454576786,
+      "q2_range": 0.029087244256771783,
+      "rmse_mean": 0.7400647989094103
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 38,
+       "sigma 0.005, ridge 0.01": 6,
+       "sigma 0.005, ridge 1e-08": 4,
+       "sigma 0.01, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.5009995370958313,
+       0.46592046431836864,
+       0.47732893228807305,
+       0.43509463330327425,
+       0.5072715151354235,
+       0.4599855211242895,
+       0.4644550401948806,
+       0.47544428608122125,
+       0.4949846012361041,
+       0.37696465110597654
+      ],
+      "q2_mean": 0.4658449181883443,
+      "q2_range": 0.1303068640294469,
+      "rmse_mean": 0.9167594354410618
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 1,
+       "sigma 0.005, ridge 0.001": 33,
+       "sigma 0.005, ridge 0.01": 11,
+       "sigma 0.005, ridge 1e-08": 2,
+       "sigma 0.01, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.6894779442735857,
+       0.6938348939756711,
+       0.6795621016739125,
+       0.6757360333567548,
+       0.6825129898178577,
+       0.6883529099136201,
+       0.7040385595062199,
+       0.7086683102181064,
+       0.6939850654502656,
+       0.6877288141232164
+      ],
+      "q2_mean": 0.6903897622309211,
+      "q2_range": 0.032932276861351584,
+      "rmse_mean": 0.6982509399454218
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 17,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 2,
+       "sigma 0.005, width 0.25, h 1, ridge 0.1": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 16,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.5995021866011896,
+       0.5868823550587032,
+       0.5909257550584137,
+       0.5693300415180995,
+       0.6042180811086308,
+       0.550681052086044,
+       0.5697303273191945,
+       0.5763393426167955,
+       0.573299713182661,
+       0.5061907802058907
+      ],
+      "q2_mean": 0.5727099634755621,
+      "q2_range": 0.09802730090274014,
+      "rmse_mean": 0.8199989888742112
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 19,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 6,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 17,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.7534767947445802,
+       0.7505835126789877,
+       0.7541510273936936,
+       0.7353316882336827,
+       0.7451804291947881,
+       0.7587784202941159,
+       0.770718760022351,
+       0.7661091471884087,
+       0.7609885874313734,
+       0.7513838977269116
+      ],
+      "q2_mean": 0.7546702264908893,
+      "q2_range": 0.03538707178866829,
+      "rmse_mean": 0.6215111386057203
+     }
+    }
+   },
+   "polymers": 709,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 0.08185486600846263,
+    "sd": 1.25504164151647
+   }
+  },
+  "O2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06554847144789641,
+     "lo": 0.010563878670779013,
+     "mean": 0.03851704108185361,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13872876406837073,
+     "lo": 0.013367122577921579,
+     "mean": 0.08079314374557722,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06367273342857124,
+     "lo": 0.00450188041596139,
+     "mean": 0.03408391458324922,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.15773463798056855,
+     "lo": 0.00815913282534384,
+     "mean": 0.08878935562692558,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.09321316012673289,
+     "lo": 0.009732420358970484,
+     "mean": 0.051993943330231884,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.15269006338488522,
+     "lo": 0.008483323751188368,
+     "mean": 0.06421826375832207,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.1837119984260673,
+     "lo": 0.10497566241098348,
+     "mean": 0.14327410803642282,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.26046400592751573,
+     "lo": 0.14150158374425492,
+     "mean": 0.18730728785891104,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": -0.04438458070541992,
+     "lo": -0.11234227928412968,
+     "mean": -0.07718150232784038,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": 0.023297063378368624,
+     "lo": -0.13245895172355002,
+     "mean": -0.0328989026669162,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": -0.0038738959570804123,
+     "lo": -0.04530021250408639,
+     "mean": -0.024897009665673986,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.003335559537664937,
+     "lo": -0.06809170141025303,
+     "mean": -0.03657350930531478,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 124,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.601732662169622,
+       0.6186451893623339,
+       0.5487583791048256,
+       0.5935896884408156,
+       0.5965911283870915,
+       0.6075273185616665,
+       0.5750679686588813,
+       0.6167479736220259,
+       0.6071466335536635,
+       0.6198698042252516
+      ],
+      "q2_mean": 0.5985676746086177,
+      "q2_range": 0.07111142512042601,
+      "rmse_mean": 0.7408793865631786
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 50
+      },
+      "q2_by_repeat": [
+       0.813610691147692,
+       0.8086246051296117,
+       0.8151002198422184,
+       0.800612056320672,
+       0.8177128536829273,
+       0.8128415349515015,
+       0.8004179609681366,
+       0.8219290237335821,
+       0.7892099975985165,
+       0.8209433338629327
+      ],
+      "q2_mean": 0.8101002277237791,
+      "q2_range": 0.03271902613506561,
+      "rmse_mean": 0.5095685902164706
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 9,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.45426910383926633,
+       0.43534615743756944,
+       0.3254133452611885,
+       0.5078893270396305,
+       0.3713213173759099,
+       0.4633813993470911,
+       0.3672662774141403,
+       0.48021605719985583,
+       0.5010884089471968,
+       0.4375887924875894
+      ],
+      "q2_mean": 0.4343780186349438,
+      "q2_range": 0.18247598177844204,
+      "rmse_mean": 0.8785994222923177
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 24,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 11,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.7192122073706682,
+       0.6736548161833028,
+       0.686357809842591,
+       0.6840491118266805,
+       0.6799709756157466,
+       0.6572424993832695,
+       0.6530438300946835,
+       0.67311711807662,
+       0.6848120375181681,
+       0.6705326754659185
+      ],
+      "q2_mean": 0.6781993081377649,
+      "q2_range": 0.06616837727598468,
+      "rmse_mean": 0.6633113304872074
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 41,
+       "up to 20 bonds, ridge 0.1": 3,
+       "up to 8 bonds, ridge 0.1": 6
+      },
+      "q2_by_repeat": [
+       0.33278738890253257,
+       0.31696888719106897,
+       0.3229929000046169,
+       0.4163476801506718,
+       0.31513516389882656,
+       0.3632146892746466,
+       0.3214007054828487,
+       0.35549123682539485,
+       0.42167532400240615,
+       0.39388887391386773
+      ],
+      "q2_mean": 0.3559902849646881,
+      "q2_range": 0.10654016010357958,
+      "rmse_mean": 0.9382653119090453
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 47,
+       "up to 8 bonds, ridge 0.1": 3
+      },
+      "q2_by_repeat": [
+       0.6026456787324661,
+       0.574196226853565,
+       0.5797720738201025,
+       0.5903902831049483,
+       0.5843014767594855,
+       0.5830516293945265,
+       0.555032599714651,
+       0.5900508998006239,
+       0.5844224353781753,
+       0.5816171812587826
+      ],
+      "q2_mean": 0.5825480484817327,
+      "q2_range": 0.047613079017815085,
+      "rmse_mean": 0.7556957069968806
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 9,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 5,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 3,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.5591443151673268,
+       0.5630783824692862,
+       0.4226558681258624,
+       0.565166961700222,
+       0.5204690778798877,
+       0.5496001785537674,
+       0.4995463522519419,
+       0.5902397391386853,
+       0.5753855635668432,
+       0.5595788060989976
+      ],
+      "q2_mean": 0.5404865244952821,
+      "q2_range": 0.1675838710128229,
+      "rmse_mean": 0.7919823470516458
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 11,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 9,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 6,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 3,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7230063163576465,
+       0.7328691548387496,
+       0.7304781851366728,
+       0.7306185639734986,
+       0.7328837528108798,
+       0.7276371475771992,
+       0.6942568078630682,
+       0.7256044236636476,
+       0.7064243587971427,
+       0.7232529236813737
+      ],
+      "q2_mean": 0.7227031634699878,
+      "q2_range": 0.0386269449478116,
+      "rmse_mean": 0.6158282486641343
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 5,
+       "width 0.25, ridge 1": 12,
+       "width 0.5, ridge 0.1": 14,
+       "width 0.5, ridge 1": 5,
+       "width 1, ridge 0.1": 14
+      },
+      "q2_by_repeat": [
+       0.3357388835912668,
+       0.3832236307630752,
+       0.1812807902823571,
+       0.40830853062172157,
+       0.3073794773441667,
+       0.38643411823154783,
+       0.29521479344759094,
+       0.34988303125684783,
+       0.3655159505457831,
+       0.3557049329813736
+      ],
+      "q2_mean": 0.33686841390657307,
+      "q2_range": 0.22702774033936446,
+      "rmse_mean": 0.9515756868393067
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 1": 10,
+       "width 0.5, ridge 0.1": 23,
+       "width 0.5, ridge 1": 4,
+       "width 1, ridge 0.1": 13
+      },
+      "q2_by_repeat": [
+       0.588120397215114,
+       0.5846524721490769,
+       0.589079059313978,
+       0.5644479955849415,
+       0.5867380460168282,
+       0.5530292895980983,
+       0.5487098837381958,
+       0.5658421295294671,
+       0.566038373709354,
+       0.5584971481521209
+      ],
+      "q2_mean": 0.5705154795007175,
+      "q2_range": 0.040369175575782124,
+      "rmse_mean": 0.7664732630281623
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.01": 27,
+       "sigma 0.005, ridge 1e-08": 5,
+       "sigma 0.01, ridge 0.01": 9,
+       "sigma 0.01, ridge 0.1": 4,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.02, ridge 0.1": 4
+      },
+      "q2_by_repeat": [
+       0.4346988580611295,
+       0.4571721600644073,
+       0.36328010072183925,
+       0.4244151280720979,
+       0.422103999849034,
+       0.4294521653896194,
+       0.40883482149570194,
+       0.4959207456372797,
+       0.4945150037596219,
+       0.4594932346996431
+      ],
+      "q2_mean": 0.4389886217750374,
+      "q2_range": 0.13264064491544048,
+      "rmse_mean": 0.8756390406688933
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 2,
+       "sigma 0.005, ridge 0.01": 28,
+       "sigma 0.005, ridge 1e-08": 6,
+       "sigma 0.01, ridge 0.01": 3,
+       "sigma 0.01, ridge 0.1": 7,
+       "sigma 0.02, ridge 0.1": 4
+      },
+      "q2_by_repeat": [
+       0.6340555941301486,
+       0.6396342569487482,
+       0.6428828833538945,
+       0.6457504673651465,
+       0.6497513737674626,
+       0.640225072719844,
+       0.6084872776893124,
+       0.6265464754730238,
+       0.6038207633505395,
+       0.6501779898964961
+      ],
+      "q2_mean": 0.6341332154694616,
+      "q2_range": 0.04635722654595664,
+      "rmse_mean": 0.707377317483535
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 2,
+       "sigma 0.005, ridge 0.01": 22,
+       "sigma 0.005, ridge 1e-08": 2,
+       "sigma 0.01, ridge 0.01": 22,
+       "sigma 0.01, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.4723354110410971,
+       0.4808414291036225,
+       0.4170146888980688,
+       0.464008205685977,
+       0.4614382117411655,
+       0.4635954206384727,
+       0.46150183991131954,
+       0.5283837450839329,
+       0.5166359663302923,
+       0.4798711806899171
+      ],
+      "q2_mean": 0.47456260991238663,
+      "q2_range": 0.11136905618586412,
+      "rmse_mean": 0.8475698454184115
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 1,
+       "sigma 0.005, ridge 0.01": 26,
+       "sigma 0.005, ridge 1e-08": 7,
+       "sigma 0.01, ridge 0.01": 12,
+       "sigma 0.01, ridge 0.1": 2,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.02, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.6633053614708947,
+       0.6625804357573866,
+       0.6667920508782493,
+       0.6629802216148568,
+       0.6726243854926623,
+       0.6533660792617562,
+       0.6392935869228002,
+       0.6518394148735529,
+       0.6449203302508997,
+       0.6763920749010155
+      ],
+      "q2_mean": 0.6594093941424074,
+      "q2_range": 0.037098487978215244,
+      "rmse_mean": 0.6825637122680089
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 9,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 4,
+       "sigma 0.005, width 0.5, h 0.3, ridge 1e-08": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.005, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 4,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 4,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 10,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 5,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 2
+      },
+      "q2_by_repeat": [
+       0.5685542523838276,
+       0.5473700806139413,
+       0.44966043600543604,
+       0.5686725464752864,
+       0.5393406741529976,
+       0.5715369578646607,
+       0.5143113897806504,
+       0.5844481549965505,
+       0.5802827288050916,
+       0.5707941767849342
+      ],
+      "q2_mean": 0.5494971397863377,
+      "q2_range": 0.1347877189911144,
+      "rmse_mean": 0.7844279316985039
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 5,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 0.3, ridge 0.01": 9,
+       "sigma 0.005, width 0.5, h 0.3, ridge 1e-08": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 4,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 4,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 5,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_by_repeat": [
+       0.7248121354723697,
+       0.7235649192850556,
+       0.7310936984470793,
+       0.7227440557385064,
+       0.7245829277937326,
+       0.7126444907218932,
+       0.6992778609917194,
+       0.7155939153286957,
+       0.7085928632873605,
+       0.7280503590477131
+      ],
+      "q2_mean": 0.7190957226114125,
+      "q2_range": 0.031815837455359874,
+      "rmse_mean": 0.619876717877464
+     }
+    }
+   },
+   "polymers": 721,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 0.702491123439667,
+    "sd": 1.169730401198701
+   }
+  },
+  "density": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.009226594325254574,
+     "lo": -0.02960338133954054,
+     "mean": -0.009312768265899551,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13429941024068556,
+     "lo": -0.0226254055075219,
+     "mean": 0.042891997001352156,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.013376257905093987,
+     "lo": -0.03308454156305296,
+     "mean": -0.007972244294428554,
+     "model": "whole trimer + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1387364379050625,
+     "lo": -0.04484829890315387,
+     "mean": 0.03336985813377713,
+     "model": "whole trimer + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.023738972877702727,
+     "lo": -0.03274543908813246,
+     "mean": -0.004729231419774327,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel, central unit",
+     "hi": 0.05441479377916928,
+     "lo": -0.04436349214647254,
+     "mean": 0.0018023492223667725,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    },
+    {
+     "against": "eight counts",
+     "hi": 0.29204718740858693,
+     "lo": 0.1762398434499565,
+     "mean": 0.23150282544098444,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "eight counts",
+     "hi": 1.5321305797602507,
+     "lo": 0.09800922161239646,
+     "mean": 0.6439998131039373,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": 0.024588304458682823,
+     "lo": -0.010123608442607462,
+     "mean": 0.007404898801722903,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "ECFP4 of the repeat unit",
+     "hi": 0.10053687976923283,
+     "lo": -0.19242786990545474,
+     "mean": -0.005779049717952178,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.004485968600120004,
+     "lo": -0.011587375752323353,
+     "mean": -0.003707500610457659,
+     "model": "field kernel, central unit",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, whole trimer",
+     "hi": 0.0025866650014998004,
+     "lo": -0.0481498453393207,
+     "mean": -0.013882796146748144,
+     "model": "field kernel, central unit",
+     "scheme": "group"
+    }
+   ],
+   "groups": 20,
+   "models": {
+    "ECFP4 of the repeat unit": {
+     "group": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 12,
+       "Tanimoto, ridge 0.1": 38
+      },
+      "q2_by_repeat": [
+       0.7884677919616653,
+       0.7909224203504602,
+       0.7497016644654015,
+       0.7876192936525139,
+       0.7900658982514102,
+       0.7953761792911036,
+       0.8037520441900781,
+       0.7966707278269227,
+       0.778118207974136,
+       0.800805889233936
+      ],
+      "q2_mean": 0.7881500117197627,
+      "q2_range": 0.05405037972467652,
+      "rmse_mean": 0.08301031974816897
+     },
+     "random": {
+      "chosen": {
+       "Tanimoto, ridge 0.01": 19,
+       "Tanimoto, ridge 0.1": 31
+      },
+      "q2_by_repeat": [
+       0.8955156996899607,
+       0.8960245225837822,
+       0.8932037216903067,
+       0.890570114352434,
+       0.8838602348524954,
+       0.8949482664596085,
+       0.8920155562596193,
+       0.895877843386312,
+       0.8916866045716445,
+       0.8897924739148388
+      ],
+      "q2_mean": 0.8923495037761005,
+      "q2_range": 0.01216428773128675,
+      "rmse_mean": 0.05919860974952185
+     }
+    },
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 4 bonds, width 0.125, h 0.03, ridge 0.001": 1,
+       "up to 4 bonds, width 0.125, h 0.03, ridge 0.01": 2,
+       "up to 4 bonds, width 0.25, h 0.03, ridge 0.001": 3,
+       "up to 4 bonds, width 0.25, h 0.03, ridge 0.01": 6,
+       "up to 4 bonds, width 1, h 0.03, ridge 0.001": 2,
+       "up to 4 bonds, width 1, h 0.1, ridge 0.001": 9,
+       "up to 4 bonds, width 2, h 0.1, ridge 0.001": 12,
+       "up to 4 bonds, width 2, h 0.3, ridge 0.001": 12,
+       "up to 4 bonds, width 2, h 1, ridge 0.001": 1,
+       "up to 4 bonds, width 2, h 3, ridge 0.001": 1,
+       "up to 6 bonds, width 2, h 0.1, ridge 0.001": 1
+      },
+      "q2_by_repeat": [
+       0.7341407614367194,
+       0.6719761596513725,
+       0.6532881587649395,
+       0.6867988376159571,
+       0.6974408502216793,
+       0.7143717033537308,
+       0.7280642103321964,
+       0.7448696016315779,
+       0.7140682217291432,
+       0.7607927918291736
+      ],
+      "q2_mean": 0.710581129656649,
+      "q2_range": 0.10750463306423408,
+      "rmse_mean": 0.09693341154852489
+     },
+     "random": {
+      "chosen": {
+       "up to 4 bonds, width 1, h 0.03, ridge 0.001": 1,
+       "up to 4 bonds, width 2, h 0.1, ridge 0.001": 17,
+       "up to 4 bonds, width 2, h 0.3, ridge 0.001": 32
+      },
+      "q2_by_repeat": [
+       0.9062139137972718,
+       0.9081677352878978,
+       0.9078402119541268,
+       0.9010672934064264,
+       0.9049601572725279,
+       0.9071660737593186,
+       0.9115336318968076,
+       0.908023256758418,
+       0.9096229189429542,
+       0.9082513645167244
+      ],
+      "q2_mean": 0.9072846557592473,
+      "q2_range": 0.010466338490381144,
+      "rmse_mean": 0.05494051191756568
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 4 bonds, ridge 0.001": 49,
+       "up to 6 bonds, ridge 0.001": 1
+      },
+      "q2_by_repeat": [
+       0.7949754297792131,
+       0.7897430357087518,
+       0.8042143962239059,
+       0.7839760101799945,
+       0.7536203607443333,
+       0.7784626377607484,
+       0.8038185763152178,
+       0.7734765913533614,
+       0.7701293024651654,
+       0.8013413550701063
+      ],
+      "q2_mean": 0.7853757695600798,
+      "q2_range": 0.05059403547957264,
+      "rmse_mean": 0.0835432112677909
+     },
+     "random": {
+      "chosen": {
+       "up to 4 bonds, ridge 0.001": 50
+      },
+      "q2_by_repeat": [
+       0.8809355588696697,
+       0.8751380445778252,
+       0.8832790431681184,
+       0.8765363607276743,
+       0.8815781610080813,
+       0.873113302576129,
+       0.8886320231009543,
+       0.8754933600617061,
+       0.8754456077924775,
+       0.8791702124054317
+      ],
+      "q2_mean": 0.8789321674288069,
+      "q2_range": 0.015518720524825391,
+      "rmse_mean": 0.06277689772352205
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, width 0.125, h 0.1, ridge 0.001": 2,
+       "sigma 0.01, width 0.125, h 0.3, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 4,
+       "sigma 0.01, width 1, h 10, ridge 0.0001": 6,
+       "sigma 0.01, width 1, h 10, ridge 0.001": 4,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 2,
+       "sigma 0.01, width 2, h 100, ridge 0.001": 3,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 4,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 18,
+       "sigma 0.02, width 1, h 3, ridge 0.0001": 1
+      },
+      "q2_by_repeat": [
+       0.7636280016667572,
+       0.7681510936730254,
+       0.7584220412013052,
+       0.7571841062558495,
+       0.7778043033771354,
+       0.7738989154932019,
+       0.7822097658132294,
+       0.7580590161447606,
+       0.7424701922497003,
+       0.810287364611236
+      ],
+      "q2_mean": 0.76921148004862,
+      "q2_range": 0.06781717236153562,
+      "rmse_mean": 0.0866245480866173
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, width 1, h 10, ridge 0.001": 1,
+       "sigma 0.01, width 2, h 10, ridge 0.0001": 1,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 4,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 18,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 23,
+       "sigma 0.01, width 2, h 30, ridge 0.01": 3
+      },
+      "q2_by_repeat": [
+       0.896421240960103,
+       0.8967378196951299,
+       0.8986056870719794,
+       0.900387537308104,
+       0.8907411549934575,
+       0.899771553283638,
+       0.8940445358884868,
+       0.8982050658476233,
+       0.8924245912762832,
+       0.8922777005724043
+      ],
+      "q2_mean": 0.8959616886897208,
+      "q2_range": 0.009646382314646429,
+      "rmse_mean": 0.05819773364176363
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.125, ridge 0.01": 1,
+       "width 0.125, ridge 0.1": 2,
+       "width 0.25, ridge 0.1": 9,
+       "width 1, ridge 0.01": 11,
+       "width 2, ridge 0.001": 19,
+       "width 2, ridge 0.01": 8
+      },
+      "q2_by_repeat": [
+       -0.015448309143708094,
+       -0.09192916007187146,
+       -0.31932794774727347,
+       -0.07623422974526672,
+       -0.05323588244656596,
+       0.0020674294179265917,
+       0.026201531238680964,
+       0.5766816811609164,
+       0.1563426899657585,
+       0.00017291638246696994
+      ],
+      "q2_mean": 0.020529071901106376,
+      "q2_range": 0.8960096289081899,
+      "rmse_mean": 0.1771999156525237
+     },
+     "random": {
+      "chosen": {
+       "width 1, ridge 0.01": 1,
+       "width 2, ridge 0.001": 43,
+       "width 2, ridge 0.01": 6
+      },
+      "q2_by_repeat": [
+       0.6484545380049473,
+       0.6693576190027842,
+       0.6646298922673175,
+       0.6787796405034056,
+       0.6557583578835539,
+       0.6649792774398515,
+       0.6648061447354696,
+       0.6578421731177733,
+       0.6722018258868124,
+       0.6643905277949205
+      ],
+      "q2_mean": 0.6641199996636836,
+      "q2_range": 0.030325102498458212,
+      "rmse_mean": 0.10457348634621277
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 16,
+       "sigma 0.01, ridge 0.001": 33,
+       "sigma 0.02, ridge 0.01": 1
+      },
+      "q2_by_repeat": [
+       0.8049898566384756,
+       0.7949379960750181,
+       0.7927705015020905,
+       0.7858514001800974,
+       0.7971005740092034,
+       0.797562364688078,
+       0.7935122112332935,
+       0.7975825532822965,
+       0.7782843696699429,
+       0.8030566794998155
+      ],
+      "q2_mean": 0.794564850677831,
+      "q2_range": 0.0267054869685327,
+      "rmse_mean": 0.08177656242911806
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 19,
+       "sigma 0.01, ridge 0.001": 29,
+       "sigma 0.01, ridge 0.01": 2
+      },
+      "q2_by_repeat": [
+       0.8751110826499877,
+       0.8738527846595858,
+       0.873632883522422,
+       0.8712306495873764,
+       0.866445933360264,
+       0.8768879178811063,
+       0.8732710754381039,
+       0.8732085762975056,
+       0.8686348440922123,
+       0.8721042837022206
+      ],
+      "q2_mean": 0.8724380031190785,
+      "q2_range": 0.010441984520842329,
+      "rmse_mean": 0.06444576404411576
+     }
+    },
+    "field kernel, whole trimer": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 17,
+       "sigma 0.01, ridge 0.001": 29,
+       "sigma 0.01, ridge 0.01": 4
+      },
+      "q2_by_repeat": [
+       0.8192884205298947,
+       0.8080158490443891,
+       0.8104284258057065,
+       0.7972465151956436,
+       0.8116767905411076,
+       0.8102530171097728,
+       0.8159578622061694,
+       0.7987659601922082,
+       0.8035486285470548,
+       0.8130704237241562
+      ],
+      "q2_mean": 0.8088251892896103,
+      "q2_range": 0.0220419053342511,
+      "rmse_mean": 0.07888774766475029
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 19,
+       "sigma 0.01, ridge 0.001": 28,
+       "sigma 0.01, ridge 0.01": 3
+      },
+      "q2_by_repeat": [
+       0.8793744492626495,
+       0.8793704351371577,
+       0.8752233644451789,
+       0.8769989715169985,
+       0.8665654078593904,
+       0.8755117688117219,
+       0.8807151296169569,
+       0.8791322208549768,
+       0.8736259544677115,
+       0.8751889924602078
+      ],
+      "q2_mean": 0.8761706694432949,
+      "q2_range": 0.014149721757566458,
+      "rmse_mean": 0.0634922115087186
+     }
+    },
+    "whole trimer + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, width 0.125, h 0.1, ridge 0.001": 2,
+       "sigma 0.01, width 0.125, h 0.3, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.0001": 3,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 2,
+       "sigma 0.01, width 1, h 10, ridge 0.0001": 6,
+       "sigma 0.01, width 1, h 3, ridge 0.0001": 1,
+       "sigma 0.01, width 1, h 30, ridge 0.001": 4,
+       "sigma 0.01, width 2, h 10, ridge 0.0001": 1,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 6,
+       "sigma 0.01, width 2, h 100, ridge 0.0001": 2,
+       "sigma 0.01, width 2, h 100, ridge 0.001": 10,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 1,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 7
+      },
+      "q2_by_repeat": [
+       0.7847366602216979,
+       0.7458576905923242,
+       0.7414271381350814,
+       0.7332402943022248,
+       0.7543705155399587,
+       0.7474863807897343,
+       0.7671337571248078,
+       0.7412833483945942,
+       0.728423914434458,
+       0.8116636518100405
+      ],
+      "q2_mean": 0.7555623351344922,
+      "q2_range": 0.08323973737558255,
+      "rmse_mean": 0.08909824755116424
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, width 1, h 10, ridge 0.001": 1,
+       "sigma 0.01, width 2, h 10, ridge 0.0001": 3,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 13,
+       "sigma 0.01, width 2, h 10, ridge 0.01": 1,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 16,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 15,
+       "sigma 0.01, width 2, h 30, ridge 0.01": 1
+      },
+      "q2_by_repeat": [
+       0.8992801947707342,
+       0.900632427184999,
+       0.8981529348716589,
+       0.8977517806179112,
+       0.8879718660140493,
+       0.8993234332889856,
+       0.8983843945970925,
+       0.9034077110685613,
+       0.8918100014014323,
+       0.8945475101872903
+      ],
+      "q2_mean": 0.8971262254002715,
+      "q2_range": 0.01543584505451201,
+      "rmse_mean": 0.05786571175207537
+     }
+    }
+   },
+   "polymers": 1075,
+   "unit": "g/cm3",
+   "y": {
+    "mean": 1.132620858972093,
+    "sd": 0.18045188318202798
+   }
+  }
+ },
+ "topo_max": [
+  2,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "units": 1734
+}

@@ -1270,7 +1270,17 @@ on 100 polymer descriptors: q² +0.852 against +0.844 on random folds (mean abso
 against 33.0 K) and +0.773 against +0.770 with whole polymer classes held out. The field alone
 is 0.06 to 0.07 behind, the 3D distances add nothing to the bond graph once the counts are in,
 and a Tanimoto kernel on ECFP4 fingerprints of the repeat unit is the best model on both tests
-(+0.903 and +0.779).
+(+0.903 and +0.779). On two properties set by how chains pack (plan item PL2;
+`benchmarks/run_polymer_packing.py`) the 3D distances do add to the graph: on measured gas
+permeability (CH4, CO2, H2, N2, O2; 444 to 721 polymers) the field plus the counts beats the
+bond-count kernel plus the counts by +0.06 to +0.08 in q² with clusters of similar polymers held
+out, on every gas. On density from molecular dynamics (RadonPy, 1,077 polymers) it does not.
+ECFP4 is again the best model on permeability. Plan item PL5
+(`benchmarks/run_polymer_permeability.py`) finds what that margin is. One graph number, the
+fraction of heavy atoms in side chains or the size of the largest side group, added to the
+counts closes it on every gas. The field cut to distances below 3 Å keeps the whole margin,
+and the distances beyond add nothing, so the field gains by typing near neighbours, not by
+describing how chains pack.
 
 ### A measured curve as the sample: no structure needed
 

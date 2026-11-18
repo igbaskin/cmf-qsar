@@ -12817,6 +12817,195 @@ with the right repeat distance for each polymer, which the extended trimer avoid
 need a sequence, which the builder does not choose. Chain length, its distribution, crystallinity
 and the measurement method are not in any field of a single oligomer.
 
+### Density and gas permeability: properties set by how chains pack
+
+On Tg the 3D distances added nothing to the bond graph once the eight counts were in. Tg is a
+property of the whole repeat unit. Density and gas permeability depend on how the chains pack,
+which is closer to what a field in space describes. Plan item PL2 asks whether the field sees
+more there (`benchmarks/run_polymer_packing.py`).
+
+**The data** (`examples/polymer_packing`, made by `benchmarks/prepare_polymer_packing.py`):
+
+* *Density*: RadonPy PI1070 (Hayashi et al., *npj Computational Materials* 8 (2022) 222; BSD
+  3-Clause). 1,077 amorphous homopolymers, each simulated by the same all-atom protocol (GAFF2,
+  ten chains of about 1,000 atoms, 300 K), with 20 polymer classes. The density is
+  1.13 ± 0.18 g/cm³. The values are computed, not measured.
+* *Gas permeability*: the set released with torch-molecule (MIT), measured values compiled from
+  the literature, as log10 of the permeability in Barrer, for CH4, CO2, H2, N2 and O2 (444 to
+  721 polymers per gas once built). 44 of 786 rows are left out, 31 of them ladder polymers with
+  four attachment points, among them the polymers of intrinsic microporosity, the most permeable
+  class; the builder handles linear chains only.
+
+The fractional free volume of the Open Polymer Prediction set is not used: it can be downloaded
+only after a sign-in to Kaggle and an acceptance of the competition's rules, and no open copy
+exists. RadonPy's van der Waals volume would give the packing coefficient, but it exceeds 1 for
+several nylons, so it is not used either.
+
+**The gate, fixed before the run.** The central unit plus the eight counts must beat the
+bond-count kernel plus the eight counts, with the 95 % interval above zero. The folds are five
+random folds and five folds of whole groups, each repeated ten times because the sets are small.
+A group is a RadonPy polymer class for the density. For the permeability, which has no classes,
+it is a Butina cluster of the repeat units' ECFP4 fingerprints at a Tanimoto distance of 0.6 (79
+to 124 clusters per gas, the largest with 163 polymers). The builder, the fields, the models and
+the selection by the evidence are those of the Tg benchmark. The 1,734 distinct repeat units of
+both tables were built once; 9 could not be embedded.
+
+q² with five random folds, then with whole groups held out:
+
+| Model | density | CH4 | CO2 | H2 | N2 | O2 |
+|---|---:|---:|---:|---:|---:|---:|
+| ECFP4 of the repeat unit | +0.892 / +0.788 | +0.856 / +0.669 | +0.795 / +0.608 | +0.825 / +0.544 | +0.826 / +0.635 | +0.810 / +0.599 |
+| field kernel, whole trimer + eight counts | +0.897 / +0.756 | +0.795 / +0.575 | +0.680 / +0.539 | +0.779 / +0.531 | +0.755 / +0.573 | +0.719 / +0.549 |
+| field kernel, central unit + eight counts | +0.896 / +0.769 | +0.788 / +0.557 | +0.681 / +0.520 | +0.772 / +0.496 | +0.743 / +0.540 | +0.723 / +0.540 |
+| bond-count kernel + eight counts | +0.907 / +0.711 | +0.746 / +0.480 | +0.634 / +0.405 | +0.749 / +0.398 | +0.684 / +0.425 | +0.678 / +0.434 |
+| field kernel, whole trimer | +0.876 / +0.809 | +0.724 / +0.494 | +0.625 / +0.450 | +0.702 / +0.421 | +0.690 / +0.466 | +0.659 / +0.475 |
+| field kernel, central unit | +0.872 / +0.795 | +0.710 / +0.475 | +0.602 / +0.409 | +0.682 / +0.378 | +0.652 / +0.411 | +0.634 / +0.439 |
+| bond-count kernel, central unit | +0.879 / +0.785 | +0.664 / +0.432 | +0.528 / +0.274 | +0.615 / +0.259 | +0.566 / +0.324 | +0.583 / +0.356 |
+| eight counts | +0.664 / +0.021 | +0.694 / +0.440 | +0.521 / +0.340 | +0.699 / +0.375 | +0.623 / +0.372 | +0.571 / +0.337 |
+
+The gate, the central unit plus counts minus the bond-count kernel plus counts:
+
+| Target | random folds | groups held out |
+|---|---|---|
+| density | -0.009 [-0.030, +0.009] | +0.043 [-0.023, +0.134] |
+| CH4 | +0.039 [+0.013, +0.065] | +0.059 [+0.017, +0.103] |
+| CO2 | +0.031 [-0.004, +0.068] | +0.083 [+0.031, +0.134] |
+| H2 | +0.012 [-0.010, +0.034] | +0.072 [+0.015, +0.135] |
+| N2 | +0.043 [+0.016, +0.072] | +0.084 [+0.024, +0.137] |
+| O2 | +0.039 [+0.011, +0.066] | +0.081 [+0.013, +0.139] |
+
+**What it says.**
+
+* **On gas permeability the field sees what the bond graph does not.** With groups held out the
+  gate is met for all five gases, by +0.06 to +0.08; on random folds for three of them (CH4, N2,
+  O2), with CO2 and H2 short of it. The whole trimer plus the counts does a little better still
+  (+0.08 to +0.12 with groups held out). Without the counts the field beats its own channels
+  with distances in bonds by +0.05 to +0.07 on random folds (the interval of H2 reaches zero).
+  This is the first polymer property
+  in this program where the 3D distances add to the graph.
+* **On density they do not.** The field kernel, its bond-count version and ECFP4 reach 0.87 to
+  0.89 on random folds; the gate is not met on either test. Density is close to additive over
+  atoms and bonds, as a group-contribution method assumes, so the graph carries it.
+* **The eight counts fail on density with classes held out** (q² +0.02, varying by 0.9 between
+  the ten dealings of the classes): molecular weight and the other counts say little about how
+  much volume a gram takes. Every kernel on the structure reaches 0.79 to 0.81 there.
+* **A fingerprint is still the best model for permeability**, 0.03 to 0.10 ahead of the field plus
+  the counts. The field adds to the graph-based channels of the same fields, not to ECFP4.
+* **Here the whole trimer beats the middle unit**, by 0.01 to 0.06 on permeability; on Tg the two
+  were equal.
+
+**The settings chosen.** The permeability field kernels chose widths of 0.005 Å, the narrowest of
+the Tg grid, in most blocks, and q² still rose from 0.01 to 0.005 Å. A second run offered 0.0025
+and 0.001 Å: q² falls again at both (on CO2, for example, +0.631, +0.613 and +0.587 at 0.005,
+0.0025 and 0.001 Å for the whole trimer), the evidence chose them in a few blocks only, and no
+number of the tables changed by more than 0.003. The density kernels chose 0.01 Å. The sums
+chose h = 0.3 to 3 on permeability and mostly 10 to 30 on density, inside the grid of 0.03 to 100. The
+first run is kept in `benchmarks/cache/polymer_packing/polymer_packing_first_run.json`. With ten
+repeats, q² of a permeability model varies between repeats by up to 0.11 on random folds (H2, the
+smallest set) and by up to 0.33 with groups held out, so the intervals, not single repeats, carry
+the comparison.
+
+**Costs.** The build took 44 minutes with 24 processes and the models 1 hour 45 minutes; the two
+narrower widths added 14 minutes, because every evaluated setting is cached.
+
+### What the field sees in a permeable polymer
+
+On gas permeability the field plus the counts beat the bond-count kernel plus the counts, but
+that result does not say what the 3D distances carry. Plan item PL5
+(`benchmarks/run_polymer_permeability.py`) tests two explanations. The folds, the groups and the
+selection are those of PL2, and the PL2 models are read from its cache.
+
+**Part 1: does one number do the work?** Each candidate below is one number per polymer. It is
+added as a ninth column of the eight counts, beside the bond-count kernel. The field then has to
+beat this extended reference.
+
+* *Span per mass*: the end-to-end distance of the extended trimer divided by its molar mass. A
+  stiff chain reaches further per gram.
+* *Radius of gyration per mass*: the radius of gyration of all atoms of the trimer, divided by
+  its molar mass.
+* *Side-chain fraction*: the fraction of the repeat unit's heavy atoms that are not on the
+  backbone. The backbone follows the PolyMetriX rule: the shortest path between the two
+  attachment atoms, every ring that shares an atom with it, and every heavy atom with a single
+  neighbour that hangs on it.
+* *Largest side group*: the number of heavy atoms in the largest connected side group.
+* *Van der Waals volume per mass*: RDKit's `ComputeMolVolume` of the trimer divided by its molar
+  mass.
+* *All five* together.
+
+The side-chain numbers need only the graph; the others need the 3D trimer. The field's margin is
+the central unit plus counts minus the bond-count kernel plus counts plus the candidate. It is
+given with five random folds, then with clusters held out:
+
+| Candidate added to the counts | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| none (the PL2 result) | +0.039 / +0.059 | +0.031 / +0.083 | +0.012 / +0.072 | +0.043 / +0.084 | +0.039 / +0.081 |
+| span per mass | +0.022 / -0.046 | +0.011 / -0.000 | +0.013 / -0.042 | +0.019 / -0.026 | +0.005 / -0.018 |
+| radius of gyration per mass | +0.006 / -0.050 | +0.029 / +0.045 | +0.013 / -0.037 | +0.025 / +0.004 | +0.023 / +0.018 |
+| side-chain fraction | -0.012 / -0.086 | -0.002 / -0.007 | -0.002 / -0.075 | -0.004 / -0.045 | -0.015 / -0.030 |
+| largest side group | +0.003 / -0.082 | -0.003 / -0.018 | -0.012 / -0.074 | +0.007 / -0.046 | -0.008 / -0.030 |
+| van der Waals volume per mass | +0.026 / +0.043 | +0.041 / +0.072 | +0.048 / +0.113 | +0.055 / +0.066 | +0.040 / +0.053 |
+| all five | -0.013 / -0.105 | -0.019 / -0.037 | +0.020 / -0.045 | -0.015 / -0.090 | -0.025 / -0.062 |
+
+`benchmarks/results/polymer_permeability/table.md` gives the 95 % intervals. With all five
+numbers and clusters held out, the reference is ahead of the field on N2 (interval -0.156 to
+-0.005) and on O2 (-0.108 to -0.013).
+
+**Part 2: which distances carry the margin?** The central-unit field kernel is cut into two
+parts. The first keeps only the channels below 3 Å: bonded pairs and pairs two bonds apart. The
+second keeps only the channels from 3 Å on: pairs further apart along the chain, and contacts
+through space. Each part, plus the eight counts, is compared with the bond-count kernel plus the
+counts. The full field plus the counts is then compared with each part plus the counts:
+
+| Gas | below 3 Å + counts minus bond-count + counts | from 3 Å on + counts minus bond-count + counts | full field + counts minus below 3 Å + counts |
+|---|---|---|---|
+| CH4 | +0.036 / +0.058 | -0.001 / +0.029 | +0.003 / +0.001 |
+| CO2 | +0.037 / +0.098 | -0.012 / +0.031 | -0.006 / -0.015 |
+| H2 | +0.025 / +0.079 | -0.016 / +0.028 | -0.013 / -0.007 |
+| N2 | +0.042 / +0.095 | +0.007 / +0.031 | +0.002 / -0.011 |
+| O2 | +0.032 / +0.066 | -0.004 / +0.036 | +0.007 / +0.015 |
+
+**What it says.**
+
+* **One graph number about the side groups accounts for the field's margin.** The margin falls
+  to zero or below on every gas and both kinds of folds when the side-chain fraction or the size
+  of the largest side group is added to the counts. Each adds +0.09 to +0.15 to the reference
+  with clusters held out, and each correlates with log permeability at +0.46 to +0.61. Bulky
+  side groups are known to keep chains apart and raise the free volume; the reference lacked a
+  number for them.
+* **With all five numbers the reference comes within 0.02 of ECFP4 on CH4, N2 and O2 with
+  clusters held out.** It reaches
+  q² 0.656, 0.537, 0.498, 0.622 and 0.593 for CH4, CO2, H2, N2 and O2. ECFP4 reaches 0.669,
+  0.608, 0.544, 0.635 and 0.599. Adding the field to it changes q² by -0.004 to +0.036. The one
+  interval above zero is CO2 with clusters held out (+0.036, from +0.005 to +0.080).
+* **Chain stiffness is part of it.** The span per mass removes the margin with clusters held out
+  on every gas, but on random folds only for O2. The radius of gyration per mass lowers it on
+  every gas, and with clusters held out removes it for CH4, H2 and N2. The
+  van der Waals volume per mass does not remove it on any gas, and it makes the reference worse
+  on H2.
+* **The margin lies below 3 Å, not in contacts through space.** The short-range part alone keeps
+  the whole margin. The full field adds nothing to it (-0.015 to +0.017), and the long-range part
+  is no better than the reference. Without the counts, the short-range part alone is better than
+  the full field on every gas, by 0.03 to 0.06 on random folds and by 0.07 to 0.14 with clusters
+  held out: the long-range channels dilute the kernel.
+* **A likely reading, not tested here.** The short-range part chose a width of 0.01 Å in most
+  blocks. At that width the kernel separates bond lengths that differ by a few hundredths of an
+  ångström, such as single, aromatic and double C-C bonds. The bond-count kernel puts all bonded
+  pairs at the same distance of one bond. So the field probably gains by typing near neighbours
+  more finely, not by describing packing.
+
+Because one number accounts for the margin, the co-pattern of the field was not read.
+
+**The settings chosen.** The widths of the cut kernels were first offered 0.005, 0.01 and
+0.02 Å. 0.01 Å was chosen in most blocks, and each end in 17 to 20 % of the blocks of one of the
+two parts. A second run added 0.0025 and 0.05 Å. These were chosen in at most 2 of 500 blocks,
+and no number moved by more than 0.003. The field plus counts chose the smallest ridge of the
+grid, 10⁻⁸, in up to 18 of 50 blocks, as in PL2. Selecting again with every ridge below 10⁻⁴
+removed left every q² unchanged in the fourth decimal: the narrow Gaussian kernel of the counts
+already does the work of a ridge.
+
+**Costs.** The candidates took 26 minutes, the models of part 1 about 3 hours 50 minutes, and
+part 2 43 minutes. All of them reuse the trimers and the cached settings of PL2.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

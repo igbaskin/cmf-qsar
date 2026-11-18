@@ -1091,6 +1091,33 @@ def registry() -> List[Benchmark]:
                   minutes="490",
                   report=lambda: _mod("run_polymer_tg").report(),
                   tables=["polymer_tg/table.md"]),
+        Benchmark("polymer_packing",
+                  "polymer properties set by how chains pack (plan item PL2): the density of "
+                  "1,077 polymers from molecular dynamics (RadonPy PI1070) and the measured "
+                  "permeability of 742 polymers to five gases, from trimers built by cmf "
+                  "polymers: the field kernel plus eight counts against the same channels with "
+                  "distances in bonds plus the counts, with ECFP4 and the counts alone, with "
+                  "random folds and with whole classes or clusters held out",
+                  "run_polymer_packing.py", "polymer_packing", compute=[[]],
+                  prepare=["prepare_polymer_packing.py (RadonPy PI1070 from GitHub and the "
+                           "permeability set from Hugging Face); the trimers are built by "
+                           "run_polymer_packing.py itself into the cache, about 45 minutes "
+                           "with 24 processes"],
+                  minutes="165",
+                  report=lambda: _mod("run_polymer_packing").report(),
+                  tables=["polymer_packing/table.md"]),
+        Benchmark("polymer_permeability",
+                  "what the 3D field sees in a permeable polymer (plan item PL5): five one-number "
+                  "candidates (span and radius of gyration of the extended trimer per mass, the "
+                  "side-chain fraction, the largest side group, the van der Waals volume per "
+                  "mass) added to the eight counts beside the bond-count kernel, and the field "
+                  "cut to distances below or from 3 A, on the measured permeability to five gases",
+                  "run_polymer_permeability.py", "polymer_permeability",
+                  compute=[[], ["--ranges"]], minutes="300",
+                  prepare=["run_polymer_packing.py first: this benchmark reads its trimers, "
+                           "kernels and cached settings"],
+                  report=lambda: _mod("run_polymer_permeability").report(),
+                  tables=["polymer_permeability/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

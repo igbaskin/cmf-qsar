@@ -1,0 +1,56 @@
+{
+ "pi1070": {
+  "source": "https://raw.githubusercontent.com/RadonPy/RadonPy/1387bc882feb9677a7741f4cce462110918d7761/data/PI1070.csv",
+  "md5": "4148919e3491461818a25b81bfabd5c6",
+  "licence": "BSD 3-Clause",
+  "paper": "Hayashi et al., npj Comput. Mater. 8, 222 (2022), doi:10.1038/s41524-022-00906-4",
+  "rows": 1077,
+  "kept": 1077,
+  "refused": {},
+  "classes": {
+   "1": 83,
+   "2": 161,
+   "3": 162,
+   "4": 118,
+   "5": 8,
+   "6": 9,
+   "7": 67,
+   "8": 11,
+   "9": 67,
+   "10": 50,
+   "11": 11,
+   "12": 5,
+   "13": 261,
+   "14": 1,
+   "15": 40,
+   "16": 11,
+   "18": 1,
+   "19": 1,
+   "20": 4,
+   "21": 6
+  }
+ },
+ "permeability": {
+  "source": "https://huggingface.co/datasets/liuganghuggingface/moldata-polymer_gas_permeability",
+  "revision": "24928245e5168b5b4c71d7579bda16efe80f6c3a",
+  "licence": "MIT (torch-molecule)",
+  "unit": "log10 of the permeability in Barrer",
+  "rows": 786,
+  "kept": 742,
+  "refused": {
+   "builder: 4 attachment points": 31,
+   "element without Gasteiger charges: Ge": 2,
+   "builder: 0 attachment points": 6,
+   "builder: 3 attachment points": 3,
+   "net formal charge": 1,
+   "builder: 1 attachment points": 1
+  },
+  "labels": {
+   "CH4": 607,
+   "CO2": 681,
+   "H2": 450,
+   "N2": 716,
+   "O2": 728
+  }
+ }
+}

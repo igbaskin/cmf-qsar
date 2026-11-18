@@ -254,8 +254,10 @@ def build_features(rows, jobs: int, use_cache: bool, tag: str = "full"):
     with open(sdf_path, "w", encoding="utf-8", newline="\n") as fh:
         for r, b in zip(rows, blocks):
             if b:
-                fh.write(r["id"] + b[b.index("\n"):] + f"> <tg_k>\n{r['tg_k']}\n\n> <psmiles>\n"
-                         f"{r['psmiles']}\n\n$$$$\n")
+                # every column of the table goes into the record, so that another benchmark
+                # (run_polymer_packing.py) can share this function with its own columns
+                props = "".join(f"> <{k}>\n{v}\n\n" for k, v in r.items() if k != "id")
+                fh.write(r["id"] + b[b.index("\n"):] + props + "$$$$\n")
     if use_cache:
         for s, w, m in zip(SIGMAS, whole, middle):
             np.save(os.path.join(CACHE, f"whole_{tag}_{s:g}.npy"), w)

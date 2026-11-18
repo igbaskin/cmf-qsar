@@ -1,0 +1,3205 @@
+{
+ "candidates": [
+  "span per mass",
+  "radius of gyration per mass",
+  "side-chain fraction",
+  "largest side group",
+  "van der Waals volume per mass"
+ ],
+ "gases": {
+  "CH4": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06452302772438447,
+     "lo": 0.012971230308360697,
+     "mean": 0.039150573172005876,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1034047502806564,
+     "lo": 0.016591515486443578,
+     "mean": 0.05875259955775225,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03746465447852706,
+     "lo": 0.0003324371520676635,
+     "mean": 0.017482295810328896,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.20267481207016055,
+     "lo": -0.005780978170528539,
+     "mean": 0.10471456243334587,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.04839923652449918,
+     "lo": -0.005819959958469556,
+     "mean": 0.02166827736167698,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.07076313769664608,
+     "lo": -0.1335615242345873,
+     "mean": -0.04596196287559362,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05139770792117602,
+     "lo": 0.015536245782543862,
+     "mean": 0.03290994530904778,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.18804909100523307,
+     "lo": 0.01903641740065186,
+     "mean": 0.10899895474934729,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.028590075244490476,
+     "lo": -0.015231917785890642,
+     "mean": 0.0062406278629580925,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.03629229055868072,
+     "lo": -0.11964176929678619,
+     "mean": -0.05024635519159504,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07576159093731713,
+     "lo": 0.028836693332151605,
+     "mean": 0.05082966654961385,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2524532962926794,
+     "lo": 0.01640178944584207,
+     "mean": 0.14428039001448845,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.011476821157648207,
+     "lo": -0.03540686986616465,
+     "mean": -0.011679093377607974,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.042706553213748805,
+     "lo": -0.18669446737188686,
+     "mean": -0.0855277904567362,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05792575754818536,
+     "lo": 0.015008104685966408,
+     "mean": 0.036489087037936296,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.26670915138848633,
+     "lo": 0.010523132228796781,
+     "mean": 0.14106116194719065,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.030827204970027132,
+     "lo": -0.024343765009137354,
+     "mean": 0.0026614861340695795,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.059094137511169036,
+     "lo": -0.19951202284557723,
+     "mean": -0.0823085623894384,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.029035296850554903,
+     "lo": -0.001704048042870462,
+     "mean": 0.01294468403230975,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04026054766801364,
+     "lo": -0.006661956803986258,
+     "mean": 0.01610231220062497,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.048600605815935956,
+     "lo": 0.004081218457297556,
+     "mean": 0.026205889139696126,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.08357522920234725,
+     "lo": 0.0028312085493085427,
+     "mean": 0.04265028735712728,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.08251075531134557,
+     "lo": 0.023811883852310152,
+     "mean": 0.05199123231981506,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.27984383999839696,
+     "lo": 0.028728771468319085,
+     "mean": 0.1633218295311749,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.012007258686703404,
+     "lo": -0.035623140457379306,
+     "mean": -0.012840659147809186,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.022323448644943584,
+     "lo": -0.21106638602825226,
+     "mean": -0.10456922997342266,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.02518051101070707,
+     "lo": -0.005993284599954518,
+     "mean": 0.008735230695123164,
+     "model": "central unit + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.048508815803478926,
+     "lo": -0.015391749213800312,
+     "mean": 0.009826624315889432,
+     "model": "central unit + eight counts + all five",
+     "scheme": "group"
+    }
+   ],
+   "correlation_with_target": {
+    "largest side group": 0.4905675898899469,
+    "radius of gyration per mass": 0.22871644801600022,
+    "side-chain fraction": 0.6084853282799234,
+    "span per mass": -0.041671829529191094,
+    "van der Waals volume per mass": 0.4262544802442841
+   },
+   "groups": 102,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 34,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.4797437130415229,
+      "q2_range": 0.14272439281325167
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 49,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7464875559738187,
+      "q2_range": 0.03610990909593237
+     }
+    },
+    "bond-count kernel + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 28,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 11
+      },
+      "q2_mean": 0.6560836154380043,
+      "q2_range": 0.08053262236642178
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 33,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 16
+      },
+      "q2_mean": 0.7941154389559065,
+      "q2_range": 0.018693166041664044
+     }
+    },
+    "bond-count kernel + eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 22,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 19,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.6310373103542735,
+      "q2_range": 0.08974036083582426
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 35,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 15
+      },
+      "q2_mean": 0.7810445491249285,
+      "q2_range": 0.03223668464940155
+     }
+    },
+    "bond-count kernel + eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 31,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5940000496323794,
+      "q2_range": 0.11040483685938873
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 34,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 14,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.7722689088445527,
+      "q2_range": 0.02802016919748007
+     }
+    },
+    "bond-count kernel + eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 37,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.634753953901304,
+      "q2_range": 0.08272870115507858
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 48
+      },
+      "q2_mean": 0.7952937132065866,
+      "q2_range": 0.02702279535516472
+     }
+    },
+    "bond-count kernel + eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 41,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.5968081856814001,
+      "q2_range": 0.10866460843268744
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 49,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.76425550734818,
+      "q2_range": 0.03487201663912254
+     }
+    },
+    "bond-count kernel + eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 4 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 36,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5003216406437712,
+      "q2_range": 0.10257832268134348
+     },
+     "random": {
+      "chosen": {
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 49,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7601879060415351,
+      "q2_range": 0.025932049109250288
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.0001": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.0001": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 34,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.0001": 3,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 2
+      },
+      "q2_mean": 0.5568763891507666,
+      "q2_range": 0.1245800947687864
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 31,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.1": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1
+      },
+      "q2_mean": 0.7876008695858678,
+      "q2_range": 0.012680836321166011
+     }
+    },
+    "central unit + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 13,
+       "sigma 0.005, width 0.5, h 3, ridge 0.0001": 24,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 12,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1
+      },
+      "q2_mean": 0.6775607666639049,
+      "q2_range": 0.06597538508865308
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 3, ridge 0.0001": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.001": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.0001": 23,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 4,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 17,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1
+      },
+      "q2_mean": 0.807020736952782,
+      "q2_range": 0.010993805558378367
+     }
+    },
+    "eight counts + all five": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.6517393830132201,
+      "q2_range": 0.09456888293993937
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.7708239581338585,
+      "q2_range": 0.020430997013987096
+     }
+    },
+    "eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 48,
+       "width 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.6087049216653085,
+      "q2_range": 0.09435344071944074
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.750236309608255,
+      "q2_range": 0.02097258301036442
+     }
+    },
+    "eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 36,
+       "width 0.5, ridge 0.1": 13,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5230853877254061,
+      "q2_range": 0.20765938885690494
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 34,
+       "width 0.5, ridge 0.1": 16
+      },
+      "q2_mean": 0.7036594594943193,
+      "q2_range": 0.03130616161154487
+     }
+    },
+    "eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 47,
+       "width 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.5938217872227912,
+      "q2_range": 0.0807134878592386
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.7538476084319121,
+      "q2_range": 0.023234578865479305
+     }
+    },
+    "eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.5784780636299752,
+      "q2_range": 0.13091080761457652
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.7241682838664424,
+      "q2_range": 0.019197345757532736
+     }
+    },
+    "eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 2,
+       "width 0.5, ridge 0.1": 44,
+       "width 1, ridge 0.1": 4
+      },
+      "q2_mean": 0.47649375127582355,
+      "q2_range": 0.12037233046859719
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 49,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7126336990990371,
+      "q2_range": 0.025432217747604957
+     }
+    }
+   },
+   "polymers": 600
+  },
+  "CO2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0677543524766557,
+     "lo": -0.004151701111732375,
+     "mean": 0.03134933536753326,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13413310144675825,
+     "lo": 0.030864488252491704,
+     "mean": 0.08340159058218921,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05133144521476405,
+     "lo": -0.008327770586035307,
+     "mean": 0.020732906516014005,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.14219272733733643,
+     "lo": 0.014942199437201062,
+     "mean": 0.08373354826970825,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.04239788553313315,
+     "lo": -0.02023897027715593,
+     "mean": 0.010616428851519255,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.0746320148873725,
+     "lo": -0.05239724849424053,
+     "mean": -0.00033195768751903554,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.020541743360574186,
+     "lo": -0.015292803439697097,
+     "mean": 0.0026590861459035997,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07310412073083847,
+     "lo": -0.007421883310240523,
+     "mean": 0.03881665828804426,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.061897201539385986,
+     "lo": -0.0037478324357054973,
+     "mean": 0.02869024922162966,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.10582124179282865,
+     "lo": 0.0007985688894176197,
+     "mean": 0.04458493229414495,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06067149162619426,
+     "lo": 0.005638596614510841,
+     "mean": 0.033534011094163874,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.16409641696954996,
+     "lo": -0.013417288546850975,
+     "mean": 0.09060520225088609,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.03040739809216696,
+     "lo": -0.03382039317092099,
+     "mean": -0.002184675726630614,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.08998449062306238,
+     "lo": -0.07509090885418697,
+     "mean": -0.007203611668696874,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05598070838688589,
+     "lo": 0.013245488312403025,
+     "mean": 0.034507502589927075,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.17036550677801998,
+     "lo": 0.01855229497027631,
+     "mean": 0.1015219891234681,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.029723478231861028,
+     "lo": -0.03457759853293118,
+     "mean": -0.003158167222393815,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.06853839383483191,
+     "lo": -0.0818729064853029,
+     "mean": -0.018120398541278893,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.015123394733922036,
+     "lo": -0.036948105260109956,
+     "mean": -0.009163016727594786,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04115651556889706,
+     "lo": -0.02291354045680127,
+     "mean": 0.011610317735187725,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.08154075869723723,
+     "lo": 0.002591503443501686,
+     "mean": 0.040512352095128046,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.1232439091994393,
+     "lo": 0.020689059392792572,
+     "mean": 0.07179127284700149,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.08354159722789457,
+     "lo": 0.01807315968290218,
+     "mean": 0.05045311055675461,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.18491804125595948,
+     "lo": 0.04139007763360436,
+     "mean": 0.12048403105814176,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.011859811993092939,
+     "lo": -0.047838953287764725,
+     "mean": -0.01910377518922135,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.03770015090989411,
+     "lo": -0.08939500317194328,
+     "mean": -0.03708244047595255,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.03401270003174206,
+     "lo": -0.012650291309452569,
+     "mean": 0.010917310574761752,
+     "model": "central unit + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.07996922532783435,
+     "lo": 0.005029018722063115,
+     "mean": 0.0355280373467205,
+     "model": "central unit + eight counts + all five",
+     "scheme": "group"
+    }
+   ],
+   "correlation_with_target": {
+    "largest side group": 0.455966113746074,
+    "radius of gyration per mass": -0.019072610221093293,
+    "side-chain fraction": 0.5163353891614512,
+    "span per mass": -0.20095682825944583,
+    "van der Waals volume per mass": 0.24905002039662852
+   },
+   "groups": 116,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 20,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 5,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 5
+      },
+      "q2_mean": 0.40466071850546337,
+      "q2_range": 0.18495801500428832
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 24,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.6340547123971675,
+      "q2_range": 0.052537322219518234
+     }
+    },
+    "bond-count kernel + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.1, ridge 0.01": 6,
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 14,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 7,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 5,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5
+      },
+      "q2_mean": 0.5369519521813014,
+      "q2_range": 0.13392392000683417
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.1, ridge 0.01": 3,
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 9,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 15,
+       "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 5,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.684642687312475,
+      "q2_range": 0.08074081319578785
+     }
+    },
+    "bond-count kernel + eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 7,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 10,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 3,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 20 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.513098300456998,
+      "q2_range": 0.12466782483381
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 17,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 14,
+       "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 1, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.6722317211453905,
+      "q2_range": 0.04676453042004414
+     }
+    },
+    "bond-count kernel + eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 20,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 4,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 8,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.45339130986254456,
+      "q2_range": 0.10954955937722
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 29,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 9,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 2,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 4,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2
+      },
+      "q2_mean": 0.6384300021717804,
+      "q2_range": 0.04932814566554544
+     }
+    },
+    "bond-count kernel + eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 12,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 1, h 3, ridge 0.1": 3,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.5018880461003098,
+      "q2_range": 0.12905591860123977
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 22,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 7,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 5
+      },
+      "q2_mean": 0.6779491007659166,
+      "q2_range": 0.02369361295561767
+     }
+    },
+    "bond-count kernel + eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 18,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5044889133532384,
+      "q2_range": 0.12236969673427434
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 35,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 8
+      },
+      "q2_mean": 0.6660765666757844,
+      "q2_range": 0.04843763645891819
+     }
+    },
+    "bond-count kernel + eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 12,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 11,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 1, h 3, ridge 0.1": 5,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.4182491462529333,
+      "q2_range": 0.11377018221443203
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 15,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 15,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.01": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.6324114104104692,
+      "q2_range": 0.0392130944900817
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 15,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 2,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 6,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 4,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 3,
+       "sigma 0.01, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.001": 3,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 2
+      },
+      "q2_mean": 0.5204626488102068,
+      "q2_range": 0.09825932218877043
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 13,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 4,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 0.3, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 3,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 8,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.6805442291340988,
+      "q2_range": 0.053103027577841355
+     }
+    },
+    "central unit + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 13,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.25, h 3, ridge 0.01": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 6,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 12,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 3,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 0.25, h 1, ridge 0.001": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5958869524302011,
+      "q2_range": 0.09735671820260894
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 9,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 0.25, h 3, ridge 0.01": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 6,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 5,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 9,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 3, ridge 0.001": 1,
+       "sigma 0.02, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.02, width 0.5, h 1, ridge 0.01": 1
+      },
+      "q2_mean": 0.7076055614121245,
+      "q2_range": 0.0466633128858992
+     }
+    },
+    "eight counts + all five": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 34,
+       "width 0.5, ridge 0.1": 16
+      },
+      "q2_mean": 0.4906985648363662,
+      "q2_range": 0.15054139176649872
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 31,
+       "width 0.5, ridge 0.1": 19
+      },
+      "q2_mean": 0.6154965685897831,
+      "q2_range": 0.04284385140510627
+     }
+    },
+    "eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 3,
+       "width 0.25, ridge 1": 3,
+       "width 0.5, ridge 0.1": 12,
+       "width 0.5, ridge 1": 13,
+       "width 1, ridge 0.1": 19
+      },
+      "q2_mean": 0.41962464159411483,
+      "q2_range": 0.10087080007437688
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 16,
+       "width 0.5, ridge 1": 15,
+       "width 1, ridge 0.1": 17
+      },
+      "q2_mean": 0.5700671200528309,
+      "q2_range": 0.04140926738163164
+     }
+    },
+    "eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 12,
+       "width 0.25, ridge 1": 20,
+       "width 0.5, ridge 0.1": 11,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 6
+      },
+      "q2_mean": 0.3571168635394924,
+      "q2_range": 0.09511501287967528
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 9,
+       "width 0.25, ridge 1": 29,
+       "width 0.5, ridge 0.1": 10,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5287187558656484,
+      "q2_range": 0.04190657762966965
+     }
+    },
+    "eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 4,
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 11,
+       "width 0.5, ridge 1": 5,
+       "width 1, ridge 0.1": 28
+      },
+      "q2_mean": 0.42035331052863717,
+      "q2_range": 0.11893246701441407
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 13,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 36
+      },
+      "q2_mean": 0.5790774879781181,
+      "q2_range": 0.03298067637594404
+     }
+    },
+    "eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 11,
+       "width 0.25, ridge 1": 9,
+       "width 0.5, ridge 0.1": 21,
+       "width 0.5, ridge 1": 7,
+       "width 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.38488543450628454,
+      "q2_range": 0.1636000687193332
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 5,
+       "width 0.25, ridge 1": 1,
+       "width 0.5, ridge 0.1": 36,
+       "width 0.5, ridge 1": 8
+      },
+      "q2_mean": 0.5376755471231757,
+      "q2_range": 0.064561106228882
+     }
+    },
+    "eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 1,
+       "width 0.5, ridge 0.1": 13,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 35
+      },
+      "q2_mean": 0.4041730799925218,
+      "q2_range": 0.15102185825400571
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 12,
+       "width 1, ridge 0.1": 38
+      },
+      "q2_mean": 0.5637696888261093,
+      "q2_range": 0.06121576494317782
+     }
+    }
+   },
+   "polymers": 674
+  },
+  "H2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03400731638522698,
+     "lo": -0.010041642074131524,
+     "mean": 0.011886166841354906,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1348686944670745,
+     "lo": 0.015161084390869698,
+     "mean": 0.07219419960349593,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.022968834089785027,
+     "lo": -0.02692409503850668,
+     "mean": -0.0011966431148895396,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2166900991119652,
+     "lo": 0.01751664106767954,
+     "mean": 0.11467854143660872,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.040638921011174854,
+     "lo": -0.013586068605572524,
+     "mean": 0.013082809956244446,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.04826483782955982,
+     "lo": -0.11467716715270417,
+     "mean": -0.04248434183311278,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0236690355318962,
+     "lo": -0.02682133135296979,
+     "mean": -0.0012762340839322928,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2042667434463543,
+     "lo": -0.009131401015351363,
+     "mean": 0.10878522571297955,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.037386451122301184,
+     "lo": -0.010153175745081225,
+     "mean": 0.013162400925287199,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.08043817092743354,
+     "lo": -0.10716648289498429,
+     "mean": -0.036591026109483615,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04168284640999957,
+     "lo": -0.013266801132585201,
+     "mean": 0.014167094342461106,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2581376362193769,
+     "lo": 0.022547922224079704,
+     "mean": 0.1471110276499903,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.023169418380304348,
+     "lo": -0.0276002644421806,
+     "mean": -0.0022809275011062002,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.03852884753274273,
+     "lo": -0.1583430385448477,
+     "mean": -0.07491682804649435,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.046803351348707785,
+     "lo": 0.000989319763744487,
+     "mean": 0.023833205021028148,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2526347031285922,
+     "lo": 0.03775919451060564,
+     "mean": 0.14640495556809485,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.014278830050467527,
+     "lo": -0.03755458675233352,
+     "mean": -0.011947038179673242,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.018814133181529743,
+     "lo": -0.14911839883346759,
+     "mean": -0.07421075596459892,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": -0.010310281067524294,
+     "lo": -0.06472519627592999,
+     "mean": -0.036287830399548526,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0031919883231737,
+     "lo": -0.08965155186309803,
+     "mean": -0.04050174085491742,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.0829154753583762,
+     "lo": 0.013104373038343619,
+     "mean": 0.04817399724090343,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.1989879370815196,
+     "lo": 0.03713150386544735,
+     "mean": 0.11269594045841336,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.036404329735196445,
+     "lo": -0.05772122532302077,
+     "mean": -0.007672578728268764,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.22035297176132465,
+     "lo": -0.005019916298789617,
+     "mean": 0.11706969533014422,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.06230285708634889,
+     "lo": -0.018059437378775894,
+     "mean": 0.01955874556962367,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.07075275853034624,
+     "lo": -0.11498135393501194,
+     "mean": -0.044875495726648285,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.03262804395464139,
+     "lo": -0.005981756253798981,
+     "mean": 0.012849819632156367,
+     "model": "central unit + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.08661654598355838,
+     "lo": -0.022861527754762655,
+     "mean": 0.013429127402983188,
+     "model": "central unit + eight counts + all five",
+     "scheme": "group"
+    }
+   ],
+   "correlation_with_target": {
+    "largest side group": 0.5463569895564726,
+    "radius of gyration per mass": -0.04234722542804714,
+    "side-chain fraction": 0.5757173333711104,
+    "span per mass": -0.23949591140133475,
+    "van der Waals volume per mass": 0.25791547737489084
+   },
+   "groups": 79,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.125, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4
+      },
+      "q2_mean": 0.3984129254214099,
+      "q2_range": 0.3318908242479166
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 28,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7491599400337746,
+      "q2_range": 0.03814836745404837
+     }
+    },
+    "bond-count kernel + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 5,
+       "up to 12 bonds, width 0.5, h 3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 30, ridge 1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 24,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+      },
+      "q2_mean": 0.49769807922079945,
+      "q2_range": 0.6650905335213271
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 16,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 2,
+       "up to 12 bonds, width 0.5, h 3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 29,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+      },
+      "q2_mean": 0.7429206279759781,
+      "q2_range": 0.04071250024486628
+     }
+    },
+    "bond-count kernel + eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 11,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 12,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 7
+      },
+      "q2_mean": 0.5404502715422996,
+      "q2_range": 0.38439782448408477
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 17,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 11,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 10,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 7
+      },
+      "q2_mean": 0.7687454036586622,
+      "q2_range": 0.039985782789214386
+     }
+    },
+    "bond-count kernel + eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 15,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 4,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 12,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.5075209547375591,
+      "q2_range": 0.19263418533981114
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 15,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 19,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 10
+      },
+      "q2_mean": 0.7453700064170181,
+      "q2_range": 0.07587631565525921
+     }
+    },
+    "bond-count kernel + eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 8,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 2,
+       "up to 20 bonds, width 0.5, h 30, ridge 1": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 15,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+      },
+      "q2_mean": 0.5351854454009437,
+      "q2_range": 0.37567693323361884
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 13,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 11,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 16
+      },
+      "q2_mean": 0.7572202408853164,
+      "q2_range": 0.0532952863820122
+     }
+    },
+    "bond-count kernel + eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 10
+      },
+      "q2_mean": 0.5058205596598041,
+      "q2_range": 0.32685889308335947
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 14,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 17,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 8
+      },
+      "q2_mean": 0.7424366271114697,
+      "q2_range": 0.07156965416444006
+     }
+    },
+    "bond-count kernel + eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 11,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 9
+      },
+      "q2_mean": 0.3467795425859218,
+      "q2_range": 0.33057232202802667
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 14,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.7046567120271021,
+      "q2_range": 0.06827790468534634
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.125, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 22,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 9,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.0001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.001": 1
+      },
+      "q2_mean": 0.49594479699687144,
+      "q2_range": 0.22582730150613017
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.001": 25,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 18,
+       "sigma 0.005, width 0.5, h 1, ridge 0.0001": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.001": 3,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.0001": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1
+      },
+      "q2_mean": 0.7717753658227379,
+      "q2_range": 0.0340727196031223
+     }
+    },
+    "central unit + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 32,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 3,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.0001": 2,
+       "sigma 0.01, width 0.5, h 3, ridge 0.001": 3,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 8
+      },
+      "q2_mean": 0.532459154436588,
+      "q2_range": 0.6029790554274551
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.5, h 10, ridge 0.1": 3,
+       "sigma 0.005, width 0.5, h 3, ridge 0.001": 26,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 11,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 3, ridge 0.001": 2,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 4
+      },
+      "q2_mean": 0.7627193210524329,
+      "q2_range": 0.03755610224109185
+     }
+    },
+    "eight counts + all five": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.5032566281023005,
+      "q2_range": 0.7093257349497365
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.7272075955085346,
+      "q2_range": 0.03853153937984577
+     }
+    },
+    "eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 38,
+       "width 0.5, ridge 0.1": 12
+      },
+      "q2_mean": 0.508624507617487,
+      "q2_range": 0.45145572183634053
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 42,
+       "width 0.5, ridge 0.1": 8
+      },
+      "q2_mean": 0.7347731054158236,
+      "q2_range": 0.039468297001282515
+     }
+    },
+    "eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 48,
+       "width 0.5, ridge 0.1": 2
+      },
+      "q2_mean": 0.48031002134236955,
+      "q2_range": 0.22086889279207222
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 50
+      },
+      "q2_mean": 0.6969730415559118,
+      "q2_range": 0.04724623677045847
+     }
+    },
+    "eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 21,
+       "width 0.5, ridge 0.1": 29
+      },
+      "q2_mean": 0.5023416133832913,
+      "q2_range": 0.4486458898375174
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 27,
+       "width 0.5, ridge 0.1": 23
+      },
+      "q2_mean": 0.73637884082851,
+      "q2_range": 0.04542696191400841
+     }
+    },
+    "eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 32,
+       "width 0.5, ridge 0.1": 18
+      },
+      "q2_mean": 0.4682593477904917,
+      "q2_range": 0.3453772141550657
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 35,
+       "width 0.5, ridge 0.1": 15
+      },
+      "q2_mean": 0.690350109657394,
+      "q2_range": 0.04586078223112211
+     }
+    },
+    "eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 30,
+       "width 0.5, ridge 0.1": 20
+      },
+      "q2_mean": 0.3584364866152514,
+      "q2_range": 0.23275051350552578
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 20,
+       "width 0.5, ridge 0.1": 30
+      },
+      "q2_mean": 0.6708776180840785,
+      "q2_range": 0.058996777954318125
+     }
+    }
+   },
+   "polymers": 444
+  },
+  "N2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07204796322851269,
+     "lo": 0.01576196571589637,
+     "mean": 0.043244018693965214,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1368427806516339,
+     "lo": 0.02352678485642706,
+     "mean": 0.084326049618481,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04584374596115585,
+     "lo": 0.004742359796660839,
+     "mean": 0.024695000090527275,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.19569848182985755,
+     "lo": 0.01365947773077592,
+     "mean": 0.11005523864241562,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.04582854922801537,
+     "lo": -0.009259395883488153,
+     "mean": 0.01854901860343794,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.044870482257209555,
+     "lo": -0.0804763527374761,
+     "mean": -0.025729189023934618,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03530629535653108,
+     "lo": 0.002457434008109635,
+     "mean": 0.018719616500649794,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1485875592078204,
+     "lo": 0.005317506303683958,
+     "mean": 0.08051701256577315,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.049619823250005336,
+     "lo": -0.000519683782860994,
+     "mean": 0.02452440219331542,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.07138175777200244,
+     "lo": -0.044632573267003324,
+     "mean": 0.003809037052707853,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0723589807208512,
+     "lo": 0.024416467254694683,
+     "mean": 0.04738444905486916,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.23812904546371114,
+     "lo": -0.0168780220922041,
+     "mean": 0.12884725809256858,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.022486105746394442,
+     "lo": -0.03234904881364506,
+     "mean": -0.004140430360903946,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.0715306437712625,
+     "lo": -0.11838002755356908,
+     "mean": -0.04452120847408758,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.057334582690851094,
+     "lo": 0.016073390972354655,
+     "mean": 0.03599191843636118,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.23849019608603497,
+     "lo": -0.0038958166992556355,
+     "mean": 0.1298333180593303,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.0385257944877328,
+     "lo": -0.023897748748380035,
+     "mean": 0.007252100257604033,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.05884506574104821,
+     "lo": -0.11872152607638052,
+     "mean": -0.04550726844084929,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.006367397204547534,
+     "lo": -0.03515948739800512,
+     "mean": -0.012132943243851835,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04103305674925273,
+     "lo": -0.01671741855098873,
+     "mean": 0.01808528112155927,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.0908025946134894,
+     "lo": 0.022779899886083997,
+     "mean": 0.05537696193781705,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.12216923672344601,
+     "lo": 0.008364054649507537,
+     "mean": 0.06624076849692173,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.08682091487722929,
+     "lo": 0.028934676665245435,
+     "mean": 0.05789321274036019,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.2767989960337364,
+     "lo": 0.050798172394730313,
+     "mean": 0.17388704607877825,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.017029670683117143,
+     "lo": -0.04459517747453078,
+     "mean": -0.014649194046394975,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": -0.004714505193049668,
+     "lo": -0.1563990365464956,
+     "mean": -0.08956099646029725,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.028784131488065225,
+     "lo": -0.004814935055492409,
+     "mean": 0.011818576060247166,
+     "model": "central unit + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.031801634210954874,
+     "lo": -0.016019677240111718,
+     "mean": 0.00781660314934185,
+     "model": "central unit + eight counts + all five",
+     "scheme": "group"
+    }
+   ],
+   "correlation_with_target": {
+    "largest side group": 0.4864006440380413,
+    "radius of gyration per mass": 0.08220757049772702,
+    "side-chain fraction": 0.5580505568729445,
+    "span per mass": -0.14429087251566886,
+    "van der Waals volume per mass": 0.32841293872555
+   },
+   "groups": 124,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.4246983232573379,
+      "q2_range": 0.0984520645416983
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.6835992474106533,
+      "q2_range": 0.032929308049419515
+     }
+    },
+    "bond-count kernel + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 11,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 9,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 13,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 10
+      },
+      "q2_mean": 0.6218831338287906,
+      "q2_range": 0.06885316664531527
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 13,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 10,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 6,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 13,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+      },
+      "q2_mean": 0.7547525836658012,
+      "q2_range": 0.03678706250258601
+     }
+    },
+    "bond-count kernel + eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 12,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 2,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6
+      },
+      "q2_mean": 0.5684635189965809,
+      "q2_range": 0.06077193828380034
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 9,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 13,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 10
+      },
+      "q2_mean": 0.730161906176365,
+      "q2_range": 0.04305935047201881
+     }
+    },
+    "bond-count kernel + eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 14,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 9,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.5107555605960747,
+      "q2_range": 0.08771497212397739
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 11,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 9
+      },
+      "q2_mean": 0.7061447717294829,
+      "q2_range": 0.04242066920175758
+     }
+    },
+    "bond-count kernel + eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 16,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 11,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 4,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 9
+      },
+      "q2_mean": 0.566646370377782,
+      "q2_range": 0.06376079089259079
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 22,
+       "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 13
+      },
+      "q2_mean": 0.7433772350425374,
+      "q2_range": 0.040163111874545465
+     }
+    },
+    "bond-count kernel + eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 15,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 3,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 9
+      },
+      "q2_mean": 0.5454615280752387,
+      "q2_range": 0.09044503865039843
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 21,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 12
+      },
+      "q2_mean": 0.7180566032639987,
+      "q2_range": 0.037800198493417425
+     }
+    },
+    "bond-count kernel + eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 5,
+       "up to 12 bonds, width 1, h 10, ridge 1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+       "up to 20 bonds, width 0.5, h 10, ridge 1": 2,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 4,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 10
+      },
+      "q2_mean": 0.4474488403473494,
+      "q2_range": 0.08322738340114
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 17,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 3, ridge 1": 3,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 3, ridge 1": 3,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 14
+      },
+      "q2_mean": 0.6803804461572942,
+      "q2_range": 0.03591873394683154
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 21,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 15,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5397523559661563,
+      "q2_range": 0.08880646150824845
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.001": 3,
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 2,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 18,
+       "sigma 0.005, width 0.5, h 1, ridge 0.001": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 12,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7434391611583555,
+      "q2_range": 0.02589592144170305
+     }
+    },
+    "central unit + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 16,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 26,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 2
+      },
+      "q2_mean": 0.6459940822672123,
+      "q2_range": 0.07222856241498266
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.5, h 3, ridge 0.01": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 19,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 28,
+       "sigma 0.02, width 0.5, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.776757090809937,
+      "q2_range": 0.03645695470886934
+     }
+    },
+    "eight counts + all five": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.5946236559494327,
+      "q2_range": 0.05303010392311225
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.7304598526532471,
+      "q2_range": 0.024937211957164807
+     }
+    },
+    "eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 48
+      },
+      "q2_mean": 0.5343227706927254,
+      "q2_range": 0.07917949371902044
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.6954504379694629,
+      "q2_range": 0.028104462960510057
+     }
+    },
+    "eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 19,
+       "width 0.25, ridge 1": 7,
+       "width 0.5, ridge 0.1": 23,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.43003287974420823,
+      "q2_range": 0.09775432904049897
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 16,
+       "width 0.5, ridge 0.1": 34
+      },
+      "q2_mean": 0.6472255537210011,
+      "q2_range": 0.0485928774124178
+     }
+    },
+    "eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 47,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5120381793833225,
+      "q2_range": 0.08146586601141936
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 1,
+       "width 0.5, ridge 0.1": 49
+      },
+      "q2_mean": 0.7002230601998866,
+      "q2_range": 0.03343038511645269
+     }
+    },
+    "eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 9,
+       "width 0.25, ridge 1": 3,
+       "width 0.5, ridge 0.1": 36,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.46516394107530745,
+      "q2_range": 0.10136467384282721
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 3,
+       "width 0.5, ridge 0.1": 47
+      },
+      "q2_mean": 0.667139305098891,
+      "q2_range": 0.03598077086135354
+     }
+    },
+    "eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 2,
+       "width 0.5, ridge 0.1": 46,
+       "width 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.44846222719170664,
+      "q2_range": 0.05886932694579916
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 50
+      },
+      "q2_mean": 0.6717124791744491,
+      "q2_range": 0.0351096027342066
+     }
+    }
+   },
+   "polymers": 709
+  },
+  "O2": {
+   "comparisons": [
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06554847144789641,
+     "lo": 0.010563878670779013,
+     "mean": 0.03851704108185361,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13872876406837073,
+     "lo": 0.013367122577921579,
+     "mean": 0.08079314374557722,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05667645776268046,
+     "lo": 0.010956772100055278,
+     "mean": 0.033900714649007124,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.16769777474886433,
+     "lo": 0.020539164547694836,
+     "mean": 0.09841576007758912,
+     "model": "bond-count kernel + eight counts + span per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.03153636641456856,
+     "lo": -0.021794229700348607,
+     "mean": 0.004616326432846485,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + span per mass",
+     "hi": 0.019043295865011294,
+     "lo": -0.05301251149329435,
+     "mean": -0.017622616332011898,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.030217109158625282,
+     "lo": 0.00025018623560164345,
+     "mean": 0.015527092837455014,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.11006969616354953,
+     "lo": 0.0074994448728967905,
+     "mean": 0.06251238393224667,
+     "model": "bond-count kernel + eight counts + radius of gyration per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.04826496235368002,
+     "lo": -0.001433688515997919,
+     "mean": 0.022989948244398595,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + radius of gyration per mass",
+     "hi": 0.05917497293132736,
+     "lo": -0.025426726900859162,
+     "mean": 0.01828075981333055,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0749756067780604,
+     "lo": 0.03319867763649708,
+     "mean": 0.0535609635731894,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.20720734046316874,
+     "lo": -0.0034916564447988897,
+     "mean": 0.11112359061412302,
+     "model": "bond-count kernel + eight counts + side-chain fraction",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.010974274461385025,
+     "lo": -0.04107644383067768,
+     "mean": -0.015043922491335793,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + side-chain fraction",
+     "hi": 0.04820488428043438,
+     "lo": -0.08577418341783148,
+     "mean": -0.030330446868545802,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.0664983891678281,
+     "lo": 0.025652142524124504,
+     "mean": 0.04603703022435501,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.19354104343912323,
+     "lo": 0.01816102500470188,
+     "mean": 0.11114158120376161,
+     "model": "bond-count kernel + eight counts + largest side group",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.02088327152582487,
+     "lo": -0.0350115565635013,
+     "mean": -0.007519989142501404,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + largest side group",
+     "hi": 0.027343754020252013,
+     "lo": -0.07321458108707116,
+     "mean": -0.030348437458184385,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.015523336473339736,
+     "lo": -0.021317963863566842,
+     "mean": -0.0018528249361728921,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.05981695986034561,
+     "lo": -6.27562893877966e-05,
+     "mean": 0.027708610778926057,
+     "model": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.07412716908837279,
+     "lo": 0.007970385882451492,
+     "mean": 0.0403698660180265,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + van der Waals volume per mass",
+     "hi": 0.10055144020885284,
+     "lo": -0.009181467136796509,
+     "mean": 0.053084532966651166,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.09226448342009395,
+     "lo": 0.03422873109148197,
+     "mean": 0.06316080415474645,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.22082766911581567,
+     "lo": 0.05162880373970945,
+     "mean": 0.14296665557338628,
+     "model": "bond-count kernel + eight counts + all five",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.00499257321705434,
+     "lo": -0.05259920120587172,
+     "mean": -0.024643763072892844,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": -0.01308603809252962,
+     "lo": -0.1075619333780045,
+     "mean": -0.06217351182780906,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.02019805236446163,
+     "lo": -0.020451419951038486,
+     "mean": -0.0005112594705156681,
+     "model": "central unit + eight counts + all five",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts + all five",
+     "hi": 0.027970145164763965,
+     "lo": -0.037880979659582995,
+     "mean": -0.004124379147581125,
+     "model": "central unit + eight counts + all five",
+     "scheme": "group"
+    }
+   ],
+   "correlation_with_target": {
+    "largest side group": 0.4582836211521571,
+    "radius of gyration per mass": -0.030694999570136324,
+    "side-chain fraction": 0.50911617047843,
+    "span per mass": -0.2089457387629318,
+    "van der Waals volume per mass": 0.2668947306966652
+   },
+   "groups": 124,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 9,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 20 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.4343780186349438,
+      "q2_range": 0.18247598177844204
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 24,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 11,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.6781993081377649,
+      "q2_range": 0.06616837727598468
+     }
+    },
+    "bond-count kernel + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.1, ridge 0.01": 3,
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 9,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 7,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 21,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.5928652422369092,
+      "q2_range": 0.09927018979996283
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 29,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.7378179703155977,
+      "q2_range": 0.036285348568634745
+     }
+    },
+    "bond-count kernel + eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 18,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 5,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.5566790477963448,
+      "q2_range": 0.10107227217484205
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 29,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 12,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.7255644287000423,
+      "q2_range": 0.032634803952997005
+     }
+    },
+    "bond-count kernel + eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 19,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 9,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 8,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 4,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 1,
+       "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 20 bonds, width 1, h 3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.5053780224016571,
+      "q2_range": 0.19374678345031804
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 15,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 23,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 8,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.6929005606075236,
+      "q2_range": 0.043480263653600915
+     }
+    },
+    "bond-count kernel + eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 24,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 10,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 4,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 20 bonds, width 1, h 3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.561873352036869,
+      "q2_range": 0.07310125072158002
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 34,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 7,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.7338593384497655,
+      "q2_range": 0.05240177876434382
+     }
+    },
+    "bond-count kernel + eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 29,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6
+      },
+      "q2_mean": 0.555477416311333,
+      "q2_range": 0.13287355628148223
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 42,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3
+      },
+      "q2_mean": 0.7197787416377206,
+      "q2_range": 0.026613449731262118
+     }
+    },
+    "bond-count kernel + eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 12,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 9,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 16,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 2,
+       "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 20 bonds, width 1, h 3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.46926500228062473,
+      "q2_range": 0.16831384037011432
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 17,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 20,
+       "up to 12 bonds, width 1, h 3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.6806824212531344,
+      "q2_range": 0.03189008608862376
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 9,
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 5,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 3,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 2
+      },
+      "q2_mean": 0.5404865244952821,
+      "q2_range": 0.1675838710128229
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 11,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 9,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 6,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 3,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.7227031634699878,
+      "q2_range": 0.0386269449478116
+     }
+    },
+    "central unit + eight counts + all five": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 11,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 3, ridge 0.01": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 13,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 6,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.25, h 1, ridge 0.01": 3,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.6008917996190429,
+      "q2_range": 0.09819304518539951
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 0.01": 5,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 0.25, h 3, ridge 0.01": 4,
+       "sigma 0.005, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 0.01": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 11,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 3, ridge 0.1": 2,
+       "sigma 0.02, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.7432174508100428,
+      "q2_range": 0.0423170898281966
+     }
+    },
+    "eight counts + all five": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 23,
+       "width 0.5, ridge 0.1": 27
+      },
+      "q2_mean": 0.4807764315877462,
+      "q2_range": 0.134512020608609
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 18,
+       "width 0.5, ridge 0.1": 32
+      },
+      "q2_mean": 0.6568438397149641,
+      "q2_range": 0.03425325321172501
+     }
+    },
+    "eight counts + largest side group": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 4,
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 28,
+       "width 0.5, ridge 1": 6,
+       "width 1, ridge 0.1": 10
+      },
+      "q2_mean": 0.45089060910100215,
+      "q2_range": 0.16483833559154448
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 36,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 13
+      },
+      "q2_mean": 0.6348382626047429,
+      "q2_range": 0.05636327957548781
+     }
+    },
+    "eight counts + radius of gyration per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 11,
+       "width 0.25, ridge 1": 10,
+       "width 0.5, ridge 0.1": 21,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 7
+      },
+      "q2_mean": 0.3645526295214417,
+      "q2_range": 0.23649622946377646
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 6,
+       "width 0.25, ridge 1": 10,
+       "width 0.5, ridge 0.1": 32,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.567877937683519,
+      "q2_range": 0.055815978068659344
+     }
+    },
+    "eight counts + side-chain fraction": {
+     "group": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 34,
+       "width 1, ridge 0.1": 16
+      },
+      "q2_mean": 0.4515402931328848,
+      "q2_range": 0.13476578230440273
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 36,
+       "width 1, ridge 0.1": 14
+      },
+      "q2_mean": 0.6407788110832074,
+      "q2_range": 0.07498163419443649
+     }
+    },
+    "eight counts + span per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 9,
+       "width 0.25, ridge 1": 1,
+       "width 0.5, ridge 0.1": 38,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.41155237851509774,
+      "q2_range": 0.1520119867454256
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 4,
+       "width 0.5, ridge 0.1": 45,
+       "width 0.5, ridge 1": 1
+      },
+      "q2_mean": 0.6061014331875243,
+      "q2_range": 0.07655660524563423
+     }
+    },
+    "eight counts + van der Waals volume per mass": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 2,
+       "width 0.5, ridge 0.1": 27,
+       "width 1, ridge 0.1": 21
+      },
+      "q2_mean": 0.42254778510755375,
+      "q2_range": 0.19898010421299406
+     },
+     "random": {
+      "chosen": {
+       "width 0.5, ridge 0.1": 23,
+       "width 1, ridge 0.1": 27
+      },
+      "q2_mean": 0.6067048647287583,
+      "q2_range": 0.03901567391830729
+     }
+    }
+   },
+   "polymers": 721
+  }
+ },
+ "repeats": 10,
+ "seconds": 15371.1
+}
