@@ -1,6 +1,6 @@
 {
- "commit": "86a2532c57c1e21bbc5c87ba73d9323d585638be",
- "created": "2026-11-19T00:02:38",
+ "commit": "9281304c9568c6036c36cbdad1600be17b12d64e",
+ "created": "2026-11-19T01:06:02",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -4481,6 +4481,9 @@
   "benchmarks/results/shift/THER.json": "0cfd1bf26307abda93592a47d1c64d0db916c6fa5550075903aff50f03ce28cd",
   "benchmarks/results/shift/THR.json": "5f6a0bbe6ac3920baa5680820dafe23bebfb3a3b2e7511fff86df3ab2db06994",
   "benchmarks/results/shift/table.md": "5164aedc8ddca1842fa8123b45bf855756e4d4cdb6d50011dd0b5b445dd5aaca",
+  "benchmarks/results/site_cofield/site_cofield.json": "1c0f910dbe60dfe8b8e231417051043886c570afa6652cac67614ed45e240291",
+  "benchmarks/results/site_cofield/site_cofield.npz": "f15f8808dc0195c7c07c6eea121a961af0e04ae66e47d5b8c08eee94b579ca95",
+  "benchmarks/results/site_cofield/table.md": "e150f62e602f42b934dc68b662fc6c5c371d9b5066b14174c36b70268bffb9b1",
   "benchmarks/results/site_fields/site_fields.json": "04f41cfcba1a3bb87968b262e23c92f9ef2ad2c2b1bce5e7b55b95f02588b748",
   "benchmarks/results/site_fields/table.md": "f15fc6c34156520dc3419932046a9dc110a49445d8c70a7afdcf3ff4a8215eaf",
   "benchmarks/results/sites/agreement.json": "667991db20006b53881df3c2bebdc5b82e6eacbc822278a9da49edcdb46ef00a",
