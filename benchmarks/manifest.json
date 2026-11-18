@@ -1,6 +1,6 @@
 {
- "commit": "1c5727383cc54c7ac034058049a34a736c338b95",
- "created": "2026-11-18T17:25:38",
+ "commit": "8279de20e4e6a2c3a4f042ac4a474e549147de5f",
+ "created": "2026-11-18T22:51:52",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3796,6 +3796,9 @@
   "benchmarks/results/phenazine/table.md": "1ff16755015b5a1a781a0a78527556e20ff8119ab75e76b0e5d284f06d1f011b",
   "benchmarks/results/polymer_packing/polymer_packing.json": "e405d341ec41d775bbb8fb7835cbb2832c8eeb11622076f3095821d28a0d776d",
   "benchmarks/results/polymer_packing/table.md": "85e8788630861007f4172ebb439b92c76390f00e95699fd9072e2062ed6cfed2",
+  "benchmarks/results/polymer_permeability/polymer_permeability.json": "57daf2faa5ae2133037aee532e22b0861639891aad00c5d916a76979a02b8709",
+  "benchmarks/results/polymer_permeability/ranges.json": "9c1d83fa60991ae4cd17e1013ba1d54aebdd2d3d37e3f251f841cd55f56931bf",
+  "benchmarks/results/polymer_permeability/table.md": "c310061f7b8269bb39983d8c1aa68c0b9fdbe060dbb47fe8c0e0173808198e11",
   "benchmarks/results/polymer_tg/polymer_tg.json": "8affa1d3c3b0e6e73e72f91137242df5ffa269f0daedafe5e786e2125c6d9d17",
   "benchmarks/results/polymer_tg/table.md": "f643f3c57d8c506b1df998411ac9d4fe198bf37ff63250936cd4ae85e8400765",
   "benchmarks/results/pooled_mixing/ACE.json": "d8fdef00b04b88e2b788883f7fde25cb03350e9945fc31e9dd070fbbba1fd4a2",
