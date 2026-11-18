@@ -1240,6 +1240,20 @@ molecule alone (q² +0.654), which equals a fingerprint
 periodic kernel is per unit volume and cosine-normalised, so it cannot see the size of the
 molecule.
 
+### Polymers as oligomers
+
+`cmf polymers` (`cmfqsar/polymer.py`) turns a table of repeat units, written as SMILES with two
+attachment points, into capped oligomers in 3D: three units by default, the most extended of four
+conformations, optimised with the end-to-end distance held fixed, every atom labelled with its
+repeat unit. `cmf build` reads the result like any other SD file. On the glass transition
+temperatures of 7,316 homopolymers (PolyMetriX, CC BY 4.0; `benchmarks/run_polymer_tg.py`) the
+field kernel of the trimer plus eight simple counts equals the published model, gradient boosting
+on 100 polymer descriptors: q² +0.852 against +0.844 on random folds (mean absolute error 31.4 K
+against 33.0 K) and +0.773 against +0.770 with whole polymer classes held out. The field alone
+is 0.06 to 0.07 behind, the 3D distances add nothing to the bond graph once the counts are in,
+and a Tanimoto kernel on ECFP4 fingerprints of the repeat unit is the best model on both tests
+(+0.903 and +0.779).
+
 ### A measured curve as the sample: no structure needed
 
 A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no

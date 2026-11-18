@@ -484,7 +484,9 @@ def cmd_build(args):
                 except KeyError as exc:
                     raise SystemExit(str(exc).strip('"'))
         have = available(ds.mols)
-        unknown = [d for d in fs.descriptors if d not in have]
+        # a calc: descriptor is computed from the structure, so it is not among the SD
+        # properties that available() lists
+        unknown = [d for d in fs.descriptors if not d.startswith("calc:") and d not in have]
         print(f"  non-field descriptors: {', '.join(fs.descriptors)} (h = {fs.descriptor_h:g})"
               + (f"; NOT numeric on any molecule: {', '.join(unknown)}" if unknown else ""))
     if args.conformers:
@@ -4147,6 +4149,78 @@ def cmd_hetero(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def cmd_polymers(args):
+    """Repeat units written as SMILES with two attachment points, built as capped oligomers."""
+    import csv
+
+    from rdkit import Chem
+    from cmfqsar.polymer import UNIT_PROP, build_many
+
+    with open(args.table, newline="", encoding="utf-8-sig") as fh:
+        sample = fh.read(4096)
+        fh.seek(0)
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t") if sample else csv.excel
+        rows = list(csv.DictReader(fh, dialect=dialect))
+    if not rows:
+        raise SystemExit(f"{args.table} has no rows")
+    columns = list(rows[0])
+    if args.smiles_column not in columns:
+        raise SystemExit(f"{args.table} has no column {args.smiles_column!r}; its columns are "
+                         f"{', '.join(columns)}. Name the repeat-unit column with --smiles-column")
+    if args.name_column and args.name_column not in columns:
+        raise SystemExit(f"{args.table} has no column {args.name_column!r}")
+    if args.units < 1:
+        raise SystemExit("--units must be at least 1")
+    smiles = [r[args.smiles_column].strip() for r in rows]
+    print(f"Building {len(smiles)} oligomers of {args.units} repeat units "
+          f"({args.stereo}, the most extended of {args.conformers} conformations, MMFF94) "
+          f"in {args.jobs} process(es) ...", flush=True)
+    step = max(len(smiles) // 20, 1)
+
+    def progress(done, total):
+        if done % step == 0 or done == total:
+            print(f"  {done}/{total}", flush=True)
+
+    built = build_many(smiles, n=args.units, stereo=args.stereo, conformers=args.conformers,
+                       seed=args.seed, jobs=args.jobs, progress=progress)
+    w = Chem.SDWriter(args.out)
+    failed = []
+    spans = []
+    for k, (row, (mol, info, err)) in enumerate(zip(rows, built)):
+        name = (row.get(args.name_column) or "").strip() if args.name_column else ""
+        name = name or f"polymer_{k + 1}"
+        if mol is None:
+            failed.append((name, row[args.smiles_column], err))
+            continue
+        mol.SetProp("_Name", name)
+        for col, val in row.items():
+            if col is None or val is None:
+                continue
+            mol.SetProp(col, str(val))
+        mol.SetProp("repeat_unit", row[args.smiles_column])
+        mol.SetProp("cmf_units", str(args.units))
+        for key in ("span", "force_field"):
+            if key in info:
+                mol.SetProp(f"cmf_{key}", f"{info[key]:.3f}" if isinstance(info[key], float)
+                            else str(info[key]))
+        Chem.CreateAtomIntPropertyList(mol, UNIT_PROP)
+        spans.append(info.get("span", float("nan")))
+        w.write(mol)
+    w.close()
+    print(f"Written {len(built) - len(failed)} oligomers to {args.out}; every atom carries "
+          f"'{UNIT_PROP}' (its repeat unit from 0, -1 for a cap).")
+    if spans:
+        import numpy as np
+        print(f"End-to-end distance of the chain: median {np.median(spans):.1f} A, "
+              f"range {np.min(spans):.1f}-{np.max(spans):.1f} A")
+    if failed:
+        print(f"{len(failed)} repeat unit(s) could not be built and are left out:")
+        for name, smi, err in failed[:20]:
+            print(f"  {name}: {smi}: {err}")
+        if len(failed) > 20:
+            print(f"  ... and {len(failed) - 20} more")
+
+
 def cmd_unalign(args):
     """Give every molecule of a structure file a random pose (control for alignment methods)."""
     import numpy as np
@@ -5425,6 +5499,29 @@ def main(argv=None):
                    help="maximum displacement in A (default 2.0)")
     u.add_argument("--seed", type=int, default=0)
     u.set_defaults(func=cmd_unalign)
+    po = sub.add_parser("polymers", help="build capped oligomers from repeat units written as "
+                                         "SMILES with two attachment points, as an SDF")
+    po.add_argument("table", help="a CSV (or tab- or semicolon-separated) table with one repeat unit "
+                                  "per row; every column is copied to the SDF as a property")
+    po.add_argument("out", help="output SDF")
+    po.add_argument("--smiles-column", default="smiles", metavar="NAME",
+                    help="the column with the repeat unit, written with two attachment points "
+                         "as * or [*] (default: smiles)")
+    po.add_argument("--name-column", default=None, metavar="NAME",
+                    help="the column with the polymer's name (default: polymer_1, polymer_2, ...)")
+    po.add_argument("--units", type=int, default=3,
+                    help="repeat units in the oligomer (default 3); an odd number has a middle "
+                         "unit, which the descriptor of one repeat unit needs")
+    po.add_argument("--stereo", default="isotactic", choices=["isotactic", "random"],
+                    help="isotactic: every stereocentre the repeat unit leaves open is fixed once "
+                         "and copied into every unit, so the build is reproducible; random: the "
+                         "embedding chooses each one (default: isotactic)")
+    po.add_argument("--conformers", type=int, default=4,
+                    help="ETKDG conformations made per oligomer; the most extended one is kept "
+                         "and optimised with MMFF94 (default 4)")
+    po.add_argument("--seed", type=int, default=0)
+    po.add_argument("--jobs", type=int, default=1, help="processes to build in (default 1)")
+    po.set_defaults(func=cmd_polymers)
     g = sub.add_parser("map", help="chemical space map and activity landscape (kernel PCA + GTM)")
     g.add_argument("dataset")
     g.add_argument("--activity", default=None)

@@ -1,0 +1,954 @@
+{
+ "atoms_median": 173.0,
+ "class_mae": {
+  "PolyMetriX descriptors, gradient boosting": {
+   "Other class": {
+    "mae": 28.490849247970015,
+    "n": 170
+   },
+   "Polyacrylics": {
+    "mae": 39.69957556568317,
+    "n": 607
+   },
+   "Polyamides": {
+    "mae": 54.320273731739015,
+    "n": 486
+   },
+   "Polyanhydrides": {
+    "mae": 54.35018715119044,
+    "n": 28
+   },
+   "Polycarbonates": {
+    "mae": 34.58603356894279,
+    "n": 160
+   },
+   "Polydienes": {
+    "mae": 56.11284796529485,
+    "n": 41
+   },
+   "Polyesters": {
+    "mae": 32.137569317533966,
+    "n": 647
+   },
+   "Polyethers": {
+    "mae": 8.218182565798685,
+    "n": 1
+   },
+   "Polyhalo-olefins": {
+    "mae": 55.093407358756735,
+    "n": 40
+   },
+   "Polyimides": {
+    "mae": 37.090571442490265,
+    "n": 1751
+   },
+   "Polyimines": {
+    "mae": 42.961822416913634,
+    "n": 255
+   },
+   "Polyketones": {
+    "mae": 32.30646072477719,
+    "n": 7
+   },
+   "Polyolefins": {
+    "mae": 44.216711971561175,
+    "n": 55
+   },
+   "Polyoxides": {
+    "mae": 33.82837696720202,
+    "n": 1743
+   },
+   "Polyphenylenes": {
+    "mae": 43.760207505040256,
+    "n": 104
+   },
+   "Polyphosphazenes": {
+    "mae": 88.8905223181095,
+    "n": 107
+   },
+   "Polysiloxanes": {
+    "mae": 52.24890828150252,
+    "n": 234
+   },
+   "Polystyrenes": {
+    "mae": 47.56358701275318,
+    "n": 239
+   },
+   "Polysulfides": {
+    "mae": 44.606327465412654,
+    "n": 216
+   },
+   "Polyureas": {
+    "mae": 57.11002389335657,
+    "n": 39
+   },
+   "Polyurethanes": {
+    "mae": 48.015561364384055,
+    "n": 122
+   },
+   "Polyvinyls": {
+    "mae": 49.11172902477734,
+    "n": 250
+   }
+  },
+  "central unit + PolyMetriX descriptors": {
+   "Other class": {
+    "mae": 29.64680403683969,
+    "n": 170
+   },
+   "Polyacrylics": {
+    "mae": 41.14831662658311,
+    "n": 607
+   },
+   "Polyamides": {
+    "mae": 40.16459015022378,
+    "n": 486
+   },
+   "Polyanhydrides": {
+    "mae": 36.26248404240523,
+    "n": 28
+   },
+   "Polycarbonates": {
+    "mae": 32.31093070232318,
+    "n": 160
+   },
+   "Polydienes": {
+    "mae": 55.720116115480465,
+    "n": 41
+   },
+   "Polyesters": {
+    "mae": 33.21527425707604,
+    "n": 647
+   },
+   "Polyethers": {
+    "mae": 18.112543142065988,
+    "n": 1
+   },
+   "Polyhalo-olefins": {
+    "mae": 58.21542567375749,
+    "n": 40
+   },
+   "Polyimides": {
+    "mae": 40.95927635049451,
+    "n": 1751
+   },
+   "Polyimines": {
+    "mae": 45.33835396817565,
+    "n": 255
+   },
+   "Polyketones": {
+    "mae": 22.798353457130215,
+    "n": 7
+   },
+   "Polyolefins": {
+    "mae": 47.06401326124298,
+    "n": 55
+   },
+   "Polyoxides": {
+    "mae": 37.2894492829391,
+    "n": 1743
+   },
+   "Polyphenylenes": {
+    "mae": 43.028639906985745,
+    "n": 104
+   },
+   "Polyphosphazenes": {
+    "mae": 81.99146401885594,
+    "n": 107
+   },
+   "Polysiloxanes": {
+    "mae": 57.01951800531184,
+    "n": 234
+   },
+   "Polystyrenes": {
+    "mae": 44.145097913386955,
+    "n": 239
+   },
+   "Polysulfides": {
+    "mae": 40.90413040945418,
+    "n": 216
+   },
+   "Polyureas": {
+    "mae": 56.263826316955004,
+    "n": 39
+   },
+   "Polyurethanes": {
+    "mae": 35.65795373666438,
+    "n": 122
+   },
+   "Polyvinyls": {
+    "mae": 48.81906578836052,
+    "n": 250
+   }
+  },
+  "invariant, central unit": {
+   "Other class": {
+    "mae": 38.11679069080938,
+    "n": 170
+   },
+   "Polyacrylics": {
+    "mae": 48.78614419578718,
+    "n": 607
+   },
+   "Polyamides": {
+    "mae": 47.145522448379666,
+    "n": 486
+   },
+   "Polyanhydrides": {
+    "mae": 52.150376921184204,
+    "n": 28
+   },
+   "Polycarbonates": {
+    "mae": 37.39471228028802,
+    "n": 160
+   },
+   "Polydienes": {
+    "mae": 59.060190238587396,
+    "n": 41
+   },
+   "Polyesters": {
+    "mae": 42.76176331171485,
+    "n": 647
+   },
+   "Polyethers": {
+    "mae": 14.474245337632766,
+    "n": 1
+   },
+   "Polyhalo-olefins": {
+    "mae": 49.22125123077155,
+    "n": 40
+   },
+   "Polyimides": {
+    "mae": 45.49146373057625,
+    "n": 1751
+   },
+   "Polyimines": {
+    "mae": 62.071206660945,
+    "n": 255
+   },
+   "Polyketones": {
+    "mae": 60.62345441732224,
+    "n": 7
+   },
+   "Polyolefins": {
+    "mae": 74.17443454444361,
+    "n": 55
+   },
+   "Polyoxides": {
+    "mae": 43.11657479349485,
+    "n": 1743
+   },
+   "Polyphenylenes": {
+    "mae": 45.18762486426527,
+    "n": 104
+   },
+   "Polyphosphazenes": {
+    "mae": 65.48911738743371,
+    "n": 107
+   },
+   "Polysiloxanes": {
+    "mae": 58.48258647325918,
+    "n": 234
+   },
+   "Polystyrenes": {
+    "mae": 42.15219917621129,
+    "n": 239
+   },
+   "Polysulfides": {
+    "mae": 55.1166178589611,
+    "n": 216
+   },
+   "Polyureas": {
+    "mae": 55.33795905385424,
+    "n": 39
+   },
+   "Polyurethanes": {
+    "mae": 40.62719135771019,
+    "n": 122
+   },
+   "Polyvinyls": {
+    "mae": 50.608464930209095,
+    "n": 250
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": -0.05548343131453067,
+   "lo": -0.07069179768889687,
+   "mean": -0.06325489178547461,
+   "model": "invariant, central unit",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": -0.02616315687239109,
+   "lo": -0.11919772996458433,
+   "mean": -0.07434406844803432,
+   "model": "invariant, central unit",
+   "scheme": "class"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.04663963367597122,
+   "lo": 0.036201142922192356,
+   "mean": 0.04139256615961773,
+   "model": "central unit + PolyMetriX descriptors",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.03738623455361948,
+   "lo": -0.039252588802142926,
+   "mean": -0.017230662931932095,
+   "model": "central unit + PolyMetriX descriptors",
+   "scheme": "class"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.0138489207982939,
+   "lo": 0.0042739225652013825,
+   "mean": 0.009041725725091876,
+   "model": "central unit + eight counts",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.03513085373774848,
+   "lo": -0.02066102412797658,
+   "mean": 0.0012612719630785696,
+   "model": "central unit + eight counts",
+   "scheme": "class"
+  },
+  {
+   "against": "invariant, oligomer",
+   "hi": -0.0043812916604538555,
+   "lo": -0.015614953439273088,
+   "mean": -0.010128897931358183,
+   "model": "invariant, central unit",
+   "scheme": "random"
+  },
+  {
+   "against": "invariant, oligomer",
+   "hi": 0.006713080457175795,
+   "lo": -0.025334716212273675,
+   "mean": -0.010361508414544973,
+   "model": "invariant, central unit",
+   "scheme": "class"
+  },
+  {
+   "against": "topological, central unit",
+   "hi": 0.09105547540995994,
+   "lo": 0.07072004143538697,
+   "mean": 0.08073777356641876,
+   "model": "invariant, central unit",
+   "scheme": "random"
+  },
+  {
+   "against": "topological, central unit",
+   "hi": 0.2333266836698081,
+   "lo": 0.06943617285675877,
+   "mean": 0.10525268677666777,
+   "model": "invariant, central unit",
+   "scheme": "class"
+  },
+  {
+   "against": "PolyMetriX descriptors, kernel",
+   "hi": -0.09189923698233181,
+   "lo": -0.10803586518026986,
+   "mean": -0.10026144352269362,
+   "model": "invariant, central unit",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, kernel",
+   "hi": -0.009882935817262305,
+   "lo": -0.09397253559017178,
+   "mean": -0.03694615329985962,
+   "model": "invariant, central unit",
+   "scheme": "class"
+  },
+  {
+   "against": "ECFP4 of the repeat unit",
+   "hi": -0.11590213785368156,
+   "lo": -0.13116293276374633,
+   "mean": -0.1237764212154907,
+   "model": "invariant, central unit",
+   "scheme": "random"
+  },
+  {
+   "against": "ECFP4 of the repeat unit",
+   "hi": -0.06334081444114156,
+   "lo": -0.1472458376395732,
+   "mean": -0.08761927097200983,
+   "model": "invariant, central unit",
+   "scheme": "class"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.030596085206010728,
+   "lo": 0.021956606877374232,
+   "mean": 0.026182478710940482,
+   "model": "central unit + eight counts",
+   "scheme": "random"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.06492906757748035,
+   "lo": 0.0190859212978036,
+   "mean": 0.030789622009626427,
+   "model": "central unit + eight counts",
+   "scheme": "class"
+  },
+  {
+   "against": "invariant, central unit",
+   "hi": 0.07817168863976029,
+   "lo": 0.06594021477479065,
+   "mean": 0.07229661751056649,
+   "model": "central unit + eight counts",
+   "scheme": "random"
+  },
+  {
+   "against": "invariant, central unit",
+   "hi": 0.10993461309451301,
+   "lo": 0.053941147316969966,
+   "mean": 0.07560534041111289,
+   "model": "central unit + eight counts",
+   "scheme": "class"
+  },
+  {
+   "against": "topological + eight counts",
+   "hi": 0.0038798025321766247,
+   "lo": -0.00222557302451917,
+   "mean": 0.0007835882730999888,
+   "model": "central unit + eight counts",
+   "scheme": "random"
+  },
+  {
+   "against": "topological + eight counts",
+   "hi": 0.014677127839631902,
+   "lo": -0.008278462103596998,
+   "mean": 0.0007626326713008336,
+   "model": "central unit + eight counts",
+   "scheme": "class"
+  },
+  {
+   "against": "PolyMetriX descriptors, kernel",
+   "hi": 0.006334231659967068,
+   "lo": 0.002510317157892958,
+   "mean": 0.004386014422398721,
+   "model": "central unit + PolyMetriX descriptors",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, kernel",
+   "hi": 0.03073875684737995,
+   "lo": 0.01021495837454064,
+   "mean": 0.020167252216242604,
+   "model": "central unit + PolyMetriX descriptors",
+   "scheme": "class"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.04249977833923166,
+   "lo": 0.031724529750502106,
+   "mean": 0.03700655173721901,
+   "model": "PolyMetriX descriptors, kernel",
+   "scheme": "random"
+  },
+  {
+   "against": "PolyMetriX descriptors, gradient boosting",
+   "hi": 0.01706745509790037,
+   "lo": -0.06295461275229018,
+   "mean": -0.0373979151481747,
+   "model": "PolyMetriX descriptors, kernel",
+   "scheme": "class"
+  }
+ ],
+ "conformers": 4,
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0,
+  100.0
+ ],
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4 of the repeat unit": {
+   "class": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     37.94021609501304,
+     41.07820988716534,
+     39.46469380659883
+    ],
+    "mae_mean": 39.49437326292574,
+    "q2_by_repeat": [
+     0.7933623487033203,
+     0.7649562212591932,
+     0.778913205936234
+    ],
+    "q2_mean": 0.7790772586329159,
+    "rmse_mean": 52.99284929846249
+   },
+   "random": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     23.73683714355375,
+     23.580899645930682,
+     23.522547768361278
+    ],
+    "mae_mean": 23.613428185948568,
+    "q2_by_repeat": [
+     0.9017381955534634,
+     0.9037892555862068,
+     0.9043717294230191
+    ],
+    "q2_mean": 0.9032997268542298,
+    "rmse_mean": 35.07142643266243
+   }
+  },
+  "PolyMetriX descriptors, gradient boosting": {
+   "class": {
+    "chosen": {},
+    "mae_by_repeat": [
+     41.309794064436495,
+     40.26795230764738,
+     41.483531778118376
+    ],
+    "mae_mean": 41.02042605006742,
+    "q2_by_repeat": [
+     0.7626308605711736,
+     0.7835070643586819,
+     0.7625726365030118
+    ],
+    "q2_mean": 0.7695701871442892,
+    "rmse_mean": 54.12717992582003
+   },
+   "random": {
+    "chosen": {},
+    "mae_by_repeat": [
+     33.10567508737583,
+     32.90010943012283,
+     32.8722317909769
+    ],
+    "mae_mean": 32.95933876949185,
+    "q2_by_repeat": [
+     0.8430707142739097,
+     0.8441519174221321,
+     0.8442385148084869
+    ],
+    "q2_mean": 0.8438203821681762,
+    "rmse_mean": 44.571629541685375
+   }
+  },
+  "PolyMetriX descriptors, kernel": {
+   "class": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     43.35304315569463,
+     43.52486537548903,
+     44.29974814063459
+    ],
+    "mae_mean": 43.725885557272754,
+    "q2_by_repeat": [
+     0.734922241024307,
+     0.7349638626052415,
+     0.7250067456553981
+    ],
+    "q2_mean": 0.7316309497616489,
+    "rmse_mean": 58.42473324389443
+   },
+   "random": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     27.102822595375926,
+     26.99164235110296,
+     26.805482494151356
+    ],
+    "mae_mean": 26.966649146876748,
+    "q2_by_repeat": [
+     0.8787258952682679,
+     0.8789758967787933,
+     0.8799327667625506
+    ],
+    "q2_mean": 0.8792115196032039,
+    "rmse_mean": 39.19753104143256
+   }
+  },
+  "central unit + PolyMetriX descriptors": {
+   "class": {
+    "chosen": {
+     "sigma 0.005, width 0.5, h 10, ridge 1": 5,
+     "sigma 0.01, width 0.5, h 10, ridge 1": 10
+    },
+    "mae_by_repeat": [
+     41.11603772292694,
+     41.707122988671856,
+     42.14709011819679
+    ],
+    "mae_mean": 41.65675027659853,
+    "q2_by_repeat": [
+     0.7563227943804962,
+     0.7522807947583292,
+     0.7473948287720609
+    ],
+    "q2_mean": 0.7519994726369621,
+    "rmse_mean": 56.16445018942221
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, width 0.5, h 10, ridge 1": 15
+    },
+    "mae_by_repeat": [
+     27.01106673992718,
+     26.784593060640205,
+     26.638060949202938
+    ],
+    "mae_mean": 26.81124024992344,
+    "q2_by_repeat": [
+     0.8819977043241909,
+     0.8832225851005204,
+     0.8844262663209596
+    ],
+    "q2_mean": 0.8832155185818903,
+    "rmse_mean": 38.54212160549212
+   }
+  },
+  "central unit + eight counts": {
+   "class": {
+    "chosen": {
+     "sigma 0.005, width 0.5, h 10, ridge 1": 3,
+     "sigma 0.005, width 0.5, h 3, ridge 1": 2,
+     "sigma 0.01, width 0.5, h 10, ridge 1": 10
+    },
+    "mae_by_repeat": [
+     39.48461749566593,
+     40.06492231354664,
+     40.49273263430594
+    ],
+    "mae_mean": 40.01409081450617,
+    "q2_by_repeat": [
+     0.7766263462650466,
+     0.7737967646594753,
+     0.7679854731282872
+    ],
+    "q2_mean": 0.7728028613509363,
+    "rmse_mean": 53.75697525234028
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, width 0.5, h 3, ridge 1": 15
+    },
+    "mae_by_repeat": [
+     31.34478434299183,
+     31.424242963674008,
+     31.391396955143055
+    ],
+    "mae_mean": 31.38680808726963,
+    "q2_by_repeat": [
+     0.8521725506418009,
+     0.8521450045675127,
+     0.8527299619106765
+    ],
+    "q2_mean": 0.8523491723733301,
+    "rmse_mean": 43.33758671160507
+   }
+  },
+  "eight counts": {
+   "class": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     42.36878792046885,
+     43.45470435716341,
+     43.100706613808136
+    ],
+    "mae_mean": 42.974732963813466,
+    "q2_by_repeat": [
+     0.7447973384961499,
+     0.7367046324616338,
+     0.7392831060651657
+    ],
+    "q2_mean": 0.740261692340983,
+    "rmse_mean": 57.47854568416047
+   },
+   "random": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     34.14044530598094,
+     34.044154246026,
+     34.0007344574755
+    ],
+    "mae_mean": 34.06177800316082,
+    "q2_by_repeat": [
+     0.8253503630647666,
+     0.8273883124259583,
+     0.8272138435923003
+    ],
+    "q2_mean": 0.8266508396943418,
+    "rmse_mean": 46.95764398818894
+   }
+  },
+  "invariant, central unit": {
+   "class": {
+    "chosen": {
+     "sigma 0.005, ridge 0.1": 3,
+     "sigma 0.005, ridge 1": 2,
+     "sigma 0.01, ridge 1": 10
+    },
+    "mae_by_repeat": [
+     47.129662753998545,
+     47.27464765076006,
+     48.33416387064294
+    ],
+    "mae_mean": 47.579491425133845,
+    "q2_by_repeat": [
+     0.6992945424777979,
+     0.6978381962233762,
+     0.678783634426886
+    ],
+    "q2_mean": 0.6919721243760201,
+    "rmse_mean": 62.58820736549429
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.01, ridge 1": 15
+    },
+    "mae_by_repeat": [
+     40.05160971755323,
+     40.05968151572443,
+     39.94063692964164
+    ],
+    "mae_mean": 40.01730938763976,
+    "q2_by_repeat": [
+     0.7799092634827548,
+     0.7799379730268965,
+     0.7806441372924492
+    ],
+    "q2_mean": 0.7801637912673668,
+    "rmse_mean": 52.88060859904194
+   }
+  },
+  "invariant, oligomer": {
+   "class": {
+    "chosen": {
+     "sigma 0.005, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     45.838218241760345,
+     46.402729457820996,
+     47.753267135949265
+    ],
+    "mae_mean": 46.66473827851021,
+    "q2_by_repeat": [
+     0.7124009822710549,
+     0.7070673600235073,
+     0.687992245027488
+    ],
+    "q2_mean": 0.7024868624406834,
+    "rmse_mean": 61.50824510315015
+   },
+   "random": {
+    "chosen": {
+     "sigma 0.005, ridge 0.1": 15
+    },
+    "mae_by_repeat": [
+     40.04156807592326,
+     40.06841855138434,
+     39.51677441300333
+    ],
+    "mae_mean": 39.87558701343698,
+    "q2_by_repeat": [
+     0.78201073985396,
+     0.7798499358816956,
+     0.7850929240391228
+    ],
+    "q2_mean": 0.7823178665915927,
+    "rmse_mean": 52.62026679756884
+   }
+  },
+  "topological + eight counts": {
+   "class": {
+    "chosen": {
+     "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+     "up to 6 bonds, width 0.5, h 1, ridge 0.1": 2,
+     "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+     "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4
+    },
+    "mae_by_repeat": [
+     39.57434840198082,
+     39.260506976179116,
+     41.13811719259842
+    ],
+    "mae_mean": 39.99099085691946,
+    "q2_by_repeat": [
+     0.7754508983646047,
+     0.7802351436497953,
+     0.7588759360464394
+    ],
+    "q2_mean": 0.7715206593536132,
+    "rmse_mean": 53.89943840846914
+   },
+   "random": {
+    "chosen": {
+     "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+     "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 7
+    },
+    "mae_by_repeat": [
+     31.20238914743588,
+     31.183947743531085,
+     31.035352575985122
+    ],
+    "mae_mean": 31.140563155650696,
+    "q2_by_repeat": [
+     0.8512474325002807,
+     0.851957273057977,
+     0.8533869505230316
+    ],
+    "q2_mean": 0.852197218693763,
+    "rmse_mean": 43.35970265473326
+   }
+  },
+  "topological, central unit": {
+   "class": {
+    "chosen": {
+     "up to 6 bonds, ridge 0.01": 6,
+     "up to 8 bonds, ridge 0.01": 7,
+     "up to 8 bonds, ridge 0.1": 2
+    },
+    "mae_by_repeat": [
+     53.71962203143255,
+     55.459887172841604,
+     55.69197849406487
+    ],
+    "mae_mean": 54.957162566113006,
+    "q2_by_repeat": [
+     0.5974755842773204,
+     0.583774871935794,
+     0.5545050992012117
+    ],
+    "q2_mean": 0.5785851851381086,
+    "rmse_mean": 73.19887993417478
+   },
+   "random": {
+    "chosen": {
+     "up to 6 bonds, ridge 0.01": 8,
+     "up to 8 bonds, ridge 0.01": 7
+    },
+    "mae_by_repeat": [
+     46.39458057328927,
+     46.37162788038689,
+     46.185635454899355
+    ],
+    "mae_mean": 46.317281302858504,
+    "q2_by_repeat": [
+     0.6969877624296946,
+     0.6972484722712768,
+     0.6988529566587572
+    ],
+    "q2_mean": 0.6976963971199095,
+    "rmse_mean": 62.01092632883888
+   }
+  }
+ },
+ "polymers": 7302,
+ "published": {
+  "Morgan fingerprint, gradient boosting": {
+   "5 clusters": 47.0,
+   "random 5-fold": 37.0
+  },
+  "PolyMetriX descriptors (all three levels), gradient boosting": {
+   "5 clusters": 41.0,
+   "random 5-fold": 33.5
+  }
+ },
+ "quick": 0,
+ "refused_by_builder": {
+  "tg0168": "ValueError: ETKDG could not embed the oligomer",
+  "tg0169": "ValueError: ETKDG could not embed the oligomer",
+  "tg0172": "ValueError: ETKDG could not embed the oligomer",
+  "tg0532": "ValueError: ETKDG could not embed the oligomer",
+  "tg0919": "ValueError: ETKDG could not embed the oligomer",
+  "tg1043": "ValueError: ETKDG could not embed the oligomer",
+  "tg1044": "ValueError: ETKDG could not embed the oligomer",
+  "tg4987": "ValueError: ETKDG could not embed the oligomer",
+  "tg5466": "ValueError: ETKDG could not embed the oligomer",
+  "tg5634": "ValueError: ETKDG could not embed the oligomer",
+  "tg5635": "ValueError: ETKDG could not embed the oligomer",
+  "tg6240": "ValueError: ETKDG could not embed the oligomer",
+  "tg6246": "ValueError: ETKDG could not embed the oligomer",
+  "tg6259": "ValueError: ETKDG could not embed the oligomer"
+ },
+ "repeats": 3,
+ "seconds": 21982.1,
+ "sigmas": [
+  0.005,
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "span_median": 11.58317329378496,
+ "tg": {
+  "max": 768.15,
+  "mean": 417.4672439057792,
+  "min": 134.15,
+  "sd": 112.78386198100749
+ },
+ "topo_max": [
+  2,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "units": 3
+}

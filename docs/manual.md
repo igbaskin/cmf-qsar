@@ -12635,6 +12635,188 @@ python benchmarks/run_cmc.py            # about 99 minutes; the 3D structures ar
 python benchmarks/prepare_cmc.py        # only to rebuild examples/cmc from SurfPro
 ```
 
+## Polymers: a repeat unit built as an oligomer
+
+A polymer has no single structure. Polymer data sets give the repeat unit as SMILES with two
+attachment points, each written as an asterisk in square brackets. Polystyrene is
+
+```
+[*]CC([*])c1ccccc1
+```
+
+and the property belongs
+to a long chain whose length, tacticity and packing the data set usually does not give. Every
+field description in this program needs atoms at fixed places, so a polymer needs a stand-in.
+The program builds the usual one: an oligomer of a few repeat units with both ends capped, in an
+extended conformation (`cmfqsar/polymer.py`, the command `cmf polymers`).
+
+**Building the oligomers.** The input is a table with one repeat unit per row:
+
+```bash
+cmf polymers units.csv units.sdf --smiles-column psmiles --name-column name --jobs 8
+cmf build units.sdf --activity tg_k --kernel autocorrelation --select evidence --save tg.cmf
+```
+
+Every column of the table is copied into the SD file, so the property is there for `cmf build`.
+The steps, each with the choice it makes:
+
+* A repeat unit must have exactly two attachment points, each bonded to one atom, with the same
+  bond order at both. A ladder polymer, a branched unit or a salt written as two fragments is
+  refused with the reason.
+* `--units` copies (default 3) are joined head to tail with RDKit's `molzip`, which keeps the
+  configuration of every stereocentre. The open ends get a hydrogen, or a CH₂= or CH≡ group when
+  the open bond is double or triple. Every atom carries the property `cmf_unit`: its repeat unit,
+  counted from 0, or -1 for a cap atom.
+* Stereocentres that the repeat unit leaves open are fixed once and copied into every unit
+  (`--stereo isotactic`, the default, which makes the build reproducible) or left to the
+  embedding (`--stereo random`). Polymer tables rarely say which tacticity was measured, so
+  neither choice is the measured one.
+* `--conformers` ETKDG conformations (default 4) are made from random starting coordinates, and
+  the most extended one is kept: the one with the largest distance between the first and the last
+  backbone atom. A trimer of a few hundred atoms often fails to embed from the default start, and
+  a configuration fixed centre by centre can be one that no 3D structure has (a bridged ring
+  system); the builder then retries with the stereocentres not enforced, and then with them left
+  open, and says so in its record.
+* The chosen conformation is optimised with MMFF94 (UFF where MMFF has no parameters) **with the
+  end-to-end distance held fixed**. Without that restraint an optimisation in vacuum folds the
+  chain onto itself: a polythiophene trimer with dodecyl side chains went from 19.8 Å to 9.6 Å.
+
+On the 7,316 polymers of the benchmark below, 14 could not be embedded within the time limits
+(30 s per attempt, four times that for the retry). The trimers have 173 atoms at the median and
+an end-to-end distance of 11.6 Å (5 to 95 per cent: 4.6 to 23.2 Å). No two heavy atoms that are
+not bonded or bonded to one common atom come closer than 1.0 Å, and the only bonds longer than
+2.3 Å are silicon-silicon bonds of 2.3 to 2.4 Å, which is their normal length. With 24 processes
+the 7,316 builds took two hours. The time limits make the build depend slightly on the load of
+the machine: an embedding that finishes on an idle machine can time out on a busy one and go to
+the retry.
+
+**One repeat unit inside the chain.** The oligomer has ends that the polymer does not have. The
+function `autocorrelation_rows` of `cmfqsar.polymer` computes the field autocorrelation of the
+invariant kernel counting only the atom pairs whose first atom lies in a chosen set, here the
+middle repeat unit: its pairs with its own atoms and with the atoms of its neighbours, and none
+that start at the caps. Over a partition of the atoms these rows add up to the plain
+autocorrelation, so the row of the middle unit is the share of one repeat unit, as the periodic
+kernel of a chain gives it per repeat length. The function is sparse: it touches only the
+distance bins near each pair's distance, where `cmfqsar.invariant.autocorrelation` builds an
+array of atoms by atoms by bins, which for 500 atoms at a width of 0.01 Å is 2.4 GB. With every
+atom in the set its rows equal the library's to 1e-15.
+
+### The glass transition temperature of 7,316 homopolymers
+
+**The data.** The curated Tg set of PolyMetriX (Kunchapu and Jablonka, *npj Computational
+Materials* 11 (2025) 312; Zenodo record 15789599, CC BY 4.0), in `examples/polymer_tg` (made by
+`benchmarks/prepare_polymer_tg.py`): 7,367 homopolymers, of which 7,316 are kept. 36 contain an
+element without Gasteiger charges (tin, sodium, selenium and others) and 15 a net charge. Tg is
+417 ± 113 K. Each polymer belongs to one of 22 classes given by the source; the two largest,
+polyimides and polyoxides, hold 1,761 and 1,745 polymers. The molecular weight, the tacticity and
+the measurement method are not given, and the curators note that values for the same repeat unit
+from different sources can differ by tens of kelvin.
+
+**The question.** Can the program, with the oligomer builder, predict a physical property of
+polymers as well as descriptors made for polymers? The reference is the published one: the 100
+hierarchical descriptors of the PolyMetriX library (side chain, backbone and full polymer) with
+gradient boosting at its default settings. The paper's Fig. 6 gives it a mean absolute error
+(MAE) of about 33.5 K on random 5-fold splits and about 41 K on splits by structural clusters.
+
+**The tests.** Five random folds repeated three times, and five folds of whole polymer classes
+repeated three times: the 22 classes are dealt to the five folds in a random order, each to the
+fold that is smallest at that moment, so a model never sees a polyimide when it predicts the
+polyimides. The bootstrap of the second test draws whole classes. In every block the kernel
+setting and the ridge are chosen by the evidence on the training block, as in the four property
+benchmarks above (`benchmarks/run_polymer_tg.py`).
+
+**The models.** All but one are kernel ridge regression; they differ in the kernel.
+
+* *Field kernel, whole trimer*: the cosine-normalised field autocorrelation of the five fields
+  (Gasteiger electrostatic, steric, hydrophobic, acceptor, donor) of the whole capped trimer, up
+  to 12 Å, with the width chosen from 0.005 to 4 Å. This is what `cmf build --kernel
+  autocorrelation` fits on the output of `cmf polymers`.
+* *Field kernel, central unit*: the same, counting only the pairs that start in the middle unit.
+* *Bond-count kernel, central unit*: the same channels with the distance counted in bonds (up to
+  a maximum chosen from 2 to 40 bonds): the graph alone, no conformer.
+* *Eight counts*: a Gaussian kernel on the eight counts of the property benchmarks, computed on
+  the repeat unit capped with hydrogen.
+* *PolyMetriX descriptors, kernel*: a Gaussian kernel on the 100 published descriptors.
+* *PolyMetriX descriptors, gradient boosting*: the published model, rerun on the same folds.
+* *ECFP4*: the Tanimoto kernel on Morgan fingerprints of the repeat unit, attachment points
+  included (the paper's Morgan reference used gradient boosting instead).
+* Three sums of two kernels, K₁ + h·K₂: each part keeps the setting its single model chose on
+  the same training block, and only h (0.03 to 100) and the ridge are chosen.
+
+| Model | q², random folds | MAE, random folds (K) | q², classes held out | MAE, classes held out (K) |
+|---|---:|---:|---:|---:|
+| ECFP4 of the repeat unit | +0.903 | 23.6 | +0.779 | 39.5 |
+| central unit + PolyMetriX descriptors | +0.883 | 26.8 | +0.752 | 41.7 |
+| PolyMetriX descriptors, kernel | +0.879 | 27.0 | +0.732 | 43.7 |
+| central unit + eight counts | +0.852 | 31.4 | +0.773 | 40.0 |
+| bond-count kernel + eight counts | +0.852 | 31.1 | +0.772 | 40.0 |
+| PolyMetriX descriptors, gradient boosting (the published model) | +0.844 | 33.0 | +0.770 | 41.0 |
+| eight counts | +0.827 | 34.1 | +0.740 | 43.0 |
+| field kernel, whole trimer | +0.782 | 39.9 | +0.702 | 46.7 |
+| field kernel, central unit | +0.780 | 40.0 | +0.692 | 47.6 |
+| bond-count kernel, central unit | +0.698 | 46.3 | +0.579 | 55.0 |
+
+| Difference of q² | random folds | classes held out |
+|---|---|---|
+| field kernel, central unit, minus the published model | -0.063 [-0.071, -0.055] | -0.074 [-0.119, -0.026] |
+| central unit + eight counts minus the published model | +0.009 [+0.004, +0.014] | +0.001 [-0.021, +0.035] |
+| central unit + PolyMetriX descriptors minus the published model | +0.041 [+0.036, +0.047] | -0.017 [-0.039, +0.037] |
+| central unit + eight counts minus bond-count kernel + eight counts | +0.001 [-0.002, +0.004] | +0.001 [-0.008, +0.015] |
+| field kernel, central unit, minus bond-count kernel, central unit | +0.081 [+0.071, +0.091] | +0.105 [+0.069, +0.233] |
+| field kernel, central unit, minus whole trimer | -0.010 [-0.016, -0.004] | -0.010 [-0.025, +0.007] |
+| central unit + eight counts minus eight counts | +0.026 [+0.022, +0.031] | +0.031 [+0.019, +0.065] |
+| central unit + PolyMetriX descriptors minus PolyMetriX descriptors, kernel | +0.004 [+0.003, +0.006] | +0.020 [+0.010, +0.031] |
+
+The rerun of the published model gives 33.0 K on random folds, the 33.5 K of the paper. Its
+41.0 K with classes held out happens to equal the paper's value for cluster splits; the folds are
+not the same. The q² of each model varies by at most 0.005 between the three repeats of the
+random folds and by up to 0.04 between those of the class folds (the bond-count kernel; 0.02
+for the field kernels).
+
+**What it says.**
+
+* **The program now handles polymers, and with the eight counts it equals the published model.**
+  The central unit plus the eight counts is +0.009 ahead on random folds and level with classes
+  held out. Added to the PolyMetriX descriptors the field gains +0.004 and +0.020 over those
+  descriptors in the same kernel.
+* **The field alone is not enough.** It is 0.06 to 0.07 behind the published model and behind the
+  eight counts. Tg depends on the size and the stiffness of the repeat unit, which the counts
+  give directly (molecular weight, rotatable bonds, rings) and which a cosine-normalised kernel
+  divides out in part (see *What the row length is worth, and when the division helps*).
+* **The 3D distances add nothing once the counts are there.** Alone, the field beats its own
+  channels with distances in bonds by 0.08 to 0.10; with the counts the two are equal to the
+  third decimal. On a property of the whole repeat unit the extended trimer carries no
+  information that the bond graph does not. The same was found for the four molecular
+  properties above.
+* **The middle unit and the whole trimer are equal.** The caps cost the whole-trimer kernel
+  nothing, so `cmf build` on the output of `cmf polymers` needs no special kernel.
+* **A fingerprint does best.** ECFP4 in a kernel is the best model on both tests, at 23.6 K on
+  random folds against the 33.0 K of the published model and the paper's 37 K for Morgan
+  fingerprints with gradient boosting. The difference comes from the learner rather than the
+  description: the PolyMetriX descriptors gain 0.037 by going from gradient boosting to the
+  kernel on random folds, though not with classes held out. With classes held out the fingerprint,
+  the published model and the two sums with the eight counts are within 0.01 of each other.
+
+**The settings chosen.** The central-unit kernel chose a width of 0.01 Å in 25 of 30 blocks and
+0.005 Å in 5; the whole-trimer kernel chose 0.005 Å, the narrowest offered, in all 30. At such
+widths the channels separate bond lengths and act as counts of typed atom pairs, as on logP.
+q² hardly depends on the width: for the whole trimer it lies between +0.780 and +0.795 on
+random folds for every width
+from 0.005 to 0.1 Å, so a narrower grid would not change the comparison. A first run that
+offered widths only down to 0.02 Å and h only up to 10 chose both edges; its numbers differ from
+these by at most 0.014 in q² (kept in `benchmarks/cache/polymer_tg/polymer_tg_first_run.json`).
+The sums chose h = 3 to 10 and the counts a width of 0.5 in every block.
+
+**Costs.** The build took 2.0 hours with 24 processes and the models 6.1 hours on one machine,
+most of it in the eigendecompositions of 4,700 to 6,400 training polymers. Every evaluated
+setting is kept in `benchmarks/cache/polymer_tg/settings/`, so a run with a wider grid evaluates
+only the settings it adds.
+
+**What is not done.** The periodic chain of plan item M1 is not used here: it would need a cell
+with the right repeat distance for each polymer, which the extended trimer avoids. Copolymers
+need a sequence, which the builder does not choose. Chain length, its distribution, crystallinity
+and the measurement method are not in any field of a single oligomer.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

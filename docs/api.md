@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 139 modules, 268 classes with 865 public methods, and 1443 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1452 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -122,6 +122,7 @@ for.
 | [cmfqsar.pharmtypes](#cmfqsarpharmtypes) | Six pharmacophore features as indicator fields (plan item D2). |
 | [cmfqsar.planealign](#cmfqsarplanealign) | Alignment onto a plane: the frame of a molecule on a surface, without the surface. |
 | [cmfqsar.pocketalign](#cmfqsarpocketalign) | Aligning a molecule inside the pocket (plan item C3). |
+| [cmfqsar.polymer](#cmfqsarpolymer) | Polymers as oligomers: a repeat unit written as SMILES becomes a capped chain in 3D, and the field autocorrelation of one repeat unit inside that chain becomes the descriptor of the polymer. |
 | [cmfqsar.poses](#cmfqsarposes) | A protocol that can judge an alignment, because q2 cannot. |
 | [cmfqsar.probes](#cmfqsarprobes) | GRID-like probe fields, written as sums of Gaussians so that CMF can keep its algebra. |
 | [cmfqsar.project](#cmfqsarproject) | Projects (plan item G2): a session that can be saved and reopened, the poses before every alignment step so that a step can be undone, and two models compared on one set of molecules. |
@@ -2145,6 +2146,10 @@ Discretise the co-fields of a fitted model into typed features with tolerance sp
 ### `cmd_hetero(args)`
 
 The workflow for a series of several chemotypes, in the order the problem imposes.
+
+### `cmd_polymers(args)`
+
+Repeat units written as SMILES with two attachment points, built as capped oligomers.
 
 ### `cmd_unalign(args)`
 
@@ -15734,6 +15739,142 @@ Align every molecule in place by the model's confidence and the pocket together.
 ### `summarise(results: Sequence[PocketAlignResult]) -> dict`
 
 What a run of the joint alignment did, in a single line of numbers.
+
+## cmfqsar.polymer
+
+Source: `cmfqsar/polymer.py`
+
+Polymers as oligomers: a repeat unit written as SMILES becomes a capped chain in 3D, and the field
+autocorrelation of one repeat unit inside that chain becomes the descriptor of the polymer.
+
+A homopolymer has no single structure.  Polymer data sets write the repeat unit as a SMILES string
+with two attachment points, `[*]CC([*])c1ccccc1` for polystyrene, and a property such as the
+glass transition temperature belongs to the long chain, not to that fragment.  Every field
+description in this program needs atoms at fixed places, so a polymer needs a stand-in.  This
+module builds the usual one: an oligomer of a few repeat units with the two open ends capped,
+in an extended conformation.
+
+**Parsing.**  `parse_repeat_unit` accepts a repeat unit with exactly two attachment points
+(written `*` or `[*]`), each bonded to one atom, with the same bond order at both ends, and
+refuses anything else with a message that says why.  A ladder polymer (four attachment points) or
+a salt written as two fragments is refused rather than guessed.
+
+**Joining.**  `oligomer` joins `n` copies head to tail with RDKit's `molzip`, which
+keeps the configuration of every stereocentre when an attachment point is replaced by a bond.
+The two open ends get a hydrogen (a `CH2=` or `CH#` group when the open bond is double or
+triple).  Every atom carries the integer property `cmf_unit`: the number of its repeat unit,
+counted from 0, or -1 for a cap.  Stereochemistry that the repeat unit does not specify is either
+fixed once and copied into every unit (`stereo="isotactic"`, the default, which makes the build
+reproducible) or left to the embedding (`stereo="random"`).  Polymer tables almost never say
+which tacticity was measured, so neither choice is the measured one.
+
+**Embedding.**  `embed_oligomer` makes a few ETKDG conformations (four by default) from
+random starting coordinates and keeps the most extended one -- the largest distance between
+the first and the last backbone atom -- before an MMFF94 optimisation (UFF where MMFF has no
+parameters) that holds that distance fixed.  An extended chain is the conformation a single
+chain has in a crystal and the one that is closest to the same for every polymer; a random coil
+of three units, or a chain that an optimisation in vacuum has folded, would put a different fold
+into the descriptor of every polymer.
+
+**The descriptor of one repeat unit.**  `autocorrelation_rows` computes the field
+autocorrelation of `cmfqsar.invariant.autocorrelation`, optionally counting only the atom
+pairs whose *first* atom lies in a chosen set, here the central repeat unit.  With every atom in
+the set the result equals the plain autocorrelation (the tests compare them).  With the central
+unit it is the field environment of one repeat unit inside a chain: its pairs with its own atoms
+and with the atoms of its neighbours, and nothing that starts at the caps.  This is what the
+periodic chain of `cmfqsar.periodic` computes per repeat length, without the need to build a
+periodic cell with the right repeat distance.  The function also replaces a dense array of
+(atoms x atoms x distance bins) by a sparse one, so an oligomer of 500 atoms at a width of
+0.01 A costs megabytes, not gigabytes; one neighbour list serves every width asked for.
+
+**What the module does not do.**  It does not describe chain length, its distribution, packing,
+crystallinity or crosslinking: none of these is in a field of a single oligomer.  A copolymer
+needs a sequence, which this module does not choose.
+
+### `class RepeatUnit  (dataclass)`
+
+A repeat unit with its two attachment points.
+
+`head` and `tail` are the indices of the two attachment atoms (atomic number 0) in `mol`,
+the head being the one written first; `bond` is the order of the bonds they carry.
+
+Attributes:
+
+- `smiles: str`
+- `mol: Chem.Mol`
+- `head: int`
+- `tail: int`
+- `bond: Chem.BondType`
+
+#### `RepeatUnit.heavy_atoms` -> int  (property)
+
+### `parse_repeat_unit(psmiles: str) -> RepeatUnit`
+
+Read a repeat unit written as SMILES with two attachment points (`*` or `[*]`).
+
+### `oligomer(unit, n: int=3, stereo: str='isotactic', add_hydrogens: bool=True) -> Chem.Mol`
+
+`n` repeat units joined head to tail, with both ends capped.
+
+`unit` is a `RepeatUnit` or a SMILES string.  Every atom gets the integer property
+`cmf_unit` (see `UNIT_PROP`): its unit, counted from 0 at the head end, or -1 for a cap
+atom; a hydrogen added here takes the unit of the atom it is bonded to.  `stereo` is
+`"isotactic"` (every centre the repeat unit leaves open is fixed once, the same way in every
+unit) or `"random"` (left open, so that the embedding chooses).
+
+### `unit_labels(mol: Chem.Mol) -> np.ndarray`
+
+The `cmf_unit` label of every atom, read from the atoms or from the SD property list.
+
+### `central_unit(mol: Chem.Mol) -> np.ndarray`
+
+A boolean mask of the atoms of the middle repeat unit of an oligomer with an odd count.
+
+### `embed_oligomer(mol: Chem.Mol, conformers: int=4, seed: int=0, optimise: bool=True, max_iters: int=2000, timeout: int=30, hold_span: bool=True) -> Tuple[Chem.Mol, Dict[str, float]]`
+
+The most extended of `conformers` ETKDG conformations, optimised with MMFF94.
+
+The embedding starts from random coordinates, which RDKit recommends for large molecules: on
+trimers of a few hundred atoms the default start often fails and costs more time than it
+saves.  `timeout` (seconds) bounds each embedding.  When no conformation can be made with the
+stereocentres enforced -- a phosphazene trimer has nine tetrahedral phosphorus and sulfur
+centres, and a bridged ring system can be given a set of configurations that does not exist
+in 3D -- one conformation is made without enforcing them, with four times the time, and the
+record says so (`stereo_enforced` 0).
+
+An optimisation in vacuum folds a chain onto itself: on a polythiophene trimer with dodecyl
+side chains MMFF94 halved the end-to-end distance, from 19.8 to 9.6 A.  With `hold_span` (the
+default) the distance between the first and the last backbone atom is held at its embedded
+value by a stiff harmonic restraint, so that bond lengths, angles and side chains relax while
+the chain stays as extended as it was embedded.
+
+Returns the molecule with one conformer and a record: the end-to-end distance before and
+after the optimisation, the force field used ("MMFF94", "UFF" or "none") and whether the
+optimisation converged.  A copy is given to the force field and only the coordinates are
+copied back, because MMFF typing changes the aromaticity flags of the molecule it is given.
+
+### `build(psmiles: str, n: int=3, stereo: str='isotactic', conformers: int=4, seed: int=0, optimise: bool=True) -> Tuple[Chem.Mol, Dict[str, float]]`
+
+Repeat unit to embedded oligomer in one call; the record also gives the atom counts.
+
+### `build_many(smiles: Sequence[str], n: int=3, stereo: str='isotactic', conformers: int=4, seed: int=0, jobs: int=1, progress=None)`
+
+`build` for a list of repeat units, in `jobs` processes.
+
+Returns one (molecule or None, record, error message) per input, in the input order.  The
+molecules come back through MOL blocks, so the `cmf_unit` labels travel as the SD property
+list that `unit_labels` reads.
+
+### `autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray]=None, chunk: int=200000) -> List[np.ndarray]`
+
+The field autocorrelation of one molecule for each spec of `specs`, from one neighbour list.
+
+`mol` is a `cmfqsar.fields.MoleculeFields`.  With `centre` None the rows equal those of
+`cmfqsar.invariant.autocorrelation` (to the size of a Gaussian 8 widths from its centre,
+1e-14 relative).  With a boolean mask only the ordered atom pairs whose first atom is in the
+mask are counted: the pairs inside the set twice (both ways round), the pairs from the set to
+the rest once.  Over a partition of the atoms these rows add up to the plain autocorrelation,
+so the row of the central unit is the share of one repeat unit, as a periodic cell's is.
 
 ## cmfqsar.poses
 

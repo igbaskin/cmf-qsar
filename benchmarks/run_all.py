@@ -1077,6 +1077,20 @@ def registry() -> List[Benchmark]:
                   minutes="99",
                   report=lambda: _mod("run_cmc").report(),
                   tables=["cmc/table.md"]),
+        Benchmark("polymer_tg",
+                  "glass transition temperatures of 7,316 homopolymers (PolyMetriX) from "
+                  "trimers built by cmf polymers: the field kernel of the trimer and of its middle "
+                  "unit, alone and with eight counts or the PolyMetriX descriptors, against the "
+                  "published model (gradient boosting on the PolyMetriX descriptors), the same "
+                  "channels with distances in bonds and ECFP4, with random folds and with whole "
+                  "polymer classes held out (plan item PL1)",
+                  "run_polymer_tg.py", "polymer_tg", compute=[[]],
+                  prepare=["prepare_polymer_tg.py (the PolyMetriX Tg set from Zenodo); the "
+                           "trimers are built by run_polymer_tg.py itself into the cache, about "
+                           "two hours with 24 processes"],
+                  minutes="490",
+                  report=lambda: _mod("run_polymer_tg").report(),
+                  tables=["polymer_tg/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

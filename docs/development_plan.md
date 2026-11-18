@@ -9196,6 +9196,42 @@ large conformational change and allostery are not among these items and should n
 no shared frame, and the method's own strength, a readable map in a fixed frame, is exactly what
 they take away.
 
+### Polymers: a repeat unit as the sample (18 November 2026)
+
+A polymer data set gives a repeat unit and a property of a long chain. The program had the
+periodic chain of item M1 and nothing that turned a repeat unit into atoms.
+
+* **PL1. Oligomers from repeat units, and a measured property.** **Done 18 November 2026.**
+  `cmfqsar/polymer.py`: a repeat unit with two attachment points becomes a capped oligomer (three
+  units by default), every atom labelled with its unit; stereocentres the unit leaves open are
+  fixed once and copied (isotactic) or left open; the most extended of four ETKDG conformations
+  from random coordinates; MMFF94 with the end-to-end distance held fixed, because a free
+  optimisation in vacuum halved the length of a polythiophene trimer. `autocorrelation_rows`
+  gives the field autocorrelation of the pairs that start in one chosen set of atoms (the middle
+  unit), sparse, equal to the library's to 1e-15 with every atom in the set. The command
+  `cmf polymers` writes an SD file for `cmf build`. Measured on the PolyMetriX glass transition
+  temperatures (7,316 homopolymers, CC BY 4.0) against the published model, gradient boosting on
+  the 100 PolyMetriX descriptors, rerun on the same folds (33.0 K on random folds; the paper
+  33.5 K). The field plus eight counts equals it (+0.009 [+0.004, +0.014] on random folds,
+  +0.001 [-0.021, +0.035] with classes held out); the field alone is 0.06 to 0.07 behind; with
+  the counts the 3D distances equal the bond graph (+0.001); the middle unit equals the whole
+  trimer; ECFP4 in a Tanimoto kernel is best (+0.903 and +0.779). Details in the manual,
+  *Polymers: a repeat unit built as an oligomer*.
+
+Open after PL1:
+
+* **PL2. A second polymer property where geometry could matter.** Tg is a property of the whole
+  repeat unit, as logP and the boiling point are, and the graph carries it. Fractional free volume
+  and density of the Open Polymer Prediction set (computed by molecular dynamics, about 7,000
+  labels) and gas permeabilities depend on how chains pack, which is closer to what a field
+  describes. Gate: the field plus counts above the bond-count kernel plus counts by more than the
+  interval.
+* **PL3. The periodic chain against the trimer.** Item M1 computes the field of a chain per
+  repeat length, but needs a cell with the right repeat distance. A builder that takes it from
+  the extended trimer would make the comparison possible.
+* **PL4. Copolymers.** A random copolymer as the weighted mean of its repeat units' fields
+  (the packed ensembles of item MS5), against a weighted mean of descriptors.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
