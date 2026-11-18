@@ -1,6 +1,6 @@
 {
- "commit": "b2a2f5692a5f9bf60d21f4437d3d0ac217793023",
- "created": "2026-11-18T14:04:22",
+ "commit": "958b72ee401a436ec3043b9cf0f9d25a968c8d80",
+ "created": "2026-11-18T15:50:57",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2739,7 +2739,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -4277,6 +4277,8 @@
   "benchmarks/results/speed/kernel.json": "92fe91c2ddb1e07f02c2f53a96053344a9f74377aae3e9b17de44a754cee656a",
   "benchmarks/results/speed/screen.json": "9b55fdc161152fe8f1f73e3cefa8a9e7f719bd304b57e12c64355464d2b6654a",
   "benchmarks/results/speed/table.md": "37dfa27675afa4d049deef6dd2d4051d60338104f1604f1cd44e4db2e194ea7c",
+  "benchmarks/results/strain/strain.json": "31d5f350358ec6bc53c9f756afcf49ebd77f8d9020f4a0940ad42ce84997ac25",
+  "benchmarks/results/strain/table.md": "472870016d145bb9c96b5bd0a06dcd91c06acd58e8c7d6a57ed76f8b6a5f5286",
   "benchmarks/results/structure/ACE.json": "c1195e0e2ec4bdc4c21d5e5f24bd9c9e7fc41dd2ee29a10d7dd731fcfdcedbb1",
   "benchmarks/results/structure/AChE.json": "c917d8781b8245cd49e14ab8ffb9c99b0249d7dfb275b5cd2ff8797b40608aa3",
   "benchmarks/results/structure/BZR.json": "be1e6e73dcae93d0b2766974c396e192d73389c803123f3c60fff515a89e9aa5",
