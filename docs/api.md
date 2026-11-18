@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1452 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1454 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -13292,6 +13292,36 @@ neighbours within `shell` angstrom may move (`_free_atoms`), every other atom is
 fixed, for at most `steps` iterations or until the largest force falls below `tolerance`
 kJ/mol/nm.  `shell=0` frees the mutated residue alone, `rotamers<=1` keeps PDBFixer's
 placement.
+
+### `relax_wild_type(wt_pdb: str, position: int, chain: Optional[str]=None, steps: int=1000, tolerance: float=1.0, platform: str='CPU', shell: float=6.0, threads: int=1) -> Structure`
+
+The wild type relaxed exactly as a mutant at `position` is relaxed (plan item PP4).
+
+`prepare_wild_type` completes the wild type but does not minimise it, while every
+mutant is minimised with its residue and the side chains around it free.  An energy of a
+mutant minus that of the unrelaxed wild type would therefore mostly measure the relaxation.
+This function frees the same atoms around the wild-type residue (`_free_atoms`) and
+minimises them with the same force field, tolerance and number of steps, starting from the
+native side chain only.  The difference of the two structures is then the substitution.
+
+### `energy_terms(structure: Structure, position: int, chain: Optional[str]=None) -> dict`
+
+The force-field energy of a structure split by where it acts (plan item PP4).
+
+Three parts, each split into the kinds of `ENERGY_KINDS` (kJ/mol, Amber ff14SB in
+vacuum with no cutoff, as the structures were relaxed):
+
+* `site`: the terms among the atoms of the residue at `position` only;
+* `surroundings`: the terms among all other atoms only;
+* `interaction`: the rest, which is every term with atoms on both sides, including the
+  bonds, angles and torsions that join the residue to its neighbours in the chain.
+
+The surroundings have the same atoms in a mutant and in the wild type, so their difference
+is the strain the substitution leaves in the protein around it.  The interaction is the
+quantity a substitution changes directly.  The site has different atoms in the two, so its
+difference mixes the residue's own composition with its strain.  `total` is the sum of
+everything and `residue` the force-field name of the residue (HID, HIE and HIP are
+different residues to it).
 
 ### `closest_approach(coords: np.ndarray) -> float`
 
