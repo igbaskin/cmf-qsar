@@ -1,6 +1,6 @@
 {
- "commit": "09140674e6fe23b500656b06287b38df72983589",
- "created": "2026-11-18T00:18:11",
+ "commit": "177ba2f687743825317897293ef4f762f6a74243",
+ "created": "2026-11-18T06:29:12",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2727,7 +2727,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3685,7 +3685,8 @@
   "benchmarks/results/particle_sites/checks.json": "dbf2de544d14038000ea29014c6bda5a41977da2f909e260130707ac63496ed2",
   "benchmarks/results/particle_sites/decomposition.json": "79496d265fe94f9baa34e7876204ebb7b7d5fe705c5cd8fd811cfb8ced71a0da",
   "benchmarks/results/particle_sites/model.json": "5ead7c43d97000d4cbbbc3ec83631f1afbcba88ba4d9643b77f4ec85020b3e72",
-  "benchmarks/results/particle_sites/table.md": "785bbf88757292af2b031f6a2f3c4590ddcdbc1670d48589d8c8cbdcb8595daf",
+  "benchmarks/results/particle_sites/references.json": "3e5b988936356e1c2d13bfd95b5cb3b039b179ea381b3afdcc52d9439d15da35",
+  "benchmarks/results/particle_sites/table.md": "33ad62525bc0d760a40c9526d6d1f6a2d55b53b04c9ca5ccb5c79edb7a91d4d0",
   "benchmarks/results/particles/counts.json": "63b1c25309b38cf041e54782c9873e61cb9b8c14156d0ada5145dce43142e0c4",
   "benchmarks/results/particles/property.json": "5bc96d6d667baaa4a06134aede4032d967e4701684792d3d5c5d2fa308916f15",
   "benchmarks/results/particles/scaling.json": "cc025a590c08c6e1908e122f2e3723a14c8e0a015fd58273b19223004ff14003",
