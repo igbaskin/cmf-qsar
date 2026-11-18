@@ -1511,6 +1511,17 @@ def registry() -> List[Benchmark]:
                   minutes="600",        # measured: 350 building, 193 and 108 fitting
                   report=lambda: _mod("run_new_proteins").write_table(_r("new_proteins")),
                   tables=["new_proteins/table.md"]),
+        Benchmark("site_cofield",
+                  "the co-field around a generic residue (plan item PP5): the field of the "
+                  "surroundings of 1,597 positions of 24 domains in the residue frame, the map "
+                  "of where protein atoms make a substitution more or less destabilising, its "
+                  "noise mask, its agreement between two halves of the proteins against the "
+                  "frame alone, and the maps of classes of substitutions (the position kernel "
+                  "comes from new_proteins, which keeps it in benchmarks/cache)",
+                  "run_site_cofield.py", "site_cofield", compute=[[]],
+                  minutes="75",        # 8 with the position kernel of new_proteins cached
+                  report=lambda: _mod("run_site_cofield").write_table(_r("site_cofield")),
+                  tables=["site_cofield/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

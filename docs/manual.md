@@ -19337,6 +19337,72 @@ a protein it has not seen with a median correlation of 0.75. What carries it is 
 well the new side chain fits; the field of the surroundings is one way to say the first, and
 not a better one than the accessible area.
 
+**The co-field around a generic residue (added 19 November 2026).** Because every position
+sits in the frame of its residue, the field model of the surroundings has a co-field: a map,
+around a generic residue, of where protein atoms of each field type make a substitution more
+or less destabilising. Plan item PP5 reads it (`benchmarks/run_site_cofield.py`, about 8
+minutes with the position kernel of PP2 in the cache). The model is the field of the
+surroundings joined with the three substitution columns, fitted on draw 0 of PP2 (6,386
+substitutions at 1,597 positions); its field weight (0.25) and ridge (0.1) were chosen with
+whole domains held out (q2 +0.424). The co-field of field f is (w/5) sum_j a_j X_jf(r)/|X_jf|,
+on a grid 1 A apart from -9 to 9 A on every axis. A positive value means that more field of
+that type there raises ddG, which makes a substitution less destabilising.
+
+Three checks say whether the map is real. First, the noise of the targets (the out-of-fold
+error, 0.90 kcal/mol) is propagated through the fit as in plan item F2, and a point is kept
+where the co-field exceeds twice its standard deviation. Second, the 24 domains are split at
+random into two sets of twelve, a model is fitted on each, and the two maps are compared;
+twenty splits. Third, the same is done after every position is given the surroundings of
+another position of its domain. This null keeps everything the frame puts into every context,
+such as the neighbouring backbone, and breaks only the link between a target and its
+surroundings.
+
+| Field | Share of the map kept | Two halves: median r | Two halves: same sign where kept | Frame alone: median r | Frame alone: same sign |
+|---|---:|---:|---:|---:|---:|
+| steric | 0.58 | +0.84 | 0.97 | +0.04 | 0.51 |
+| acceptor | 0.25 | +0.29 | 0.91 | +0.02 | 0.51 |
+| hydrophobic | 0.32 | +0.25 | 0.90 | -0.00 | 0.50 |
+| donor | 0.25 | +0.22 | 0.88 | -0.03 | 0.47 |
+| electrostatic | 0.23 | +0.13 | 0.87 | +0.03 | 0.51 |
+
+The steric co-field is the map: two sets of proteins that share nothing give the same map
+(r +0.84, never below +0.79), and the frame alone gives none (r +0.04, signs no better than
+chance). The other four fields are weaker; where they are kept they hold their sign in 87 to
+91 % of the points against 47 to 51 % for the frame alone, but over the whole grid two halves
+agree only at r +0.13 to +0.29.
+
+![The co-field of the surroundings in the frame of a generic residue, in the plane through the alpha carbon that holds the virtual beta carbon (CB*, to the right) and the nitrogen. Red raises ddG (a substitution is less destabilising where more field of that type is present), blue lowers it. Top row: the model of all substitutions, with grey over the points the noise of the targets could produce. Bottom row: models fitted on classes of substitutions, without a mask. Drawn by `benchmarks/run_site_cofield.py`.](docs/figures/site_cofield.png)
+
+What the steric map says is burial with a direction. In front of the alpha carbon, along the
+beta carbon, the kept co-field is negative at 97 % of the points within 5 A and at all of them
+from 5 to 9 A: protein atoms where the side chain points make every substitution more
+destabilising. Behind the alpha carbon, within 5 A, it is positive at 91 % of the kept points.
+A count of atoms in a sphere does not see that difference, which explains why the accessible
+area beats the count: the area is measured from where the side chain points.
+
+**What a site wants.** The same model was fitted on classes of substitutions, and the two
+maps of a pair were compared in front of the residue, where the new side chain sits. The
+first comparison planned, the correlation of the two maps of a pair, turned out to measure the
+burial pattern that every class shares (+0.27 to +0.79), so the difference of the two maps is
+what is reported, with the share of 20 half-models (ten splits of the domains) that give the
+same sign:
+
+* **charge**: the electrostatic co-field of substitutions that add a positive charge, minus
+  that of those that add a negative one, is negative in front of the residue, as physics
+  expects (a positive environment punishes an added positive charge); 16 of 20 half-models
+  agree;
+* **donor**: the acceptor co-field of substitutions that add a neutral side-chain donor, minus
+  that of those that remove one, is negative in all 20 half-models, against the simple
+  expectation that acceptors nearby favour a new donor. Most acceptor atoms around a site are
+  backbone oxygens, so the acceptor field mostly measures burial again, and the map says that
+  a polar side chain put into a buried site costs more than one taken out of it;
+* **volume**: the steric difference between adding and removing volume is positive in all 20
+  half-models: a crowded site punishes a removed side chain more than an added one, which
+  matches the mean ddG of the two classes (-1.32 against -0.73 kcal/mol).
+
+So the map that the data support is a steric one, and it is the shape of burial around the
+side chain; only the charge pair shows a specific interaction, and only in 16 of 20 halves.
+
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And
 **holding out one position does not hold out its surroundings**, because the surroundings of

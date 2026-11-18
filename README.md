@@ -1167,6 +1167,15 @@ substitution alone by +0.20 to +0.27 in q2. The field of the surroundings equals
 atoms; the solvent-accessible area joined with the energy of the built mutant is best, q2
 +0.52, and orders the substitutions of a new protein with a median correlation of 0.75.
 
+### The co-field around a generic residue
+
+Plan item PP5 (`benchmarks/run_site_cofield.py`): the field model of the surroundings of
+1,597 positions of 24 proteins has a co-field in the frame of the residue. Its steric part is
+the same when two disjoint sets of twelve proteins are fitted (r +0.84) and absent when the
+surroundings are shuffled among positions (r +0.04). It says that protein atoms along the
+direction of the side chain make every substitution more destabilising: burial with a
+direction, which is why the accessible area beats a count of atoms.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle

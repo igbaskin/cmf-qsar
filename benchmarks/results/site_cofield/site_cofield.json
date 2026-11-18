@@ -1,0 +1,493 @@
+{
+ "draw": 0,
+ "n": 6386,
+ "positions": 1597,
+ "weight": 0.25,
+ "ridge": 0.1,
+ "cross_validation": {
+  "q2": 0.424,
+  "rmse": 0.9004,
+  "picks": [
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.5,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ],
+   [
+    0.25,
+    0.1
+   ]
+  ]
+ },
+ "grid": {
+  "half": 9.0,
+  "spacing": 1.0,
+  "points": 6859
+ },
+ "z": 2.0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "acceptor",
+  "donor"
+ ],
+ "covered_points": [
+  852,
+  1914,
+  722,
+  784,
+  613
+ ],
+ "kept_share": [
+  0.229,
+  0.577,
+  0.324,
+  0.246,
+  0.25
+ ],
+ "regions": {
+  "electrostatic": {
+   "in front, within 5 A": {
+    "kept points": 41,
+    "sum": -4.0859,
+    "negative share": 0.634
+   },
+   "in front, 5 to 9 A": {
+    "kept points": 33,
+    "sum": -4.0445,
+    "negative share": 0.636
+   },
+   "behind, within 5 A": {
+    "kept points": 37,
+    "sum": 5.9297,
+    "negative share": 0.297
+   },
+   "behind, 5 to 9 A": {
+    "kept points": 32,
+    "sum": 3.3679,
+    "negative share": 0.375
+   }
+  },
+  "steric": {
+   "in front, within 5 A": {
+    "kept points": 143,
+    "sum": -29.3871,
+    "negative share": 0.972
+   },
+   "in front, 5 to 9 A": {
+    "kept points": 466,
+    "sum": -91.8189,
+    "negative share": 1.0
+   },
+   "behind, within 5 A": {
+    "kept points": 65,
+    "sum": 6.1091,
+    "negative share": 0.092
+   },
+   "behind, 5 to 9 A": {
+    "kept points": 156,
+    "sum": -4.777,
+    "negative share": 0.654
+   }
+  },
+  "hydrophobic": {
+   "in front, within 5 A": {
+    "kept points": 33,
+    "sum": -5.6614,
+    "negative share": 0.848
+   },
+   "in front, 5 to 9 A": {
+    "kept points": 17,
+    "sum": -3.171,
+    "negative share": 0.941
+   },
+   "behind, within 5 A": {
+    "kept points": 54,
+    "sum": -0.3566,
+    "negative share": 0.519
+   },
+   "behind, 5 to 9 A": {
+    "kept points": 48,
+    "sum": 3.5143,
+    "negative share": 0.333
+   }
+  },
+  "acceptor": {
+   "in front, within 5 A": {
+    "kept points": 44,
+    "sum": -7.0244,
+    "negative share": 0.75
+   },
+   "in front, 5 to 9 A": {
+    "kept points": 21,
+    "sum": -1.9739,
+    "negative share": 0.762
+   },
+   "behind, within 5 A": {
+    "kept points": 39,
+    "sum": -3.7474,
+    "negative share": 0.667
+   },
+   "behind, 5 to 9 A": {
+    "kept points": 34,
+    "sum": -3.0795,
+    "negative share": 0.706
+   }
+  },
+  "donor": {
+   "in front, within 5 A": {
+    "kept points": 23,
+    "sum": -0.6665,
+    "negative share": 0.435
+   },
+   "in front, 5 to 9 A": {
+    "kept points": 4,
+    "sum": 0.9604,
+    "negative share": 0.0
+   },
+   "behind, within 5 A": {
+    "kept points": 48,
+    "sum": -1.5442,
+    "negative share": 0.5
+   },
+   "behind, 5 to 9 A": {
+    "kept points": 25,
+    "sum": -2.7543,
+    "negative share": 0.76
+   }
+  }
+ },
+ "extremes": {
+  "electrostatic": {
+   "most negative": {
+    "value": -0.64733,
+    "distance from CA": 5.0,
+    "along the beta carbon": 1.74
+   },
+   "most positive": {
+    "value": 0.84176,
+    "distance from CA": 4.36,
+    "along the beta carbon": -0.82
+   }
+  },
+  "steric": {
+   "most negative": {
+    "value": -0.47169,
+    "distance from CA": 5.74,
+    "along the beta carbon": 5.52
+   },
+   "most positive": {
+    "value": 0.18554,
+    "distance from CA": 1.41,
+    "along the beta carbon": -0.85
+   }
+  },
+  "hydrophobic": {
+   "most negative": {
+    "value": -0.52013,
+    "distance from CA": 5.1,
+    "along the beta carbon": 0.48
+   },
+   "most positive": {
+    "value": 0.38737,
+    "distance from CA": 5.39,
+    "along the beta carbon": -1.48
+   }
+  },
+  "acceptor": {
+   "most negative": {
+    "value": -0.64731,
+    "distance from CA": 3.61,
+    "along the beta carbon": 0.54
+   },
+   "most positive": {
+    "value": 0.41052,
+    "distance from CA": 2.83,
+    "along the beta carbon": -0.31
+   }
+  },
+  "donor": {
+   "most negative": {
+    "value": -0.62094,
+    "distance from CA": 4.36,
+    "along the beta carbon": -4.23
+   },
+   "most positive": {
+    "value": 0.49631,
+    "distance from CA": 3.0,
+    "along the beta carbon": -1.39
+   }
+  }
+ },
+ "halves": {
+  "median r": [
+   0.13,
+   0.84,
+   0.245,
+   0.285,
+   0.221
+  ],
+  "lowest r": [
+   -0.044,
+   0.786,
+   0.137,
+   0.16,
+   0.094
+  ],
+  "median same sign": [
+   0.869,
+   0.966,
+   0.897,
+   0.907,
+   0.882
+  ]
+ },
+ "null": {
+  "median r": [
+   0.025,
+   0.035,
+   -0.002,
+   0.021,
+   -0.03
+  ],
+  "lowest r": [
+   -0.125,
+   -0.202,
+   -0.214,
+   -0.185,
+   -0.209
+  ],
+  "median same sign": [
+   0.505,
+   0.507,
+   0.504,
+   0.513,
+   0.467
+  ]
+ },
+ "classes": {
+  "adds volume": {
+   "n": 1919,
+   "positions": 925,
+   "mean ddG": -0.735,
+   "halves": {
+    "median r": [
+     0.149,
+     0.885,
+     0.368,
+     0.409,
+     0.36
+    ],
+    "lowest r": [
+     0.107,
+     0.811,
+     0.248,
+     0.363,
+     0.194
+    ],
+    "median same sign": [
+     0.633,
+     0.92,
+     0.737,
+     0.694,
+     0.696
+    ]
+   }
+  },
+  "removes volume": {
+   "n": 1656,
+   "positions": 891,
+   "mean ddG": -1.32,
+   "halves": {
+    "median r": [
+     0.238,
+     0.924,
+     0.441,
+     0.434,
+     0.112
+    ],
+    "lowest r": [
+     0.02,
+     0.909,
+     0.294,
+     0.384,
+     -0.033
+    ],
+    "median same sign": [
+     0.669,
+     0.964,
+     0.774,
+     0.754,
+     0.614
+    ]
+   }
+  },
+  "adds a positive charge": {
+   "n": 456,
+   "positions": 419,
+   "mean ddG": -1.214,
+   "halves": {
+    "median r": [
+     0.108,
+     0.903,
+     0.184,
+     0.268,
+     0.107
+    ],
+    "lowest r": [
+     0.031,
+     0.816,
+     0.06,
+     0.182,
+     0.025
+    ],
+    "median same sign": [
+     0.613,
+     0.947,
+     0.643,
+     0.637,
+     0.585
+    ]
+   }
+  },
+  "adds a negative charge": {
+   "n": 480,
+   "positions": 441,
+   "mean ddG": -1.408,
+   "halves": {
+    "median r": [
+     0.251,
+     0.935,
+     0.413,
+     0.54,
+     0.328
+    ],
+    "lowest r": [
+     0.18,
+     0.905,
+     0.184,
+     0.453,
+     0.155
+    ],
+    "median same sign": [
+     0.569,
+     0.93,
+     0.739,
+     0.668,
+     0.634
+    ]
+   }
+  },
+  "adds a donor": {
+   "n": 1776,
+   "positions": 1038,
+   "mean ddG": -1.029,
+   "halves": {
+    "median r": [
+     0.182,
+     0.914,
+     0.46,
+     0.435,
+     0.261
+    ],
+    "lowest r": [
+     0.144,
+     0.833,
+     0.324,
+     0.326,
+     0.09
+    ],
+    "median same sign": [
+     0.69,
+     0.944,
+     0.803,
+     0.764,
+     0.667
+    ]
+   }
+  },
+  "removes a donor": {
+   "n": 1136,
+   "positions": 422,
+   "mean ddG": -0.729,
+   "halves": {
+    "median r": [
+     0.08,
+     0.812,
+     0.161,
+     0.134,
+     0.226
+    ],
+    "lowest r": [
+     -0.029,
+     0.709,
+     0.078,
+     0.069,
+     0.079
+    ],
+    "median same sign": [
+     0.618,
+     0.923,
+     0.615,
+     0.655,
+     0.578
+    ]
+   }
+  }
+ },
+ "pairs": [
+  {
+   "first": "adds volume",
+   "second": "removes volume",
+   "field": "steric",
+   "r": 0.787,
+   "front difference": 0.029682,
+   "halves with the same sign": 1.0,
+   "expected sign": null
+  },
+  {
+   "first": "adds a positive charge",
+   "second": "adds a negative charge",
+   "field": "electrostatic",
+   "r": 0.269,
+   "front difference": -0.010039,
+   "halves with the same sign": 0.8,
+   "expected sign": -1
+  },
+  {
+   "first": "adds a donor",
+   "second": "removes a donor",
+   "field": "acceptor",
+   "r": 0.371,
+   "front difference": -0.042631,
+   "halves with the same sign": 1.0,
+   "expected sign": 1
+  }
+ ],
+ "seconds": 477.0,
+ "written": "2026-11-19 00:58:03"
+}

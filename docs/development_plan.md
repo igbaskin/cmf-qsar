@@ -9206,6 +9206,19 @@ correlation of its whole kernel with the target before any accuracy is measured.
   figure and the check that the map is not an artefact of the alignment, by the protocol of F2. It
   waits on PP2 or PP3, because a co-field of a description that does not predict out of its own
   protein is a picture of noise.
+
+  **Done 19 November 2026.** `benchmarks/run_site_cofield.py`, the field of the surroundings
+  joined with the three columns, fitted on draw 0 of PP2 (6,386 substitutions, 1,597
+  positions, 24 domains; q2 +0.424 with domains held out). The steric co-field is real: two
+  disjoint halves of the domains give the same map (median r +0.84 over twenty splits, the
+  same sign at 97 % of the points the F2 mask keeps), while the same halves after the
+  surroundings are shuffled among the positions of a domain give r +0.04 and 51 % (the check
+  that the map is not an artefact of the alignment). It is negative in front of the alpha
+  carbon along the beta carbon and positive just behind it: burial with a direction. The other
+  four fields agree between halves only at r +0.13 to +0.29. Of three pairs of substitution
+  classes, the charge pair has the sign physics expects in 16 of 20 half-models; the donor pair
+  has the opposite sign in 20 of 20, because the acceptor field around a site is mostly
+  backbone oxygens and measures burial. The figure is `docs/figures/site_cofield.png`.
 * **PP6. Binding, not folding.** The same frame and the same difference field apply to a mutation
   at an interface, where the target is the change of binding free energy and the environment is the
   partner protein rather than the protein's own core. SKEMPI is the public collection. The item is
@@ -9881,10 +9894,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
-| H. Protein physics | 6 | 4 | PP5, PP6 |
+| H. Protein physics | 6 | 5 | PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 140 finished, 8 partly, 31 open.**
+**179 items: 141 finished, 8 partly, 30 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
