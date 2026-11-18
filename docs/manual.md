@@ -18810,9 +18810,65 @@ Six burial numbers in place of one count gain nothing that the interval shows (+
 So the reading above holds against a linear count only: a field of the surroundings is worth
 less than a count with a nonlinear model. Whether the reason is the cosine normalisation of the
 kernel, which divides out the size of a field and so the number of atoms, was not tested. Typed
-fields, directions and the solvent-accessible area remain plan item PP3, which now has this count
-among its references. The twenty-fifth tutorial, `docs/tutorials/25_point_mutants.ipynb`, builds one
-mutant, counts the atoms around the sites and runs this comparison; it needs OpenMM and PDBFixer.
+fields, directions and the solvent-accessible area were plan item PP3, which had this count
+among its references; the next paragraphs give its result. The twenty-fifth tutorial,
+`docs/tutorials/25_point_mutants.ipynb`, builds one mutant, counts the atoms around the sites
+and runs this comparison; it needs OpenMM and PDBFixer.
+
+**Descriptions that a count cannot imitate (added 18 November 2026).** Plan item PP3 asked
+whether any field description of a site beats burial. `benchmarks/run_site_fields.py` uses the
+same 280 positions, the same two draws of four substitutions and the same wild-type
+surroundings as the paragraph above. Every description is joined with the three substitution
+columns. Five candidates were measured:
+
+* **typed fields**: one overlap kernel for each of the five fields (electrostatic, steric,
+  hydrophobic, acceptor, donor) instead of their sum, either cosine-normalised or raw. The raw
+  kernel is divided only by its mean diagonal, so it keeps the size of each field and with it
+  the number of atoms;
+* **anisotropy**: for each field, its amount, its centre and its three principal second moments
+  in the frame of the residue, so the description has a direction; also the same without the
+  amounts;
+* **anchored points**: the value and the gradient size of each field at seven points along and
+  around the virtual beta carbon, which is built from the backbone so that a glycine has one too.
+
+The references are the Gaussian kernel on one count, the burial columns of PP1, and the
+solvent-accessible area of the residue and of its side chain in the wild type (Shrake-Rupley
+with a probe of 1.4 angstrom, computed by mdtraj). Each kernel on columns is a Gaussian of the
+standardised columns. Each description is joined with the column kernel at a weight of 0.25 or
+0.5, and that weight and the ridge are chosen in inner folds. Segments, domains and positions
+were held out in turn, three repeats each (`benchmarks/results/site_fields/table.md`,
+69 minutes).
+
+| Description, joined with the three columns | q2, segments held out | q2, domains held out |
+|---|---:|---:|
+| one count | +0.450, +0.451 | +0.428, +0.419 |
+| burial columns | +0.464, +0.478 | +0.438, +0.434 |
+| solvent-accessible area | +0.522, +0.517 | +0.497, +0.480 |
+| typed fields, cosine | +0.416, +0.413 | +0.380, +0.343 |
+| typed fields, raw | +0.414, +0.413 | +0.387, +0.392 |
+| anisotropy | +0.469, +0.473 | +0.394, +0.402 |
+| anisotropy without the amounts | +0.470, +0.474 | +0.389, +0.394 |
+| anchored points | +0.443, +0.416 | +0.359, +0.387 |
+
+The two numbers in each cell are the two draws. No candidate beats both references. The
+anisotropy is level with the count and the burial columns, and every interval of those
+differences contains zero. The typed fields and the anchored points are behind. Every candidate
+is behind the accessible area, by 0.04 to 0.14, and all 30 intervals of those differences
+exclude zero. The accessible area is ahead of the count by +0.072 (+0.033 to +0.110) and +0.067
+(+0.025 to +0.112) with segments held out, and by +0.069 and +0.061 with domains held out; all six
+intervals exclude zero.
+
+The cosine normalisation is not the reason the field loses. The raw typed kernel equals the
+cosine one with segments and positions held out (differences of 0.003 or less). With domains held
+out it is ahead by +0.008 and +0.049, which is small next to the gap to the area. The fields
+measure mostly the same thing as the count: the amount of the steric field correlates with the
+count at +0.868 over the positions. The residue area correlates with it at -0.753 only, so the
+area carries something the count does not. That is what solvent exposure measures and a count
+of atoms inside an envelope does not: on which side of the residue the protein is missing.
+
+So the gate of PP3 is not passed. A field model of a protein's own stability, measured this way,
+is worth less than the accessible area and a substitution table, and the rest of the protein
+section stops here unless a new description is found.
 
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And

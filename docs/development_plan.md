@@ -9149,6 +9149,21 @@ correlation of its whole kernel with the target before any accuracy is measured.
   reason PP1 found. Gate: beats both references by more than the interval of rule 4. If it fails,
   this section ends here, and the honest summary is that a field model of a protein's own stability
   is worth a count and a substitution table.
+
+  **Done 18 November 2026, gate not passed.** `benchmarks/run_site_fields.py`, the same 280
+  positions and two draws of 1,120 substitutions as PP1, every description joined with the three
+  substitution columns, every choice made in inner folds, three repeats. With segments held out
+  the count reaches q2 +0.450 and +0.451, the burial columns +0.464 and +0.478, the
+  solvent-accessible area +0.522 and +0.517. The anisotropy (+0.469, +0.473) is level with the
+  count and the burial columns, with every interval containing zero; the typed fields (+0.416,
+  +0.413) and the anchored points (+0.443, +0.416) are behind. With domains held out the order is
+  the same. Every candidate is behind the area, and all 30 intervals exclude zero. The area is
+  ahead of the count by +0.061 to +0.072 under every hold-out, with every interval excluding zero.
+  The cosine normalisation is not the reason: the raw typed kernel equals the cosine one except
+  with domains held out (+0.008 and +0.049). So the summary is slightly worse than the
+  one written above: a field model of a protein's own stability is worth less than the
+  accessible area and a substitution table. PP2, PP5 and PP6 depend on a pass and stay closed;
+  PP4 does not, since a force-field energy is not a field.
 * **PP4. The strain the mutation leaves.** A mutant built by minimisation carries an energy, and
   the difference of that energy from the wild type is a physical quantity the field never sees.
   The item joins it to the kernel as one more block in `cmfqsar/mixing.py` and asks what it adds,
@@ -9766,10 +9781,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
-| H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
+| H. Protein physics | 6 | 2 | PP2, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 137 finished, 8 partly, 34 open.**
+**179 items: 138 finished, 8 partly, 33 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

@@ -1433,6 +1433,18 @@ def registry() -> List[Benchmark]:
                   minutes="50",
                   report=lambda: _mod("run_mutants").report(),
                   tables=["mutants/table.md"]),
+        Benchmark("site_fields",
+                  "can a field of a protein site beat a count of its neighbours (plan item "
+                  "PP3): the five field kernels of the surroundings each with its own weight, "
+                  "raw and cosine-normalised, the anisotropy of the fields in the residue frame "
+                  "and the fields at anchored points, against one count of atoms, the burial "
+                  "columns of PP1 and the solvent-accessible area of the wild-type residue, on "
+                  "the 280 positions of the mega-scale domains with segments and domains held "
+                  "out",
+                  "run_site_fields.py", "site_fields", compute=[[]],
+                  minutes="180",
+                  report=lambda: _mod("run_site_fields").write_table(_r("site_fields")),
+                  tables=["site_fields/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

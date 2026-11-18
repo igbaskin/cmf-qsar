@@ -1139,6 +1139,16 @@ larger than every training particle from 33.7 to 4.4 meV (shell counts: 13.8). O
 two metals they take the mixing energy from 11.2 to 4.6 meV per atom in random folds, but with a
 geometry held out a Gaussian kernel on neighbour counts is better (12.2 against 13.2).
 
+### A field of a protein site against its accessible area
+
+Plan item PP3 (`benchmarks/run_site_fields.py`): typed fields, their direction in the residue
+frame and fields at anchored points were measured against a count of atoms around the site and
+against the solvent-accessible area, on 1,120 substitutions at 280 positions of four domains.
+None of the field descriptions beats both references. The accessible area of the wild-type
+residue is the best description: q2 +0.522 against +0.450 for the count with segments of the
+chain held out, and the margin over every field description excludes zero. Keeping the size of
+a field in the kernel instead of dividing it out does not close the gap.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle
