@@ -101,7 +101,7 @@ class Benchmark:
     script: str                                  # file under benchmarks/
     results: str                                 # folder under benchmarks/results/
     compute: List[List[str]] = field(default_factory=list)   # argument lists, run in order
-    needs: Optional[str] = None                  # "data-root" | "cif-root" | "orca" | "xtb"
+    needs: Optional[str] = None                  # "data-root" | "orca" | "xtb" | "openmm" | ...
                                                  # | "pybamm" (not in requirements-lock.txt)
                                                  # | "vasp" (VASP and ORCA grids in the cache)
                                                  # | "uma" (the UMA potential in the WSL
@@ -1466,7 +1466,7 @@ def registry() -> List[Benchmark]:
                   "interaction, as a description of the site next to one count of atoms, the "
                   "solvent-accessible area and the field of the surroundings (the structures "
                   "are those of the mutants benchmark, in benchmarks/cache)",
-                  "run_strain.py", "strain", compute=[["--compute"]],
+                  "run_strain.py", "strain", compute=[["--compute"]], needs="openmm",
                   prepare=["../examples/make_mutant_examples.py --build",
                            "run_mutants.py --prepare"],
                   minutes="20",        # measured: 6.5 for stage 1, 13 for stage 2
