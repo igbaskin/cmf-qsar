@@ -1472,6 +1472,18 @@ def registry() -> List[Benchmark]:
                   minutes="20",        # measured: 6.5 for stage 1, 13 for stage 2
                   report=lambda: _mod("run_strain").write_table(_r("strain")),
                   tables=["strain/table.md"]),
+        Benchmark("new_proteins",
+                  "does a description of a protein site carry to a protein the model has not "
+                  "seen (plan item PP2): 24 domains of the mega-scale set, four substitutions "
+                  "per position, whole domains held out; the substitution columns, one count "
+                  "of atoms, the solvent-accessible area and the field of the surroundings, "
+                  "then the energy of the built mutants (the build writes about 12,000 "
+                  "structures into benchmarks/cache)",
+                  "run_new_proteins.py", "new_proteins", compute=[["--build"]],
+                  needs="openmm",
+                  minutes="600",        # measured: 350 building, 193 and 108 fitting
+                  report=lambda: _mod("run_new_proteins").write_table(_r("new_proteins")),
+                  tables=["new_proteins/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

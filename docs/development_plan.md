@@ -9136,6 +9136,20 @@ correlation of its whole kernel with the target before any accuracy is measured.
   Twenty domains at four substitutions per position is about a day of building on this machine, and
   the sample set it gives resolves a difference of about 0.05 in q2. Nothing new has to be written:
   `--domains` already takes the list.
+
+  **Done 19 November 2026; the surroundings carry, the field does not beat a count.** Twenty
+  domains chosen by the rules of PP1 (`NEW_DOMAINS` in `examples/make_mutant_examples.py`),
+  24 in all, 1,597 positions, 6,386 substitutions on each of two draws, whole domains held out
+  in eight folds (`benchmarks/run_new_proteins.py`). Every site description beats the three
+  substitution columns (q2 +0.217, +0.207) by +0.20 to +0.27, every interval far from zero.
+  The field of the surroundings (+0.427, +0.422) equals one count (+0.421, +0.413); the
+  accessible area (+0.490, +0.471) beats the count by +0.070 and +0.058, both intervals
+  excluding zero. The energy terms of PP4 add to the area, +0.034 and +0.048 with both
+  intervals excluding zero, which four domains could not resolve; the area with the energy is
+  best (+0.524, +0.519; median correlation inside a held-out protein 0.75 and 0.77). Building
+  took about six hours on twelve processes, not a day. PP5 may start: a description now
+  predicts out of its own protein. PP6 may start on the same ground, with the reading that the
+  field gains nothing a count and the area do not give.
 * **PP3. Can a field of the site beat a count of its neighbours?** This is the question PP1 ends
   on, and it decides the rest of this section. PP1 measured the surroundings with the envelope of
   LP2 and a cosine kernel, and that description is worth exactly what the number of atoms inside
@@ -9833,10 +9847,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
-| H. Protein physics | 6 | 3 | PP2, PP5, PP6 |
+| H. Protein physics | 6 | 4 | PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 139 finished, 8 partly, 32 open.**
+**179 items: 140 finished, 8 partly, 31 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

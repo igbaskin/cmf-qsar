@@ -1,7 +1,9 @@
-# Point mutants of four protein domains, with their folding stability
+# Point mutants of 24 protein domains, with their folding stability
 
-This folder holds the labels of plan item PP1: single amino-acid substitutions in four small
-natural protein domains, with the change of folding free energy each one causes.
+This folder holds the labels of plan items PP1 and PP2: single amino-acid substitutions in
+small natural protein domains, with the change of folding free energy each one causes. PP1
+uses four domains; PP2 adds twenty more, chosen by the same rules, to ask whether a
+description carries to a protein the model has not seen.
 
 ## Where the data come from
 
@@ -30,6 +32,26 @@ One folder per domain, named by the identifier the study uses, which is a Protei
 | `1UFM` | 72 | 1353 | 3.28 |
 | `2K5N` | 67 | 1236 | 4.09 |
 | `3ZGK` | 69 | 1301 | 3.56 |
+| `1AOY` | 69 | 1287 | 3.43 |
+| `5KPH` | 69 | 1287 | 3.50 |
+| `2M8U` | 67 | 1273 | 3.35 |
+| `1QKH` | 68 | 1267 | 3.96 |
+| `2JT1` | 67 | 1264 | 3.29 |
+| `1F0M` | 66 | 1238 | 4.30 |
+| `3DKM` | 72 | 1234 | 3.12 |
+| `2LO1` | 65 | 1215 | 3.94 |
+| `2O2W` | 67 | 1210 | 3.74 |
+| `1V1C` | 65 | 1209 | 3.46 |
+| `2KVS` | 67 | 1202 | 4.51 |
+| `1YU5` | 65 | 1201 | 3.71 |
+| `2KCM` | 68 | 1197 | 4.24 |
+| `1ORC` | 63 | 1195 | 4.18 |
+| `2LYR` | 62 | 1177 | 3.83 |
+| `2KXD` | 71 | 1168 | 4.06 |
+| `4C26` | 62 | 1155 | 4.43 |
+| `2MCH` | 64 | 1141 | 3.66 |
+| `1R69` | 61 | 1122 | 3.17 |
+| `1GYZ` | 59 | 1121 | 4.07 |
 
 Each folder holds:
 
@@ -56,7 +78,9 @@ The four domains were chosen before anything was measured, by three rules: a nat
 rather than a designed one (the identifier is a PDB code), a different fold cluster for each, and
 a wild-type stability above 3 kcal/mol, so that a substitution costing a few kcal/mol still falls
 inside the resolved range. Among the domains that pass those rules, the four with the most
-variants were taken.
+variants were taken. For plan item PP2 the next twenty were taken by the same rules, each
+from a fold cluster that none of the others has (`NEW_DOMAINS` in
+`examples/make_mutant_examples.py`).
 
 ## The structures of the variants are not here
 

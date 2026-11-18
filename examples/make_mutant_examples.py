@@ -17,7 +17,8 @@ licence CC BY 4.0.  Two files of that record are used:
 
 What is kept
 ------------
-For each domain named in :data:`DOMAINS`: every single substitution (a label such as ``V1Q``;
+For each domain named in :data:`DOMAINS` (plan item PP1) and :data:`NEW_DOMAINS` (plan item
+PP2): every single substitution (a label such as ``V1Q``;
 insertions, deletions and double mutants are left out) whose ``dG_ML`` lies in the range the
 assay resolves, -1 to 5 kcal/mol, and whose ``ddG_ML`` is present.  The domains are natural
 proteins (named by a PDB code) from different fold clusters of the data set, with a wild-type
@@ -40,7 +41,7 @@ several at once.
 Usage
 -----
     python examples/make_mutant_examples.py                        # the tables and the models
-    python examples/make_mutant_examples.py --build                # every structure, in order
+    python examples/make_mutant_examples.py --build                # every structure of the PP1 domains
     python examples/make_mutant_examples.py --build --shard 0 --shards 12   # one share of 12
 """
 from __future__ import annotations
@@ -67,13 +68,23 @@ BUILT = os.path.join(CACHE, "built")
 
 #: PDB code -> fold cluster of the data set, wild-type dG_ML (kcal/mol)
 DOMAINS = {"1O6X": (129, 4.17), "1UFM": (174, 3.28), "2K5N": (105, 4.09), "3ZGK": (16, 3.56)}
+#: the twenty domains plan item PP2 adds, chosen by the same rules: the next twenty natural
+#: domains by the number of mutants that pass, each from a fold cluster not used before
+NEW_DOMAINS = {"1AOY": (95, 3.43), "5KPH": (146, 3.50), "2M8U": (186, 3.35), "1QKH": (205, 3.96),
+               "2JT1": (230, 3.29), "1F0M": (7, 4.30), "3DKM": (163, 3.12), "2LO1": (192, 3.94),
+               "2O2W": (232, 3.74), "1V1C": (173, 3.46), "2KVS": (17, 4.51), "1YU5": (139, 3.71),
+               "2KCM": (150, 4.24), "1ORC": (202, 4.18), "2LYR": (191, 3.83), "2KXD": (38, 4.06),
+               "4C26": (181, 4.43), "2MCH": (65, 3.66), "1R69": (81, 3.17), "1GYZ": (100, 4.07)}
+ALL_DOMAINS = {**DOMAINS, **NEW_DOMAINS}
 DG_RANGE = (-1.0, 5.0)
 
 
-def select(table: str = TABLE, out: str = OUT) -> Dict[str, int]:
-    """Write the mutant tables and copy the models; returns the number of mutants per domain."""
-    wanted = {f"{d}.pdb": d for d in DOMAINS}
-    rows: Dict[str, List[dict]] = {d: [] for d in DOMAINS}
+def select(table: str = TABLE, out: str = OUT, domains=None) -> Dict[str, int]:
+    """Write the mutant tables and copy the models; returns the number of mutants per domain.
+    Every domain of :data:`ALL_DOMAINS` unless `domains` names some."""
+    domains = list(ALL_DOMAINS if domains is None else domains)
+    wanted = {f"{d}.pdb": d for d in domains}
+    rows: Dict[str, List[dict]] = {d: [] for d in domains}
     wild: Dict[str, dict] = {}
     with open(table, newline="") as fh:
         for r in csv.DictReader(fh):

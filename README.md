@@ -1159,6 +1159,14 @@ them. On 657 substitutions at 174 positions, the change of these energies adds +
 but almost nothing to the solvent-accessible area. A count joined with the energy is level
 with the area.
 
+### Point mutants of proteins the model has not seen
+
+Plan item PP2 (`benchmarks/run_new_proteins.py`, twenty more domains in `examples/mutants`):
+on 24 domains with each domain held out whole, every description of the site beats the
+substitution alone by +0.20 to +0.27 in q2. The field of the surroundings equals a count of
+atoms; the solvent-accessible area joined with the energy of the built mutant is best, q2
++0.52, and orders the substitutions of a new protein with a median correlation of 0.75.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle

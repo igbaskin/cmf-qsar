@@ -19104,6 +19104,50 @@ evidence of `cmfqsar.mixing.drop_one`, computed on all samples rather than held 
 energy a log Bayes factor of +32 and +39 next to the area. It is a reminder that an in-sample
 evidence says a block is used, not that it predicts.
 
+**Twenty-four proteins, each held out whole (added 19 November 2026).** Four domains cannot
+say whether a description that wins inside them also wins on a protein the model has not seen,
+which is the question a user has. Plan item PP2 adds twenty domains of the same collection,
+chosen by the rules of PP1 (`NEW_DOMAINS` in `examples/make_mutant_examples.py`), and
+`benchmarks/run_new_proteins.py` measures on all 24: 1,597 positions, four substitutions drawn
+at each on two draws (6,386 substitutions), whole domains held out in eight folds, three
+repeats. Stage 1 needs only the wild-type structures. Stage 2 builds the drawn mutants
+(12,939 structures and energy splits, about six hours on twelve processes) and adds the energy
+terms of PP4. Besides q2, the table gives the correlation of the held-out predictions with ddG
+inside each domain, which says how well the model orders the substitutions of one new protein
+(`benchmarks/results/new_proteins/table.md`).
+
+| Description, joined with the three columns | q2, draws 0 and 1 | Median r inside one protein |
+|---|---:|---:|
+| three columns alone | +0.217, +0.207 | 0.53, 0.49 |
+| one count | +0.421, +0.413 | 0.69, 0.67 |
+| field of the surroundings | +0.427, +0.422 | 0.66, 0.67 |
+| solvent-accessible area | +0.490, +0.471 | 0.75, 0.73 |
+| solvent-accessible area and field | +0.510, +0.499 | 0.75, 0.74 |
+| energy terms | +0.365, +0.366 | 0.64, 0.63 |
+| one count and energy terms | +0.505, +0.499 | 0.75, 0.74 |
+| solvent-accessible area and energy terms | +0.524, +0.519 | 0.75, 0.77 |
+
+Four readings follow, each with the interval over the repeats and the folds:
+
+* **The surroundings carry to a new protein.** Every description of the wild-type site beats
+  the substitution columns by +0.20 to +0.27, the energy terms alone by +0.15 and +0.16, and
+  every interval is far from zero. This is the result of PP1, now on proteins the model has not
+  seen.
+* **The field still equals the count** (+0.006 and +0.009; the intervals contain zero), and the
+  accessible area still beats the count (+0.070 and +0.058; both intervals exclude zero). On
+  the area the field adds +0.020 and +0.028; the first interval just reaches zero, the second
+  excludes it.
+* **The energy adds to the area here.** It adds +0.034 (+0.016 to +0.049) and +0.048 (+0.032
+  to +0.062). PP4, on four domains, could not resolve this gain. On the count the energy adds
+  +0.085 and +0.086, as in PP4.
+* **The best description is the area with the energy**, q2 +0.52 on a new protein, against
+  +0.21 for the substitution alone.
+
+So a model of a protein's own stability, trained on 21 proteins, orders the substitutions of
+a protein it has not seen with a median correlation of 0.75. What carries it is how exposed the site is and how
+well the new side chain fits; the field of the surroundings is one way to say the first, and
+not a better one than the accessible area.
+
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And
 **holding out one position does not hold out its surroundings**, because the surroundings of
