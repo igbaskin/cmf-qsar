@@ -1,6 +1,6 @@
 {
- "commit": "f34865549a47f6a261b72793f34b99e897bed21b",
- "created": "2026-11-18T13:39:00",
+ "commit": "b2a2f5692a5f9bf60d21f4437d3d0ac217793023",
+ "created": "2026-11-18T14:04:22",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2218,6 +2218,18 @@
    "bytes": 40831,
    "sha256": "3405b34c2b38dead2a61e8a2d83e4eed230d1df74d2f0159e456791928548e22"
   },
+  "examples/polymer_tg/README.md": {
+   "bytes": 2856,
+   "sha256": "7bd512f0d41b7100ded5b2546a41401e6f94561aeee02d5fe1124430c3e2fee2"
+  },
+  "examples/polymer_tg/provenance.json": {
+   "bytes": 1428,
+   "sha256": "ea09e826e8c235fffafb7ca710b3f213af4a9f5431c2cc4840b620344e5c59cf"
+  },
+  "examples/polymer_tg/tg.csv": {
+   "bytes": 772855,
+   "sha256": "1825bdf9300e1d5d29c3ff556088056cec8e80d7187a02698c891dfcc967e5b6"
+  },
   "examples/porphyrin/README.md": {
    "bytes": 5568,
    "sha256": "5252004d6b7b8a74f747616c23fbac494f5bae56194e5ccfaddfc67493cbd0ff"
@@ -2727,7 +2739,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3758,6 +3770,8 @@
   "benchmarks/results/phenazine/data.json": "ced159bf4c67cd384e58075460e0cf0a06b32198ebfc0ae7d994426155e84de8",
   "benchmarks/results/phenazine/gate.json": "2abaf3c05f6b90992d53b6d29d8fe769433e79cc903b2b50639ef3505a69c01a",
   "benchmarks/results/phenazine/table.md": "1ff16755015b5a1a781a0a78527556e20ff8119ab75e76b0e5d284f06d1f011b",
+  "benchmarks/results/polymer_tg/polymer_tg.json": "8affa1d3c3b0e6e73e72f91137242df5ffa269f0daedafe5e786e2125c6d9d17",
+  "benchmarks/results/polymer_tg/table.md": "f643f3c57d8c506b1df998411ac9d4fe198bf37ff63250936cd4ae85e8400765",
   "benchmarks/results/pooled_mixing/ACE.json": "d8fdef00b04b88e2b788883f7fde25cb03350e9945fc31e9dd070fbbba1fd4a2",
   "benchmarks/results/pooled_mixing/ACHE.json": "8bbc4d9cbc09e3df2085b9a27c4560875bed1c00081f7415218c0f5c52e016cc",
   "benchmarks/results/pooled_mixing/ACHE_TOX.json": "2a03fdbf36585ae251bbe2da7070f92adee13310278b4a3c777f434841512bf1",
