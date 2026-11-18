@@ -12908,6 +12908,104 @@ the comparison.
 **Costs.** The build took 44 minutes with 24 processes and the models 1 hour 45 minutes; the two
 narrower widths added 14 minutes, because every evaluated setting is cached.
 
+### What the field sees in a permeable polymer
+
+On gas permeability the field plus the counts beat the bond-count kernel plus the counts, but
+that result does not say what the 3D distances carry. Plan item PL5
+(`benchmarks/run_polymer_permeability.py`) tests two explanations. The folds, the groups and the
+selection are those of PL2, and the PL2 models are read from its cache.
+
+**Part 1: does one number do the work?** Each candidate below is one number per polymer. It is
+added as a ninth column of the eight counts, beside the bond-count kernel. The field then has to
+beat this extended reference.
+
+* *Span per mass*: the end-to-end distance of the extended trimer divided by its molar mass. A
+  stiff chain reaches further per gram.
+* *Radius of gyration per mass*: the radius of gyration of all atoms of the trimer, divided by
+  its molar mass.
+* *Side-chain fraction*: the fraction of the repeat unit's heavy atoms that are not on the
+  backbone. The backbone follows the PolyMetriX rule: the shortest path between the two
+  attachment atoms, every ring that shares an atom with it, and every heavy atom with a single
+  neighbour that hangs on it.
+* *Largest side group*: the number of heavy atoms in the largest connected side group.
+* *Van der Waals volume per mass*: RDKit's `ComputeMolVolume` of the trimer divided by its molar
+  mass.
+* *All five* together.
+
+The side-chain numbers need only the graph; the others need the 3D trimer. The field's margin is
+the central unit plus counts minus the bond-count kernel plus counts plus the candidate. It is
+given with five random folds, then with clusters held out:
+
+| Candidate added to the counts | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| none (the PL2 result) | +0.039 / +0.059 | +0.031 / +0.083 | +0.012 / +0.072 | +0.043 / +0.084 | +0.039 / +0.081 |
+| span per mass | +0.022 / -0.046 | +0.011 / -0.000 | +0.013 / -0.042 | +0.019 / -0.026 | +0.005 / -0.018 |
+| radius of gyration per mass | +0.006 / -0.050 | +0.029 / +0.045 | +0.013 / -0.037 | +0.025 / +0.004 | +0.023 / +0.018 |
+| side-chain fraction | -0.012 / -0.086 | -0.002 / -0.007 | -0.002 / -0.075 | -0.004 / -0.045 | -0.015 / -0.030 |
+| largest side group | +0.003 / -0.082 | -0.003 / -0.018 | -0.012 / -0.074 | +0.007 / -0.046 | -0.008 / -0.030 |
+| van der Waals volume per mass | +0.026 / +0.043 | +0.041 / +0.072 | +0.048 / +0.113 | +0.055 / +0.066 | +0.040 / +0.053 |
+| all five | -0.013 / -0.105 | -0.019 / -0.037 | +0.020 / -0.045 | -0.015 / -0.090 | -0.025 / -0.062 |
+
+`benchmarks/results/polymer_permeability/table.md` gives the 95 % intervals. With all five
+numbers and clusters held out, the reference is ahead of the field on N2 (interval -0.156 to
+-0.005) and on O2 (-0.108 to -0.013).
+
+**Part 2: which distances carry the margin?** The central-unit field kernel is cut into two
+parts. The first keeps only the channels below 3 Å: bonded pairs and pairs two bonds apart. The
+second keeps only the channels from 3 Å on: pairs further apart along the chain, and contacts
+through space. Each part, plus the eight counts, is compared with the bond-count kernel plus the
+counts. The full field plus the counts is then compared with each part plus the counts:
+
+| Gas | below 3 Å + counts minus bond-count + counts | from 3 Å on + counts minus bond-count + counts | full field + counts minus below 3 Å + counts |
+|---|---|---|---|
+| CH4 | +0.036 / +0.058 | -0.001 / +0.029 | +0.003 / +0.001 |
+| CO2 | +0.037 / +0.098 | -0.012 / +0.031 | -0.006 / -0.015 |
+| H2 | +0.025 / +0.079 | -0.016 / +0.028 | -0.013 / -0.007 |
+| N2 | +0.042 / +0.095 | +0.007 / +0.031 | +0.002 / -0.011 |
+| O2 | +0.032 / +0.066 | -0.004 / +0.036 | +0.007 / +0.015 |
+
+**What it says.**
+
+* **One graph number about the side groups accounts for the field's margin.** The margin falls
+  to zero or below on every gas and both kinds of folds when the side-chain fraction or the size
+  of the largest side group is added to the counts. Each adds +0.09 to +0.15 to the reference
+  with clusters held out, and each correlates with log permeability at +0.46 to +0.61. Bulky
+  side groups are known to keep chains apart and raise the free volume; the reference lacked a
+  number for them.
+* **With all five numbers the reference comes within 0.02 of ECFP4 on CH4, N2 and O2 with
+  clusters held out.** It reaches
+  q² 0.656, 0.537, 0.498, 0.622 and 0.593 for CH4, CO2, H2, N2 and O2. ECFP4 reaches 0.669,
+  0.608, 0.544, 0.635 and 0.599. Adding the field to it changes q² by -0.004 to +0.036. The one
+  interval above zero is CO2 with clusters held out (+0.036, from +0.005 to +0.080).
+* **Chain stiffness is part of it.** The span per mass removes the margin with clusters held out
+  on every gas, but on random folds only for O2. The radius of gyration per mass lowers it on
+  every gas, and with clusters held out removes it for CH4, H2 and N2. The
+  van der Waals volume per mass does not remove it on any gas, and it makes the reference worse
+  on H2.
+* **The margin lies below 3 Å, not in contacts through space.** The short-range part alone keeps
+  the whole margin. The full field adds nothing to it (-0.015 to +0.017), and the long-range part
+  is no better than the reference. Without the counts, the short-range part alone is better than
+  the full field on every gas, by 0.03 to 0.06 on random folds and by 0.07 to 0.14 with clusters
+  held out: the long-range channels dilute the kernel.
+* **A likely reading, not tested here.** The short-range part chose a width of 0.01 Å in most
+  blocks. At that width the kernel separates bond lengths that differ by a few hundredths of an
+  ångström, such as single, aromatic and double C-C bonds. The bond-count kernel puts all bonded
+  pairs at the same distance of one bond. So the field probably gains by typing near neighbours
+  more finely, not by describing packing.
+
+Because one number accounts for the margin, the co-pattern of the field was not read.
+
+**The settings chosen.** The widths of the cut kernels were first offered 0.005, 0.01 and
+0.02 Å. 0.01 Å was chosen in most blocks, and each end in 17 to 20 % of the blocks of one of the
+two parts. A second run added 0.0025 and 0.05 Å. These were chosen in at most 2 of 500 blocks,
+and no number moved by more than 0.003. The field plus counts chose the smallest ridge of the
+grid, 10⁻⁸, in up to 18 of 50 blocks, as in PL2. Selecting again with every ridge below 10⁻⁴
+removed left every q² unchanged in the fourth decimal: the narrow Gaussian kernel of the counts
+already does the work of a ridge.
+
+**Costs.** The candidates took 26 minutes, the models of part 1 about 3 hours 50 minutes, and
+part 2 43 minutes. All of them reuse the trimers and the cached settings of PL2.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

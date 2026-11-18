@@ -1106,6 +1106,18 @@ def registry() -> List[Benchmark]:
                   minutes="165",
                   report=lambda: _mod("run_polymer_packing").report(),
                   tables=["polymer_packing/table.md"]),
+        Benchmark("polymer_permeability",
+                  "what the 3D field sees in a permeable polymer (plan item PL5): five one-number "
+                  "candidates (span and radius of gyration of the extended trimer per mass, the "
+                  "side-chain fraction, the largest side group, the van der Waals volume per "
+                  "mass) added to the eight counts beside the bond-count kernel, and the field "
+                  "cut to distances below or from 3 A, on the measured permeability to five gases",
+                  "run_polymer_permeability.py", "polymer_permeability",
+                  compute=[[], ["--ranges"]], minutes="300",
+                  prepare=["run_polymer_packing.py first: this benchmark reads its trimers, "
+                           "kernels and cached settings"],
+                  report=lambda: _mod("run_polymer_permeability").report(),
+                  tables=["polymer_permeability/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

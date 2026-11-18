@@ -9261,6 +9261,18 @@ Open after PL1:
   end-to-end distance and the radius of gyration of the extended trimer per unit mass (chain
   stiffness), and the bulk of the side groups. Test each as a fourth kernel beside the counts,
   as the count references of the other items were tested, before reading the co-pattern.
+  **Done 18 November 2026; one graph number accounts for the margin**
+  (`benchmarks/run_polymer_permeability.py`). Five candidates were added as columns of the
+  counts: span and radius of gyration per mass, side-chain fraction, largest side group and van
+  der Waals volume per mass. With the side-chain fraction or the largest side group, the margin
+  of central unit plus counts over the reference falls to -0.015 to +0.007 on random folds and
+  -0.086 to -0.007 with clusters held out, on every gas. With all five the reference is ahead
+  on N2 and O2 with clusters held out, within 0.02 of ECFP4 on three gases. The field cut to distances below
+  3 Å keeps the whole margin (+0.025 to +0.042 random, +0.058 to +0.098 clusters); the full
+  field adds -0.015 to +0.017 to it, and the part from 3 Å on is no better than the reference.
+  The margin comes from near neighbours typed by exact distance, not from packing, so the
+  co-pattern was not read. Details in the manual, *What the field sees in a permeable
+  polymer*.
 * **PL6. Ladder polymers.** A repeat unit with four attachment points (the polymers of intrinsic
   microporosity) needs a builder that joins two strands; PL2 had to leave out 31 of them, the
   most permeable class.

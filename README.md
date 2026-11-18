@@ -1267,7 +1267,12 @@ and a Tanimoto kernel on ECFP4 fingerprints of the repeat unit is the best model
 permeability (CH4, CO2, H2, N2, O2; 444 to 721 polymers) the field plus the counts beats the
 bond-count kernel plus the counts by +0.06 to +0.08 in q² with clusters of similar polymers held
 out, on every gas. On density from molecular dynamics (RadonPy, 1,077 polymers) it does not.
-ECFP4 is again the best model on permeability.
+ECFP4 is again the best model on permeability. Plan item PL5
+(`benchmarks/run_polymer_permeability.py`) finds what that margin is. One graph number, the
+fraction of heavy atoms in side chains or the size of the largest side group, added to the
+counts closes it on every gas. The field cut to distances below 3 Å keeps the whole margin,
+and the distances beyond add nothing, so the field gains by typing near neighbours, not by
+describing how chains pack.
 
 ### A measured curve as the sample: no structure needed
 
