@@ -12817,6 +12817,97 @@ with the right repeat distance for each polymer, which the extended trimer avoid
 need a sequence, which the builder does not choose. Chain length, its distribution, crystallinity
 and the measurement method are not in any field of a single oligomer.
 
+### Density and gas permeability: properties set by how chains pack
+
+On Tg the 3D distances added nothing to the bond graph once the eight counts were in. Tg is a
+property of the whole repeat unit. Density and gas permeability depend on how the chains pack,
+which is closer to what a field in space describes. Plan item PL2 asks whether the field sees
+more there (`benchmarks/run_polymer_packing.py`).
+
+**The data** (`examples/polymer_packing`, made by `benchmarks/prepare_polymer_packing.py`):
+
+* *Density*: RadonPy PI1070 (Hayashi et al., *npj Computational Materials* 8 (2022) 222; BSD
+  3-Clause). 1,077 amorphous homopolymers, each simulated by the same all-atom protocol (GAFF2,
+  ten chains of about 1,000 atoms, 300 K), with 20 polymer classes. The density is
+  1.13 ± 0.18 g/cm³. The values are computed, not measured.
+* *Gas permeability*: the set released with torch-molecule (MIT), measured values compiled from
+  the literature, as log10 of the permeability in Barrer, for CH4, CO2, H2, N2 and O2 (444 to
+  721 polymers per gas once built). 44 of 786 rows are left out, 31 of them ladder polymers with
+  four attachment points, among them the polymers of intrinsic microporosity, the most permeable
+  class; the builder handles linear chains only.
+
+The fractional free volume of the Open Polymer Prediction set is not used: it can be downloaded
+only after a sign-in to Kaggle and an acceptance of the competition's rules, and no open copy
+exists. RadonPy's van der Waals volume would give the packing coefficient, but it exceeds 1 for
+several nylons, so it is not used either.
+
+**The gate, fixed before the run.** The central unit plus the eight counts must beat the
+bond-count kernel plus the eight counts, with the 95 % interval above zero. The folds are five
+random folds and five folds of whole groups, each repeated ten times because the sets are small.
+A group is a RadonPy polymer class for the density. For the permeability, which has no classes,
+it is a Butina cluster of the repeat units' ECFP4 fingerprints at a Tanimoto distance of 0.6 (79
+to 124 clusters per gas, the largest with 163 polymers). The builder, the fields, the models and
+the selection by the evidence are those of the Tg benchmark. The 1,734 distinct repeat units of
+both tables were built once; 9 could not be embedded.
+
+q² with five random folds, then with whole groups held out:
+
+| Model | density | CH4 | CO2 | H2 | N2 | O2 |
+|---|---:|---:|---:|---:|---:|---:|
+| ECFP4 of the repeat unit | +0.892 / +0.788 | +0.856 / +0.669 | +0.795 / +0.608 | +0.825 / +0.544 | +0.826 / +0.635 | +0.810 / +0.599 |
+| field kernel, whole trimer + eight counts | +0.897 / +0.756 | +0.795 / +0.575 | +0.680 / +0.539 | +0.779 / +0.531 | +0.755 / +0.573 | +0.719 / +0.549 |
+| field kernel, central unit + eight counts | +0.896 / +0.769 | +0.788 / +0.557 | +0.681 / +0.520 | +0.772 / +0.496 | +0.743 / +0.540 | +0.723 / +0.540 |
+| bond-count kernel + eight counts | +0.907 / +0.711 | +0.746 / +0.480 | +0.634 / +0.405 | +0.749 / +0.398 | +0.684 / +0.425 | +0.678 / +0.434 |
+| field kernel, whole trimer | +0.876 / +0.809 | +0.724 / +0.494 | +0.625 / +0.450 | +0.702 / +0.421 | +0.690 / +0.466 | +0.659 / +0.475 |
+| field kernel, central unit | +0.872 / +0.795 | +0.710 / +0.475 | +0.602 / +0.409 | +0.682 / +0.378 | +0.652 / +0.411 | +0.634 / +0.439 |
+| bond-count kernel, central unit | +0.879 / +0.785 | +0.664 / +0.432 | +0.528 / +0.274 | +0.615 / +0.259 | +0.566 / +0.324 | +0.583 / +0.356 |
+| eight counts | +0.664 / +0.021 | +0.694 / +0.440 | +0.521 / +0.340 | +0.699 / +0.375 | +0.623 / +0.372 | +0.571 / +0.337 |
+
+The gate, the central unit plus counts minus the bond-count kernel plus counts:
+
+| Target | random folds | groups held out |
+|---|---|---|
+| density | -0.009 [-0.030, +0.009] | +0.043 [-0.023, +0.134] |
+| CH4 | +0.039 [+0.013, +0.065] | +0.059 [+0.017, +0.103] |
+| CO2 | +0.031 [-0.004, +0.068] | +0.083 [+0.031, +0.134] |
+| H2 | +0.012 [-0.010, +0.034] | +0.072 [+0.015, +0.135] |
+| N2 | +0.043 [+0.016, +0.072] | +0.084 [+0.024, +0.137] |
+| O2 | +0.039 [+0.011, +0.066] | +0.081 [+0.013, +0.139] |
+
+**What it says.**
+
+* **On gas permeability the field sees what the bond graph does not.** With groups held out the
+  gate is met for all five gases, by +0.06 to +0.08; on random folds for three of them (CH4, N2,
+  O2), with CO2 and H2 short of it. The whole trimer plus the counts does a little better still
+  (+0.08 to +0.12 with groups held out). Without the counts the field beats its own channels
+  with distances in bonds by +0.05 to +0.07 on random folds (the interval of H2 reaches zero).
+  This is the first polymer property
+  in this program where the 3D distances add to the graph.
+* **On density they do not.** The field kernel, its bond-count version and ECFP4 reach 0.87 to
+  0.89 on random folds; the gate is not met on either test. Density is close to additive over
+  atoms and bonds, as a group-contribution method assumes, so the graph carries it.
+* **The eight counts fail on density with classes held out** (q² +0.02, varying by 0.9 between
+  the ten dealings of the classes): molecular weight and the other counts say little about how
+  much volume a gram takes. Every kernel on the structure reaches 0.79 to 0.81 there.
+* **A fingerprint is still the best model for permeability**, 0.03 to 0.10 ahead of the field plus
+  the counts. The field adds to the graph-based channels of the same fields, not to ECFP4.
+* **Here the whole trimer beats the middle unit**, by 0.01 to 0.06 on permeability; on Tg the two
+  were equal.
+
+**The settings chosen.** The permeability field kernels chose widths of 0.005 Å, the narrowest of
+the Tg grid, in most blocks, and q² still rose from 0.01 to 0.005 Å. A second run offered 0.0025
+and 0.001 Å: q² falls again at both (on CO2, for example, +0.631, +0.613 and +0.587 at 0.005,
+0.0025 and 0.001 Å for the whole trimer), the evidence chose them in a few blocks only, and no
+number of the tables changed by more than 0.003. The density kernels chose 0.01 Å. The sums
+chose h = 0.3 to 3 on permeability and mostly 10 to 30 on density, inside the grid of 0.03 to 100. The
+first run is kept in `benchmarks/cache/polymer_packing/polymer_packing_first_run.json`. With ten
+repeats, q² of a permeability model varies between repeats by up to 0.11 on random folds (H2, the
+smallest set) and by up to 0.33 with groups held out, so the intervals, not single repeats, carry
+the comparison.
+
+**Costs.** The build took 44 minutes with 24 processes and the models 1 hour 45 minutes; the two
+narrower widths added 14 minutes, because every evaluated setting is cached.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with
