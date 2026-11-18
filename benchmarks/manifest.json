@@ -1,6 +1,6 @@
 {
- "commit": "958b72ee401a436ec3043b9cf0f9d25a968c8d80",
- "created": "2026-11-18T15:50:57",
+ "commit": "1c5727383cc54c7ac034058049a34a736c338b95",
+ "created": "2026-11-18T17:25:38",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2218,6 +2218,30 @@
    "bytes": 40831,
    "sha256": "3405b34c2b38dead2a61e8a2d83e4eed230d1df74d2f0159e456791928548e22"
   },
+  "examples/polymer_packing/LICENSE_RadonPy.txt": {
+   "bytes": 1526,
+   "sha256": "0f660cb23fa6c593637c177cda5b08942a3e433c6a0a0cbb2860fcedf07c72f8"
+  },
+  "examples/polymer_packing/LICENSE_torch-molecule.txt": {
+   "bytes": 1117,
+   "sha256": "d615cbd34506317ffba0b52edafa47b8a12fc1663a7e5896a639af2351ff7542"
+  },
+  "examples/polymer_packing/README.md": {
+   "bytes": 4127,
+   "sha256": "1fc61c4edd4b99dd4c767b522c5bd5452b8560649d3827c085335ead854ff292"
+  },
+  "examples/polymer_packing/permeability.csv": {
+   "bytes": 80910,
+   "sha256": "bde5c62a1d0c159d973540f34e5302e6cb2a4fd2e644c1cc7ad377701cf18397"
+  },
+  "examples/polymer_packing/pi1070.csv": {
+   "bytes": 101550,
+   "sha256": "ada38f188e591058601025b629be45d9d4e1fe958abfc861a67c99cb7fafbb4a"
+  },
+  "examples/polymer_packing/provenance.json": {
+   "bytes": 1256,
+   "sha256": "6baa10a3be32e2790fca321bf3ebb17e2d82a0a2a33a1584ed65344d7e261267"
+  },
   "examples/polymer_tg/README.md": {
    "bytes": 2856,
    "sha256": "7bd512f0d41b7100ded5b2546a41401e6f94561aeee02d5fe1124430c3e2fee2"
@@ -2739,7 +2763,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3770,6 +3794,8 @@
   "benchmarks/results/phenazine/data.json": "ced159bf4c67cd384e58075460e0cf0a06b32198ebfc0ae7d994426155e84de8",
   "benchmarks/results/phenazine/gate.json": "2abaf3c05f6b90992d53b6d29d8fe769433e79cc903b2b50639ef3505a69c01a",
   "benchmarks/results/phenazine/table.md": "1ff16755015b5a1a781a0a78527556e20ff8119ab75e76b0e5d284f06d1f011b",
+  "benchmarks/results/polymer_packing/polymer_packing.json": "e405d341ec41d775bbb8fb7835cbb2832c8eeb11622076f3095821d28a0d776d",
+  "benchmarks/results/polymer_packing/table.md": "85e8788630861007f4172ebb439b92c76390f00e95699fd9072e2062ed6cfed2",
   "benchmarks/results/polymer_tg/polymer_tg.json": "8affa1d3c3b0e6e73e72f91137242df5ffa269f0daedafe5e786e2125c6d9d17",
   "benchmarks/results/polymer_tg/table.md": "f643f3c57d8c506b1df998411ac9d4fe198bf37ff63250936cd4ae85e8400765",
   "benchmarks/results/pooled_mixing/ACE.json": "d8fdef00b04b88e2b788883f7fde25cb03350e9945fc31e9dd070fbbba1fd4a2",
