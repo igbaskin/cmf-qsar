@@ -1,6 +1,6 @@
 {
- "commit": "8279de20e4e6a2c3a4f042ac4a474e549147de5f",
- "created": "2026-11-18T22:51:52",
+ "commit": "86a2532c57c1e21bbc5c87ba73d9323d585638be",
+ "created": "2026-11-19T00:02:38",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1491,8 +1491,8 @@
    "sha256": "622a4c0ea9bf5adcad95232d2c3afd9e7535776a743dcc80306039ba5f874a4d"
   },
   "examples/make_mutant_examples.py": {
-   "bytes": 8558,
-   "sha256": "6041d1e352787b0a56831036aa91e3e9fded094c822777b50eddf71f383888c3"
+   "bytes": 9479,
+   "sha256": "f3e2da33bad7feb321a40801a220baa699aff2357f269e2b6f28ccaff0d12156"
   },
   "examples/make_phenazine_examples.py": {
    "bytes": 21955,
@@ -1746,6 +1746,42 @@
    "bytes": 122782,
    "sha256": "5e3e7e69e57970ca33563aa766ea73668389808ec06a8f18058d23d647bbcb7b"
   },
+  "examples/mutants/1AOY/1AOY.pdb": {
+   "bytes": 89351,
+   "sha256": "0938d658be145088c382427253afb8023c31d6c477bb277a1e365f6d544c0dd0"
+  },
+  "examples/mutants/1AOY/mutants.csv": {
+   "bytes": 58567,
+   "sha256": "60a0c2a3d4f12acba583d9e57d661bb15374f4aeee3aedb11f24bb619145fc24"
+  },
+  "examples/mutants/1AOY/wild_type.txt": {
+   "bytes": 114,
+   "sha256": "bd5c565df062c0aa1ddd2d4a5949b93ce41b1695226821e3d7241f40a2e1fd93"
+  },
+  "examples/mutants/1F0M/1F0M.pdb": {
+   "bytes": 84572,
+   "sha256": "a5fc61df5bb396329e6bd0ec2c9ab070b3cf3e2ebb1e098766b48726b1471ddd"
+  },
+  "examples/mutants/1F0M/mutants.csv": {
+   "bytes": 56249,
+   "sha256": "9d0da07a399412011bd3c2b34a078566cd9cbe18ef54212eefd3ed15040cb719"
+  },
+  "examples/mutants/1F0M/wild_type.txt": {
+   "bytes": 109,
+   "sha256": "ee0e8dd5fb8e4259bc2465b173c12c055aaa3e8b6ceba6048dd4b7436c329759"
+  },
+  "examples/mutants/1GYZ/1GYZ.pdb": {
+   "bytes": 77525,
+   "sha256": "8ae75fdde5fcd35caabbd0a6e4fc60f1107bb1a0060bf670b0e679d3dffcb669"
+  },
+  "examples/mutants/1GYZ/mutants.csv": {
+   "bytes": 50804,
+   "sha256": "b844759d45a067d5a8154d7d138d1fa101103b1ff14af724cc81329107472846"
+  },
+  "examples/mutants/1GYZ/wild_type.txt": {
+   "bytes": 105,
+   "sha256": "cf270ef4eb59f59ce5eeb5f46201e741b607fcbf511d3c43a761263a57150891"
+  },
   "examples/mutants/1O6X/1O6X.pdb": {
    "bytes": 92510,
    "sha256": "51f585779a688436d5ca6ad01ce7abe994519087b4da40d21d82085df7640b10"
@@ -1757,6 +1793,42 @@
   "examples/mutants/1O6X/wild_type.txt": {
    "bytes": 118,
    "sha256": "e474885ab8c47b11a4dab411523ef8bdfe698d85aac040454156e3a81aea1432"
+  },
+  "examples/mutants/1ORC/1ORC.pdb": {
+   "bytes": 80765,
+   "sha256": "1adaaf94b12a650544dd127b2c22a36e1d73e71a2e0c1221466c0ab4c316c47c"
+  },
+  "examples/mutants/1ORC/mutants.csv": {
+   "bytes": 54330,
+   "sha256": "4098c8cae6952c63a0a4dadebebf47fb62b1ad4a3d529941327d5318b754e76f"
+  },
+  "examples/mutants/1ORC/wild_type.txt": {
+   "bytes": 109,
+   "sha256": "a0b1002b3c9c0f5f944743d07ff0da2367831c459028e584ff492ecbf46e30c2"
+  },
+  "examples/mutants/1QKH/1QKH.pdb": {
+   "bytes": 89756,
+   "sha256": "9a3753b8bf4a3ea829b95e01ae490ab8b3a502e4081c06c80d33bcef6490718c"
+  },
+  "examples/mutants/1QKH/mutants.csv": {
+   "bytes": 57687,
+   "sha256": "ac55b7d278f5e036efb50e5f7fe337d40db8b7063316f986ec11c2f0dfd99154"
+  },
+  "examples/mutants/1QKH/wild_type.txt": {
+   "bytes": 114,
+   "sha256": "3814b156aa45bf7e30fd82ff2dde7332d5b02ec39dce921cff78cffc03c5edf9"
+  },
+  "examples/mutants/1R69/1R69.pdb": {
+   "bytes": 79145,
+   "sha256": "4927d9780e56333e408d98a402381f54ff2561bd1b69f242fe65d1abe135295f"
+  },
+  "examples/mutants/1R69/mutants.csv": {
+   "bytes": 51053,
+   "sha256": "b27a600a069dd87bb757fb6c16eb54fdbf60d33a58715489776fdd74f4b95270"
+  },
+  "examples/mutants/1R69/wild_type.txt": {
+   "bytes": 107,
+   "sha256": "902f5bb43fb2aae830a5732e6d1f7b91c1cd38305cef8ed067f3e6b779be08aa"
   },
   "examples/mutants/1UFM/1UFM.pdb": {
    "bytes": 89351,
@@ -1770,6 +1842,42 @@
    "bytes": 118,
    "sha256": "d7ecedbe0ddf68bcae409635413d2a9e26925d39eb7b5b70fc1ce05a5cec7c6e"
   },
+  "examples/mutants/1V1C/1V1C.pdb": {
+   "bytes": 85382,
+   "sha256": "7022016c1345cc401cb32dc5ea368241e55f757dbaa35305f8e6cb1006e53141"
+  },
+  "examples/mutants/1V1C/mutants.csv": {
+   "bytes": 55045,
+   "sha256": "e40cd26922504fd2d0de08bfb0f4e641e81a6f3ca680bf123d16f15dbfb2f6bb"
+  },
+  "examples/mutants/1V1C/wild_type.txt": {
+   "bytes": 112,
+   "sha256": "9ffa968102627244624220b00f33f43068eabac512e8fba666a48003c4c2c225"
+  },
+  "examples/mutants/1YU5/1YU5.pdb": {
+   "bytes": 85058,
+   "sha256": "87c4f35cb01fc2211af15de46ada3ee67247e30711a337f3827b31daec2f80b5"
+  },
+  "examples/mutants/1YU5/mutants.csv": {
+   "bytes": 54611,
+   "sha256": "1d64f9f23f4d6ace1ecae4624c50dd26c0712649f6b19dc80efe383cae80cb86"
+  },
+  "examples/mutants/1YU5/wild_type.txt": {
+   "bytes": 111,
+   "sha256": "1ce5ae36871f9f2b490fd52cb7aa1bbb0934553c2e0fb17725b3b343239613b5"
+  },
+  "examples/mutants/2JT1/2JT1.pdb": {
+   "bytes": 86192,
+   "sha256": "5148e61ba33d0cd7205bfdb2d8e8e9ed9258897179d25494d4787261cb7f0f15"
+  },
+  "examples/mutants/2JT1/mutants.csv": {
+   "bytes": 57355,
+   "sha256": "e1f4cde697571b015d05d99fc865aa03e5fcae30b3c134ad8a63d69b758c2594"
+  },
+  "examples/mutants/2JT1/wild_type.txt": {
+   "bytes": 113,
+   "sha256": "9c97d2d87a66f7cb1b16065db10908651b661494465db5bee269cde3a6262824"
+  },
   "examples/mutants/2K5N/2K5N.pdb": {
    "bytes": 85544,
    "sha256": "3f67507793e029829abadc09c5397c16e565e9370f923c0f9a7fb9cadc458aca"
@@ -1781,6 +1889,114 @@
   "examples/mutants/2K5N/wild_type.txt": {
    "bytes": 113,
    "sha256": "2867c4cd64fc8f93d69c9b5f2e560f619a556b9fc06663681645a023538f9676"
+  },
+  "examples/mutants/2KCM/2KCM.pdb": {
+   "bytes": 86192,
+   "sha256": "b9beca23a26878c836789a32837fd30d5f9e7a50250ac3ea4cd45ffbdab2dc4b"
+  },
+  "examples/mutants/2KCM/mutants.csv": {
+   "bytes": 54567,
+   "sha256": "8d5354d4c3f2c9771818f028d0d5c44e82cced516569a7f2f9e8bcc63affc61e"
+  },
+  "examples/mutants/2KCM/wild_type.txt": {
+   "bytes": 113,
+   "sha256": "072a9b9b6f62ef87ca176d56f1f9f4d0bcc33b6bd19d8e743bc8be05a159f4b1"
+  },
+  "examples/mutants/2KVS/2KVS.pdb": {
+   "bytes": 88055,
+   "sha256": "77441320a781ed9dc45639be0a3a9d7e47283c6a7e84d2e08a86617ae5093f34"
+  },
+  "examples/mutants/2KVS/mutants.csv": {
+   "bytes": 54693,
+   "sha256": "5db3ed4e9517319dae8c7f484fbeba761a042da88ac88bc3a71387ace5541dfd"
+  },
+  "examples/mutants/2KVS/wild_type.txt": {
+   "bytes": 112,
+   "sha256": "bb2a9140957938480c65b1c7f88f26e0cb0daf19c599fd87e3f9145db92c7500"
+  },
+  "examples/mutants/2KXD/2KXD.pdb": {
+   "bytes": 90566,
+   "sha256": "4e57f2650e32ef66295cac52df9eb34065772d6470bce5fc444f0fda9d858119"
+  },
+  "examples/mutants/2KXD/mutants.csv": {
+   "bytes": 53273,
+   "sha256": "0dd916f8ca24a300220fc9ea0e164b30470ade687d932468df53917096d41ebd"
+  },
+  "examples/mutants/2KXD/wild_type.txt": {
+   "bytes": 116,
+   "sha256": "c98c1ee73747030c2ced0772c4e2cc33c01a6b601e16b71e88d97688ea5d9531"
+  },
+  "examples/mutants/2LO1/2LO1.pdb": {
+   "bytes": 86516,
+   "sha256": "20b71dd230329f98efd70154a67ad716549899670a76c84e27dcdb7d173374c4"
+  },
+  "examples/mutants/2LO1/mutants.csv": {
+   "bytes": 55297,
+   "sha256": "24218b7280652a632adb32f69d5077941dbe8187dd163a5a6e34191d0a9fc326"
+  },
+  "examples/mutants/2LO1/wild_type.txt": {
+   "bytes": 112,
+   "sha256": "1e2f217d232ffc4b90ac66a36a5ab7cad85ead21cf9d1d5d37133d61e1db060e"
+  },
+  "examples/mutants/2LYR/2LYR.pdb": {
+   "bytes": 85058,
+   "sha256": "db83c94a6ba7017bac633427eec396f1cbe3cbe749adf57382a31d9b4477b79f"
+  },
+  "examples/mutants/2LYR/mutants.csv": {
+   "bytes": 53502,
+   "sha256": "da253906fd469f80d1a858f617c9d09244e3faecee1e1760e62582d2a5d8e1d5"
+  },
+  "examples/mutants/2LYR/wild_type.txt": {
+   "bytes": 108,
+   "sha256": "f1547665e11e819282e3b8367b2f9772ff20067cb131b284f9c17fd509a0011e"
+  },
+  "examples/mutants/2M8U/2M8U.pdb": {
+   "bytes": 85949,
+   "sha256": "d176e0895df5c534605d4dc14a28fcff98332167840125a5df9490a4d6df5c94"
+  },
+  "examples/mutants/2M8U/mutants.csv": {
+   "bytes": 57652,
+   "sha256": "9cd6640ca1f3f20146ec548083d1820025af4cd26a59e363143ee894e5399480"
+  },
+  "examples/mutants/2M8U/wild_type.txt": {
+   "bytes": 113,
+   "sha256": "b4c79453fb41079833ac0a18baf028d20c9d7c5c99dbaa7c8688dd2cd3fb49f8"
+  },
+  "examples/mutants/2MCH/2MCH.pdb": {
+   "bytes": 84167,
+   "sha256": "2ff68a0aba779a03d62437bd1512b3e15014a04e543d5f3dd409174c14270c4d"
+  },
+  "examples/mutants/2MCH/mutants.csv": {
+   "bytes": 51895,
+   "sha256": "5f2e5f628ef8183677596ec13bd9caed0973e8d8344cce7e48301b31d23fe9eb"
+  },
+  "examples/mutants/2MCH/wild_type.txt": {
+   "bytes": 109,
+   "sha256": "eb148dba12c24dc5a0c0df7ceb4747c196997eb11f2f70f54e7178caaedd6e28"
+  },
+  "examples/mutants/2O2W/2O2W.pdb": {
+   "bytes": 87812,
+   "sha256": "aa4e58320f71a17170f0550d588aec3c3e4c047e5c95200cc55c860746f3ecde"
+  },
+  "examples/mutants/2O2W/mutants.csv": {
+   "bytes": 55073,
+   "sha256": "28d15d6f53d3b40dccbe1753e2f82048a367e43f5a0a81de5801d35431fd34d9"
+  },
+  "examples/mutants/2O2W/wild_type.txt": {
+   "bytes": 113,
+   "sha256": "eaa1b4a80854d7722c0282ff50371e9592a60c120f880c99ea02b2251db7a45d"
+  },
+  "examples/mutants/3DKM/3DKM.pdb": {
+   "bytes": 89108,
+   "sha256": "3d847d573e648b631983885a02f41bc14d8a8a11ac893b1c8c76ec5c46781c86"
+  },
+  "examples/mutants/3DKM/mutants.csv": {
+   "bytes": 56247,
+   "sha256": "651e9fd1f666d020c2075e59c05d777415f1f28e97ddb3f12e6a276f560ac3df"
+  },
+  "examples/mutants/3DKM/wild_type.txt": {
+   "bytes": 118,
+   "sha256": "75a28dd7268c3b075e5a40a79a756ad60475424ed3555d2ccedf6a9ba867bace"
   },
   "examples/mutants/3ZGK/3ZGK.pdb": {
    "bytes": 90566,
@@ -1794,9 +2010,33 @@
    "bytes": 114,
    "sha256": "d95b92a5036fd17b847ec906a8a35c24fee904b719aa14ffb3704bf583c41e79"
   },
+  "examples/mutants/4C26/4C26.pdb": {
+   "bytes": 81089,
+   "sha256": "f5ea989488bf933d0b29161ba5744e6ef3b28f89c20beac08771fdec84e66dbd"
+  },
+  "examples/mutants/4C26/mutants.csv": {
+   "bytes": 52448,
+   "sha256": "869b37b159d6ed4578ecddcf29d9047528d12deaa44a515c4b3d74d0d9d13f2f"
+  },
+  "examples/mutants/4C26/wild_type.txt": {
+   "bytes": 109,
+   "sha256": "5291f8783489c97bc7a380c28807777fb9f58007911e814277a41a62405276b3"
+  },
+  "examples/mutants/5KPH/5KPH.pdb": {
+   "bytes": 96074,
+   "sha256": "749e6e1c2b157802239a2d443006521a56c12c3848de201a287ef0a6dfad796d"
+  },
+  "examples/mutants/5KPH/mutants.csv": {
+   "bytes": 58447,
+   "sha256": "a071e6dffea8d95f4bf7b665411b7beb8c59f57a6226dcf9fbf12f70aa7171cf"
+  },
+  "examples/mutants/5KPH/wild_type.txt": {
+   "bytes": 115,
+   "sha256": "0b0f6cda86d999522806b0467a6e585396361401359587a4eefedb86310c1a87"
+  },
   "examples/mutants/README.md": {
-   "bytes": 4565,
-   "sha256": "a50c07a345c0e0064ee1cf0b5b71e4a5514b2bbd78f03bfc9bd8907805be3bcb"
+   "bytes": 5484,
+   "sha256": "8b9a4ddf8bf9b237cdb919b889bacd2d121a322e001e7a0378a596ff4b1a14e3"
   },
   "examples/openff/LICENSE_openff_protein-ligand-benchmark.txt": {
    "bytes": 1071,
@@ -2763,7 +3003,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3711,6 +3951,8 @@
   "benchmarks/results/nebdft/rule.md": "8093224e645ceba02c52f8b7b40757e5c24e0511d888d16b3cd8bd75d961709b",
   "benchmarks/results/nebdft/run.json": "38651b3ef78a3b5e1047e9e76bb18c84eaf3e3893cd3b3c55b3b7729753f079f",
   "benchmarks/results/nebdft/table.md": "82c50c0f8998cb08aba2e7d77dd3a224b52eddb9fbfdba6fed825a791abb001d",
+  "benchmarks/results/new_proteins/new_proteins.json": "294a09660d4dddcb12201e715f1a31ae24e6b3463d629ad3029bfeac393e729f",
+  "benchmarks/results/new_proteins/table.md": "15d4d40ddb28bd1290ebc824c7c3fe12ff995732ca81d8a22125038de23d7856",
   "benchmarks/results/nonlinearity/maps.png": "a5b8a57f83e92f50e50e612bb3328b8fd9761f706593ef42abb3bfdc71ae74b6",
   "benchmarks/results/nonlinearity/summary.csv": "19e83648381b5f7b58676ab16cbc95c959bb863d5389bae29c01b075dee461aa",
   "benchmarks/results/nonlinearity/table.md": "e2e1c6085a51d3fe3b5fd2558993f67da90daeeb4ac48103c61a14523c48bbc9",
