@@ -1442,7 +1442,7 @@ def registry() -> List[Benchmark]:
                   "the 280 positions of the mega-scale domains with segments and domains held "
                   "out",
                   "run_site_fields.py", "site_fields", compute=[[]],
-                  minutes="180",
+                  minutes="75",
                   report=lambda: _mod("run_site_fields").write_table(_r("site_fields")),
                   tables=["site_fields/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
