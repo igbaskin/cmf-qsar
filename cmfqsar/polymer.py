@@ -69,9 +69,16 @@ gigabytes.  When the screw is a translation, :func:`periodic_chain` makes the ce
 :func:`cmfqsar.periodic.periodic_autocorrelation` gives the same field, with or without the
 uniform background per repeat length.
 
+**Copolymers (plan item PL4).**  :func:`sequence_oligomer` and :func:`build_sequence` join
+different repeat units in a given order.  A copolymer has units in several local environments
+(a unit with a neighbour on each side), and :func:`environment_weights` counts how often each
+occurs in a set of chains: the copolymer is then the weighted set of the trimers of its
+environments, and its descriptor the weighted mean of their central-unit rows.  The module does
+not choose the chains; the caller gives them, as the architecture and the composition define
+them.
+
 **What the module does not do.**  It does not describe chain length, its distribution, packing,
-crystallinity or crosslinking: none of these is in a field of a single oligomer.  A copolymer
-needs a sequence, which this module does not choose.
+crystallinity or crosslinking: none of these is in a field of a single oligomer.
 """
 from __future__ import annotations
 
@@ -770,3 +777,116 @@ def chain_autocorrelation_rows(mol: Chem.Mol, mf, specs: Sequence,
     ij = np.stack([np.minimum(i, j)[keep], np.maximum(i, j)[keep]], axis=1)
     return autocorrelation_rows(SimpleNamespace(coords=Xall, weights=Wall), specs, centre=centre,
                                 atom_pairs=ij)
+
+
+# --------------------------------------------------------------------------- copolymers
+
+def sequence_oligomer(units: Sequence, stereo: str = "isotactic",
+                      add_hydrogens: bool = True) -> Chem.Mol:
+    """An oligomer of the repeat units `units` in the order given (plan item PL4).
+
+    Each entry is a :class:`RepeatUnit` or a SMILES string; unit k + 1 is joined to the tail of
+    unit k, as :func:`oligomer` joins copies of one unit, and the labels, caps and stereo options
+    are those of :func:`oligomer`.  A sequence of one unit repeated n times gives exactly
+    ``oligomer(unit, n)`` (tested).  All units must have the same number of attachment points and
+    the same bond order at them.
+    """
+    units = [parse_repeat_unit(u) if isinstance(u, str) else u for u in units]
+    if not units:
+        raise ValueError("a sequence needs at least one repeat unit")
+    if stereo not in ("isotactic", "random"):
+        raise ValueError(f"stereo must be 'isotactic' or 'random', not {stereo!r}")
+    if len({u.ladder for u in units}) > 1 or len({u.bond for u in units}) > 1:
+        raise ValueError("the units of a sequence must all be linear or all ladders, with one "
+                         "bond order at their attachment points")
+    first = units[0]
+    e = 2 if first.ladder else 1
+    n = len(units)
+    bases: Dict[str, Chem.Mol] = {}
+    pieces = []
+    for k, unit in enumerate(units):
+        if unit.smiles not in bases:
+            base = Chem.Mol(unit.mol)
+            bases[unit.smiles] = _fix_stereo(base) if stereo == "isotactic" else base
+        m = Chem.RWMol(bases[unit.smiles])
+        for a in m.GetAtoms():
+            a.SetIntProp(UNIT_PROP, k)
+        m.GetAtomWithIdx(unit.head).SetAtomMapNum(e * k + 1)
+        m.GetAtomWithIdx(unit.tail).SetAtomMapNum(e * k + e + 1)
+        if unit.ladder:
+            m.GetAtomWithIdx(unit.head2).SetAtomMapNum(e * k + 2)
+            m.GetAtomWithIdx(unit.tail2).SetAtomMapNum(e * k + e + 2)
+        pieces.append(m.GetMol())
+    caps = []
+    for label in list(range(1, e + 1)) + list(range(e * n + 1, e * n + e + 1)):
+        cap = Chem.MolFromSmiles(_CAPS[first.bond].format(label), sanitize=False)
+        for a in cap.GetAtoms():
+            a.SetIntProp(UNIT_PROP, -1)
+        caps.append(cap)
+    combined = caps[0]
+    for p in caps[1:e] + pieces + caps[e:]:
+        combined = Chem.CombineMols(combined, p)
+    out = Chem.molzip(combined)
+    Chem.SanitizeMol(out)
+    for a in out.GetAtoms():
+        a.SetAtomMapNum(0)
+    if add_hydrogens:
+        out = Chem.AddHs(out)
+        for a in out.GetAtoms():
+            if not a.HasProp(UNIT_PROP):
+                a.SetIntProp(UNIT_PROP, a.GetNeighbors()[0].GetIntProp(UNIT_PROP))
+    Chem.AssignStereochemistry(out, cleanIt=True, force=True)
+    return out
+
+
+def build_sequence(units: Sequence[str], stereo: str = "isotactic", conformers: int = 4,
+                   seed: int = 0, optimise: bool = True) -> Tuple[Chem.Mol, Dict[str, float]]:
+    """:func:`build` for a sequence of repeat units: the oligomer of :func:`sequence_oligomer`,
+    embedded and optimised as :func:`build` does it."""
+    parsed = [parse_repeat_unit(u) for u in units]
+    hold = not parsed[0].ladder
+
+    def embed(m):
+        return embed_oligomer(m, conformers=conformers, seed=seed, optimise=optimise,
+                              hold_span=hold)
+    try:
+        out, info = embed(sequence_oligomer(parsed, stereo=stereo))
+        info["stereo_open"] = 0.0
+    except ValueError:
+        if stereo != "isotactic":
+            raise
+        out, info = embed(sequence_oligomer(parsed, stereo="random"))
+        info["stereo_open"] = 1.0
+    n = len(parsed)
+    labels = unit_labels(out)
+    info.update({"units": float(n), "atoms": float(out.GetNumAtoms()),
+                 "central_atoms": float(np.sum(labels == n // 2)) if n % 2 else float("nan")})
+    Chem.CreateAtomIntPropertyList(out, UNIT_PROP)
+    return out, info
+
+
+def environment_weights(sequences: Iterable[Sequence], weights: Optional[Sequence[float]] = None,
+                        both_directions: bool = True) -> Dict[Tuple, float]:
+    """How often each local environment occurs inside a set of chains (plan item PL4).
+
+    A chain is a sequence of unit names, such as ``"AABABBAB"``.  The environment of an inner
+    unit is the triple (unit before, unit, unit after); the two end units, which have one
+    neighbour, are left out.  With `both_directions` every chain is counted also read backwards,
+    because a chain has no direction, while the builder joins each unit's tail to the next
+    unit's head.  The result is normalised to sum to 1: the weights of the trimers whose central
+    units, averaged, describe a copolymer as an ensemble of environments.
+    """
+    seqs = [tuple(s) for s in sequences]
+    w = np.ones(len(seqs)) if weights is None else np.asarray(weights, float)
+    out: Dict[Tuple, float] = {}
+    for s, ws in zip(seqs, w):
+        if len(s) < 3:
+            raise ValueError(f"a chain of {len(s)} units has no inner unit")
+        readings = [s, s[::-1]] if both_directions else [s]
+        share = float(ws) / (len(readings) * (len(s) - 2))
+        for r in readings:
+            for i in range(1, len(r) - 1):
+                key = (r[i - 1], r[i], r[i + 1])
+                out[key] = out.get(key, 0.0) + share
+    total = sum(out.values())
+    return {k: v / total for k, v in sorted(out.items())}

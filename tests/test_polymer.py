@@ -239,6 +239,41 @@ def test_a_translation_chain_is_the_periodic_cell_of_m1(trimer, fs):
         periodic_chain(mol, mf, turned)
 
 
+def test_a_sequence_of_one_unit_is_the_oligomer():
+    from cmfqsar.polymer import sequence_oligomer
+    for smi in (STYRENE, PIM1):
+        a, b = oligomer(smi, n=3), sequence_oligomer([smi] * 3)
+        assert Chem.MolToSmiles(a) == Chem.MolToSmiles(b)
+        assert (unit_labels(a) == unit_labels(b)).all()
+
+
+def test_a_sequence_joins_different_units_in_order():
+    # styrene then ethylene then styrene: CH3-CH(Ph)-CH2-CH2-CH2-CH(Ph)-H
+    from cmfqsar.polymer import sequence_oligomer
+    m = sequence_oligomer([STYRENE, "[*]CC[*]", STYRENE], stereo="random", add_hydrogens=False)
+    assert Chem.MolToSmiles(Chem.RemoveHs(m)) == Chem.MolToSmiles(
+        Chem.MolFromSmiles("CC(CCCCc1ccccc1)c1ccccc1"))
+    labels = unit_labels(m)
+    assert sorted(set(labels.tolist())) == [-1, 0, 1, 2]
+    assert np.sum(labels == 1) == 2                      # the ethylene unit: two carbons
+    with pytest.raises(ValueError, match="all be linear or all ladders"):
+        sequence_oligomer([STYRENE, PIM1])
+
+
+def test_environment_weights_count_the_inner_units_both_ways():
+    from cmfqsar.polymer import environment_weights
+    w = environment_weights(["ABABABAB"])
+    assert w == pytest.approx({("A", "B", "A"): 0.5, ("B", "A", "B"): 0.5})
+    w = environment_weights(["AAAABBBB"])
+    # inner units AAA AAA AAB ABB BBB BBB, and backwards BBB BBB BBA BAA AAA AAA
+    assert w[("A", "A", "A")] == pytest.approx(4 / 12)
+    assert w[("A", "A", "B")] == pytest.approx(1 / 12)
+    assert w[("B", "A", "A")] == pytest.approx(1 / 12)
+    assert sum(w.values()) == pytest.approx(1.0)
+    with pytest.raises(ValueError, match="no inner unit"):
+        environment_weights(["AB"])
+
+
 def test_build_many_keeps_the_order_and_reports_failures():
     out = build_many([STYRENE, "[*]CC", "[*]CC[*]"], n=3, conformers=2, jobs=1)
     assert [m is not None for m, _, _ in out] == [True, False, True]

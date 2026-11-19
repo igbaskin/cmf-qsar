@@ -9418,7 +9418,22 @@ Open after PL1:
   +0.022); the far copies cost 0.045 to 0.094. Details in the manual, *The periodic chain
   against the trimer*.
 * **PL4. Copolymers.** A random copolymer as the weighted mean of its repeat units' fields
-  (the packed ensembles of item MS5), against a weighted mean of descriptors.
+  (the packed ensembles of item MS5), against a weighted mean of descriptors. **Done 19 November
+  2026; the gate is met on the electron affinity only, and only just**
+  (`benchmarks/prepare_copolymers.py`, `benchmarks/run_copolymers.py`). The data are 1,575
+  copolymers of the VIPEA set (computed xTB electron affinity and ionization potential; 9
+  diboronic acids, 25 of 680 dibromides drawn with a fixed seed; alternating, random and block).
+  No open measured set of useful size was found. `cmfqsar.polymer.environment_weights` counts the
+  local environments (a unit and its two neighbours) over the source's octamers;
+  `build_sequence` builds one trimer for each, and the copolymer's row is the weighted mean of
+  their middle-unit rows (MS5's mean map). The evidence chose ridges of 1e-4 to 1e-3 in some
+  blocks, and two references then failed on held-out dibromides (q2 -0.33 and -0.45). A second
+  selection with ridges of at least 0.1 is reported next to the first. Gate, sequence ensemble +
+  counts minus counts + architecture, dibromides held out: +0.096 [+0.001, +0.222] (electron
+  affinity), -0.027 [-0.105, +0.037] (ionization potential). The ensemble is best on random
+  folds (q2 0.983 and 0.984) and predicts the differences between architectures (r 0.44 and
+  0.75), but on new dibromides it does not beat the mean of the homopolymer units. Details in
+  the manual, *Copolymers: a sequence as an ensemble of local environments*.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

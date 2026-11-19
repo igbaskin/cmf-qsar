@@ -1140,6 +1140,17 @@ def registry() -> List[Benchmark]:
                            "and their rows"],
                   report=lambda: _mod("run_polymer_chain").report(),
                   tables=["polymer_chain/table.md"]),
+        Benchmark("copolymers",
+                  "copolymers (plan item PL4): 1,575 copolymers of the VIPEA set with computed "
+                  "electron affinities and ionization potentials, each described by the trimers "
+                  "of its local environments, against weighted means of descriptors, with random "
+                  "folds and with whole dibromides held out",
+                  "run_copolymers.py", "copolymers",
+                  compute=[[]], minutes="130",
+                  prepare=["prepare_copolymers.py makes examples/copolymers/vipea.csv, which the "
+                           "repository carries"],
+                  report=lambda: _mod("run_copolymers").report(),
+                  tables=["copolymers/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

@@ -1311,6 +1311,13 @@ copies of the middle unit, related by the screw that carries one junction onto t
 field is worse than the trimer's middle unit on all six targets, by 0.02 to 0.12 in q2, because
 the copies beyond the nearest neighbours dilute the kernel. 41 % of these chains meet
 themselves a few units on, and only one is a pure translation, so the trimer stays the sample.
+Plan item PL4 (`benchmarks/run_copolymers.py`) describes a copolymer by the local environments
+of its units: one trimer for each unit with its two neighbours, weighted by how often the
+environment occurs in the chain. On 1,575 copolymers with computed electron affinities and
+ionization potentials (the VIPEA set), this ensemble plus counts is the best model on random
+folds (q² 0.98, half the error of weighted counts). Unlike a weighted mean, it predicts the
+small differences between alternating, random and block copolymers. With whole dibromides
+held out it is no better than the mean of the two homopolymer units.
 
 ### A measured curve as the sample: no structure needed
 

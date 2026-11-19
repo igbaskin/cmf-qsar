@@ -1,0 +1,52 @@
+{
+ "source": "https://raw.githubusercontent.com/coleygroup/polymer-chemprop-data/2af92df9560c9f1caf6ddc8a71e2290768a71674/datasets/vipea/dataset.csv",
+ "commit": "2af92df9560c9f1caf6ddc8a71e2290768a71674",
+ "sha256": "6f9d4d8c0cb8154a2150235569ba71f116f9bda1417303e19184e46d64a8bc46",
+ "licence": "MIT",
+ "paper": "M. Aldeghi and C. W. Coley, Chem. Sci. 13, 10486 (2022), doi:10.1039/D2SC02839E",
+ "rows": 42966,
+ "diboronic_acids": 9,
+ "dibromides": 682,
+ "dibromides_refused": {
+  "294": "a third bromine on aromatic carbon",
+  "391": "a third bromine on aromatic carbon"
+ },
+ "dibromides_kept": [
+  "14",
+  "68",
+  "75",
+  "79",
+  "113",
+  "157",
+  "240",
+  "267",
+  "307",
+  "314",
+  "338",
+  "370",
+  "424",
+  "460",
+  "486",
+  "508",
+  "518",
+  "554",
+  "558",
+  "586",
+  "593",
+  "615",
+  "627",
+  "658",
+  "664"
+ ],
+ "seed": 0,
+ "kept": 1575,
+ "kinds": {
+  "alternating 4A_4B": 225,
+  "block 2A_6B": 225,
+  "block 4A_4B": 225,
+  "block 6A_2B": 225,
+  "random 2A_6B": 225,
+  "random 4A_4B": 225,
+  "random 6A_2B": 225
+ }
+}

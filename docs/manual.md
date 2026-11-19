@@ -13244,6 +13244,121 @@ ridges below 10⁻⁴ removed changed no q² in the fourth decimal.
 and the second run (the narrower width and the nearest copies) 12 minutes. The trimers are those
 of PL2.
 
+### Copolymers: a sequence as an ensemble of local environments
+
+A copolymer has two kinds of repeat units, A and B, and its properties depend on more than the
+fraction of each. In an alternating chain every unit has two neighbours of the other kind; in a
+block copolymer most units have neighbours of their own kind. A weighted mean of the
+descriptors of A and B sees the fractions only. Plan item PL4
+(`benchmarks/run_copolymers.py`) describes a copolymer by the local environments its units are in,
+and asks whether that describes it better than the weighted mean.
+
+**The data.** The VIPEA set of Aldeghi and Coley (*Chem. Sci.* 13, 10486, 2022; MIT licence)
+gives the electron affinity and the ionization potential of 42,966 binary copolymers of 9 aryl
+diboronic acids (A) and 682 aryl dibromides (B). Each pair of monomers appears as an alternating
+copolymer (1:1) and as a random and a block copolymer at A:B = 1:1, 1:3 and 3:1. The values were
+computed with the tight-binding program xTB on octamers and averaged over the sequences of each
+copolymer, so they are computed, not measured. No open measured set of copolymers of a useful size
+was found: the large measured tables are restricted (PolyInfo) or have only a few monomers.
+`benchmarks/prepare_copolymers.py` makes the repeat units (the two B(OH)2 groups of A and the two
+bromine atoms of B become the attachment points), refuses two dibromides with a third bromine,
+and draws 25 of the other 680 with a fixed seed. Every copolymer of these 25 with the 9 acids is
+kept: 225 pairs, 1,575 copolymers, in `examples/copolymers/vipea.csv`. A kernel model on the whole
+set would cost days.
+
+**The representation.** A unit with a neighbour on each side is one local environment, for
+example A between B and A. `cmfqsar.polymer.environment_weights` counts the environments over
+the octamers the labels were computed on, with the rules of the source (every distinct order of
+the units for a random copolymer, AAAABBBB, AABBBBBB or AAAAAABB for a block copolymer, ABABABAB
+for the alternating one), inner units only, each chain read in both directions.
+`cmfqsar.polymer.build_sequence` builds one trimer per environment, and its middle unit gives a
+row of the field autocorrelation, as in PL1. The copolymer's row is the weighted mean of the rows
+of its environments: 1,384 trimers in all, built in 4 minutes with no geometry faults. This is
+the mean-map principle of item MS5 applied to an autocorrelation. The rows of the members are
+averaged and their atoms are not put together, because the autocorrelation is quadratic in the
+field and would then count pairs of atoms from two different trimers.
+
+**The models**, fixed before the run:
+
+* *field kernel, sequence ensemble*: the mean rows above;
+* *field kernel, mean of the homopolymer units*: the middle units of the AAA and BBB trimers,
+  weighted by the fractions; it knows the composition but not the neighbours;
+* *bond-count kernel, sequence ensemble*: the same ensemble with distances counted in bonds;
+* *weighted counts*: the eight counts of PL1 for each unit, weighted by the fractions (the
+  weighted mean of descriptors that the plan names);
+* *weighted counts + architecture*: the same with three columns that name the architecture,
+  because a weighted mean cannot see it otherwise;
+* *weighted ECFP4*: the count fingerprint of each unit, weighted by the fractions, in the
+  min/max (Tanimoto) kernel;
+* each of the three structure kernels plus the weighted counts.
+
+The folds are five random folds and five folds of whole dibromides (five dibromides per fold), each
+repeated five times. Random folds put copolymers of the same two monomers on both sides; the
+dibromide folds do not. The gate is *sequence ensemble + weighted counts* minus *weighted counts +
+architecture*, with the 95 % interval above zero with dibromides held out.
+
+**The ridge.** The first run chose the setting and the ridge by the evidence on each training
+block, as in PL1 to PL3. With dibromides held out, two of the references then failed: *weighted
+counts + architecture* reached q² −0.33 on the electron affinity, because in some blocks it chose a
+ridge of 10⁻⁴ or 10⁻³ and missed one held-out dibromide by up to 9 eV. A training block holds seven
+copolymers of each pair of monomers with close labels, and the evidence treats them as independent,
+so it trusts the data too much. Every model was therefore selected a second time with the ridges
+below 0.1 removed, from the stored predictions; the floor was chosen after the first run, among
+10⁻⁴, 10⁻³, 10⁻² and 0.1. Both selections are in the results table. With the floor, every model
+chose the floor itself in every block, so the numbers below depend on that choice. Few choices
+were at the edge of their lists: the widest field width (1 Å) in 5 of the 50 blocks of the
+homopolymer mean on the electron affinity, and the longest bond count (40 bonds) in 13 of the 50
+blocks of the bond-count kernel alone on the electron affinity, with the floor.
+
+**The gate is met on the electron affinity, only just, and not on the ionization potential.**
+q² on random folds / with dibromides held out, ridge at least 0.1, and the correlation of the
+predicted with the computed differences between architectures ("architecture r", see below):
+
+| Model | electron affinity | architecture r | ionization potential | architecture r |
+|---|---|---|---|---|
+| field kernel, sequence ensemble | +0.939 / +0.639 | +0.17 | +0.919 / +0.771 | +0.19 |
+| field kernel, mean of the homopolymer units | +0.916 / +0.590 | −0.02 | +0.904 / +0.700 | +0.01 |
+| bond-count kernel, sequence ensemble | +0.917 / +0.513 | +0.24 | +0.892 / +0.811 | +0.23 |
+| weighted counts | +0.938 / +0.648 | 0 | +0.944 / +0.689 | 0 |
+| weighted counts + architecture | +0.887 / +0.603 | +0.60 | +0.909 / +0.717 | +0.76 |
+| weighted ECFP4 | +0.963 / +0.658 | 0 | +0.961 / +0.742 | 0 |
+| sequence ensemble + weighted counts | **+0.983** / +0.714 | +0.44 | **+0.984** / +0.675 | +0.75 |
+| homopolymer mean + weighted counts | +0.970 / **+0.758** | −0.01 | +0.963 / +0.742 | −0.00 |
+| bond-count ensemble + weighted counts | +0.970 / +0.753 | +0.43 | +0.976 / +0.734 | +0.65 |
+
+The gate, *sequence ensemble + weighted counts* minus *weighted counts + architecture*, with
+dibromides held out: +0.096 [+0.001, +0.222] on the electron affinity and −0.027 [−0.105, +0.037]
+on the ionization potential. With the evidence alone it is +0.799 [+0.074, +2.447] and −0.003
+[−0.112, +0.111]; the first of these measures the failed reference, not the ensemble.
+
+**What it says.**
+
+* **On random folds the sequence ensemble is the best description.** With the counts it reaches
+  q² 0.983 and 0.984, and its error is about half that of the weighted counts (0.087 against 0.166
+  eV on the electron affinity). It is above every reference, by +0.008 to +0.094, and every
+  interval is above zero.
+* **Only a description that sees the sequence predicts the architecture.** For each pair of
+  monomers and each composition, the architecture check takes the value of each architecture
+  minus the mean over the architectures, and correlates the predicted with the computed
+  differences, with dibromides held out. The weighted means predict no difference. The ensemble
+  plus the counts reaches r = 0.44 and 0.75, close to the counts with three columns that name the
+  architecture (0.60 and 0.76). The ensemble has no column that names the architecture; it sees
+  only which environments occur and how often. These differences are small: their spread is 0.073 eV and 0.075 eV, against
+  a spread of the labels of 0.67 eV and 0.57 eV, so they are 1 to 2 % of the variance.
+* **On a new dibromide the neighbours add nothing that can be measured.** The ensemble plus the
+  counts minus the homopolymer mean plus the counts is −0.039 [−0.132, +0.048] and −0.040
+  [−0.119, +0.028]; against the bond-count ensemble plus the counts it is −0.040 and −0.053, with
+  the intervals touching zero. What the ensemble adds over the homopolymer mean is the field of
+  the junctions between A and B, and the junctions of a new dibromide are new too. On the
+  ionization potential the bond-count kernel alone is the best model with dibromides held out
+  (0.811).
+* **3D against the graph.** With the counts added to both, the field ensemble is ahead of the
+  bond-count ensemble on random folds by +0.014 and +0.008 (intervals above zero); with
+  dibromides held out it is not.
+
+**Costs.** The trimers took 4 minutes with 12 processes. The models took 72 minutes for the
+electron affinity and 51 minutes for the ionization potential, on a machine shared with other jobs; the second selection is read from the stored predictions in under a minute.
+
 ## Designing a crystal: a prototype, a budget and a loop
 
 Every section above asks how well a model predicts. A design study asks the other question: with

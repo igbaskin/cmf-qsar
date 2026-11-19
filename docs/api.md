@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 270 classes with 871 public methods, and 1458 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 270 classes with 871 public methods, and 1461 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -15868,9 +15868,16 @@ gigabytes.  When the screw is a translation, `periodic_chain` makes the cell of
 `cmfqsar.periodic.periodic_autocorrelation` gives the same field, with or without the
 uniform background per repeat length.
 
+**Copolymers (plan item PL4).**  `sequence_oligomer` and `build_sequence` join
+different repeat units in a given order.  A copolymer has units in several local environments
+(a unit with a neighbour on each side), and `environment_weights` counts how often each
+occurs in a set of chains: the copolymer is then the weighted set of the trimers of its
+environments, and its descriptor the weighted mean of their central-unit rows.  The module does
+not choose the chains; the caller gives them, as the architecture and the composition define
+them.
+
 **What the module does not do.**  It does not describe chain length, its distribution, packing,
-crystallinity or crosslinking: none of these is in a field of a single oligomer.  A copolymer
-needs a sequence, which this module does not choose.
+crystallinity or crosslinking: none of these is in a field of a single oligomer.
 
 ### `class RepeatUnit  (dataclass)`
 
@@ -16051,6 +16058,32 @@ by channel.  For a chain whose screw is a translation they equal
 `cmfqsar.periodic.periodic_autocorrelation` on `periodic_chain` with the
 background and the taper off, times the number of atoms of the unit.  `copies` limits the
 chain to that many copies on each side (1: the nearest neighbours only, as in a trimer).
+
+### `sequence_oligomer(units: Sequence, stereo: str='isotactic', add_hydrogens: bool=True) -> Chem.Mol`
+
+An oligomer of the repeat units `units` in the order given (plan item PL4).
+
+Each entry is a `RepeatUnit` or a SMILES string; unit k + 1 is joined to the tail of
+unit k, as `oligomer` joins copies of one unit, and the labels, caps and stereo options
+are those of `oligomer`.  A sequence of one unit repeated n times gives exactly
+`oligomer(unit, n)` (tested).  All units must have the same number of attachment points and
+the same bond order at them.
+
+### `build_sequence(units: Sequence[str], stereo: str='isotactic', conformers: int=4, seed: int=0, optimise: bool=True) -> Tuple[Chem.Mol, Dict[str, float]]`
+
+`build` for a sequence of repeat units: the oligomer of `sequence_oligomer`,
+embedded and optimised as `build` does it.
+
+### `environment_weights(sequences: Iterable[Sequence], weights: Optional[Sequence[float]]=None, both_directions: bool=True) -> Dict[Tuple, float]`
+
+How often each local environment occurs inside a set of chains (plan item PL4).
+
+A chain is a sequence of unit names, such as `"AABABBAB"`.  The environment of an inner
+unit is the triple (unit before, unit, unit after); the two end units, which have one
+neighbour, are left out.  With `both_directions` every chain is counted also read backwards,
+because a chain has no direction, while the builder joins each unit's tail to the next
+unit's head.  The result is normalised to sum to 1: the weights of the trimers whose central
+units, averaged, describe a copolymer as an ensemble of environments.
 
 ## cmfqsar.poses
 
