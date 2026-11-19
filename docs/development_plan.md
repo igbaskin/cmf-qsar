@@ -10064,7 +10064,7 @@ own text has to stop before it, and five entries state their status in a form of
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
-| H. Electrochemistry | 11 | 10 | EC9 |
+| H. Electrochemistry | 12 | 11 | EC9 |
 | H. Battery science | 13 | 9 | BT9 (partly), BT10, BT11, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
@@ -10073,9 +10073,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
+| H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 144 finished, 7 partly, 28 open.**
+**186 items: 151 finished, 7 partly, 28 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
