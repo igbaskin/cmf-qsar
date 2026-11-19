@@ -1186,6 +1186,22 @@ the accessible area. The field of the partner is level with them (q2 +0.200 agai
 +0.198 for the buried area, complexes held out), and the field of the whole complex falls
 behind a count when families are held out.
 
+### A host series in the frame of its cavity
+
+Plan item SC5 (`cmfqsar/cavity.py`, `cmf align --by cavity`, `benchmarks/run_crowns.py`): a
+series of hosts is aligned by its cavity, with the origin at the centroid of the donor atoms of
+the macrocycle and z along their unique axis, so no common scaffold is needed. Measured on 79
+crown ethers and cryptands with log K of Na⁺ and K⁺ in methanol, entered by hand from Izatt et
+al., Chem. Rev. 85 (1985) 271 (`examples/crowns/`). The fields in this frame do not beat counts
+read from the formula on the constants (q2 +0.423 against +0.718 for K⁺, random folds), and the
+ion probe field is behind the electrostatic field. The co-field of the K⁺ constant is a
+reproducible map: on the monocyclic hosts it puts the largest loss at the donor ring of
+12-crown-4 (2.0 Å) and the gain at the donor ring of 18-crown-6 (2.7 to 3.0 Å), and with the
+cryptands in it marks the donor on the axis that a cage has. It cannot name positions around
+the ring, because the frame leaves the turn about z free. The geometries are hosts wrapped
+around the ion under a restraint, not energy minima: GFN1-xTB, GFN2-xTB and GFN-FF all draw the
+K⁺-O contact too short.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle

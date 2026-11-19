@@ -4886,7 +4886,8 @@ for anything molecular.
   **Not done:** the potassium probe has no data here, so it is defined and unmeasured; the
   crown-ether and calixarene log K series this item also names needs the Izatt tabulations, for
   which no machine-readable open copy was found on 4 November 2026 (the NIST stability-constant
-  database is licensed), so that half of the item stays with SC5, which needs the same data and
+  database is licensed), so that half of the item stays with SC5 (which entered the crown ether
+  and cryptand constants by hand and measured the probe there), which needs the same data and
   the cavity frame; and the targets here are gas-phase one-to-one complexes, not solvation free
   energies.
   **The oxygens at the ion as a reference, added 15 November 2026,** while the fifteenth tutorial was written.
@@ -7250,6 +7251,34 @@ the numbers above; on a series of hosts, the five-field aligned model.
   first carried no information the first did not. A host series has a physical frame, which few drug series have, so the co-field is
   expected to be readable. Gate: the co-field of the K⁺ constant names the cavity size and the
   donor positions.
+  **Done 19 November 2026; the gate is met in part.** `cmfqsar/cavity.py` holds the frame
+  (`cavity_frame`, `cmf align --by cavity`, `cmfqsar.align.cavity_align`) and a builder of
+  host-ion complexes (`host_complex`). `examples/crowns/` holds 79 crown ethers and cryptands
+  with log K of Na⁺ and K⁺ in methanol at 25 °C, entered by hand from Table I of Izatt et al.,
+  Chem. Rev. 85 (1985) 271; 215 of the 220 values were found again by a program in the text
+  layer of the scan. `benchmarks/run_crowns.py` measures it in 3 minutes.
+  **The geometries are not energy minima.** GFN1-xTB, GFN2-xTB and GFN-FF draw the K⁺-O contact
+  too short (2.50 A with GFN1 against 2.78 A from the ionic radii) and leave the ion of
+  15-crown-5 on three or four of its five oxygens, so each host is optimised with every ring
+  donor held at the sum of the ionic radii from the ion.
+  **Prediction.** The five fields in the cavity frame lose to counts read from the formula on
+  both constants (q2 +0.423 against +0.718 for K⁺ and +0.256 against +0.483 for Na⁺, random
+  folds; the paired intervals exclude zero), and adding them to the counts gains nothing. The
+  frame is worth little against the alignment-free kernel. The electrostatic field beats the
+  potassium and sodium probe fields, which is the comparison EC7 left open. With whole families
+  held out the fields beat the counts on the selectivity only (+0.320 against -0.111). The
+  two-task model of SC1 equals a model of the difference, and two separate models are much worse.
+  **The gate.** The co-field of the K⁺ constant is reproducible (two halves of the hosts
+  correlate +0.49, shuffled constants -0.02). Read as the effect of one acceptor atom, it marks
+  with all hosts the donor on the axis above the ring, which 7 of 9 cryptands have and 4 of 70
+  other hosts; on the 70 monocyclic hosts its largest loss is at the donor ring of 12-crown-4
+  (2.00 A), it turns to a gain at 2.60 A (2.48 to 2.71) and the gain is largest at 2.75 to
+  3.00 A, where the donor ring of 18-crown-6 is (2.70 A). It names the ring that binds best and
+  not the size of the ion: the map of Na⁺ has its gain at the same radius. It does not name
+  positions around the ring, because the frame leaves the turn about z free.
+  **Left:** the 1991 and 1995 reviews, whose structures are numbered on drawn charts; calixarenes;
+  and a geometry method that gives the complex as a minimum, without which the cost of wrapping
+  the ion does not enter any field.
 * **SC6. What an invariant model says about a guest.** The invariant kernel has no co-field, so a
   model of a guest table cannot show where on the guest binding is gained or lost, which is the
   question a formulation chemist asks. The channel sum is a sum over the atoms of the molecule,
@@ -9908,8 +9937,7 @@ its own completion in bold with a date -- "Done 27 October 2026", "Built 27 Octo
 "measured 1 November 2026" -- so an item named below as not finished is one whose entry carries no
 such statement, and one marked *partly* carries a date for a part of itself and says in its entry
 what is left. Five entries do not follow that convention and were read by hand: E11 (version (i)
-of four measured), EC8 (a pilot measured, without the cut-and-terminate step and without M5), SC5
-(the radii of EC7 are done and the frame convention and the data are left), and PBH1 and PBH2,
+of four measured), EC8 (a pilot measured, without the cut-and-terminate step and without M5), and PBH1 and PBH2,
 which record completion in their titles.
 
 The previous version of this table was written by hand and had drifted far enough to mislead: 29
@@ -9938,7 +9966,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Electrochemistry | 11 | 10 | EC9 |
 | H. Battery science | 13 | 8 | BT9 (partly), BT10, BT11, BT12, BT13 |
 | H. Local properties | 5 | 5 | -- |
-| H. Supramolecular and host-guest | 8 | 5 | SC4, SC5 (partly), SC8 |
+| H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
@@ -9946,7 +9974,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 142 finished, 8 partly, 29 open.**
+**179 items: 143 finished, 7 partly, 29 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

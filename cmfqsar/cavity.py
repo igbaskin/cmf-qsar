@@ -154,11 +154,86 @@ def with_cavity_frame(mol: Chem.Mol, donors: Optional[Sequence[int]] = None,
 #: element symbol and charge of the ions a complex can be built with
 IONS = {"Li": 1, "Na": 1, "K": 1, "Rb": 1, "Cs": 1, "Ag": 1, "Mg": 2, "Ca": 2, "Sr": 2,
         "Ba": 2}
+#: Shannon's ionic radii for six-fold coordination, angstrom (Acta Cryst. A32 (1976) 751)
+ION_RADII = {"Li": 0.76, "Na": 1.02, "K": 1.38, "Rb": 1.52, "Cs": 1.67, "Ag": 1.15,
+             "Mg": 0.72, "Ca": 1.00, "Sr": 1.18, "Ba": 1.35}
+#: the radius of a donor oxygen in the same scale, and how much longer than the sum of the two
+#: radii a contact may be and still count as a contact, angstrom
+DONOR_RADIUS = 1.40
+CONTACT_SLACK = 0.60
+#: the number of donors an ion has to touch to count as bound
+MIN_CONTACTS = 3
+#: the force constant, in hartree per square bohr, of the restraints that pull every donor of
+#: the ring to its contact distance from the ion before the free optimisation
+WRAP_FORCE = 0.05
+
+
+def contact_distance(ion: str) -> float:
+    """The largest ion-donor distance counted as a contact, angstrom."""
+    return ION_RADII[ion] + DONOR_RADIUS + CONTACT_SLACK
+
+
+def _clear_point(point: np.ndarray, xyz: np.ndarray, need: float = 1.8) -> np.ndarray:
+    """`point`, or the nearest point of a 0.5 A grid within 3 A of it that no atom of `xyz` is
+    closer to than `need`.  The centroid of the donors of a large folded ring can lie on an
+    atom, and an ion started there throws that atom off in the first optimisation step."""
+    xyz = np.asarray(xyz, float)
+    if float(np.linalg.norm(xyz - point, axis=1).min()) >= need:
+        return point
+    g = np.arange(-3.0, 3.01, 0.5)
+    shifts = np.array([(x, y, z) for x in g for y in g for z in g])
+    shifts = shifts[np.argsort(np.linalg.norm(shifts, axis=1), kind="stable")]
+    for s in shifts:
+        if float(np.linalg.norm(xyz - (point + s), axis=1).min()) >= need:
+            return point + s
+    return point
+
+
+def ion_starts(xyz: np.ndarray, donors: Sequence[int], ion: str) -> List[np.ndarray]:
+    """Where an ion is put before a complex is optimised.
+
+    The centroid of the donors when the ring is wide enough for the ion.  When the mean
+    distance of the donors from their centroid is shorter than the sum of the two radii, the
+    ion does not fit in the plane, and it is put above and below the ring at the height that
+    gives it that contact distance: two starts in place of one.  An ion started in the plane
+    of a ring that is too small for it is pushed to the edge of the ring by the optimiser and
+    ends on two donors only.  A start that lies on an atom is moved off it
+    (:func:`_clear_point`).
+    """
+    xyz = np.asarray(xyz, float)
+    p = xyz[list(donors)]
+    centre = p.mean(axis=0)
+    radius = float(np.linalg.norm(p - centre, axis=1).mean())
+    reach = ION_RADII[ion] + DONOR_RADIUS
+    height = float(np.sqrt(max(reach * reach - radius * radius, 0.0)))
+    if height < 0.5:
+        return [_clear_point(centre, xyz)]
+    normal = np.linalg.svd(p - centre)[2][2]
+    return [_clear_point(centre + height * normal, xyz),
+            _clear_point(centre - height * normal, xyz)]
+
+
+def donor_misfit(xyz: np.ndarray, donors: Sequence[int], ion_xyz: np.ndarray, ion: str) -> float:
+    """The root-mean-square difference, in angstrom, between the ion-donor distances and the
+    sum of the two radii: zero when every donor of the ring is at its contact distance."""
+    d = np.linalg.norm(np.asarray(xyz, float)[list(donors)] - np.asarray(ion_xyz, float), axis=1)
+    return float(np.sqrt(np.mean((d - (ION_RADII[ion] + DONOR_RADIUS)) ** 2)))
+
+
+def ion_contacts(xyz: np.ndarray, donors: Sequence[int], ion_xyz: np.ndarray, ion: str) -> int:
+    """How many of `donors` are in contact with an ion at `ion_xyz`."""
+    d = np.linalg.norm(np.asarray(xyz, float)[list(donors)] - np.asarray(ion_xyz, float), axis=1)
+    return int(np.sum(d <= contact_distance(ion)))
 
 
 def _xtb_optimise(symbols: Sequence[str], xyz: np.ndarray, charge: int, workdir: str,
-                  solvent: Optional[str], exe: str, threads: int = 1) -> (np.ndarray, float):
-    """Optimise one structure with GFN2-xTB; returns (coordinates, energy in hartree)."""
+                  solvent: Optional[str], exe: str, threads: int = 1,
+                  gfn: int = 1, restraints: Sequence = ()) -> (np.ndarray, float):
+    """Optimise one structure with GFN`gfn`-xTB; returns (coordinates, energy in hartree).
+
+    `restraints` are (atom, atom, distance in angstrom) triples, atoms counted from 0, held
+    with a harmonic force of :data:`WRAP_FORCE`; the energy returned then includes them.
+    """
     import os
     import subprocess
     os.makedirs(workdir, exist_ok=True)
@@ -167,7 +242,16 @@ def _xtb_optimise(symbols: Sequence[str], xyz: np.ndarray, charge: int, workdir:
         fh.write(f"{len(symbols)}\n\n")
         for s, p in zip(symbols, xyz):
             fh.write(f"{s} {p[0]:.6f} {p[1]:.6f} {p[2]:.6f}\n")
-    cmd = [exe, "in.xyz", "--opt", "--gfn", "2", "--chrg", str(int(charge))]
+    # "loose" stops at 4e-3 Eh/bohr on the gradient: enough for the shape of a cavity, and a
+    # long alkyl chain otherwise takes hundreds of steps that do not move the ring
+    cmd = [exe, "in.xyz", "--opt", "loose", "--gfn", str(int(gfn)), "--chrg", str(int(charge))]
+    if restraints:
+        with open(os.path.join(workdir, "restrain.inp"), "w") as fh:
+            fh.write(f"$constrain\n  force constant={WRAP_FORCE}\n")
+            for i, j, dist in restraints:
+                fh.write(f"  distance: {int(i) + 1}, {int(j) + 1}, {float(dist):.4f}\n")
+            fh.write("$end\n")
+        cmd += ["--input", "restrain.inp"]
     if solvent:
         cmd += ["--alpb", solvent]
     env = dict(os.environ, OMP_NUM_THREADS=str(int(threads)), MKL_NUM_THREADS=str(int(threads)),
@@ -204,19 +288,41 @@ def _bonds_intact(mol: Chem.Mol, xyz: np.ndarray, stretch: float = 1.25) -> bool
 
 def host_complex(smiles: str, ion: str = "K", conformers: int = 8, seed: int = 0,
                  solvent: Optional[str] = "methanol", workdir: Optional[str] = None,
-                 xtb: Optional[str] = None, threads: int = 1) -> Dict[str, object]:
-    """The host of `smiles` holding `ion`, optimised with GFN2-xTB in implicit `solvent`.
+                 xtb: Optional[str] = None, threads: int = 1,
+                 gfn: int = 1, release: bool = False) -> Dict[str, object]:
+    """The host of `smiles` wrapped around `ion`, with GFN`gfn`-xTB in implicit `solvent`.
 
     A conformer generator does not give the conformation a binding constant belongs to: an
     empty crown ether folds its ring and turns its oxygens outwards.  So `conformers` starts are
-    made with RDKit's macrocycle torsions, the ion is put at the centroid of each start's
-    donors, and every complex is optimised.  The lowest energy is kept among the results whose
-    host bonds are intact (:func:`_bonds_intact`) and whose ion is still within 1.5 A of the
-    donor centroid; the second condition rejects an ion that left the cavity for the outside of
-    the ring.
+    made with RDKit's macrocycle torsions, the ion is put where :func:`ion_starts` says, and
+    each start is optimised while every donor of the ring is pulled to its contact distance
+    from the ion (the sum of :data:`ION_RADII` and :data:`DONOR_RADIUS`) by a harmonic
+    restraint of :data:`WRAP_FORCE`.  The start that is returned is the one whose donors come
+    closest to that distance (:func:`donor_misfit`) among those whose bonds are intact
+    (:func:`_bonds_intact`).
+
+    The result is therefore **the host as far around the ion as it can go**, not a minimum of
+    the energy, and that is a choice forced by the method.  Without the restraint none of
+    GFN1-xTB, GFN2-xTB and GFN-FF keeps the potassium ion of 15-crown-5 on all five of its
+    oxygens (three with GFN1 and GFN-FF, four with GFN2), and the contacts are too short: 2.50,
+    2.50 and 2.59 A with GFN1, where the sum of the radii is 2.78 A.  A method that draws the
+    contact too short prefers a few short contacts to many of the right length.  `release` adds the unrestrained optimisation
+    after the restrained one and returns its result, the lowest energy among the starts whose
+    ion still touches at least :data:`MIN_CONTACTS` donors (:func:`ion_contacts`).
+
+    What the restraint cannot do is the information: a ring that is too small leaves the ion
+    above it, a ring that is too large cannot bring every donor in, and the misfit that
+    remains is returned.
+
+    GFN1 is the default and not GFN2, because GFN2 draws potassium nearly as small as sodium:
+    on 18-crown-6, dibenzo-18-crown-6 and [2.2.2]cryptand the mean potassium-oxygen contact of
+    the unrestrained complex is 2.80, 2.79 and 2.78 A with GFN1 and 2.68, 2.60 and 2.71 A with
+    GFN2, and the sum of the two radii is 2.78 A.
 
     Returns the complex as an RDKit molecule (the host, then the ion as the last atom), the
-    host alone in the same conformation, the energy in hartree, and how many starts were kept.
+    host alone in the same conformation, the energy in hartree (with the restraint energy when
+    the complex is not released), the misfit, the number of contacts, and how many starts were
+    kept of how many.
     """
     import tempfile
     from rdkit.Chem import AllChem
@@ -226,41 +332,57 @@ def host_complex(smiles: str, ion: str = "K", conformers: int = 8, seed: int = 0
     exe = find_xtb(xtb)
     host = Chem.AddHs(Chem.MolFromSmiles(smiles))
     params = AllChem.ETKDGv3()
-    params.randomSeed = int(seed)
+    # RDKit multiplies the seed by the number of the conformer, so a seed of 0 gives the same
+    # conformer every time; the seed asked for is therefore shifted by one
+    params.randomSeed = max(1, int(seed) + 1)
     params.useMacrocycleTorsions = True
     cids = list(AllChem.EmbedMultipleConfs(host, int(conformers), params))
     if not cids:
         raise CavityError(f"RDKit could not embed {smiles}")
-    AllChem.MMFFOptimizeMoleculeConfs(host)
+    AllChem.MMFFOptimizeMoleculeConfs(host, maxIters=2000)
     donors = donor_atoms(host)
     if len(donors) < 3:
         raise CavityError(f"{smiles} has {len(donors)} donors in a macrocycle")
     symbols = [a.GetSymbol() for a in host.GetAtoms()] + [ion]
     tmp = tempfile.mkdtemp(prefix="cavity_") if workdir is None else workdir
-    best, kept = None, 0
-    for k, cid in enumerate(cids):
+    reach = ION_RADII[ion] + DONOR_RADIUS
+    pulls = [(dn, len(symbols) - 1, reach) for dn in donors]
+    best, kept, tried = None, 0, 0
+    starts = [(cid, place) for cid in cids
+              for place in ion_starts(host.GetConformer(cid).GetPositions(), donors, ion)]
+    for k, (cid, place) in enumerate(starts):
         xyz = np.asarray(host.GetConformer(cid).GetPositions(), float)
-        start = np.vstack([xyz, xyz[donors].mean(axis=0)])
         one = Chem.Mol(host)
         one.RemoveAllConformers()
-        conf = Chem.Conformer(host.GetConformer(cid))
-        one.AddConformer(conf, assignId=True)
+        one.AddConformer(Chem.Conformer(host.GetConformer(cid)), assignId=True)
+        tried += 1
         try:
-            got, energy = _xtb_optimise(symbols, start, IONS[ion],
-                                        f"{tmp}/{ion}_{k}", solvent, exe, threads)
+            got, energy = _xtb_optimise(symbols, np.vstack([xyz, place]), IONS[ion],
+                                        f"{tmp}/{ion}_{k}_wrap", solvent, exe, threads, gfn,
+                                        restraints=pulls)
+            if release:
+                got, energy = _xtb_optimise(symbols, got, IONS[ion], f"{tmp}/{ion}_{k}",
+                                            solvent, exe, threads, gfn)
         except CavityError:
             continue
         hx, ix = got[:-1], got[-1]
         if not _bonds_intact(one, hx):
             continue
-        if np.linalg.norm(ix - hx[donors].mean(axis=0)) > 1.5:
-            continue
-        kept += 1
-        if best is None or energy < best[0]:
-            best = (energy, got, one)
+        touching = ion_contacts(hx, donors, ix, ion)
+        misfit = donor_misfit(hx, donors, ix, ion)
+        if release:
+            bound = touching >= min(MIN_CONTACTS, len(donors))
+            kept += int(bound)
+            # a bound start first, then more contacts among the unbound, then the energy
+            rank = (0, 0, energy) if bound else (1, -touching, energy)
+        else:
+            kept += 1
+            rank = (misfit, energy)
+        if best is None or rank < best[0]:
+            best = (rank, energy, got, one, misfit, touching)
     if best is None:
-        raise CavityError(f"no start of {smiles} with {ion} kept its bonds and its ion")
-    energy, got, one = best
+        raise CavityError(f"no start of {smiles} with {ion} kept its bonds")
+    _rank, energy, got, one, misfit, touching = best
     rw = Chem.RWMol(one)
     atom = Chem.Atom(ion)
     atom.SetFormalCharge(IONS[ion])
@@ -274,7 +396,8 @@ def host_complex(smiles: str, ion: str = "K", conformers: int = 8, seed: int = 0
     for i, p in enumerate(got[:-1]):
         hc.SetAtomPosition(i, Point3D(*[float(v) for v in p]))
     return {"complex": complex_, "host": host_only, "energy": energy, "kept": kept,
-            "starts": len(cids), "ion_index": idx}
+            "starts": tried, "ion_index": idx, "misfit": misfit, "contacts": touching,
+            "released": bool(release)}
 
 
 def cavity_align_dataset(mols: Sequence[Chem.Mol]) -> List[str]:

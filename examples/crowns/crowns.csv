@@ -1,0 +1,80 @@
+name,abbreviation,family,smiles,ring_size,ring_donors,logK_Na,logK_K,selectivity_K_Na,n_Na,n_K,values_Na,values_K,medium,page
+12-crown-4,12C4,12-crown-4,C1COCCOCCOCCO1,12,4,1.47,1.59,0.12,3,3,"1.47 (Cal, ref 20); 1.41 (ISE, ref 21); 1.7 (ISE, ref 22)","1.59 (Pot, ref 20); 1.74 (ISE, ref 22); 1.58 (ISE, ref 21)",methanol,278
+hydroxymethyl-12-crown-4,HOM12C4,12-crown-4,OCC1COCCOCCOCCO1,12,4,1.37,1.43,0.06,1,1,"1.37 (ISE, ref 21)","1.43 (ISE, ref 21)",methanol,278
+octyloxymethyl-12-crown-4,OctOM12C4,12-crown-4,CCCCCCCCOCC1COCCOCCOCCO1,12,4,1.32,1.36,0.04,1,1,"1.32 (ISE, ref 21)","1.36 (ISE, ref 21)",methanol,278
+benzyloxymethyl-12-crown-4,BzOM12C4,12-crown-4,c1ccc(COCC2COCCOCCOCCO2)cc1,12,4,1.35,1.42,0.07,1,1,"1.35 (ISE, ref 21)","1.42 (ISE, ref 21)",methanol,278
+15-crown-5,15C5,15-crown-5,C1COCCOCCOCCOCCO1,15,5,3.285,3.35,0.065,8,7,"3.48 (Cal, ref 61); 3.3 (Cal, ref 67); 3.14 (Pot, ref 20); 3.25 (ISE, ref 55); 3.3 (ISE, ref 21); 3.24 (ISE, ref 22); 3.27 (Pot, ref 62); 3.31 (Pot, ref 63)","3.77 (Cal, ref 61); 3.35 (Cal, ref 67); 3.1 (ISE, ref 64); 3.61 (Pot, ref 20); 3.34 (ISE, ref 21); 3.43 (ISE, ref 22); 3.34 (Pot, ref 63)",methanol,283
+hexyl-15-crown-5,Hex15C5,15-crown-5,CCCCCCC1COCCOCCOCCOCCO1,15,5,3.15,3.19,0.04,1,1,"3.15 (Pot, ref 63)","3.19 (Pot, ref 63)",methanol,284
+decyl-15-crown-5,Dec15C5,15-crown-5,CCCCCCCCCCC1COCCOCCOCCOCCO1,15,5,3.18,3.15,-0.03,1,1,"3.18 (Pot, ref 63)","3.15 (Pot, ref 63)",methanol,284
+phenyl-15-crown-5,Ph15C5,15-crown-5,c1ccc(C2COCCOCCOCCOCCO2)cc1,15,5,3.34,3.38,0.04,1,1,"3.34 (Pot, ref 63)","3.38 (Pot, ref 63)",methanol,284
+octyloxymethyl-15-crown-5,OctOM15C5,15-crown-5,CCCCCCCCOCC1COCCOCCOCCOCCO1,15,5,3.13,2.95,-0.18,1,1,"3.13 (Pot, ref 63)","2.95 (Pot, ref 63)",methanol,284
+dodecyloxymethyl-15-crown-5,DodecOM15C5,15-crown-5,CCCCCCCCCCCCOCC1COCCOCCOCCOCCO1,15,5,3.14,3.09,-0.05,1,1,"3.14 (Pot, ref 63)","3.09 (Pot, ref 63)",methanol,284
+(2-methoxyphenoxy)methyl-15-crown-5,2-MeOPhOM15C5,15-crown-5,COc1ccccc1OCC1COCCOCCOCCOCCO1,15,5,3.24,3.32,0.08,1,1,"3.24 (Cal, ref 67)","3.32 (Cal, ref 67)",methanol,284
+(4-methoxyphenoxy)methyl-15-crown-5,4-MeOPhOM15C5,15-crown-5,COc1ccc(OCC2COCCOCCOCCOCCO2)cc1,15,5,2.9,3.17,0.27,1,1,"2.9 (Cal, ref 67)","3.17 (Cal, ref 67)",methanol,284-285
+methyl-(2-methoxyethoxy)methyl-15-crown-5,MeOEOM(Me)15C5,15-crown-5,COCCOCC1(C)COCCOCCOCCOCCO1,15,5,3.87,3.42,-0.45,1,1,"3.87 (Pot, ref 62a)","3.42 (Pot, ref 62a)",methanol,285
+methyl-(2-pyridylmethoxy)methyl-15-crown-5,PyMOM(Me)15C5,15-crown-5,CC1(COCc2ccccn2)COCCOCCOCCOCCO1,15,5,3.58,3.08,-0.5,1,1,"3.58 (Pot, ref 62)","3.08 (Pot, ref 62)",methanol,285
+methyl-(2-methoxyphenoxy)methyl-15-crown-5,2-MeOPhOM(Me)15C5,15-crown-5,COc1ccccc1OCC1(C)COCCOCCOCCOCCO1,15,5,3.79,3.35,-0.44,1,1,"3.79 (Pot, ref 62)","3.35 (Pot, ref 62)",methanol,285
+methyl-(8-quinolyloxy)methyl-15-crown-5,QuinOM(Me)15C5,15-crown-5,CC1(COc2cccc3cccnc23)COCCOCCOCCOCCO1,15,5,4.87,3.56,-1.31,1,1,"4.87 (Pot, ref 62)","3.56 (Pot, ref 62)",methanol,285
+hexyl-(8-quinolyloxy)methyl-15-crown-5,QuinOM(Hex)15C5,15-crown-5,CCCCCCC1(COc2cccc3cccnc23)COCCOCCOCCOCCO1,15,5,4.85,3.41,-1.44,1,1,"4.85 (Pot, ref 62)","3.41 (Pot, ref 62)",methanol,285
+hexyl-(2-methoxyethoxy)methyl-15-crown-5,MeOEOM(Hex)15C5,15-crown-5,CCCCCCC1(COCCOC)COCCOCCOCCOCCO1,15,5,3.9,3.29,-0.61,1,1,"3.9 (Pot, ref 62)","3.29 (Pot, ref 62)",methanol,285
+bis[(2-methoxyethoxy)methyl]-15-crown-5,(MeOEOM)2-15C5,15-crown-5,COCCOCC1(COCCOC)COCCOCCOCCOCCO1,15,5,3.84,3.44,-0.4,1,1,"3.84 (Pot, ref 62)","3.44 (Pot, ref 62)",methanol,285
+bis[(2-(2-methoxyethoxy)ethoxy)methyl]-15-crown-5,(MeOEOEOM)2-15C5,15-crown-5,COCCOCCOCC1(COCCOCCOC)COCCOCCOCCOCCO1,15,5,3.86,3.98,0.12,1,1,"3.86 (Pot, ref 62)","3.98 (Pot, ref 62)",methanol,285
+phenoxymethyl-15-crown-5,PhOM15C5,15-crown-5,c1ccc(OCC2COCCOCCOCCOCCO2)cc1,15,5,3.07,3.16,0.09,1,1,"3.07 (ISE, ref 21)","3.16 (ISE, ref 21)",methanol,285
+benzo-15-crown-5,B15C5,benzo-15-crown-5,c1ccc2c(c1)OCCOCCOCCOCCO2,15,5,3.05,2.8,-0.25,3,1,"3.05 (ISE, ref 64); 3.37 (Cond, ref 74); 2.87 (Pot, ref 340)","2.8 (method not given, ref 64)",methanol,285
+4'-(1-hydroxy-2-methylaminoethyl)benzo-15-crown-5,AdrB15C5,benzo-15-crown-5,CNCC(O)c1ccc2c(c1)OCCOCCOCCOCCO2,15,5,2.94,2.63,-0.31,1,1,"2.94 (Pot, ref 340)","2.63 (Pot, ref 340)",methanol,286
+dibenzo-15-crown-5,B2-15C5,benzo-15-crown-5,c1ccc2c(c1)OCCOCCOc1ccccc1OCCO2,15,5,2.2,2.0,-0.2,1,1,"2.2 (ISE, ref 64)","2 (ISE, ref 64)",methanol,286
+"rac-7,9-dimethyldibenzo-15-crown-5","rac-7,9-Me2B2-15C5",benzo-15-crown-5,C[C@@H]1COc2ccccc2OCCOc2ccccc2OC[C@@H](C)O1,15,5,1.9,1.4,-0.5,1,1,"1.9 (ISE, ref 64)","1.4 (ISE, ref 64)",methanol,286
+"rac-6,10-dimethyldibenzo-15-crown-5","rac-6,10-Me2B2-15C5",benzo-15-crown-5,C[C@@H]1COC[C@@H](C)Oc2ccccc2OCCOc2ccccc2O1,15,5,1.1,0.9,-0.2,1,1,"1.1 (ISE, ref 64)","0.9 (ISE, ref 64)",methanol,286
+"meso-6,10-dimethyldibenzo-15-crown-5","meso-6,10-Me2B2-15C5",benzo-15-crown-5,C[C@@H]1COC[C@H](C)Oc2ccccc2OCCOc2ccccc2O1,15,5,1.5,1.4,-0.1,1,1,"1.5 (ISE, ref 64)","1.4 (ISE, ref 64)",methanol,286
+aza-15-crown-5,A15C5,aza-15-crown-5,C1COCCOCCOCCOCCN1,15,5,2.06,2.72,0.66,1,1,"2.06 (ISE, ref 76)","2.72 (ISE, ref 76)",methanol,286
+N-butylaza-15-crown-5,BuA15C5,aza-15-crown-5,CCCCN1CCOCCOCCOCCOCC1,15,5,3.22,2.99,-0.23,1,1,"3.22 (Cal, ref 67)","2.99 (Cal, ref 67)",methanol,286-287
+N-octylaza-15-crown-5,OctA15C5,aza-15-crown-5,CCCCCCCCN1CCOCCOCCOCCOCC1,15,5,2.91,3.05,0.14,1,1,"2.91 (ISE, ref 76)","3.05 (ISE, ref 76)",methanol,287
+N-(2-hydroxyethyl)aza-15-crown-5,HOEA15C5,aza-15-crown-5,OCCN1CCOCCOCCOCCOCC1,15,5,3.92,3.67,-0.25,1,1,"3.92 (ISE, ref 76)","3.67 (ISE, ref 76)",methanol,287
+N-(2-methoxyethyl)aza-15-crown-5,MeOEA15C5,aza-15-crown-5,COCCN1CCOCCOCCOCCOCC1,15,5,4.33,4.2,-0.13,1,1,"4.33 (Cal, ref 67)","4.2 (Cal, ref 67)",methanol,287
+N-[2-(2-hydroxyethoxy)ethyl]aza-15-crown-5,H(OE)2A15C5,aza-15-crown-5,OCCOCCN1CCOCCOCCOCCOCC1,15,5,4.68,4.42,-0.26,1,1,"4.68 (ISE, ref 76)","4.42 (ISE, ref 76)",methanol,287
+N-[H(OCH2CH2)3]aza-15-crown-5,H(OE)3A15C5,aza-15-crown-5,OCCOCCOCCN1CCOCCOCCOCCOCC1,15,5,4.34,4.77,0.43,1,1,"4.34 (ISE, ref 76)","4.77 (ISE, ref 76)",methanol,287
+N-[CH3(OCH2CH2)3]aza-15-crown-5,Me(OE)3A15C5,aza-15-crown-5,COCCOCCOCCN1CCOCCOCCOCCOCC1,15,5,4.32,4.85,0.53,1,1,"4.32 (ISE, ref 76)","4.85 (ISE, ref 76)",methanol,287
+18-crown-6,18C6,18-crown-6,C1COCCOCCOCCOCCOCCO1,18,6,4.35,6.09,1.74,7,8,"4.36 (Cal, ref 61, 91, 92); 4.38 (Cal, ref 20); 4.46 (Cond, ref 74); 4.32 (Elec, ref 54); 4.35 (ISE, ref 55); 4.35 (ISE, ref 22); 4.32 (ISE, ref 11, 25)","6.06 (Cal, ref 61, 92); 6.08 (Cond, ref 93); 6.2 (Cond, ref 74); 6.1 (Elec, ref 54); 5.93 (ISE, ref 64); 6.08 (ISE, ref 22); 6.18 (Pot, ref 20); 6.1 (ISE, ref 11, 25)",methanol,289
+cis-anti-cis-dicyclohexano-18-crown-6,cis-anti-cis-Cy2-18C6,18-crown-6,C1CC[C@H]2OCCOCCO[C@@H]3CCCC[C@@H]3OCCOCCO[C@H]2C1,18,6,3.68,5.38,1.7,1,1,"3.68 (ISE, ref 11, 25)","5.38 (ISE, ref 11, 25)",methanol,292
+cis-syn-cis-dicyclohexano-18-crown-6,cis-syn-cis-Cy2-18C6,18-crown-6,C1CC[C@H]2OCCOCCO[C@H]3CCCC[C@H]3OCCOCCO[C@H]2C1,18,6,4.08,6.01,1.93,1,1,"4.08 (ISE, ref 11, 25)","6.01 (ISE, ref 11, 25)",methanol,292-293
+"2,6-dioxo-18-crown-6",K2-18C6,18-crown-6,O=C1COCC(=O)OCCOCCOCCOCCO1,18,6,2.5,2.79,0.29,1,1,"2.5 (Cal, ref 118, 119)","2.79 (Cal, ref 118, 119)",methanol,293
+octyl-18-crown-6,Oct18C6,18-crown-6,CCCCCCCCC1COCCOCCOCCOCCOCCO1,18,6,3.91,5.03,1.12,1,1,"3.91 (Spec, ref 63)","5.03 (Spec, ref 63)",methanol,294
+dodecyl-18-crown-6,Dodec18C6,18-crown-6,CCCCCCCCCCCCC1COCCOCCOCCOCCOCCO1,18,6,3.93,5.28,1.35,1,1,"3.93 (Spec, ref 63)","5.28 (Spec, ref 63)",methanol,294
+phenyl-18-crown-6,Ph18C6,18-crown-6,c1ccc(C2COCCOCCOCCOCCOCCO2)cc1,18,6,4.17,5.56,1.39,1,1,"4.17 (Spec, ref 63)","5.56 (Spec, ref 63)",methanol,294
+octyloxymethyl-18-crown-6,OctOM18C6,18-crown-6,CCCCCCCCOCC1COCCOCCOCCOCCOCCO1,18,6,3.88,5.36,1.48,1,1,"3.88 (Spec, ref 63)","5.36 (Spec, ref 63)",methanol,294
+dodecyloxymethyl-18-crown-6,DodecOM18C6,18-crown-6,CCCCCCCCCCCCOCC1COCCOCCOCCOCCOCCO1,18,6,3.83,5.37,1.54,1,1,"3.83 (Spec, ref 63)","5.37 (Spec, ref 63)",methanol,294
+pyridino-18-crown-6,Py18C6,18-crown-6,c1cc2nc(c1)COCCOCCOCCOCCOC2,18,6,4.09,5.35,1.26,1,1,"4.09 (Cal, ref 61, 102)","5.35 (Cal, ref 61, 102)",methanol,299
+diketopyridino-18-crown-6,K2Py18C6,18-crown-6,O=C1OCCOCCOCCOCCOC(=O)c2cccc1n2,18,6,4.29,4.66,0.37,1,1,"4.29 (Cal, ref 102, 119)","4.66 (Cal, ref 102, 119)",methanol,299
+thia-18-crown-6,T18C6,18-crown-6,C1COCCOCCSCCOCCOCCO1,18,6,2.57,3.61,1.04,1,1,"2.57 (Cal, ref 61)","3.61 (Cal, ref 61)",methanol,301
+benzo-18-crown-6,B18C6,benzo-18-crown-6,c1ccc2c(c1)OCCOCCOCCOCCOCCO2,18,6,4.35,5.235,0.885,3,4,"4.35 (Pot, ref 340); 4.03 (Spec, ref 122); 4.5 (Cond, ref 338)","5.05 (Pot, ref 340); 5.2 (ISE, ref 64); 5.27 (Spec, ref 122); 5.7 (Cond, ref 338)",methanol,295
+dibenzo-18-crown-6,B2-18C6,benzo-18-crown-6,c1ccc2c(c1)OCCOCCOc1ccccc1OCCOCCO2,18,6,4.36,5.0,0.64,5,7,"4.5 (Cal, ref 127); 4.36 (Elec, ref 54); 4.36 (ISE, ref 11, 25); 4.4 (Sol, ref 90a); 4.36 (Spec, ref 63)","5 (ISE, ref 11, 25); 5.1 (Cal, ref 127); 5.08 (Cond, ref 93); 5 (Elec, ref 54); 4.8 (ISE, ref 64); 5.05 (ISE, ref 90a); 5 (Spec, ref 63)",methanol,296-297
+"meso-6,10-dimethyldibenzo-18-crown-6","meso-6,10-Me2B2-18C6",benzo-18-crown-6,C[C@@H]1COC[C@H](C)Oc2ccccc2OCCOCCOc2ccccc2O1,18,6,3.56,4.13,0.57,1,1,"3.56 (ISE, ref 64)","4.13 (ISE, ref 64)",methanol,297
+"rac-6,10-dimethyldibenzo-18-crown-6","rac-6,10-Me2B2-18C6",benzo-18-crown-6,C[C@@H]1COC[C@@H](C)Oc2ccccc2OCCOCCOc2ccccc2O1,18,6,3.77,4.37,0.6,1,1,"3.77 (ISE, ref 64)","4.37 (ISE, ref 64)",methanol,297
+"meso-7,9-dimethyldibenzo-18-crown-6","meso-7,9-Me2B2-18C6",benzo-18-crown-6,C[C@@H]1COc2ccccc2OCCOCCOc2ccccc2OC[C@H](C)O1,18,6,2.79,3.42,0.63,1,1,"2.79 (ISE, ref 64)","3.42 (ISE, ref 64)",methanol,297
+"rac-7,9-dimethyldibenzo-18-crown-6","rac-7,9-Me2B2-18C6",benzo-18-crown-6,C[C@@H]1COc2ccccc2OCCOCCOc2ccccc2OC[C@@H](C)O1,18,6,3.03,4.04,1.01,1,1,"3.03 (ISE, ref 64)","4.04 (ISE, ref 64)",methanol,297
+aza-18-crown-6,A18C6,aza-18-crown-6,C1COCCOCCOCCOCCOCCN1,18,6,2.77,4.04,1.27,1,2,"2.77 (ISE, ref 76)","4.18 (ISE, ref 76); 3.9 (ISE, ref 11, 25)",methanol,298
+N-octylaza-18-crown-6,OctA18C6,aza-18-crown-6,CCCCCCCCN1CCOCCOCCOCCOCCOCC1,18,6,3.51,4.65,1.14,1,1,"3.51 (ISE, ref 76)","4.65 (ISE, ref 76)",methanol,298
+N-(2-hydroxyethyl)aza-18-crown-6,HOEA18C6,aza-18-crown-6,OCCN1CCOCCOCCOCCOCCOCC1,18,6,4.75,5.49,0.74,1,1,"4.75 (ISE, ref 76)","5.49 (ISE, ref 76)",methanol,298
+N-(2-methoxyethyl)aza-18-crown-6,MeOEA18C6,aza-18-crown-6,COCCN1CCOCCOCCOCCOCCOCC1,18,6,5.6,5.35,-0.25,1,1,"5.6 (Cal, ref 67)","5.35 (Cal, ref 67)",methanol,298
+N-[2-(2-hydroxyethoxy)ethyl]aza-18-crown-6,H(OE)2A18C6,aza-18-crown-6,OCCOCCN1CCOCCOCCOCCOCCOCC1,18,6,4.34,5.88,1.54,1,1,"4.34 (ISE, ref 76)","5.88 (ISE, ref 76)",methanol,298
+N-[H(OCH2CH2)3]aza-18-crown-6,H(OE)3A18C6,aza-18-crown-6,OCCOCCOCCN1CCOCCOCCOCCOCCOCC1,18,6,4.26,5.69,1.43,1,1,"4.26 (ISE, ref 76)","5.69 (ISE, ref 76)",methanol,299
+N-[CH3(OCH2CH2)3]aza-18-crown-6,Me(OE)3A18C6,aza-18-crown-6,COCCOCCOCCN1CCOCCOCCOCCOCCOCC1,18,6,4.28,5.96,1.68,1,1,"4.28 (ISE, ref 76)","5.96 (ISE, ref 76)",methanol,299
+"N,N'-dimethyl-1,10-diaza-18-crown-6",Me2A2-18C6,aza-18-crown-6,CN1CCOCCOCCN(C)CCOCCOCC1,18,6,3.7,5.3,1.6,1,1,"3.7 (Pot, ref 134)","5.3 (Pot, ref 134)","methanol, 0.01 M Me4NBr",300
+"2,4-dioxo-19-crown-6",K2-19C6,larger ring,O=C1CC(=O)OCCOCCOCCOCCOCCO1,19,6,1.8,2.55,0.75,1,1,"1.8 (Cal, ref 118, 119)","2.55 (Cal, ref 118, 119)",methanol,301
+"2,5-dioxo-20-crown-6",K2-20C6,larger ring,O=C1CCC(=O)OCCOCCOCCOCCOCCO1,20,6,1.7,1.94,0.24,1,1,"1.7 (Cal, ref 119)","1.94 (Cal, ref 119)",methanol,301
+21-crown-7,21C7,larger ring,C1COCCOCCOCCOCCOCCOCCO1,21,7,2.135,4.35,2.215,2,3,"1.73 (Cal, ref 61); 2.54 (ISE, ref 22)","4.22 (Cal, ref 61); 4.35 (ISE, ref 22); 4.41 (ISE, ref 11, 25)",methanol,301
+dibenzo-21-crown-7,B2-21C7,larger ring,c1ccc2c(c1)OCCOCCOCCOc1ccccc1OCCOCCO2,21,7,2.4,4.3,1.9,1,1,"2.4 (ISE, ref 11, 25)","4.3 (ISE, ref 11, 25)",methanol,301
+24-crown-8,24C8,larger ring,C1COCCOCCOCCOCCOCCOCCOCCO1,24,8,2.35,3.505,1.155,1,2,"2.35 (ISE, ref 22)","3.53 (ISE, ref 22); 3.48 (ISE, ref 11, 25)",methanol,302
+"1,7-dibenzo-24-crown-8","1,7-B2-24C8",larger ring,c1ccc2c(c1)OCCOCCOCCOCCOCCOc1ccccc1OCCO2,24,8,2.55,3.85,1.3,1,1,"2.55 (Pot, ref 138)","3.85 (Pot, ref 138)",methanol,302
+"1,10-dibenzo-24-crown-8","1,10-B2-24C8",larger ring,c1ccc2c(c1)OCCOCCOCCOCCOc1ccccc1OCCOCCO2,24,8,2.15,3.45,1.3,1,1,"2.15 (Pot, ref 138)","3.45 (Pot, ref 138)",methanol,302
+"1,13-dibenzo-24-crown-8","1,13-B2-24C8",larger ring,c1ccc2c(c1)OCCOCCOCCOc1ccccc1OCCOCCOCCO2,24,8,2.25,3.585,1.335,1,2,"2.25 (Pot, ref 138)","3.6 (Pot, ref 138); 3.57 (Cond, ref 333)",methanol,302-303
+dibenzo-30-crown-10,B2-30C10,larger ring,c1ccc2c(c1)OCCOCCOCCOCCOc1ccccc1OCCOCCOCCOCCO2,30,10,2.05,4.6,2.55,2,1,"2 (ISE, ref 11, 25); 2.1 (Spec, ref 139)","4.6 (ISE, ref 11, 25)",methanol,304-305
+[2.1.1]cryptand,2.1.1,cryptand,C1COCCN2CCOCCN(CCO1)CCOCC2,12,6,6.4,2.3,-4.1,2,1,"6.1 (Pot, ref 134); 6.7 (Pot, ref 148)","2.3 (Pot, ref 134)","methanol, 0.01 M Me4NBr or 0.1 M Bu4NClO4",306
+[2.2.1]cryptand,2.2.1,cryptand,C1COCCN2CCOCCOCCN(CCO1)CCOCC2,15,7,9.475,8.54,-0.935,2,2,"9.65 (Pot, ref 146); 9.3 (Pot, ref 148)","8.54 (Pot, ref 146); 8.54 (Cond, ref 156)","methanol, 0.05 M Et4NClO4 or 0.1 M Bu4NClO4 or none",308
+[2.2.2]cryptand,2.2.2,cryptand,C1COCCN2CCOCCOCCN(CCO1)CCOCCOCC2,18,8,7.9,10.605,2.705,3,2,"7.9 (CyVol, ref 162); 7.98 (Pot, ref 146); 7.8 (Pot, ref 148)","10.41 (Pot, ref 146); 10.8 (Pot, ref 162)","methanol, 0.05 M Et4NClO4 or 0.1 M Bu4NClO4",310-311
+benzo[2.2.2]cryptand,B2.2.2,cryptand,c1ccc2c(c1)OCCN1CCOCCOCCN(CCOCCOCC1)CCO2,18,8,7.5,9.21,1.71,1,1,"7.5 (Ag+ ISE, ref 173)","9.21 (Ag+ ISE, ref 173)","methanol, 0.02 M Et4NClO4",313
+dibenzo[2.2.2]cryptand,B2-2.2.2,cryptand,c1ccc2c(c1)OCCN1CCOCCOCCN(CCO2)CCOc2ccccc2OCC1,18,8,7.485,8.67,1.185,2,2,"7.37 (Pot, ref 169); 7.6 (Ag+ ISE, ref 174)","8.74 (Ag+ ISE, ref 174); 8.6 (Pot, ref 169)",methanol,313
+decyl[2.2.2]cryptand,Dec2.2.2,cryptand,CCCCCCCCCCC1COCCN2CCOCCOCCN(CCOCCOCC2)CCO1,18,8,7.0,9.42,2.42,1,1,"7 (Ag+ ISE, ref 174)","9.42 (Ag+ ISE, ref 174)",methanol,313
+[2.2.C8]cryptand,2.2.C8,cryptand,C1CCCCN2CCOCCOCCN(CCC1)CCOCCOCC2,18,6,3.5,5.2,1.7,1,1,"3.5 (Pot, ref 134)","5.2 (Pot, ref 134)","methanol, 0.01 M Me4NBr",314
+[3.3.2]cryptand,3.3.2,cryptand,C1COCCN2CCOCCOCCOCCN(CCOCCO1)CCOCCOCC2,21,10,3.2,6.0,2.8,1,1,"3.2 (Pot, ref 134)","6 (Pot, ref 134)","methanol, 0.01 M Me4NBr",315
+[3.3.3]cryptand,3.3.3,cryptand,C1COCCN2CCOCCOCCOCCN(CCOCCO1)CCOCCOCCOCC2,24,11,2.7,5.4,2.7,1,1,"2.7 (Pot, ref 134)","5.4 (Pot, ref 134)","methanol, 0.01 M Me4NBr",315

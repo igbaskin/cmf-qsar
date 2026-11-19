@@ -7,6 +7,9 @@
 * field_align       - rigid-body refinement maximising the (normalised) CMF kernel
                       between a molecule and the reference (the alignment criterion
                       suggested in Baskin & Zhokhova 2013)
+* cavity_align      - every host in the frame of its own cavity, with no reference: the origin
+                      at the centroid of the donor atoms of the macrocycle, z along their
+                      unique axis (plan item SC5; the frame is defined in cmfqsar/cavity.py)
 """
 from __future__ import annotations
 
@@ -168,6 +171,18 @@ def align_dataset(mols: Sequence[Chem.Mol], ref_index: int, use_mcs: bool = True
 # --------------------------------------------------------------------------- #
 # Unalign: randomise the pose of every molecule
 # --------------------------------------------------------------------------- #
+
+def cavity_align(mols: Sequence[Chem.Mol]) -> List[str]:
+    """Move every molecule of `mols` into the frame of its own cavity, in place.
+
+    For a series of crown ethers, cryptands or other macrocyclic hosts, which often share no
+    scaffold that :func:`mcs_align` could superimpose.  Returns one line per molecule; a
+    molecule without a macrocycle is left where it is and its line starts with "FAILED".
+    The frame itself is :func:`cmfqsar.cavity.cavity_frame`.
+    """
+    from .cavity import cavity_align_dataset
+    return cavity_align_dataset(mols)
+
 
 def random_rigid_transform(coords: np.ndarray, rng: np.random.RandomState,
                            max_rotation: Optional[float] = None,

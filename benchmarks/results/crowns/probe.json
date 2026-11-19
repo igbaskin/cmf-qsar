@@ -1,0 +1,32 @@
+{
+ "Na": {
+  "probe": "sodium",
+  "grid_step": 0.4,
+  "probe_minimum": {
+   "mean": 0.3388803399283676,
+   "median": 0.3159092432962352,
+   "within_1A": 1.0
+  },
+  "donor_centroid": {
+   "mean": 0.48176868909951776,
+   "median": 0.44688679774636436,
+   "within_1A": 0.9493670886075949
+  },
+  "probe_closer": 0.6329113924050633
+ },
+ "K": {
+  "probe": "potassium",
+  "grid_step": 0.4,
+  "probe_minimum": {
+   "mean": 0.47110535759148753,
+   "median": 0.33936889957684674,
+   "within_1A": 0.9240506329113924
+  },
+  "donor_centroid": {
+   "mean": 0.8839956819406131,
+   "median": 1.0001342809843088,
+   "within_1A": 0.4936708860759494
+  },
+  "probe_closer": 0.6835443037974683
+ }
+}

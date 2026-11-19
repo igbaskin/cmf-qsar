@@ -1610,7 +1610,7 @@ def _reference_index(names, spec, y=None):
 
 
 def cmd_align(args):
-    """Put a set of molecules in one frame, by whichever of the four criteria is asked for."""
+    """Put a set of molecules in one frame, by the criterion of ALIGN_WAYS that is asked for."""
     import numpy as np
 
     ds = load_dataset(args.dataset, activity_prop=args.activity,
@@ -1670,7 +1670,7 @@ def cmd_align(args):
         for nm, line in zip(ds.names, log):
             print(f"  {nm:30s} {line}")
     elif way == "cavity":
-        from cmfqsar.cavity import cavity_align_dataset
+        from cmfqsar.align import cavity_align as cavity_align_dataset
         print(f"Putting {len(mf)} hosts in the frame of their own cavity: the origin at the "
               f"centroid of the macrocycle's donor atoms, z along the unique axis of the donors")
         log = cavity_align_dataset(list(ds.mols))

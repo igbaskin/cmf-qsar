@@ -1547,6 +1547,16 @@ def registry() -> List[Benchmark]:
                   minutes="90",         # measured: 8 preparing, 15 the context kernel, 63 fits
                   report=lambda: _mod("run_binding").write_table(_r("binding")),
                   tables=["binding/table.md"]),
+        Benchmark("crowns",
+                  "a host series in the frame of its cavity (plan item SC5): log K of Na+ and "
+                  "K+ for 79 crown ethers and cryptands in methanol, the fields in the cavity "
+                  "frame against counts read from the formula and contacts read from the "
+                  "complex, the selectivity by three routes, and the co-field read in cylinder "
+                  "coordinates of the frame",
+                  "run_crowns.py", "crowns", compute=[[]],
+                  minutes="3",          # measured: 2.7; the geometries are in the repository
+                  report=lambda: _mod("run_crowns").write_table(_r("crowns")),
+                  tables=["crowns/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

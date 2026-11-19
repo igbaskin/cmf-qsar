@@ -4,7 +4,11 @@
 * The frame is a property of the host alone: moving the input does not move the result.
 * For a crown ether z is the ring normal; for a cryptand it runs through the bridgeheads.
 * A molecule without a macrocycle is refused, and the align command logs it.
-* With xtb present, a complex is built whose ion sits among the donors.
+* An ion that is too large for a ring starts above and below it, at its contact distance.
+* A contact is a donor within the sum of the two radii and a stated slack.
+* A start that lies on an atom is moved off it, and the misfit of a perfect ring is zero.
+* With xtb present, a complex is built whose ion touches every donor of the ring at the sum of
+  the radii, from starts that differ from each other.
 """
 import os
 import sys
@@ -87,6 +91,48 @@ def test_a_molecule_without_a_macrocycle_is_refused():
     assert log[0].startswith("FAILED") and "6 donors" in log[1]
 
 
+def _ring(radius, n=6):
+    phi = 2 * np.pi * np.arange(n) / n
+    return np.column_stack([radius * np.cos(phi), radius * np.sin(phi), np.zeros(n)])
+
+
+def test_an_ion_too_large_for_a_ring_starts_above_and_below_it():
+    reach = C.ION_RADII["K"] + C.DONOR_RADIUS
+    small = _ring(1.9, 4)
+    starts = C.ion_starts(small, range(4), "K")
+    assert len(starts) == 2
+    for s in starts:
+        assert np.allclose(np.linalg.norm(small - s, axis=1), reach, atol=1e-9)
+    assert np.allclose(starts[0] + starts[1], 0.0, atol=1e-9)        # one on each side
+    wide = _ring(3.0)
+    assert len(C.ion_starts(wide, range(6), "K")) == 1
+    assert np.allclose(C.ion_starts(wide, range(6), "K")[0], 0.0, atol=1e-9)
+    # a ring that is only a little too small keeps the centre: the height would be under 0.5 A
+    assert len(C.ion_starts(_ring(reach - 0.02), range(6), "K")) == 1
+
+
+def test_a_start_on_an_atom_is_moved_off_it_and_a_perfect_ring_has_no_misfit():
+    reach = C.ION_RADII["K"] + C.DONOR_RADIUS
+    ring = _ring(reach)
+    assert C.donor_misfit(ring, range(6), np.zeros(3), "K") == pytest.approx(0.0, abs=1e-12)
+    assert C.donor_misfit(ring, range(6), np.zeros(3), "Na") == pytest.approx(1.38 - 1.02)
+    blocked = np.vstack([ring, [[0.2, 0.0, 0.0]]])              # an atom at the centre
+    start = C.ion_starts(blocked, range(6), "K")[0]
+    assert np.linalg.norm(blocked - start, axis=1).min() >= 1.8
+    assert np.linalg.norm(start) <= 3.0 * np.sqrt(3) + 1e-9
+    # a free centre is left where it is
+    assert np.allclose(C._clear_point(np.zeros(3), ring), 0.0)
+
+
+def test_a_contact_is_a_donor_within_the_radii_and_the_slack():
+    limit = C.contact_distance("Na")
+    assert abs(limit - (1.02 + C.DONOR_RADIUS + C.CONTACT_SLACK)) < 1e-12
+    ring = _ring(limit - 0.01)
+    assert C.ion_contacts(ring, range(6), np.zeros(3), "Na") == 6
+    assert C.ion_contacts(ring, range(6), np.array([0.5, 0.0, 0.0]), "Na") < 6
+    assert C.contact_distance("K") - limit == pytest.approx(1.38 - 1.02)
+
+
 def test_a_complex_holds_its_ion_among_the_donors():
     from cmfqsar.xtb import XtbError, find_xtb
     try:
@@ -99,5 +145,18 @@ def test_a_complex_holds_its_ion_among_the_donors():
     donors = C.donor_atoms(r["host"])
     d = np.linalg.norm(xyz[donors] - xyz[r["ion_index"]], axis=1)
     assert m.GetAtomWithIdx(r["ion_index"]).GetSymbol() == "Li"
-    assert d.min() > 1.7 and d.max() < 3.0
+    # two conformers, and two starts for a conformer whose ring is too small for the ion
+    assert r["kept"] >= 1 and r["starts"] in (2, 3, 4)
+    assert not r["released"] and r["contacts"] == 4
+    # every oxygen is held at the sum of the two radii
+    assert np.allclose(d, C.ION_RADII["Li"] + C.DONOR_RADIUS, atol=0.1)
+    assert r["misfit"] < 0.1
+    # the two conformers differ: RDKit gives one conformer many times for a seed of zero
+    from rdkit.Chem import AllChem
+    h = Chem.AddHs(Chem.MolFromSmiles("C1COCCOCCOCCO1"))
+    p = AllChem.ETKDGv3()
+    p.randomSeed = 1
+    ids = list(AllChem.EmbedMultipleConfs(h, 2, p))
+    assert np.abs(h.GetConformer(ids[0]).GetPositions()
+                  - h.GetConformer(ids[1]).GetPositions()).max() > 0.1
     assert r["host"].GetNumAtoms() == m.GetNumAtoms() - 1

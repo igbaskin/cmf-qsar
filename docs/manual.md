@@ -17791,6 +17791,171 @@ lithium, +0.076 [+0.063, +0.087] paired.
 The fifteenth tutorial, `docs/tutorials/15_an_ion_and_its_solvent.ipynb`, finds the ion with the
 probe, computes the contacts, and reads these fits and the selectivity from the stored results.
 
+## A host series in the frame of its cavity: crown ethers and cryptands
+
+*Plan item SC5, done 19 November 2026. The gate is met in part.*
+
+A series of drug molecules is aligned on a scaffold. A series of hosts often has none: 18-crown-6
+and [2.2.2]cryptand share no ring. What every host of such a series has is a cavity, and the frame
+of this section is put on it (`cmfqsar/cavity.py`):
+
+* **the donors** are the oxygen, nitrogen and sulfur atoms that are members of a ring of at least
+  nine atoms (the macrocycle). An oxygen of a side arm or of an ester carbonyl is not one of them;
+* **the origin** is the centroid of the donors;
+* **the z axis** is the unique axis of the donor set: the principal axis whose moment differs most
+  from the other two. For the ring of a crown ether it is the normal of the ring;
+* **the x axis** is the direction, normal to z, in which the heavy atoms extend farthest;
+* **the signs** of x and z are those that make the third moment of the heavy atoms positive.
+
+```bash
+cmf align hosts.sdf --by cavity --out framed.sdf
+```
+
+No reference molecule is needed: every host gets the frame of its own cavity, and a molecule
+without a macrocycle is reported and left where it is. From Python the same is
+`cmfqsar.align.cavity_align(mols)`. This frame is not `cmfqsar.protein.cavity_frame`, which finds
+the channel of a host that is given as a structure, in order to place a guest in it.
+
+**The data.** `examples/crowns/` holds 79 crown ethers and cryptands with the stability constant
+(log K) of the sodium and of the potassium complex in methanol at 25 °C. No machine-readable open
+copy of the Izatt tabulations exists, so the values were entered by hand from Table I of Izatt,
+Bradshaw, Nielsen, Lamb, Christensen and Sen, *Chem. Rev.* 85 (1985) 271, and the structures were
+read from its charts. The rules were fixed before any model was run: monocyclic crown compounds
+and bicyclic cryptands with a value for both ions; methanol, pure or with at most 0.1 M of a
+tetraalkylammonium salt; the one-to-one complex; the median where the table gives several values;
+no mixtures of isomers. The article is a scan with a text layer. A program found 215 of the 220
+values again in the text layer of the stated page, with their method and reference number, and the
+other five were read on the page image. The later reviews of the same group (1991 and 1995) number
+their structures on drawn charts and were not merged; one conflict with them was noticed and is
+recorded in `examples/make_crown_examples.py`. The constants span 0.90 to 10.61 for potassium and
+1.10 to 9.47 for sodium, their correlation is +0.810, and the selectivity log K(K⁺) − log K(Na⁺)
+spans −4.10 to +2.80.
+
+**The geometries, and why they are not energy minima.** A binding constant belongs to the host
+around the ion, not to a conformer of the empty host, which folds. The geometries were built with
+GFN-xTB in implicit methanol (`cmfqsar.cavity.host_complex`), and three trials decided how:
+
+* started from conformers of the free host, GFN1-xTB left the ion of plain 15-crown-5 on three of
+  its five oxygens, for both ions;
+* the contacts it keeps are too short. For potassium on 15-crown-5 they are 2.50, 2.50 and 2.59 Å,
+  where the sum of Shannon's ionic radii is 2.78 Å. GFN2-xTB draws them shorter (2.37 Å on average
+  for potassium on 12-crown-4) and GFN-FF gives 2.50 to 2.71 Å for potassium in 18-crown-6;
+* a method that draws a contact too short prefers a few short contacts to many of the right
+  length, so its minimum is not the complex.
+
+Each geometry is therefore **the host as far around the ion as it can go**: an optimisation in
+which every donor of the ring is held at the sum of the ionic radii from the ion (2.42 Å for
+sodium, 2.78 Å for potassium) by a harmonic restraint. In all 158 complexes every ring donor
+reaches the ion (the largest misfit is 0.15 Å). What the restraint leaves to the method is the
+shape: potassium stays 1.92 Å from the donor centroid of the 12-crown-4 family, 1.37 Å for
+15-crown-5 and 0.56 Å for 18-crown-6, and the donor ring has a radius of 1.99, 2.40 and 2.70 Å. A
+field model can learn that shape. It cannot learn what the wrapping costs, because no energy
+enters. One more trap was found on the way: RDKit returns the same conformer every time for a
+conformer seed of 0, so a "search over eight starts" was one start until the seed was shifted.
+
+**Where the probe field puts the ion.** The deepest point of the sodium or potassium probe field
+of the host alone lies 0.34 Å and 0.47 Å from the ion on average; the donor centroid, which needs
+no field, lies 0.48 Å and 0.88 Å away. The probe is closer in 63 % and 68 % of the hosts. This is
+weaker evidence than on the ethers of the section above, because the ion positions here come from
+a restraint that uses ionic radii, as the probes do.
+
+**What was measured** (`benchmarks/run_crowns.py`, 3 minutes). Nested cross-validation with every
+setting chosen inside each fold; five random folds repeated ten times, and one family of hosts
+held out at a time (nine families: 12-crown-4, 15-crown-5, benzo-15-crown-5, aza-15-crown-5,
+18-crown-6, benzo-18-crown-6, aza-18-crown-6, larger rings, cryptands). The references are
+numbers read from the formula (ring size, donors of the ring by element, fused aromatic rings,
+donors on side arms, bicyclic or not), numbers read from the complex (donors in contact, their
+misfit, the radius of the donor ring, the distance of the ion from the donor centroid), and a
+fingerprint (ECFP4 counts with a Tanimoto kernel). The references get a Gaussian kernel whose
+width is chosen inside each fold.
+
+| Description | log K of K⁺, random folds | log K of Na⁺, random folds | Selectivity, random folds | log K of K⁺, families held out | log K of Na⁺, families held out | Selectivity, families held out |
+|---|---|---|---|---|---|---|
+| ring counts | +0.718 | +0.483 | +0.410 | +0.176 | +0.008 | −0.111 |
+| complex shape | +0.166 | −0.466 | +0.472 | −0.187 | −1.248 | +0.332 |
+| ring counts + complex shape | +0.589 | +0.516 | +0.378 | +0.547 | −0.045 | −0.118 |
+| fingerprint | +0.649 | +0.707 | +0.295 | +0.276 | +0.023 | +0.210 |
+| electrostatic field, cavity frame | +0.420 | +0.229 | +0.386 | +0.163 | −0.104 | +0.375 |
+| ion probe field, cavity frame | +0.214 | −0.041 | +0.157 | −0.002 | −0.533 | +0.164 |
+| five fields, cavity frame | +0.423 | +0.256 | +0.349 | +0.158 | −0.201 | +0.320 |
+| five fields, no frame | +0.449 | +0.046 | +0.308 | +0.291 | −0.294 | +0.218 |
+| five fields, amounts kept | +0.399 | +0.270 | +0.361 | +0.189 | −0.153 | +0.337 |
+| five fields + ring counts | +0.722 | +0.566 | +0.418 | +0.097 | −0.085 | −0.006 |
+
+Every value is a cross-validated q². The standard deviation of the targets is 1.85, 1.53 and 1.09
+log K units.
+
+1. **The fields do not beat the counts on the constants.** With random folds the mean absolute
+   error of the five fields is larger than that of the ring counts by 0.369 log K units for
+   potassium (95 % interval 0.191 to 0.550) and by 0.307 for sodium (0.115 to 0.499). Fields added
+   to the counts change nothing that is resolved (+0.038, interval −0.011 to +0.089). The constant
+   is carried by what the formula says: the correlation of log K of potassium with the number of
+   ring nitrogens is +0.62, with the bicyclic flag +0.60 and with the number of ring donors +0.57.
+2. **The division by the size of a field is not the reason.** The overlap kernel of this program
+   divides each field by its size, so a host with more donors has no more acceptor field. With the
+   amounts kept the result is the same (difference −0.025, interval −0.070 to +0.016).
+3. **The frame is worth little on prediction.** Against the alignment-free kernel of the same
+   fields the cavity frame gives −0.102 for potassium (−0.243 to +0.044) and −0.139 for sodium
+   (−0.286 to +0.000): the intervals include zero or touch it. Turning z to the side of the ion
+   changes nothing.
+4. **The ion probe field is worse than the electrostatic field**, which is the comparison item EC7
+   asked for on a host series: +0.259 log K units for potassium (0.135 to 0.384) and +0.148 for
+   sodium (0.021 to 0.268) with random folds, and the same sign with families held out. Added to
+   the five fields it changes nothing (+0.010, −0.007 to +0.027).
+5. **A family that was not seen is hard for every description.** For sodium nothing reaches a q²
+   of +0.03. For potassium the best is the counts with the complex shape (+0.547); the five fields
+   give +0.158. The selectivity is the one target where the fields beat the counts: +0.320 against
+   −0.111, a paired difference of −0.191 log K units (−0.335 to −0.055). The numbers read from the
+   complex are as good there (+0.332), and the difference to them includes zero.
+6. **The selectivity by three routes.** The two-task model of item SC1 and a model of the
+   difference give the same error (−0.007, −0.023 to +0.010), with a correlation of 0.82 between
+   the two endpoints chosen inside the folds. Two separate models, subtracted, are much worse (q²
+   −0.345 against +0.374), because the errors of two models add.
+
+**The co-field, which is the gate.** The gate reads: the co-field of the K⁺ constant names the
+cavity size and the donor positions. A co-field is the gain per unit of field at a point, which
+cannot be compared with a structure, so it is read here as the effect of one atom: the overlap of
+the co-field with one acceptor atom placed at the point, in log K units. The reading is done in
+cylinder coordinates of the frame (distance from the z axis, height, turn about the axis) and
+averaged over the turn.
+
+* **The map is not noise.** Two random halves of the hosts give acceptor maps with a correlation
+  of +0.49 for potassium; with the constants given to the hosts at random it is −0.02. For sodium
+  it is +0.23 against +0.01.
+* **With all hosts the map shows the cage first.** The largest gain for potassium is on the axis,
+  2.5 Å above the plane of the donors. Seven of the nine cryptands have an oxygen or a nitrogen
+  within 1.5 Å of that place, and four of the 70 other hosts; the mean log K is 6.33 with such an
+  atom and 3.83 without.
+* **On the 70 monocyclic hosts the map names the size of the ring.** The largest loss is in the
+  plane 2.00 Å from the axis, which is the radius of the donor ring of the 12-crown-4 family
+  (1.99 Å). The gain turns positive at 2.60 Å (2.48 to 2.71 over bootstrap samples of the hosts)
+  and is largest at 2.75 to 3.00 Å; the donor ring of the 18-crown-6 family has a radius of
+  2.70 Å. The correlation of two halves is +0.44 against −0.01. This reading was added after the
+  first one, when the map of all hosts had shown the cage.
+* **It names the ring that binds best, not the size of the ion.** The map of the sodium constant
+  has its gain at the same radius (3.00 Å) and turns positive at 2.58 Å (2.21 to 3.82), although
+  the donor rings around sodium are smaller (1.96 to 2.44 Å by family). In methanol both ions bind the
+  18-membered rings best, and that is what both maps say.
+* **Positions around the ring are not named, and cannot be.** The frame fixes the centre and the
+  plane; the turn about z is fixed only by where the substituents are. The donors of the 79 hosts
+  are spread evenly over the turn (a concentration of 0.00 to 0.01 on a scale from 0 to 1), so no model in
+  this frame can say where around the ring a donor should be.
+
+**The verdict on the gate: met in part.** The co-field of the potassium constant names the size of
+the cavity on the monocyclic hosts, and the height of the donors (in the plane for a crown ether,
+on the axis above it for a cryptand). It does not name their positions around the ring. Two limits
+belong to this verdict. The radius of 2.70 Å is itself a product of the restraint that built the
+geometries, so the map reads back which ring size the constants favour; it does not measure a
+distance. And the model that gives the map predicts the constants worse than a count of the ring
+does.
+
+**What this does not show.** The geometries are not minima and carry no energy. One tabulation of
+1985 was used, with medians over methods; the cryptand values carry a supporting electrolyte and
+most crown ether values do not. The grids of the field width, of the kernel width and of the ridge
+were widened twice after first runs chose values at their ends. Building the geometries takes 22
+minutes on 24 processes (`examples/make_crown_examples.py --build`) and needs xtb; the benchmark
+reads the stored geometries and needs neither.
+
 ## The ion with its shell as the molecule: a solvation complex
 
 The section above models the solvent molecule. For almost every property of an electrolyte the
@@ -19607,7 +19772,7 @@ trimmed at 8 Å around a shallow, solvent-exposed hinge leaves most of a ligand 
 
 Alignment was spread over flags of `build` and `predict` and the `hetero` workflow, which made the
 criteria the program has look like unrelated features. They are one question — where do these
-molecules go — asked five ways, and `align` asks it:
+molecules go — asked six ways, and `align` asks it:
 
 ```bash
 cmf align data.sdf --by mcs    --out aligned.sdf          # on the common substructure
@@ -19615,6 +19780,7 @@ cmf align data.sdf --by field  --reference 0 --out aligned.sdf
 cmf align data.sdf --by variance --model m.cmf --max-rmsd 2 --out aligned.sdf
 cmf align data.sdf --by pocket --model m.cmf --pocket site.pdb --out aligned.sdf
 cmf align data.sdf --by plane  --pose auto --refine plane --reference 0 --out onsurface.sdf
+cmf align hosts.sdf --by cavity --out framed.sdf             # each host by its own cavity
 ```
 
 | `--by` | what it maximises | what it needs |
@@ -19624,6 +19790,7 @@ cmf align data.sdf --by plane  --pose auto --refine plane --reference 0 --out on
 | `variance` | the confidence of the model's own prediction — the criterion of *Alignment by prediction confidence* | a model (`--model`); `--flexible` adds the torsions, and `--any-orientation` with `--max-rmsd 0` searches orientations as well as placements |
 | `pocket` | that confidence with a complementarity term, $\sigma^2 - w\,[\text{fit} - \text{clash}]$ | a model and a structure; see the warning in *Alignment inside the pocket* |
 | `plane` | nothing, by default: it poses each molecule on a surface $z = 0$ by rule (`--pose flat` or `upright`); with `--pose auto` and `--refine`, the field similarity to one reference pose, moved only as a surface allows | a reference whose input pose is trusted, for `auto` and `--refine`; see *Posed by rule: the surface frame without the slab* |
+| `cavity` | nothing: it puts every host in the frame of its own cavity, the origin at the centroid of the donor atoms of the macrocycle and z along their unique axis; see *A host series in the frame of its cavity* | a macrocycle with at least three donor atoms; no reference |
 
 Every mode prints what it did per molecule and then how far the set moved, and writes nothing
 unless `--out` is given — an alignment that is not kept is a measurement, and saying so avoids the

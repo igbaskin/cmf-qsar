@@ -1,0 +1,172 @@
+{
+ "hosts": 79,
+ "families": {
+  "12-crown-4": 4,
+  "15-crown-5": 17,
+  "benzo-15-crown-5": 6,
+  "aza-15-crown-5": 8,
+  "18-crown-6": 12,
+  "benzo-18-crown-6": 6,
+  "aza-18-crown-6": 8,
+  "larger ring": 9,
+  "cryptand": 9
+ },
+ "targets": {
+  "K": {
+   "min": 0.9,
+   "max": 10.605,
+   "mean": 4.182405063291139,
+   "sd": 1.8520164960784005
+  },
+  "Na": {
+   "min": 1.1,
+   "max": 9.475,
+   "mean": 3.5932911392405065,
+   "sd": 1.5279905075579852
+  },
+  "selectivity": {
+   "min": -4.1000000000000005,
+   "max": 2.8,
+   "mean": 0.589113924050633,
+   "sd": 1.0873294306781083
+  }
+ },
+ "geometry": {
+  "Na": {
+   "radius_sum": 2.42,
+   "contact_limit": 3.02,
+   "all_donors_in_contact": 79,
+   "not_all_in_contact": [],
+   "mean_misfit": 0.014051621610311758,
+   "max_misfit": 0.1547024408299709,
+   "mean_ion_to_centroid": 0.48176744541692584,
+   "by_family": {
+    "12-crown-4": {
+     "donor_radius": 1.963848472052397,
+     "ion_to_centroid": 1.4041891766217565
+    },
+    "15-crown-5": {
+     "donor_radius": 2.2951962308813267,
+     "ion_to_centroid": 0.7392725961856766
+    },
+    "benzo-15-crown-5": {
+     "donor_radius": 2.2683840671523163,
+     "ion_to_centroid": 0.8284904085177053
+    },
+    "aza-15-crown-5": {
+     "donor_radius": 2.324076658066631,
+     "ion_to_centroid": 0.6420784117701823
+    },
+    "18-crown-6": {
+     "donor_radius": 2.4044093078953845,
+     "ion_to_centroid": 0.27125280213209696
+    },
+    "benzo-18-crown-6": {
+     "donor_radius": 2.406327523890607,
+     "ion_to_centroid": 0.2340193289181213
+    },
+    "aza-18-crown-6": {
+     "donor_radius": 2.4054543865621216,
+     "ion_to_centroid": 0.27144298260012845
+    },
+    "larger ring": {
+     "donor_radius": 2.4352544744274076,
+     "ion_to_centroid": 0.1425449218004458
+    },
+    "cryptand": {
+     "donor_radius": 2.443769332550941,
+     "ion_to_centroid": 0.1837855383252203
+    }
+   },
+   "correlations_with_log_K": {
+    "ring donors in contact": 0.2350264715989766,
+    "misfit of the donor distances": 0.09065073202395874,
+    "radius of the donor ring": 0.35216528749459086,
+    "ion to donor centroid": -0.3537575349462988
+   }
+  },
+  "K": {
+   "radius_sum": 2.78,
+   "contact_limit": 3.38,
+   "all_donors_in_contact": 79,
+   "not_all_in_contact": [],
+   "mean_misfit": 0.009942967134229506,
+   "max_misfit": 0.07275483396597988,
+   "mean_ion_to_centroid": 0.8839955970170583,
+   "by_family": {
+    "12-crown-4": {
+     "donor_radius": 1.9880667501844895,
+     "ion_to_centroid": 1.9238173064446713
+    },
+    "15-crown-5": {
+     "donor_radius": 2.404938712512369,
+     "ion_to_centroid": 1.370842701984223
+    },
+    "benzo-15-crown-5": {
+     "donor_radius": 2.3586776668410327,
+     "ion_to_centroid": 1.4512883343320444
+    },
+    "aza-15-crown-5": {
+     "donor_radius": 2.435902069445047,
+     "ion_to_centroid": 1.3145102530615222
+    },
+    "18-crown-6": {
+     "donor_radius": 2.695782425254683,
+     "ion_to_centroid": 0.5554982000018157
+    },
+    "benzo-18-crown-6": {
+     "donor_radius": 2.6690819352052664,
+     "ion_to_centroid": 0.6890187129316692
+    },
+    "aza-18-crown-6": {
+     "donor_radius": 2.7352216120133326,
+     "ion_to_centroid": 0.395778005819663
+    },
+    "larger ring": {
+     "donor_radius": 2.7710626398255536,
+     "ion_to_centroid": 0.19507616398701105
+    },
+    "cryptand": {
+     "donor_radius": 2.7228288169589003,
+     "ion_to_centroid": 0.43224941936671935
+    }
+   },
+   "correlations_with_log_K": {
+    "ring donors in contact": 0.5720251005550184,
+    "misfit of the donor distances": 0.35220953595233384,
+    "radius of the donor ring": 0.6421162124368883,
+    "ion to donor centroid": -0.6091330924614077
+   }
+  }
+ },
+ "correlation_K_Na": 0.8096564725342378,
+ "count_correlations": {
+  "K": {
+   "ring size": 0.34625494667577783,
+   "ring donors": 0.5720251005550184,
+   "ring nitrogens": 0.6199952512756353,
+   "ring sulfurs": -0.03499542842976946,
+   "fused aromatic rings": -0.09015814703285578,
+   "side-arm donors": -0.06456671782593668,
+   "bicyclic": 0.5959601666585964
+  },
+  "Na": {
+   "ring size": -0.07100982175618782,
+   "ring donors": 0.2350264715989766,
+   "ring nitrogens": 0.6130245312935464,
+   "ring sulfurs": -0.07582828888495015,
+   "fused aromatic rings": -0.17720579049504923,
+   "side-arm donors": 0.10458136731033428,
+   "bicyclic": 0.5950205103670082
+  },
+  "selectivity": {
+   "ring size": 0.6895538606101507,
+   "ring donors": 0.6440382141905139,
+   "ring nitrogens": 0.1945553593671221,
+   "ring sulfurs": 0.04695246301708728,
+   "fused aromatic rings": 0.09545808958311977,
+   "side-arm donors": -0.25693957612705026,
+   "bicyclic": 0.1789175961998301
+  }
+ }
+}
