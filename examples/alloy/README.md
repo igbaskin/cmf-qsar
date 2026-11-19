@@ -80,17 +80,22 @@ bootstrap interval of 95 %.
   slightly worse (+0.011 eV, interval +0.003 to +0.018). For OH (213 slabs) the autocorrelation of
   indicator fields is better with random folds (-0.025 eV, interval -0.050 to -0.002) but not
   when whole alloys are held out.
-- **One value for each site.** For H, the overlap kernel with extended fields is better than every
-  reference when whole slabs are held out (MAE 0.216 eV against 0.268 eV; difference -0.051 eV,
-  interval -0.068 to -0.036) and when whole alloys are held out (0.216 eV against 0.267 eV). With
-  random folds it ties the best reference (+0.003 eV, interval -0.013 to +0.021). For OH the
-  field methods do not beat the references: the best, the overlap kernel with extended fields,
-  is level with them when slabs are held out (+0.003 eV, interval -0.013 to +0.018) and worse when
-  alloys are held out (+0.022 eV).
-- **What this means.** The names and properties of the binding elements and the slab elements
-  explain most of the variance (q2 about 0.6 to 0.7). A field of the environment around the
-  site adds something for H on new slabs and new alloys. It adds nothing for OH, and nothing for
-  the lowest energy of a whole slab.
+- **One value for each site.** The references include *neighbour counts*: the number of atoms of
+  each element in four shells (up to 2.3, 3.3, 4.5 and 6.0 Angstrom) around the same point that
+  the field methods use. For H, the overlap kernel with extended fields is better than every
+  reference when whole slabs are held out (MAE 0.216 eV against 0.244 eV for the best reference,
+  the neighbour counts with the binding elements, the site kind and the slab elements;
+  difference -0.027 eV, interval -0.040 to -0.015) and when whole alloys are held out (0.216 eV
+  against 0.243 eV; -0.027 eV, interval -0.040 to -0.015). With random folds it is not better
+  (+0.014 eV, interval -0.001 to +0.031). Before the neighbour counts were added, the lead was
+  0.051 eV; about half of it was a lack of counts in the references. For OH no field method beats
+  the references: the best, the overlap kernel with extended fields, is worse with random folds
+  (+0.019 eV, interval +0.010 to +0.028) and with alloys held out (+0.022 eV), and level with them
+  when slabs are held out (+0.012 eV, interval -0.000 to +0.025).
+- **What this means.** The names and properties of the elements and the neighbour counts explain
+  most of the variance (q2 about 0.6 to 0.8). A smooth field of the environment around the site
+  adds a small gain for H on new slabs and new alloys (about 11 % of the error). It adds nothing
+  for OH, and nothing for the lowest energy of a whole slab.
 
 ## What to keep in mind
 

@@ -7,7 +7,7 @@ How to read the tables:
 - **q2** is the out-of-fold coefficient of determination. The training mean has q2 near 0.
 - **MAE** is the mean absolute error in eV.
 - **MAE against the best reference** is the MAE of the method minus the MAE of the best reference method of the same task and folds, with a paired bootstrap interval (2.5 % to 97.5 %). A negative number means that the method has the smaller error. An interval that contains zero means that the two methods do not differ clearly.
-- A *reference* is a model that uses only element names or tabulated element properties. A *field method* is a model on the structure.
+- A *reference* is a model that uses only element names, tabulated element properties or (for sites) counts of the atoms of each element in four shells around the site. A *field method* is a model on a smooth field of the structure.
 - **slab** tasks: the sample is the bare slab and the target is the lowest adsorption energy over its sites. **site** tasks: the sample is one site of one slab and the target is the energy at that site.
 - Folds: **random** (10 folds), **slab-out** (all sites of a slab in one fold) and **alloy-out** (all slabs with the same elements in one fold).
 
@@ -153,7 +153,7 @@ Mean -0.11 eV, standard deviation 0.69 eV.
 
 ### Folds: random
 
-The best reference is *properties of the binding elements, site kind and slab elements* (MAE 0.206 eV).
+The best reference is *neighbour counts, binding elements, site kind and slab elements* (MAE 0.195 eV).
 
 | method | kind | q2 | MAE (eV) | MAE against the best reference (eV) |
 | --- | --- | --- | --- | --- |
@@ -162,14 +162,18 @@ The best reference is *properties of the binding elements, site kind and slab el
 | binding elements, site kind and slab elements | reference | +0.706 | 0.215 |  |
 | properties of the binding elements and site kind | reference | +0.602 | 0.264 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.715 | 0.206 |  |
-| site environment, invariant, classic fields | field method | +0.645 | 0.283 | +0.077 [+0.062, +0.093] |
-| site environment, overlap in the lattice frame, classic fields | field method | +0.708 | 0.232 | +0.026 [+0.010, +0.042] |
-| site environment, invariant, extended fields | field method | +0.737 | 0.230 | +0.024 [+0.010, +0.039] |
-| site environment, overlap in the lattice frame, extended fields | field method | +0.746 | 0.209 | +0.003 [-0.013, +0.021] |
+| neighbour counts of each element in four shells | reference | +0.751 | 0.207 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.754 | 0.203 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.778 | 0.200 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.769 | 0.195 |  |
+| site environment, invariant, classic fields | field method | +0.645 | 0.283 | +0.088 [+0.073, +0.104] |
+| site environment, overlap in the lattice frame, classic fields | field method | +0.708 | 0.232 | +0.037 [+0.022, +0.054] |
+| site environment, invariant, extended fields | field method | +0.737 | 0.230 | +0.035 [+0.022, +0.049] |
+| site environment, overlap in the lattice frame, extended fields | field method | +0.746 | 0.209 | +0.014 [-0.001, +0.031] |
 
 ### Folds: slab-out
 
-The best reference is *properties of the binding elements, site kind and slab elements* (MAE 0.268 eV).
+The best reference is *neighbour counts, binding elements, site kind and slab elements* (MAE 0.244 eV).
 
 | method | kind | q2 | MAE (eV) | MAE against the best reference (eV) |
 | --- | --- | --- | --- | --- |
@@ -178,14 +182,18 @@ The best reference is *properties of the binding elements, site kind and slab el
 | binding elements, site kind and slab elements | reference | +0.607 | 0.272 |  |
 | properties of the binding elements and site kind | reference | +0.557 | 0.284 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.620 | 0.268 |  |
-| site environment, invariant, classic fields | field method | +0.621 | 0.295 | +0.027 [+0.011, +0.044] |
-| site environment, overlap in the lattice frame, classic fields | field method | +0.710 | 0.239 | -0.029 [-0.045, -0.014] |
-| site environment, invariant, extended fields | field method | +0.692 | 0.252 | -0.015 [-0.031, +0.000] |
-| site environment, overlap in the lattice frame, extended fields | field method | +0.741 | 0.216 | -0.051 [-0.068, -0.036] |
+| neighbour counts of each element in four shells | reference | +0.651 | 0.263 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.649 | 0.265 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.700 | 0.246 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.693 | 0.244 |  |
+| site environment, invariant, classic fields | field method | +0.621 | 0.295 | +0.051 [+0.037, +0.065] |
+| site environment, overlap in the lattice frame, classic fields | field method | +0.710 | 0.239 | -0.005 [-0.018, +0.008] |
+| site environment, invariant, extended fields | field method | +0.692 | 0.252 | +0.009 [-0.004, +0.022] |
+| site environment, overlap in the lattice frame, extended fields | field method | +0.741 | 0.216 | -0.027 [-0.040, -0.015] |
 
 ### Folds: alloy-out
 
-The best reference is *binding elements, site kind and slab elements* (MAE 0.267 eV).
+The best reference is *neighbour counts, binding elements, site kind and slab elements* (MAE 0.243 eV).
 
 | method | kind | q2 | MAE (eV) | MAE against the best reference (eV) |
 | --- | --- | --- | --- | --- |
@@ -194,10 +202,14 @@ The best reference is *binding elements, site kind and slab elements* (MAE 0.267
 | binding elements, site kind and slab elements | reference | +0.613 | 0.267 |  |
 | properties of the binding elements and site kind | reference | +0.559 | 0.281 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.613 | 0.267 |  |
-| site environment, invariant, classic fields | field method | +0.614 | 0.296 | +0.029 [+0.012, +0.046] |
-| site environment, overlap in the lattice frame, classic fields | field method | +0.718 | 0.239 | -0.028 [-0.044, -0.013] |
-| site environment, invariant, extended fields | field method | +0.688 | 0.253 | -0.013 [-0.031, +0.003] |
-| site environment, overlap in the lattice frame, extended fields | field method | +0.745 | 0.216 | -0.051 [-0.069, -0.034] |
+| neighbour counts of each element in four shells | reference | +0.666 | 0.260 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.666 | 0.261 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.704 | 0.245 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.698 | 0.243 |  |
+| site environment, invariant, classic fields | field method | +0.614 | 0.296 | +0.053 [+0.039, +0.067] |
+| site environment, overlap in the lattice frame, classic fields | field method | +0.718 | 0.239 | -0.004 [-0.017, +0.008] |
+| site environment, invariant, extended fields | field method | +0.688 | 0.253 | +0.010 [-0.003, +0.024] |
+| site environment, overlap in the lattice frame, extended fields | field method | +0.745 | 0.216 | -0.027 [-0.040, -0.015] |
 
 ## site OH [all]: 2475 samples
 
@@ -214,6 +226,10 @@ The best reference is *binding elements, site kind and slab elements* (MAE 0.221
 | binding elements, site kind and slab elements | reference | +0.718 | 0.221 |  |
 | properties of the binding elements and site kind | reference | +0.645 | 0.252 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.714 | 0.221 |  |
+| neighbour counts of each element in four shells | reference | +0.689 | 0.240 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.695 | 0.235 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.715 | 0.222 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.710 | 0.227 |  |
 | site environment, invariant, classic fields | field method | +0.520 | 0.321 | +0.100 [+0.084, +0.118] |
 | site environment, overlap in the lattice frame, classic fields | field method | +0.615 | 0.281 | +0.061 [+0.049, +0.073] |
 | site environment, invariant, extended fields | field method | +0.680 | 0.246 | +0.025 [+0.017, +0.035] |
@@ -221,7 +237,7 @@ The best reference is *binding elements, site kind and slab elements* (MAE 0.221
 
 ### Folds: slab-out
 
-The best reference is *properties of the binding elements, site kind and slab elements* (MAE 0.249 eV).
+The best reference is *neighbour sums of element properties in four shells, and site kind* (MAE 0.240 eV).
 
 | method | kind | q2 | MAE (eV) | MAE against the best reference (eV) |
 | --- | --- | --- | --- | --- |
@@ -230,10 +246,14 @@ The best reference is *properties of the binding elements, site kind and slab el
 | binding elements, site kind and slab elements | reference | +0.622 | 0.252 |  |
 | properties of the binding elements and site kind | reference | +0.620 | 0.264 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.627 | 0.249 |  |
-| site environment, invariant, classic fields | field method | +0.435 | 0.347 | +0.098 [+0.077, +0.120] |
-| site environment, overlap in the lattice frame, classic fields | field method | +0.568 | 0.303 | +0.054 [+0.036, +0.071] |
-| site environment, invariant, extended fields | field method | +0.612 | 0.272 | +0.023 [+0.008, +0.038] |
-| site environment, overlap in the lattice frame, extended fields | field method | +0.673 | 0.252 | +0.003 [-0.013, +0.018] |
+| neighbour counts of each element in four shells | reference | +0.615 | 0.276 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.617 | 0.272 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.678 | 0.240 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.625 | 0.260 |  |
+| site environment, invariant, classic fields | field method | +0.435 | 0.347 | +0.107 [+0.087, +0.130] |
+| site environment, overlap in the lattice frame, classic fields | field method | +0.568 | 0.303 | +0.063 [+0.049, +0.079] |
+| site environment, invariant, extended fields | field method | +0.612 | 0.272 | +0.032 [+0.018, +0.047] |
+| site environment, overlap in the lattice frame, extended fields | field method | +0.673 | 0.252 | +0.012 [-0.000, +0.025] |
 
 ### Folds: alloy-out
 
@@ -246,6 +266,10 @@ The best reference is *properties of the binding elements, site kind and slab el
 | binding elements, site kind and slab elements | reference | +0.653 | 0.240 |  |
 | properties of the binding elements and site kind | reference | +0.622 | 0.266 |  |
 | properties of the binding elements, site kind and slab elements | reference | +0.665 | 0.232 |  |
+| neighbour counts of each element in four shells | reference | +0.610 | 0.278 |  |
+| neighbour counts of each element in four shells, and site kind | reference | +0.627 | 0.271 |  |
+| neighbour sums of element properties in four shells, and site kind | reference | +0.674 | 0.245 |  |
+| neighbour counts, binding elements, site kind and slab elements | reference | +0.631 | 0.261 |  |
 | site environment, invariant, classic fields | field method | +0.423 | 0.357 | +0.125 [+0.102, +0.149] |
 | site environment, overlap in the lattice frame, classic fields | field method | +0.534 | 0.312 | +0.080 [+0.065, +0.096] |
 | site environment, invariant, extended fields | field method | +0.614 | 0.278 | +0.046 [+0.028, +0.062] |

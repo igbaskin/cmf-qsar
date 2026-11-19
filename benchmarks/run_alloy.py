@@ -31,6 +31,11 @@ elements are.  So the references are
   radius, ...) averaged over the slab, or over the top layer and the other layers separately;
 * for a site, the same two kinds taken over the top-layer atoms that bind the adsorbate, with the
   kind of site (top, bridge, fcc or hcp hollow);
+* for a site, the *neighbour counts*: how many atoms of each element lie in four shells (up to
+  2.3, 3.3, 4.5 and 6.0 A) around the same point that the field methods use, and the sums of the
+  element properties in those shells. A field of the environment is a smooth version of such
+  counts, so this is the fair test of whether the smooth field adds anything. They were added
+  after the first full run (``--task counts``), on the same sites and folds;
 
 and the field methods are the periodic autocorrelation of the slab (rotation and translation
 invariant), the rotation-invariant autocorrelation of the point environment of a site, and the
@@ -52,6 +57,8 @@ Usage
     python benchmarks/run_alloy.py                 # slab and site tasks, then the table
     python benchmarks/run_alloy.py --task slab
     python benchmarks/run_alloy.py --report        # rebuild the table from the stored results
+    python benchmarks/run_alloy.py --task counts   # add the neighbour-count references to the
+                                                   # stored site results (needs a site run first)
 """
 from __future__ import annotations
 
@@ -231,6 +238,124 @@ def site_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str,
     fam["properties of the binding elements, site kind and slab elements"] = gauss_family(
         Xq, "properties+slab")
     return fam
+
+
+#: outer edges of the four shells around the point of a site, in angstrom
+SHELLS = (2.3, 3.3, 4.5, 6.0)
+
+
+def neighbour_counts(data: AlloySet, rows: Sequence[dict]) -> Tuple[np.ndarray, np.ndarray]:
+    """What a field sees around a site, written as counts and without any smoothing.
+
+    The point is the same as for the field methods (the position of the adsorbate in the plane, at
+    a fixed height over the top layer). For each of the four shells around it the function counts
+    the atoms of every element, and sums the standardised properties of the elements. The cell is
+    repeated in the plane, so that the shells are not cut by the edge of the 2 x 2 cell.
+
+    Returns (counts, property sums); the columns run over shells first, then elements (or
+    properties)."""
+    col = {e: i for i, e in enumerate(data.elements)}
+    props = standard_properties(data.elements)
+    n_shell = len(SHELLS)
+    N = np.zeros((len(rows), n_shell, len(col)))
+    Q = np.zeros((len(rows), n_shell, len(PROPS)))
+    images: Dict[int, Tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    shifts = [(i, j) for i in range(-2, 3) for j in range(-2, 3)]
+    for k, r in enumerate(rows):
+        s = r["slab"]
+        if s not in images:
+            atoms = data.slabs[s]
+            cell = np.asarray(atoms.cell)
+            pos = np.concatenate([atoms.positions + i * cell[0] + j * cell[1] for i, j in shifts])
+            idx = np.tile(np.arange(len(atoms)), len(shifts))
+            top, _ = data.layers(s)
+            images[s] = (pos, idx, np.array([float(atoms.positions[top, 2].mean())]))
+        pos, idx, z_top = images[s]
+        sym = data.slabs[s].get_chemical_symbols()
+        centre = np.array([r["x"], r["y"], z_top[0] + HEIGHT[r["ads"]]])
+        d = np.linalg.norm(pos - centre, axis=1)
+        shell = np.searchsorted(SHELLS, d, side="left")
+        for a in np.where(shell < n_shell)[0]:
+            e = sym[idx[a]]
+            N[k, shell[a], col[e]] += 1.0
+            Q[k, shell[a]] += props[e]
+    return N.reshape(len(rows), -1), Q.reshape(len(rows), -1)
+
+
+def count_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str, np.ndarray]]:
+    """References that count the neighbours of a site in four shells (the fair reference for a
+    field, which is also a smooth count of the neighbours)."""
+    N, Q = neighbour_counts(data, rows)
+    B, P, S, C = site_reference_rows(data, rows)
+    fam: Dict[str, Dict[str, np.ndarray]] = {}
+    fam["neighbour counts of each element in four shells"] = {
+        "linear": N @ N.T, **gauss_family(N, "counts")}
+    Xs = np.hstack([N, S])
+    fam["neighbour counts of each element in four shells, and site kind"] = {
+        "linear": Xs @ Xs.T, **gauss_family(Xs, "counts+site")}
+    Xq = np.hstack([Q, S])
+    fam["neighbour sums of element properties in four shells, and site kind"] = gauss_family(
+        Xq, "property sums+site")
+    Xa = np.hstack([N, B, S, C])
+    fam["neighbour counts, binding elements, site kind and slab elements"] = {
+        "linear": Xa @ Xa.T, **gauss_family(Xa, "counts+binding+slab")}
+    return fam
+
+
+def add_counts(log=print) -> None:
+    """Add the neighbour-count references to the stored site results.
+
+    The rows, the folds and the seeds are those of the stored run, so the stored predictions of
+    every other method stay valid; only the new references are cross-validated, and every
+    difference against the best reference is computed again."""
+    warnings.filterwarnings("ignore")
+    path = os.path.join(RESULTS, "data_site.json")
+    with open(path, encoding="utf-8") as fh:
+        stored = json.load(fh)
+    data = AlloySet()
+    by_log = collections.defaultdict(list)
+    for r in data.rows:
+        by_log[(r["log"], r["ads"])].append(r)
+    for t in stored["tasks"]:
+        rows = []
+        for name in t["rows"]:
+            hit = by_log[(name, t["adsorbate"])]
+            if len(hit) != 1:
+                raise SystemExit(f"the log {name} is not one row of the data: {len(hit)}")
+            rows.append(hit[0])
+        y = np.array(t["y"])
+        if not np.allclose(y, [r["e"] for r in rows]):
+            raise SystemExit("the stored targets differ from the data: rebuild the results")
+        groups = {"slab-out": [str(r["slab"]) for r in rows],
+                  "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+        fams = count_references(data, rows)
+        old = {m["name"] for m in t["models"]}
+        new = [m for m in fams if m not in old]
+        log(f"{t['task']}: {len(new)} new references on {len(rows)} sites")
+        for design in ("random", "slab-out", "alloy-out"):
+            for name in new:
+                res = cross_validate(name, fams[name], y, design, groups)
+                t["models"].append(dict(res, task=t["task"]))
+                log(f"  {t['task']:16s} {design:9s} {name:66s} q2 {res['q2']:+.3f} "
+                    f"mae {res['mae']:.3f} eV ({res['seconds']:.0f} s)")
+        is_field = lambda m: m.startswith(("periodic", "site environment"))   # noqa: E731
+        t["models"].sort(key=lambda m: (["random", "slab-out", "alloy-out"].index(m["design"]),
+                                        m["name"] != "training mean", is_field(m["name"])))
+        t["pairs"] = []
+        for design in ("random", "slab-out", "alloy-out"):
+            res = {m["name"]: m for m in t["models"] if m["design"] == design}
+            refs = [m for m in res if not is_field(m) and m != "training mean"]
+            for a in [m for m in res if is_field(m)]:
+                for b in refs + ["training mean"]:
+                    pa = np.array([np.nan if v is None else v for v in res[a]["predicted"]])
+                    pb = np.array([np.nan if v is None else v for v in res[b]["predicted"]])
+                    d, lo, hi = bootstrap_mae(y, pa, pb, groups=groups["slab-out"])
+                    t["pairs"].append({"task": t["task"], "design": design, "method": a,
+                                       "against": b, "delta_mae": d, "low": lo, "high": hi})
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(stored, fh, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
 
 
 # --------------------------------------------------------------------------- #
@@ -442,7 +567,7 @@ def run(args, log=print) -> None:
                           "alloy-out": [data.alloy(r["slab"]) for r in rows]}
                 log(f"site {ads} [{variant}]: {len(rows)} sites on {len({r['slab'] for r in rows})} "
                     f"slabs, mean {y.mean():+.2f} eV, sd {y.std():.2f} eV")
-                fams = {**site_references(data, rows),
+                fams = {**site_references(data, rows), **count_references(data, rows),
                         **site_field_kernels(data, rows, overlap=not args.no_overlap, log=log)}
                 refs = [f for f in fams if not f.startswith("site environment")]
                 res = run_task(f"site {ads} [{variant}]", y, fams, refs,
@@ -491,8 +616,9 @@ def write_table(path: Optional[str] = None) -> str:
              "best reference method of the same task and folds, with a paired bootstrap interval "
              "(2.5 % to 97.5 %). A negative number means that the method has the smaller error. "
              "An interval that contains zero means that the two methods do not differ clearly.",
-             "- A *reference* is a model that uses only element names or tabulated element "
-             "properties. A *field method* is a model on the structure.",
+             "- A *reference* is a model that uses only element names, tabulated element "
+             "properties or (for sites) counts of the atoms of each element in four shells around "
+             "the site. A *field method* is a model on a smooth field of the structure.",
              "- **slab** tasks: the sample is the bare slab and the target is the lowest "
              "adsorption energy over its sites. **site** tasks: the sample is one site of one slab "
              "and the target is the energy at that site.",
@@ -534,13 +660,18 @@ def write_table(path: Optional[str] = None) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", choices=("all", "slab", "site"), default="all")
+    ap.add_argument("--task", choices=("all", "slab", "site", "counts"), default="all",
+                    help="counts: add the neighbour-count references to the stored site results")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
     ap.add_argument("--max-sites", type=int, default=MAX_OVERLAP_SITES)
     ap.add_argument("--no-overlap", action="store_true")
     ap.add_argument("--report", action="store_true")
     args = ap.parse_args()
     if args.report:
+        print("wrote", write_table())
+        return
+    if args.task == "counts":
+        add_counts()
         print("wrote", write_table())
         return
     run(args)
