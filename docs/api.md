@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1454 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1455 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -13263,6 +13263,7 @@ Attributes:
 - `energy_before: float` = `float('nan')`
 - `energy_after: float` = `float('nan')`
 - `collapsed: int` = `0`
+- `bonds: Optional[np.ndarray]` = `None`
 
 #### `Structure.save(path: str) -> str`
 
@@ -13278,6 +13279,23 @@ Complete the heavy atoms of a structure, add the hydrogens it lacks, remove ever
 that is not protein, and write it.  Every mutant is then built from this file, so that the
 hydrogens the wild type already has are kept and the mutant differs from it only in the
 mutated residue.
+
+### `prepare_complex(pdb_in: str, pdb_out: str, chains: str, ph: float=7.0) -> Tuple[Structure, Dict[Tuple[str, str], int]]`
+
+A protein complex made ready for the fields of its sites (plan item PP6).
+
+Only the chains named in `chains` are kept (for SKEMPI's `1CSE_E_I` that is `"EI"`).
+Non-standard residues are replaced by their standard parents, everything that is not
+protein is removed, missing heavy atoms are completed and hydrogens are added, as in
+`prepare_wild_type`.  Residues missing from the deposited model are *not* built: a
+loop modelled from nothing would put atoms near a site that no experiment saw.
+
+The residues of a complex are numbered per chain and often carry insertion codes (100A,
+100B in an antibody loop), while the functions of this module find a residue by one
+number.  Every residue is therefore renumbered 1, 2, 3, ... through all chains in file
+order, and the second value returned maps (chain, number as deposited with its insertion
+code, such as `"100A"`) to the new number.  The chain identifiers are kept, so the
+chain of an atom still says which partner it belongs to.
 
 ### `build_mutant(wt_pdb: str, mutation: Mutation, chain: Optional[str]=None, ph: float=7.0, steps: int=1000, tolerance: float=1.0, platform: str='CPU', shell: float=6.0, rotamers: int=6, threads: int=1) -> Structure`
 
@@ -13339,11 +13357,16 @@ with two atoms closer than `MIN_SEPARATION` is thrown away for this reason.
 The bond length CA-CB and the angle N-CA-CB of one residue, which say whether the side
 chain was placed properly: about 1.53 angstrom and 110 degrees in a sound structure.
 
-### `protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]]=None) -> Chem.Mol`
+### `protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]]=None, bonds: Optional[np.ndarray]=None) -> Chem.Mol`
 
 An RDKit molecule of a protein with explicit hydrogens, formal charges from the valence
 and, when given, the partial charges in the per-atom property `partial_charge` that
 `charge_model="file"` reads.
+
+With `bonds`, the bonds of the force-field topology as (atom, atom) rows, every bond that
+proximity bonding made and that is not among them is removed.  A deposited structure can
+have two atoms of one residue closer than a bond length (a strained side chain), which
+proximity bonding joins and only the topology knows to be apart.
 
 ### `protein_of(structure: Structure) -> Chem.Mol`
 
