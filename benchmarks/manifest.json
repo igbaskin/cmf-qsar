@@ -1,14 +1,14 @@
 {
- "commit": "36fc8192c3822293bb2bf4bc81b2cb50176f2e3d",
- "created": "2026-11-19T17:02:26",
+ "commit": "903847f0f2fc171c27af0a0a63464efbd6d1677b",
+ "created": "2026-11-19T18:53:26",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
   },
   "examples/alloy/README.md": {
-   "bytes": 13210,
-   "sha256": "d1bf1a052e0594083c6424d1ec633b48aaace2f69fd42ef00aac05610945598c"
+   "bytes": 16038,
+   "sha256": "1a548ab572d372f0bccae4bcbc9b18a064dd09098601ac37a70a05e631e57fad"
   },
   "examples/alloy/adsorption.csv": {
    "bytes": 1880581,
@@ -3111,11 +3111,12 @@
   "benchmarks/results/alignment/THER.json": "7567c19dd1302c90ff6bbcef3b0ff03ca7412c97693c2ee15fd8f9c96e5bdc4f",
   "benchmarks/results/alignment/THR.json": "d0886d86781c75db7766967b3418f6be1d5e224b6cd4ff25a467605afd4176bc",
   "benchmarks/results/alignment/table.md": "98818deeae5b03f185841ab32f86ace9e4f556f728fa3a74fffe35488cbf3245",
+  "benchmarks/results/alloy/ablation.json": "85d2533a162bef4e9abc7eaec25aefd235525cccd20779758b4f0843c86523cc",
   "benchmarks/results/alloy/data_site.json": "288bfa4813f0bf564ef37012083586329c18994e5a14534fe9e1d69406be925a",
   "benchmarks/results/alloy/data_slab.json": "d25672dda8d7503f3c5edbc32025812e35363a02a78ac4b6f22c133a0c676233",
   "benchmarks/results/alloy/gnn.json": "e0ab59f667520ea7212b63944b4f4c4a60d744878d7201a640aef41f0499ba95",
   "benchmarks/results/alloy/shells.json": "b25bb2379141fe6ba394eccd73394e966af308c52c569bdafac1a5240307ea70",
-  "benchmarks/results/alloy/table.md": "04c8f42612c1ed109755f30668340aa661d2f5ab2290c4cf6ade9e541812efb8",
+  "benchmarks/results/alloy/table.md": "727294972d3578b837dabdd29caba5020ac909a1ded30a2129c404afac7da83a",
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",
