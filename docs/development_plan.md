@@ -6596,6 +6596,23 @@ concentration was driven, and the stage counts only discharges that ended at the
   210 kJ/mol. Only two measured values stand behind this. The failure for solvents that
   wrap the ion is therefore a failure of the descriptor and not of the rule; both
   variants are in the benchmark (`single_one_donor` and `mixtures_one_donor`).
+  **Done 19 November 2026** (the readings ended on 16 November). The item ends without a
+  field model. Gate (a): the constants of the cell set are 27 and 50 kJ/mol too low, and the
+  mean per electrode is accurate enough for a carbonate electrolyte. Gate (b): the values for
+  one electrode differ between electrolytes by more than the repeatability of 4.8 kJ/mol.
+  Gate (c): closed without a field model, because the room that is left for one, 1.1 and
+  1.8 kJ/mol, is below the repeatability. Gate (d): not run, because no Gaussian process was
+  fitted, and because no measured activation energy for 1 mol/L LiPF6 in EC:EMC 3:7 was
+  found. The item gives three things: the table of 162 measured values from 34 studies
+  (`examples/charge_transfer/activation_energies.csv`, with its sources); the mean per
+  electrode with its deviation (graphite 61.4 kJ/mol from 21 values, layered oxide 68.0
+  kJ/mol from 12); and the regression on the binding energy of Li⁺ with one solvent
+  molecule, with the binding energy of one donor group for the solvents that wrap the ion.
+  Three things are left, and none changes the verdict: a series of diglyme, triglyme and
+  tetraglyme on one electrode, which would settle the shift of 13 to 15 kJ/mol of the two
+  solvents that wrap the ion; a copy of Xu 2007 with its Figure 5 intact, which would add
+  seven compositions; and the use of the measured means in the constants of the cell model,
+  which this item has not done.
 
 * **BT13. The interphase films: the molecule that reacts first, and the barrier through the
   film (opened 14 November 2026).** The solid electrolyte interphase (SEI) is the film that the
@@ -10048,7 +10065,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 11 | 10 | EC9 |
-| H. Battery science | 13 | 8 | BT9 (partly), BT10, BT11, BT12, BT13 |
+| H. Battery science | 13 | 9 | BT9 (partly), BT10, BT11, BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
@@ -10058,7 +10075,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Protein physics | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 143 finished, 7 partly, 29 open.**
+**179 items: 144 finished, 7 partly, 28 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -10097,7 +10114,8 @@ equally blocked.
   binding energy and not enough to separate a field model from it. The regression was run:
   it lowers the held-out error to 7 to 9 kJ/mol for solvents that hold the ion with one
   atom, it fails for solvents that wrap the ion, and it leaves 1 to 2 kJ/mol for a model of
-  the solvent alone. Part (c) of the gate is closed without a field model.
+  the solvent alone. Part (c) of the gate is closed without a field model, and the item
+  was finished on 19 November 2026.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and
