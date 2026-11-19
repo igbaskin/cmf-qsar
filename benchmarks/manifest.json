@@ -1,14 +1,14 @@
 {
- "commit": "91cf6d2722a28e98a396ac5cbf99c614e47dbcf2",
- "created": "2026-11-19T02:15:19",
+ "commit": "f2765674c8f3e68c0c325761101ae39857438d13",
+ "created": "2026-11-19T09:44:36",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
   },
   "examples/alloy/README.md": {
-   "bytes": 7952,
-   "sha256": "ed7e64801db6bfdfa176e9b5e52f5f2d249d69848579d8628d555c8a07b52169"
+   "bytes": 8482,
+   "sha256": "f134f1ba6e7fcd562328fd00891cad2e558d011264890b7706667335664a3b15"
   },
   "examples/alloy/adsorption.csv": {
    "bytes": 1880581,
@@ -3107,9 +3107,9 @@
   "benchmarks/results/alignment/THER.json": "7567c19dd1302c90ff6bbcef3b0ff03ca7412c97693c2ee15fd8f9c96e5bdc4f",
   "benchmarks/results/alignment/THR.json": "d0886d86781c75db7766967b3418f6be1d5e224b6cd4ff25a467605afd4176bc",
   "benchmarks/results/alignment/table.md": "98818deeae5b03f185841ab32f86ace9e4f556f728fa3a74fffe35488cbf3245",
-  "benchmarks/results/alloy/data_site.json": "31c00369d526407dd74980e42fc0d61ee5e4beafaa212bd164de39f6d82ff965",
+  "benchmarks/results/alloy/data_site.json": "288bfa4813f0bf564ef37012083586329c18994e5a14534fe9e1d69406be925a",
   "benchmarks/results/alloy/data_slab.json": "d25672dda8d7503f3c5edbc32025812e35363a02a78ac4b6f22c133a0c676233",
-  "benchmarks/results/alloy/table.md": "b4f5c1f1d4f6aedbb601195472093e0dc19e3259e78272bfd645fcb03af30109",
+  "benchmarks/results/alloy/table.md": "b34eea18b163c395dbb0ed821165681a17bda5a1cb1234e538680dd53ef4a04a",
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",

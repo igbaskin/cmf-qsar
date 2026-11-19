@@ -7515,10 +7515,16 @@ What it leaves open, in order:
   inside each training part. **Slab, H:** the best reference (mean properties of the whole slab,
   MAE 0.189 eV) is slightly better than the best field method (0.199 eV; +0.011 eV, interval
   +0.003 to +0.018). **Slab, OH:** indicator fields are better with random folds (-0.025 eV) and
-  not with alloys held out. **Site, H:** the overlap kernel with extended fields beats every
-  reference on new slabs (MAE 0.216 against 0.268 eV, interval of the difference -0.068 to
-  -0.036) and on new alloys (0.216 against 0.267 eV), and ties it with random folds. **Site, OH:**
-  no field method beats the references. **Not done:** the O and OOH energies (O.tar.gz, 6.1 GB, not
+  not with alloys held out. **Site, H:** the overlap kernel with extended fields beats the
+  element-name and element-property references on new slabs (MAE 0.216 against 0.268 eV) and on
+  new alloys (0.216 against 0.267 eV). Neighbour-count references (atoms of each element in four
+  shells around the same point, added on 19 November with `--task counts`) halve that lead: the
+  best of them has 0.244 eV (slabs held out) and 0.243 eV (alloys held out), so the difference
+  is -0.027 eV, interval -0.040 to -0.015 in both. With random folds the overlap kernel is not
+  better than the counts (+0.014 eV, interval -0.001 to +0.031). **Site, OH:** no field method
+  beats the references (+0.019 eV with random folds, +0.012 eV with slabs held out, interval
+  -0.000 to +0.025, +0.022 eV with alloys held out). **Verdict:** a small gain for H sites on new
+  materials, about 11 % of the error, and no more. **Not done:** the O and OOH energies (O.tar.gz, 6.1 GB, not
   downloaded; the set has no OOH, so no ORR limiting potential); the converged-only variant of the
   site tasks; a tutorial.
 
