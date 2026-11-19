@@ -1131,6 +1131,20 @@ def registry() -> List[Benchmark]:
                   minutes="4",
                   report=lambda: _mod("run_porphyrin").write_table(),
                   tables=["porphyrin/table.md"]),
+        Benchmark("alloy",
+                  "HER and ORR descriptors on bimetallic alloy surfaces (plan item EC12): the "
+                  "adsorption energies of H and OH on 1,928 slabs of Mamun et al., read from "
+                  "their Quantum ESPRESSO logs; periodic autocorrelation kernels on the slab "
+                  "and site kernels at the adsorbate against element fractions and tabulated "
+                  "element properties, with random, slab-out and alloy-out folds",
+                  "run_alloy.py", "alloy", compute=[[]],
+                  prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
+                           "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
+                           "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
+                           "the result is kept in examples/alloy)"],
+                  minutes="220",
+                  report=lambda: _mod("run_alloy").write_table(),
+                  tables=["alloy/table.md"]),
         Benchmark("structures",
                   "structures that are not molecules -- crystals, layers, chains and metal "
                   "particles -- written in six file formats and read back: what each format "

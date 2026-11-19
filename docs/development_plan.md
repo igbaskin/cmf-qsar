@@ -7498,6 +7498,30 @@ What it leaves open, in order:
   0.1 eV); the sign of the normal of the ring is arbitrary for out-of-plane substituents; there is
   no measured activity for these complexes.
 
+* **EC12. HER and ORR on bimetallic alloy surfaces, done 19 November 2026.** EC8 and EC11 had too
+  little structural variation. The set of Mamun et al. (Scientific Data 6 (2019) 76; Materials
+  Cloud record xxdhq-f1v83, CC BY 4.0) has 1,928 slabs of 37 elements (a 2 x 2 cell of three
+  layers) with H on 1,918 of them and OH on 213. The published files give only raw Quantum
+  ESPRESSO logs, so `examples/make_alloy_examples.py` reads 17,212 H logs and 4,060 reference
+  logs, matches each adsorbed slab to its bare slab (95.9 % matched), computes the adsorption
+  energies, finds the site (top, bridge, fcc, hcp, subsurface) and removes 25 % duplicate
+  geometries. Data in `examples/alloy/`; benchmark `benchmarks/run_alloy.py`. **Log faults:** the last
+  position block of a log is the next, uncomputed step; the reader of ASE fails on 2,196 logs;
+  458 logs hold several single-point runs; cells use different vectors and origins.
+  **Measured:** two kinds of task. For a *slab* (target: the lowest energy over its sites) and for
+  a *site* (target: the energy at that site), field kernels against element fractions, fractions
+  by layer, tabulated element properties, and, for sites, the properties of the binding elements
+  with the slab elements. Folds: random, slab-out and alloy-out; the kernel and ridge are chosen
+  inside each training part. **Slab, H:** the best reference (mean properties of the whole slab,
+  MAE 0.189 eV) is slightly better than the best field method (0.199 eV; +0.011 eV, interval
+  +0.003 to +0.018). **Slab, OH:** indicator fields are better with random folds (-0.025 eV) and
+  not with alloys held out. **Site, H:** the overlap kernel with extended fields beats every
+  reference on new slabs (MAE 0.216 against 0.268 eV, interval of the difference -0.068 to
+  -0.036) and on new alloys (0.216 against 0.267 eV), and ties it with random folds. **Site, OH:**
+  no field method beats the references. **Not done:** the O and OOH energies (O.tar.gz, 6.1 GB, not
+  downloaded; the set has no OOH, so no ORR limiting potential); the converged-only variant of the
+  site tasks; a tutorial.
+
 * **PO1. A catalytic series with a shared frame, done 5 November 2026.** The catalysis bullet of
   H named ligand libraries with a shared frame and a rate or a selectivity as the activity, and
   EC4, EC8 and EC9 recorded that no such series could be found in machine-readable form. One

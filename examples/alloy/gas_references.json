@@ -1,0 +1,8 @@
+{
+ "E_H2": -32.919976003545365,
+ "E_H2O": -476.6223082710821,
+ "log_H2": "mamunm/2320544715712739104062708184724040.log",
+ "log_H2O": "mamunm/594059447222461210640053295291249224.log",
+ "unit": "eV",
+ "note": "ASE's value of the Rydberg constant; BEEF-vdW"
+}
