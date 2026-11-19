@@ -1,6 +1,6 @@
 {
- "commit": "903847f0f2fc171c27af0a0a63464efbd6d1677b",
- "created": "2026-11-19T18:53:26",
+ "commit": "ee6bf1422d284b0c7679bc84ee9a68471e87f865",
+ "created": "2026-11-19T19:57:33",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -153,6 +153,22 @@
   "examples/complexes_ni/ni_bpp.sdf": {
    "bytes": 92398,
    "sha256": "08e4c624bdaba1daad99ba3039d5bea96c8d8729d78a27b69663ec25f3f19b50"
+  },
+  "examples/copolymers/LICENSE_polymer-chemprop-data.txt": {
+   "bytes": 1067,
+   "sha256": "4ef9682f72ede67442b9fd976812c34884ce9bbc35b4eb56cb1642f6bdca299d"
+  },
+  "examples/copolymers/README.md": {
+   "bytes": 3216,
+   "sha256": "9e9bdc911c944a9b5674405f767633c40c9c994c5927ea54f0e78d50410dc1c6"
+  },
+  "examples/copolymers/provenance.json": {
+   "bytes": 1030,
+   "sha256": "befea14efa0a757def73885bf414c7af8020a5af0bc79618fd8f34c2c92178e3"
+  },
+  "examples/copolymers/vipea.csv": {
+   "bytes": 267183,
+   "sha256": "bf1b3d6f850887387cd12e05849d3ff5f49fe561f0c41299bbc027c05a341b9a"
   },
   "examples/corrosion/0_c1ccccc1.csv": {
    "bytes": 41440,
@@ -3386,6 +3402,8 @@
   "benchmarks/results/conformal/THER.json": "51360722e3dd1dd962c4a422981238e9053acc777da7761a1119c85f810b7a72",
   "benchmarks/results/conformal/THR.json": "e3c54ff74418b4c47a411632ccd3d9fa8bd0b10d3a02bd9a12a210fd6faa33ed",
   "benchmarks/results/conformal/table.md": "702d1107fbabee88dee5055b9b5b04d27a0fa42b15d0a1b1db6222f36a8a2e8c",
+  "benchmarks/results/copolymers/copolymers.json": "494c15160b4ea4901091e404cdcaea1b39c3fb4e9464508f8141a05bff6d616c",
+  "benchmarks/results/copolymers/table.md": "e78703d46191b667cc97a003dd2cf0c2d716605fd6f5f8de28befa65760d0ecf",
   "benchmarks/results/core_fields/alloys.json": "2f660e518bff51ebbca7fc5cec6ac95598397786445f151b74f3918391662635",
   "benchmarks/results/core_fields/checks.json": "a9e72dd02f07478b3fe7ce8cdfb037ff8b24890fe4161e0b588afb8d30d6ff2b",
   "benchmarks/results/core_fields/single.json": "3c96a26109cffb32a0cdcde207343036728cd8e8121bdec54372e4b92e676a44",
