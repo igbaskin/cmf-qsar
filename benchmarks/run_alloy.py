@@ -41,6 +41,23 @@ and the field methods are the periodic autocorrelation of the slab (rotation and
 invariant), the rotation-invariant autocorrelation of the point environment of a site, and the
 overlap kernel of that environment in the frame of the lattice.
 
+The shells around a site (task ``shells``, added 19 November 2026)
+-----------------------------------------------------------------
+The site references above know the binding atoms, the kind of site and the composition of the
+slab, but not what lies around the site: the second neighbours, or the atom under a hollow. A
+field of the site environment sees those, so a reference that sees them too is needed before a
+lead of the field is read as a property of the field. The task adds two such references, with no
+field and no frame:
+
+* *shell properties and site kind*: for each of four distance shells around the point of the
+  site (up to 2.5, 3.5, 4.5 and 6 A, the periodic images of the slab included), the number of
+  atoms and the sum of their standardised element properties; with the kind of site;
+* *shell elements and site kind*: for each shell, the number of atoms of each element.
+
+Each is a linear kernel and Gaussian kernels of five widths, on the stored rows, folds and inner
+choice of the site task. The task reads the stored predictions of the site task and compares every
+field method with the better of the two, by the bootstrap over slabs.
+
 Folds
 -----
 random      slabs (or sites) dealt at random into 10 folds
@@ -56,6 +73,7 @@ Usage
 -----
     python benchmarks/run_alloy.py                 # slab and site tasks, then the table
     python benchmarks/run_alloy.py --task slab
+    python benchmarks/run_alloy.py --task shells    # after the site task: the shell references
     python benchmarks/run_alloy.py --report        # rebuild the table from the stored results
     python benchmarks/run_alloy.py --task counts   # add the neighbour-count references to the
                                                    # stored site results (needs a site run first)
@@ -146,6 +164,26 @@ class AlloySet:
 
 def select(data: AlloySet, ads: str, variant: str) -> List[dict]:
     return [r for r in data.rows if r["ads"] == ads and (variant == "all" or not r["limit"])]
+
+
+def site_rows(data: AlloySet, ads: str, variant: str, max_sites: int,
+              rng: Optional[np.random.RandomState] = None) -> List[dict]:
+    """The rows of a site task: whole slabs drawn at random until `max_sites` rows are reached.
+
+    `run` draws all its site tasks from one generator, in the order H all, H converged, OH all,
+    OH converged; a task alone gets a new generator, which is the same for the first task."""
+    rows = select(data, ads, variant)
+    slabs = sorted({r["slab"] for r in rows})
+    if len(rows) > max_sites:
+        (rng if rng is not None else np.random.RandomState(SEED)).shuffle(slabs)
+        keep, count = set(), 0
+        for s in slabs:
+            keep.add(s)
+            count += sum(1 for r in rows if r["slab"] == s)
+            if count >= max_sites:
+                break
+        rows = [r for r in rows if r["slab"] in keep]
+    return rows
 
 
 def slab_task(data: AlloySet, ads: str, variant: str) -> Tuple[List[int], np.ndarray]:
@@ -282,6 +320,11 @@ def neighbour_counts(data: AlloySet, rows: Sequence[dict]) -> Tuple[np.ndarray, 
     return N.reshape(len(rows), -1), Q.reshape(len(rows), -1)
 
 
+#: the widths of gauss_family; the count references use gauss_light, which gives the same kernels
+#: without the (n, n, d) array (about 7.4 GB for 2,500 sites and 148 count columns)
+COUNT_FACTORS = (0.25, 1.0, 4.0)
+
+
 def count_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str, np.ndarray]]:
     """References that count the neighbours of a site in four shells (the fair reference for a
     field, which is also a smooth count of the neighbours)."""
@@ -289,16 +332,16 @@ def count_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str
     B, P, S, C = site_reference_rows(data, rows)
     fam: Dict[str, Dict[str, np.ndarray]] = {}
     fam["neighbour counts of each element in four shells"] = {
-        "linear": N @ N.T, **gauss_family(N, "counts")}
+        "linear": N @ N.T, **gauss_light(N, "counts", factors=COUNT_FACTORS)}
     Xs = np.hstack([N, S])
     fam["neighbour counts of each element in four shells, and site kind"] = {
-        "linear": Xs @ Xs.T, **gauss_family(Xs, "counts+site")}
+        "linear": Xs @ Xs.T, **gauss_light(Xs, "counts+site", factors=COUNT_FACTORS)}
     Xq = np.hstack([Q, S])
-    fam["neighbour sums of element properties in four shells, and site kind"] = gauss_family(
-        Xq, "property sums+site")
+    fam["neighbour sums of element properties in four shells, and site kind"] = gauss_light(
+        Xq, "property sums+site", factors=COUNT_FACTORS)
     Xa = np.hstack([N, B, S, C])
     fam["neighbour counts, binding elements, site kind and slab elements"] = {
-        "linear": Xa @ Xa.T, **gauss_family(Xa, "counts+binding+slab")}
+        "linear": Xa @ Xa.T, **gauss_light(Xa, "counts+binding+slab", factors=COUNT_FACTORS)}
     return fam
 
 
@@ -551,17 +594,7 @@ def run(args, log=print) -> None:
         rng = np.random.RandomState(SEED)
         for ads in ("H", "OH"):
             for variant in args.variants:
-                rows = select(data, ads, variant)
-                slabs = sorted({r["slab"] for r in rows})
-                if len(rows) > args.max_sites:
-                    rng.shuffle(slabs)
-                    keep, count = set(), 0
-                    for s in slabs:
-                        keep.add(s)
-                        count += sum(1 for r in rows if r["slab"] == s)
-                        if count >= args.max_sites:
-                            break
-                    rows = [r for r in rows if r["slab"] in keep]
+                rows = site_rows(data, ads, variant, args.max_sites, rng)
                 y = np.array([r["e"] for r in rows])
                 groups = {"slab-out": [str(r["slab"]) for r in rows],
                           "alloy-out": [data.alloy(r["slab"]) for r in rows]}
@@ -579,6 +612,128 @@ def run(args, log=print) -> None:
     path = os.path.join(RESULTS, "data.json" if args.task == "all" else f"data_{args.task}.json")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump({"tasks": tasks, "seed": SEED, "folds": FOLDS, "inner": INNER}, fh, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+# --------------------------------------------------------------------------- #
+# The shells around a site (task shells)
+# --------------------------------------------------------------------------- #
+SHELL_EDGES = (2.5, 3.5, 4.5, 6.0)
+#: the widths of the Gaussian kernels, as factors of the median squared distance; wider than
+#: gauss_family's, because a first measurement chose the widest of 0.25, 1 and 4 in most folds
+SHELL_FACTORS = (0.25, 1.0, 4.0, 16.0, 64.0)
+SHELL_REFERENCES = ("shell properties and site kind", "shell elements and site kind")
+
+
+def shell_columns(data: AlloySet, rows: Sequence[dict], ads: str):
+    """For every site: per shell around its point, the number of atoms and the sum of the
+    standardised element properties (`P`), and the number of atoms of each element (`E`); and the
+    kind of site (`S`). The periodic images of the slab in its two in-plane directions count: two
+    on each side, because a 2 x 2 cell is about 5.5 A long and the outer shell reaches 6 A."""
+    props = standard_properties(data.elements)
+    col = {e: i for i, e in enumerate(data.elements)}
+    n_p, n_e, n_s = len(PROPS), len(col), len(SHELL_EDGES)
+    P = np.zeros((len(rows), n_s * (1 + n_p)))
+    E = np.zeros((len(rows), n_s * n_e))
+    S = np.zeros((len(rows), len(SITE_KINDS)))
+    for k, r in enumerate(rows):
+        slab = data.slabs[r["slab"]]
+        top, _ = data.layers(r["slab"])
+        centre = np.array([r["x"], r["y"], float(slab.positions[top, 2].mean()) + HEIGHT[ads]])
+        cell = slab.cell.array
+        sym = slab.get_chemical_symbols()
+        for i in range(-2, 3):
+            for j in range(-2, 3):
+                d = np.linalg.norm(slab.positions + i * cell[0] + j * cell[1] - centre, axis=1)
+                low = 0.0
+                for s, edge in enumerate(SHELL_EDGES):
+                    for a in np.flatnonzero((d > low) & (d <= edge)):
+                        P[k, s * (1 + n_p)] += 1.0
+                        P[k, s * (1 + n_p) + 1:(s + 1) * (1 + n_p)] += props[sym[a]]
+                        E[k, s * n_e + col[sym[a]]] += 1.0
+                    low = edge
+        S[k, SITE_KINDS.index(r["site"])] = 1.0
+    return P, E, S
+
+
+def gauss_light(X: np.ndarray, prefix: str, factors=SHELL_FACTORS) -> Dict[str, np.ndarray]:
+    """The kernels of gauss_family, computed from |x|^2 + |y|^2 - 2 x.y without the (n, n, d)
+    array that gauss_family builds (about 7.6 GB for 2,500 rows of 150 columns)."""
+    sq = np.sum(X * X, axis=1)
+    D2 = np.maximum(sq[:, None] + sq[None, :] - 2.0 * (X @ X.T), 0.0)
+    med = float(np.median(D2[D2 > 1e-12]))
+    return {f"{prefix} gauss x{f:g}": np.exp(-D2 / (f * med)) for f in factors}
+
+
+def _standardised(X: np.ndarray) -> np.ndarray:
+    keep = X.std(axis=0) > 0
+    X = X[:, keep]
+    return (X - X.mean(axis=0)) / X.std(axis=0)
+
+
+def shell_references(data: AlloySet, rows: Sequence[dict], ads: str) -> Dict[str, Dict[str, np.ndarray]]:
+    P, E, S = shell_columns(data, rows, ads)
+    fam = {}
+    for name, M, prefix in ((SHELL_REFERENCES[0], P, "shell properties"),
+                            (SHELL_REFERENCES[1], E, "shell elements")):
+        X = np.hstack([_standardised(M), S])
+        fam[name] = {"linear": X @ X.T / X.shape[1], **gauss_light(X, prefix)}
+    return fam
+
+
+def run_shells(args, log=print) -> None:
+    """The shell references on the rows and folds of every stored site task."""
+    warnings.filterwarnings("ignore")
+    path = os.path.join(RESULTS, "data_site.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} is missing: run the site task first")
+    with open(path, encoding="utf-8") as fh:
+        stored = json.load(fh)["tasks"]
+    data = AlloySet()
+    out = []
+    # the generator of the stored run: one for all site tasks, in the order of the stored tasks
+    rng = np.random.RandomState(SEED)
+    for task in stored:
+        ads, variant = task["adsorbate"], task["variant"]
+        rows = site_rows(data, ads, variant, args.max_sites, rng)
+        if [r["log"] for r in rows] != task["rows"]:
+            raise SystemExit(f"{task['task']}: the rows differ from the stored run")
+        y = np.array([r["e"] for r in rows])
+        groups = {"slab-out": [str(r["slab"]) for r in rows],
+                  "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+        fams = shell_references(data, rows, ads)
+        res = {"task": task["task"], "adsorbate": ads, "variant": variant, "n": len(rows),
+               "models": [], "pairs": []}
+        designs = []
+        for m in task["models"]:
+            if m["design"] not in designs:
+                designs.append(m["design"])
+        for design in designs:
+            sm = {m["name"]: m for m in task["models"] if m["design"] == design}
+            old_refs = [n for n in sm if not n.startswith("site environment") and n != "training mean"]
+            best_old = min(old_refs, key=lambda n: sm[n]["mae"])
+            new = {name: cross_validate(name, fam, y, design, groups) for name, fam in fams.items()}
+            best_new = min(new, key=lambda n: new[n]["mae"])
+            pn = np.array([np.nan if v is None else v for v in new[best_new]["predicted"]])
+            po = np.array(sm[best_old]["predicted"], float)
+            for name, r in new.items():
+                res["models"].append({k: v for k, v in r.items() if k != "predicted"})
+                log(f"  {task['task']:14s} {design:9s} {name:32s} q2 {r['q2']:+.3f} mae {r['mae']:.3f}")
+            d = bootstrap_mae(y, pn, po, groups=groups["slab-out"])
+            res["pairs"].append({"design": design, "method": best_new, "against": best_old,
+                                 "delta_mae": d[0], "low": d[1], "high": d[2]})
+            for name in sm:
+                if name.startswith("site environment"):
+                    pf = np.array([np.nan if v is None else v for v in sm[name]["predicted"]])
+                    d = bootstrap_mae(y, pf, pn, groups=groups["slab-out"])
+                    res["pairs"].append({"design": design, "method": name, "against": best_new,
+                                         "delta_mae": d[0], "low": d[1], "high": d[2]})
+        out.append(res)
+    path = os.path.join(RESULTS, "shells.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"tasks": out, "edges": list(SHELL_EDGES), "factors": list(SHELL_FACTORS)}, fh,
+                  indent=1, default=float)
         fh.write("\n")
     log(f"wrote {path}")
 
@@ -652,6 +807,33 @@ def write_table(path: Optional[str] = None) -> str:
                             diff = f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}]"
                 lines.append(f"| {m['name']} | {kind} | {m['q2']:+.3f} | {m['mae']:.3f} | {diff} |")
             lines.append("")
+    shells = os.path.join(RESULTS, "shells.json")
+    if os.path.exists(shells):
+        with open(shells, encoding="utf-8") as fh:
+            sh = json.load(fh)
+        lines += ["## The shells around a site: references added on 19 November 2026", "",
+                  "Two more references for the site tasks, with no field and no frame: for each "
+                  "distance shell around the point of the site (up to "
+                  + ", ".join(f"{e:g}" for e in sh["edges"]) + " A), the number of atoms and the "
+                  "sum of their standardised element properties (*shell properties*), or the "
+                  "number of atoms of each element (*shell elements*), each with the kind of "
+                  "site. Same rows, folds and inner choice as the site tasks above. The "
+                  "differences are in MAE (eV); a negative number means that the first method "
+                  "has the smaller error.", ""]
+        for t in sh["tasks"]:
+            lines += [f"### {t['task']}", "",
+                      "| folds | reference | q2 | MAE (eV) | chosen kernels |",
+                      "| --- | --- | --- | --- | --- |"]
+            for m in t["models"]:
+                chosen = ", ".join(f"{k} ({v})" for k, v in m["chosen"].items())
+                lines.append(f"| {m['design']} | {m['name']} | {m['q2']:+.3f} | {m['mae']:.3f} | "
+                             f"{chosen} |")
+            lines += ["", "| folds | method | against | MAE difference (eV) |",
+                      "| --- | --- | --- | --- |"]
+            for p in t["pairs"]:
+                lines.append(f"| {p['design']} | {p['method']} | {p['against']} | "
+                             f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
+            lines.append("")
     path = path or os.path.join(RESULTS, "table.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -660,8 +842,9 @@ def write_table(path: Optional[str] = None) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", choices=("all", "slab", "site", "counts"), default="all",
-                    help="counts: add the neighbour-count references to the stored site results")
+    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells"), default="all",
+                    help="counts: add the neighbour-count references to the stored site results; "
+                         "shells: the shell references on the stored site tasks")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
     ap.add_argument("--max-sites", type=int, default=MAX_OVERLAP_SITES)
     ap.add_argument("--no-overlap", action="store_true")
@@ -672,6 +855,10 @@ def main() -> None:
         return
     if args.task == "counts":
         add_counts()
+        print("wrote", write_table())
+        return
+    if args.task == "shells":
+        run_shells(args)
         print("wrote", write_table())
         return
     run(args)

@@ -275,3 +275,65 @@ The best reference is *properties of the binding elements, site kind and slab el
 | site environment, invariant, extended fields | field method | +0.614 | 0.278 | +0.046 [+0.028, +0.062] |
 | site environment, overlap in the lattice frame, extended fields | field method | +0.668 | 0.255 | +0.022 [+0.008, +0.035] |
 
+## The shells around a site: references added on 19 November 2026
+
+Two more references for the site tasks, with no field and no frame: for each distance shell around the point of the site (up to 2.5, 3.5, 4.5, 6 A), the number of atoms and the sum of their standardised element properties (*shell properties*), or the number of atoms of each element (*shell elements*), each with the kind of site. Same rows, folds and inner choice as the site tasks above. The differences are in MAE (eV); a negative number means that the first method has the smaller error.
+
+### site H [all]
+
+| folds | reference | q2 | MAE (eV) | chosen kernels |
+| --- | --- | --- | --- | --- |
+| random | shell properties and site kind | +0.817 | 0.174 | shell properties gauss x1 lam=0.1 (9), shell properties gauss x1 lam=0.01 (1) |
+| random | shell elements and site kind | +0.799 | 0.188 | shell elements gauss x1 lam=0.1 (10) |
+| slab-out | shell properties and site kind | +0.771 | 0.201 | shell properties gauss x4 lam=0.01 (6), shell properties gauss x16 lam=0.001 (1), shell properties gauss x1 lam=0.1 (3) |
+| slab-out | shell elements and site kind | +0.698 | 0.241 | shell elements gauss x4 lam=0.1 (8), shell elements gauss x16 lam=0.01 (1), shell elements gauss x1 lam=0.1 (1) |
+| alloy-out | shell properties and site kind | +0.774 | 0.200 | shell properties gauss x4 lam=0.01 (4), shell properties gauss x1 lam=0.1 (6) |
+| alloy-out | shell elements and site kind | +0.718 | 0.235 | shell elements gauss x4 lam=0.1 (9), shell elements gauss x16 lam=0.01 (1) |
+
+| folds | method | against | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | shell properties and site kind | neighbour counts, binding elements, site kind and slab elements | -0.021 [-0.033, -0.009] |
+| random | site environment, invariant, classic fields | shell properties and site kind | +0.109 [+0.097, +0.121] |
+| random | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.058 [+0.047, +0.070] |
+| random | site environment, invariant, extended fields | shell properties and site kind | +0.056 [+0.046, +0.066] |
+| random | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.035 [+0.024, +0.046] |
+| slab-out | shell properties and site kind | neighbour counts, binding elements, site kind and slab elements | -0.043 [-0.055, -0.032] |
+| slab-out | site environment, invariant, classic fields | shell properties and site kind | +0.094 [+0.082, +0.107] |
+| slab-out | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.038 [+0.027, +0.049] |
+| slab-out | site environment, invariant, extended fields | shell properties and site kind | +0.052 [+0.041, +0.063] |
+| slab-out | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.016 [+0.004, +0.027] |
+| alloy-out | shell properties and site kind | neighbour counts, binding elements, site kind and slab elements | -0.043 [-0.054, -0.032] |
+| alloy-out | site environment, invariant, classic fields | shell properties and site kind | +0.096 [+0.083, +0.109] |
+| alloy-out | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.039 [+0.028, +0.050] |
+| alloy-out | site environment, invariant, extended fields | shell properties and site kind | +0.053 [+0.042, +0.065] |
+| alloy-out | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.016 [+0.005, +0.027] |
+
+### site OH [all]
+
+| folds | reference | q2 | MAE (eV) | chosen kernels |
+| --- | --- | --- | --- | --- |
+| random | shell properties and site kind | +0.740 | 0.208 | shell properties gauss x1 lam=0.1 (10) |
+| random | shell elements and site kind | +0.713 | 0.224 | shell elements gauss x4 lam=0.01 (7), shell elements gauss x1 lam=0.1 (3) |
+| slab-out | shell properties and site kind | +0.715 | 0.220 | shell properties gauss x16 lam=0.001 (5), shell properties gauss x4 lam=0.01 (4), shell properties gauss x1 lam=0.1 (1) |
+| slab-out | shell elements and site kind | +0.650 | 0.251 | shell elements gauss x4 lam=0.1 (8), shell elements gauss x4 lam=0.01 (2) |
+| alloy-out | shell properties and site kind | +0.719 | 0.222 | shell properties gauss x4 lam=0.01 (5), shell properties gauss x1 lam=0.1 (4), shell properties gauss x16 lam=0.001 (1) |
+| alloy-out | shell elements and site kind | +0.634 | 0.266 | shell elements gauss x4 lam=0.01 (2), shell elements gauss x4 lam=0.1 (8) |
+
+| folds | method | against | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | shell properties and site kind | binding elements, site kind and slab elements | -0.013 [-0.019, -0.007] |
+| random | site environment, invariant, classic fields | shell properties and site kind | +0.113 [+0.097, +0.131] |
+| random | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.073 [+0.062, +0.087] |
+| random | site environment, invariant, extended fields | shell properties and site kind | +0.038 [+0.030, +0.047] |
+| random | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.032 [+0.024, +0.040] |
+| slab-out | shell properties and site kind | neighbour sums of element properties in four shells, and site kind | -0.020 [-0.029, -0.011] |
+| slab-out | site environment, invariant, classic fields | shell properties and site kind | +0.127 [+0.106, +0.149] |
+| slab-out | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.083 [+0.070, +0.098] |
+| slab-out | site environment, invariant, extended fields | shell properties and site kind | +0.052 [+0.039, +0.066] |
+| slab-out | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.032 [+0.022, +0.043] |
+| alloy-out | shell properties and site kind | properties of the binding elements, site kind and slab elements | -0.010 [-0.026, +0.002] |
+| alloy-out | site environment, invariant, classic fields | shell properties and site kind | +0.135 [+0.116, +0.156] |
+| alloy-out | site environment, overlap in the lattice frame, classic fields | shell properties and site kind | +0.090 [+0.074, +0.111] |
+| alloy-out | site environment, invariant, extended fields | shell properties and site kind | +0.055 [+0.044, +0.068] |
+| alloy-out | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.032 [+0.023, +0.042] |
+

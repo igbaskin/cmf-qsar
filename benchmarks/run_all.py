@@ -1136,13 +1136,17 @@ def registry() -> List[Benchmark]:
                   "adsorption energies of H and OH on 1,928 slabs of Mamun et al., read from "
                   "their Quantum ESPRESSO logs; periodic autocorrelation kernels on the slab "
                   "and site kernels at the adsorbate against element fractions and tabulated "
-                  "element properties, with random, slab-out and alloy-out folds",
-                  "run_alloy.py", "alloy", compute=[[]],
+                  "element properties, with random, slab-out and alloy-out folds; for the "
+                  "sites also two kinds of reference with no field: the atoms of each element in "
+                  "distance shells around the site (neighbour counts), and the atom count and "
+                  "standardised element properties in such shells (shell properties)",
+                  "run_alloy.py", "alloy",
+                  compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"]],
                   prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
                            "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
                            "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
                            "the result is kept in examples/alloy)"],
-                  minutes="220",
+                  minutes="265",
                   report=lambda: _mod("run_alloy").write_table(),
                   tables=["alloy/table.md"]),
         Benchmark("structures",

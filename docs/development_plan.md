@@ -7520,13 +7520,23 @@ What it leaves open, in order:
   new alloys (0.216 against 0.267 eV). Neighbour-count references (atoms of each element in four
   shells around the same point, added on 19 November with `--task counts`) halve that lead: the
   best of them has 0.244 eV (slabs held out) and 0.243 eV (alloys held out), so the difference
-  is -0.027 eV, interval -0.040 to -0.015 in both. With random folds the overlap kernel is not
-  better than the counts (+0.014 eV, interval -0.001 to +0.031). **Site, OH:** no field method
-  beats the references (+0.019 eV with random folds, +0.012 eV with slabs held out, interval
-  -0.000 to +0.025, +0.022 eV with alloys held out). **Verdict:** a small gain for H sites on new
-  materials, about 11 % of the error, and no more. **Not done:** the O and OOH energies (O.tar.gz, 6.1 GB, not
-  downloaded; the set has no OOH, so no ORR limiting potential); the converged-only variant of the
-  site tasks; a tutorial.
+  is -0.027 eV, interval -0.040 to -0.015 in both. **Shell properties** (added on 19 November
+  with `--task shells`, results in `results/alloy/shells.json`) remove the rest of the lead. Per
+  shell (up to 2.5, 3.5, 4.5 and 6 A) they take the number of atoms and the sum of the
+  standardised element properties, with the site kind, standardised columns and a Gaussian
+  kernel. For H their MAE is 0.174 / 0.201 / 0.200 eV (random / slab-out / alloy-out), and the
+  overlap kernel minus them is +0.035 [+0.024, +0.046], +0.016 [+0.004, +0.027] and +0.016
+  [+0.005, +0.027]. **Site, OH:** no field method beats the references. The shell properties
+  reach 0.208 / 0.220 / 0.222 eV, and the overlap kernel is worse by +0.032 with each kind of
+  fold. A one-off check on H with slabs held out (not part of the benchmark) found why the
+  neighbour counts are weaker. Starting from the shell properties: without the atom count of
+  each shell, 0.222 eV; without standardised columns, 0.220 eV; with the first shell at 2.3 A
+  instead of 2.5 A, 0.205 eV. All three together give the 0.246 eV of the neighbour-count
+  property sums. **Verdict:** a smooth field of the site environment adds nothing to a count of
+  the atoms and their properties at each distance from the site, for H or for OH. A tutorial was
+  planned on this set and dropped for that reason. **Not done:** the O and OOH energies
+  (O.tar.gz, 6.1 GB, not downloaded; the set has no OOH, so no ORR limiting potential); the
+  converged-only variant of the site tasks.
 
 * **PO1. A catalytic series with a shared frame, done 5 November 2026.** The catalysis bullet of
   H named ligand libraries with a shared frame and a rate or a selectivity as the activity, and

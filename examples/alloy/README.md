@@ -80,22 +80,42 @@ bootstrap interval of 95 %.
   slightly worse (+0.011 eV, interval +0.003 to +0.018). For OH (213 slabs) the autocorrelation of
   indicator fields is better with random folds (-0.025 eV, interval -0.050 to -0.002) but not
   when whole alloys are held out.
-- **One value for each site.** The references include *neighbour counts*: the number of atoms of
-  each element in four shells (up to 2.3, 3.3, 4.5 and 6.0 Angstrom) around the same point that
-  the field methods use. For H, the overlap kernel with extended fields is better than every
-  reference when whole slabs are held out (MAE 0.216 eV against 0.244 eV for the best reference,
-  the neighbour counts with the binding elements, the site kind and the slab elements;
-  difference -0.027 eV, interval -0.040 to -0.015) and when whole alloys are held out (0.216 eV
-  against 0.243 eV; -0.027 eV, interval -0.040 to -0.015). With random folds it is not better
-  (+0.014 eV, interval -0.001 to +0.031). Before the neighbour counts were added, the lead was
-  0.051 eV; about half of it was a lack of counts in the references. For OH no field method beats
-  the references: the best, the overlap kernel with extended fields, is worse with random folds
-  (+0.019 eV, interval +0.010 to +0.028) and with alloys held out (+0.022 eV), and level with them
-  when slabs are held out (+0.012 eV, interval -0.000 to +0.025).
-- **What this means.** The names and properties of the elements and the neighbour counts explain
-  most of the variance (q2 about 0.6 to 0.8). A smooth field of the environment around the site
-  adds a small gain for H on new slabs and new alloys (about 11 % of the error). It adds nothing
-  for OH, and nothing for the lowest energy of a whole slab.
+- **One value for each site.** The site references are of three kinds, and none uses a field:
+  - *element references*: the names or properties of the binding elements, the site kind and the
+    elements of the slab;
+  - *neighbour counts* (`--task counts`): the number of atoms of each element in four shells (up
+    to 2.3, 3.3, 4.5 and 6.0 Angstrom) around the same point that the field methods use, and
+    variants of it;
+  - *shell properties* (`--task shells`): for four shells (up to 2.5, 3.5, 4.5 and 6.0 Angstrom)
+    around the same point, the number of atoms and the sum of their standardised element
+    properties, with the site kind. The columns are standardised before the Gaussian kernel.
+
+  The best field method is the overlap kernel with extended fields. The table compares it with
+  the best neighbour-count reference and with the shell properties (MAE in eV; the last column is
+  a paired bootstrap interval of 95 %, with whole slabs resampled):
+
+  | adsorbate | folds | overlap kernel, extended fields | best neighbour-count reference | shell properties | overlap kernel minus shell properties |
+  | --- | --- | --- | --- | --- | --- |
+  | H | random | 0.209 | 0.195 | 0.174 | +0.035 [+0.024, +0.046] |
+  | H | slab-out | 0.216 | 0.244 | 0.201 | +0.016 [+0.004, +0.027] |
+  | H | alloy-out | 0.216 | 0.243 | 0.200 | +0.016 [+0.005, +0.027] |
+  | OH | random | 0.240 | 0.222 | 0.208 | +0.032 [+0.024, +0.040] |
+  | OH | slab-out | 0.252 | 0.240 | 0.220 | +0.032 [+0.022, +0.043] |
+  | OH | alloy-out | 0.255 | 0.245 | 0.222 | +0.032 [+0.023, +0.042] |
+
+  Against the element references and the neighbour counts, the overlap kernel looks better for H
+  on new slabs and new alloys (-0.027 eV against the best neighbour-count reference, interval
+  -0.040 to -0.015). Against the shell properties it is worse with every kind of fold, for H and
+  for OH. The neighbour counts are weaker than the shell properties mainly because they leave out
+  the number of atoms in each shell and do not standardise their columns. Without
+  standardisation the site kind (columns of 0 and 1) has almost no weight beside the sums. In some
+  folds the shell properties chose the widest Gaussian together with the smallest ridge value (1
+  of 10 folds for H with slabs held out, 1 to 5 of 10 for OH). A wider grid could only make this
+  reference better.
+- **What this means.** The names and properties of the elements, counted in shells around the
+  site, explain most of the variance (q2 about 0.7 to 0.8). A smooth field of the environment
+  around the site adds nothing to them, for H or for OH. The fields also add nothing for the
+  lowest energy of a whole slab.
 
 ## What to keep in mind
 
