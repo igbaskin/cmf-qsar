@@ -1,14 +1,14 @@
 {
- "commit": "ee6bf1422d284b0c7679bc84ee9a68471e87f865",
- "created": "2026-11-19T19:57:33",
+ "commit": "ad581e8d16765dcffae3c49e0675c64f102b97d7",
+ "created": "2026-11-19T21:08:52",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
   },
   "examples/alloy/README.md": {
-   "bytes": 16038,
-   "sha256": "1a548ab572d372f0bccae4bcbc9b18a064dd09098601ac37a70a05e631e57fad"
+   "bytes": 18190,
+   "sha256": "67b539e863dd6305b276daea8d257f9b9a36b58f876025a98939e1c38dcd2aca"
   },
   "examples/alloy/adsorption.csv": {
    "bytes": 1880581,
@@ -3128,11 +3128,12 @@
   "benchmarks/results/alignment/THR.json": "d0886d86781c75db7766967b3418f6be1d5e224b6cd4ff25a467605afd4176bc",
   "benchmarks/results/alignment/table.md": "98818deeae5b03f185841ab32f86ace9e4f556f728fa3a74fffe35488cbf3245",
   "benchmarks/results/alloy/ablation.json": "85d2533a162bef4e9abc7eaec25aefd235525cccd20779758b4f0843c86523cc",
+  "benchmarks/results/alloy/ablation_OH.json": "39580e45c04501cea8f04c3b55edfbd4baad0fe3b4b0175a45492d3308d1fb1c",
   "benchmarks/results/alloy/data_site.json": "288bfa4813f0bf564ef37012083586329c18994e5a14534fe9e1d69406be925a",
   "benchmarks/results/alloy/data_slab.json": "d25672dda8d7503f3c5edbc32025812e35363a02a78ac4b6f22c133a0c676233",
   "benchmarks/results/alloy/gnn.json": "e0ab59f667520ea7212b63944b4f4c4a60d744878d7201a640aef41f0499ba95",
   "benchmarks/results/alloy/shells.json": "b25bb2379141fe6ba394eccd73394e966af308c52c569bdafac1a5240307ea70",
-  "benchmarks/results/alloy/table.md": "727294972d3578b837dabdd29caba5020ac909a1ded30a2129c404afac7da83a",
+  "benchmarks/results/alloy/table.md": "f821671926c7ec87f3a5d834670c25f866dfb3acf8725891ce05d703c017d8c7",
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",
