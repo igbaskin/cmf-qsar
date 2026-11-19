@@ -1,6 +1,6 @@
 {
- "commit": "b128b59d2339039616689c551fff40aa6fa6ebae",
- "created": "2026-11-19T11:29:32",
+ "commit": "4ffb3c097755c268436d1ad0ba415b74693d8841",
+ "created": "2026-11-19T13:37:55",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2487,20 +2487,24 @@
    "sha256": "d615cbd34506317ffba0b52edafa47b8a12fc1663a7e5896a639af2351ff7542"
   },
   "examples/polymer_packing/README.md": {
-   "bytes": 4127,
-   "sha256": "1fc61c4edd4b99dd4c767b522c5bd5452b8560649d3827c085335ead854ff292"
+   "bytes": 6079,
+   "sha256": "708247ab459abc6cfb130a81b195a8fb170389b44d2a6f58c6d9bc4a55a356db"
   },
   "examples/polymer_packing/permeability.csv": {
    "bytes": 80910,
    "sha256": "bde5c62a1d0c159d973540f34e5302e6cb2a4fd2e644c1cc7ad377701cf18397"
+  },
+  "examples/polymer_packing/permeability_pl6.csv": {
+   "bytes": 100012,
+   "sha256": "4d86b7908b81243f57f4330a46126653435035a8e9f4e4ec07c0aab5f209f83f"
   },
   "examples/polymer_packing/pi1070.csv": {
    "bytes": 101550,
    "sha256": "ada38f188e591058601025b629be45d9d4e1fe958abfc861a67c99cb7fafbb4a"
   },
   "examples/polymer_packing/provenance.json": {
-   "bytes": 1256,
-   "sha256": "6baa10a3be32e2790fca321bf3ebb17e2d82a0a2a33a1584ed65344d7e261267"
+   "bytes": 2189,
+   "sha256": "bd707c5d8339689347aa4fc47607a67780440500cb0f32a80d901aa27add138a"
   },
   "examples/polymer_tg/README.md": {
    "bytes": 2856,
@@ -3023,7 +3027,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -4062,6 +4066,8 @@
   "benchmarks/results/phenazine/data.json": "ced159bf4c67cd384e58075460e0cf0a06b32198ebfc0ae7d994426155e84de8",
   "benchmarks/results/phenazine/gate.json": "2abaf3c05f6b90992d53b6d29d8fe769433e79cc903b2b50639ef3505a69c01a",
   "benchmarks/results/phenazine/table.md": "1ff16755015b5a1a781a0a78527556e20ff8119ab75e76b0e5d284f06d1f011b",
+  "benchmarks/results/polymer_ladders/polymer_ladders.json": "72b5d52c4b78877d87f2ffa5b4b9d074d908ec2d35792e82a47dd23b72d33ff2",
+  "benchmarks/results/polymer_ladders/table.md": "dd0c110f925fd6cf14f18c468dbefcdf73cc251c8a637f4a574b16dca091f5a1",
   "benchmarks/results/polymer_packing/polymer_packing.json": "e405d341ec41d775bbb8fb7835cbb2832c8eeb11622076f3095821d28a0d776d",
   "benchmarks/results/polymer_packing/table.md": "85e8788630861007f4172ebb439b92c76390f00e95699fd9072e2062ed6cfed2",
   "benchmarks/results/polymer_permeability/polymer_permeability.json": "57daf2faa5ae2133037aee532e22b0861639891aad00c5d916a76979a02b8709",
