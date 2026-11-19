@@ -1572,7 +1572,7 @@ def cmd_screen(args):
         print(f"written {rep.out_path}")
 
 
-ALIGN_WAYS = ("mcs", "field", "variance", "pocket", "plane")
+ALIGN_WAYS = ("mcs", "field", "variance", "pocket", "plane", "cavity")
 
 
 def _write_sdf(path, rdmols, fields, names):
@@ -1666,6 +1666,14 @@ def cmd_align(args):
               + (", then refining on the field similarity" if args.field_refine else ""))
         log = align_dataset(list(ds.mols), ref, use_mcs=True, field_refine=args.field_refine,
                             fieldset=fieldset)
+        mf = [build_fields(m, fieldset, n) for m, n in zip(ds.mols, ds.names)]
+        for nm, line in zip(ds.names, log):
+            print(f"  {nm:30s} {line}")
+    elif way == "cavity":
+        from cmfqsar.cavity import cavity_align_dataset
+        print(f"Putting {len(mf)} hosts in the frame of their own cavity: the origin at the "
+              f"centroid of the macrocycle's donor atoms, z along the unique axis of the donors")
+        log = cavity_align_dataset(list(ds.mols))
         mf = [build_fields(m, fieldset, n) for m, n in zip(ds.mols, ds.names)]
         for nm, line in zip(ds.names, log):
             print(f"  {nm:30s} {line}")
@@ -5995,7 +6003,10 @@ def main(argv=None):
                          "variance: minimise the posterior variance of the prediction, which "
                          "needs a model. pocket: the confidence criterion with a complementarity "
                          "term, which needs a model and a structure. plane: pose every molecule "
-                         "on a surface z = 0 by rule (--pose), with no reference needed")
+                         "on a surface z = 0 by rule (--pose), with no reference needed. cavity: put "
+                         "every host in the frame of its own macrocycle (origin at the "
+                         "centroid of the O, N and S atoms of the ring, z along their unique "
+                         "axis), with no reference needed")
     al.add_argument("--pose", default="flat", choices=["flat", "flat-up", "upright", "auto"],
                     help="with --by plane: flat (the flattest face down, lowest heavy atom at "
                          "--height), flat-up (the other face down), upright (the most basic "
