@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 270 classes with 871 public methods, and 1461 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 141 modules, 271 classes with 871 public methods, and 1474 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -45,6 +45,7 @@ for.
 | [cmfqsar.battery](#cmfqsarbattery) | Electrode data for the periodic kernel: insertion pairs, and the voltage between them. |
 | [cmfqsar.bioisostere](#cmfqsarbioisostere) | Which groups are interchangeable here? |
 | [cmfqsar.bonds](#cmfqsarbonds) | Bonds of a periodic structure, perceived from distances, for drawing only. |
+| [cmfqsar.cavity](#cmfqsarcavity) | The frame a host's cavity gives (plan item SC5). |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.celldiff](#cmfqsarcelldiff) | The difference between two cells of one ladder as a field in the cell (plan item BT6). |
 | [cmfqsar.cellmodel](#cmfqsarcellmodel) | Running a cell model once per drawn parameter set, and saying which deviation matters (plan item MS9). |
@@ -369,6 +370,9 @@ Source: `cmfqsar/align.py`
 * field_align       - rigid-body refinement maximising the (normalised) CMF kernel
                       between a molecule and the reference (the alignment criterion
                       suggested in Baskin & Zhokhova 2013)
+* cavity_align      - every host in the frame of its own cavity, with no reference: the origin
+                      at the centroid of the donor atoms of the macrocycle, z along their
+                      unique axis (plan item SC5; the frame is defined in cmfqsar/cavity.py)
 
 ### `embed_3d(mol: Chem.Mol, seed: int=42, optimize: bool=True) -> Chem.Mol`
 
@@ -399,6 +403,15 @@ Returns (score_before, score_after); `mol` is modified in place.
 ### `align_dataset(mols: Sequence[Chem.Mol], ref_index: int, use_mcs: bool=True, field_refine: bool=False, fieldset: Optional[FieldSet]=None, progress=None) -> List[str]`
 
 Align every molecule to mols[ref_index] in place. Returns a log line per molecule.
+
+### `cavity_align(mols: Sequence[Chem.Mol]) -> List[str]`
+
+Move every molecule of `mols` into the frame of its own cavity, in place.
+
+For a series of crown ethers, cryptands or other macrocyclic hosts, which often share no
+scaffold that `mcs_align` could superimpose.  Returns one line per molecule; a
+molecule without a macrocycle is left where it is and its line starts with "FAILED".
+The frame itself is `cmfqsar.cavity.cavity_frame`.
 
 ### `random_rigid_transform(coords: np.ndarray, rng: np.random.RandomState, max_rotation: Optional[float]=None, max_translation: float=2.0) -> np.ndarray`
 
@@ -1211,6 +1224,139 @@ out, and a flat shell is drawn as a polygon with `Polyhedron.planar` set.
 ### `polyhedra_mesh(polyhedra: Sequence[Polyhedron]) -> Optional[Tuple[np.ndarray, np.ndarray]]`
 
 Every polyhedron as one mesh, so a cell of hundreds costs one drawing item.
+
+## cmfqsar.cavity
+
+Source: `cmfqsar/cavity.py`
+
+The frame a host's cavity gives (plan item SC5).
+
+A series of crown ethers, cryptands or other macrocyclic hosts has a physical frame that few drug
+series have: the cavity.  Two hosts of a series often share no scaffold that a substructure
+superposition could use (18-crown-6 and [2.2.2]cryptand have no common ring), but both hold a
+cation at the centre of a set of donor atoms.  The frame of this module is put on that centre:
+
+* **the donors** are the oxygen, nitrogen and sulfur atoms that are members of a ring of at
+  least `MIN_MACROCYCLE` atoms (the macrocycle); a donor on a side arm or on a fused
+  benzene ring is not one of them.  A caller may give the donors instead;
+* **the origin** is the centroid of the donors;
+* **the z axis** is the unique axis of the donor set: the principal axis whose moment is
+  farthest from the other two.  For the ring of a crown ether, flat or folded, that is the
+  normal of the ring; for an elongated cage such as a cryptand it is the axis through the two
+  bridgehead nitrogens;
+* **the x axis** is the direction, in the plane normal to z, of the largest extent of the heavy
+  atoms, so a benzo or cyclohexano ring fused to the macrocycle lies along x;
+* **the signs** of x and z are those that make the third moment of the heavy atoms along them
+  positive, so the side of the ring that carries the substituents is the same in every host;
+  y completes a right-handed frame.
+
+A ring that is symmetric about z, such as 18-crown-6 itself, leaves the turn about z free, and
+`cavity_frame_quality` reports how close the two in-plane moments are.  For such a host the
+fields are nearly the same in every turn, which is why the frame is still usable.
+
+### `class CavityError  — bases: ValueError`
+
+A molecule that has no macrocycle, or too few donors in it to fix a frame.
+
+### `macrocycle_atoms(mol: Chem.Mol, min_size: int=MIN_MACROCYCLE) -> List[int]`
+
+The atoms that are members of a ring of at least `min_size` atoms.
+
+RDKit's smallest set of smallest rings does not always contain the large ring of a cage
+(in a cryptand every ring passes through both bridgeheads), so the rings are taken from the
+symmetrised set, which holds every ring of a bicyclic cage.
+
+### `donor_atoms(mol: Chem.Mol, min_size: int=MIN_MACROCYCLE) -> List[int]`
+
+The O, N and S atoms of the macrocycle.
+
+### `cavity_axes(coords: np.ndarray, donors: Sequence[int], heavy: Optional[Sequence[int]]=None) -> (np.ndarray, np.ndarray)`
+
+(origin, rotation) of the cavity frame for `coords`; frame coordinates are
+`(coords - origin) @ rotation.T`.  `heavy` are the atoms that fix the turn about z and the
+signs (all atoms when not given).
+
+### `cavity_frame(mol: Chem.Mol, donors: Optional[Sequence[int]]=None, conf_id: int=-1) -> np.ndarray`
+
+The coordinates of `mol` in its cavity frame (see the module text).
+
+### `cavity_frame_quality(mol: Chem.Mol, donors: Optional[Sequence[int]]=None, conf_id: int=-1) -> Dict[str, float]`
+
+How well the donors fix the frame: their number, the mean distance from the origin (the
+cavity radius), how flat they are, and how close the two moments that set the turn about z
+are (a ratio near 1 leaves that turn free).
+
+### `with_cavity_frame(mol: Chem.Mol, donors: Optional[Sequence[int]]=None, conf_id: int=-1) -> Chem.Mol`
+
+A copy of `mol` whose conformer is moved into its cavity frame.
+
+### `contact_distance(ion: str) -> float`
+
+The largest ion-donor distance counted as a contact, angstrom.
+
+### `ion_starts(xyz: np.ndarray, donors: Sequence[int], ion: str) -> List[np.ndarray]`
+
+Where an ion is put before a complex is optimised.
+
+The centroid of the donors when the ring is wide enough for the ion.  When the mean
+distance of the donors from their centroid is shorter than the sum of the two radii, the
+ion does not fit in the plane, and it is put above and below the ring at the height that
+gives it that contact distance: two starts in place of one.  An ion started in the plane
+of a ring that is too small for it is pushed to the edge of the ring by the optimiser and
+ends on two donors only.  A start that lies on an atom is moved off it
+(`_clear_point`).
+
+### `donor_misfit(xyz: np.ndarray, donors: Sequence[int], ion_xyz: np.ndarray, ion: str) -> float`
+
+The root-mean-square difference, in angstrom, between the ion-donor distances and the
+sum of the two radii: zero when every donor of the ring is at its contact distance.
+
+### `ion_contacts(xyz: np.ndarray, donors: Sequence[int], ion_xyz: np.ndarray, ion: str) -> int`
+
+How many of `donors` are in contact with an ion at `ion_xyz`.
+
+### `host_complex(smiles: str, ion: str='K', conformers: int=8, seed: int=0, solvent: Optional[str]='methanol', workdir: Optional[str]=None, xtb: Optional[str]=None, threads: int=1, gfn: int=1, release: bool=False) -> Dict[str, object]`
+
+The host of `smiles` wrapped around `ion`, with GFN`gfn`-xTB in implicit `solvent`.
+
+A conformer generator does not give the conformation a binding constant belongs to: an
+empty crown ether folds its ring and turns its oxygens outwards.  So `conformers` starts are
+made with RDKit's macrocycle torsions, the ion is put where `ion_starts` says, and
+each start is optimised while every donor of the ring is pulled to its contact distance
+from the ion (the sum of `ION_RADII` and `DONOR_RADIUS`) by a harmonic
+restraint of `WRAP_FORCE`.  The start that is returned is the one whose donors come
+closest to that distance (`donor_misfit`) among those whose bonds are intact
+(`_bonds_intact`).
+
+The result is therefore **the host as far around the ion as it can go**, not a minimum of
+the energy, and that is a choice forced by the method.  Without the restraint none of
+GFN1-xTB, GFN2-xTB and GFN-FF keeps the potassium ion of 15-crown-5 on all five of its
+oxygens (three with GFN1 and GFN-FF, four with GFN2), and the contacts are too short: 2.50,
+2.50 and 2.59 A with GFN1, where the sum of the radii is 2.78 A.  A method that draws the
+contact too short prefers a few short contacts to many of the right length.  `release` adds the unrestrained optimisation
+after the restrained one and returns its result, the lowest energy among the starts whose
+ion still touches at least `MIN_CONTACTS` donors (`ion_contacts`).
+
+What the restraint cannot do is the information: a ring that is too small leaves the ion
+above it, a ring that is too large cannot bring every donor in, and the misfit that
+remains is returned.
+
+GFN1 is the default and not GFN2, because GFN2 draws potassium nearly as small as sodium:
+on 18-crown-6, dibenzo-18-crown-6 and [2.2.2]cryptand the mean potassium-oxygen contact of
+the unrestrained complex is 2.80, 2.79 and 2.78 A with GFN1 and 2.68, 2.60 and 2.71 A with
+GFN2, and the sum of the two radii is 2.78 A.
+
+Returns the complex as an RDKit molecule (the host, then the ion as the last atom), the
+host alone in the same conformation, the energy in hartree (with the restraint energy when
+the complex is not released), the misfit, the number of contacts, and how many starts were
+kept of how many.
+
+### `cavity_align_dataset(mols: Sequence[Chem.Mol]) -> List[str]`
+
+Move every molecule into its own cavity frame, in place; one log line per molecule.
+
+Nothing is aligned onto a reference: the frame is a property of each host alone, which is
+what lets two hosts with no common scaffold share it.
 
 ## cmfqsar.cdft
 
@@ -2029,7 +2175,7 @@ Score a library block by block, never holding more than one block of it.
 
 ### `cmd_align(args)`
 
-Put a set of molecules in one frame, by whichever of the four criteria is asked for.
+Put a set of molecules in one frame, by the criterion of ALIGN_WAYS that is asked for.
 
 ### `cmd_lowrank(args)`
 

@@ -117,14 +117,14 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 169 benchmarks and 179.7 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 170 benchmarks and 181.7 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
 needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
 exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
-this program has compared with published numbers on the same labels. The rule gives **93 of the
-169 benchmarks, 22.7 hours in all**, and `reproduce_groups()` splits them into **nine groups of
+this program has compared with published numbers on the same labels. The rule gives **94 of the
+170 benchmarks, 22.7 hours in all**, and `reproduce_groups()` splits them into **nine groups of
 about 2 hours 30 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
 There were seven groups until item MS5 (14 November 2026) added 25 minutes and the largest
 group no longer fitted twice, and eight until item NT6 (16 November 2026): the eight groups were
@@ -301,22 +301,22 @@ machines at all.
 
 ### What is covered
 
-**The 76 benchmarks left out** are of eight kinds. Fifty-nine are long, 128.2 hours together:
-`poses` 16 h, `compas` 15 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h, `alloy` 6.7 h,
-`polymer_permeability` 5.0 h, `spectra` 3.5 h, `host_pocket` and `polymer_packing` 2.8 h each, `particle_sites`
-2.5 h, `copolymers` and `gntk_compas` 2.2 h each, `litraj` 2.1 h, `2dmd`, `battery`, `microstructure` and `scattering`
-2.0 h each, `molcrystals` 1.9 h, `local` 1.8 h, `logp` 1.7 h, `cmc` 1.6 h, `boiling`, `fieldae`,
-`increments`, `polymer_chain`, `rowlength`, `threebody` and `topomer_mittal` 1.5 h each, and thirty-one more between 32
-and 75 minutes. Five need ORCA, which no runner has (`am_eu`, `anisotropic`, `cdft_kernels`,
-`charge_transfer`, `corrosion_qm`). Two need xtb (`shells`, `xtb`). Three need PyBaMM, which
-`requirements-lock.txt` does not pin (`cellmodel`, `cellmodel_fields`, `diffusion`). Two need files
-the repository does not carry and are started with `--data-root` (`local_scale`, `sutherland`). One
-needs grids from VASP and ORCA calculations that the repository does not carry (`gridfields`). One
-needs the UMA potential and a GPU, in the WSL environment of `examples/corrosion_fe110`
-(`slab_adsorption`). Three need OpenMM and PDBFixer, which `requirements-lock.txt` does not pin,
-and structures the repository does not carry: the mutants that `examples/make_mutant_examples.py
---build` writes, or the complexes that `benchmarks/run_binding.py --fetch` downloads (`binding`,
-`new_proteins`, `strain`).
+**The 76 benchmarks left out** are of eight kinds. Fifty-nine are long, 130.0 hours together:
+`poses` 16 h, `compas` 15 h, `alloy` 8.7 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h,
+`polymer_permeability` 5.0 h, `spectra` 3.5 h, `host_pocket` and `polymer_packing` 2.8 h each,
+`particle_sites` 2.5 h, `copolymers` and `gntk_compas` 2.2 h each, `litraj` 2.1 h, `2dmd`,
+`battery`, `microstructure` and `scattering` 2.0 h each, `molcrystals` 1.9 h, `local` 1.8 h, `logp`
+1.7 h, `cmc` 1.6 h, `boiling`, `fieldae`, `increments`, `polymer_chain`, `rowlength`, `threebody`
+and `topomer_mittal` 1.5 h each, and thirty-one more between 32 and 75 minutes. Five need ORCA,
+which no runner has (`am_eu`, `anisotropic`, `cdft_kernels`, `charge_transfer`, `corrosion_qm`).
+Two need xtb (`shells`, `xtb`). Three need PyBaMM, which `requirements-lock.txt` does not pin
+(`cellmodel`, `cellmodel_fields`, `diffusion`). Two need files the repository does not carry and
+are started with `--data-root` (`local_scale`, `sutherland`). One needs grids from VASP and ORCA
+calculations that the repository does not carry (`gridfields`). One needs the UMA potential and a
+GPU, in the WSL environment of `examples/corrosion_fe110` (`slab_adsorption`). Three need OpenMM
+and PDBFixer, which `requirements-lock.txt` does not pin, and structures the repository does not
+carry: the mutants that `examples/make_mutant_examples.py --build` writes, or the complexes that
+`benchmarks/run_binding.py --fetch` downloads (`binding`, `new_proteins`, `strain`).
 
 What is covered, by paper: the tables of papers 4, 7, 8, 12 and 18 in full, and most of papers 1,
 3, 9 and 13. Of what is left out, `host_pocket` belongs to paper 13, `pharmfields` and

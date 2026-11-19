@@ -18222,7 +18222,7 @@ misfit, the radius of the donor ring, the distance of the ion from the donor cen
 fingerprint (ECFP4 counts with a Tanimoto kernel). The references get a Gaussian kernel whose
 width is chosen inside each fold.
 
-| Description | log K of K⁺, random folds | log K of Na⁺, random folds | Selectivity, random folds | log K of K⁺, families held out | log K of Na⁺, families held out | Selectivity, families held out |
+| Description | K⁺, random folds | Na⁺, random folds | K⁺ − Na⁺, random folds | K⁺, families held out | Na⁺, families held out | K⁺ − Na⁺, families held out |
 |---|---|---|---|---|---|---|
 | ring counts | +0.718 | +0.483 | +0.410 | +0.176 | +0.008 | −0.111 |
 | complex shape | +0.166 | −0.466 | +0.472 | −0.187 | −1.248 | +0.332 |
@@ -18235,8 +18235,8 @@ width is chosen inside each fold.
 | five fields, amounts kept | +0.399 | +0.270 | +0.361 | +0.189 | −0.153 | +0.337 |
 | five fields + ring counts | +0.722 | +0.566 | +0.418 | +0.097 | −0.085 | −0.006 |
 
-Every value is a cross-validated q². The standard deviation of the targets is 1.85, 1.53 and 1.09
-log K units.
+Every value is a cross-validated q². The columns K⁺ and Na⁺ are the two constants, and K⁺ − Na⁺ is the
+selectivity. The standard deviation of the three targets is 1.85, 1.53 and 1.09 log K units.
 
 1. **The fields do not beat the counts on the constants.** With random folds the mean absolute
    error of the five fields is larger than that of the ring counts by 0.369 log K units for
