@@ -337,3 +337,75 @@ Two more references for the site tasks, with no field and no frame: for each dis
 | alloy-out | site environment, invariant, extended fields | shell properties and site kind | +0.055 [+0.044, +0.068] |
 | alloy-out | site environment, overlap in the lattice frame, extended fields | shell properties and site kind | +0.032 [+0.023, +0.042] |
 
+## A graph neural network
+
+A message-passing network of the SchNet type (`benchmarks/alloy_gnn.py`): 3 layers, 32 features, edges up to 5 A, the element and its tabulated properties as the start of every atom. For a site the graph holds the atoms within 6 A of the same point that the field methods use, and the point itself; it is given no site kind. For a slab the graph is the 12 atoms with their periodic images. The prediction is the mean of 3 networks, each stopped on a validation part of the training part that is left out in the same way as the test part. Same rows, folds and seeds as the tables above. The differences are in MAE (eV); a negative number means that the network has the smaller error.
+
+### slab H [all]
+
+| folds | q2 | MAE (eV) | mean epochs |
+| --- | --- | --- | --- |
+| random | +0.794 | 0.117 | 100 |
+| alloy-out | +0.794 | 0.117 | 93 |
+
+| folds | the network against | kind | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | periodic autocorrelation, extended fields | field method | -0.082 [-0.089, -0.075] |
+| random | element properties, whole slab | reference | -0.071 [-0.079, -0.064] |
+| alloy-out | periodic autocorrelation, extended fields | field method | -0.085 [-0.092, -0.078] |
+| alloy-out | element properties, whole slab | reference | -0.073 [-0.080, -0.065] |
+
+### slab OH [all]
+
+| folds | q2 | MAE (eV) | mean epochs |
+| --- | --- | --- | --- |
+| random | +0.731 | 0.176 | 89 |
+| alloy-out | +0.698 | 0.193 | 68 |
+
+| folds | the network against | kind | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | periodic autocorrelation, indicator fields | field method | -0.016 [-0.034, +0.002] |
+| random | element properties, whole slab | reference | -0.041 [-0.067, -0.016] |
+| alloy-out | periodic autocorrelation, extended fields | field method | -0.094 [-0.128, -0.063] |
+| alloy-out | element properties, whole slab | reference | -0.057 [-0.087, -0.029] |
+
+### site H [all]
+
+| folds | q2 | MAE (eV) | mean epochs |
+| --- | --- | --- | --- |
+| random | +0.883 | 0.098 | 118 |
+| slab-out | +0.838 | 0.136 | 66 |
+| alloy-out | +0.836 | 0.137 | 68 |
+
+| folds | the network against | kind | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | site environment, overlap in the lattice frame, extended fields | field method | -0.111 [-0.124, -0.099] |
+| random | neighbour counts, binding elements, site kind and slab elements | reference | -0.097 [-0.108, -0.086] |
+| random | shell properties and site kind | reference | -0.076 [-0.085, -0.068] |
+| slab-out | site environment, overlap in the lattice frame, extended fields | field method | -0.080 [-0.089, -0.071] |
+| slab-out | neighbour counts, binding elements, site kind and slab elements | reference | -0.107 [-0.118, -0.097] |
+| slab-out | shell properties and site kind | reference | -0.064 [-0.072, -0.056] |
+| alloy-out | site environment, overlap in the lattice frame, extended fields | field method | -0.079 [-0.089, -0.068] |
+| alloy-out | neighbour counts, binding elements, site kind and slab elements | reference | -0.106 [-0.117, -0.095] |
+| alloy-out | shell properties and site kind | reference | -0.063 [-0.072, -0.055] |
+
+### site OH [all]
+
+| folds | q2 | MAE (eV) | mean epochs |
+| --- | --- | --- | --- |
+| random | +0.759 | 0.186 | 82 |
+| slab-out | +0.741 | 0.192 | 86 |
+| alloy-out | +0.747 | 0.196 | 73 |
+
+| folds | the network against | kind | MAE difference (eV) |
+| --- | --- | --- | --- |
+| random | site environment, overlap in the lattice frame, extended fields | field method | -0.053 [-0.064, -0.045] |
+| random | binding elements, site kind and slab elements | reference | -0.034 [-0.042, -0.028] |
+| random | shell properties and site kind | reference | -0.022 [-0.028, -0.016] |
+| slab-out | site environment, overlap in the lattice frame, extended fields | field method | -0.060 [-0.070, -0.050] |
+| slab-out | neighbour sums of element properties in four shells, and site kind | reference | -0.048 [-0.058, -0.038] |
+| slab-out | shell properties and site kind | reference | -0.028 [-0.036, -0.020] |
+| alloy-out | site environment, overlap in the lattice frame, extended fields | field method | -0.059 [-0.068, -0.049] |
+| alloy-out | properties of the binding elements, site kind and slab elements | reference | -0.036 [-0.051, -0.025] |
+| alloy-out | shell properties and site kind | reference | -0.026 [-0.033, -0.020] |
+

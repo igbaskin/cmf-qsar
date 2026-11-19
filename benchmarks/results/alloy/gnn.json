@@ -1,0 +1,338 @@
+{
+ "tasks": [
+  {
+   "task": "slab H [all]",
+   "adsorbate": "H",
+   "kind": "slab",
+   "n": 1918,
+   "models": [
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "random",
+     "q2": 0.7937830519935665,
+     "rmse": 0.279256879945478,
+     "mae": 0.11739847345634269,
+     "epochs": 99.8
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "alloy-out",
+     "q2": 0.7939278853277146,
+     "rmse": 0.27915879681143235,
+     "mae": 0.11745884665140494,
+     "epochs": 92.96666666666667
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "against": "periodic autocorrelation, extended fields",
+     "delta_mae": -0.0819944527625163,
+     "low": -0.08935678029560896,
+     "high": -0.07469877966298838,
+     "kind": "field method"
+    },
+    {
+     "design": "random",
+     "against": "element properties, whole slab",
+     "delta_mae": -0.07129934305799104,
+     "low": -0.07868387794998635,
+     "high": -0.06418243629881827,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "periodic autocorrelation, extended fields",
+     "delta_mae": -0.08503054891694731,
+     "low": -0.09227908467031057,
+     "high": -0.07767749811669925,
+     "kind": "field method"
+    },
+    {
+     "design": "alloy-out",
+     "against": "element properties, whole slab",
+     "delta_mae": -0.07258268449225813,
+     "low": -0.08034473153628038,
+     "high": -0.06517143476110555,
+     "kind": "reference"
+    }
+   ]
+  },
+  {
+   "task": "slab OH [all]",
+   "adsorbate": "OH",
+   "kind": "slab",
+   "n": 213,
+   "models": [
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "random",
+     "q2": 0.7309733099324615,
+     "rmse": 0.28601591781878527,
+     "mae": 0.17563313630943875,
+     "epochs": 88.83333333333333
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "alloy-out",
+     "q2": 0.6980763496556456,
+     "rmse": 0.30299892414928464,
+     "mae": 0.1932953038759399,
+     "epochs": 68.4
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "against": "periodic autocorrelation, indicator fields",
+     "delta_mae": -0.01625413222676772,
+     "low": -0.03443179372014422,
+     "high": 0.0019744449435193335,
+     "kind": "field method"
+    },
+    {
+     "design": "random",
+     "against": "element properties, whole slab",
+     "delta_mae": -0.041315535012927174,
+     "low": -0.06705916562164338,
+     "high": -0.015759195915624743,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "periodic autocorrelation, extended fields",
+     "delta_mae": -0.09400591631803007,
+     "low": -0.12780544693271112,
+     "high": -0.06270431912543037,
+     "kind": "field method"
+    },
+    {
+     "design": "alloy-out",
+     "against": "element properties, whole slab",
+     "delta_mae": -0.0574440625698206,
+     "low": -0.08716762532351359,
+     "high": -0.029072270482077042,
+     "kind": "reference"
+    }
+   ]
+  },
+  {
+   "task": "site H [all]",
+   "adsorbate": "H",
+   "kind": "site",
+   "n": 2500,
+   "models": [
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "random",
+     "q2": 0.883256938878952,
+     "rmse": 0.23577930698492688,
+     "mae": 0.098166611925743,
+     "epochs": 118.23333333333333
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "slab-out",
+     "q2": 0.8378394776844504,
+     "rmse": 0.2778834715179265,
+     "mae": 0.13646620235679785,
+     "epochs": 66.1
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "alloy-out",
+     "q2": 0.8364104682837532,
+     "rmse": 0.2791051840616681,
+     "mae": 0.13687768339568296,
+     "epochs": 68.3
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.1109885044006659,
+     "low": -0.12443551755211299,
+     "high": -0.0990578299489787,
+     "kind": "field method"
+    },
+    {
+     "design": "random",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.09713052081734966,
+     "low": -0.10817017360101744,
+     "high": -0.08557788016841739,
+     "kind": "reference"
+    },
+    {
+     "design": "random",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.07598470455961615,
+     "low": -0.08529548862337133,
+     "high": -0.06764196156190595,
+     "kind": "reference"
+    },
+    {
+     "design": "slab-out",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.07981813942101962,
+     "low": -0.0893150182263194,
+     "high": -0.07051053175624722,
+     "kind": "field method"
+    },
+    {
+     "design": "slab-out",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.10731526371984246,
+     "low": -0.11810733825438786,
+     "high": -0.09705042300130112,
+     "kind": "reference"
+    },
+    {
+     "design": "slab-out",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.06427690757440133,
+     "low": -0.07245154900540252,
+     "high": -0.05635634216697684,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.07874076325620424,
+     "low": -0.08908887623249628,
+     "high": -0.06818370507874677,
+     "kind": "field method"
+    },
+    {
+     "design": "alloy-out",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.10622541027075427,
+     "low": -0.11724710319354387,
+     "high": -0.09507702154407617,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.06307040255173482,
+     "low": -0.07162159276837322,
+     "high": -0.05461578692392136,
+     "kind": "reference"
+    }
+   ]
+  },
+  {
+   "task": "site OH [all]",
+   "adsorbate": "OH",
+   "kind": "site",
+   "n": 2475,
+   "models": [
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "random",
+     "q2": 0.7591845636245604,
+     "rmse": 0.3251189330748672,
+     "mae": 0.18626191037088796,
+     "epochs": 82.36666666666666
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "slab-out",
+     "q2": 0.7411130814927585,
+     "rmse": 0.3370972062091419,
+     "mae": 0.1921299541616682,
+     "epochs": 85.83333333333333
+    },
+    {
+     "name": "graph neural network (SchNet type, ensemble of three)",
+     "design": "alloy-out",
+     "q2": 0.7466985560953399,
+     "rmse": 0.3334409486057328,
+     "mae": 0.1961166705436578,
+     "epochs": 73.3
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.053386156706415194,
+     "low": -0.06359199690295438,
+     "high": -0.04463641783826346,
+     "kind": "field method"
+    },
+    {
+     "design": "random",
+     "against": "binding elements, site kind and slab elements",
+     "delta_mae": -0.03449633668563795,
+     "low": -0.041831381085183056,
+     "high": -0.02756376367783992,
+     "kind": "reference"
+    },
+    {
+     "design": "random",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.021718836653657342,
+     "low": -0.02819148452361085,
+     "high": -0.015563488101336904,
+     "kind": "reference"
+    },
+    {
+     "design": "slab-out",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.05996725614882767,
+     "low": -0.0701349607348126,
+     "high": -0.050472576376677236,
+     "kind": "field method"
+    },
+    {
+     "design": "slab-out",
+     "against": "neighbour sums of element properties in four shells, and site kind",
+     "delta_mae": -0.04765258599280223,
+     "low": -0.058074891302873244,
+     "high": -0.03770176579985034,
+     "kind": "reference"
+    },
+    {
+     "design": "slab-out",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.027700560188358092,
+     "low": -0.03612175446050027,
+     "high": -0.020196428549816854,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "site environment, overlap in the lattice frame, extended fields",
+     "delta_mae": -0.05859258495659106,
+     "low": -0.06845850960503815,
+     "high": -0.04937641457678941,
+     "kind": "field method"
+    },
+    {
+     "design": "alloy-out",
+     "against": "properties of the binding elements, site kind and slab elements",
+     "delta_mae": -0.03630512558971821,
+     "low": -0.05101437756950864,
+     "high": -0.024892986149636056,
+     "kind": "reference"
+    },
+    {
+     "design": "alloy-out",
+     "against": "shell properties and site kind",
+     "delta_mae": -0.02637079958685301,
+     "low": -0.03314278995670818,
+     "high": -0.019771566234974766,
+     "kind": "reference"
+    }
+   ]
+  }
+ ],
+ "members": 3,
+ "hidden": 32,
+ "lr": 0.002,
+ "layers": 3,
+ "cutoff": 5.0,
+ "radius": 6.0
+}

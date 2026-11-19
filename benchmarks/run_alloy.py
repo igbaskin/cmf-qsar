@@ -739,6 +739,124 @@ def run_shells(args, log=print) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# A graph neural network (task gnn)
+# --------------------------------------------------------------------------- #
+GNN_NAME = "graph neural network (SchNet type, ensemble of three)"
+
+
+def run_gnn(args, log=print) -> None:
+    """The graph neural network of ``alloy_gnn.py`` on the rows and folds of the stored tasks.
+
+    Slab tasks use the variant `all` only. For every task and folds the network is compared
+    with the best field method, the best reference of the stored run and (site tasks) the best
+    of the shell references of ``shells.json``."""
+    import multiprocessing as mp
+    import alloy_gnn as G
+    warnings.filterwarnings("ignore")
+    data = AlloySet()
+    stored = []
+    for name in ("data_slab.json", "data_site.json"):
+        with open(os.path.join(RESULTS, name), encoding="utf-8") as fh:
+            stored += json.load(fh)["tasks"]
+    shells = {}
+    if os.path.exists(os.path.join(RESULTS, "shells.json")):
+        with open(os.path.join(RESULTS, "shells.json"), encoding="utf-8") as fh:
+            shells = {t["task"]: t for t in json.load(fh)["tasks"]}
+    props = standard_properties(data.elements)
+    P = np.vstack([np.array([props[e] for e in data.elements]), np.zeros((1, len(PROPS)))])
+    is_field = lambda m: m.startswith(("periodic", "site environment"))   # noqa: E731
+    rng = np.random.RandomState(SEED)
+    out = []
+    for task in stored:
+        if task["variant"] != "all" or (args.only and args.only not in task["task"]):
+            if task["kind"] == "site" and task["variant"] == "all":
+                site_rows(data, task["adsorbate"], "all", args.max_sites, rng)   # keep the draw
+            continue
+        ads = task["adsorbate"]
+        if task["kind"] == "site":
+            rows = site_rows(data, ads, "all", args.max_sites, rng)
+            if [r["log"] for r in rows] != task["rows"]:
+                raise SystemExit(f"{task['task']}: the rows differ from the stored run")
+            graphs = G.site_graphs(data, rows, ads, HEIGHT)
+            groups = {"slab-out": [str(r["slab"]) for r in rows],
+                      "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+            pair_groups = groups["slab-out"]
+        else:
+            ids, _ = slab_task(data, ads, "all")
+            if list(ids) != list(task["ids"]):
+                raise SystemExit(f"{task['task']}: the slabs differ from the stored run")
+            rows = None
+            graphs = G.slab_graphs(data, ids)
+            groups = {"alloy-out": [data.alloy(s) for s in ids]}
+            pair_groups = None
+        y = np.array(task["y"])
+        net_args = dict(n_elements=len(data.elements), props=P, readout=graphs.readout)
+        designs = []
+        for m in task["models"]:
+            if m["design"] not in designs:
+                designs.append(m["design"])
+        jobs, index = [], {}
+        for design in designs:
+            for k, te in enumerate(folds_for(design, len(y), groups, SEED, FOLDS)):
+                tr = np.setdiff1d(np.arange(len(y)), te)
+                sub = {d: [g[i] for i in tr] for d, g in groups.items()}
+                inner = folds_for(design, len(tr), sub, SEED, INNER)
+                for member in range(G.MEMBERS):
+                    va = tr[inner[member]]
+                    jobs.append((len(jobs), member, np.setdiff1d(tr, va), va, te))
+                    index[len(jobs) - 1] = (design, k)
+        log(f"{task['task']}: {len(y)} samples, {len(jobs)} trainings on {args.workers} workers")
+        t0 = time.time()
+        sums = {d: np.zeros(len(y)) for d in designs}
+        epochs = {d: [] for d in designs}
+        with mp.get_context("spawn").Pool(args.workers, initializer=G.init_worker,
+                                          initargs=(graphs, y, net_args, 1)) as pool:
+            for n, (job, member, te, pred, ep, best, sec) in enumerate(
+                    pool.imap_unordered(G.fit_fold, jobs)):
+                design, _ = index[job]
+                sums[design][te] += pred / G.MEMBERS
+                epochs[design].append(ep)
+                if (n + 1) % 20 == 0:
+                    log(f"  {n + 1}/{len(jobs)} trainings, {time.time() - t0:.0f} s")
+        res = {"task": task["task"], "adsorbate": ads, "kind": task["kind"], "n": len(y),
+               "models": [], "pairs": []}
+        for design in designs:
+            pred = sums[design]
+            sm = {m["name"]: m for m in task["models"] if m["design"] == design}
+            fields = [n for n in sm if is_field(n)]
+            refs = [n for n in sm if not is_field(n) and n != "training mean"]
+            best_field = min(fields, key=lambda n: sm[n]["mae"])
+            best_ref = min(refs, key=lambda n: sm[n]["mae"])
+            res["models"].append({"name": GNN_NAME, "design": design, "q2": r2_score(y, pred),
+                                  "rmse": rmse(y, pred), "mae": float(np.mean(np.abs(y - pred))),
+                                  "epochs": float(np.mean(epochs[design]))})
+            log(f"  {task['task']:14s} {design:9s} {GNN_NAME}  q2 {res['models'][-1]['q2']:+.3f} "
+                f"mae {res['models'][-1]['mae']:.3f}")
+            against = {best_field: np.array([np.nan if v is None else v
+                                             for v in sm[best_field]["predicted"]]),
+                       best_ref: np.array([np.nan if v is None else v
+                                           for v in sm[best_ref]["predicted"]])}
+            if task["kind"] == "site" and task["task"] in shells:
+                sh = [m for m in shells[task["task"]]["models"] if m["design"] == design]
+                name = min(sh, key=lambda m: m["mae"])["name"]
+                fam = shell_references(data, rows, ads)[name]
+                against[name] = np.array(cross_validate(name, fam, y, design, groups)["predicted"])
+            for name, other in against.items():
+                d = bootstrap_mae(y, pred, other, groups=pair_groups)
+                res["pairs"].append({"design": design, "against": name, "delta_mae": d[0],
+                                     "low": d[1], "high": d[2],
+                                     "kind": ("field method" if is_field(name) else "reference")})
+        out.append(res)
+    path = os.path.join(RESULTS, "gnn.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"tasks": out, "members": G.MEMBERS, "hidden": G.HIDDEN, "lr": G.LR,
+                   "layers": G.LAYERS, "cutoff": G.CUTOFF, "radius": G.ENV_RADIUS}, fh,
+                  indent=1, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+# --------------------------------------------------------------------------- #
 # The table
 # --------------------------------------------------------------------------- #
 def _load_results() -> List[dict]:
@@ -834,6 +952,33 @@ def write_table(path: Optional[str] = None) -> str:
                 lines.append(f"| {p['design']} | {p['method']} | {p['against']} | "
                              f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
             lines.append("")
+    gnn = os.path.join(RESULTS, "gnn.json")
+    if os.path.exists(gnn):
+        with open(gnn, encoding="utf-8") as fh:
+            g = json.load(fh)
+        lines += ["## A graph neural network", "",
+                  f"A message-passing network of the SchNet type (`benchmarks/alloy_gnn.py`): "
+                  f"{g['layers']} layers, {g['hidden']} features, edges up to {g['cutoff']:g} A, "
+                  f"the element and its tabulated properties as the start of every atom. For a "
+                  f"site the graph holds the atoms within {g['radius']:g} A of the same point that "
+                  f"the field methods use, and the point itself; it is given no site kind. For a "
+                  f"slab the graph is the 12 atoms with their periodic images. The prediction is "
+                  f"the mean of {g['members']} networks, each stopped on a validation part of "
+                  f"the training part that is left out in the same way as the test part. Same "
+                  f"rows, folds and seeds as the tables above. The differences are in MAE (eV); "
+                  f"a negative number means that the network has the smaller error.", ""]
+        for t in g["tasks"]:
+            lines += [f"### {t['task']}", "",
+                      "| folds | q2 | MAE (eV) | mean epochs |", "| --- | --- | --- | --- |"]
+            for m in t["models"]:
+                lines.append(f"| {m['design']} | {m['q2']:+.3f} | {m['mae']:.3f} | "
+                             f"{m['epochs']:.0f} |")
+            lines += ["", "| folds | the network against | kind | MAE difference (eV) |",
+                      "| --- | --- | --- | --- |"]
+            for p in t["pairs"]:
+                lines.append(f"| {p['design']} | {p['against']} | {p['kind']} | "
+                             f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
+            lines.append("")
     path = path or os.path.join(RESULTS, "table.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -842,9 +987,13 @@ def write_table(path: Optional[str] = None) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells"), default="all",
+    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells", "gnn"),
+                    default="all",
                     help="counts: add the neighbour-count references to the stored site results; "
-                         "shells: the shell references on the stored site tasks")
+                         "shells: the shell references on the stored site tasks; "
+                         "gnn: the graph neural network on every stored task")
+    ap.add_argument("--workers", type=int, default=20, help="processes of the task gnn")
+    ap.add_argument("--only", default="", help="task gnn: only the tasks whose name has this text")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
     ap.add_argument("--max-sites", type=int, default=MAX_OVERLAP_SITES)
     ap.add_argument("--no-overlap", action="store_true")
@@ -859,6 +1008,10 @@ def main() -> None:
         return
     if args.task == "shells":
         run_shells(args)
+        print("wrote", write_table())
+        return
+    if args.task == "gnn":
+        run_gnn(args)
         print("wrote", write_table())
         return
     run(args)

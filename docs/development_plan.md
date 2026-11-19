@@ -7532,9 +7532,28 @@ What it leaves open, in order:
   neighbour counts are weaker. Starting from the shell properties: without the atom count of
   each shell, 0.222 eV; without standardised columns, 0.220 eV; with the first shell at 2.3 A
   instead of 2.5 A, 0.205 eV. All three together give the 0.246 eV of the neighbour-count
-  property sums. **Verdict:** a smooth field of the site environment adds nothing to a count of
-  the atoms and their properties at each distance from the site, for H or for OH. A tutorial was
-  planned on this set and dropped for that reason. **Not done:** the O and OOH energies
+  property sums. **Graph neural network** (added on 19 November with `--task gnn`,
+  `benchmarks/alloy_gnn.py`, results in `results/alloy/gnn.json`): a SchNet-type network in plain
+  PyTorch, 3 layers of 32 features, edges up to 5 A, learned element vectors and the nine
+  element properties of the references, no site kind; an ensemble of 3 members, each stopped on
+  an inner validation part of the same kind as the test part. The network has the smaller error
+  than the best field method, the best reference and (sites) the shell properties in every row.
+  MAE (eV), random / slab-out or alloy-out: **slab H** 0.117 / 0.117 (references 0.189 / 0.190,
+  fields 0.199); **slab OH** 0.176 / 0.193; **site H** 0.098 / 0.136 / 0.137 (shell properties
+  0.174 / 0.201 / 0.200, so -0.076 [-0.085, -0.068] / -0.064 [-0.072, -0.056] / -0.063 [-0.072,
+  -0.055]); **site OH** 0.186 / 0.192 / 0.196 (shell properties 0.208 / 0.220 / 0.222, so
+  -0.022 [-0.028, -0.016] / -0.028 [-0.036, -0.020] / -0.026 [-0.033, -0.020]). The only
+  interval that includes zero is slab OH with random folds against the best field method
+  (-0.016 [-0.034, +0.002]). One training on 2,500 sites takes about 45 minutes on one core
+  with the machine full, 5 minutes with it free. Pilot: three settings on the inner folds of
+  one training part only. **Trap:** on a CPU the Gaussian distance features hold denormal
+  numbers, which made every matrix product about 40 times slower until
+  `torch.set_flush_denormal(True)`. **Verdict:** a smooth field of the site environment adds
+  nothing to a count of the atoms and their properties at each distance from the site, for H or
+  for OH, but a learned network on the same atoms beats both by 0.02 to 0.08 eV; the shell
+  counts are not the limit of the data. What part of the network gives the gain (element
+  vectors, exact distances, depth, ensemble) is not tested. A tutorial was planned on this set
+  and dropped for the first reason. **Not done:** the O and OOH energies
   (O.tar.gz, 6.1 GB, not downloaded; the set has no OOH, so no ORR limiting potential); the
   converged-only variant of the site tasks.
 

@@ -1150,14 +1150,17 @@ def registry() -> List[Benchmark]:
                   "element properties, with random, slab-out and alloy-out folds; for the "
                   "sites also two kinds of reference with no field: the atoms of each element in "
                   "distance shells around the site (neighbour counts), and the atom count and "
-                  "standardised element properties in such shells (shell properties)",
+                  "standardised element properties in such shells (shell properties); and a "
+                  "graph neural network of the SchNet type on the same rows and folds "
+                  "(needs PyTorch)",
                   "run_alloy.py", "alloy",
-                  compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"]],
+                  compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"],
+                           ["--task", "gnn"]],
                   prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
                            "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
                            "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
                            "the result is kept in examples/alloy)"],
-                  minutes="265",
+                  minutes="400",
                   report=lambda: _mod("run_alloy").write_table(),
                   tables=["alloy/table.md"]),
         Benchmark("structures",

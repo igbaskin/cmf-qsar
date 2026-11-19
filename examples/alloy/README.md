@@ -112,10 +112,50 @@ bootstrap interval of 95 %.
   folds the shell properties chose the widest Gaussian together with the smallest ridge value (1
   of 10 folds for H with slabs held out, 1 to 5 of 10 for OH). A wider grid could only make this
   reference better.
+- **A graph neural network** (`--task gnn`, `benchmarks/alloy_gnn.py`). A small network of the
+  SchNet type: every atom is a node with a learned vector for its element and the same nine
+  tabulated element properties that the references use; messages travel along every pair of
+  atoms nearer than 5 Angstrom, weighted by a function of the distance that the network learns.
+  For a site the nodes are the atoms within 6 Angstrom of the same point as before, plus the
+  point itself. The network is given no site kind and no relaxed height. For a slab the nodes
+  are its 12 atoms with their periodic images. The prediction is the mean of 3 networks. Each
+  stops training at the best epoch on a validation part cut from its training part in the same
+  way as the test part (random, slab-out or alloy-out). The rows, folds and seeds are those of the
+  other methods. MAE in eV, and the difference from the best method of each kind (negative: the
+  network is better; interval of 95 %, with whole slabs resampled for sites):
+
+  | task | folds | network MAE | against the best field method | against the best reference | against the shell properties |
+  | --- | --- | --- | --- | --- | --- |
+  | slab H | random | 0.117 | -0.082 [-0.089, -0.075] | -0.071 [-0.079, -0.064] | |
+  | slab H | alloy-out | 0.117 | -0.085 [-0.092, -0.078] | -0.073 [-0.080, -0.065] | |
+  | slab OH | random | 0.176 | -0.016 [-0.034, +0.002] | -0.041 [-0.067, -0.016] | |
+  | slab OH | alloy-out | 0.193 | -0.094 [-0.128, -0.063] | -0.057 [-0.087, -0.029] | |
+  | site H | random | 0.098 | -0.111 [-0.124, -0.099] | -0.097 [-0.108, -0.086] | -0.076 [-0.085, -0.068] |
+  | site H | slab-out | 0.136 | -0.080 [-0.089, -0.071] | -0.107 [-0.118, -0.097] | -0.064 [-0.072, -0.056] |
+  | site H | alloy-out | 0.137 | -0.079 [-0.089, -0.068] | -0.106 [-0.117, -0.095] | -0.063 [-0.072, -0.055] |
+  | site OH | random | 0.186 | -0.053 [-0.064, -0.045] | -0.034 [-0.042, -0.028] | -0.022 [-0.028, -0.016] |
+  | site OH | slab-out | 0.192 | -0.060 [-0.070, -0.050] | -0.048 [-0.058, -0.038] | -0.028 [-0.036, -0.020] |
+  | site OH | alloy-out | 0.196 | -0.059 [-0.068, -0.049] | -0.036 [-0.051, -0.025] | -0.026 [-0.033, -0.020] |
+
+  The network has the smaller error in every row. The one interval that includes zero is slab OH
+  with random folds against the field method (213 slabs). The gain is largest for H (0.06 to 0.08
+  eV against the shell properties on new slabs and new alloys) and smaller for OH (0.02 to 0.03
+  eV). The network needs about 45 minutes of one processor core for one training on 2,500 sites;
+  the kernel methods need seconds.
 - **What this means.** The names and properties of the elements, counted in shells around the
   site, explain most of the variance (q2 about 0.7 to 0.8). A smooth field of the environment
   around the site adds nothing to them, for H or for OH. The fields also add nothing for the
-  lowest energy of a whole slab.
+  lowest energy of a whole slab. The network shows that these shell counts are not the limit of
+  the data: it uses the same elements and the exact distances and is clearly better. This
+  benchmark does not say which part of the network is responsible. It could be the learned
+  element vectors, the continuous distances, the layers of messages or the ensemble of three
+  members. Each of them was not tested alone.
+- **What was not done for the network.** Its settings (32 features, 3 layers, learning rate
+  0.002) were chosen in a small pilot with three settings on the validation parts of one
+  training part, never on a test fold. They were not tuned further. The references and field
+  methods choose their kernel and ridge value inside the training part with a larger grid.
+  No network with field input, no single network without the ensemble and no network that uses
+  directions of the bonds (an equivariant network) were run.
 
 ## What to keep in mind
 
