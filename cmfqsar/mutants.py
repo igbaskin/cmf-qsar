@@ -115,20 +115,26 @@ class Structure:
     energy_after: float = float("nan")
     #: how many starting turns of the side chain ended with two atoms on top of each other
     collapsed: int = 0
+    #: the bonds of the force-field topology as (atom, atom) rows, when they are kept: a
+    #: deposited complex can have atoms closer than a bond length that are not bonded, and
+    #: :func:`protein_from_pdb` then keeps only the bonds listed here
+    bonds: Optional[np.ndarray] = None
 
     def save(self, path: str) -> str:
+        extra = {} if self.bonds is None else {"bonds": np.asarray(self.bonds, np.int32)}
         np.savez_compressed(path, name=self.name, pdb_block=self.pdb_block,
                             charges=np.asarray(self.charges, float),
                             energy=np.array([self.energy_before, self.energy_after,
-                                             float(self.collapsed)]))
+                                             float(self.collapsed)]), **extra)
         return path
 
     @classmethod
     def load(cls, path: str) -> "Structure":
         with np.load(path, allow_pickle=False) as z:
             e = z["energy"]
+            bonds = np.asarray(z["bonds"], int) if "bonds" in z.files else None
             return cls(str(z["name"]), str(z["pdb_block"]), np.asarray(z["charges"], float),
-                       float(e[0]), float(e[1]), int(e[2]) if len(e) > 2 else 0)
+                       float(e[0]), float(e[1]), int(e[2]) if len(e) > 2 else 0, bonds)
 
 
 # --------------------------------------------------------------------------- #
@@ -197,6 +203,91 @@ def prepare_wild_type(pdb_in: str, pdb_out: str, ph: float = 7.0) -> Structure:
         fh.write(text)
     system = _forcefield().createSystem(f.topology, nonbondedMethod=app.NoCutoff, constraints=None)
     return Structure(os.path.splitext(os.path.basename(pdb_out))[0], text, _charges_of(system, unit, mm))
+
+
+def _repair_terminal_oxygens(top, positions, unit, mm):
+    """Put every terminal oxygen (OXT) that PDBFixer placed on top of the carbonyl oxygen
+    where it belongs.
+
+    PDBFixer sometimes adds the OXT of a chain end less than an angstrom from O, which no
+    minimisation repairs.  The two oxygens of a carboxylate are mirror images of each other
+    about the CA-C axis, so OXT is put at 1.25 A from C in the direction of O reflected about
+    that axis.  An OXT at least 1 A from O is left where it is.
+    """
+    xyz = np.array(positions.value_in_unit(unit.angstrom))
+    moved = False
+    for res in top.residues():
+        at = {a.name: a.index for a in res.atoms()}
+        if not {"CA", "C", "O", "OXT"} <= set(at):
+            continue
+        if np.linalg.norm(xyz[at["OXT"]] - xyz[at["O"]]) >= 1.0:
+            continue
+        u1 = xyz[at["C"]] - xyz[at["CA"]]
+        u1 /= np.linalg.norm(u1)
+        u2 = xyz[at["O"]] - xyz[at["C"]]
+        u2 /= np.linalg.norm(u2)
+        d = 2.0 * float(u2 @ u1) * u1 - u2
+        xyz[at["OXT"]] = xyz[at["C"]] + 1.25 * d / np.linalg.norm(d)
+        moved = True
+    if not moved:
+        return positions
+    return [mm.Vec3(*(p * 0.1)) for p in xyz] * unit.nanometer
+
+
+def prepare_complex(pdb_in: str, pdb_out: str, chains: str, ph: float = 7.0
+                    ) -> Tuple[Structure, Dict[Tuple[str, str], int]]:
+    """A protein complex made ready for the fields of its sites (plan item PP6).
+
+    Only the chains named in `chains` are kept (for SKEMPI's ``1CSE_E_I`` that is ``"EI"``).
+    Non-standard residues are replaced by their standard parents, everything that is not
+    protein is removed, missing heavy atoms are completed and hydrogens are added, as in
+    :func:`prepare_wild_type`.  Residues missing from the deposited model are *not* built: a
+    loop modelled from nothing would put atoms near a site that no experiment saw.
+
+    The residues of a complex are numbered per chain and often carry insertion codes (100A,
+    100B in an antibody loop), while the functions of this module find a residue by one
+    number.  Every residue is therefore renumbered 1, 2, 3, ... through all chains in file
+    order, and the second value returned maps (chain, number as deposited with its insertion
+    code, such as ``"100A"``) to the new number.  The chain identifiers are kept, so the
+    chain of an atom still says which partner it belongs to.
+    """
+    app, unit, mm, PDBFixer = _openmm()
+    f = PDBFixer(filename=pdb_in)
+    wanted = set(chains)
+    f.removeChains([i for i, c in enumerate(f.topology.chains()) if c.id not in wanted])
+    f.findMissingResidues()
+    f.missingResidues = {}
+    f.findNonstandardResidues()
+    f.replaceNonstandardResidues()
+    f.removeHeterogens(False)
+    f.findMissingAtoms()
+    f.addMissingAtoms()
+    f.positions = _repair_terminal_oxygens(f.topology, f.positions, unit, mm)
+    f.addMissingHydrogens(ph)
+    xyz = np.array(f.positions.value_in_unit(unit.angstrom))
+    if closest_approach(xyz) < MIN_SEPARATION:
+        raise ValueError(f"{pdb_in}: two atoms closer than {MIN_SEPARATION} A after the "
+                         "missing atoms were added")
+    numbering: Dict[Tuple[str, str], int] = {}
+    for k, res in enumerate(f.topology.residues(), 1):
+        code = (getattr(res, "insertionCode", "") or "").strip()
+        numbering[(res.chain.id, f"{res.id.strip()}{code}".upper())] = k
+        res.id = str(k)
+        res.insertionCode = " "
+    if len(numbering) > 9999:
+        raise ValueError(f"{pdb_in}: {len(numbering)} residues do not fit the four-digit "
+                         "residue number of the PDB format")
+    missing = wanted - {c.id for c in f.topology.chains()}
+    if missing:
+        raise ValueError(f"{pdb_in} has no protein chain {''.join(sorted(missing))}")
+    text = _pdb_text(app, f.topology, f.positions)
+    with open(pdb_out, "w") as fh:
+        fh.write(text)
+    system = _forcefield().createSystem(f.topology, nonbondedMethod=app.NoCutoff, constraints=None)
+    name = os.path.splitext(os.path.basename(pdb_out))[0]
+    bonds = np.array(sorted((min(b[0].index, b[1].index), max(b[0].index, b[1].index))
+                            for b in f.topology.bonds()), int).reshape(-1, 2)
+    return Structure(name, text, _charges_of(system, unit, mm), bonds=bonds), numbering
 
 
 def _free_atoms(top, positions, unit, chain: str, position: int, shell: float) -> List[int]:
@@ -534,14 +625,61 @@ def _fix_histidines(mol: Chem.RWMol) -> None:
             b2.SetBondType(Chem.BondType.SINGLE)
 
 
-def protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]] = None) -> Chem.Mol:
+def _keep_topology_bonds(mol: Chem.RWMol, bonds: np.ndarray) -> int:
+    """Remove every bond of `mol` that is not a row of `bonds`; returns how many."""
+    allowed = {(int(a), int(b)) for a, b in np.asarray(bonds, int).reshape(-1, 2)}
+    allowed |= {(b, a) for a, b in allowed}
+    drop = [(b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()
+            if (b.GetBeginAtomIdx(), b.GetEndAtomIdx()) not in allowed]
+    for a, c in drop:
+        mol.RemoveBond(a, c)
+    return len(drop)
+
+
+def _drop_contact_bonds(mol: Chem.RWMol) -> int:
+    """Remove the bonds proximity bonding makes between two residues where there is no bond.
+
+    Between two residues a protein has only the peptide bond (C to N) and the disulfide bond
+    (SG to SG).  A deposited crystal structure of a complex sometimes has two atoms of
+    different residues closer than a bond length, often at the interface, and proximity
+    bonding joins them, which leaves an oxygen or a nitrogen with an impossible valence.
+    A structure without such contacts is left exactly as it was.  Returns how many bonds were
+    removed.
+    """
+    drop = []
+    for b in mol.GetBonds():
+        i, j = b.GetBeginAtom().GetPDBResidueInfo(), b.GetEndAtom().GetPDBResidueInfo()
+        if i is None or j is None:
+            continue
+        if (i.GetChainId(), i.GetResidueNumber(), i.GetInsertionCode()) == \
+                (j.GetChainId(), j.GetResidueNumber(), j.GetInsertionCode()):
+            continue
+        names = {i.GetName().strip(), j.GetName().strip()}
+        if names in ({"C", "N"}, {"SG"}):
+            continue
+        drop.append((b.GetBeginAtomIdx(), b.GetEndAtomIdx()))
+    for a, c in drop:
+        mol.RemoveBond(a, c)
+    return len(drop)
+
+
+def protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]] = None,
+                     bonds: Optional[np.ndarray] = None) -> Chem.Mol:
     """An RDKit molecule of a protein with explicit hydrogens, formal charges from the valence
     and, when given, the partial charges in the per-atom property ``partial_charge`` that
-    ``charge_model="file"`` reads."""
+    ``charge_model="file"`` reads.
+
+    With `bonds`, the bonds of the force-field topology as (atom, atom) rows, every bond that
+    proximity bonding made and that is not among them is removed.  A deposited structure can
+    have two atoms of one residue closer than a bond length (a strained side chain), which
+    proximity bonding joins and only the topology knows to be apart."""
     mol = Chem.MolFromPDBBlock(pdb_block, removeHs=False, sanitize=False, proximityBonding=True)
     if mol is None:
         raise ValueError("RDKit could not read the PDB text")
     rw = Chem.RWMol(mol)
+    if bonds is not None:
+        _keep_topology_bonds(rw, bonds)
+    _drop_contact_bonds(rw)
     _fix_histidines(rw)
     for a in rw.GetAtoms():
         a.SetNoImplicit(True)
@@ -563,7 +701,7 @@ def protein_from_pdb(pdb_block: str, charges: Optional[Sequence[float]] = None) 
 
 
 def protein_of(structure: Structure) -> Chem.Mol:
-    return protein_from_pdb(structure.pdb_block, structure.charges)
+    return protein_from_pdb(structure.pdb_block, structure.charges, structure.bonds)
 
 
 def residue_atoms(mol: Chem.Mol, position: int, chain: Optional[str] = None) -> Dict[str, int]:

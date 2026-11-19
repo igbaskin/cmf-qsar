@@ -19403,6 +19403,67 @@ same sign:
 So the map that the data support is a steric one, and it is the shape of burial around the
 side chain; only the charge pair shows a specific interaction, and only in 16 of 20 halves.
 
+**Binding, not folding (added 19 November 2026).** The same frame applies to a substitution
+at a protein interface, where the target is the change of binding free energy and the
+surroundings that matter are the partner protein. Plan item PP6 measures it on SKEMPI 2.0
+(Jankauskaite et al., Bioinformatics 35 (2019) 462; CC BY 4.0) with
+`benchmarks/run_binding.py`: every single substitution whose two affinities are numbers,
+the target ddG = R T ln(Kd of the mutant / Kd of the wild type), positive for weaker
+binding, repeated measurements averaged. The structure is the deposited complex with only
+the chains SKEMPI names, completed by `cmfqsar.mutants.prepare_complex`, which keeps the
+deposited residue numbers (with insertion codes such as 100B) in a table and numbers the
+residues 1, 2, 3, ... for the rest of the module. No mutant is built: every description
+comes from the wild-type complex, as in stage 1 of PP2. Eight of 316 complexes could not
+be completed (PDBFixer placed two atoms less than 0.7 A apart, or could not finish a
+residue), which leaves 3,992 substitutions at 2,793 positions of 308 complexes, sd of ddG
+1.65 kcal/mol. PDBFixer does not place missing atoms the same way in every run, so which
+complexes fail can change by one or two.
+
+Two descriptions are new. The **buried area** is the solvent-accessible area of the residue
+and of its side chain in the complex, together with the area of each that binding buries
+(the area with the partner removed, minus the area in the complex). The **field of the
+partner** is the context of PP1 with only the partner's atoms kept, joined with two counts:
+the atoms of the complex around the site and those of them that belong to the partner.
+475 sites have no partner atom inside the envelope; their partner fields are identical to
+each other and unlike all others. Whole complexes are held out, and then whole families
+(complexes that SKEMPI lists as related or that share a protein name; 94 families, the
+largest with 973 substitutions). Every description is joined with the three substitution
+columns; eight folds, three repeats, every choice made in inner folds.
+
+| Description | q2, complexes held out | q2, families held out | Median r inside a complex, families held out |
+|---|---:|---:|---:|
+| the three substitution columns | +0.043 | -0.004 | +0.187 |
+| one count of atoms around the site | +0.108 | +0.068 | +0.411 |
+| two counts (all atoms, partner atoms) | +0.169 | +0.125 | +0.450 |
+| SKEMPI's class of the site (core, rim, support, surface, interior) | +0.136 | +0.094 | +0.413 |
+| accessible area in the complex | +0.098 | +0.044 | +0.433 |
+| buried area | +0.198 | +0.102 | +0.437 |
+| field of the surroundings (the whole complex) | +0.095 | -0.007 | +0.200 |
+| field of the partner, with the two counts | +0.200 | +0.131 | +0.470 |
+| buried area and field of the partner | +0.225 | +0.133 | +0.476 |
+| buried area and field of the surroundings | +0.216 | +0.120 | +0.443 |
+
+Binding is harder than folding: the best q2 is about a third of what PP2 reaches on new
+proteins, and the substitution alone predicts nothing on a new family. What helps is the
+partner. The two counts beat one count by +0.061 and +0.057, and the buried area beats the
+accessible area by +0.101 and +0.058, with every interval excluding zero. The field of the
+surroundings, which carried folding as well as a count did, is level with one count when
+complexes are held out (-0.013, interval -0.049 to +0.016) and behind it when families are
+held out (-0.074, interval -0.104 to -0.060): most of the atoms around an interface site
+belong to its own protein, and a model that learns their pattern learns the family. The
+field of the partner is level with the two counts it is joined with (+0.031 and +0.006)
+and with the buried area (+0.002 and +0.029); joined with the buried area it adds +0.027
+(interval -0.007 to +0.060) and +0.031 (interval -0.002 to +0.045). So the gate of the
+item is not passed. The order of the descriptions is the order a biochemist would expect,
+and the field of the partner is at the top of it, but no field beats the buried area and
+the counts by more than the interval. The cosine form of the partner kernel was chosen
+over the raw one in most folds.
+
+One technical result is general. The compiled kernel engine (`engine="numba"`) gives the
+kernel of the NumPy engine to a relative 1e-13 and was about twenty times faster on these
+contexts of 250 atoms; the kernel over 2,793 positions took 15 minutes instead of an
+estimated 3.4 hours.
+
 Two lessons from that measurement are general and worth carrying to any model whose sample is a
 site rather than a molecule. **Put a count in the references before you believe a field.** And
 **holding out one position does not hold out its surroundings**, because the surroundings of

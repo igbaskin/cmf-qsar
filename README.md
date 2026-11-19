@@ -1176,6 +1176,16 @@ surroundings are shuffled among positions (r +0.04). It says that protein atoms 
 direction of the side chain make every substitution more destabilising: burial with a
 direction, which is why the accessible area beats a count of atoms.
 
+### Binding, not folding
+
+Plan item PP6 (`benchmarks/run_binding.py`): 3,992 single substitutions of SKEMPI 2.0 at
+the interfaces of 308 deposited complexes, the change of binding free energy as the target,
+whole complexes and whole families of complexes held out. The partner carries what can be
+predicted: a count of its atoms and the area binding buries beat a count of all atoms and
+the accessible area. The field of the partner is level with them (q2 +0.200 against
++0.198 for the buried area, complexes held out), and the field of the whole complex falls
+behind a count when families are held out.
+
 ### Coated particles from structure files
 
 Plan item NT11 (`cmfqsar/periodic.py`, `cmfqsar/cli.py`, the crystal window): the particle

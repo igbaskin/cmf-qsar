@@ -1536,6 +1536,17 @@ def registry() -> List[Benchmark]:
                   minutes="75",        # 8 with the position kernel of new_proteins cached
                   report=lambda: _mod("run_site_cofield").write_table(_r("site_cofield")),
                   tables=["site_cofield/table.md"]),
+        Benchmark("binding",
+                  "binding, not folding (plan item PP6): every single substitution of SKEMPI "
+                  "2.0 with two numeric affinities, the deposited complexes, whole complexes "
+                  "and whole families of complexes held out; counts of atoms, the buried "
+                  "area, the field of the surroundings and the field of the partner alone",
+                  "run_binding.py", "binding", compute=[["--prepare"]],
+                  needs="openmm",
+                  prepare=["run_binding.py --fetch"],
+                  minutes="90",         # measured: 8 preparing, 15 the context kernel, 63 fits
+                  report=lambda: _mod("run_binding").write_table(_r("binding")),
+                  tables=["binding/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

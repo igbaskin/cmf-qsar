@@ -9249,6 +9249,24 @@ correlation of its whole kernel with the target before any accuracy is measured.
   worth starting only if PP2 passes, because a binding set is smaller and noisier than the folding
   set of PP1 and would not resolve what the folding set could not.
 
+  **Done 19 November 2026, gate not passed.** `benchmarks/run_binding.py` on SKEMPI 2.0 (a
+  CC BY 4.0 copy in Zenodo record 23716666, since the SKEMPI site did not answer), every
+  single substitution with two numeric affinities, the deposited complexes from the PDB
+  completed by `prepare_complex`: 3,992 substitutions at 2,793 positions of 308 complexes
+  (eight complexes could not be completed). Every description is taken from the wild-type
+  complex. With whole complexes held out, the buried area (the area of the residue in the
+  complex and the area binding buries) reaches q2 +0.198, two counts (all atoms around the
+  site, partner atoms) +0.169, one count +0.108, the field of the whole complex +0.095, the
+  field of the partner joined with the two counts +0.200, and the buried area with the field
+  of the partner +0.225. With whole families held out the same order holds at lower values
+  (+0.102, +0.125, +0.068, -0.007, +0.131, +0.133). The partner is what carries: two counts
+  beat one by +0.06 and the buried area beats the accessible area by +0.10 and +0.06, all
+  intervals excluding zero. The field of the partner is level with the counts and with the
+  buried area (+0.002 to +0.031, every interval containing zero), and adds +0.027 and +0.031
+  to the buried area with intervals that just contain zero. The field of the whole complex
+  falls behind one count with families held out (-0.074, interval excluding zero). Fetching
+  the 323 PDB entries took about 40 minutes, preparing the complexes 8, the measurement 78.
+
 **Order.** PP1 first and it is done: the data, the builder, the three fields and the measurement,
 with the finding that the change on its own is worth no more than the change of residue volume,
 hydropathy and charge, that the surroundings of the site are what add to it, and that a count of
@@ -9258,7 +9276,8 @@ site beat burial, measured as PP1 measures it? PP4 with it, since its input is a
 a force-field energy is not a count. PP2 after those two and only if one of them passes, because
 twenty domains of structures is a day of building and there is no point spending it on a
 description that a count already matches. PP5 after whichever of them predicts out of its own
-protein. PP6 last and only on a pass. Folding itself,
+protein. PP6 last and only on a pass; it was done on 19 November 2026 and did not pass its
+gate. Folding itself,
 large conformational change and allostery are not among these items and should not be: they have
 no shared frame, and the method's own strength, a readable map in a fixed frame, is exactly what
 they take away.
@@ -9918,10 +9937,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
-| H. Protein physics | 6 | 5 | PP6 |
+| H. Protein physics | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**179 items: 141 finished, 8 partly, 30 open.**
+**179 items: 142 finished, 8 partly, 29 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
