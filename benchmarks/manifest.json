@@ -1,6 +1,6 @@
 {
- "commit": "ee6bf1422d284b0c7679bc84ee9a68471e87f865",
- "created": "2026-11-19T19:57:33",
+ "commit": "cdd405814f47dd351364f3720f4762df1bd05e29",
+ "created": "2026-11-19T21:26:08",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -617,6 +617,26 @@
   "examples/corrosion_hcl/9_c1nc_nH_n1.csv": {
    "bytes": 5168,
    "sha256": "03e075bd3d623dd79c775889288d1d0b78aa82ee0cb28a2a0ba1e9f6b0844a69"
+  },
+  "examples/crowns/README.md": {
+   "bytes": 4136,
+   "sha256": "6b3c16175ad0426e05125e41bad2d91c4f2e33fe8e2ae67ae11f33f302da13eb"
+  },
+  "examples/crowns/build.json": {
+   "bytes": 48462,
+   "sha256": "2ae34bccd53173b35c10f4fe74df26f101a77f8f25d4695ad5cdbf60560eb7e2"
+  },
+  "examples/crowns/crowns.csv": {
+   "bytes": 14516,
+   "sha256": "4036a3846869530fa3465194cc626ab0f2da2c101c9773eb05505094fab5208a"
+  },
+  "examples/crowns/hosts_K.sdf": {
+   "bytes": 404056,
+   "sha256": "cb93036a1e1392f2a63e35e686edbff4587cd1cd9d3830a88bd81276f27bbfd7"
+  },
+  "examples/crowns/hosts_Na.sdf": {
+   "bytes": 404058,
+   "sha256": "61e7f010f3ebb9a3dc156e1a408df6f26b9817d8d14bd44e0e6d984ebb54079c"
   },
   "examples/cyclodextrin/README.md": {
    "bytes": 7033,
@@ -1461,6 +1481,10 @@
   "examples/make_buchwald_examples.py": {
    "bytes": 17112,
    "sha256": "9507fad88044c300fcf79b40a85f9b138797094b1bce3884f4772e004dd55512"
+  },
+  "examples/make_crown_examples.py": {
+   "bytes": 31518,
+   "sha256": "810202fd0b87a9ccd62de955a0147314fbca9fa21da72bb2c0a0a46c901966bc"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -3043,7 +3067,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3465,6 +3489,13 @@
   "benchmarks/results/corrosion_qm/7_c1nncs1.json": "c908325484a259075434049b87371ae243ad366be74aff85f5b20a739bbd8fd1",
   "benchmarks/results/corrosion_qm/7_c1nncs1/7_c1nncs1_qm.sdf": "916e4c863d5636727d97de4cfc936908c3562a8d467652a7aa039a51df9bcc58",
   "benchmarks/results/corrosion_qm/table.md": "458dc231183254e8de913843c4c6a275775b74a8cc50c9b29ae1cc1668677efd",
+  "benchmarks/results/crowns/cofield.json": "2ec68c8eb9ec6f4a7afaf7f1f94c496a01d8a17dbb3b2324358dbcf11d47eb3d",
+  "benchmarks/results/crowns/cofield_maps.npz": "a51ddc11fb947ca4cc780285c14efe0751231db02bfdf39ac88179cb8f57d012",
+  "benchmarks/results/crowns/data.json": "c51fb442bddf710c69c7ec47f27ae04592737ba2d0aee52b64ca7625017775db",
+  "benchmarks/results/crowns/models.json": "81214e192aadd4c584e02c0828b69454731d690f919860a0541bb2e6a7340fff",
+  "benchmarks/results/crowns/probe.json": "59bece48e8754d05c115b500c8e66b63507647511a833bec0a2adeb537681558",
+  "benchmarks/results/crowns/select.json": "4fbd1afaa6ccfb4595f0f032d7b99210afe6bc67746538d7737f3640fd903664",
+  "benchmarks/results/crowns/table.md": "274d49c8b906ee00e85840317a4baf7217272fe154f6336fa631bf499f44ac29",
   "benchmarks/results/cyclodextrin/alpha.json": "3669277fbc1d41e0aea73bcf7dcb3d8d100e6d475a5017f5d579f145ad2a08f5",
   "benchmarks/results/cyclodextrin/beta.json": "0f14963fc1426f739a8bda77d2e1299da87e39944eae77a87ffe4ddca3069277",
   "benchmarks/results/cyclodextrin/dimethyl_beta.json": "b2730704e2526476e534fe5cc58374f55fb514e3e0e4ab877023814a8d862b56",
