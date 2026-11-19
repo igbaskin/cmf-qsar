@@ -1315,7 +1315,25 @@ ECFP4 is again the best model on permeability. Plan item PL5
 fraction of heavy atoms in side chains or the size of the largest side group, added to the
 counts closes it on every gas. The field cut to distances below 3 Å keeps the whole margin,
 and the distances beyond add nothing, so the field gains by typing near neighbours, not by
-describing how chains pack.
+describing how chains pack. Plan item PL6 (`benchmarks/run_polymer_ladders.py`) builds ladder
+polymers, such as the polymers of intrinsic microporosity, from repeat units with four
+attachment points. Trained on linear polymers, every model predicts the 27 ladders too low by
+about one to two log units and none ranks them; the field is worst, 0.26 to 0.60 log units
+behind the bond-count kernel. With other ladders in the training set the error halves. PL6
+also found that 101 of the 742 linear repeat units of the source are written with a broken
+benzene ring or a methylene for a carbonyl oxygen; repairing them changes PL2's numbers little.
+Plan item PL3 (`benchmarks/run_polymer_chain.py`) builds an infinite chain from the trimer:
+copies of the middle unit, related by the screw that carries one junction onto the next. Its
+field is worse than the trimer's middle unit on all six targets, by 0.02 to 0.12 in q2, because
+the copies beyond the nearest neighbours dilute the kernel. 41 % of these chains meet
+themselves a few units on, and only one is a pure translation, so the trimer stays the sample.
+Plan item PL4 (`benchmarks/run_copolymers.py`) describes a copolymer by the local environments
+of its units: one trimer for each unit with its two neighbours, weighted by how often the
+environment occurs in the chain. On 1,575 copolymers with computed electron affinities and
+ionization potentials (the VIPEA set), this ensemble plus counts is the best model on random
+folds (q² 0.98, half the error of weighted counts). Unlike a weighted mean, it predicts the
+small differences between alternating, random and block copolymers. With whole dibromides
+held out it is no better than the mean of the two homopolymer units.
 
 ### A measured curve as the sample: no structure needed
 

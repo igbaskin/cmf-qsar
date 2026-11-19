@@ -17,12 +17,31 @@ log10 of the permeability.
 What this script does: download both into ``benchmarks/cache/polymer_packing/raw/`` (the RadonPy
 file is checked against its MD5 checksum, the Hugging Face revision against the one above); refuse
 the repeat units the field description cannot represent, each with its reason; write
-``examples/polymer_packing/pi1070.csv`` and ``permeability.csv``, the two licence texts and
-``provenance.json``.
+``examples/polymer_packing/pi1070.csv``, ``permeability.csv`` and ``permeability_pl6.csv``, the two
+licence texts and ``provenance.json``.
 
-Refused rows: a repeat unit the builder refuses (``cmfqsar.polymer.parse_repeat_unit``: not
-exactly two attachment points, which leaves out ladder polymers such as the polymers of intrinsic
-microporosity), an element outside the Gasteiger scheme, and a net formal charge.
+Refused rows of ``pi1070.csv`` and ``permeability.csv`` (plan item PL2): a repeat unit the builder
+refuses (``cmfqsar.polymer.parse_repeat_unit``) or one with four attachment points, which leaves
+out ladder polymers such as the polymers of intrinsic microporosity; an element outside the
+Gasteiger scheme; a net formal charge.  These two tables keep the SMILES as the sources give them.
+
+**The table of plan item PL6** (``permeability_pl6.csv``).  The same permeability rows, with two
+changes.
+
+* *Ladder polymers are kept.*  The builder joins four attachment points since PL6.  Four of the 31
+  are refused: a junction ring of fewer than five atoms (perm558); a Troger's base written with two
+  bridges per unit, so that the junction would be a ring of four nitrogens and four carbons
+  (perm054); and two rows that repeat the five values of another row (perm094 repeats perm499,
+  written with a broken ring; perm618 is a regioisomer of perm005).
+* *Two faults of the source are repaired.*  In 99 rows (115 rings) a benzene ring is written as a
+  cyclohexa-1,3-diene: two adjacent ring carbons carry a hydrogen and no double bond, as in a
+  fluorene written ``C3C=CC=CC3C3C=CC=CC32``.  No polymer in these papers has such a ring; it is a
+  benzene ring whose aromatic bonds were lost.  The repair makes the bond between the two carbons
+  double, which makes the ring aromatic.  In 12 rows (24 atoms) the carbonyl carbon of an imide
+  or an ester carries ``=CH2`` in place of ``=O`` (``c(=C)n``, ``OC(=C)C``); the repair makes it an
+  oxygen.  The column ``source_psmiles`` keeps the
+  SMILES of the source, and ``repair`` says what was changed.  The density and glass transition
+  tables have neither fault.
 
 Not used: RadonPy's van der Waals volume per repeat unit, which would give the packing
 coefficient k = V_vdW rho N_A / M.  It is above 1 -- the atoms filling more than the whole volume --
@@ -119,6 +138,15 @@ def permeability_rows():
 
 
 def refusal(psmiles: str) -> str:
+    """Why a repeat unit is left out of the PL2 tables, or an empty string."""
+    mol = Chem.MolFromSmiles(psmiles)
+    if mol is not None and sum(a.GetAtomicNum() == 0 for a in mol.GetAtoms()) == 4:
+        return "builder: 4 attachment points"     # a ladder polymer; PL2 had no builder for it
+    return chemistry_refusal(psmiles)
+
+
+def chemistry_refusal(psmiles: str) -> str:
+    """Why the builder or the field description cannot take a repeat unit, or an empty string."""
     try:
         parse_repeat_unit(psmiles)
     except ValueError as exc:
@@ -133,6 +161,99 @@ def refusal(psmiles: str) -> str:
     if sum(a.GetFormalCharge() for a in mol.GetAtoms()) != 0:
         return "net formal charge"
     return ""
+
+
+#: a benzene ring written as a cyclohexa-1,3-diene: two adjacent sp3 ring carbons with hydrogen
+BROKEN_BENZENE = Chem.MolFromSmarts(
+    "[#6;R;!a]1=[#6;!a][#6;!a]=[#6;!a][#6;X4;!H0][#6;X4;!H0]1")
+#: a carbonyl carbon of an imide, amide or ester with a methylene where the oxygen belongs
+CARBONYL_METHYLENE = Chem.MolFromSmarts("[#6](=[CH2;D1])~[#7,#8]")
+#: rows of the PL6 table refused by hand, with the reason; the junction-ring rule finds perm558
+PL6_FAULTS = {
+    "perm054": "Troger's base written with two bridges per unit; the junction would be a ring "
+               "of four N and four C",
+    "perm094": "repeats the five values of perm499, written with a broken aromatic ring",
+    "perm618": "repeats the five values of perm005 (within 1 %); a regioisomer of its unit",
+}
+
+
+def repair(psmiles: str):
+    """(repaired SMILES, broken benzene rings made aromatic, carbonyl oxygens restored).
+
+    The atom order of the input is kept (``canonical=False``), so that the attachment points stay
+    in the order written, which decides the head and the tail.
+    """
+    m = Chem.RWMol(Chem.MolFromSmiles(psmiles))
+    rings = 0
+    while True:
+        hit = m.GetSubstructMatch(BROKEN_BENZENE)
+        if not hit:
+            break
+        m.GetBondBetweenAtoms(hit[4], hit[5]).SetBondType(Chem.BondType.DOUBLE)
+        for i in (hit[4], hit[5]):
+            a = m.GetAtomWithIdx(i)
+            a.SetNumExplicitHs(0)
+            a.SetNoImplicit(False)
+            a.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+        Chem.SanitizeMol(m)
+        rings += 1
+    oxygens = 0
+    for hit in m.GetSubstructMatches(CARBONYL_METHYLENE):
+        m.GetAtomWithIdx(hit[1]).SetAtomicNum(8)
+        oxygens += 1
+    Chem.SanitizeMol(m)
+    if not rings and not oxygens:
+        return psmiles, 0, 0
+    return Chem.MolToSmiles(m, canonical=False), rings, oxygens
+
+
+def junction_ring(psmiles: str) -> int:
+    """The size of the ring that forms where two units of a ladder polymer meet (0 if linear)."""
+    unit = parse_repeat_unit(psmiles)
+    if not unit.ladder:
+        return 0
+    m = unit.mol
+    nb = lambda i: m.GetAtomWithIdx(i).GetNeighbors()[0].GetIdx()      # noqa: E731
+    D = Chem.GetDistanceMatrix(m)
+    return int(D[nb(unit.head), nb(unit.head2)] + D[nb(unit.tail), nb(unit.tail2)] + 2)
+
+
+def pl6_table(raw):
+    """The rows of ``permeability_pl6.csv`` and the counts for the provenance."""
+    kept, refused, repairs = [], Counter(), Counter()
+    for k, r in enumerate(raw):
+        rid = f"perm{k + 1:03d}"
+        src = r["SMILES"]
+        why = chemistry_refusal(src)
+        if not why and rid in PL6_FAULTS:
+            why = "fault: " + PL6_FAULTS[rid]
+        if not why and 0 < junction_ring(src) < 5:
+            why = f"fault: the junction ring would have {junction_ring(src)} atoms"
+        if why:
+            refused[why] += 1
+            continue
+        fixed, rings, oxygens = repair(src)
+        what = []
+        if rings:
+            what.append(f"{rings} benzene ring{'s' if rings > 1 else ''} made aromatic")
+            repairs["rows with benzene rings made aromatic"] += 1
+            repairs["benzene rings made aromatic"] += rings
+        if oxygens:
+            what.append(f"{oxygens} carbonyl oxygen{'s' if oxygens > 1 else ''} restored")
+            repairs["rows with carbonyl oxygens restored"] += 1
+            repairs["carbonyl oxygens restored"] += oxygens
+        if chemistry_refusal(fixed):
+            raise SystemExit(f"{rid}: the repaired SMILES {fixed} is refused: "
+                             f"{chemistry_refusal(fixed)}")
+        row = {"id": rid, "psmiles": fixed, "ladder": int(parse_repeat_unit(fixed).ladder)}
+        for g in GASES:
+            v = r.get(g)
+            row[f"log10_{g}"] = (f"{math.log10(float(v)):.4f}"
+                                 if v not in (None, "") and float(v) > 0 else "")
+        row["repair"] = "; ".join(what)
+        row["source_psmiles"] = src if what else ""
+        kept.append(row)
+    return kept, refused, repairs
 
 
 def write(name: str, rows, fields) -> None:
@@ -186,6 +307,16 @@ def main() -> int:
                             "rows": len(raw), "kept": len(kept), "refused": dict(refused),
                             "labels": {g: sum(1 for r in kept if r[f"log10_{g}"]) for g in GASES}}
     print(f"permeability: {len(raw)} rows, {len(kept)} kept, refused {dict(refused)}")
+    # ---- the PL6 table: ladders kept, two faults of the source repaired
+    kept6, refused6, repairs6 = pl6_table(raw)
+    write("permeability_pl6.csv", kept6, list(kept6[0]))
+    prov["permeability_pl6"] = {
+        "source": "the permeability rows above", "kept": len(kept6),
+        "ladders": sum(r["ladder"] for r in kept6), "refused": dict(sorted(refused6.items())),
+        "repairs": dict(sorted(repairs6.items())),
+        "labels": {g: sum(1 for r in kept6 if r[f"log10_{g}"]) for g in GASES}}
+    print(f"permeability, PL6: {len(kept6)} kept ({prov['permeability_pl6']['ladders']} "
+          f"ladders), refused {dict(refused6)}, repairs {dict(repairs6)}")
     # ---- licences and provenance
     shutil.copyfile(fetch(RADONPY_LICENSE, os.path.join(CACHE, "LICENSE_RadonPy.txt")),
                     os.path.join(OUT, "LICENSE_RadonPy.txt"))

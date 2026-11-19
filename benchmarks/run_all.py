@@ -1118,6 +1118,39 @@ def registry() -> List[Benchmark]:
                            "kernels and cached settings"],
                   report=lambda: _mod("run_polymer_permeability").report(),
                   tables=["polymer_permeability/table.md"]),
+        Benchmark("polymer_ladders",
+                  "ladder polymers (plan item PL6): the 27 ladder polymers of the permeability "
+                  "set built as trimers joined by two bonds per junction, 101 linear repeat "
+                  "units with repaired benzene rings and carbonyl oxygens, and the PL2 models "
+                  "trained on the linear polymers predicting the ladders",
+                  "run_polymer_ladders.py", "polymer_ladders",
+                  compute=[[]], minutes="70",
+                  prepare=["prepare_polymer_packing.py and run_polymer_packing.py first: this "
+                           "benchmark reads permeability_pl6.csv and the PL2 trimers"],
+                  report=lambda: _mod("run_polymer_ladders").report(),
+                  tables=["polymer_ladders/table.md"]),
+        Benchmark("polymer_chain",
+                  "the periodic chain against the trimer (plan item PL3): copies of the "
+                  "trimer's middle unit related by the screw that carries one junction onto the "
+                  "next, against the middle unit of the trimer, on the density and the "
+                  "permeability targets and folds of PL2",
+                  "run_polymer_chain.py", "polymer_chain",
+                  compute=[[]], minutes="90",
+                  prepare=["run_polymer_packing.py first: this benchmark reads its trimers "
+                           "and their rows"],
+                  report=lambda: _mod("run_polymer_chain").report(),
+                  tables=["polymer_chain/table.md"]),
+        Benchmark("copolymers",
+                  "copolymers (plan item PL4): 1,575 copolymers of the VIPEA set with computed "
+                  "electron affinities and ionization potentials, each described by the trimers "
+                  "of its local environments, against weighted means of descriptors, with random "
+                  "folds and with whole dibromides held out",
+                  "run_copolymers.py", "copolymers",
+                  compute=[[]], minutes="130",
+                  prepare=["prepare_copolymers.py makes examples/copolymers/vipea.csv, which the "
+                           "repository carries"],
+                  report=lambda: _mod("run_copolymers").report(),
+                  tables=["copolymers/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "
@@ -1136,13 +1169,21 @@ def registry() -> List[Benchmark]:
                   "adsorption energies of H and OH on 1,928 slabs of Mamun et al., read from "
                   "their Quantum ESPRESSO logs; periodic autocorrelation kernels on the slab "
                   "and site kernels at the adsorbate against element fractions and tabulated "
-                  "element properties, with random, slab-out and alloy-out folds",
-                  "run_alloy.py", "alloy", compute=[[]],
+                  "element properties, with random, slab-out and alloy-out folds; for the "
+                  "sites also two kinds of reference with no field: the atoms of each element in "
+                  "distance shells around the site (neighbour counts), and the atom count and "
+                  "standardised element properties in such shells (shell properties); and a "
+                  "graph neural network of the SchNet type on the same rows and folds "
+                  "(needs PyTorch), and seven variants of it that show which part of the network "
+                  "gives its gain",
+                  "run_alloy.py", "alloy",
+                  compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"],
+                           ["--task", "gnn"], ["--task", "ablate"]],
                   prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
                            "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
                            "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
                            "the result is kept in examples/alloy)"],
-                  minutes="220",
+                  minutes="520",
                   report=lambda: _mod("run_alloy").write_table(),
                   tables=["alloy/table.md"]),
         Benchmark("structures",

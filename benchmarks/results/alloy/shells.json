@@ -1,0 +1,423 @@
+{
+ "tasks": [
+  {
+   "task": "site H [all]",
+   "adsorbate": "H",
+   "variant": "all",
+   "n": 2500,
+   "models": [
+    {
+     "name": "shell properties and site kind",
+     "design": "random",
+     "q2": 0.8171108902514322,
+     "rmse": 0.29511009874846234,
+     "mae": 0.17415131648535914,
+     "chosen": {
+      "shell properties gauss x1 lam=0.1": 9,
+      "shell properties gauss x1 lam=0.01": 1
+     },
+     "seconds": 338.4376165866852
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "random",
+     "q2": 0.7989554348479726,
+     "rmse": 0.3094114044590357,
+     "mae": 0.18751405111879885,
+     "chosen": {
+      "shell elements gauss x1 lam=0.1": 10
+     },
+     "seconds": 155.52109909057617
+    },
+    {
+     "name": "shell properties and site kind",
+     "design": "slab-out",
+     "q2": 0.7706229825939225,
+     "rmse": 0.3304951564782995,
+     "mae": 0.20074310993119918,
+     "chosen": {
+      "shell properties gauss x4 lam=0.01": 6,
+      "shell properties gauss x16 lam=0.001": 1,
+      "shell properties gauss x1 lam=0.1": 3
+     },
+     "seconds": 154.25808572769165
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "slab-out",
+     "q2": 0.6978089932081524,
+     "rmse": 0.37934198836452504,
+     "mae": 0.24078741759063504,
+     "chosen": {
+      "shell elements gauss x4 lam=0.1": 8,
+      "shell elements gauss x16 lam=0.01": 1,
+      "shell elements gauss x1 lam=0.1": 1
+     },
+     "seconds": 164.7664988040924
+    },
+    {
+     "name": "shell properties and site kind",
+     "design": "alloy-out",
+     "q2": 0.7742250187180733,
+     "rmse": 0.3278899125789049,
+     "mae": 0.19994808594741778,
+     "chosen": {
+      "shell properties gauss x4 lam=0.01": 4,
+      "shell properties gauss x1 lam=0.1": 6
+     },
+     "seconds": 507.4008266925812
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "alloy-out",
+     "q2": 0.71824652231394,
+     "rmse": 0.3662897713136653,
+     "mae": 0.23548851495007342,
+     "chosen": {
+      "shell elements gauss x4 lam=0.1": 9,
+      "shell elements gauss x16 lam=0.01": 1
+     },
+     "seconds": 165.97240829467773
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "method": "shell properties and site kind",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.021145816257733513,
+     "low": -0.032547969280213904,
+     "high": -0.008766961975358707
+    },
+    {
+     "design": "random",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.10870548616715825,
+     "low": 0.09743366799922018,
+     "high": 0.1205334084665435
+    },
+    {
+     "design": "random",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.058215640073667085,
+     "low": 0.04712486236544185,
+     "high": 0.06973378402538975
+    },
+    {
+     "design": "random",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.0559835272857343,
+     "low": 0.04607147362858406,
+     "high": 0.06575210898129885
+    },
+    {
+     "design": "random",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03500379984104976,
+     "low": 0.024300325155867955,
+     "high": 0.04591644191643569
+    },
+    {
+     "design": "slab-out",
+     "method": "shell properties and site kind",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.04303835614544113,
+     "low": -0.05472467300618081,
+     "high": -0.032499458714099
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.0940748657699634,
+     "low": 0.08164133260303408,
+     "high": 0.10718632197047652
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03796848354213178,
+     "low": 0.026709017973472415,
+     "high": 0.04949865593272591
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.05164529781380603,
+     "low": 0.040653587881377955,
+     "high": 0.0626254132172104
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.015541231846618292,
+     "low": 0.00435187915648503,
+     "high": 0.02651177027154089
+    },
+    {
+     "design": "alloy-out",
+     "method": "shell properties and site kind",
+     "against": "neighbour counts, binding elements, site kind and slab elements",
+     "delta_mae": -0.04315500771901945,
+     "low": -0.05448411524537402,
+     "high": -0.031753243702910626
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.09570904043266512,
+     "low": 0.08299059243218428,
+     "high": 0.10925105878701558
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.038788884071313146,
+     "low": 0.02776560832238646,
+     "high": 0.05011876508766265
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.0533515551298446,
+     "low": 0.04246199002677175,
+     "high": 0.06477950833814401
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.01567036070446942,
+     "low": 0.0048981595546235684,
+     "high": 0.026604182107355403
+    }
+   ]
+  },
+  {
+   "task": "site OH [all]",
+   "adsorbate": "OH",
+   "variant": "all",
+   "n": 2475,
+   "models": [
+    {
+     "name": "shell properties and site kind",
+     "design": "random",
+     "q2": 0.739633700388777,
+     "rmse": 0.33805898680694196,
+     "mae": 0.2079807470245453,
+     "chosen": {
+      "shell properties gauss x1 lam=0.1": 10
+     },
+     "seconds": 148.85518050193787
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "random",
+     "q2": 0.7132433828475572,
+     "rmse": 0.35477811695580763,
+     "mae": 0.22363113715431562,
+     "chosen": {
+      "shell elements gauss x4 lam=0.01": 7,
+      "shell elements gauss x1 lam=0.1": 3
+     },
+     "seconds": 184.4718782901764
+    },
+    {
+     "name": "shell properties and site kind",
+     "design": "slab-out",
+     "q2": 0.7147463387897607,
+     "rmse": 0.3538471595512,
+     "mae": 0.2198305143500263,
+     "chosen": {
+      "shell properties gauss x16 lam=0.001": 5,
+      "shell properties gauss x4 lam=0.01": 4,
+      "shell properties gauss x1 lam=0.1": 1
+     },
+     "seconds": 174.3888919353485
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "slab-out",
+     "q2": 0.6498013911447525,
+     "rmse": 0.39206430866512704,
+     "mae": 0.25058709133107077,
+     "chosen": {
+      "shell elements gauss x4 lam=0.1": 8,
+      "shell elements gauss x4 lam=0.01": 2
+     },
+     "seconds": 265.36915397644043
+    },
+    {
+     "name": "shell properties and site kind",
+     "design": "alloy-out",
+     "q2": 0.7186668398730727,
+     "rmse": 0.35140712461049317,
+     "mae": 0.22248747013051082,
+     "chosen": {
+      "shell properties gauss x4 lam=0.01": 5,
+      "shell properties gauss x1 lam=0.1": 4,
+      "shell properties gauss x16 lam=0.001": 1
+     },
+     "seconds": 220.05835485458374
+    },
+    {
+     "name": "shell elements and site kind",
+     "design": "alloy-out",
+     "q2": 0.6340266580481315,
+     "rmse": 0.4007973358312666,
+     "mae": 0.2661927757526302,
+     "chosen": {
+      "shell elements gauss x4 lam=0.01": 2,
+      "shell elements gauss x4 lam=0.1": 8
+     },
+     "seconds": 528.5677797794342
+    }
+   ],
+   "pairs": [
+    {
+     "design": "random",
+     "method": "shell properties and site kind",
+     "against": "binding elements, site kind and slab elements",
+     "delta_mae": -0.01277750003198061,
+     "low": -0.018878067525512555,
+     "high": -0.007213714406427456
+    },
+    {
+     "design": "random",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.11301535431976198,
+     "low": 0.09675639385015172,
+     "high": 0.13082681875811839
+    },
+    {
+     "design": "random",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.07341209103889948,
+     "low": 0.06214968618688541,
+     "high": 0.08677787892016035
+    },
+    {
+     "design": "random",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03826397097102835,
+     "low": 0.029718654468346917,
+     "high": 0.04713763455462945
+    },
+    {
+     "design": "random",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03166732005275785,
+     "low": 0.023666893122253035,
+     "high": 0.04044245294316164
+    },
+    {
+     "design": "slab-out",
+     "method": "shell properties and site kind",
+     "against": "neighbour sums of element properties in four shells, and site kind",
+     "delta_mae": -0.019952025804444135,
+     "low": -0.02926534249730912,
+     "high": -0.011474555421475503
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.12720384052061837,
+     "low": 0.10640050673491204,
+     "high": 0.14940797149274732
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.08334819293017207,
+     "low": 0.07041273246479365,
+     "high": 0.0975273897244043
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.05239942000800488,
+     "low": 0.039160200321591905,
+     "high": 0.06565533663412572
+    },
+    {
+     "design": "slab-out",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03226669596046958,
+     "low": 0.02151398547148215,
+     "high": 0.04305801942172441
+    },
+    {
+     "design": "alloy-out",
+     "method": "shell properties and site kind",
+     "against": "properties of the binding elements, site kind and slab elements",
+     "delta_mae": -0.009934326002865201,
+     "low": -0.025933894163703668,
+     "high": 0.0023720460443713088
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, invariant, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.13473506792061,
+     "low": 0.11567289395115404,
+     "high": 0.1563749421587271
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, overlap in the lattice frame, classic fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.08973279299181017,
+     "low": 0.07352228984447332,
+     "high": 0.11081183260202596
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, invariant, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.05547149294460088,
+     "low": 0.04390838255726909,
+     "high": 0.06753232655151613
+    },
+    {
+     "design": "alloy-out",
+     "method": "site environment, overlap in the lattice frame, extended fields",
+     "against": "shell properties and site kind",
+     "delta_mae": 0.03222178536973805,
+     "low": 0.022668905071550213,
+     "high": 0.04232720363988548
+    }
+   ]
+  }
+ ],
+ "edges": [
+  2.5,
+  3.5,
+  4.5,
+  6.0
+ ],
+ "factors": [
+  0.25,
+  1.0,
+  4.0,
+  16.0,
+  64.0
+ ]
+}

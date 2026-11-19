@@ -4158,7 +4158,8 @@ def cmd_hetero(args):
 
 
 def cmd_polymers(args):
-    """Repeat units written as SMILES with two attachment points, built as capped oligomers."""
+    """Repeat units written as SMILES with two attachment points (four for a ladder polymer),
+    built as capped oligomers."""
     import csv
 
     from rdkit import Chem
@@ -5508,13 +5509,14 @@ def main(argv=None):
     u.add_argument("--seed", type=int, default=0)
     u.set_defaults(func=cmd_unalign)
     po = sub.add_parser("polymers", help="build capped oligomers from repeat units written as "
-                                         "SMILES with two attachment points, as an SDF")
+                                         "SMILES with two attachment points (four for a "
+                                         "ladder polymer), as an SDF")
     po.add_argument("table", help="a CSV (or tab- or semicolon-separated) table with one repeat unit "
                                   "per row; every column is copied to the SDF as a property")
     po.add_argument("out", help="output SDF")
     po.add_argument("--smiles-column", default="smiles", metavar="NAME",
                     help="the column with the repeat unit, written with two attachment points "
-                         "as * or [*] (default: smiles)")
+                         "(four for a ladder polymer) as * or [*] (default: smiles)")
     po.add_argument("--name-column", default=None, metavar="NAME",
                     help="the column with the polymer's name (default: polymer_1, polymer_2, ...)")
     po.add_argument("--units", type=int, default=3,

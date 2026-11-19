@@ -7549,13 +7549,53 @@ What it leaves open, in order:
   new alloys (0.216 against 0.267 eV). Neighbour-count references (atoms of each element in four
   shells around the same point, added on 19 November with `--task counts`) halve that lead: the
   best of them has 0.244 eV (slabs held out) and 0.243 eV (alloys held out), so the difference
-  is -0.027 eV, interval -0.040 to -0.015 in both. With random folds the overlap kernel is not
-  better than the counts (+0.014 eV, interval -0.001 to +0.031). **Site, OH:** no field method
-  beats the references (+0.019 eV with random folds, +0.012 eV with slabs held out, interval
-  -0.000 to +0.025, +0.022 eV with alloys held out). **Verdict:** a small gain for H sites on new
-  materials, about 11 % of the error, and no more. **Not done:** the O and OOH energies (O.tar.gz, 6.1 GB, not
-  downloaded; the set has no OOH, so no ORR limiting potential); the converged-only variant of the
-  site tasks; a tutorial.
+  is -0.027 eV, interval -0.040 to -0.015 in both. **Shell properties** (added on 19 November
+  with `--task shells`, results in `results/alloy/shells.json`) remove the rest of the lead. Per
+  shell (up to 2.5, 3.5, 4.5 and 6 A) they take the number of atoms and the sum of the
+  standardised element properties, with the site kind, standardised columns and a Gaussian
+  kernel. For H their MAE is 0.174 / 0.201 / 0.200 eV (random / slab-out / alloy-out), and the
+  overlap kernel minus them is +0.035 [+0.024, +0.046], +0.016 [+0.004, +0.027] and +0.016
+  [+0.005, +0.027]. **Site, OH:** no field method beats the references. The shell properties
+  reach 0.208 / 0.220 / 0.222 eV, and the overlap kernel is worse by +0.032 with each kind of
+  fold. A one-off check on H with slabs held out (not part of the benchmark) found why the
+  neighbour counts are weaker. Starting from the shell properties: without the atom count of
+  each shell, 0.222 eV; without standardised columns, 0.220 eV; with the first shell at 2.3 A
+  instead of 2.5 A, 0.205 eV. All three together give the 0.246 eV of the neighbour-count
+  property sums. **Graph neural network** (added on 19 November with `--task gnn`,
+  `benchmarks/alloy_gnn.py`, results in `results/alloy/gnn.json`): a SchNet-type network in plain
+  PyTorch, 3 layers of 32 features, edges up to 5 A, learned element vectors and the nine
+  element properties of the references, no site kind; an ensemble of 3 members, each stopped on
+  an inner validation part of the same kind as the test part. The network has the smaller error
+  than the best field method, the best reference and (sites) the shell properties in every row.
+  MAE (eV), random / slab-out or alloy-out: **slab H** 0.117 / 0.117 (references 0.189 / 0.190,
+  fields 0.199); **slab OH** 0.176 / 0.193; **site H** 0.098 / 0.136 / 0.137 (shell properties
+  0.174 / 0.201 / 0.200, so -0.076 [-0.085, -0.068] / -0.064 [-0.072, -0.056] / -0.063 [-0.072,
+  -0.055]); **site OH** 0.186 / 0.192 / 0.196 (shell properties 0.208 / 0.220 / 0.222, so
+  -0.022 [-0.028, -0.016] / -0.028 [-0.036, -0.020] / -0.026 [-0.033, -0.020]). The only
+  interval that includes zero is slab OH with random folds against the best field method
+  (-0.016 [-0.034, +0.002]). One training on 2,500 sites takes about 45 minutes on one core
+  with the machine full, 5 minutes with it free. Pilot: three settings on the inner folds of
+  one training part only. **Trap:** on a CPU the Gaussian distance features hold denormal
+  numbers, which made every matrix product about 40 times slower until
+  `torch.set_flush_denormal(True)`. **Verdict:** a smooth field of the site environment adds
+  nothing to a count of the atoms and their properties at each distance from the site, for H or
+  for OH, but a learned network on the same atoms beats both by 0.02 to 0.08 eV; the shell
+  counts are not the limit of the data. **Ablation** (`--task ablate`, results in
+  `results/alloy/ablation.json`; H sites, slabs held out, 7 variants of 3 members, seeds paired
+  by fold and member): the full network has MAE 0.135 eV against 0.201 for the shell properties
+  (-0.066 [-0.074, -0.058]). Distances replaced by the centre of four shells: +0.036 [+0.029,
+  +0.043], more than half of the gap. A network with about the shell properties' own information
+  (one layer, four shells, tabulated properties only, no site kind, nothing beyond 5 A) still
+  beats them by -0.031 [-0.039, -0.022]: the other part of the gap is the learner (0.031 +
+  0.036 = 0.067). No learned element vectors, no tabulated properties, or one layer: about +0.010
+  each (the two element inputs replace each other). One network 0.150, the mean of three 0.135
+  (0.015 [0.013, 0.017]). Site kind added: +0.002 [-0.001, +0.006], nothing. The 0.010 changes
+  are about the seed spread of one network (members 0.145 to 0.154); a repeat of the full
+  network gave 0.135 against 0.136. Not done: OH, other folds, tuning for each variant, a network
+  with field input, an equivariant network. A tutorial was planned on this set
+  and dropped for the first reason. **Not done:** the O and OOH energies
+  (O.tar.gz, 6.1 GB, not downloaded; the set has no OOH, so no ORR limiting potential); the
+  converged-only variant of the site tasks.
 
 * **PO1. A catalytic series with a shared frame, done 5 November 2026.** The catalysis bullet of
   H named ligand libraries with a shared frame and a rate or a selectivity as the activity, and
@@ -9380,12 +9420,49 @@ Open after PL1:
   polymer*.
 * **PL6. Ladder polymers.** A repeat unit with four attachment points (the polymers of intrinsic
   microporosity) needs a builder that joins two strands; PL2 had to leave out 31 of them, the
-  most permeable class.
+  most permeable class. **Done 19 November 2026; the gate is not met**
+  (`benchmarks/run_polymer_ladders.py`). `cmfqsar.polymer` reads four attachment points as two
+  ends (map numbers 1-2 and 3-4, or the closest pairs in the bond graph), joins two bonds per
+  junction, and optimises a ladder without the end-to-end restraint. 27 of the 31 ladders are
+  kept; all build without geometry faults. The source has two faults that PL2 missed: 99 rows
+  with a benzene ring written as a cyclohexadiene and 12 with =CH2 for a carbonyl oxygen,
+  repaired in a table of PL6's own (`permeability_pl6.csv`); on the repaired linear polymers the
+  PL2 numbers move little (random-fold q2 by -0.008 to +0.017). Gate: trained on the linear
+  polymers, central unit + counts against bond-count kernel + counts on the ladders. Its RMSE is
+  larger by +0.26 to +0.60 log units (interval above zero for four gases). Every model predicts
+  the ladders 0.8 to 1.8 log units too low and none ranks them; with other ladders in training
+  the error halves (0.5 to 0.9). Details in the manual, *Ladder polymers*.
 * **PL3. The periodic chain against the trimer.** Item M1 computes the field of a chain per
   repeat length, but needs a cell with the right repeat distance. A builder that takes it from
-  the extended trimer would make the comparison possible.
+  the extended trimer would make the comparison possible. **Done 19 November 2026; the gate is
+  not met** (`benchmarks/run_polymer_chain.py`). The extended trimer gives no repeat: its units
+  have different conformations, and even the copy that the junction screw makes misses the
+  next unit by 4.1 A (median). `cmfqsar.polymer.chain_screw` builds the chain as copies of the middle unit
+  related by the screw that carries the junction before it onto the junction after it;
+  `chain_autocorrelation_rows` gives its field, and `periodic_chain` M1's cell when the screw is
+  a translation (one polymer of 1,725). 705 chains (41 %) meet themselves and are left out.
+  On the other 1,020, chain + counts minus central unit + counts is -0.018 to -0.089 on random
+  folds (every interval below zero) and -0.020 to -0.116 with groups held out, on the density
+  and all five gases. The chain cut to its nearest copies is close to the trimer (-0.058 to
+  +0.022); the far copies cost 0.045 to 0.094. Details in the manual, *The periodic chain
+  against the trimer*.
 * **PL4. Copolymers.** A random copolymer as the weighted mean of its repeat units' fields
-  (the packed ensembles of item MS5), against a weighted mean of descriptors.
+  (the packed ensembles of item MS5), against a weighted mean of descriptors. **Done 19 November
+  2026; the gate is met on the electron affinity only, and only just**
+  (`benchmarks/prepare_copolymers.py`, `benchmarks/run_copolymers.py`). The data are 1,575
+  copolymers of the VIPEA set (computed xTB electron affinity and ionization potential; 9
+  diboronic acids, 25 of 680 dibromides drawn with a fixed seed; alternating, random and block).
+  No open measured set of useful size was found. `cmfqsar.polymer.environment_weights` counts the
+  local environments (a unit and its two neighbours) over the source's octamers;
+  `build_sequence` builds one trimer for each, and the copolymer's row is the weighted mean of
+  their middle-unit rows (MS5's mean map). The evidence chose ridges of 1e-4 to 1e-3 in some
+  blocks, and two references then failed on held-out dibromides (q2 -0.33 and -0.45). A second
+  selection with ridges of at least 0.1 is reported next to the first. Gate, sequence ensemble +
+  counts minus counts + architecture, dibromides held out: +0.096 [+0.001, +0.222] (electron
+  affinity), -0.027 [-0.105, +0.037] (ionization potential). The ensemble is best on random
+  folds (q2 0.983 and 0.984) and predicts the differences between architectures (r 0.44 and
+  0.75), but on new dibromides it does not beat the mean of the homopolymer units. Details in
+  the manual, *Copolymers: a sequence as an ensemble of local environments*.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

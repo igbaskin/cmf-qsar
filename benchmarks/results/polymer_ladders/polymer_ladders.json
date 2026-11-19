@@ -1,0 +1,5178 @@
+{
+ "audit": {
+  "ladders": [
+   {
+    "atoms": 172,
+    "faults": [],
+    "id": "perm005",
+    "ring_planarity": 0.029,
+    "span": 10.62706695230152
+   },
+   {
+    "atoms": 139,
+    "faults": [],
+    "id": "perm434",
+    "ring_planarity": 0.013,
+    "span": 6.148605863272982
+   },
+   {
+    "atoms": 100,
+    "faults": [],
+    "id": "perm021",
+    "ring_planarity": 0.0,
+    "span": 34.97536669149213
+   },
+   {
+    "atoms": 172,
+    "faults": [],
+    "id": "perm659",
+    "ring_planarity": 0.021,
+    "span": 8.442050282583537
+   },
+   {
+    "atoms": 127,
+    "faults": [],
+    "id": "perm055",
+    "ring_planarity": 0.008,
+    "span": 16.49133492113361
+   },
+   {
+    "atoms": 172,
+    "faults": [],
+    "id": "perm259",
+    "ring_planarity": 0.045,
+    "span": 23.596613007627678
+   },
+   {
+    "atoms": 124,
+    "faults": [],
+    "id": "perm464",
+    "ring_planarity": 0.007,
+    "span": 14.652345641298583
+   },
+   {
+    "atoms": 304,
+    "faults": [],
+    "id": "perm093",
+    "ring_planarity": 0.072,
+    "span": 11.633353695356304
+   },
+   {
+    "atoms": 175,
+    "faults": [],
+    "id": "perm301",
+    "ring_planarity": 0.013,
+    "span": 29.10192600014771
+   },
+   {
+    "atoms": 169,
+    "faults": [],
+    "id": "perm302",
+    "ring_planarity": 0.007,
+    "span": 25.706203586168368
+   },
+   {
+    "atoms": 175,
+    "faults": [],
+    "id": "perm303",
+    "ring_planarity": 0.07,
+    "span": 8.869757041299227
+   },
+   {
+    "atoms": 193,
+    "faults": [],
+    "id": "perm304",
+    "ring_planarity": 0.006,
+    "span": 26.34281360270486
+   },
+   {
+    "atoms": 211,
+    "faults": [],
+    "id": "perm305",
+    "ring_planarity": 0.023,
+    "span": 21.52805586618749
+   },
+   {
+    "atoms": 322,
+    "faults": [],
+    "id": "perm499",
+    "ring_planarity": 0.045,
+    "span": 17.771790357277666
+   },
+   {
+    "atoms": 283,
+    "faults": [],
+    "id": "perm306",
+    "ring_planarity": 0.044,
+    "span": 55.11155039934449
+   },
+   {
+    "atoms": 244,
+    "faults": [],
+    "id": "perm307",
+    "ring_planarity": 0.051,
+    "span": 11.730060564419038
+   },
+   {
+    "atoms": 196,
+    "faults": [],
+    "id": "perm500",
+    "ring_planarity": 0.021,
+    "span": 24.91280332369191
+   },
+   {
+    "atoms": 229,
+    "faults": [],
+    "id": "perm308",
+    "ring_planarity": 0.036,
+    "span": 8.049848215631254
+   },
+   {
+    "atoms": 193,
+    "faults": [],
+    "id": "perm309",
+    "ring_planarity": 0.039,
+    "span": 9.775393065601401
+   },
+   {
+    "atoms": 175,
+    "faults": [],
+    "id": "perm501",
+    "ring_planarity": 0.007,
+    "span": 23.770741275150858
+   },
+   {
+    "atoms": 157,
+    "faults": [],
+    "id": "perm686",
+    "ring_planarity": 0.001,
+    "span": 23.730346718637875
+   },
+   {
+    "atoms": 175,
+    "faults": [],
+    "id": "perm095",
+    "ring_planarity": 0.001,
+    "span": 23.74446569901017
+   },
+   {
+    "atoms": 250,
+    "faults": [],
+    "id": "perm687",
+    "ring_planarity": 0.004,
+    "span": 50.03752423679889
+   },
+   {
+    "atoms": 262,
+    "faults": [],
+    "id": "perm502",
+    "ring_planarity": 0.028,
+    "span": 36.32300887091861
+   },
+   {
+    "atoms": 286,
+    "faults": [],
+    "id": "perm503",
+    "ring_planarity": 0.007,
+    "span": 50.04376521460078
+   },
+   {
+    "atoms": 250,
+    "faults": [],
+    "id": "perm688",
+    "ring_planarity": 0.079,
+    "span": 4.004758625258934
+   },
+   {
+    "atoms": 316,
+    "faults": [],
+    "id": "perm526",
+    "ring_planarity": 0.104,
+    "span": 12.658520025701302
+   }
+  ],
+  "others": [],
+  "repaired": [
+   {
+    "atoms": 215,
+    "faults": [],
+    "id": "perm062",
+    "ring_planarity": 0.021,
+    "span": 20.00053253115952
+   },
+   {
+    "atoms": 179,
+    "faults": [],
+    "id": "perm470",
+    "ring_planarity": 0.068,
+    "span": 20.381420182087485
+   },
+   {
+    "atoms": 179,
+    "faults": [],
+    "id": "perm663",
+    "ring_planarity": 0.031,
+    "span": 13.608337787248198
+   },
+   {
+    "atoms": 212,
+    "faults": [],
+    "id": "perm067",
+    "ring_planarity": 0.054,
+    "span": 14.847481710001764
+   },
+   {
+    "atoms": 200,
+    "faults": [],
+    "id": "perm476",
+    "ring_planarity": 0.039,
+    "span": 22.502593245195847
+   },
+   {
+    "atoms": 164,
+    "faults": [],
+    "id": "perm666",
+    "ring_planarity": 0.027,
+    "span": 12.078165818690012
+   },
+   {
+    "atoms": 287,
+    "faults": [],
+    "id": "perm667",
+    "ring_planarity": 0.047,
+    "span": 10.028558313819724
+   },
+   {
+    "atoms": 197,
+    "faults": [],
+    "id": "perm069",
+    "ring_planarity": 0.024,
+    "span": 11.467496558022612
+   },
+   {
+    "atoms": 221,
+    "faults": [],
+    "id": "perm071",
+    "ring_planarity": 0.077,
+    "span": 19.20218761485496
+   },
+   {
+    "atoms": 164,
+    "faults": [],
+    "id": "perm279",
+    "ring_planarity": 0.026,
+    "span": 10.940738144480688
+   },
+   {
+    "atoms": 203,
+    "faults": [],
+    "id": "perm669",
+    "ring_planarity": 0.024,
+    "span": 10.43403298106202
+   },
+   {
+    "atoms": 182,
+    "faults": [],
+    "id": "perm280",
+    "ring_planarity": 0.039,
+    "span": 6.705486763196962
+   },
+   {
+    "atoms": 143,
+    "faults": [],
+    "id": "perm672",
+    "ring_planarity": 0.018,
+    "span": 13.544332733751478
+   },
+   {
+    "atoms": 209,
+    "faults": [],
+    "id": "perm294",
+    "ring_planarity": 0.047,
+    "span": 22.87634095781779
+   },
+   {
+    "atoms": 173,
+    "faults": [],
+    "id": "perm490",
+    "ring_planarity": 0.042,
+    "span": 11.03493002411592
+   },
+   {
+    "atoms": 227,
+    "faults": [],
+    "id": "perm498",
+    "ring_planarity": 0.043,
+    "span": 19.754148393311585
+   },
+   {
+    "atoms": 245,
+    "faults": [],
+    "id": "perm091",
+    "ring_planarity": 0.027,
+    "span": 19.496952286200244
+   },
+   {
+    "atoms": 248,
+    "faults": [],
+    "id": "perm300",
+    "ring_planarity": 0.039,
+    "span": 21.781207534196003
+   },
+   {
+    "atoms": 212,
+    "faults": [],
+    "id": "perm684",
+    "ring_planarity": 0.038,
+    "span": 27.86589490021111
+   },
+   {
+    "atoms": 146,
+    "faults": [],
+    "id": "perm324",
+    "ring_planarity": 0.027,
+    "span": 5.646208579238319
+   },
+   {
+    "atoms": 215,
+    "faults": [],
+    "id": "perm505",
+    "ring_planarity": 0.031,
+    "span": 17.168146164309377
+   },
+   {
+    "atoms": 263,
+    "faults": [],
+    "id": "perm506",
+    "ring_planarity": 0.047,
+    "span": 20.108987062880473
+   },
+   {
+    "atoms": 236,
+    "faults": [],
+    "id": "perm518",
+    "ring_planarity": 0.032,
+    "span": 20.073765489747373
+   },
+   {
+    "atoms": 182,
+    "faults": [],
+    "id": "perm319",
+    "ring_planarity": 0.066,
+    "span": 21.20294468920728
+   },
+   {
+    "atoms": 209,
+    "faults": [],
+    "id": "perm522",
+    "ring_planarity": 0.029,
+    "span": 24.704376255194536
+   },
+   {
+    "atoms": 182,
+    "faults": [],
+    "id": "perm521",
+    "ring_planarity": 0.033,
+    "span": 6.489763437530792
+   },
+   {
+    "atoms": 194,
+    "faults": [],
+    "id": "perm108",
+    "ring_planarity": 0.047,
+    "span": 8.682423109351499
+   },
+   {
+    "atoms": 179,
+    "faults": [],
+    "id": "perm322",
+    "ring_planarity": 0.012,
+    "span": 12.18978000094904
+   },
+   {
+    "atoms": 176,
+    "faults": [],
+    "id": "perm702",
+    "ring_planarity": 0.039,
+    "span": 8.4410919321145
+   },
+   {
+    "atoms": 212,
+    "faults": [],
+    "id": "perm109",
+    "ring_planarity": 0.028,
+    "span": 12.944485289701387
+   },
+   {
+    "atoms": 200,
+    "faults": [],
+    "id": "perm524",
+    "ring_planarity": 0.048,
+    "span": 5.315457915600745
+   },
+   {
+    "atoms": 332,
+    "faults": [],
+    "id": "perm327",
+    "ring_planarity": 0.027,
+    "span": 23.014740033998002
+   },
+   {
+    "atoms": 338,
+    "faults": [],
+    "id": "perm704",
+    "ring_planarity": 0.033,
+    "span": 21.308801635438893
+   },
+   {
+    "atoms": 359,
+    "faults": [],
+    "id": "perm705",
+    "ring_planarity": 0.036,
+    "span": 4.159512294155275
+   },
+   {
+    "atoms": 359,
+    "faults": [],
+    "id": "perm326",
+    "ring_planarity": 0.041,
+    "span": 9.536957610565254
+   },
+   {
+    "atoms": 407,
+    "faults": [],
+    "id": "perm706",
+    "ring_planarity": 0.044,
+    "span": 9.239247876103692
+   },
+   {
+    "atoms": 380,
+    "faults": [],
+    "id": "perm528",
+    "ring_planarity": 0.034,
+    "span": 23.248725612893985
+   },
+   {
+    "atoms": 335,
+    "faults": [],
+    "id": "perm529",
+    "ring_planarity": 0.039,
+    "span": 25.40629151368067
+   },
+   {
+    "atoms": 341,
+    "faults": [],
+    "id": "perm707",
+    "ring_planarity": 0.043,
+    "span": 14.186262979980835
+   },
+   {
+    "atoms": 335,
+    "faults": [],
+    "id": "perm530",
+    "ring_planarity": 0.039,
+    "span": 25.040979233444347
+   },
+   {
+    "atoms": 257,
+    "faults": [],
+    "id": "perm132",
+    "ring_planarity": 0.036,
+    "span": 11.460639850756886
+   },
+   {
+    "atoms": 227,
+    "faults": [],
+    "id": "perm135",
+    "ring_planarity": 0.029,
+    "span": 15.844961072150197
+   },
+   {
+    "atoms": 161,
+    "faults": [],
+    "id": "perm555",
+    "ring_planarity": 0.025,
+    "span": 24.906015328870737
+   },
+   {
+    "atoms": 152,
+    "faults": [],
+    "id": "perm557",
+    "ring_planarity": 0.012,
+    "span": 22.733932650106013
+   },
+   {
+    "atoms": 200,
+    "faults": [],
+    "id": "perm734",
+    "ring_planarity": 0.063,
+    "span": 27.232845499729496
+   },
+   {
+    "atoms": 248,
+    "faults": [],
+    "id": "perm354",
+    "ring_planarity": 0.036,
+    "span": 23.653602098344635
+   },
+   {
+    "atoms": 359,
+    "faults": [],
+    "id": "perm360",
+    "ring_planarity": 0.054,
+    "span": 32.914085203216544
+   },
+   {
+    "atoms": 380,
+    "faults": [],
+    "id": "perm153",
+    "ring_planarity": 0.06,
+    "span": 25.774757859569654
+   },
+   {
+    "atoms": 356,
+    "faults": [],
+    "id": "perm567",
+    "ring_planarity": 0.044,
+    "span": 12.20008416945989
+   },
+   {
+    "atoms": 446,
+    "faults": [],
+    "id": "perm154",
+    "ring_planarity": 0.067,
+    "span": 5.729049501575152
+   },
+   {
+    "atoms": 167,
+    "faults": [],
+    "id": "perm232",
+    "ring_planarity": 0.027,
+    "span": 12.242660408256585
+   },
+   {
+    "atoms": 167,
+    "faults": [],
+    "id": "perm442",
+    "ring_planarity": 0.015,
+    "span": 10.751651645520994
+   },
+   {
+    "atoms": 152,
+    "faults": [],
+    "id": "perm745",
+    "ring_planarity": 0.023,
+    "span": 17.452885036697683
+   },
+   {
+    "atoms": 182,
+    "faults": [],
+    "id": "perm755",
+    "ring_planarity": 0.07,
+    "span": 25.62644525599548
+   },
+   {
+    "atoms": 188,
+    "faults": [],
+    "id": "perm166",
+    "ring_planarity": 0.039,
+    "span": 26.86012379143226
+   },
+   {
+    "atoms": 185,
+    "faults": [],
+    "id": "perm379",
+    "ring_planarity": 0.06,
+    "span": 24.328276629954154
+   },
+   {
+    "atoms": 233,
+    "faults": [],
+    "id": "perm757",
+    "ring_planarity": 0.031,
+    "span": 9.012655975569787
+   },
+   {
+    "atoms": 233,
+    "faults": [],
+    "id": "perm168",
+    "ring_planarity": 0.073,
+    "span": 12.30474011232737
+   },
+   {
+    "atoms": 251,
+    "faults": [],
+    "id": "perm169",
+    "ring_planarity": 0.047,
+    "span": 7.779162240193519
+   },
+   {
+    "atoms": 251,
+    "faults": [],
+    "id": "perm585",
+    "ring_planarity": 0.054,
+    "span": 8.263951391879704
+   },
+   {
+    "atoms": 227,
+    "faults": [],
+    "id": "perm761",
+    "ring_planarity": 0.051,
+    "span": 6.219324605109917
+   },
+   {
+    "atoms": 191,
+    "faults": [],
+    "id": "perm176",
+    "ring_planarity": 0.026,
+    "span": 16.807286713646274
+   },
+   {
+    "atoms": 173,
+    "faults": [],
+    "id": "perm029",
+    "ring_planarity": 0.058,
+    "span": 19.745402187090942
+   },
+   {
+    "atoms": 149,
+    "faults": [],
+    "id": "perm440",
+    "ring_planarity": 0.06,
+    "span": 23.42805630709202
+   },
+   {
+    "atoms": 152,
+    "faults": [],
+    "id": "perm639",
+    "ring_planarity": 0.01,
+    "span": 24.13748415826007
+   },
+   {
+    "atoms": 173,
+    "faults": [],
+    "id": "perm230",
+    "ring_planarity": 0.011,
+    "span": 18.56133628687741
+   },
+   {
+    "atoms": 125,
+    "faults": [],
+    "id": "perm028",
+    "ring_planarity": 0.01,
+    "span": 5.089064368969918
+   },
+   {
+    "atoms": 191,
+    "faults": [],
+    "id": "perm441",
+    "ring_planarity": 0.005,
+    "span": 20.158030346761766
+   },
+   {
+    "atoms": 149,
+    "faults": [],
+    "id": "perm032",
+    "ring_planarity": 0.031,
+    "span": 7.6139700983646055
+   },
+   {
+    "atoms": 161,
+    "faults": [],
+    "id": "perm780",
+    "ring_planarity": 0.015,
+    "span": 17.954624184265096
+   }
+  ]
+ },
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "draws": 2000,
+ "folds": 5,
+ "gases": {
+  "CH4": {
+   "all": {
+    "clusters": 102,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.052307514544933015,
+      "lo": 0.009603519472313003,
+      "mean": 0.029804760361390903,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.07134838497236032,
+      "lo": -0.0862217815895729,
+      "mean": 0.009420417878180931,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.7490247737482181,
+      "lo": 0.19715189401853625,
+      "mean": 0.479140998050543,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.04244322014242087,
+      "lo": -0.09143251912018345,
+      "mean": -0.06570480076845309,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.013667573888422387,
+      "lo": -0.20752969865474755,
+      "mean": -0.07746571846632433,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.6799276582148852,
+      "lo": 0.0884921100240085,
+      "mean": 0.397000770369748,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.023820976264652294,
+      "lo": -0.011269812480950403,
+      "mean": 0.005811305124744814,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.03330606246257365,
+      "lo": -0.08163765149904069,
+      "mean": -0.015181056779449031,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.3346538262818886,
+      "lo": -0.15423302492455723,
+      "mean": 0.09764852557050485,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.02836896768352675,
+      "lo": -0.07182247489185664,
+      "mean": -0.04971479898203979,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.13429801966985633,
+      "lo": -0.12788820194371903,
+      "mean": 0.0121112733547859,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.5723309267375939,
+      "lo": 0.08844237683626532,
+      "mean": 0.33938153091092915,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     }
+    ],
+    "ladders": 25,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "ladders": {
+        "mean_error": -1.089530869827632,
+        "q2": -0.40307069477154145,
+        "rmse": 1.4826079011814801,
+        "spearman": 0.19773033641396218
+       },
+       "q2_mean": 0.5868325592215616,
+       "q2_range": 0.22736331777962526,
+       "rmse_mean": 0.9251126246150065
+      },
+      "ladders": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 1
+       },
+       "mean_error": -1.3434382797604707,
+       "q2": -0.863399261324219,
+       "rmse": 1.7085964230577246,
+       "spearman": 0.33237161607327503
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 17,
+        "Tanimoto, ridge 0.1": 33
+       },
+       "ladders": {
+        "mean_error": -0.16545700037897068,
+        "q2": 0.684409684775708,
+        "rmse": 0.7031506246931396,
+        "spearman": 0.7347566975693925
+       },
+       "q2_mean": 0.8575837297429624,
+       "q2_range": 0.024897976331645477,
+       "rmse_mean": 0.5462698997668672
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 38,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.9249668519550812,
+        "q2": -0.22810429874425986,
+        "rmse": 1.3870884616188588,
+        "spearman": 0.05693402682736654
+       },
+       "q2_mean": 0.47408672683468184,
+       "q2_range": 0.21547214917262925,
+       "rmse_mean": 1.0477917174257934
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1
+       },
+       "mean_error": -1.2103606674903926,
+       "q2": -0.6885412535522795,
+       "rmse": 1.6264561953769296,
+       "spearman": 0.23773803094130086
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.25981225049925966,
+        "q2": 0.5280071201442397,
+        "rmse": 0.8599124898922134,
+        "spearman": 0.5881900474259691
+       },
+       "q2_mean": 0.7603308166257022,
+       "q2_range": 0.01991941668420316,
+       "rmse_mean": 0.7087288375537775
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 1,
+        "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 40,
+        "up to 8 bonds, width 0.5, h 3, ridge 1": 1
+       },
+       "ladders": {
+        "mean_error": -0.9397584780269237,
+        "q2": -0.21706010273301257,
+        "rmse": 1.380837415303761,
+        "spearman": 0.1808040041139343
+       },
+       "q2_mean": 0.5926975813068168,
+       "q2_range": 0.17892289033834385,
+       "rmse_mean": 0.9212890796521027
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.5324929145517876,
+       "q2": -1.4279675666004952,
+       "rmse": 1.950329428398149,
+       "spearman": 0.17349490607528587
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 47,
+        "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+       },
+       "ladders": {
+        "mean_error": -0.25725306094493,
+        "q2": 0.5539762910378636,
+        "rmse": 0.8359215197476296,
+        "spearman": 0.6616657171829085
+       },
+       "q2_mean": 0.7970219229223503,
+       "q2_range": 0.0378352269012473,
+       "rmse_mean": 0.6520927985828735
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 20 bonds, ridge 0.1": 1,
+        "up to 4 bonds, ridge 0.1": 1,
+        "up to 6 bonds, ridge 0.1": 3,
+        "up to 8 bonds, ridge 0.1": 45
+       },
+       "ladders": {
+        "mean_error": -1.0375044695670557,
+        "q2": -0.5715926251145989,
+        "rmse": 1.5691213240471138,
+        "spearman": 0.055779958716001006
+       },
+       "q2_mean": 0.41013034255254227,
+       "q2_range": 0.13756831158041416,
+       "rmse_mean": 1.1112643547586312
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, ridge 0.1": 1
+       },
+       "mean_error": -1.0621886847757491,
+       "q2": -0.677719910062609,
+       "rmse": 1.6212360887300368,
+       "spearman": 0.15695326314571317
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.4601787233349986,
+        "q2": 0.26696729222104687,
+        "rmse": 1.0716382585125457,
+        "spearman": 0.4058472858302142
+       },
+       "q2_mean": 0.6644136490655601,
+       "q2_range": 0.028128903357588553,
+       "rmse_mean": 0.8386734991513534
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.0001": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.001": 3,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 26,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 16,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.3420684015296405,
+        "q2": -1.217989613652338,
+        "rmse": 1.8640874707143018,
+        "spearman": -0.12156184106383668
+       },
+       "q2_mean": 0.5032063906924737,
+       "q2_range": 0.21325009928856375,
+       "rmse_mean": 1.0178899193965925
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.6939432892329893,
+       "q2": -1.8299419005957192,
+       "rmse": 2.1055971934274726,
+       "spearman": -0.10386613002289843
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 8,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 39,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.28777213867954976,
+        "q2": 0.54634588082922,
+        "rmse": 0.8430415168651298,
+        "spearman": 0.6189651970623836
+       },
+       "q2_mean": 0.7903131657718899,
+       "q2_range": 0.025867259539617216,
+       "rmse_mean": 0.6628758287399605
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.001": 2,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 8,
+        "sigma 0.005, width 0.5, h 3, ridge 0.001": 2,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 19,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 12,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 5,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.260039174479122,
+        "q2": -0.9920217198948198,
+        "rmse": 1.766581052314803,
+        "spearman": -0.17349490607528587
+       },
+       "q2_mean": 0.5878525904905707,
+       "q2_range": 0.19082595045338158,
+       "rmse_mean": 0.9257791727287359
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.6150069016014539,
+       "q2": -1.6771794815032823,
+       "rmse": 2.047977953968654,
+       "spearman": -0.20080785137760362
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 3,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 19,
+        "sigma 0.005, width 0.5, h 3, ridge 0.01": 2,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 23,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.27334532431413416,
+        "q2": 0.5022358187454066,
+        "rmse": 0.8830765540713716,
+        "spearman": 0.5970379029464383
+       },
+       "q2_mean": 0.8041026857031642,
+       "q2_range": 0.029000876715224,
+       "rmse_mean": 0.6406740299294207
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.5, ridge 0.1": 49
+       },
+       "ladders": {
+        "mean_error": -1.0902190488367716,
+        "q2": -0.7799460381357759,
+        "rmse": 1.6698980263938734,
+        "spearman": 0.041554444016929586
+       },
+       "q2_mean": 0.4220974962928671,
+       "q2_range": 0.18247667993741445,
+       "rmse_mean": 1.0990943804914433
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.6328298449699075,
+       "q2": -1.6591940876602327,
+       "rmse": 2.0410871643248134,
+       "spearman": 0.12004617160446325
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.3098307201914454,
+        "q2": 0.45377171595098387,
+        "rmse": 0.9250679307177081,
+        "spearman": 0.6331987037692252
+       },
+       "q2_mean": 0.7113210031887959,
+       "q2_range": 0.02311562827584923,
+       "rmse_mean": 0.7778477952511327
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.5, ridge 0.1": 49
+       },
+       "ladders": {
+        "mean_error": -1.1212777555913138,
+        "q2": -0.6848289758433892,
+        "rmse": 1.6246673201292205,
+        "spearman": 0.14390150057714504
+       },
+       "q2_mean": 0.5141927927123688,
+       "q2_range": 0.30046050753799114,
+       "rmse_mean": 1.0036194135521315
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.6771453477999978,
+       "q2": -1.8169698219884372,
+       "rmse": 2.1007657611716186,
+       "spearman": 0.09465178914967295
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.3326121752869298,
+        "q2": 0.4334764396394948,
+        "rmse": 0.942096783993613,
+        "spearman": 0.649740346698798
+       },
+       "q2_mean": 0.7528179910338537,
+       "q2_range": 0.023558189359015547,
+       "rmse_mean": 0.7197582399313819
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.0001": 4,
+        "sigma 0.005, ridge 0.01": 5,
+        "sigma 0.005, ridge 0.1": 23,
+        "sigma 0.01, ridge 0.01": 1,
+        "sigma 0.01, ridge 0.1": 16,
+        "sigma 0.02, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.5871417460318475,
+        "q2": -1.649528611481653,
+        "rmse": 2.0373743780497113,
+        "spearman": -0.1654164292957271
+       },
+       "q2_mean": 0.422903259993631,
+       "q2_range": 0.17420466590828165,
+       "rmse_mean": 1.098302145308368
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, ridge 0.1": 1
+       },
+       "mean_error": -1.6845921758702458,
+       "q2": -1.8807224817812385,
+       "rmse": 2.1244046547181354,
+       "spearman": -0.1473360288843337
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.001": 1,
+        "sigma 0.005, ridge 0.01": 15,
+        "sigma 0.005, ridge 0.1": 31,
+        "sigma 0.01, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.4960576587975924,
+        "q2": 0.3430202911175281,
+        "rmse": 1.0145244349404294,
+        "spearman": 0.630505878176039
+       },
+       "q2_mean": 0.7101341932738053,
+       "q2_range": 0.02144541400429323,
+       "rmse_mean": 0.7794530234538461
+      }
+     }
+    },
+    "polymers": 625,
+    "y": {
+     "ladders_mean": 1.8978879999999998,
+     "linear_mean": 0.1790703333333333,
+     "mean": 0.24782304,
+     "sd": 1.4478292867148248
+    }
+   },
+   "linear": {
+    "clusters": 97,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.0611163168011927,
+      "lo": 0.012317131388578623,
+      "mean": 0.03641749824560769,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.1134934757909322,
+      "lo": 0.015250363363344826,
+      "mean": 0.05823389011083946,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.040485201279295224,
+      "lo": -0.08694178360238483,
+      "mean": -0.06263040280717413,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.0003203293197349176,
+      "lo": -0.17288548328741943,
+      "mean": -0.04895022404082594,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.031330613832904246,
+      "lo": -0.009413610484872353,
+      "mean": 0.010652311542846515,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.09183402861111646,
+      "lo": -0.0103398767477138,
+      "mean": 0.029470705753320003,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.021951867856383044,
+      "lo": -0.0630224423551993,
+      "mean": -0.041699593230573595,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.13794409369809618,
+      "lo": -0.10353778156527853,
+      "mean": 0.03662694152930579,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     }
+    ],
+    "ladders": 0,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "q2_mean": 0.6335904260691325,
+       "q2_range": 0.09715198464824859,
+       "rmse_mean": 0.8553681456023551
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 15,
+        "Tanimoto, ridge 0.1": 35
+       },
+       "q2_mean": 0.8533192768271449,
+       "q2_range": 0.02075659610214975,
+       "rmse_mean": 0.5415097021024715
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.25, h 0.1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 39,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5
+       },
+       "q2_mean": 0.4988320373160974,
+       "q2_range": 0.25351810115447426,
+       "rmse_mean": 0.999235461524696
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 48,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.7516472201110145,
+       "q2_range": 0.029041739133164324,
+       "rmse_mean": 0.7046825964698122
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 41,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.619335792409162,
+       "q2_range": 0.12945647508172908,
+       "rmse_mean": 0.8710651647456995
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 50
+       },
+       "q2_mean": 0.7955470930786209,
+       "q2_range": 0.026391168811478627,
+       "rmse_mean": 0.6393662451839204
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 4 bonds, ridge 0.1": 1,
+        "up to 6 bonds, ridge 0.1": 2,
+        "up to 8 bonds, ridge 0.1": 47
+       },
+       "q2_mean": 0.4210123961046405,
+       "q2_range": 0.19246306736977226,
+       "rmse_mean": 1.0751069937655708
+      },
+      "random": {
+       "chosen": {
+        "up to 8 bonds, ridge 0.1": 50
+       },
+       "q2_mean": 0.6648922476785641,
+       "q2_range": 0.02031943596143282,
+       "rmse_mean": 0.8186591148021833
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 39,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 5,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 2,
+        "sigma 0.03, width 0.5, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.5731036483654247,
+       "q2_range": 0.1918789733217614,
+       "rmse_mean": 0.9225432965594719
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 5,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 44,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 1
+       },
+       "q2_mean": 0.7908002202990649,
+       "q2_range": 0.011853320796716194,
+       "rmse_mean": 0.6468246161830085
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 27,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 17,
+        "sigma 0.005, width 1, h 3, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.03, width 0.5, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.6634645548942348,
+       "q2_range": 0.09552257410921072,
+       "rmse_mean": 0.8196511305003285
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 26,
+        "sigma 0.005, width 0.5, h 10, ridge 1": 1,
+        "sigma 0.005, width 0.5, h 3, ridge 0.01": 2,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 21
+       },
+       "q2_mean": 0.8094416713890042,
+       "q2_range": 0.014715161719777159,
+       "rmse_mean": 0.6172988695742043
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 2,
+        "width 0.25, ridge 1": 1,
+        "width 0.5, ridge 0.1": 44,
+        "width 0.5, ridge 1": 3
+       },
+       "q2_mean": 0.4663475891056771,
+       "q2_range": 0.2054404956891851,
+       "rmse_mean": 1.031912435294711
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "q2_mean": 0.7020614388272718,
+       "q2_range": 0.01673418528331383,
+       "rmse_mean": 0.7719202179332675
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 48,
+        "width 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.5922558537837059,
+       "q2_range": 0.12156662291357856,
+       "rmse_mean": 0.9021573580457867
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "q2_mean": 0.7526526979988655,
+       "q2_range": 0.0212071702904173,
+       "rmse_mean": 0.7033039654926698
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 9,
+        "sigma 0.005, ridge 0.1": 37,
+        "sigma 0.01, ridge 0.01": 1,
+        "sigma 0.01, ridge 0.1": 2,
+        "sigma 0.03, ridge 0.1": 1
+       },
+       "q2_mean": 0.47895526212553524,
+       "q2_range": 0.15374134550351737,
+       "rmse_mean": 1.02016719716681
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 13,
+        "sigma 0.005, ridge 0.1": 37
+       },
+       "q2_mean": 0.711400126944131,
+       "q2_range": 0.017511142583260253,
+       "rmse_mean": 0.7597152541075548
+      }
+     }
+    },
+    "polymers": 600,
+    "y": {
+     "ladders_mean": null,
+     "linear_mean": 0.1790703333333333,
+     "mean": 0.1790703333333333,
+     "sd": 1.4142493057755252
+    }
+   }
+  },
+  "CO2": {
+   "all": {
+    "clusters": 116,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.0665536786629945,
+      "lo": 0.00422289003726325,
+      "mean": 0.03513365044096606,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.09432024948476267,
+      "lo": -0.09174177516093145,
+      "mean": 0.01933879634051494,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.8710332429359401,
+      "lo": 0.34781220607205526,
+      "mean": 0.604103922367961,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.050591383286799387,
+      "lo": -0.11246579760692398,
+      "mean": -0.08070808268692553,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.025516106343187243,
+      "lo": -0.13862890067466838,
+      "mean": -0.07404505829964214,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.559302213141344,
+      "lo": 0.1889811469844511,
+      "mean": 0.3800847282900788,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.05725994778167067,
+      "lo": 0.003644550473138461,
+      "mean": 0.03048135920728423,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.10717540241810568,
+      "lo": -0.023350187272517812,
+      "mean": 0.046906389268509874,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.3757397085713519,
+      "lo": -0.10738850361952347,
+      "mean": 0.14310662610590885,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.030544937075242445,
+      "lo": -0.08322622870046663,
+      "mean": -0.0558870453092396,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.10767844506028847,
+      "lo": -0.07409035808353305,
+      "mean": 0.025012405318182718,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.05776254325918972,
+      "lo": -0.44287449442241295,
+      "mean": -0.24778669953476506,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     }
+    ],
+    "ladders": 24,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "ladders": {
+        "mean_error": -1.3129541811732877,
+        "q2": -1.3956964358373245,
+        "rmse": 1.648386627044203,
+        "spearman": 0.23217391304347823
+       },
+       "q2_mean": 0.5536184748068853,
+       "q2_range": 0.04714840260917763,
+       "rmse_mean": 0.8047430058898424
+      },
+      "ladders": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 1
+       },
+       "mean_error": -1.4274826391424515,
+       "q2": -1.70416934233074,
+       "rmse": 1.7512983220383693,
+       "spearman": 0.13043478260869562
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 18,
+        "Tanimoto, ridge 0.1": 32
+       },
+       "ladders": {
+        "mean_error": -0.19064286909108033,
+        "q2": 0.6203956129642151,
+        "rmse": 0.6561585626449226,
+        "spearman": 0.7339130434782607
+       },
+       "q2_mean": 0.7926522617994081,
+       "q2_range": 0.029064112352355398,
+       "rmse_mean": 0.548424646303944
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 12,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 15,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 7,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 2,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.1, ridge 0.01": 2,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.9394142752721896,
+        "q2": -0.3421081494781697,
+        "rmse": 1.233777784103662,
+        "spearman": 0.5139130434782608
+       },
+       "q2_mean": 0.39258103282163853,
+       "q2_range": 0.18995198764874066,
+       "rmse_mean": 0.9379408322350985
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1
+       },
+       "mean_error": -1.2758659943937614,
+       "q2": -1.0566029527047736,
+       "rmse": 1.5272791279604871,
+       "spearman": 0.5191304347826087
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 34,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 2,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+        "up to 6 bonds, width 1, h 0.1, ridge 0.01": 2,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.2749012524012348,
+        "q2": 0.47316689730763284,
+        "rmse": 0.7730003967543967,
+        "spearman": 0.6799999999999999
+       },
+       "q2_mean": 0.6526795725764437,
+       "q2_range": 0.07039303581677392,
+       "rmse_mean": 0.7096565124255363
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 12,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 12,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 8,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 1, h 1, ridge 0.1": 3,
+        "up to 20 bonds, width 1, h 3, ridge 0.1": 4,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 1, h 0.3, ridge 0.01": 3,
+        "up to 8 bonds, width 0.5, h 0.1, ridge 0.01": 2,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.8168153447681915,
+        "q2": -0.31789135016392933,
+        "rmse": 1.2225960629880686,
+        "spearman": 0.3695652173913043
+       },
+       "q2_mean": 0.47669875604919165,
+       "q2_range": 0.11494776009429852,
+       "rmse_mean": 0.8707269197847041
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 1
+       },
+       "mean_error": -0.9827043743463747,
+       "q2": -0.6317366127122357,
+       "rmse": 1.3604049963976954,
+       "spearman": 0.31652173913043474
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 9,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 18,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 11,
+        "up to 20 bonds, width 1, h 3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 1, h 0.3, ridge 0.01": 3,
+        "up to 6 bonds, width 1, h 1, ridge 0.1": 4,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.21258372519280977,
+        "q2": 0.45367388225652905,
+        "rmse": 0.7871711534724956,
+        "spearman": 0.6669565217391304
+       },
+       "q2_mean": 0.68321879665668,
+       "q2_range": 0.05851345536856678,
+       "rmse_mean": 0.6777626713718079
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 34,
+        "up to 20 bonds, ridge 0.1": 9,
+        "up to 6 bonds, ridge 0.01": 4,
+        "up to 8 bonds, ridge 0.01": 1,
+        "up to 8 bonds, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.9397441986142582,
+        "q2": -0.3941085499634509,
+        "rmse": 1.257452198467759,
+        "spearman": 0.49304347826086947
+       },
+       "q2_mean": 0.23308733140970112,
+       "q2_range": 0.14888795215540618,
+       "rmse_mean": 1.0544980552248935
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 1
+       },
+       "mean_error": -0.9118807704372864,
+       "q2": -0.4593636488661441,
+       "rmse": 1.2865449110904514,
+       "spearman": 0.5139130434782608
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 39,
+        "up to 20 bonds, ridge 0.1": 1,
+        "up to 6 bonds, ridge 0.01": 5,
+        "up to 6 bonds, ridge 0.1": 4,
+        "up to 8 bonds, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.4921627197110972,
+        "q2": 0.15145474927977787,
+        "rmse": 0.9810263955732753,
+        "spearman": 0.4860869565217391
+       },
+       "q2_mean": 0.5480734614953601,
+       "q2_range": 0.07917325277632481,
+       "rmse_mean": 0.8096121124373787
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 2,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 9,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 4,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 19,
+        "sigma 0.01, width 1, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 3,
+        "sigma 0.02, width 0.5, h 0.3, ridge 0.1": 3,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 3,
+        "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.3459585859892682,
+        "q2": -1.4978386933245158,
+        "rmse": 1.6831599299568276,
+        "spearman": 0.011304347826086955
+       },
+       "q2_mean": 0.45195724406931925,
+       "q2_range": 0.08000364451602571,
+       "rmse_mean": 0.8915079749143962
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 1
+       },
+       "mean_error": -1.8365809181396562,
+       "q2": -3.005314632227476,
+       "rmse": 2.131383050328448,
+       "spearman": -0.23826086956521736
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.001": 1,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.001": 1,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 6,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.1": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 28,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 4,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.24222993929306394,
+        "q2": 0.5345013658560251,
+        "rmse": 0.7266117134221857,
+        "spearman": 0.5930434782608696
+       },
+       "q2_mean": 0.703186014316068,
+       "q2_range": 0.039332074218676905,
+       "rmse_mean": 0.656205572490814
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 15,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 1, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 3,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 22,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 4,
+        "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.9602592090808545,
+        "q2": -0.7601544722929299,
+        "rmse": 1.412923280185789,
+        "spearman": 0.023478260869565212
+       },
+       "q2_mean": 0.5628357356430191,
+       "q2_range": 0.07709843893120805,
+       "rmse_mean": 0.796259882741069
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 1, h 3, ridge 0.1": 1
+       },
+       "mean_error": -1.0098224047857431,
+       "q2": -0.9930913346569896,
+       "rmse": 1.5035116225036043,
+       "spearman": -0.07478260869565216
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.001": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 9,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 7,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 27,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.097444857524888,
+        "q2": 0.5500305165826824,
+        "rmse": 0.7143889358935376,
+        "spearman": 0.58
+       },
+       "q2_mean": 0.7307646441236434,
+       "q2_range": 0.05353909233767329,
+       "rmse_mean": 0.6248718095965341
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 2,
+        "width 0.25, ridge 1": 11,
+        "width 0.5, ridge 0.1": 22,
+        "width 0.5, ridge 1": 8,
+        "width 1, ridge 0.1": 7
+       },
+       "ladders": {
+        "mean_error": -1.3269011438985807,
+        "q2": -1.4934370480243997,
+        "rmse": 1.6816762593438057,
+        "spearman": -0.01174168325213034
+       },
+       "q2_mean": 0.30395092411969327,
+       "q2_range": 0.10940637855137592,
+       "rmse_mean": 1.0047357775175658
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.25, ridge 1": 1
+       },
+       "mean_error": -1.7406563118285796,
+       "q2": -2.588364924699142,
+       "rmse": 2.0173975571989966,
+       "spearman": 0.09523809748950167
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 1": 3,
+        "width 0.5, ridge 0.1": 21,
+        "width 0.5, ridge 1": 22,
+        "width 1, ridge 0.1": 4
+       },
+       "ladders": {
+        "mean_error": -0.48797365634225326,
+        "q2": 0.26377513593266866,
+        "rmse": 0.9137942678167118,
+        "spearman": 0.5930434782608696
+       },
+       "q2_mean": 0.5576454358397288,
+       "q2_range": 0.05834797330422603,
+       "rmse_mean": 0.8010716452975858
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 16,
+        "width 0.5, ridge 1": 4,
+        "width 1, ridge 0.1": 30
+       },
+       "ladders": {
+        "mean_error": -1.0621437900521677,
+        "q2": -0.9871852755521011,
+        "rmse": 1.5012823175941064,
+        "spearman": 0.04218308427617197
+       },
+       "q2_mean": 0.39653955665921575,
+       "q2_range": 0.08398927459449612,
+       "rmse_mean": 0.9355518100712095
+      },
+      "ladders": {
+       "chosen": {
+        "width 1, ridge 0.1": 1
+       },
+       "mean_error": -1.1430322015030552,
+       "q2": -1.182876275882542,
+       "rmse": 1.5734674007638874,
+       "spearman": 0.08393129139485761
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 12,
+        "width 0.5, ridge 1": 1,
+        "width 1, ridge 0.1": 37
+       },
+       "ladders": {
+        "mean_error": -0.3482340791988519,
+        "q2": 0.28677882737685745,
+        "rmse": 0.8994050106511086,
+        "spearman": 0.4843478260869564
+       },
+       "q2_mean": 0.5942884289675208,
+       "q2_range": 0.06993563004917802,
+       "rmse_mean": 0.7671045444316154
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, ridge 0.01": 10,
+        "sigma 0.01, ridge 0.1": 32,
+        "sigma 0.02, ridge 0.1": 8
+       },
+       "ladders": {
+        "mean_error": -1.6474218655782575,
+        "q2": -2.4006327524655218,
+        "rmse": 1.963916666923095,
+        "spearman": -0.05304347826086955
+       },
+       "q2_mean": 0.3456876005763814,
+       "q2_range": 0.08266130232777569,
+       "rmse_mean": 0.974304827861048
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, ridge 0.1": 1
+       },
+       "mean_error": -1.7026649713187532,
+       "q2": -2.651692436804102,
+       "rmse": 2.0351212317948315,
+       "spearman": -0.1660869565217391
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 2,
+        "sigma 0.01, ridge 0.001": 2,
+        "sigma 0.01, ridge 0.01": 14,
+        "sigma 0.01, ridge 0.1": 29,
+        "sigma 0.02, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.4292877542679214,
+        "q2": 0.35029289755808646,
+        "rmse": 0.858424286874007,
+        "spearman": 0.6365217391304347
+       },
+       "q2_mean": 0.6231044211907495,
+       "q2_range": 0.05249723716185084,
+       "rmse_mean": 0.7394357957666047
+      }
+     }
+    },
+    "polymers": 698,
+    "y": {
+     "ladders_mean": 3.0975,
+     "linear_mean": 1.3742563798219585,
+     "mean": 1.4335083094555874,
+     "sd": 1.2046787554480245
+    }
+   },
+   "linear": {
+    "clusters": 113,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.05883975222962075,
+      "lo": -0.009574845680616534,
+      "mean": 0.02374179011405597,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.11707017127917799,
+      "lo": 0.008046106184364757,
+      "mean": 0.06342026984796578,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.06150960465152902,
+      "lo": -0.13217171125917104,
+      "mean": -0.09614160711615782,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.0327303242214883,
+      "lo": -0.15997717757747426,
+      "mean": -0.08445655171480815,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.057489474879162034,
+      "lo": -0.0007265027020385449,
+      "mean": 0.027292159148044615,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.1452725416754819,
+      "lo": 0.015850354685940243,
+      "mean": 0.07196779474785076,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.03361440868579602,
+      "lo": -0.09108750193493163,
+      "mean": -0.061982841225802776,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.08796320235416721,
+      "lo": -0.09676763948167086,
+      "mean": 0.004168244624074613,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     }
+    ],
+    "ladders": 0,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "q2_mean": 0.5782949958122732,
+       "q2_range": 0.15868805466547142,
+       "rmse_mean": 0.7563849010652588
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 17,
+        "Tanimoto, ridge 0.1": 33
+       },
+       "q2_mean": 0.7884961151495585,
+       "q2_range": 0.04262600229820035,
+       "rmse_mean": 0.5362441694755209
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 3,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 9,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 5,
+        "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+        "up to 8 bonds, width 1, h 0.1, ridge 0.01": 2,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.3586002922104061,
+       "q2_range": 0.1841229773896732,
+       "rmse_mean": 0.93338378160696
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 26,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 10,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 3,
+        "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.6379061343200159,
+       "q2_range": 0.05860452440466701,
+       "rmse_mean": 0.701686986195103
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 5,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 4,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 20 bonds, width 1, h 1, ridge 0.1": 4,
+        "up to 20 bonds, width 1, h 3, ridge 0.1": 2,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 4,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 1, h 0.3, ridge 0.01": 1,
+        "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6,
+        "up to 8 bonds, width 1, h 0.3, ridge 0.01": 1,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 1, h 3, ridge 0.1": 2
+       },
+       "q2_mean": 0.44197729632621885,
+       "q2_range": 0.2552551932746533,
+       "rmse_mean": 0.8697746169254043
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 10,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 21,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 6,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 2,
+        "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 2,
+        "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+       },
+       "q2_mean": 0.6749744004268091,
+       "q2_range": 0.03186119725134107,
+       "rmse_mean": 0.6648887533991589
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 21,
+        "up to 20 bonds, ridge 0.1": 11,
+        "up to 6 bonds, ridge 0.01": 6,
+        "up to 6 bonds, ridge 0.1": 1,
+        "up to 8 bonds, ridge 0.01": 3,
+        "up to 8 bonds, ridge 0.1": 8
+       },
+       "q2_mean": 0.17497758770159466,
+       "q2_range": 0.21720557581392674,
+       "rmse_mean": 1.0585680797170722
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 39,
+        "up to 6 bonds, ridge 0.01": 3,
+        "up to 6 bonds, ridge 0.1": 1,
+        "up to 8 bonds, ridge 0.1": 7
+       },
+       "q2_mean": 0.5238928598046386,
+       "q2_range": 0.06788923816662007,
+       "rmse_mean": 0.8046276378988881
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 3,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 16,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 11,
+        "sigma 0.01, width 1, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 3,
+        "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 6,
+        "sigma 0.02, width 0.5, h 0.3, ridge 0.1": 2,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 1,
+        "sigma 0.03, width 0.5, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.4674966418629597,
+       "q2_range": 0.18356277157151535,
+       "rmse_mean": 0.8501939362334424
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 4,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 19,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 10,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+        "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 3,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.6803305434744216,
+       "q2_range": 0.0437078807984328,
+       "rmse_mean": 0.659340629302547
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 19,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 1, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 3,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 13,
+        "sigma 0.02, width 0.5, h 0.3, ridge 0.1": 2,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 5,
+        "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 2,
+        "sigma 0.03, width 1, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.5563219657598482,
+       "q2_range": 0.2322920288701915,
+       "rmse_mean": 0.775135613285603
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 2,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 2,
+        "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 13,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 5,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 22,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 4
+       },
+       "q2_mean": 0.7188557328009141,
+       "q2_range": 0.03184267719394607,
+       "rmse_mean": 0.6183633707839237
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 3,
+        "width 0.25, ridge 1": 25,
+        "width 0.5, ridge 0.1": 8,
+        "width 0.5, ridge 1": 7,
+        "width 1, ridge 0.1": 7
+       },
+       "q2_mean": 0.31939583126869453,
+       "q2_range": 0.10357397703504378,
+       "rmse_mean": 0.961967553219473
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 1": 31,
+        "width 0.5, ridge 0.1": 5,
+        "width 0.5, ridge 1": 12,
+        "width 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.5332672783440917,
+       "q2_range": 0.06119032692587034,
+       "rmse_mean": 0.7966639050611859
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.5, ridge 0.1": 13,
+        "width 0.5, ridge 1": 15,
+        "width 1, ridge 0.1": 21
+       },
+       "q2_mean": 0.39089724878022836,
+       "q2_range": 0.3014696590063026,
+       "rmse_mean": 0.9086394622486574
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 12,
+        "width 0.5, ridge 1": 6,
+        "width 1, ridge 0.1": 32
+       },
+       "q2_mean": 0.577485254235387,
+       "q2_range": 0.03686153002574821,
+       "rmse_mean": 0.7581061011543321
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, ridge 0.01": 10,
+        "sigma 0.01, ridge 0.1": 29,
+        "sigma 0.02, ridge 0.1": 10,
+        "sigma 0.03, ridge 0.1": 1
+       },
+       "q2_mean": 0.35931948598458024,
+       "q2_range": 0.17293045748513836,
+       "rmse_mean": 0.9330085705997524
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 5,
+        "sigma 0.01, ridge 0.01": 13,
+        "sigma 0.01, ridge 0.1": 27,
+        "sigma 0.02, ridge 0.1": 5
+       },
+       "q2_mean": 0.6073103518233166,
+       "q2_range": 0.039372729011061924,
+       "rmse_mean": 0.7308376874851289
+      }
+     }
+    },
+    "polymers": 674,
+    "y": {
+     "ladders_mean": null,
+     "linear_mean": 1.3742563798219585,
+     "mean": 1.3742563798219585,
+     "sd": 1.1663770162863374
+    }
+   }
+  },
+  "H2": {
+   "all": {
+    "clusters": 80,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.027860229563368557,
+      "lo": -0.007127236846552998,
+      "mean": 0.010661112559526953,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.09527558900308775,
+      "lo": -0.09707940976426434,
+      "mean": 0.008205841391813906,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.4596219352527034,
+      "lo": 0.10325978288214886,
+      "mean": 0.2842400321552221,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.02357463899874632,
+      "lo": -0.084135714731358,
+      "mean": -0.05235330443945296,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.0035869334458886004,
+      "lo": -0.2333275433511611,
+      "mean": -0.098161583810076,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.4743311680653653,
+      "lo": 0.2170820727292237,
+      "mean": 0.34611321923316174,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.019941251544638612,
+      "lo": -0.006716972504019536,
+      "mean": 0.006752072279421761,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.04235497723991363,
+      "lo": -0.08578803758727667,
+      "mean": -0.02052384129838214,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.26688250315393885,
+      "lo": 0.0583784832059069,
+      "mean": 0.16542827768385449,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.00782142148148305,
+      "lo": -0.07430630783904738,
+      "mean": -0.03996622317831766,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.08317083454455816,
+      "lo": -0.15959097149973137,
+      "mean": -0.02514662027019876,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.37736608871998667,
+      "lo": 0.19371368271726994,
+      "mean": 0.2853210305368692,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     }
+    ],
+    "ladders": 23,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "ladders": {
+        "mean_error": -0.9690656821106934,
+        "q2": -6.600389877397479,
+        "rmse": 1.1029498800410127,
+        "spearman": 0.01482213438735178
+       },
+       "q2_mean": 0.5444049643880018,
+       "q2_range": 0.07736220806047567,
+       "rmse_mean": 0.6738704378532984
+      },
+      "ladders": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 1
+       },
+       "mean_error": -1.2406505923332345,
+       "q2": -10.075280219647988,
+       "rmse": 1.3314203910400553,
+       "spearman": -0.0790513833992095
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 19,
+        "Tanimoto, ridge 0.1": 31
+       },
+       "ladders": {
+        "mean_error": -0.20854695490974337,
+        "q2": -0.377322898061893,
+        "rmse": 0.4695217618986547,
+        "spearman": 0.41600790513833996
+       },
+       "q2_mean": 0.8301378668898352,
+       "q2_range": 0.022912250610846008,
+       "rmse_mean": 0.4114663234924508
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 12,
+        "up to 20 bonds, width 0.25, h 10, ridge 1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 4 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+        "up to 4 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 4 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5
+       },
+       "ladders": {
+        "mean_error": -0.8806037427866101,
+        "q2": -5.66686942093186,
+        "rmse": 1.0329964210674927,
+        "spearman": 0.2005928853754941
+       },
+       "q2_mean": 0.3813111803645766,
+       "q2_range": 0.15969086006384747,
+       "rmse_mean": 0.7848470070222648
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1
+       },
+       "mean_error": -1.2718131857639363,
+       "q2": -11.128569636698439,
+       "rmse": 1.393293578117995,
+       "spearman": -0.015810276679841896
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 10,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 9,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 1,
+        "up to 4 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+        "up to 4 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 4 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+        "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.3781231879791667,
+        "q2": -1.2512691503614057,
+        "rmse": 0.6002767913393536,
+        "spearman": 0.49802371541501983
+       },
+       "q2_mean": 0.7390043552596391,
+       "q2_range": 0.051520204967225425,
+       "rmse_mean": 0.5099605276022661
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 6,
+        "up to 20 bonds, width 0.25, h 10, ridge 1": 1,
+        "up to 20 bonds, width 0.25, h 3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 5,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 6,
+        "up to 20 bonds, width 0.5, h 3, ridge 0.1": 2,
+        "up to 4 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 4 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 6 bonds, width 0.5, h 3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 10
+       },
+       "ladders": {
+        "mean_error": -0.8233933719946177,
+        "q2": -5.403189754767127,
+        "rmse": 1.0123624505318933,
+        "spearman": 0.17292490118577078
+       },
+       "q2_mean": 0.48315055373929755,
+       "q2_range": 0.11340434711265479,
+       "rmse_mean": 0.7175343221053494
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.3782582964198007,
+       "q2": -12.159717678639057,
+       "rmse": 1.45131314389307,
+       "spearman": 0.14624505928853757
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 10, ridge 1": 2,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.25, h 10, ridge 1": 1,
+        "up to 20 bonds, width 0.25, h 3, ridge 0.1": 3,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 9,
+        "up to 20 bonds, width 0.5, h 3, ridge 0.1": 1,
+        "up to 4 bonds, width 0.25, h 1, ridge 0.1": 3,
+        "up to 4 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 8,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5
+       },
+       "ladders": {
+        "mean_error": -0.30136677075148444,
+        "q2": -0.7445903009820187,
+        "rmse": 0.5284264760705248,
+        "spearman": 0.5513833992094862
+       },
+       "q2_mean": 0.7633670035933808,
+       "q2_range": 0.033730014157383525,
+       "rmse_mean": 0.48568458935295106
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 6,
+        "up to 20 bonds, ridge 0.1": 21,
+        "up to 4 bonds, ridge 0.01": 6,
+        "up to 6 bonds, ridge 0.01": 4,
+        "up to 6 bonds, ridge 0.1": 1,
+        "up to 8 bonds, ridge 0.01": 5,
+        "up to 8 bonds, ridge 0.1": 7
+       },
+       "ladders": {
+        "mean_error": -0.9786728300414913,
+        "q2": -7.48336601005721,
+        "rmse": 1.1652576016212426,
+        "spearman": 0.012845849802371542
+       },
+       "q2_mean": 0.1976830845194604,
+       "q2_range": 0.1560193269685587,
+       "rmse_mean": 0.8941433350049566
+      },
+      "ladders": {
+       "chosen": {
+        "up to 8 bonds, ridge 0.1": 1
+       },
+       "mean_error": -1.172337527274183,
+       "q2": -12.561250935224692,
+       "rmse": 1.4732882270199124,
+       "spearman": -0.17786561264822134
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 8,
+        "up to 20 bonds, ridge 0.1": 23,
+        "up to 4 bonds, ridge 0.01": 4,
+        "up to 6 bonds, ridge 0.01": 5,
+        "up to 6 bonds, ridge 0.1": 4,
+        "up to 8 bonds, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.44672323043878925,
+        "q2": -2.420673136192984,
+        "rmse": 0.7399351027079638,
+        "spearman": 0.24505928853754944
+       },
+       "q2_mean": 0.5882495553781844,
+       "q2_range": 0.06583066410544103,
+       "rmse_mean": 0.640670766143359
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.0001": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 22,
+        "sigma 0.01, width 0.25, h 10, ridge 1": 4,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 4,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 7,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 8,
+        "sigma 0.02, width 0.5, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.156360662075429,
+        "q2": -9.80569892574585,
+        "rmse": 1.3151166427179057,
+        "spearman": 0.0909090909090909
+       },
+       "q2_mean": 0.4237317946844185,
+       "q2_range": 0.12017080978694195,
+       "rmse_mean": 0.7577785768742783
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.605524943342633,
+       "q2": -16.581939276435968,
+       "rmse": 1.677533610273217,
+       "spearman": -0.0899209486166008
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 2,
+        "sigma 0.01, width 0.25, h 1, ridge 0.001": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.01": 4,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 29,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 6,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.44046369174618916,
+        "q2": -1.547073291911615,
+        "rmse": 0.6384965622872042,
+        "spearman": 0.4881422924901186
+       },
+       "q2_mean": 0.7719351281121224,
+       "q2_range": 0.028718071655497,
+       "rmse_mean": 0.4768386820283247
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 10, ridge 1": 8,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 4,
+        "sigma 0.01, width 0.5, h 1, ridge 0.0001": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 4,
+        "sigma 0.01, width 0.5, h 10, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 10, ridge 1": 16,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 13,
+        "sigma 0.01, width 0.5, h 30, ridge 1": 1,
+        "sigma 0.02, width 0.25, h 10, ridge 1": 1
+       },
+       "ladders": {
+        "mean_error": -0.9890739904323681,
+        "q2": -7.762535447243785,
+        "rmse": 1.1842754767731196,
+        "spearman": 0.09387351778656126
+       },
+       "q2_mean": 0.48523520476219517,
+       "q2_range": 0.15191725420442648,
+       "rmse_mean": 0.7159062502459566
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 10, ridge 1": 1
+       },
+       "mean_error": -1.5642840010953702,
+       "q2": -15.330724255561428,
+       "rmse": 1.6167414215769245,
+       "spearman": 0.08300395256916995
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 3, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 10, ridge 1": 7,
+        "sigma 0.01, width 0.25, h 3, ridge 0.01": 4,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 4,
+        "sigma 0.01, width 0.5, h 10, ridge 1": 12,
+        "sigma 0.01, width 0.5, h 3, ridge 0.01": 3,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 16,
+        "sigma 0.01, width 0.5, h 30, ridge 1": 1
+       },
+       "ladders": {
+        "mean_error": -0.3442114929589789,
+        "q2": -0.9306425047210587,
+        "rmse": 0.5558898880099671,
+        "spearman": 0.532608695652174
+       },
+       "q2_mean": 0.7789317863129055,
+       "q2_range": 0.041516658928917094,
+       "rmse_mean": 0.4694030007999018
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 34,
+        "width 0.5, ridge 0.1": 16
+       },
+       "ladders": {
+        "mean_error": -1.067149283242523,
+        "q2": -8.627043894678506,
+        "rmse": 1.2413216166475542,
+        "spearman": 0.18631085322915517
+       },
+       "q2_mean": 0.3291497498540902,
+       "q2_range": 0.12462913513171126,
+       "rmse_mean": 0.817669062284971
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1
+       },
+       "mean_error": -1.6226261596851221,
+       "q2": -16.331810304573786,
+       "rmse": 1.6655581729372189,
+       "spearman": 0.4472448863989003
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 40,
+        "width 0.5, ridge 0.1": 10
+       },
+       "ladders": {
+        "mean_error": -0.4882484303772545,
+        "q2": -1.9252110827738766,
+        "rmse": 0.6842525860429431,
+        "spearman": 0.6106719367588932
+       },
+       "q2_mean": 0.7147915153785191,
+       "q2_range": 0.04841568244802352,
+       "rmse_mean": 0.5331727799259831
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 14,
+        "width 0.5, ridge 0.1": 36
+       },
+       "ladders": {
+        "mean_error": -0.9378563500671833,
+        "q2": -7.374324915546831,
+        "rmse": 1.1577445517017013,
+        "spearman": 0.1487521666365403
+       },
+       "q2_mean": 0.4501086418457579,
+       "q2_range": 0.18530279526139493,
+       "rmse_mean": 0.7397627443063828
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1
+       },
+       "mean_error": -1.5631984976673374,
+       "q2": -15.278872689325809,
+       "rmse": 1.6141727289118446,
+       "spearman": 0.2367185641824014
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 16,
+        "width 0.5, ridge 0.1": 34
+       },
+       "ladders": {
+        "mean_error": -0.368903013945083,
+        "q2": -1.1041112590092976,
+        "rmse": 0.5803262192148773,
+        "spearman": 0.592885375494071
+       },
+       "q2_mean": 0.7573445897921842,
+       "q2_range": 0.03765496793720047,
+       "rmse_mean": 0.49182254944004
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 1,
+        "sigma 0.01, ridge 0.0001": 1,
+        "sigma 0.01, ridge 0.01": 8,
+        "sigma 0.01, ridge 0.1": 39,
+        "sigma 0.02, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.379809627356866,
+        "q2": -13.438790535219846,
+        "rmse": 1.520208828744369,
+        "spearman": -0.10671936758893281
+       },
+       "q2_mean": 0.3305028597883151,
+       "q2_range": 0.12886530998645251,
+       "rmse_mean": 0.8168309406983326
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, ridge 0.1": 1
+       },
+       "mean_error": -1.4878182555186685,
+       "q2": -15.944618523195164,
+       "rmse": 1.6468488479658598,
+       "spearman": -0.19466403162055337
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.001": 1,
+        "sigma 0.005, ridge 0.01": 2,
+        "sigma 0.01, ridge 0.001": 6,
+        "sigma 0.01, ridge 0.01": 10,
+        "sigma 0.01, ridge 0.1": 31
+       },
+       "ladders": {
+        "mean_error": -0.4638183161743303,
+        "q2": -2.0961560607078122,
+        "rmse": 0.7039620768262566,
+        "spearman": 0.2341897233201581
+       },
+       "q2_mean": 0.6924357995771152,
+       "q2_range": 0.030769806115997556,
+       "rmse_mean": 0.553780824632247
+      }
+     }
+    },
+    "polymers": 467,
+    "y": {
+     "ladders_mean": 3.2592000000000003,
+     "linear_mean": 1.6987466216216218,
+     "mean": 1.7755997858672377,
+     "sd": 0.9986448013649879
+    }
+   },
+   "linear": {
+    "clusters": 75,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.026333134183194072,
+      "lo": -0.014249667564540916,
+      "mean": 0.006173254062618483,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.11022099140430018,
+      "lo": -0.05050532562686607,
+      "mean": 0.02479637342666796,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.014846136809830742,
+      "lo": -0.07877002304355586,
+      "mean": -0.045554564530862374,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.0038715087806628448,
+      "lo": -0.22605635567711985,
+      "mean": -0.08221634418808932,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.014791493594171522,
+      "lo": -0.01784204543193541,
+      "mean": -0.0014771569238887228,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.04195997398079628,
+      "lo": -0.06482372019558613,
+      "mean": -0.016214016934940956,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.0036186336333220498,
+      "lo": -0.07146684292071007,
+      "mean": -0.03701071401101008,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.11308234072985231,
+      "lo": -0.15556558566699438,
+      "mean": 0.013535749914843298,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     }
+    ],
+    "ladders": 0,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "q2_mean": 0.540635254011012,
+       "q2_range": 0.08330046267887425,
+       "rmse_mean": 0.6501750825468362
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 19,
+        "Tanimoto, ridge 0.1": 31
+       },
+       "q2_mean": 0.81663203398892,
+       "q2_range": 0.016182080814969635,
+       "rmse_mean": 0.4108579451040308
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 11,
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 4,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 5,
+        "up to 20 bonds, width 0.25, h 10, ridge 1": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 8 bonds, width 0.125, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 14,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.38835993955887893,
+       "q2_range": 0.15533581748242886,
+       "rmse_mean": 0.7498486819399972
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 17,
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 4,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 22,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1
+       },
+       "q2_mean": 0.7469599204924771,
+       "q2_range": 0.055387898235903066,
+       "rmse_mean": 0.4823840311539797
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 12 bonds, width 0.5, h 10, ridge 1": 2,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.25, h 3, ridge 1": 1,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 4,
+        "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+        "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 5,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 4,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 12
+       },
+       "q2_mean": 0.5182649389826276,
+       "q2_range": 0.13035724200985432,
+       "rmse_mean": 0.6654214864527562
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 1, ridge 0.1": 15,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 0.5, h 10, ridge 1": 2,
+        "up to 6 bonds, width 0.25, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 8 bonds, width 0.25, h 1, ridge 0.1": 8,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 13
+       },
+       "q2_mean": 0.7610187054405609,
+       "q2_range": 0.04296836991222386,
+       "rmse_mean": 0.468910313749643
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 16,
+        "up to 20 bonds, ridge 0.1": 7,
+        "up to 6 bonds, ridge 0.01": 8,
+        "up to 8 bonds, ridge 0.01": 2,
+        "up to 8 bonds, ridge 0.1": 17
+       },
+       "q2_mean": 0.23375838715733202,
+       "q2_range": 0.14784566053641268,
+       "rmse_mean": 0.8396367347176991
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 22,
+        "up to 6 bonds, ridge 0.01": 3,
+        "up to 6 bonds, ridge 0.1": 1,
+        "up to 8 bonds, ridge 0.01": 1,
+        "up to 8 bonds, ridge 0.1": 23
+       },
+       "q2_mean": 0.6095879980310672,
+       "q2_range": 0.11137578088220779,
+       "rmse_mean": 0.5990378585617352
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 9,
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 4,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 10, ridge 1": 1,
+        "sigma 0.01, width 0.125, h 1, ridge 0.0001": 1,
+        "sigma 0.01, width 0.125, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 24,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 6
+       },
+       "q2_mean": 0.441336072967432,
+       "q2_range": 0.16605910986456218,
+       "rmse_mean": 0.7167809941219702
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.001": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.01": 5,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 14,
+        "sigma 0.005, width 0.25, h 10, ridge 1": 1,
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 6,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 19,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.7646266206550073,
+       "q2_range": 0.04153294230665816,
+       "rmse_mean": 0.46537469767777145
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 10, ridge 1": 2,
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 3,
+        "sigma 0.005, width 0.5, h 10, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 10, ridge 1": 7,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 3,
+        "sigma 0.01, width 0.25, h 1, ridge 0.0001": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.25, h 10, ridge 1": 9,
+        "sigma 0.01, width 0.25, h 3, ridge 0.1": 2,
+        "sigma 0.01, width 0.25, h 3, ridge 1": 1,
+        "sigma 0.01, width 0.5, h 10, ridge 1": 13,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 6
+       },
+       "q2_mean": 0.523949354830016,
+       "q2_range": 0.13200475173363868,
+       "rmse_mean": 0.6615074567091039
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 10, ridge 1": 7,
+        "sigma 0.005, width 0.25, h 3, ridge 0.01": 5,
+        "sigma 0.005, width 0.25, h 3, ridge 0.1": 8,
+        "sigma 0.005, width 0.5, h 10, ridge 1": 4,
+        "sigma 0.005, width 0.5, h 3, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 3,
+        "sigma 0.01, width 0.25, h 10, ridge 1": 6,
+        "sigma 0.01, width 0.25, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 10, ridge 1": 11,
+        "sigma 0.01, width 0.5, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 3
+       },
+       "q2_mean": 0.7668282091215659,
+       "q2_range": 0.03511354550456536,
+       "rmse_mean": 0.46327032491033104
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.125, ridge 0.1": 2,
+        "width 0.25, ridge 0.1": 39,
+        "width 0.5, ridge 0.1": 9
+       },
+       "q2_mean": 0.3610150788873866,
+       "q2_range": 0.23170017953343347,
+       "rmse_mean": 0.7662325462198865
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 48,
+        "width 0.5, ridge 0.1": 2
+       },
+       "q2_mean": 0.7090847615078582,
+       "q2_range": 0.03871386282951961,
+       "rmse_mean": 0.5174280401044665
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 20,
+        "width 0.5, ridge 0.1": 30
+       },
+       "q2_mean": 0.4905380162478002,
+       "q2_range": 0.13305125141540197,
+       "rmse_mean": 0.6844152587667062
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 27,
+        "width 0.5, ridge 0.1": 23
+       },
+       "q2_mean": 0.7424924675649897,
+       "q2_range": 0.04114389672492036,
+       "rmse_mean": 0.4868186591576344
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 6,
+        "sigma 0.005, ridge 0.1": 10,
+        "sigma 0.01, ridge 0.0001": 1,
+        "sigma 0.01, ridge 0.01": 3,
+        "sigma 0.01, ridge 0.1": 30
+       },
+       "q2_mean": 0.3504285529264474,
+       "q2_range": 0.08995015903570969,
+       "rmse_mean": 0.7732354133283336
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.001": 4,
+        "sigma 0.005, ridge 0.01": 12,
+        "sigma 0.005, ridge 0.1": 12,
+        "sigma 0.01, ridge 0.001": 2,
+        "sigma 0.01, ridge 0.01": 1,
+        "sigma 0.01, ridge 0.1": 19
+       },
+       "q2_mean": 0.6784724734283173,
+       "q2_range": 0.025346923570217506,
+       "rmse_mean": 0.5440569185215449
+      }
+     }
+    },
+    "polymers": 444,
+    "y": {
+     "ladders_mean": null,
+     "linear_mean": 1.6987466216216218,
+     "mean": 1.6987466216216218,
+     "sd": 0.9595498385538745
+    }
+   }
+  },
+  "N2": {
+   "all": {
+    "clusters": 127,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.06903102353437492,
+      "lo": 0.01850412156067149,
+      "mean": 0.04265283496086958,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.10394793835566718,
+      "lo": -0.045348839657760376,
+      "mean": 0.04000603468246344,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.7497869757565395,
+      "lo": 0.12905601262073996,
+      "mean": 0.4589510167145958,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.036269451571803356,
+      "lo": -0.08977047198751785,
+      "mean": -0.06241482902651929,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.0008697619205200782,
+      "lo": -0.14264406692334008,
+      "mean": -0.048775590168339655,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.23698797668668917,
+      "lo": -0.2523607390453143,
+      "mean": 0.0076771022477852835,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.0381601613547637,
+      "lo": -0.006380846837840482,
+      "mean": 0.014833489593540472,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.06992157440451471,
+      "lo": -0.019211444086445525,
+      "mean": 0.030829411197782264,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.2472749995773505,
+      "lo": -0.18504686720871844,
+      "mean": 0.04553631455177687,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.021335080928340175,
+      "lo": -0.07002755309716772,
+      "mean": -0.04510179816917659,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.1251058188297233,
+      "lo": -0.09556889513860883,
+      "mean": 0.02754284831070175,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.09101191270868698,
+      "lo": -0.2764116571903294,
+      "mean": -0.08435688866844826,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     }
+    ],
+    "ladders": 27,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -1.1829622061001492,
+        "q2": -0.9606086886094494,
+        "rmse": 1.5165957371818894,
+        "spearman": 0.1800976800976801
+       },
+       "q2_mean": 0.6029855256188805,
+       "q2_range": 0.06804312596871576,
+       "rmse_mean": 0.8129273661867085
+      },
+      "ladders": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 1
+       },
+       "mean_error": -1.4297034861136255,
+       "q2": -1.527990982072052,
+       "rmse": 1.7221149211787459,
+       "spearman": 0.20573870573870573
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 9,
+        "Tanimoto, ridge 0.1": 41
+       },
+       "ladders": {
+        "mean_error": -0.23595975007448675,
+        "q2": 0.5873920303673923,
+        "rmse": 0.695733916822704,
+        "spearman": 0.6495726495726496
+       },
+       "q2_mean": 0.8240123439647725,
+       "q2_range": 0.024236963866015704,
+       "rmse_mean": 0.5413230311693245
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 9,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 9,
+        "up to 20 bonds, width 0.5, h 3, ridge 1": 2,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.7364693723899177,
+        "q2": -0.049354796187928374,
+        "rmse": 1.1095210481191888,
+        "spearman": 0.2490842490842491
+       },
+       "q2_mean": 0.4603747899251719,
+       "q2_range": 0.11129351954661482,
+       "rmse_mean": 0.947637326180413
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -0.9273201922034725,
+       "q2": -0.37668221173527505,
+       "rmse": 1.2708410067119353,
+       "spearman": 0.29120879120879123
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 19,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 12 bonds, width 0.5, h 3, ridge 1": 1,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 17,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.23100345152088242,
+        "q2": 0.5464704273406275,
+        "rmse": 0.7294191732852165,
+        "spearman": 0.5787545787545787
+       },
+       "q2_mean": 0.6978043395613113,
+       "q2_range": 0.01804269148554183,
+       "rmse_mean": 0.7094139292139723
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 16,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 15,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 6,
+        "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 3,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.7859184551624793,
+        "q2": -0.2416287675714337,
+        "rmse": 1.2068971247003257,
+        "spearman": 0.23382173382173382
+       },
+       "q2_mean": 0.5556441086072259,
+       "q2_range": 0.06002355528432446,
+       "rmse_mean": 0.860096549539368
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.2177736849604743,
+       "q2": -1.1610178186020912,
+       "rmse": 1.5922217179585207,
+       "spearman": 0.11294261294261294
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 23,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 16,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.2106375082133678,
+        "q2": 0.5783220051274314,
+        "rmse": 0.7033392249682132,
+        "spearman": 0.594017094017094
+       },
+       "q2_mean": 0.7471842499681193,
+       "q2_range": 0.03430443705441666,
+       "rmse_mean": 0.6487587489259183
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 17,
+        "up to 20 bonds, ridge 0.1": 24,
+        "up to 6 bonds, ridge 0.1": 3,
+        "up to 8 bonds, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.9832679597258694,
+        "q2": -0.5290341780331504,
+        "rmse": 1.3393157192163672,
+        "spearman": 0.31929181929181927
+       },
+       "q2_mean": 0.3099921683661896,
+       "q2_range": 0.06304673651267012,
+       "rmse_mean": 1.071944361327142
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 1
+       },
+       "mean_error": -0.7860378086909592,
+       "q2": -0.4511364128074249,
+       "rmse": 1.30475355671079,
+       "spearman": 0.3815628815628816
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 23,
+        "up to 20 bonds, ridge 0.1": 7,
+        "up to 6 bonds, ridge 0.1": 17,
+        "up to 8 bonds, ridge 0.1": 3
+       },
+       "ladders": {
+        "mean_error": -0.46994135784580765,
+        "q2": 0.13581273391557303,
+        "rmse": 1.0068813595253039,
+        "spearman": 0.37362637362637363
+       },
+       "q2_mean": 0.5721330449313492,
+       "q2_range": 0.031812276681558505,
+       "rmse_mean": 0.844135319700249
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 10,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 6,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 32,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -1.110240312312906,
+        "q2": -0.9240231336080011,
+        "rmse": 1.5023790337824643,
+        "spearman": -0.09340659340659341
+       },
+       "q2_mean": 0.5330162791367279,
+       "q2_range": 0.0469995146321488,
+       "rmse_mean": 0.8818493858494427
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.4188084057585055,
+       "q2": -1.5505805365412768,
+       "rmse": 1.7297920234265312,
+       "spearman": -0.018315018315018316
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 19,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 30
+       },
+       "ladders": {
+        "mean_error": -0.2844092942417306,
+        "q2": 0.5635720383384974,
+        "rmse": 0.7155346235021635,
+        "spearman": 0.5525030525030524
+       },
+       "q2_mean": 0.7570128443900039,
+       "q2_range": 0.026489401255847866,
+       "rmse_mean": 0.6360730999711139
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 5,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 5,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 22,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 15,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.96134831195711,
+        "q2": -0.6684107357742874,
+        "rmse": 1.3990262310051405,
+        "spearman": -0.16483516483516483
+       },
+       "q2_mean": 0.6135666980145102,
+       "q2_range": 0.04777782213779991,
+       "rmse_mean": 0.8021135947094578
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.295699600602157,
+       "q2": -1.2863922392203988,
+       "rmse": 1.6377580325102976,
+       "spearman": -0.14224664224664224
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 6,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 14,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 25,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 4
+       },
+       "ladders": {
+        "mean_error": -0.2514081352377556,
+        "q2": 0.5439575210421663,
+        "rmse": 0.7314371563962891,
+        "spearman": 0.5402930402930403
+       },
+       "q2_mean": 0.7721931344431852,
+       "q2_range": 0.025529976196361215,
+       "rmse_mean": 0.6158837893959472
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 4,
+        "width 0.25, ridge 1": 3,
+        "width 0.5, ridge 0.1": 43
+       },
+       "ladders": {
+        "mean_error": -1.0603514697510386,
+        "q2": -1.0562106964883964,
+        "rmse": 1.553131315909114,
+        "spearman": 0.019844298811570862
+       },
+       "q2_mean": 0.40183918111226546,
+       "q2_range": 0.08746883530463123,
+       "rmse_mean": 0.9978509357220533
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.493022219411124,
+       "q2": -1.8094224797806842,
+       "rmse": 1.8154441631966645,
+       "spearman": 0.15356434311107917
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.30023480326270474,
+        "q2": 0.48821313629107177,
+        "rmse": 0.7748523182151389,
+        "spearman": 0.5976800976800977
+       },
+       "q2_mean": 0.6628799917533096,
+       "q2_range": 0.03816589501975809,
+       "rmse_mean": 0.7492133754613504
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 2,
+        "width 0.5, ridge 0.1": 47,
+        "width 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.9223939861701363,
+        "q2": -0.657826314883359,
+        "rmse": 1.3945814494253352,
+        "spearman": 0.09189436834281278
+       },
+       "q2_mean": 0.5183404273425715,
+       "q2_range": 0.03889741345468123,
+       "rmse_mean": 0.8955918373014148
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.359538010485912,
+       "q2": -1.526357250777715,
+       "rmse": 1.7215583670291126,
+       "spearman": 0.03755151928958794
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.5, ridge 0.1": 49
+       },
+       "ladders": {
+        "mean_error": -0.28850630276239564,
+        "q2": 0.5031248481761772,
+        "rmse": 0.7634806047517592,
+        "spearman": 0.5293040293040293
+       },
+       "q2_mean": 0.6993086085706108,
+       "q2_range": 0.03520800660189716,
+       "rmse_mean": 0.7075838865957313
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.1": 10,
+        "sigma 0.01, ridge 0.1": 40
+       },
+       "ladders": {
+        "mean_error": -1.4722501160637453,
+        "q2": -1.7572186835413182,
+        "rmse": 1.7984980689026264,
+        "spearman": -0.11233211233211234
+       },
+       "q2_mean": 0.4012192147948535,
+       "q2_range": 0.055680818497840234,
+       "rmse_mean": 0.9985676690010973
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.005, ridge 0.1": 1
+       },
+       "mean_error": -1.6334041578113148,
+       "q2": -2.192475045983614,
+       "rmse": 1.9352546744195651,
+       "spearman": -0.11355311355311355
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 5,
+        "sigma 0.005, ridge 0.1": 15,
+        "sigma 0.01, ridge 0.1": 30
+       },
+       "ladders": {
+        "mean_error": -0.5225286569074912,
+        "q2": 0.2658120326288904,
+        "rmse": 0.9280641586389458,
+        "spearman": 0.5360195360195361
+       },
+       "q2_mean": 0.6569705427740565,
+       "q2_range": 0.021763183462664926,
+       "rmse_mean": 0.7558466333173832
+      }
+     }
+    },
+    "polymers": 736,
+    "y": {
+     "ladders_mean": 1.8072814814814815,
+     "linear_mean": 0.08185486600846263,
+     "mean": 0.14515176630434784,
+     "sd": 1.2905774572555604
+    }
+   },
+   "linear": {
+    "clusters": 122,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.0688472703299017,
+      "lo": 0.014332283270953506,
+      "mean": 0.04015540562173103,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.13078651965718596,
+      "lo": 0.029883933962216235,
+      "mean": 0.0725238567411004,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.039169747027029744,
+      "lo": -0.09213375970349043,
+      "mean": -0.06497934863882837,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.0011252760016477103,
+      "lo": -0.15456189402301052,
+      "mean": -0.049358956625971784,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.0365357099636427,
+      "lo": -0.009653340606488925,
+      "mean": 0.013106902553973399,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.09964367998484984,
+      "lo": 3.843169130337021e-05,
+      "mean": 0.03965228094822759,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.023296399442177748,
+      "lo": -0.06922908730786503,
+      "mean": -0.046000537503249506,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.12976295583040268,
+      "lo": -0.10044524605606242,
+      "mean": 0.03289957064399185,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     }
+    ],
+    "ladders": 0,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 1,
+        "Tanimoto, ridge 0.1": 49
+       },
+       "q2_mean": 0.6180155796643916,
+       "q2_range": 0.05492292712308888,
+       "rmse_mean": 0.7754754680708056
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 9,
+        "Tanimoto, ridge 0.1": 41
+       },
+       "q2_mean": 0.8200238518271356,
+       "q2_range": 0.019809679961260818,
+       "rmse_mean": 0.5323465184708219
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 13,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 10,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 4,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 9,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.43803603630777543,
+       "q2_range": 0.14324770797781605,
+       "rmse_mean": 0.9402503329843459
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 10,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 12 bonds, width 0.5, h 3, ridge 1": 3,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 8,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 7
+       },
+       "q2_mean": 0.6901763364264945,
+       "q2_range": 0.03235285972170443,
+       "rmse_mean": 0.6985051940845808
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 26,
+        "up to 20 bonds, width 0.25, h 1, ridge 0.1": 3,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 20 bonds, width 0.5, h 10, ridge 1": 2,
+        "up to 20 bonds, width 0.5, h 3, ridge 1": 1,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 5,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6
+       },
+       "q2_mean": 0.5704208580822222,
+       "q2_range": 0.090206200735087,
+       "rmse_mean": 0.822160976580345
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 23,
+        "up to 12 bonds, width 0.5, h 10, ridge 1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 6 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 15
+       },
+       "q2_mean": 0.7472981927397562,
+       "q2_range": 0.04030590189934824,
+       "rmse_mean": 0.6307106492198534
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 26,
+        "up to 20 bonds, ridge 0.1": 13,
+        "up to 6 bonds, ridge 0.01": 2,
+        "up to 6 bonds, ridge 0.1": 3,
+        "up to 8 bonds, ridge 0.1": 6
+       },
+       "q2_mean": 0.294938233522442,
+       "q2_range": 0.11653606189380927,
+       "rmse_mean": 1.0534524281643003
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 24,
+        "up to 20 bonds, ridge 0.1": 4,
+        "up to 6 bonds, ridge 0.1": 7,
+        "up to 8 bonds, ridge 0.1": 15
+       },
+       "q2_mean": 0.5646340243237888,
+       "q2_range": 0.04286035945377342,
+       "rmse_mean": 0.8280216667938749
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.001": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 12,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 12,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 6,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 17
+       },
+       "q2_mean": 0.5472605168016809,
+       "q2_range": 0.08100684572336847,
+       "rmse_mean": 0.8442416608021286
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 17,
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 21,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 8
+       },
+       "q2_mean": 0.7466250670922416,
+       "q2_range": 0.01977862727687396,
+       "rmse_mean": 0.6316992450192245
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.001": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 16,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 9,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 19,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 2
+       },
+       "q2_mean": 0.6364993751135746,
+       "q2_range": 0.05204355122250459,
+       "rmse_mean": 0.7564856549152293
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 23,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 15,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 11
+       },
+       "q2_mean": 0.7702540713892251,
+       "q2_range": 0.027109317654152476,
+       "rmse_mean": 0.6014788218894773
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 2,
+        "width 0.25, ridge 1": 17,
+        "width 0.5, ridge 0.1": 30,
+        "width 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.40558121037770595,
+       "q2_range": 0.12142974617049984,
+       "rmse_mean": 0.9671651639496055
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 1": 20,
+        "width 0.5, ridge 0.1": 30
+       },
+       "q2_mean": 0.6365698716291002,
+       "q2_range": 0.04467530799788988,
+       "rmse_mean": 0.7564530438494106
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 3,
+        "width 0.5, ridge 0.1": 47
+       },
+       "q2_mean": 0.531233820552816,
+       "q2_range": 0.06099003613832421,
+       "rmse_mean": 0.8591690491608664
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "q2_mean": 0.7043894690319831,
+       "q2_range": 0.034368872572108966,
+       "rmse_mean": 0.6822525600707097
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.0001": 1,
+        "sigma 0.005, ridge 0.1": 26,
+        "sigma 0.01, ridge 0.1": 23
+       },
+       "q2_mean": 0.42695624117231523,
+       "q2_range": 0.06477821144709006,
+       "rmse_mean": 0.9499291497409592
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 3,
+        "sigma 0.005, ridge 0.1": 36,
+        "sigma 0.01, ridge 0.1": 11
+       },
+       "q2_mean": 0.6507455932099668,
+       "q2_range": 0.02838043391333367,
+       "rmse_mean": 0.7416596328267558
+      }
+     }
+    },
+    "polymers": 709,
+    "y": {
+     "ladders_mean": null,
+     "linear_mean": 0.08185486600846263,
+     "mean": 0.08185486600846263,
+     "sd": 1.25504164151647
+    }
+   }
+  },
+  "O2": {
+   "all": {
+    "clusters": 127,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.0689964976917022,
+      "lo": 0.009373053284676778,
+      "mean": 0.039730762985516144,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.11018172600733707,
+      "lo": -0.053843863847197714,
+      "mean": 0.03806001203571685,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.5844654619086306,
+      "lo": -0.0968746696736117,
+      "mean": 0.2554624589129175,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.03666758968149843,
+      "lo": -0.0942347898918436,
+      "mean": -0.0652722740073689,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.03748712166385704,
+      "lo": -0.07655196321045016,
+      "mean": -0.008537621364190895,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.0431169681530806,
+      "lo": -0.3602865294007796,
+      "mean": -0.150691683834957,
+      "measure": "RMSE",
+      "model": "central unit + eight counts",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.03442372616247775,
+      "lo": -0.012719873902448659,
+      "mean": 0.010777947736046456,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.07438611987193186,
+      "lo": -0.022091500000225136,
+      "mean": 0.030860472943308848,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.12261879897267634,
+      "lo": -0.33331780720166,
+      "mean": -0.09690938674475658,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.01822554680822114,
+      "lo": -0.06723421457049139,
+      "mean": -0.0425529573682768,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.12023488636364321,
+      "lo": -0.03279328009785511,
+      "mean": 0.051854676642881126,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.08250092405548747,
+      "lo": -0.38878802807615087,
+      "mean": -0.2268761925843843,
+      "measure": "RMSE",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "ladders held out"
+     }
+    ],
+    "ladders": 27,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "ladders": {
+        "mean_error": -1.1897519288549376,
+        "q2": -1.2624718443991072,
+        "rmse": 1.5168019631409786,
+        "spearman": 0.1288156288156288
+       },
+       "q2_mean": 0.5704916136800932,
+       "q2_range": 0.04232077055591388,
+       "rmse_mean": 0.7915947042778424
+      },
+      "ladders": {
+       "chosen": {
+        "Tanimoto, ridge 0.1": 1
+       },
+       "mean_error": -1.4539014082641155,
+       "q2": -1.9524683375413598,
+       "rmse": 1.7327260907850908,
+       "spearman": 0.12576312576312576
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 18,
+        "Tanimoto, ridge 0.1": 32
+       },
+       "ladders": {
+        "mean_error": -0.23671227655793176,
+        "q2": 0.5736325207479793,
+        "rmse": 0.6584598919546197,
+        "spearman": 0.5805860805860806
+       },
+       "q2_mean": 0.8063892421258837,
+       "q2_range": 0.0241314967823828,
+       "rmse_mean": 0.5314258017975477
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 18,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 13,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 6,
+        "up to 20 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.641500229212447,
+        "q2": -0.07178293947580183,
+        "rmse": 1.043976470023423,
+        "spearman": 0.24297924297924298
+       },
+       "q2_mean": 0.47753534716208784,
+       "q2_range": 0.12116197721750677,
+       "rmse_mean": 0.8726150147059866
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -0.9401144017194719,
+       "q2": -0.7305615007207331,
+       "rmse": 1.3265719480372162,
+       "spearman": 0.3046398046398046
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 42,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 6,
+        "up to 20 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.18832228497587572,
+        "q2": 0.4713590656717098,
+        "rmse": 0.733191944697055,
+        "spearman": 0.525030525030525
+       },
+       "q2_mean": 0.6938555714206547,
+       "q2_range": 0.03559294585653716,
+       "rmse_mean": 0.668261756024888
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 29,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 1,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 7,
+        "up to 20 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.7246327979091824,
+        "q2": -0.2501210647562846,
+        "rmse": 1.12749163124987,
+        "spearman": 0.2448107448107448
+       },
+       "q2_mean": 0.5515974250281117,
+       "q2_range": 0.09448632320998196,
+       "rmse_mean": 0.8085047108927002
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.229879021707804,
+       "q2": -1.5261667936521577,
+       "rmse": 1.602759284945463,
+       "spearman": 0.20512820512820512
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 44,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 3,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.1950388938252321,
+        "q2": 0.5113993821878555,
+        "rmse": 0.704878552409581,
+        "spearman": 0.5641025641025641
+       },
+       "q2_mean": 0.7425496928788563,
+       "q2_range": 0.04567320230537508,
+       "rmse_mean": 0.6127182181903296
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 35,
+        "up to 20 bonds, ridge 0.1": 8,
+        "up to 6 bonds, ridge 0.01": 1,
+        "up to 8 bonds, ridge 0.1": 6
+       },
+       "ladders": {
+        "mean_error": -0.904370690620762,
+        "q2": -0.6953062991701551,
+        "rmse": 1.3129898786838385,
+        "spearman": 0.36507936507936506
+       },
+       "q2_mean": 0.3191875940895191,
+       "q2_range": 0.09101880654007499,
+       "rmse_mean": 0.9964665924996844
+      },
+      "ladders": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 1
+       },
+       "mean_error": -0.914851206310816,
+       "q2": -0.8175206854512775,
+       "rmse": 1.359492987011155,
+       "spearman": 0.35225885225885223
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 48,
+        "up to 20 bonds, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.5214650660981653,
+        "q2": -0.00970514743552009,
+        "rmse": 1.0132919106411622,
+        "spearman": 0.3717948717948718
+       },
+       "q2_mean": 0.5872146627551329,
+       "q2_range": 0.035399122069622924,
+       "rmse_mean": 0.7760336714678191
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 40,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+        "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 5
+       },
+       "ladders": {
+        "mean_error": -1.0926085870054043,
+        "q2": -1.087490846488031,
+        "rmse": 1.4569665475959355,
+        "spearman": 0.03540903540903541
+       },
+       "q2_mean": 0.541800737431668,
+       "q2_range": 0.1365874627208178,
+       "rmse_mean": 0.816761359193638
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.3120566284234343,
+       "q2": -1.4612587221243598,
+       "rmse": 1.5820344069501338,
+       "spearman": 0.11782661782661781
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 45,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.23574899197315324,
+        "q2": 0.5487747592195547,
+        "rmse": 0.6773825164622986,
+        "spearman": 0.5726495726495726
+       },
+       "q2_mean": 0.7373785801258066,
+       "q2_range": 0.041274108425823464,
+       "rmse_mean": 0.6188564285022691
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 33,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 6,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 5,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 4,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.9076139889140123,
+        "q2": -0.646195775294506,
+        "rmse": 1.2938324278699578,
+        "spearman": -0.010378510378510378
+       },
+       "q2_mean": 0.6081709866956791,
+       "q2_range": 0.09139820358394157,
+       "rmse_mean": 0.7556575066445821
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+       },
+       "mean_error": -1.1735509985441865,
+       "q2": -1.229917454631504,
+       "rmse": 1.5058498982007065,
+       "spearman": -0.0586080586080586
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 43,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 1
+       },
+       "ladders": {
+        "mean_error": -0.21577789380819107,
+        "q2": 0.5213388541028199,
+        "rmse": 0.6976721364555503,
+        "spearman": 0.5543345543345543
+       },
+       "q2_mean": 0.760280108178512,
+       "q2_range": 0.050266850236978744,
+       "rmse_mean": 0.5911822270518357
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.25, ridge 1": 2,
+        "width 0.5, ridge 0.1": 43,
+        "width 0.5, ridge 1": 2,
+        "width 1, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -1.0174032314954573,
+        "q2": -1.0558420954958496,
+        "rmse": 1.4458797244695853,
+        "spearman": 0.12120287120297897
+       },
+       "q2_mean": 0.3937715819494976,
+       "q2_range": 0.1167037399621077,
+       "rmse_mean": 0.9401119677122878
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.4094663101875324,
+       "q2": -1.8379027805927541,
+       "rmse": 1.6987757280949654,
+       "spearman": 0.1645550316836415
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 50
+       },
+       "ladders": {
+        "mean_error": -0.24862140191586615,
+        "q2": 0.46673537370047813,
+        "rmse": 0.7363913500578918,
+        "spearman": 0.6092796092796092
+       },
+       "q2_mean": 0.6302688201221015,
+       "q2_range": 0.04491232440395021,
+       "rmse_mean": 0.7343855578588004
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 43,
+        "width 1, ridge 0.1": 7
+       },
+       "ladders": {
+        "mean_error": -0.8688913265051651,
+        "q2": -0.6918091079495876,
+        "rmse": 1.311634917878133,
+        "spearman": 0.14745840501521118
+       },
+       "q2_mean": 0.46479474800880805,
+       "q2_range": 0.07768613470320207,
+       "rmse_mean": 0.8834646775975221
+      },
+      "ladders": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 1
+       },
+       "mean_error": -1.2928134141043044,
+       "q2": -1.6613009862110002,
+       "rmse": 1.645069641618031,
+       "spearman": 0.03083498738413319
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 46,
+        "width 1, ridge 0.1": 4
+       },
+       "ladders": {
+        "mean_error": -0.2611839298635225,
+        "q2": 0.42699113936316935,
+        "rmse": 0.7633398922733539,
+        "spearman": 0.5775335775335775
+       },
+       "q2_mean": 0.6694408241099974,
+       "q2_range": 0.05609435360457815,
+       "rmse_mean": 0.6942155198902382
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.01, ridge 0.01": 9,
+        "sigma 0.01, ridge 0.1": 35,
+        "sigma 0.02, ridge 0.01": 1,
+        "sigma 0.02, ridge 0.1": 5
+       },
+       "ladders": {
+        "mean_error": -1.4764843389171574,
+        "q2": -2.126311209567409,
+        "rmse": 1.7830084211299584,
+        "spearman": -0.051892551892551896
+       },
+       "q2_mean": 0.4086955415707411,
+       "q2_range": 0.11702077780896336,
+       "rmse_mean": 0.9284583093704372
+      },
+      "ladders": {
+       "chosen": {
+        "sigma 0.01, ridge 0.1": 1
+       },
+       "mean_error": -1.6301620642118908,
+       "q2": -2.661646605614176,
+       "rmse": 1.9296364938088661,
+       "spearman": -0.05555555555555555
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 2,
+        "sigma 0.01, ridge 0.01": 12,
+        "sigma 0.01, ridge 0.1": 34,
+        "sigma 0.02, ridge 0.1": 2
+       },
+       "ladders": {
+        "mean_error": -0.49958241650484975,
+        "q2": 0.22279102234490944,
+        "rmse": 0.8890090759302541,
+        "spearman": 0.5146520146520146
+       },
+       "q2_mean": 0.6490522599198897,
+       "q2_range": 0.042990539338382705,
+       "rmse_mean": 0.7155015532313339
+      }
+     }
+    },
+    "polymers": 748,
+    "y": {
+     "ladders_mean": 2.428288888888889,
+     "linear_mean": 0.702491123439667,
+     "mean": 0.7647859625668448,
+     "sd": 1.207979070819625
+    }
+   },
+   "linear": {
+    "clusters": 122,
+    "comparisons": [
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.052612345865401144,
+      "lo": -0.002987560241686235,
+      "mean": 0.02451398166245289,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts",
+      "hi": 0.12770820559334656,
+      "lo": 0.004199373807788134,
+      "mean": 0.07300764596770992,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.03942328656373513,
+      "lo": -0.10715348950939639,
+      "mean": -0.07260071318735029,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.03482027568050852,
+      "lo": -0.12054086206809021,
+      "mean": -0.023047090484564547,
+      "measure": "q2",
+      "model": "central unit + eight counts",
+      "scheme": "group"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.03133389713004284,
+      "lo": -0.015496593076195326,
+      "mean": 0.0077042205880750725,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "bond-count kernel + eight counts + side groups",
+      "hi": 0.09542358832682998,
+      "lo": -0.007280891720982626,
+      "mean": 0.0458453535421558,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": -0.014463345042231476,
+      "lo": -0.07318546361303618,
+      "mean": -0.04398619500128298,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "random"
+     },
+     {
+      "against": "ECFP4 of the repeat unit",
+      "hi": 0.12943570164104293,
+      "lo": -0.05946583551671647,
+      "mean": 0.05243897448632884,
+      "measure": "q2",
+      "model": "central unit + eight counts + side groups",
+      "scheme": "group"
+     }
+    ],
+    "ladders": 0,
+    "models": {
+     "ECFP4 of the repeat unit": {
+      "group": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 10,
+        "Tanimoto, ridge 0.1": 40
+       },
+       "q2_mean": 0.5834665284549106,
+       "q2_range": 0.07953023745558563,
+       "rmse_mean": 0.7545448804612
+      },
+      "random": {
+       "chosen": {
+        "Tanimoto, ridge 0.01": 19,
+        "Tanimoto, ridge 0.1": 31
+       },
+       "q2_mean": 0.802465921630638,
+       "q2_range": 0.03312195686442443,
+       "rmse_mean": 0.5197033471663988
+      }
+     },
+     "bond-count kernel + eight counts": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 14,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 14,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 6,
+        "up to 20 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+       },
+       "q2_mean": 0.4366650243432472,
+       "q2_range": 0.13714185820385927,
+       "rmse_mean": 0.8771342068424659
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 17,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 21,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 5,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 4,
+        "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.6854968356189362,
+       "q2_range": 0.05131024958328101,
+       "rmse_mean": 0.6558553984831115
+      }
+     },
+     "bond-count kernel + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+        "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 26,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 6,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 6,
+        "up to 20 bonds, width 0.5, h 1, ridge 0.1": 2,
+        "up to 20 bonds, width 1, h 3, ridge 0.1": 1,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 4,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 1, h 3, ridge 0.1": 1
+       },
+       "q2_mean": 0.5525161643619622,
+       "q2_range": 0.08736629315730005,
+       "rmse_mean": 0.7820925971460697
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, width 0.5, h 1, ridge 0.1": 27,
+        "up to 12 bonds, width 1, h 1, ridge 0.1": 10,
+        "up to 12 bonds, width 1, h 3, ridge 0.1": 10,
+        "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+        "up to 8 bonds, width 1, h 1, ridge 0.1": 2
+       },
+       "q2_mean": 0.7334557464223034,
+       "q2_range": 0.04313583082655281,
+       "rmse_mean": 0.6037493745644684
+      }
+     },
+     "bond-count kernel, central unit": {
+      "group": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 41,
+        "up to 20 bonds, ridge 0.1": 3,
+        "up to 8 bonds, ridge 0.1": 6
+       },
+       "q2_mean": 0.31313572529243694,
+       "q2_range": 0.13710618820476028,
+       "rmse_mean": 0.9688728718520604
+      },
+      "random": {
+       "chosen": {
+        "up to 12 bonds, ridge 0.1": 47,
+        "up to 8 bonds, ridge 0.1": 3
+       },
+       "q2_mean": 0.5787589289655931,
+       "q2_range": 0.051570697563857015,
+       "rmse_mean": 0.7591018428884461
+      }
+     },
+     "central unit + eight counts": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 3,
+        "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 7,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 3,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 22,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 7,
+        "sigma 0.02, width 0.25, h 0.3, ridge 0.1": 3,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 2,
+        "sigma 0.03, width 1, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.5351695222197664,
+       "q2_range": 0.14297767999783828,
+       "rmse_mean": 0.7967699060421455
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.01": 2,
+        "sigma 0.005, width 0.25, h 0.3, ridge 0.1": 1,
+        "sigma 0.005, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 3,
+        "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.01": 2,
+        "sigma 0.01, width 0.25, h 0.3, ridge 0.1": 9,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 2,
+        "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 20,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 3,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 2
+       },
+       "q2_mean": 0.7204014574864253,
+       "q2_range": 0.04364465590483024,
+       "rmse_mean": 0.6183835195366474
+      }
+     },
+     "central unit + eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 4,
+        "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.25, h 1, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 24,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 13,
+        "sigma 0.02, width 0.5, h 1, ridge 0.1": 5,
+        "sigma 0.03, width 1, h 1, ridge 0.1": 1
+       },
+       "q2_mean": 0.6177356913767615,
+       "q2_range": 0.10965735860697201,
+       "rmse_mean": 0.7226693178753959
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, width 0.5, h 1, ridge 0.01": 1,
+        "sigma 0.005, width 0.5, h 1, ridge 0.1": 4,
+        "sigma 0.005, width 1, h 3, ridge 0.01": 2,
+        "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 0.5, h 1, ridge 0.01": 2,
+        "sigma 0.01, width 0.5, h 1, ridge 0.1": 20,
+        "sigma 0.01, width 0.5, h 3, ridge 0.1": 1,
+        "sigma 0.01, width 1, h 3, ridge 0.01": 3,
+        "sigma 0.01, width 1, h 3, ridge 0.1": 13,
+        "sigma 0.02, width 1, h 3, ridge 0.1": 3
+       },
+       "q2_mean": 0.7523848679962533,
+       "q2_range": 0.03822385645820714,
+       "rmse_mean": 0.5819442070724623
+      }
+     },
+     "eight counts": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 2,
+        "width 0.25, ridge 1": 15,
+        "width 0.5, ridge 0.1": 23,
+        "width 0.5, ridge 1": 1,
+        "width 1, ridge 0.1": 9
+       },
+       "q2_mean": 0.36016428616691726,
+       "q2_range": 0.07991587033569614,
+       "rmse_mean": 0.9354420163173541
+      },
+      "random": {
+       "chosen": {
+        "width 0.25, ridge 1": 17,
+        "width 0.5, ridge 0.1": 25,
+        "width 0.5, ridge 1": 2,
+        "width 1, ridge 0.1": 6
+       },
+       "q2_mean": 0.587134278116515,
+       "q2_range": 0.04766683334517219,
+       "rmse_mean": 0.7515101063052094
+      }
+     },
+     "eight counts + side groups": {
+      "group": {
+       "chosen": {
+        "width 0.25, ridge 0.1": 1,
+        "width 0.5, ridge 0.1": 31,
+        "width 0.5, ridge 1": 3,
+        "width 1, ridge 0.1": 15
+       },
+       "q2_mean": 0.4550065404669903,
+       "q2_range": 0.08284113864545728,
+       "rmse_mean": 0.8633193874104407
+      },
+      "random": {
+       "chosen": {
+        "width 0.5, ridge 0.1": 28,
+        "width 1, ridge 0.1": 22
+       },
+       "q2_mean": 0.6379757388058028,
+       "q2_range": 0.04490229253596234,
+       "rmse_mean": 0.703702076661971
+      }
+     },
+     "field kernel, central unit": {
+      "group": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 2,
+        "sigma 0.005, ridge 0.1": 3,
+        "sigma 0.01, ridge 0.01": 5,
+        "sigma 0.01, ridge 0.1": 34,
+        "sigma 0.02, ridge 0.1": 5,
+        "sigma 0.03, ridge 0.1": 1
+       },
+       "q2_mean": 0.43328765186753737,
+       "q2_range": 0.17518207183316015,
+       "rmse_mean": 0.8799060677732697
+      },
+      "random": {
+       "chosen": {
+        "sigma 0.005, ridge 0.01": 6,
+        "sigma 0.005, ridge 0.1": 2,
+        "sigma 0.01, ridge 0.001": 1,
+        "sigma 0.01, ridge 0.01": 7,
+        "sigma 0.01, ridge 0.1": 31,
+        "sigma 0.02, ridge 0.1": 3
+       },
+       "q2_mean": 0.6368259049877341,
+       "q2_range": 0.04375644422751346,
+       "rmse_mean": 0.7048100952014443
+      }
+     }
+    },
+    "polymers": 721,
+    "y": {
+     "ladders_mean": null,
+     "linear_mean": 0.702491123439667,
+     "mean": 0.702491123439667,
+     "sd": 1.169730401198701
+    }
+   }
+  }
+ },
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0,
+  100.0
+ ],
+ "ladders": 27,
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "not_built": {},
+ "polymers": 762,
+ "repaired": 102,
+ "repeats": 10,
+ "seconds": 3971.1,
+ "sigmas": [
+  0.001,
+  0.0025,
+  0.005,
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "topo_max": [
+  2,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ]
+}

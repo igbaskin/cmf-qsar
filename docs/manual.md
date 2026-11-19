@@ -12660,9 +12660,9 @@ cmf build units.sdf --activity tg_k --kernel autocorrelation --select evidence -
 Every column of the table is copied into the SD file, so the property is there for `cmf build`.
 The steps, each with the choice it makes:
 
-* A repeat unit must have exactly two attachment points, each bonded to one atom, with the same
-  bond order at both. A ladder polymer, a branched unit or a salt written as two fragments is
-  refused with the reason.
+* A repeat unit must have two attachment points, or four for a ladder polymer (see *Ladder
+  polymers* below), each bonded to one atom, with the same bond order at all. A branched unit or
+  a salt written as two fragments is refused with the reason.
 * `--units` copies (default 3) are joined head to tail with RDKit's `molzip`, which keeps the
   configuration of every stereocentre. The open ends get a hydrogen, or a CH₂= or CH≡ group when
   the open bond is double or triple. Every atom carries the property `cmf_unit`: its repeat unit,
@@ -12680,6 +12680,7 @@ The steps, each with the choice it makes:
 * The chosen conformation is optimised with MMFF94 (UFF where MMFF has no parameters) **with the
   end-to-end distance held fixed**. Without that restraint an optimisation in vacuum folds the
   chain onto itself: a polythiophene trimer with dodecyl side chains went from 19.8 Å to 9.6 Å.
+  A ladder polymer cannot fold and is optimised without the restraint.
 
 On the 7,316 polymers of the benchmark below, 14 could not be embedded within the time limits
 (30 s per attempt, four times that for the retry). The trimers have 173 atoms at the median and
@@ -12813,7 +12814,9 @@ setting is kept in `benchmarks/cache/polymer_tg/settings/`, so a run with a wide
 only the settings it adds.
 
 **What is not done.** The periodic chain of plan item M1 is not used here: it would need a cell
-with the right repeat distance for each polymer, which the extended trimer avoids. Copolymers
+with the right repeat distance for each polymer, which the extended trimer avoids. Plan item PL3
+builds a chain from the trimer (*The periodic chain against the trimer* below), and it describes
+the polymers worse than the trimer does. Copolymers
 need a sequence, which the builder does not choose. Chain length, its distribution, crystallinity
 and the measurement method are not in any field of a single oligomer.
 
@@ -12834,7 +12837,10 @@ more there (`benchmarks/run_polymer_packing.py`).
   the literature, as log10 of the permeability in Barrer, for CH4, CO2, H2, N2 and O2 (444 to
   721 polymers per gas once built). 44 of 786 rows are left out, 31 of them ladder polymers with
   four attachment points, among them the polymers of intrinsic microporosity, the most permeable
-  class; the builder handles linear chains only.
+  class; the builder handled linear chains only. Plan item PL6 adds them (*Ladder polymers*
+  below), and it found that 101 of these linear repeat units are written with a broken benzene
+  ring or a methylene in place of a carbonyl oxygen. The numbers of this section are for the
+  structures as the source gives them; PL6 gives them again for the repaired structures.
 
 The fractional free volume of the Open Polymer Prediction set is not used: it can be downloaded
 only after a sign-in to Kaggle and an acceptance of the competition's rules, and no open copy
@@ -13005,6 +13011,353 @@ already does the work of a ridge.
 
 **Costs.** The candidates took 26 minutes, the models of part 1 about 3 hours 50 minutes, and
 part 2 43 minutes. All of them reuse the trimers and the cached settings of PL2.
+
+### Ladder polymers
+
+A ladder polymer joins its repeat units by two bonds each, so that a ring forms at every junction.
+The polymers of intrinsic microporosity (PIMs) are the best known: PIM-1 joins a spirobisindane
+catechol to a dicyanobenzene through a dibenzodioxin ring. Their chains cannot turn about single
+bonds, they pack badly, and they are the most permeable class of the permeability set. PL2 had to
+leave out the 31 of them, because the builder handled two attachment points only. Plan item PL6
+(`benchmarks/run_polymer_ladders.py`) adds them.
+
+**The builder.** A repeat unit with four attachment points is read as two ends of two points
+each. When the points carry atom map numbers, points 1 and 2 are the head and points 3 and 4
+the tail, and the tail point 3 is joined to the head point 1 of the next unit, 4 to 2. Without numbers, the
+two ends are the split of the four points into two pairs whose atoms are closest in the bond
+graph; a split that ties with another is refused, with a request for numbers. The head is the
+end with the first point written. The ring that forms has the same size whichever point of an end
+is joined to which; only the regioisomer depends on it, and for a symmetric end, such as the two
+oxygens of a catechol, both are the same. Each open end gets two hydrogens. A ladder trimer is
+optimised **without** the end-to-end restraint of a linear chain: it cannot fold, and on large
+fused systems the embedding is often bent. With the restraint, one PIM trimer kept a bend that a
+free optimisation removed (17.6 Å to 36.3 Å end to end, and its benzene rings from 0.2 Å out of
+plane to 0.03 Å).
+
+**The data, and two faults of the source.** The PL6 table
+(`examples/polymer_packing/permeability_pl6.csv`, made by `prepare_polymer_packing.py`) is the
+permeability table of PL2 with the ladders kept. Four of the 31 are refused: one would close a
+four-membered ring at the junction, one writes a Tröger's base with two bridges per unit (the
+junction would be a ring of four nitrogens and four carbons), and two repeat the five values of
+another row. That leaves 27 ladders.
+
+Reading the ladders showed two faults in the source that also affect the linear polymers of PL2:
+
+* In 99 rows a benzene ring is written as a cyclohexa-1,3-diene: two adjacent ring carbons carry
+  a hydrogen and no double bond, as in a fluorene written `C3C=CC=CC3C3C=CC=CC32`, or the benzene
+  ring of a phthalimide written the same way. Such a ring is a benzene ring whose aromatic bonds
+  were lost. The repair makes the bond between the two carbons double, which makes the ring
+  aromatic again (115 rings).
+* In 12 rows the carbonyl carbon of an imide or an ester carries `=CH2` in place of `=O`
+  (`c(=C)n`, `OC(=C)C`). The repair makes it an oxygen (24 atoms).
+
+102 rows are repaired, 101 of them linear: 14 % of the linear polymers of PL2. The column
+`source_psmiles` keeps the SMILES of the source. The density set of PL2 and the glass transition
+set of PL1 have neither fault. PL2's own table is left as it was, so that its results can be
+reproduced.
+
+**The trimers.** 27 ladder trimers and 70 repaired linear trimers were built; the other 31
+repaired units equal, after the repair, a unit that PL2 had already built correctly. Seven units
+that PL2 could not embed are left out here too, so that the linear set is PL2's: 735 linear
+polymers and 27 ladders. No trimer has a bond of the wrong length or two atoms closer than 1.3 Å
+(`cmfqsar.orca.geometry_faults`). Every benzene and pyridine ring lies within 0.10 Å of its plane
+in the ladders and within 0.08 Å in the repaired units. The dioxin rings at the junctions of the
+PIMs fold by up to 0.3 Å along their O-O axis, which these rings are known to do at little cost.
+The end-to-end distance of the ladder trimers is 4 to 55 Å: the spiro centres of PIM-1 and the
+bridges of a Tröger's base turn the chain at every unit.
+
+**The questions, fixed before the run.** The models are those of PL2 without the whole trimer,
+plus the PL5 reference: the eight counts with the side-chain fraction and the size of the largest
+side group as two more columns ("side groups"). The folds are those of PL2. Three tests:
+
+1. *What the repair changes*: the PL2 models on the 735 repaired linear polymers.
+2. *The gate*: each model is trained on the linear polymers only and predicts the ladders. The
+   gate is a smaller error on the ladders for the central unit plus counts than for the bond-count
+   kernel plus counts, with the 95 % bootstrap interval of the difference (ladders resampled)
+   below zero.
+3. *What a ladder in the training set gains*: the error on the ladders in the random folds of all
+   762 polymers, where other ladders are in the training block.
+
+**The repair changes PL2's numbers little.** On random folds every model's q² moves by -0.008 to
++0.017. The counts gain most, because the count of aromatic rings is now right. With clusters
+held out the q² values move by -0.10 to +0.03. The clusters themselves change with the repaired
+fingerprints, so part of this is a change of folds. The PL2 gate, central
+unit plus counts minus bond-count kernel plus counts, on random folds / with clusters held out:
+
+| Gas | PL2 | repaired |
+|---|---|---|
+| CH4 | +0.039 / +0.059 | +0.036 / +0.058 |
+| CO2 | +0.031 / +0.083 | +0.024 / +0.063 |
+| H2 | +0.012 / +0.072 | +0.006 / +0.025 |
+| N2 | +0.043 / +0.084 | +0.040 / +0.073 |
+| O2 | +0.039 / +0.081 | +0.025 / +0.073 |
+
+With clusters held out the interval stays above zero for four gases. For H2 it now includes zero
+(-0.051 to +0.110).
+
+**The gate is not met: trained on linear polymers, the field predicts the ladders worse than the
+bond graph.** The ladders are on average 1.6 to 1.7 log units (a factor of about 50) more
+permeable than the linear polymers. The error on the ladders, as RMSE with the mean error in
+brackets (log10 Barrer):
+
+| Model, trained on linear polymers only | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| central unit + eight counts | 2.11 (-1.69) | 2.13 (-1.84) | 1.68 (-1.61) | 1.73 (-1.42) | 1.58 (-1.31) |
+| bond-count kernel + eight counts | 1.63 (-1.21) | 1.53 (-1.28) | 1.39 (-1.27) | 1.27 (-0.93) | 1.33 (-0.94) |
+| ECFP4 of the repeat unit | 1.71 (-1.34) | 1.75 (-1.43) | 1.33 (-1.24) | 1.72 (-1.43) | 1.73 (-1.45) |
+| central unit + counts + side groups | 2.05 (-1.62) | 1.50 (-1.01) | 1.62 (-1.56) | 1.64 (-1.30) | 1.51 (-1.17) |
+| bond-count + counts + side groups | 1.95 (-1.53) | 1.36 (-0.98) | 1.45 (-1.38) | 1.59 (-1.22) | 1.60 (-1.23) |
+| difference of the first two rows | +0.48 [+0.20, +0.75] | +0.60 [+0.35, +0.87] | +0.28 [+0.10, +0.46] | +0.46 [+0.13, +0.75] | +0.26 [-0.10, +0.58] |
+
+**The error on the ladders when other ladders are in the training set** (random folds of all
+762 polymers; RMSE, log10 Barrer):
+
+| Model | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| central unit + eight counts | 0.84 | 0.73 | 0.64 | 0.72 | 0.68 |
+| bond-count kernel + eight counts | 0.86 | 0.77 | 0.60 | 0.73 | 0.73 |
+| ECFP4 of the repeat unit | 0.70 | 0.66 | 0.47 | 0.70 | 0.66 |
+
+**What it says.**
+
+* **No model predicts a ladder polymer from linear polymers.** Every model predicts too low, by
+  0.8 to 1.8 log units on average, and none ranks the ladders: the rank correlation (Spearman)
+  between predicted and measured permeability within the ladders is -0.24 to +0.12 for the field
+  plus counts, -0.02 to +0.52 for the bond-count kernel plus counts and -0.08 to +0.33 for ECFP4.
+  What makes a PIM permeable is not present in a linear polymer for any of these descriptions.
+* **The field is the worst of them.** Its error on the ladders is 0.26 to 0.60 log units larger
+  than that of the bond-count kernel plus counts, and it predicts them lower than that model on
+  every gas. Distance is not the reason: measured by the largest kernel value to any linear polymer,
+  the field kernel puts the ladders closer to the linear polymers than the bond-count kernel does
+  (at the 19th to 25th percentile of the linear polymers' own nearest neighbours, against the 9th
+  to 11th; ECFP4 and the counts put them at the 2nd). The field finds near neighbours for a ladder,
+  but they are linear polymers of ordinary permeability.
+* **The side groups of PL5 close most of the gap on the ladders as well.** With the two side-group
+  numbers in both references, the field's excess error on the ladders falls to -0.10 to +0.17, with
+  the interval including zero except for H2.
+* **Ladders in the training set halve the error.** With other ladders in the training block the
+  error on a ladder falls from 1.3 to 2.1 log units to 0.5 to 0.9, and the rank correlation within
+  the ladders rises to 0.4 to 0.7. ECFP4 is best here too.
+* **The PL2 margin of the field shrinks with the ladders in the set.** On all 762 polymers with
+  clusters held out, central unit plus counts minus bond-count kernel plus counts is +0.008 to
+  +0.040, every interval including zero; on random folds it is +0.011 to +0.043, above zero for
+  four gases.
+
+**The settings chosen.** The smallest ridge (10⁻⁸) was chosen in none of the 1,000 blocks of a
+model. The only setting at the edge of its grid is the smallest weight of the counts (0.03) in
+the bond-count kernel plus counts, in 16 of its 1,000 blocks.
+
+**Costs.** The 97 new trimers took 5 minutes with 6 processes and the models 66 minutes; the PL2
+trimers are read from its cache.
+
+### The periodic chain against the trimer
+
+The middle unit of a trimer sees one neighbouring unit on each side. A real chain has
+neighbours as far as the distance cutoff reaches, and item M1 can compute the field of a chain
+per repeat length, if it is given a cell with the right repeat. Plan item PL3
+(`benchmarks/run_polymer_chain.py`) builds such a chain from the trimer and compares it with the
+trimer on the targets and folds of PL2.
+
+**An extended trimer does not give a repeat.** Its three units have different conformations:
+the trimer is extended from end to end, but its torsions are not the same in every unit.
+On four test polymers, moving the middle unit by the vector between two head atoms missed the
+next unit by 1.7 to 11 Å (root mean square over the heavy atoms), and a cell built with that
+vector put atoms of neighbouring units 0.5 Å apart. Even the best rigid fit of one unit onto
+the next makes such overlaps in 57 % of a sample of 432 trimers.
+
+**The chain that is built.** `cmfqsar.polymer.chain_screw` makes copies of the middle unit
+related by one screw, a rotation and a translation. The screw carries the junction before the
+middle unit onto the junction after it. Every junction of the chain then has the bond, the two
+bond angles and the torsions of the trimer's junction, and the middle unit keeps its conformation.
+So the chain differs from the trimer in two ways only: the copies beyond the nearest neighbours,
+and no caps. `chain_autocorrelation_rows` gives the field of one unit of this chain in the
+convention of the trimer's central-unit rows, so the two compare channel by channel. When the
+screw is a pure translation, `periodic_chain` gives M1's periodic cell, and the two routes agree to
+10⁻¹² (tested).
+
+Of the 1,725 trimers of PL2:
+
+* The screw turns by 133° per unit and rises by 2.8 Å along its axis (medians; the rise is 0.5
+  to 12.4 Å between the 5th and 95th percentiles). Only one screw is a translation, so M1's cell
+  fits one polymer.
+* The copy of the middle unit that the screw makes misses the trimer's own next unit by 4.1 Å
+  (median root mean square over the heavy atoms): the junction is the same, the rest of the
+  unit is not.
+* 705 chains (41 %) bring two atoms closer than 1.3 Å a few units further on: the helix meets
+  itself. They are left out, and every model is compared on the other 1,020 polymers (641 for the
+  density, 273 to 427 per gas).
+* Setting every backbone torsion to 180° before taking the screw (an all-trans chain) still left
+  29 % of a sample of 108 overlapping, so it was not used.
+
+**The question, fixed before the run.** Does the field of the chain describe a polymer better
+than the field of the trimer's middle unit? The gate is periodic chain plus counts minus central
+unit plus counts, with the interval above zero. A third description separates the two
+differences: the chain cut to its nearest copy on each side ("nearest copies only").
+
+**The gate is not met: the chain is worse on every target.** q² on random folds / with groups
+held out (classes for the density, clusters for the gases):
+
+| Target | Polymers | central unit + counts | periodic chain + counts | chain minus central, random folds | chain minus central, groups held out |
+|---|---|---|---|---|---|
+| density | 641 | +0.874 / +0.713 | +0.816 / +0.597 | -0.056 [-0.086, -0.026] | -0.116 [-0.335, +0.007] |
+| CH4 | 359 | +0.677 / +0.511 | +0.628 / +0.467 | -0.046 [-0.068, -0.025] | -0.037 [-0.086, +0.002] |
+| CO2 | 399 | +0.593 / +0.438 | +0.511 / +0.361 | -0.089 [-0.134, -0.043] | -0.076 [-0.171, -0.004] |
+| H2 | 273 | +0.608 / +0.402 | +0.589 / +0.377 | -0.018 [-0.034, -0.002] | -0.020 [-0.064, +0.011] |
+| N2 | 417 | +0.630 / +0.474 | +0.573 / +0.439 | -0.059 [-0.090, -0.030] | -0.036 [-0.108, +0.012] |
+| O2 | 427 | +0.643 / +0.463 | +0.565 / +0.401 | -0.080 [-0.119, -0.045] | -0.069 [-0.145, -0.010] |
+
+**The field kernels alone** (q², random folds / groups held out):
+
+| Target | central unit of the trimer | nearest copies only | periodic chain |
+|---|---|---|---|
+| density | +0.846 / +0.768 | +0.839 / +0.744 | +0.742 / +0.650 |
+| CH4 | +0.587 / +0.473 | +0.581 / +0.488 | +0.511 / +0.372 |
+| CO2 | +0.532 / +0.408 | +0.486 / +0.385 | +0.414 / +0.318 |
+| H2 | +0.540 / +0.411 | +0.544 / +0.435 | +0.501 / +0.379 |
+| N2 | +0.549 / +0.462 | +0.534 / +0.443 | +0.481 / +0.404 |
+| O2 | +0.573 / +0.459 | +0.541 / +0.421 | +0.477 / +0.379 |
+
+**What it says.**
+
+* **The far copies make the field worse.** The full chain minus the nearest copies is -0.045 to
+  -0.094 on random folds (every interval below zero) and -0.044 to -0.091 with groups held out.
+  The nearest copies minus the central unit is -0.058 to +0.022; only O2 has both intervals below
+  zero. So the idealised neighbours and the missing caps cost little, and the copies beyond them
+  cost most. They add the same distances again and again at long range, and under the cosine
+  normalisation these channels dilute the ones that carry information, as the long-range channels
+  did in PL5.
+* **The copies do change the description.** The correlation of the two field kernels over all
+  pairs of polymers is 0.92 at 0.005 Å and 0.89 at 0.1 Å; it is lower for the third of the
+  polymers with the shortest rise per unit (0.91 and 0.89) than for the third with the longest
+  (0.98 and 0.96), as expected: a long unit already sees most of its neighbours inside itself.
+* **The trimer stays the sample.** On the same 1,020 polymers the PL2 margin of the central unit
+  plus counts over the bond-count kernel plus counts is -0.002 to +0.092 on the gases, with the
+  interval above zero for CH4 and N2 on both kinds of folds.
+
+**The settings chosen.** The chain chose narrower widths than the central unit: 0.0025 Å or
+0.001 Å in most blocks, against 0.005 Å. 0.001 Å is the narrowest width of PL2's list, so a second
+run offered 0.0005 Å; it was chosen in none of the 600 blocks, and no number changed. Every model
+chose the smallest ridge (10⁻⁸) in about half of its blocks, as in PL2; selecting again with the
+ridges below 10⁻⁴ removed changed no q² in the fourth decimal.
+
+**Costs.** The screws and the chain rows took 2 minutes with 12 processes, the models 75 minutes,
+and the second run (the narrower width and the nearest copies) 12 minutes. The trimers are those
+of PL2.
+
+### Copolymers: a sequence as an ensemble of local environments
+
+A copolymer has two kinds of repeat units, A and B, and its properties depend on more than the
+fraction of each. In an alternating chain every unit has two neighbours of the other kind; in a
+block copolymer most units have neighbours of their own kind. A weighted mean of the
+descriptors of A and B sees the fractions only. Plan item PL4
+(`benchmarks/run_copolymers.py`) describes a copolymer by the local environments its units are in,
+and asks whether that describes it better than the weighted mean.
+
+**The data.** The VIPEA set of Aldeghi and Coley (*Chem. Sci.* 13, 10486, 2022; MIT licence)
+gives the electron affinity and the ionization potential of 42,966 binary copolymers of 9 aryl
+diboronic acids (A) and 682 aryl dibromides (B). Each pair of monomers appears as an alternating
+copolymer (1:1) and as a random and a block copolymer at A:B = 1:1, 1:3 and 3:1. The values were
+computed with the tight-binding program xTB on octamers and averaged over the sequences of each
+copolymer, so they are computed, not measured. No open measured set of copolymers of a useful size
+was found: the large measured tables are restricted (PolyInfo) or have only a few monomers.
+`benchmarks/prepare_copolymers.py` makes the repeat units (the two B(OH)2 groups of A and the two
+bromine atoms of B become the attachment points), refuses two dibromides with a third bromine,
+and draws 25 of the other 680 with a fixed seed. Every copolymer of these 25 with the 9 acids is
+kept: 225 pairs, 1,575 copolymers, in `examples/copolymers/vipea.csv`. A kernel model on the whole
+set would cost days.
+
+**The representation.** A unit with a neighbour on each side is one local environment, for
+example A between B and A. `cmfqsar.polymer.environment_weights` counts the environments over
+the octamers the labels were computed on, with the rules of the source (every distinct order of
+the units for a random copolymer, AAAABBBB, AABBBBBB or AAAAAABB for a block copolymer, ABABABAB
+for the alternating one), inner units only, each chain read in both directions.
+`cmfqsar.polymer.build_sequence` builds one trimer per environment, and its middle unit gives a
+row of the field autocorrelation, as in PL1. The copolymer's row is the weighted mean of the rows
+of its environments: 1,384 trimers in all, built in 4 minutes with no geometry faults. This is
+the mean-map principle of item MS5 applied to an autocorrelation. The rows of the members are
+averaged and their atoms are not put together, because the autocorrelation is quadratic in the
+field and would then count pairs of atoms from two different trimers.
+
+**The models**, fixed before the run:
+
+* *field kernel, sequence ensemble*: the mean rows above;
+* *field kernel, mean of the homopolymer units*: the middle units of the AAA and BBB trimers,
+  weighted by the fractions; it knows the composition but not the neighbours;
+* *bond-count kernel, sequence ensemble*: the same ensemble with distances counted in bonds;
+* *weighted counts*: the eight counts of PL1 for each unit, weighted by the fractions (the
+  weighted mean of descriptors that the plan names);
+* *weighted counts + architecture*: the same with three columns that name the architecture,
+  because a weighted mean cannot see it otherwise;
+* *weighted ECFP4*: the count fingerprint of each unit, weighted by the fractions, in the
+  min/max (Tanimoto) kernel;
+* each of the three structure kernels plus the weighted counts.
+
+The folds are five random folds and five folds of whole dibromides (five dibromides per fold), each
+repeated five times. Random folds put copolymers of the same two monomers on both sides; the
+dibromide folds do not. The gate is *sequence ensemble + weighted counts* minus *weighted counts +
+architecture*, with the 95 % interval above zero with dibromides held out.
+
+**The ridge.** The first run chose the setting and the ridge by the evidence on each training
+block, as in PL1 to PL3. With dibromides held out, two of the references then failed: *weighted
+counts + architecture* reached q² −0.33 on the electron affinity, because in some blocks it chose a
+ridge of 10⁻⁴ or 10⁻³ and missed one held-out dibromide by up to 9 eV. A training block holds seven
+copolymers of each pair of monomers with close labels, and the evidence treats them as independent,
+so it trusts the data too much. Every model was therefore selected a second time with the ridges
+below 0.1 removed, from the stored predictions; the floor was chosen after the first run, among
+10⁻⁴, 10⁻³, 10⁻² and 0.1. Both selections are in the results table. With the floor, every model
+chose the floor itself in every block, so the numbers below depend on that choice. Few choices
+were at the edge of their lists: the widest field width (1 Å) in 5 of the 50 blocks of the
+homopolymer mean on the electron affinity, and the longest bond count (40 bonds) in 13 of the 50
+blocks of the bond-count kernel alone on the electron affinity, with the floor.
+
+**The gate is met on the electron affinity, only just, and not on the ionization potential.**
+q² on random folds / with dibromides held out, ridge at least 0.1, and the correlation of the
+predicted with the computed differences between architectures ("architecture r", see below):
+
+| Model | electron affinity | architecture r | ionization potential | architecture r |
+|---|---|---|---|---|
+| field kernel, sequence ensemble | +0.939 / +0.639 | +0.17 | +0.919 / +0.771 | +0.19 |
+| field kernel, mean of the homopolymer units | +0.916 / +0.590 | −0.02 | +0.904 / +0.700 | +0.01 |
+| bond-count kernel, sequence ensemble | +0.917 / +0.513 | +0.24 | +0.892 / +0.811 | +0.23 |
+| weighted counts | +0.938 / +0.648 | 0 | +0.944 / +0.689 | 0 |
+| weighted counts + architecture | +0.887 / +0.603 | +0.60 | +0.909 / +0.717 | +0.76 |
+| weighted ECFP4 | +0.963 / +0.658 | 0 | +0.961 / +0.742 | 0 |
+| sequence ensemble + weighted counts | **+0.983** / +0.714 | +0.44 | **+0.984** / +0.675 | +0.75 |
+| homopolymer mean + weighted counts | +0.970 / **+0.758** | −0.01 | +0.963 / +0.742 | −0.00 |
+| bond-count ensemble + weighted counts | +0.970 / +0.753 | +0.43 | +0.976 / +0.734 | +0.65 |
+
+The gate, *sequence ensemble + weighted counts* minus *weighted counts + architecture*, with
+dibromides held out: +0.096 [+0.001, +0.222] on the electron affinity and −0.027 [−0.105, +0.037]
+on the ionization potential. With the evidence alone it is +0.799 [+0.074, +2.447] and −0.003
+[−0.112, +0.111]; the first of these measures the failed reference, not the ensemble.
+
+**What it says.**
+
+* **On random folds the sequence ensemble is the best description.** With the counts it reaches
+  q² 0.983 and 0.984, and its error is about half that of the weighted counts (0.087 against 0.166
+  eV on the electron affinity). It is above every reference, by +0.008 to +0.094, and every
+  interval is above zero.
+* **Only a description that sees the sequence predicts the architecture.** For each pair of
+  monomers and each composition, the architecture check takes the value of each architecture
+  minus the mean over the architectures, and correlates the predicted with the computed
+  differences, with dibromides held out. The weighted means predict no difference. The ensemble
+  plus the counts reaches r = 0.44 and 0.75, close to the counts with three columns that name the
+  architecture (0.60 and 0.76). The ensemble has no column that names the architecture; it sees
+  only which environments occur and how often. These differences are small: their spread is 0.073 eV and 0.075 eV, against
+  a spread of the labels of 0.67 eV and 0.57 eV, so they are 1 to 2 % of the variance.
+* **On a new dibromide the neighbours add nothing that can be measured.** The ensemble plus the
+  counts minus the homopolymer mean plus the counts is −0.039 [−0.132, +0.048] and −0.040
+  [−0.119, +0.028]; against the bond-count ensemble plus the counts it is −0.040 and −0.053, with
+  the intervals touching zero. What the ensemble adds over the homopolymer mean is the field of
+  the junctions between A and B, and the junctions of a new dibromide are new too. On the
+  ionization potential the bond-count kernel alone is the best model with dibromides held out
+  (0.811).
+* **3D against the graph.** With the counts added to both, the field ensemble is ahead of the
+  bond-count ensemble on random folds by +0.014 and +0.008 (intervals above zero); with
+  dibromides held out it is not.
+
+**Costs.** The trimers took 4 minutes with 12 processes. The models took 72 minutes for the
+electron affinity and 51 minutes for the ionization potential, on a machine shared with other jobs; the second selection is read from the stored predictions in under a minute.
 
 ## Designing a crystal: a prototype, a budget and a loop
 

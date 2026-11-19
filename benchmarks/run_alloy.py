@@ -41,6 +41,23 @@ and the field methods are the periodic autocorrelation of the slab (rotation and
 invariant), the rotation-invariant autocorrelation of the point environment of a site, and the
 overlap kernel of that environment in the frame of the lattice.
 
+The shells around a site (task ``shells``, added 19 November 2026)
+-----------------------------------------------------------------
+The site references above know the binding atoms, the kind of site and the composition of the
+slab, but not what lies around the site: the second neighbours, or the atom under a hollow. A
+field of the site environment sees those, so a reference that sees them too is needed before a
+lead of the field is read as a property of the field. The task adds two such references, with no
+field and no frame:
+
+* *shell properties and site kind*: for each of four distance shells around the point of the
+  site (up to 2.5, 3.5, 4.5 and 6 A, the periodic images of the slab included), the number of
+  atoms and the sum of their standardised element properties; with the kind of site;
+* *shell elements and site kind*: for each shell, the number of atoms of each element.
+
+Each is a linear kernel and Gaussian kernels of five widths, on the stored rows, folds and inner
+choice of the site task. The task reads the stored predictions of the site task and compares every
+field method with the better of the two, by the bootstrap over slabs.
+
 Folds
 -----
 random      slabs (or sites) dealt at random into 10 folds
@@ -56,6 +73,7 @@ Usage
 -----
     python benchmarks/run_alloy.py                 # slab and site tasks, then the table
     python benchmarks/run_alloy.py --task slab
+    python benchmarks/run_alloy.py --task shells    # after the site task: the shell references
     python benchmarks/run_alloy.py --report        # rebuild the table from the stored results
     python benchmarks/run_alloy.py --task counts   # add the neighbour-count references to the
                                                    # stored site results (needs a site run first)
@@ -146,6 +164,26 @@ class AlloySet:
 
 def select(data: AlloySet, ads: str, variant: str) -> List[dict]:
     return [r for r in data.rows if r["ads"] == ads and (variant == "all" or not r["limit"])]
+
+
+def site_rows(data: AlloySet, ads: str, variant: str, max_sites: int,
+              rng: Optional[np.random.RandomState] = None) -> List[dict]:
+    """The rows of a site task: whole slabs drawn at random until `max_sites` rows are reached.
+
+    `run` draws all its site tasks from one generator, in the order H all, H converged, OH all,
+    OH converged; a task alone gets a new generator, which is the same for the first task."""
+    rows = select(data, ads, variant)
+    slabs = sorted({r["slab"] for r in rows})
+    if len(rows) > max_sites:
+        (rng if rng is not None else np.random.RandomState(SEED)).shuffle(slabs)
+        keep, count = set(), 0
+        for s in slabs:
+            keep.add(s)
+            count += sum(1 for r in rows if r["slab"] == s)
+            if count >= max_sites:
+                break
+        rows = [r for r in rows if r["slab"] in keep]
+    return rows
 
 
 def slab_task(data: AlloySet, ads: str, variant: str) -> Tuple[List[int], np.ndarray]:
@@ -282,6 +320,11 @@ def neighbour_counts(data: AlloySet, rows: Sequence[dict]) -> Tuple[np.ndarray, 
     return N.reshape(len(rows), -1), Q.reshape(len(rows), -1)
 
 
+#: the widths of gauss_family; the count references use gauss_light, which gives the same kernels
+#: without the (n, n, d) array (about 7.4 GB for 2,500 sites and 148 count columns)
+COUNT_FACTORS = (0.25, 1.0, 4.0)
+
+
 def count_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str, np.ndarray]]:
     """References that count the neighbours of a site in four shells (the fair reference for a
     field, which is also a smooth count of the neighbours)."""
@@ -289,16 +332,16 @@ def count_references(data: AlloySet, rows: Sequence[dict]) -> Dict[str, Dict[str
     B, P, S, C = site_reference_rows(data, rows)
     fam: Dict[str, Dict[str, np.ndarray]] = {}
     fam["neighbour counts of each element in four shells"] = {
-        "linear": N @ N.T, **gauss_family(N, "counts")}
+        "linear": N @ N.T, **gauss_light(N, "counts", factors=COUNT_FACTORS)}
     Xs = np.hstack([N, S])
     fam["neighbour counts of each element in four shells, and site kind"] = {
-        "linear": Xs @ Xs.T, **gauss_family(Xs, "counts+site")}
+        "linear": Xs @ Xs.T, **gauss_light(Xs, "counts+site", factors=COUNT_FACTORS)}
     Xq = np.hstack([Q, S])
-    fam["neighbour sums of element properties in four shells, and site kind"] = gauss_family(
-        Xq, "property sums+site")
+    fam["neighbour sums of element properties in four shells, and site kind"] = gauss_light(
+        Xq, "property sums+site", factors=COUNT_FACTORS)
     Xa = np.hstack([N, B, S, C])
     fam["neighbour counts, binding elements, site kind and slab elements"] = {
-        "linear": Xa @ Xa.T, **gauss_family(Xa, "counts+binding+slab")}
+        "linear": Xa @ Xa.T, **gauss_light(Xa, "counts+binding+slab", factors=COUNT_FACTORS)}
     return fam
 
 
@@ -551,17 +594,7 @@ def run(args, log=print) -> None:
         rng = np.random.RandomState(SEED)
         for ads in ("H", "OH"):
             for variant in args.variants:
-                rows = select(data, ads, variant)
-                slabs = sorted({r["slab"] for r in rows})
-                if len(rows) > args.max_sites:
-                    rng.shuffle(slabs)
-                    keep, count = set(), 0
-                    for s in slabs:
-                        keep.add(s)
-                        count += sum(1 for r in rows if r["slab"] == s)
-                        if count >= args.max_sites:
-                            break
-                    rows = [r for r in rows if r["slab"] in keep]
+                rows = site_rows(data, ads, variant, args.max_sites, rng)
                 y = np.array([r["e"] for r in rows])
                 groups = {"slab-out": [str(r["slab"]) for r in rows],
                           "alloy-out": [data.alloy(r["slab"]) for r in rows]}
@@ -581,6 +614,367 @@ def run(args, log=print) -> None:
         json.dump({"tasks": tasks, "seed": SEED, "folds": FOLDS, "inner": INNER}, fh, default=float)
         fh.write("\n")
     log(f"wrote {path}")
+
+
+# --------------------------------------------------------------------------- #
+# The shells around a site (task shells)
+# --------------------------------------------------------------------------- #
+SHELL_EDGES = (2.5, 3.5, 4.5, 6.0)
+#: the widths of the Gaussian kernels, as factors of the median squared distance; wider than
+#: gauss_family's, because a first measurement chose the widest of 0.25, 1 and 4 in most folds
+SHELL_FACTORS = (0.25, 1.0, 4.0, 16.0, 64.0)
+SHELL_REFERENCES = ("shell properties and site kind", "shell elements and site kind")
+
+
+def shell_columns(data: AlloySet, rows: Sequence[dict], ads: str):
+    """For every site: per shell around its point, the number of atoms and the sum of the
+    standardised element properties (`P`), and the number of atoms of each element (`E`); and the
+    kind of site (`S`). The periodic images of the slab in its two in-plane directions count: two
+    on each side, because a 2 x 2 cell is about 5.5 A long and the outer shell reaches 6 A."""
+    props = standard_properties(data.elements)
+    col = {e: i for i, e in enumerate(data.elements)}
+    n_p, n_e, n_s = len(PROPS), len(col), len(SHELL_EDGES)
+    P = np.zeros((len(rows), n_s * (1 + n_p)))
+    E = np.zeros((len(rows), n_s * n_e))
+    S = np.zeros((len(rows), len(SITE_KINDS)))
+    for k, r in enumerate(rows):
+        slab = data.slabs[r["slab"]]
+        top, _ = data.layers(r["slab"])
+        centre = np.array([r["x"], r["y"], float(slab.positions[top, 2].mean()) + HEIGHT[ads]])
+        cell = slab.cell.array
+        sym = slab.get_chemical_symbols()
+        for i in range(-2, 3):
+            for j in range(-2, 3):
+                d = np.linalg.norm(slab.positions + i * cell[0] + j * cell[1] - centre, axis=1)
+                low = 0.0
+                for s, edge in enumerate(SHELL_EDGES):
+                    for a in np.flatnonzero((d > low) & (d <= edge)):
+                        P[k, s * (1 + n_p)] += 1.0
+                        P[k, s * (1 + n_p) + 1:(s + 1) * (1 + n_p)] += props[sym[a]]
+                        E[k, s * n_e + col[sym[a]]] += 1.0
+                    low = edge
+        S[k, SITE_KINDS.index(r["site"])] = 1.0
+    return P, E, S
+
+
+def gauss_light(X: np.ndarray, prefix: str, factors=SHELL_FACTORS) -> Dict[str, np.ndarray]:
+    """The kernels of gauss_family, computed from |x|^2 + |y|^2 - 2 x.y without the (n, n, d)
+    array that gauss_family builds (about 7.6 GB for 2,500 rows of 150 columns)."""
+    sq = np.sum(X * X, axis=1)
+    D2 = np.maximum(sq[:, None] + sq[None, :] - 2.0 * (X @ X.T), 0.0)
+    med = float(np.median(D2[D2 > 1e-12]))
+    return {f"{prefix} gauss x{f:g}": np.exp(-D2 / (f * med)) for f in factors}
+
+
+def _standardised(X: np.ndarray) -> np.ndarray:
+    keep = X.std(axis=0) > 0
+    X = X[:, keep]
+    return (X - X.mean(axis=0)) / X.std(axis=0)
+
+
+def shell_references(data: AlloySet, rows: Sequence[dict], ads: str) -> Dict[str, Dict[str, np.ndarray]]:
+    P, E, S = shell_columns(data, rows, ads)
+    fam = {}
+    for name, M, prefix in ((SHELL_REFERENCES[0], P, "shell properties"),
+                            (SHELL_REFERENCES[1], E, "shell elements")):
+        X = np.hstack([_standardised(M), S])
+        fam[name] = {"linear": X @ X.T / X.shape[1], **gauss_light(X, prefix)}
+    return fam
+
+
+def run_shells(args, log=print) -> None:
+    """The shell references on the rows and folds of every stored site task."""
+    warnings.filterwarnings("ignore")
+    path = os.path.join(RESULTS, "data_site.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} is missing: run the site task first")
+    with open(path, encoding="utf-8") as fh:
+        stored = json.load(fh)["tasks"]
+    data = AlloySet()
+    out = []
+    # the generator of the stored run: one for all site tasks, in the order of the stored tasks
+    rng = np.random.RandomState(SEED)
+    for task in stored:
+        ads, variant = task["adsorbate"], task["variant"]
+        rows = site_rows(data, ads, variant, args.max_sites, rng)
+        if [r["log"] for r in rows] != task["rows"]:
+            raise SystemExit(f"{task['task']}: the rows differ from the stored run")
+        y = np.array([r["e"] for r in rows])
+        groups = {"slab-out": [str(r["slab"]) for r in rows],
+                  "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+        fams = shell_references(data, rows, ads)
+        res = {"task": task["task"], "adsorbate": ads, "variant": variant, "n": len(rows),
+               "models": [], "pairs": []}
+        designs = []
+        for m in task["models"]:
+            if m["design"] not in designs:
+                designs.append(m["design"])
+        for design in designs:
+            sm = {m["name"]: m for m in task["models"] if m["design"] == design}
+            old_refs = [n for n in sm if not n.startswith("site environment") and n != "training mean"]
+            best_old = min(old_refs, key=lambda n: sm[n]["mae"])
+            new = {name: cross_validate(name, fam, y, design, groups) for name, fam in fams.items()}
+            best_new = min(new, key=lambda n: new[n]["mae"])
+            pn = np.array([np.nan if v is None else v for v in new[best_new]["predicted"]])
+            po = np.array(sm[best_old]["predicted"], float)
+            for name, r in new.items():
+                res["models"].append({k: v for k, v in r.items() if k != "predicted"})
+                log(f"  {task['task']:14s} {design:9s} {name:32s} q2 {r['q2']:+.3f} mae {r['mae']:.3f}")
+            d = bootstrap_mae(y, pn, po, groups=groups["slab-out"])
+            res["pairs"].append({"design": design, "method": best_new, "against": best_old,
+                                 "delta_mae": d[0], "low": d[1], "high": d[2]})
+            for name in sm:
+                if name.startswith("site environment"):
+                    pf = np.array([np.nan if v is None else v for v in sm[name]["predicted"]])
+                    d = bootstrap_mae(y, pf, pn, groups=groups["slab-out"])
+                    res["pairs"].append({"design": design, "method": name, "against": best_new,
+                                         "delta_mae": d[0], "low": d[1], "high": d[2]})
+        out.append(res)
+    path = os.path.join(RESULTS, "shells.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"tasks": out, "edges": list(SHELL_EDGES), "factors": list(SHELL_FACTORS)}, fh,
+                  indent=1, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+# --------------------------------------------------------------------------- #
+# A graph neural network (task gnn)
+# --------------------------------------------------------------------------- #
+GNN_NAME = "graph neural network (SchNet type, ensemble of three)"
+
+
+def run_gnn(args, log=print) -> None:
+    """The graph neural network of ``alloy_gnn.py`` on the rows and folds of the stored tasks.
+
+    Slab tasks use the variant `all` only. For every task and folds the network is compared
+    with the best field method, the best reference of the stored run and (site tasks) the best
+    of the shell references of ``shells.json``."""
+    import multiprocessing as mp
+    import alloy_gnn as G
+    warnings.filterwarnings("ignore")
+    data = AlloySet()
+    stored = []
+    for name in ("data_slab.json", "data_site.json"):
+        with open(os.path.join(RESULTS, name), encoding="utf-8") as fh:
+            stored += json.load(fh)["tasks"]
+    shells = {}
+    if os.path.exists(os.path.join(RESULTS, "shells.json")):
+        with open(os.path.join(RESULTS, "shells.json"), encoding="utf-8") as fh:
+            shells = {t["task"]: t for t in json.load(fh)["tasks"]}
+    props = standard_properties(data.elements)
+    P = np.vstack([np.array([props[e] for e in data.elements]), np.zeros((1, len(PROPS)))])
+    is_field = lambda m: m.startswith(("periodic", "site environment"))   # noqa: E731
+    rng = np.random.RandomState(SEED)
+    out = []
+    for task in stored:
+        if task["variant"] != "all" or (args.only and args.only not in task["task"]):
+            if task["kind"] == "site" and task["variant"] == "all":
+                site_rows(data, task["adsorbate"], "all", args.max_sites, rng)   # keep the draw
+            continue
+        ads = task["adsorbate"]
+        if task["kind"] == "site":
+            rows = site_rows(data, ads, "all", args.max_sites, rng)
+            if [r["log"] for r in rows] != task["rows"]:
+                raise SystemExit(f"{task['task']}: the rows differ from the stored run")
+            graphs = G.site_graphs(data, rows, ads, HEIGHT)
+            groups = {"slab-out": [str(r["slab"]) for r in rows],
+                      "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+            pair_groups = groups["slab-out"]
+        else:
+            ids, _ = slab_task(data, ads, "all")
+            if list(ids) != list(task["ids"]):
+                raise SystemExit(f"{task['task']}: the slabs differ from the stored run")
+            rows = None
+            graphs = G.slab_graphs(data, ids)
+            groups = {"alloy-out": [data.alloy(s) for s in ids]}
+            pair_groups = None
+        y = np.array(task["y"])
+        net_args = dict(n_elements=len(data.elements), props=P, readout=graphs.readout)
+        designs = []
+        for m in task["models"]:
+            if m["design"] not in designs:
+                designs.append(m["design"])
+        jobs, index = [], {}
+        for design in designs:
+            for k, te in enumerate(folds_for(design, len(y), groups, SEED, FOLDS)):
+                tr = np.setdiff1d(np.arange(len(y)), te)
+                sub = {d: [g[i] for i in tr] for d, g in groups.items()}
+                inner = folds_for(design, len(tr), sub, SEED, INNER)
+                for member in range(G.MEMBERS):
+                    va = tr[inner[member]]
+                    jobs.append((len(jobs), member, np.setdiff1d(tr, va), va, te))
+                    index[len(jobs) - 1] = (design, k)
+        log(f"{task['task']}: {len(y)} samples, {len(jobs)} trainings on {args.workers} workers")
+        t0 = time.time()
+        sums = {d: np.zeros(len(y)) for d in designs}
+        epochs = {d: [] for d in designs}
+        with mp.get_context("spawn").Pool(args.workers, initializer=G.init_worker,
+                                          initargs=(graphs, y, net_args, 1)) as pool:
+            for n, (job, member, te, pred, ep, best, sec) in enumerate(
+                    pool.imap_unordered(G.fit_fold, jobs)):
+                design, _ = index[job]
+                sums[design][te] += pred / G.MEMBERS
+                epochs[design].append(ep)
+                if (n + 1) % 20 == 0:
+                    log(f"  {n + 1}/{len(jobs)} trainings, {time.time() - t0:.0f} s")
+        res = {"task": task["task"], "adsorbate": ads, "kind": task["kind"], "n": len(y),
+               "models": [], "pairs": []}
+        for design in designs:
+            pred = sums[design]
+            sm = {m["name"]: m for m in task["models"] if m["design"] == design}
+            fields = [n for n in sm if is_field(n)]
+            refs = [n for n in sm if not is_field(n) and n != "training mean"]
+            best_field = min(fields, key=lambda n: sm[n]["mae"])
+            best_ref = min(refs, key=lambda n: sm[n]["mae"])
+            res["models"].append({"name": GNN_NAME, "design": design, "q2": r2_score(y, pred),
+                                  "rmse": rmse(y, pred), "mae": float(np.mean(np.abs(y - pred))),
+                                  "epochs": float(np.mean(epochs[design]))})
+            log(f"  {task['task']:14s} {design:9s} {GNN_NAME}  q2 {res['models'][-1]['q2']:+.3f} "
+                f"mae {res['models'][-1]['mae']:.3f}")
+            against = {best_field: np.array([np.nan if v is None else v
+                                             for v in sm[best_field]["predicted"]]),
+                       best_ref: np.array([np.nan if v is None else v
+                                           for v in sm[best_ref]["predicted"]])}
+            if task["kind"] == "site" and task["task"] in shells:
+                sh = [m for m in shells[task["task"]]["models"] if m["design"] == design]
+                name = min(sh, key=lambda m: m["mae"])["name"]
+                fam = shell_references(data, rows, ads)[name]
+                against[name] = np.array(cross_validate(name, fam, y, design, groups)["predicted"])
+            for name, other in against.items():
+                d = bootstrap_mae(y, pred, other, groups=pair_groups)
+                res["pairs"].append({"design": design, "against": name, "delta_mae": d[0],
+                                     "low": d[1], "high": d[2],
+                                     "kind": ("field method" if is_field(name) else "reference")})
+        out.append(res)
+    path = os.path.join(RESULTS, "gnn.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"tasks": out, "members": G.MEMBERS, "hidden": G.HIDDEN, "lr": G.LR,
+                   "layers": G.LAYERS, "cutoff": G.CUTOFF, "radius": G.ENV_RADIUS}, fh,
+                  indent=1, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+# --------------------------------------------------------------------------- #
+# Which part of the network gives the gain (task ablate)
+# --------------------------------------------------------------------------- #
+ABLATIONS = {
+    "full network": {},
+    "no learned element vectors": dict(use_emb=False),
+    "no tabulated element properties": dict(use_props=False),
+    "distances replaced by four shells": dict(bins=True),
+    "one layer of messages": dict(layers=1),
+    "site kind added": dict(kinds=True),
+    "one layer, four shells, no learned element vectors": dict(layers=1, bins=True,
+                                                               use_emb=False),
+}
+
+
+def run_ablate(args, log=print) -> None:
+    """H sites with whole slabs held out: the network with one part changed at a time.
+
+    Every variant is trained as the full network of ``run_gnn`` (3 members, the same rows, folds and
+    inner folds) and the seed of a member depends only on the fold and the member, so that the
+    variants are paired. The result is compared with the full network and with the best shell
+    reference."""
+    import multiprocessing as mp
+    import alloy_gnn as G
+    warnings.filterwarnings("ignore")
+    data = AlloySet()
+    with open(os.path.join(RESULTS, "data_site.json"), encoding="utf-8") as fh:
+        task = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
+    rows = site_rows(data, "H", "all", args.max_sites, np.random.RandomState(SEED))
+    if [r["log"] for r in rows] != task["rows"]:
+        raise SystemExit("the rows differ from the stored run")
+    y = np.array(task["y"])
+    design = "slab-out"
+    groups = {"slab-out": [str(r["slab"]) for r in rows],
+              "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+    props = standard_properties(data.elements)
+    P = np.vstack([np.array([props[e] for e in data.elements]), np.zeros((1, len(PROPS)))])
+    P_kinds = np.vstack([P, np.zeros((len(SITE_KINDS) - 1, len(PROPS)))])
+    base = G.site_graphs(data, rows, "H", HEIGHT)
+    kind_graphs = G.with_site_kinds(base, rows, len(data.elements), SITE_KINDS)
+    variants = {}
+    for name, opt in ABLATIONS.items():
+        opt = dict(opt)
+        kinds = opt.pop("kinds", False)
+        variants[name] = (kind_graphs if kinds else base,
+                          dict(n_elements=len(data.elements), props=P_kinds if kinds else P,
+                               readout=base.readout, **opt))
+    only = [n for n in ABLATIONS if not args.only or args.only in n]
+    jobs = []
+    for k, te in enumerate(folds_for(design, len(y), groups, SEED, FOLDS)):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        sub = {d: [g[i] for i in tr] for d, g in groups.items()}
+        inner = folds_for(design, len(tr), sub, SEED, INNER)
+        for name in only:
+            for member in range(G.MEMBERS):
+                va = tr[inner[member]]
+                jobs.append((name, k, member, np.setdiff1d(tr, va), va, te))
+    log(f"site H, slabs held out: {len(only)} variants, {len(jobs)} trainings on {args.workers} workers")
+    pred = {n: np.full((G.MEMBERS, len(y)), np.nan) for n in only}
+    epochs = {n: [] for n in only}
+    t0 = time.time()
+    with mp.get_context("spawn").Pool(args.workers, initializer=G.init_ablation,
+                                      initargs=(variants, y, 1)) as pool:
+        for n, (name, k, member, te, p, ep, best, sec) in enumerate(
+                pool.imap_unordered(G.fit_variant, jobs)):
+            pred[name][member, te] = p
+            epochs[name].append(ep)
+            if (n + 1) % 20 == 0:
+                log(f"  {n + 1}/{len(jobs)} trainings, {time.time() - t0:.0f} s")
+    sh = None
+    shells_path = os.path.join(RESULTS, "shells.json")
+    if os.path.exists(shells_path):
+        with open(shells_path, encoding="utf-8") as fh:
+            t = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
+        sh = min([m for m in t["models"] if m["design"] == design], key=lambda m: m["mae"])["name"]
+        shell_pred = np.array(cross_validate(sh, shell_references(data, rows, "H")[sh], y, design,
+                                             groups)["predicted"])
+    out = {"task": "site H [all]", "design": design, "members": G.MEMBERS, "shell_reference": sh,
+           "variants": []}
+    full = pred.get("full network")
+    for name in only:
+        ens = pred[name].mean(axis=0)
+        single = [float(np.mean(np.abs(y - pred[name][m]))) for m in range(G.MEMBERS)]
+        rec = {"name": name, "q2": r2_score(y, ens), "mae": float(np.mean(np.abs(y - ens))),
+               "single_mae": single, "epochs": float(np.mean(epochs[name]))}
+        if full is not None and name != "full network":
+            d = bootstrap_mae(y, ens, full.mean(axis=0), groups=groups["slab-out"])
+            rec["against_full"] = {"delta_mae": d[0], "low": d[1], "high": d[2]}
+        if sh is not None:
+            d = bootstrap_mae(y, ens, shell_pred, groups=groups["slab-out"])
+            rec["against_shells"] = {"delta_mae": d[0], "low": d[1], "high": d[2]}
+        out["variants"].append(rec)
+        log(f"  {name:55s} MAE {rec['mae']:.3f}  one network {np.mean(single):.3f}  q2 {rec['q2']:+.3f}")
+    if full is not None:                       # the ensemble: one network against three
+        errs = np.mean([np.abs(y - full[m]) for m in range(G.MEMBERS)], axis=0)
+        eb = np.abs(y - full.mean(axis=0))
+        d = _bootstrap_errors(errs, eb, groups["slab-out"])
+        out["ensemble"] = {"one_network_mae": float(np.mean(errs)), "three_mae": float(np.mean(eb)),
+                           "delta_mae": d[0], "low": d[1], "high": d[2]}
+    path = os.path.join(RESULTS, "ablation.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(out, fh, indent=1, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+def _bootstrap_errors(ea, eb, groups, runs: int = RUNS, seed: int = SEED):
+    """Mean of `ea` minus mean of `eb` (absolute errors of the same rows), resampling groups."""
+    labels = sorted(set(groups))
+    g = np.asarray(groups)
+    members = {lab: np.where(g == lab)[0] for lab in labels}
+    rng = np.random.RandomState(seed)
+    draws = []
+    for _ in range(runs):
+        pick = rng.randint(0, len(labels), len(labels))
+        idx = np.concatenate([members[labels[p]] for p in pick])
+        draws.append(np.mean(ea[idx] - eb[idx]))
+    return (float(np.mean(ea) - np.mean(eb)), float(np.percentile(draws, 2.5)),
+            float(np.percentile(draws, 97.5)))
 
 
 # --------------------------------------------------------------------------- #
@@ -652,6 +1046,87 @@ def write_table(path: Optional[str] = None) -> str:
                             diff = f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}]"
                 lines.append(f"| {m['name']} | {kind} | {m['q2']:+.3f} | {m['mae']:.3f} | {diff} |")
             lines.append("")
+    shells = os.path.join(RESULTS, "shells.json")
+    if os.path.exists(shells):
+        with open(shells, encoding="utf-8") as fh:
+            sh = json.load(fh)
+        lines += ["## The shells around a site: references added on 19 November 2026", "",
+                  "Two more references for the site tasks, with no field and no frame: for each "
+                  "distance shell around the point of the site (up to "
+                  + ", ".join(f"{e:g}" for e in sh["edges"]) + " A), the number of atoms and the "
+                  "sum of their standardised element properties (*shell properties*), or the "
+                  "number of atoms of each element (*shell elements*), each with the kind of "
+                  "site. Same rows, folds and inner choice as the site tasks above. The "
+                  "differences are in MAE (eV); a negative number means that the first method "
+                  "has the smaller error.", ""]
+        for t in sh["tasks"]:
+            lines += [f"### {t['task']}", "",
+                      "| folds | reference | q2 | MAE (eV) | chosen kernels |",
+                      "| --- | --- | --- | --- | --- |"]
+            for m in t["models"]:
+                chosen = ", ".join(f"{k} ({v})" for k, v in m["chosen"].items())
+                lines.append(f"| {m['design']} | {m['name']} | {m['q2']:+.3f} | {m['mae']:.3f} | "
+                             f"{chosen} |")
+            lines += ["", "| folds | method | against | MAE difference (eV) |",
+                      "| --- | --- | --- | --- |"]
+            for p in t["pairs"]:
+                lines.append(f"| {p['design']} | {p['method']} | {p['against']} | "
+                             f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
+            lines.append("")
+    gnn = os.path.join(RESULTS, "gnn.json")
+    if os.path.exists(gnn):
+        with open(gnn, encoding="utf-8") as fh:
+            g = json.load(fh)
+        lines += ["## A graph neural network", "",
+                  f"A message-passing network of the SchNet type (`benchmarks/alloy_gnn.py`): "
+                  f"{g['layers']} layers, {g['hidden']} features, edges up to {g['cutoff']:g} A, "
+                  f"the element and its tabulated properties as the start of every atom. For a "
+                  f"site the graph holds the atoms within {g['radius']:g} A of the same point that "
+                  f"the field methods use, and the point itself; it is given no site kind. For a "
+                  f"slab the graph is the 12 atoms with their periodic images. The prediction is "
+                  f"the mean of {g['members']} networks, each stopped on a validation part of "
+                  f"the training part that is left out in the same way as the test part. Same "
+                  f"rows, folds and seeds as the tables above. The differences are in MAE (eV); "
+                  f"a negative number means that the network has the smaller error.", ""]
+        for t in g["tasks"]:
+            lines += [f"### {t['task']}", "",
+                      "| folds | q2 | MAE (eV) | mean epochs |", "| --- | --- | --- | --- |"]
+            for m in t["models"]:
+                lines.append(f"| {m['design']} | {m['q2']:+.3f} | {m['mae']:.3f} | "
+                             f"{m['epochs']:.0f} |")
+            lines += ["", "| folds | the network against | kind | MAE difference (eV) |",
+                      "| --- | --- | --- | --- |"]
+            for p in t["pairs"]:
+                lines.append(f"| {p['design']} | {p['against']} | {p['kind']} | "
+                             f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
+            lines.append("")
+    abl = os.path.join(RESULTS, "ablation.json")
+    if os.path.exists(abl):
+        with open(abl, encoding="utf-8") as fh:
+            a = json.load(fh)
+        interval = lambda d: f"{d['delta_mae']:+.3f} [{d['low']:+.3f}, {d['high']:+.3f}]"   # noqa: E731
+        lines += ["## Which part of the network gives the gain", "",
+                  f"{a['task']}, folds `{a['design']}`. Each row is the network with one part "
+                  f"changed. Every variant is trained like the full network: {a['members']} "
+                  f"members, the same rows, folds and inner folds, and a seed that depends on "
+                  f"the fold and the member only. MAE in eV. *One network* is the mean MAE of "
+                  f"the {a['members']} members alone. The two last columns are differences in "
+                  f"MAE of the ensemble with an interval of 95 % (whole slabs resampled); a "
+                  f"positive number against the full network means that the change made the "
+                  f"result worse. The shell reference is `{a['shell_reference']}`.", "",
+                  "| variant | MAE of the ensemble | MAE of one network | q2 | minus the full network "
+                  "| minus the shell reference |", "| --- | --- | --- | --- | --- | --- |"]
+        for v in a["variants"]:
+            lines.append(f"| {v['name']} | {v['mae']:.3f} | {np.mean(v['single_mae']):.3f} | "
+                         f"{v['q2']:+.3f} | "
+                         f"{interval(v['against_full']) if 'against_full' in v else ''} | "
+                         f"{interval(v['against_shells']) if 'against_shells' in v else ''} |")
+        if "ensemble" in a:
+            e = a["ensemble"]
+            lines += ["", f"The ensemble alone: one network of the full model has MAE "
+                      f"{e['one_network_mae']:.3f}, the mean of {a['members']} has "
+                      f"{e['three_mae']:.3f}; difference (one network minus the ensemble) "
+                      f"{interval(e)}.", ""]
     path = path or os.path.join(RESULTS, "table.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -660,8 +1135,15 @@ def write_table(path: Optional[str] = None) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", choices=("all", "slab", "site", "counts"), default="all",
-                    help="counts: add the neighbour-count references to the stored site results")
+    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells", "gnn", "ablate"),
+                    default="all",
+                    help="counts: add the neighbour-count references to the stored site results; "
+                         "shells: the shell references on the stored site tasks; "
+                         "gnn: the graph neural network on every stored task; "
+                         "ablate: the network with one part changed at a time (H sites, "
+                         "slabs held out)")
+    ap.add_argument("--workers", type=int, default=20, help="processes of the task gnn")
+    ap.add_argument("--only", default="", help="task gnn: only the tasks whose name has this text")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
     ap.add_argument("--max-sites", type=int, default=MAX_OVERLAP_SITES)
     ap.add_argument("--no-overlap", action="store_true")
@@ -672,6 +1154,18 @@ def main() -> None:
         return
     if args.task == "counts":
         add_counts()
+        print("wrote", write_table())
+        return
+    if args.task == "shells":
+        run_shells(args)
+        print("wrote", write_table())
+        return
+    if args.task == "gnn":
+        run_gnn(args)
+        print("wrote", write_table())
+        return
+    if args.task == "ablate":
+        run_ablate(args)
         print("wrote", write_table())
         return
     run(args)

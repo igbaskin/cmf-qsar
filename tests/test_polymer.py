@@ -153,6 +153,127 @@ def test_the_central_row_does_not_see_the_caps(fs):
     assert not np.allclose(autocorrelation_rows(mf, [spec])[0], autocorrelation_rows(mf2, [spec])[0])
 
 
+PIM1 = "*Oc1cc2c(cc1O*)C1(CC2(C)C)CC(C)(C)c2cc3c(cc21)Oc1c(C#N)c(*)c(*)c(C#N)c1O3"
+
+
+def test_a_ladder_unit_has_two_ends_of_two_points():
+    # PIM-1: the head is the two catechol oxygens, the tail the two ring carbons between the
+    # nitriles, so that every junction closes a dioxin ring
+    u = parse_repeat_unit(PIM1)
+    assert u.ladder and not parse_repeat_unit(STYRENE).ladder
+    nb = lambda i: u.mol.GetAtomWithIdx(i).GetNeighbors()[0].GetSymbol()   # noqa: E731
+    assert (nb(u.head), nb(u.head2), nb(u.tail), nb(u.tail2)) == ("O", "O", "C", "C")
+    m = Chem.RemoveHs(oligomer(PIM1, n=3, add_hydrogens=False))
+    unit = Chem.MolFromSmiles(PIM1)
+    unit_bonds = unit.GetNumBonds() - 4
+    # three units, two bonds per junction, four caps of hydrogen (removed here)
+    assert m.GetNumBonds() == 3 * unit_bonds + 2 * 2
+    labels = unit_labels(oligomer(PIM1, n=3, add_hydrogens=False))
+    m2 = oligomer(PIM1, n=3, add_hydrogens=False)
+    junction = [r for r in m2.GetRingInfo().AtomRings()
+                if {int(labels[i]) for i in r} == {0, 1}]
+    assert [len(r) for r in junction] == [6]
+    assert not any(a.GetAtomicNum() == 0 for a in m2.GetAtoms())
+
+
+def test_numbered_points_decide_the_ends_and_a_tie_is_refused():
+    # the same ethylene ladder written with the points numbered against their written order
+    u = parse_repeat_unit("[*:3]C([*:1])C([*:2])[*:4]")
+    assert u.mol.GetAtomWithIdx(u.head).GetAtomMapNum() == 1
+    assert u.mol.GetAtomWithIdx(u.tail2).GetAtomMapNum() == 4
+    with pytest.raises(ValueError, match="cannot be split"):
+        parse_repeat_unit("[*]C([*])([*])[*]")
+
+
+def test_the_span_of_a_ladder_runs_from_the_first_to_the_last_unit():
+    from cmfqsar.polymer import _end_atoms
+    m = oligomer(PIM1, n=3)
+    a, b = _end_atoms(m)
+    labels = unit_labels(m)
+    assert {int(labels[a]), int(labels[b])} == {0, 2}
+
+
+def test_the_chain_screw_keeps_the_junction_of_the_trimer(trimer):
+    # every junction of the chain of copies has the bond of the trimer's junction after the
+    # middle unit, and the screw and its inverse undo each other
+    from cmfqsar.polymer import _chain_bonds, chain_screw
+    mol, _ = trimer
+    s = chain_screw(mol)
+    labels = unit_labels(mol)
+    X = mol.GetConformer().GetPositions()
+    mid = X[labels == 1]
+    _, junction = _chain_bonds(mol, labels, 1)
+    (tp, hp), = junction
+    nxt = s.apply(mid, 1)
+    assert abs(np.linalg.norm(mid[tp] - nxt[hp]) - s.junction) < 0.05
+    assert np.allclose(s.apply(nxt, -1), mid, atol=1e-9)
+    assert s.frame_residual < 0.2
+    assert set(s.record()) == {"turn", "rise", "frame_residual", "rmsd_next", "junction", "contact"}
+    with pytest.raises(ValueError, match="odd number"):
+        chain_screw(oligomer(STYRENE, n=2))
+
+
+def test_a_translation_chain_is_the_periodic_cell_of_m1(trimer, fs):
+    # with the screw replaced by a pure translation, the sparse rows of the chain equal the
+    # periodic autocorrelation of M1 on the cell (background and taper off) times the atoms
+    from cmfqsar.periodic import PeriodicSpec, periodic_autocorrelation
+    from cmfqsar.polymer import ChainScrew, chain_autocorrelation_rows, periodic_chain
+    mol, _ = trimer
+    mf = build_fields(mol, fs, "ps")
+    s = ChainScrew(R=np.eye(3), t=np.array([0.0, 0.0, 6.5]), turn=0.0, rise=6.5,
+                   frame_residual=0.0, rmsd_next=0.0, junction=1.5, contact=2.0)
+    cell = periodic_chain(mol, mf, s)
+    assert cell.pbc == (False, False, True) and abs(cell.measure - 6.5) < 1e-12
+    sig, rmax = 0.1, 9.0
+    ps = PeriodicSpec(r_max=rmax, step=sig, sigma=sig, taper=0.0, background=False)
+    a = periodic_autocorrelation(cell, ps) * cell.n_atoms
+    b = chain_autocorrelation_rows(mol, mf, [AutocorrelationSpec(d_max=rmax, step=sig,
+                                                                 sigma=sig)], s)[0]
+    ok = ps.centres <= rmax - 8 * sig
+    A, B = a.reshape(-1, len(ps.centres))[:, ok], b.reshape(-1, len(ps.centres))[:, ok]
+    assert np.abs(A - B).max() <= 1e-12 * np.abs(A).max()
+    turned = ChainScrew(R=np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
+                        t=np.array([0.0, 0.0, 6.5]), turn=90.0, rise=6.5, frame_residual=0.0,
+                        rmsd_next=0.0, junction=1.5, contact=2.0)
+    with pytest.raises(ValueError, match="no periodic cell"):
+        periodic_chain(mol, mf, turned)
+
+
+def test_a_sequence_of_one_unit_is_the_oligomer():
+    from cmfqsar.polymer import sequence_oligomer
+    for smi in (STYRENE, PIM1):
+        a, b = oligomer(smi, n=3), sequence_oligomer([smi] * 3)
+        assert Chem.MolToSmiles(a) == Chem.MolToSmiles(b)
+        assert (unit_labels(a) == unit_labels(b)).all()
+
+
+def test_a_sequence_joins_different_units_in_order():
+    # styrene then ethylene then styrene: CH3-CH(Ph)-CH2-CH2-CH2-CH(Ph)-H
+    from cmfqsar.polymer import sequence_oligomer
+    m = sequence_oligomer([STYRENE, "[*]CC[*]", STYRENE], stereo="random", add_hydrogens=False)
+    assert Chem.MolToSmiles(Chem.RemoveHs(m)) == Chem.MolToSmiles(
+        Chem.MolFromSmiles("CC(CCCCc1ccccc1)c1ccccc1"))
+    labels = unit_labels(m)
+    assert sorted(set(labels.tolist())) == [-1, 0, 1, 2]
+    assert np.sum(labels == 1) == 2                      # the ethylene unit: two carbons
+    with pytest.raises(ValueError, match="all be linear or all ladders"):
+        sequence_oligomer([STYRENE, PIM1])
+
+
+def test_environment_weights_count_the_inner_units_both_ways():
+    from cmfqsar.polymer import environment_weights
+    w = environment_weights(["ABABABAB"])
+    assert w == pytest.approx({("A", "B", "A"): 0.5, ("B", "A", "B"): 0.5})
+    w = environment_weights(["AAAABBBB"])
+    # inner units AAA AAA AAB ABB BBB BBB, and backwards BBB BBB BBA BAA AAA AAA
+    assert w[("A", "A", "A")] == pytest.approx(4 / 12)
+    assert w[("A", "A", "B")] == pytest.approx(1 / 12)
+    assert w[("B", "A", "A")] == pytest.approx(1 / 12)
+    assert sum(w.values()) == pytest.approx(1.0)
+    with pytest.raises(ValueError, match="no inner unit"):
+        environment_weights(["AB"])
+
+
 def test_build_many_keeps_the_order_and_reports_failures():
     out = build_many([STYRENE, "[*]CC", "[*]CC[*]"], n=3, conformers=2, jobs=1)
     assert [m is not None for m, _, _ in out] == [True, False, True]
