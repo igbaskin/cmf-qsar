@@ -1,14 +1,14 @@
 {
- "commit": "424e04c7aa8478592c81699f533c01b831fe7403",
- "created": "2026-11-19T10:21:59",
+ "commit": "b128b59d2339039616689c551fff40aa6fa6ebae",
+ "created": "2026-11-19T11:29:32",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
   },
   "examples/alloy/README.md": {
-   "bytes": 8482,
-   "sha256": "f134f1ba6e7fcd562328fd00891cad2e558d011264890b7706667335664a3b15"
+   "bytes": 9687,
+   "sha256": "b9453e6b7b82038d9d18ab671633bc0eb399bf9cadf5938e8723166f5c5767b2"
   },
   "examples/alloy/adsorption.csv": {
    "bytes": 1880581,
@@ -3109,7 +3109,8 @@
   "benchmarks/results/alignment/table.md": "98818deeae5b03f185841ab32f86ace9e4f556f728fa3a74fffe35488cbf3245",
   "benchmarks/results/alloy/data_site.json": "288bfa4813f0bf564ef37012083586329c18994e5a14534fe9e1d69406be925a",
   "benchmarks/results/alloy/data_slab.json": "d25672dda8d7503f3c5edbc32025812e35363a02a78ac4b6f22c133a0c676233",
-  "benchmarks/results/alloy/table.md": "b34eea18b163c395dbb0ed821165681a17bda5a1cb1234e538680dd53ef4a04a",
+  "benchmarks/results/alloy/shells.json": "b25bb2379141fe6ba394eccd73394e966af308c52c569bdafac1a5240307ea70",
+  "benchmarks/results/alloy/table.md": "e74600ca4830a18e1aa96a84a69b989464766ea051d709d072e6a491fb9af7cd",
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",
