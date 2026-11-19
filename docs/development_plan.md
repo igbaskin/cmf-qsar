@@ -7562,8 +7562,15 @@ What it leaves open, in order:
   each (the two element inputs replace each other). One network 0.150, the mean of three 0.135
   (0.015 [0.013, 0.017]). Site kind added: +0.002 [-0.001, +0.006], nothing. The 0.010 changes
   are about the seed spread of one network (members 0.145 to 0.154); a repeat of the full
-  network gave 0.135 against 0.136. Not done: OH, other folds, tuning for each variant, a network
-  with field input, an equivariant network. A tutorial was planned on this set
+  network gave 0.135 against 0.136. **Ablation on OH sites** (`--adsorbate OH`, results in
+  `results/alloy/ablation_OH.json`): the full network has 0.193 eV against 0.220 for the shell
+  properties (-0.027 [-0.034, -0.020]). Here the learner gives nothing: the network with the shell
+  properties' information (one layer, four shells, no learned vectors) is no better than they
+  are (-0.001 [-0.010, +0.010]). The gap comes from three layers (+0.017 when removed), exact
+  distances (+0.010) and the ensemble (one network 0.205, three 0.193; 0.012 [0.010, 0.013]);
+  learned vectors +0.003 and tabulated properties +0.005 matter little; the site kind helps a
+  little (-0.004 [-0.007, -0.001], weak). Not done: other folds, tuning for each variant, a
+  network with field input, an equivariant network. A tutorial was planned on this set
   and dropped for the first reason. **Not done:** the O and OOH energies
   (O.tar.gz, 6.1 GB, not downloaded; the set has no OOH, so no ORR limiting potential); the
   converged-only variant of the site tasks.

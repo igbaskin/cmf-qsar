@@ -1178,12 +1178,13 @@ def registry() -> List[Benchmark]:
                   "gives its gain",
                   "run_alloy.py", "alloy",
                   compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"],
-                           ["--task", "gnn"], ["--task", "ablate"]],
+                           ["--task", "gnn"], ["--task", "ablate"],
+                           ["--task", "ablate", "--adsorbate", "OH"]],
                   prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
                            "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
                            "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
                            "the result is kept in examples/alloy)"],
-                  minutes="520",
+                  minutes="640",
                   report=lambda: _mod("run_alloy").write_table(),
                   tables=["alloy/table.md"]),
         Benchmark("structures",
