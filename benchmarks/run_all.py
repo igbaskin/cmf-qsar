@@ -1118,6 +1118,17 @@ def registry() -> List[Benchmark]:
                            "kernels and cached settings"],
                   report=lambda: _mod("run_polymer_permeability").report(),
                   tables=["polymer_permeability/table.md"]),
+        Benchmark("polymer_ladders",
+                  "ladder polymers (plan item PL6): the 27 ladder polymers of the permeability "
+                  "set built as trimers joined by two bonds per junction, 101 linear repeat "
+                  "units with repaired benzene rings and carbonyl oxygens, and the PL2 models "
+                  "trained on the linear polymers predicting the ladders",
+                  "run_polymer_ladders.py", "polymer_ladders",
+                  compute=[[]], minutes="70",
+                  prepare=["prepare_polymer_packing.py and run_polymer_packing.py first: this "
+                           "benchmark reads permeability_pl6.csv and the PL2 trimers"],
+                  report=lambda: _mod("run_polymer_ladders").report(),
+                  tables=["polymer_ladders/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "

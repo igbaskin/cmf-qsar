@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 866 public methods, and 1455 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 867 public methods, and 1455 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -2149,7 +2149,8 @@ The workflow for a series of several chemotypes, in the order the problem impose
 
 ### `cmd_polymers(args)`
 
-Repeat units written as SMILES with two attachment points, built as capped oligomers.
+Repeat units written as SMILES with two attachment points (four for a ladder polymer),
+built as capped oligomers.
 
 ### `cmd_unalign(args)`
 
@@ -15807,19 +15808,31 @@ description in this program needs atoms at fixed places, so a polymer needs a st
 module builds the usual one: an oligomer of a few repeat units with the two open ends capped,
 in an extended conformation.
 
-**Parsing.**  `parse_repeat_unit` accepts a repeat unit with exactly two attachment points
-(written `*` or `[*]`), each bonded to one atom, with the same bond order at both ends, and
-refuses anything else with a message that says why.  A ladder polymer (four attachment points) or
-a salt written as two fragments is refused rather than guessed.
+**Parsing.**  `parse_repeat_unit` accepts a repeat unit with two attachment points (written
+`*` or `[*]`) or, for a ladder polymer, four.  Each attachment point is bonded to one atom,
+all carry bonds of one order, and anything else is refused with a message that says why.  A salt
+written as two fragments is refused rather than guessed.
+
+**Ladder polymers.**  A ladder polymer, such as the polymers of intrinsic microporosity (PIM-1),
+joins its repeat units by two bonds each, so that a ring forms at every junction.  Its four
+attachment points form two ends of two points each.  With atom map numbers, `[*:1]` and
+`[*:2]` are the head and `[*:3]` and `[*:4]` the tail, and 3 is joined to 1 and 4 to 2 of
+the next unit.  Without them, the two ends are the split of the four points into two pairs whose
+atoms are closest in the bond graph (counted in bonds; a split that ties with another is refused),
+the head is the end with the first point written, and within each end the points are taken in the
+order written: the first of the tail is joined to the first of the head.  The size of the ring
+that forms does not depend on this order; only which of two regioisomers is built does, and for a
+symmetric end, such as the two oxygens of a catechol, both are the same.
 
 **Joining.**  `oligomer` joins `n` copies head to tail with RDKit's `molzip`, which
 keeps the configuration of every stereocentre when an attachment point is replaced by a bond.
-The two open ends get a hydrogen (a `CH2=` or `CH#` group when the open bond is double or
-triple).  Every atom carries the integer property `cmf_unit`: the number of its repeat unit,
-counted from 0, or -1 for a cap.  Stereochemistry that the repeat unit does not specify is either
-fixed once and copied into every unit (`stereo="isotactic"`, the default, which makes the build
-reproducible) or left to the embedding (`stereo="random"`).  Polymer tables almost never say
-which tacticity was measured, so neither choice is the measured one.
+Each open end gets a hydrogen (a `CH2=` or `CH#` group when the open bond is double or
+triple); a ladder has two open points at each end.  Every atom carries the integer property
+`cmf_unit`: the number of its repeat unit, counted from 0, or -1 for a cap.  Stereochemistry
+that the repeat unit does not specify is either fixed once and copied into every unit
+(`stereo="isotactic"`, the default, which makes the build reproducible) or left to the
+embedding (`stereo="random"`).  Polymer tables almost never say which tacticity was measured,
+so neither choice is the measured one.
 
 **Embedding.**  `embed_oligomer` makes a few ETKDG conformations (four by default) from
 random starting coordinates and keeps the most extended one -- the largest distance between
@@ -15827,7 +15840,8 @@ the first and the last backbone atom -- before an MMFF94 optimisation (UFF where
 parameters) that holds that distance fixed.  An extended chain is the conformation a single
 chain has in a crystal and the one that is closest to the same for every polymer; a random coil
 of three units, or a chain that an optimisation in vacuum has folded, would put a different fold
-into the descriptor of every polymer.
+into the descriptor of every polymer.  A ladder polymer cannot fold, and `build` optimises
+it without holding the distance.
 
 **The descriptor of one repeat unit.**  `autocorrelation_rows` computes the field
 autocorrelation of `cmfqsar.invariant.autocorrelation`, optionally counting only the atom
@@ -15846,10 +15860,12 @@ needs a sequence, which this module does not choose.
 
 ### `class RepeatUnit  (dataclass)`
 
-A repeat unit with its two attachment points.
+A repeat unit with its two attachment points, or four for a ladder polymer.
 
 `head` and `tail` are the indices of the two attachment atoms (atomic number 0) in `mol`,
-the head being the one written first; `bond` is the order of the bonds they carry.
+the head being the one written first; `bond` is the order of the bonds they carry.  A ladder
+polymer has a second point at each end, `head2` and `tail2`: `tail` is joined to `head` of the
+next unit and `tail2` to `head2`.  They are None for a linear polymer.
 
 Attributes:
 
@@ -15858,12 +15874,17 @@ Attributes:
 - `head: int`
 - `tail: int`
 - `bond: Chem.BondType`
+- `head2: Optional[int]` = `None`
+- `tail2: Optional[int]` = `None`
+
+#### `RepeatUnit.ladder` -> bool  (property)
 
 #### `RepeatUnit.heavy_atoms` -> int  (property)
 
 ### `parse_repeat_unit(psmiles: str) -> RepeatUnit`
 
-Read a repeat unit written as SMILES with two attachment points (`*` or `[*]`).
+Read a repeat unit written as SMILES with two attachment points (`*` or `[*]`), or
+four for a ladder polymer.
 
 ### `oligomer(unit, n: int=3, stereo: str='isotactic', add_hydrogens: bool=True) -> Chem.Mol`
 
@@ -15909,6 +15930,12 @@ copied back, because MMFF typing changes the aromaticity flags of the molecule i
 ### `build(psmiles: str, n: int=3, stereo: str='isotactic', conformers: int=4, seed: int=0, optimise: bool=True) -> Tuple[Chem.Mol, Dict[str, float]]`
 
 Repeat unit to embedded oligomer in one call; the record also gives the atom counts.
+
+A ladder polymer is optimised without holding its end-to-end distance.  Its units are joined
+by rings, so the chain cannot fold by turning about single bonds, and on large fused systems
+the embedding is often bent: holding that span kept a bend that a free optimisation removes
+(one PIM trimer went from 17.6 to 36.3 A, and its aromatic rings from 0.2 to 0.03 A out of
+plane).
 
 ### `build_many(smiles: Sequence[str], n: int=3, stereo: str='isotactic', conformers: int=4, seed: int=0, jobs: int=1, progress=None)`
 

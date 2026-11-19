@@ -9,19 +9,31 @@ description in this program needs atoms at fixed places, so a polymer needs a st
 module builds the usual one: an oligomer of a few repeat units with the two open ends capped,
 in an extended conformation.
 
-**Parsing.**  :func:`parse_repeat_unit` accepts a repeat unit with exactly two attachment points
-(written ``*`` or ``[*]``), each bonded to one atom, with the same bond order at both ends, and
-refuses anything else with a message that says why.  A ladder polymer (four attachment points) or
-a salt written as two fragments is refused rather than guessed.
+**Parsing.**  :func:`parse_repeat_unit` accepts a repeat unit with two attachment points (written
+``*`` or ``[*]``) or, for a ladder polymer, four.  Each attachment point is bonded to one atom,
+all carry bonds of one order, and anything else is refused with a message that says why.  A salt
+written as two fragments is refused rather than guessed.
+
+**Ladder polymers.**  A ladder polymer, such as the polymers of intrinsic microporosity (PIM-1),
+joins its repeat units by two bonds each, so that a ring forms at every junction.  Its four
+attachment points form two ends of two points each.  With atom map numbers, ``[*:1]`` and
+``[*:2]`` are the head and ``[*:3]`` and ``[*:4]`` the tail, and 3 is joined to 1 and 4 to 2 of
+the next unit.  Without them, the two ends are the split of the four points into two pairs whose
+atoms are closest in the bond graph (counted in bonds; a split that ties with another is refused),
+the head is the end with the first point written, and within each end the points are taken in the
+order written: the first of the tail is joined to the first of the head.  The size of the ring
+that forms does not depend on this order; only which of two regioisomers is built does, and for a
+symmetric end, such as the two oxygens of a catechol, both are the same.
 
 **Joining.**  :func:`oligomer` joins ``n`` copies head to tail with RDKit's ``molzip``, which
 keeps the configuration of every stereocentre when an attachment point is replaced by a bond.
-The two open ends get a hydrogen (a ``CH2=`` or ``CH#`` group when the open bond is double or
-triple).  Every atom carries the integer property ``cmf_unit``: the number of its repeat unit,
-counted from 0, or -1 for a cap.  Stereochemistry that the repeat unit does not specify is either
-fixed once and copied into every unit (``stereo="isotactic"``, the default, which makes the build
-reproducible) or left to the embedding (``stereo="random"``).  Polymer tables almost never say
-which tacticity was measured, so neither choice is the measured one.
+Each open end gets a hydrogen (a ``CH2=`` or ``CH#`` group when the open bond is double or
+triple); a ladder has two open points at each end.  Every atom carries the integer property
+``cmf_unit``: the number of its repeat unit, counted from 0, or -1 for a cap.  Stereochemistry
+that the repeat unit does not specify is either fixed once and copied into every unit
+(``stereo="isotactic"``, the default, which makes the build reproducible) or left to the
+embedding (``stereo="random"``).  Polymer tables almost never say which tacticity was measured,
+so neither choice is the measured one.
 
 **Embedding.**  :func:`embed_oligomer` makes a few ETKDG conformations (four by default) from
 random starting coordinates and keeps the most extended one -- the largest distance between
@@ -29,7 +41,8 @@ the first and the last backbone atom -- before an MMFF94 optimisation (UFF where
 parameters) that holds that distance fixed.  An extended chain is the conformation a single
 chain has in a crystal and the one that is closest to the same for every polymer; a random coil
 of three units, or a chain that an optimisation in vacuum has folded, would put a different fold
-into the descriptor of every polymer.
+into the descriptor of every polymer.  A ladder polymer cannot fold, and :func:`build` optimises
+it without holding the distance.
 
 **The descriptor of one repeat unit.**  :func:`autocorrelation_rows` computes the field
 autocorrelation of :func:`cmfqsar.invariant.autocorrelation`, optionally counting only the atom
@@ -67,31 +80,59 @@ _TAIL = 8.0
 
 @dataclass
 class RepeatUnit:
-    """A repeat unit with its two attachment points.
+    """A repeat unit with its two attachment points, or four for a ladder polymer.
 
     `head` and `tail` are the indices of the two attachment atoms (atomic number 0) in `mol`,
-    the head being the one written first; `bond` is the order of the bonds they carry.
+    the head being the one written first; `bond` is the order of the bonds they carry.  A ladder
+    polymer has a second point at each end, `head2` and `tail2`: `tail` is joined to `head` of the
+    next unit and `tail2` to `head2`.  They are None for a linear polymer.
     """
     smiles: str
     mol: Chem.Mol
     head: int
     tail: int
     bond: Chem.BondType
+    head2: Optional[int] = None
+    tail2: Optional[int] = None
+
+    @property
+    def ladder(self) -> bool:
+        return self.head2 is not None
 
     @property
     def heavy_atoms(self) -> int:
         return sum(1 for a in self.mol.GetAtoms() if a.GetAtomicNum() > 1)
 
 
+def _ladder_ends(mol: Chem.Mol, stars: List[int], psmiles: str) -> Tuple[int, int, int, int]:
+    """(head, head2, tail, tail2) of four attachment points; see *Ladder polymers* above."""
+    maps = [mol.GetAtomWithIdx(s).GetAtomMapNum() for s in stars]
+    if sorted(maps) == [1, 2, 3, 4]:
+        by = {m: s for m, s in zip(maps, stars)}
+        return by[1], by[2], by[3], by[4]
+    nb = [mol.GetAtomWithIdx(s).GetNeighbors()[0].GetIdx() for s in stars]
+    D = Chem.GetDistanceMatrix(mol)
+    splits = (((0, 1), (2, 3)), ((0, 2), (1, 3)), ((0, 3), (1, 2)))
+    score = [D[nb[a], nb[b]] + D[nb[c], nb[d]] for (a, b), (c, d) in splits]
+    best = int(np.argmin(score))
+    if sum(1 for s in score if s == score[best]) > 1:
+        raise ValueError(f"{psmiles!r}: the four attachment points cannot be split into two ends "
+                         f"without a choice; number them [*:1] and [*:2] (head) and [*:3] and "
+                         f"[*:4] (tail)")
+    (a, b), (c, d) = splits[best]               # a = 0, the first point written, is in the head
+    return stars[a], stars[b], stars[c], stars[d]
+
+
 def parse_repeat_unit(psmiles: str) -> RepeatUnit:
-    """Read a repeat unit written as SMILES with two attachment points (``*`` or ``[*]``)."""
+    """Read a repeat unit written as SMILES with two attachment points (``*`` or ``[*]``), or
+    four for a ladder polymer."""
     mol = Chem.MolFromSmiles(psmiles)
     if mol is None:
         raise ValueError(f"{psmiles!r} is not valid SMILES")
     stars = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() == 0]
-    if len(stars) != 2:
-        raise ValueError(f"{psmiles!r} has {len(stars)} attachment points; a repeat unit of a "
-                         f"linear polymer has exactly two")
+    if len(stars) not in (2, 4):
+        raise ValueError(f"{psmiles!r} has {len(stars)} attachment points; a repeat unit has two "
+                         f"(a linear polymer) or four (a ladder polymer)")
     for s in stars:
         if mol.GetAtomWithIdx(s).GetDegree() != 1:
             raise ValueError(f"{psmiles!r}: an attachment point must be bonded to exactly one atom")
@@ -99,11 +140,15 @@ def parse_repeat_unit(psmiles: str) -> RepeatUnit:
         raise ValueError(f"{psmiles!r} has more than one fragment (a salt or a mixture); write the "
                          f"repeat unit as one connected piece")
     bonds = [mol.GetAtomWithIdx(s).GetBonds()[0].GetBondType() for s in stars]
-    if bonds[0] != bonds[1]:
-        raise ValueError(f"{psmiles!r}: the two attachment points carry bonds of different order "
-                         f"({bonds[0]} and {bonds[1]}), so the units cannot be joined head to tail")
+    if len(set(bonds)) != 1:
+        raise ValueError(f"{psmiles!r}: the attachment points carry bonds of different order "
+                         f"({', '.join(str(b) for b in bonds)}), so the units cannot be joined "
+                         f"head to tail")
     if bonds[0] not in _CAPS:
         raise ValueError(f"{psmiles!r}: an attachment bond of order {bonds[0]} is not supported")
+    if len(stars) == 4:
+        h, h2, t, t2 = _ladder_ends(mol, stars, psmiles)
+        return RepeatUnit(psmiles, mol, h, t, bonds[0], h2, t2)
     return RepeatUnit(psmiles, mol, stars[0], stars[1], bonds[0])
 
 
@@ -136,23 +181,28 @@ def oligomer(unit, n: int = 3, stereo: str = "isotactic", add_hydrogens: bool = 
     base = Chem.Mol(unit.mol)
     if stereo == "isotactic":
         base = _fix_stereo(base)
+    # the points of one end: one for a linear polymer, two for a ladder
+    e = 2 if unit.ladder else 1
     pieces = []
     for k in range(n):
         m = Chem.RWMol(base)
         for a in m.GetAtoms():
             a.SetIntProp(UNIT_PROP, k)
         # label the attachment points so that molzip joins tail k to head k + 1
-        m.GetAtomWithIdx(unit.head).SetAtomMapNum(k + 1)
-        m.GetAtomWithIdx(unit.tail).SetAtomMapNum(k + 2)
+        m.GetAtomWithIdx(unit.head).SetAtomMapNum(e * k + 1)
+        m.GetAtomWithIdx(unit.tail).SetAtomMapNum(e * k + e + 1)
+        if unit.ladder:
+            m.GetAtomWithIdx(unit.head2).SetAtomMapNum(e * k + 2)
+            m.GetAtomWithIdx(unit.tail2).SetAtomMapNum(e * k + e + 2)
         pieces.append(m.GetMol())
     caps = []
-    for label in (1, n + 1):
+    for label in list(range(1, e + 1)) + list(range(e * n + 1, e * n + e + 1)):
         cap = Chem.MolFromSmiles(_CAPS[unit.bond].format(label), sanitize=False)
         for a in cap.GetAtoms():
             a.SetIntProp(UNIT_PROP, -1)
         caps.append(cap)
     combined = caps[0]
-    for p in pieces + [caps[1]]:
+    for p in caps[1:e] + pieces + caps[e:]:
         combined = Chem.CombineMols(combined, p)
     out = Chem.molzip(combined)
     Chem.SanitizeMol(out)
@@ -190,7 +240,11 @@ def central_unit(mol: Chem.Mol) -> np.ndarray:
 
 
 def _end_atoms(mol: Chem.Mol) -> Tuple[int, int]:
-    """The two heavy atoms of the chain bonded to the caps: the first and the last backbone atom."""
+    """The two atoms of the chain bonded to the caps: the first and the last backbone atom.
+
+    A ladder has two capped atoms at each end; the first of the first unit and the first of the
+    last unit are taken, so that the two never lie at the same end of the chain.
+    """
     labels = unit_labels(mol)
     ends = []
     for a in mol.GetAtoms():
@@ -201,6 +255,12 @@ def _end_atoms(mol: Chem.Mol) -> Tuple[int, int]:
     if len(ends) < 2:
         heavy = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() > 1]
         return heavy[0], heavy[-1]
+    first = [i for i in ends if labels[i] == 0]
+    last = [i for i in ends if labels[i] == labels.max()]
+    if labels.max() > 0 and first and last:
+        # in the order of `ends`, so that a linear chain gets exactly (ends[0], ends[-1]) as before
+        a, b = sorted((min(first), min(last)), key=ends.index)
+        return a, b
     return ends[0], ends[-1]
 
 
@@ -289,11 +349,23 @@ def embed_oligomer(mol: Chem.Mol, conformers: int = 4, seed: int = 0,
 
 def build(psmiles: str, n: int = 3, stereo: str = "isotactic", conformers: int = 4,
           seed: int = 0, optimise: bool = True) -> Tuple[Chem.Mol, Dict[str, float]]:
-    """Repeat unit to embedded oligomer in one call; the record also gives the atom counts."""
+    """Repeat unit to embedded oligomer in one call; the record also gives the atom counts.
+
+    A ladder polymer is optimised without holding its end-to-end distance.  Its units are joined
+    by rings, so the chain cannot fold by turning about single bonds, and on large fused systems
+    the embedding is often bent: holding that span kept a bend that a free optimisation removes
+    (one PIM trimer went from 17.6 to 36.3 A, and its aromatic rings from 0.2 to 0.03 A out of
+    plane).
+    """
     unit = parse_repeat_unit(psmiles)
     mol = oligomer(unit, n=n, stereo=stereo)
+    hold = not unit.ladder
+
+    def embed(m):
+        return embed_oligomer(m, conformers=conformers, seed=seed, optimise=optimise,
+                              hold_span=hold)
     try:
-        out, info = embed_oligomer(mol, conformers=conformers, seed=seed, optimise=optimise)
+        out, info = embed(mol)
         info["stereo_open"] = 0.0
     except ValueError:
         if stereo != "isotactic":
@@ -301,7 +373,7 @@ def build(psmiles: str, n: int = 3, stereo: str = "isotactic", conformers: int =
         # a configuration fixed centre by centre can be one that no 3D structure has (a bridged
         # ring system); with the centres left open the embedding chooses ones that exist
         mol = oligomer(unit, n=n, stereo="random")
-        out, info = embed_oligomer(mol, conformers=conformers, seed=seed, optimise=optimise)
+        out, info = embed(mol)
         info["stereo_open"] = 1.0
     labels = unit_labels(out)
     info.update({"units": float(n), "atoms": float(out.GetNumAtoms()),

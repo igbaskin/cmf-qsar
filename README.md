@@ -1299,7 +1299,13 @@ ECFP4 is again the best model on permeability. Plan item PL5
 fraction of heavy atoms in side chains or the size of the largest side group, added to the
 counts closes it on every gas. The field cut to distances below 3 Å keeps the whole margin,
 and the distances beyond add nothing, so the field gains by typing near neighbours, not by
-describing how chains pack.
+describing how chains pack. Plan item PL6 (`benchmarks/run_polymer_ladders.py`) builds ladder
+polymers, such as the polymers of intrinsic microporosity, from repeat units with four
+attachment points. Trained on linear polymers, every model predicts the 27 ladders too low by
+about one to two log units and none ranks them; the field is worst, 0.26 to 0.60 log units
+behind the bond-count kernel. With other ladders in the training set the error halves. PL6
+also found that 101 of the 742 linear repeat units of the source are written with a broken
+benzene ring or a methylene for a carbonyl oxygen; repairing them changes PL2's numbers little.
 
 ### A measured curve as the sample: no structure needed
 

@@ -9361,7 +9361,18 @@ Open after PL1:
   polymer*.
 * **PL6. Ladder polymers.** A repeat unit with four attachment points (the polymers of intrinsic
   microporosity) needs a builder that joins two strands; PL2 had to leave out 31 of them, the
-  most permeable class.
+  most permeable class. **Done 19 November 2026; the gate is not met**
+  (`benchmarks/run_polymer_ladders.py`). `cmfqsar.polymer` reads four attachment points as two
+  ends (map numbers 1-2 and 3-4, or the closest pairs in the bond graph), joins two bonds per
+  junction, and optimises a ladder without the end-to-end restraint. 27 of the 31 ladders are
+  kept; all build without geometry faults. The source has two faults that PL2 missed: 99 rows
+  with a benzene ring written as a cyclohexadiene and 12 with =CH2 for a carbonyl oxygen,
+  repaired in a table of PL6's own (`permeability_pl6.csv`); on the repaired linear polymers the
+  PL2 numbers move little (random-fold q2 by -0.008 to +0.017). Gate: trained on the linear
+  polymers, central unit + counts against bond-count kernel + counts on the ladders. Its RMSE is
+  larger by +0.26 to +0.60 log units (interval above zero for four gases). Every model predicts
+  the ladders 0.8 to 1.8 log units too low and none ranks them; with other ladders in training
+  the error halves (0.5 to 0.9). Details in the manual, *Ladder polymers*.
 * **PL3. The periodic chain against the trimer.** Item M1 computes the field of a chain per
   repeat length, but needs a cell with the right repeat distance. A builder that takes it from
   the extended trimer would make the comparison possible.

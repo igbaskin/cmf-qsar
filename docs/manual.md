@@ -12660,9 +12660,9 @@ cmf build units.sdf --activity tg_k --kernel autocorrelation --select evidence -
 Every column of the table is copied into the SD file, so the property is there for `cmf build`.
 The steps, each with the choice it makes:
 
-* A repeat unit must have exactly two attachment points, each bonded to one atom, with the same
-  bond order at both. A ladder polymer, a branched unit or a salt written as two fragments is
-  refused with the reason.
+* A repeat unit must have two attachment points, or four for a ladder polymer (see *Ladder
+  polymers* below), each bonded to one atom, with the same bond order at all. A branched unit or
+  a salt written as two fragments is refused with the reason.
 * `--units` copies (default 3) are joined head to tail with RDKit's `molzip`, which keeps the
   configuration of every stereocentre. The open ends get a hydrogen, or a CH₂= or CH≡ group when
   the open bond is double or triple. Every atom carries the property `cmf_unit`: its repeat unit,
@@ -12680,6 +12680,7 @@ The steps, each with the choice it makes:
 * The chosen conformation is optimised with MMFF94 (UFF where MMFF has no parameters) **with the
   end-to-end distance held fixed**. Without that restraint an optimisation in vacuum folds the
   chain onto itself: a polythiophene trimer with dodecyl side chains went from 19.8 Å to 9.6 Å.
+  A ladder polymer cannot fold and is optimised without the restraint.
 
 On the 7,316 polymers of the benchmark below, 14 could not be embedded within the time limits
 (30 s per attempt, four times that for the retry). The trimers have 173 atoms at the median and
@@ -12834,7 +12835,10 @@ more there (`benchmarks/run_polymer_packing.py`).
   the literature, as log10 of the permeability in Barrer, for CH4, CO2, H2, N2 and O2 (444 to
   721 polymers per gas once built). 44 of 786 rows are left out, 31 of them ladder polymers with
   four attachment points, among them the polymers of intrinsic microporosity, the most permeable
-  class; the builder handles linear chains only.
+  class; the builder handled linear chains only. Plan item PL6 adds them (*Ladder polymers*
+  below), and it found that 101 of these linear repeat units are written with a broken benzene
+  ring or a methylene in place of a carbonyl oxygen. The numbers of this section are for the
+  structures as the source gives them; PL6 gives them again for the repaired structures.
 
 The fractional free volume of the Open Polymer Prediction set is not used: it can be downloaded
 only after a sign-in to Kaggle and an acceptance of the competition's rules, and no open copy
@@ -13005,6 +13009,144 @@ already does the work of a ridge.
 
 **Costs.** The candidates took 26 minutes, the models of part 1 about 3 hours 50 minutes, and
 part 2 43 minutes. All of them reuse the trimers and the cached settings of PL2.
+
+### Ladder polymers
+
+A ladder polymer joins its repeat units by two bonds each, so that a ring forms at every junction.
+The polymers of intrinsic microporosity (PIMs) are the best known: PIM-1 joins a spirobisindane
+catechol to a dicyanobenzene through a dibenzodioxin ring. Their chains cannot turn about single
+bonds, they pack badly, and they are the most permeable class of the permeability set. PL2 had to
+leave out the 31 of them, because the builder handled two attachment points only. Plan item PL6
+(`benchmarks/run_polymer_ladders.py`) adds them.
+
+**The builder.** A repeat unit with four attachment points is read as two ends of two points
+each. When the points carry atom map numbers, points 1 and 2 are the head and points 3 and 4
+the tail, and the tail point 3 is joined to the head point 1 of the next unit, 4 to 2. Without numbers, the
+two ends are the split of the four points into two pairs whose atoms are closest in the bond
+graph; a split that ties with another is refused, with a request for numbers. The head is the
+end with the first point written. The ring that forms has the same size whichever point of an end
+is joined to which; only the regioisomer depends on it, and for a symmetric end, such as the two
+oxygens of a catechol, both are the same. Each open end gets two hydrogens. A ladder trimer is
+optimised **without** the end-to-end restraint of a linear chain: it cannot fold, and on large
+fused systems the embedding is often bent. With the restraint, one PIM trimer kept a bend that a
+free optimisation removed (17.6 Å to 36.3 Å end to end, and its benzene rings from 0.2 Å out of
+plane to 0.03 Å).
+
+**The data, and two faults of the source.** The PL6 table
+(`examples/polymer_packing/permeability_pl6.csv`, made by `prepare_polymer_packing.py`) is the
+permeability table of PL2 with the ladders kept. Four of the 31 are refused: one would close a
+four-membered ring at the junction, one writes a Tröger's base with two bridges per unit (the
+junction would be a ring of four nitrogens and four carbons), and two repeat the five values of
+another row. That leaves 27 ladders.
+
+Reading the ladders showed two faults in the source that also affect the linear polymers of PL2:
+
+* In 99 rows a benzene ring is written as a cyclohexa-1,3-diene: two adjacent ring carbons carry
+  a hydrogen and no double bond, as in a fluorene written `C3C=CC=CC3C3C=CC=CC32`, or the benzene
+  ring of a phthalimide written the same way. Such a ring is a benzene ring whose aromatic bonds
+  were lost. The repair makes the bond between the two carbons double, which makes the ring
+  aromatic again (115 rings).
+* In 12 rows the carbonyl carbon of an imide or an ester carries `=CH2` in place of `=O`
+  (`c(=C)n`, `OC(=C)C`). The repair makes it an oxygen (24 atoms).
+
+102 rows are repaired, 101 of them linear: 14 % of the linear polymers of PL2. The column
+`source_psmiles` keeps the SMILES of the source. The density set of PL2 and the glass transition
+set of PL1 have neither fault. PL2's own table is left as it was, so that its results can be
+reproduced.
+
+**The trimers.** 27 ladder trimers and 70 repaired linear trimers were built; the other 31
+repaired units equal, after the repair, a unit that PL2 had already built correctly. Seven units
+that PL2 could not embed are left out here too, so that the linear set is PL2's: 735 linear
+polymers and 27 ladders. No trimer has a bond of the wrong length or two atoms closer than 1.3 Å
+(`cmfqsar.orca.geometry_faults`). Every benzene and pyridine ring lies within 0.10 Å of its plane
+in the ladders and within 0.08 Å in the repaired units. The dioxin rings at the junctions of the
+PIMs fold by up to 0.3 Å along their O-O axis, which these rings are known to do at little cost.
+The end-to-end distance of the ladder trimers is 4 to 55 Å: the spiro centres of PIM-1 and the
+bridges of a Tröger's base turn the chain at every unit.
+
+**The questions, fixed before the run.** The models are those of PL2 without the whole trimer,
+plus the PL5 reference: the eight counts with the side-chain fraction and the size of the largest
+side group as two more columns ("side groups"). The folds are those of PL2. Three tests:
+
+1. *What the repair changes*: the PL2 models on the 735 repaired linear polymers.
+2. *The gate*: each model is trained on the linear polymers only and predicts the ladders. The
+   gate is a smaller error on the ladders for the central unit plus counts than for the bond-count
+   kernel plus counts, with the 95 % bootstrap interval of the difference (ladders resampled)
+   below zero.
+3. *What a ladder in the training set gains*: the error on the ladders in the random folds of all
+   762 polymers, where other ladders are in the training block.
+
+**The repair changes PL2's numbers little.** On random folds every model's q² moves by -0.008 to
++0.017. The counts gain most, because the count of aromatic rings is now right. With clusters
+held out the q² values move by -0.10 to +0.03. The clusters themselves change with the repaired
+fingerprints, so part of this is a change of folds. The PL2 gate, central
+unit plus counts minus bond-count kernel plus counts, on random folds / with clusters held out:
+
+| Gas | PL2 | repaired |
+|---|---|---|
+| CH4 | +0.039 / +0.059 | +0.036 / +0.058 |
+| CO2 | +0.031 / +0.083 | +0.024 / +0.063 |
+| H2 | +0.012 / +0.072 | +0.006 / +0.025 |
+| N2 | +0.043 / +0.084 | +0.040 / +0.073 |
+| O2 | +0.039 / +0.081 | +0.025 / +0.073 |
+
+With clusters held out the interval stays above zero for four gases. For H2 it now includes zero
+(-0.051 to +0.110).
+
+**The gate is not met: trained on linear polymers, the field predicts the ladders worse than the
+bond graph.** The ladders are on average 1.6 to 1.7 log units (a factor of about 50) more
+permeable than the linear polymers. The error on the ladders, as RMSE with the mean error in
+brackets (log10 Barrer):
+
+| Model, trained on linear polymers only | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| central unit + eight counts | 2.11 (-1.69) | 2.13 (-1.84) | 1.68 (-1.61) | 1.73 (-1.42) | 1.58 (-1.31) |
+| bond-count kernel + eight counts | 1.63 (-1.21) | 1.53 (-1.28) | 1.39 (-1.27) | 1.27 (-0.93) | 1.33 (-0.94) |
+| ECFP4 of the repeat unit | 1.71 (-1.34) | 1.75 (-1.43) | 1.33 (-1.24) | 1.72 (-1.43) | 1.73 (-1.45) |
+| central unit + counts + side groups | 2.05 (-1.62) | 1.50 (-1.01) | 1.62 (-1.56) | 1.64 (-1.30) | 1.51 (-1.17) |
+| bond-count + counts + side groups | 1.95 (-1.53) | 1.36 (-0.98) | 1.45 (-1.38) | 1.59 (-1.22) | 1.60 (-1.23) |
+| difference of the first two rows | +0.48 [+0.20, +0.75] | +0.60 [+0.35, +0.87] | +0.28 [+0.10, +0.46] | +0.46 [+0.13, +0.75] | +0.26 [-0.10, +0.58] |
+
+**The error on the ladders when other ladders are in the training set** (random folds of all
+762 polymers; RMSE, log10 Barrer):
+
+| Model | CH4 | CO2 | H2 | N2 | O2 |
+|---|---|---|---|---|---|
+| central unit + eight counts | 0.84 | 0.73 | 0.64 | 0.72 | 0.68 |
+| bond-count kernel + eight counts | 0.86 | 0.77 | 0.60 | 0.73 | 0.73 |
+| ECFP4 of the repeat unit | 0.70 | 0.66 | 0.47 | 0.70 | 0.66 |
+
+**What it says.**
+
+* **No model predicts a ladder polymer from linear polymers.** Every model predicts too low, by
+  0.8 to 1.8 log units on average, and none ranks the ladders: the rank correlation (Spearman)
+  between predicted and measured permeability within the ladders is -0.24 to +0.12 for the field
+  plus counts, -0.02 to +0.52 for the bond-count kernel plus counts and -0.08 to +0.33 for ECFP4.
+  What makes a PIM permeable is not present in a linear polymer for any of these descriptions.
+* **The field is the worst of them.** Its error on the ladders is 0.26 to 0.60 log units larger
+  than that of the bond-count kernel plus counts, and it predicts them lower than that model on
+  every gas. Distance is not the reason: measured by the largest kernel value to any linear polymer,
+  the field kernel puts the ladders closer to the linear polymers than the bond-count kernel does
+  (at the 19th to 25th percentile of the linear polymers' own nearest neighbours, against the 9th
+  to 11th; ECFP4 and the counts put them at the 2nd). The field finds near neighbours for a ladder,
+  but they are linear polymers of ordinary permeability.
+* **The side groups of PL5 close most of the gap on the ladders as well.** With the two side-group
+  numbers in both references, the field's excess error on the ladders falls to -0.10 to +0.17, with
+  the interval including zero except for H2.
+* **Ladders in the training set halve the error.** With other ladders in the training block the
+  error on a ladder falls from 1.3 to 2.1 log units to 0.5 to 0.9, and the rank correlation within
+  the ladders rises to 0.4 to 0.7. ECFP4 is best here too.
+* **The PL2 margin of the field shrinks with the ladders in the set.** On all 762 polymers with
+  clusters held out, central unit plus counts minus bond-count kernel plus counts is +0.008 to
+  +0.040, every interval including zero; on random folds it is +0.011 to +0.043, above zero for
+  four gases.
+
+**The settings chosen.** The smallest ridge (10⁻⁸) was chosen in none of the 1,000 blocks of a
+model. The only setting at the edge of its grid is the smallest weight of the counts (0.03) in
+the bond-count kernel plus counts, in 16 of its 1,000 blocks.
+
+**Costs.** The 97 new trimers took 5 minutes with 6 processes and the models 66 minutes; the PL2
+trimers are read from its cache.
 
 ## Designing a crystal: a prototype, a budget and a loop
 

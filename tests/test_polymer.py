@@ -153,6 +153,46 @@ def test_the_central_row_does_not_see_the_caps(fs):
     assert not np.allclose(autocorrelation_rows(mf, [spec])[0], autocorrelation_rows(mf2, [spec])[0])
 
 
+PIM1 = "*Oc1cc2c(cc1O*)C1(CC2(C)C)CC(C)(C)c2cc3c(cc21)Oc1c(C#N)c(*)c(*)c(C#N)c1O3"
+
+
+def test_a_ladder_unit_has_two_ends_of_two_points():
+    # PIM-1: the head is the two catechol oxygens, the tail the two ring carbons between the
+    # nitriles, so that every junction closes a dioxin ring
+    u = parse_repeat_unit(PIM1)
+    assert u.ladder and not parse_repeat_unit(STYRENE).ladder
+    nb = lambda i: u.mol.GetAtomWithIdx(i).GetNeighbors()[0].GetSymbol()   # noqa: E731
+    assert (nb(u.head), nb(u.head2), nb(u.tail), nb(u.tail2)) == ("O", "O", "C", "C")
+    m = Chem.RemoveHs(oligomer(PIM1, n=3, add_hydrogens=False))
+    unit = Chem.MolFromSmiles(PIM1)
+    unit_bonds = unit.GetNumBonds() - 4
+    # three units, two bonds per junction, four caps of hydrogen (removed here)
+    assert m.GetNumBonds() == 3 * unit_bonds + 2 * 2
+    labels = unit_labels(oligomer(PIM1, n=3, add_hydrogens=False))
+    m2 = oligomer(PIM1, n=3, add_hydrogens=False)
+    junction = [r for r in m2.GetRingInfo().AtomRings()
+                if {int(labels[i]) for i in r} == {0, 1}]
+    assert [len(r) for r in junction] == [6]
+    assert not any(a.GetAtomicNum() == 0 for a in m2.GetAtoms())
+
+
+def test_numbered_points_decide_the_ends_and_a_tie_is_refused():
+    # the same ethylene ladder written with the points numbered against their written order
+    u = parse_repeat_unit("[*:3]C([*:1])C([*:2])[*:4]")
+    assert u.mol.GetAtomWithIdx(u.head).GetAtomMapNum() == 1
+    assert u.mol.GetAtomWithIdx(u.tail2).GetAtomMapNum() == 4
+    with pytest.raises(ValueError, match="cannot be split"):
+        parse_repeat_unit("[*]C([*])([*])[*]")
+
+
+def test_the_span_of_a_ladder_runs_from_the_first_to_the_last_unit():
+    from cmfqsar.polymer import _end_atoms
+    m = oligomer(PIM1, n=3)
+    a, b = _end_atoms(m)
+    labels = unit_labels(m)
+    assert {int(labels[a]), int(labels[b])} == {0, 2}
+
+
 def test_build_many_keeps_the_order_and_reports_failures():
     out = build_many([STYRENE, "[*]CC", "[*]CC[*]"], n=3, conformers=2, jobs=1)
     assert [m is not None for m, _, _ in out] == [True, False, True]

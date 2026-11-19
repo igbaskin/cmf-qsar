@@ -8,6 +8,7 @@ gas permeability. Both are made by `benchmarks/prepare_polymer_packing.py` and r
 | --- | --- |
 | `pi1070.csv` | 1,077 amorphous homopolymers with their density at 300 K from molecular dynamics |
 | `permeability.csv` | 742 polymers with the measured permeability to five gases |
+| `permeability_pl6.csv` | the same rows for plan item PL6: 27 ladder polymers added, two faults of the source repaired (769 rows) |
 | `LICENSE_RadonPy.txt` | the BSD 3-Clause licence of the density data |
 | `LICENSE_torch-molecule.txt` | the MIT licence of the permeability data |
 | `provenance.json` | the sources, their versions, how many rows were refused and why |
@@ -62,10 +63,41 @@ reproduced in `LICENSE_torch-molecule.txt`.
 
 - 41 repeat units do not have exactly two attachment points. 31 of them have four: these are
   ladder polymers, among them the polymers of intrinsic microporosity, which are the most
-  permeable class. The oligomer builder handles linear chains only.
+  permeable class. The oligomer builder of PL2 handled linear chains only; `permeability_pl6.csv`
+  keeps them.
 - Two contain germanium, which has no Gasteiger charges.
 - One carries a net charge.
 
 **What the data do not say.** The film preparation, the thermal history, the temperature and the
 pressure of each measurement are not given. Permeability can change by a factor of several with
 these, so part of the spread between similar polymers is not in the repeat unit at all.
+
+## Gas permeability with ladder polymers and repaired structures (plan item PL6)
+
+`permeability_pl6.csv` holds the permeability rows again, for `benchmarks/run_polymer_ladders.py`.
+`permeability.csv` stays as it is, so that the results of PL2 and PL5 can be reproduced.
+
+**Columns.** `id`, `psmiles` and the five `log10_` columns as above. `ladder` is 1 for a repeat
+unit with four attachment points. `repair` says what was changed in the SMILES of the source, and
+`source_psmiles` gives that SMILES when something was changed (both are empty otherwise).
+
+**Ladder polymers.** 27 of the 31 are kept. A ladder repeat unit has two ends of two attachment
+points each, and two units are joined by two bonds, which close a ring (the dioxin ring of PIM-1,
+for example). Four are left out:
+
+- `perm558`: the junction would be a four-membered ring.
+- `perm054`: a Troger's base written with two bridges per unit; the junction would be a ring of
+  four nitrogens and four carbons, which is not a Troger's base.
+- `perm094`: the same five values as `perm499`, written with a broken aromatic ring.
+- `perm618`: the same five values as `perm005` (within 1 %), a regioisomer of the same unit.
+
+**Two faults of the source, repaired.**
+
+- In 99 rows (115 rings) a benzene ring is written as a cyclohexa-1,3-diene: two adjacent ring
+  carbons carry a hydrogen and no double bond, as in `C3C=CC=CC3C3C=CC=CC32` for a fluorene. The
+  repair makes the bond between the two carbons double, so that the ring is aromatic.
+- In 12 rows (24 atoms) the carbonyl carbon of an imide or an ester carries `=CH2` in place of
+  `=O`. The repair makes it an oxygen.
+
+102 rows are repaired, 101 of them linear polymers that are also in `permeability.csv`. The
+labels per gas are 632, 705, 473, 743 and 755.

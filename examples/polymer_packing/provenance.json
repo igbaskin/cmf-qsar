@@ -52,5 +52,34 @@
    "N2": 716,
    "O2": 728
   }
+ },
+ "permeability_pl6": {
+  "source": "the permeability rows above",
+  "kept": 769,
+  "ladders": 27,
+  "refused": {
+   "builder: 0 attachment points": 6,
+   "builder: 1 attachment points": 1,
+   "builder: 3 attachment points": 3,
+   "element without Gasteiger charges: Ge": 2,
+   "fault: Troger's base written with two bridges per unit; the junction would be a ring of four N and four C": 1,
+   "fault: repeats the five values of perm005 (within 1 %); a regioisomer of its unit": 1,
+   "fault: repeats the five values of perm499, written with a broken aromatic ring": 1,
+   "fault: the junction ring would have 4 atoms": 1,
+   "net formal charge": 1
+  },
+  "repairs": {
+   "benzene rings made aromatic": 115,
+   "carbonyl oxygens restored": 24,
+   "rows with benzene rings made aromatic": 99,
+   "rows with carbonyl oxygens restored": 12
+  },
+  "labels": {
+   "CH4": 632,
+   "CO2": 705,
+   "H2": 473,
+   "N2": 743,
+   "O2": 755
+  }
  }
 }
