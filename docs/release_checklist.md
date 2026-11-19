@@ -117,7 +117,7 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 170 benchmarks and 181.7 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 170 benchmarks and 183.7 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
@@ -301,8 +301,8 @@ machines at all.
 
 ### What is covered
 
-**The 76 benchmarks left out** are of eight kinds. Fifty-nine are long, 130.0 hours together:
-`poses` 16 h, `compas` 15 h, `alloy` 8.7 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h,
+**The 76 benchmarks left out** are of eight kinds. Fifty-nine are long, 132.0 hours together:
+`poses` 16 h, `compas` 15 h, `alloy` 11 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h,
 `polymer_permeability` 5.0 h, `spectra` 3.5 h, `host_pocket` and `polymer_packing` 2.8 h each,
 `particle_sites` 2.5 h, `copolymers` and `gntk_compas` 2.2 h each, `litraj` 2.1 h, `2dmd`,
 `battery`, `microstructure` and `scattering` 2.0 h each, `molcrystals` 1.9 h, `local` 1.8 h, `logp`
