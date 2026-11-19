@@ -1,10 +1,26 @@
 {
- "commit": "9281304c9568c6036c36cbdad1600be17b12d64e",
- "created": "2026-11-19T01:06:02",
+ "commit": "91cf6d2722a28e98a396ac5cbf99c614e47dbcf2",
+ "created": "2026-11-19T02:15:19",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
+  },
+  "examples/alloy/README.md": {
+   "bytes": 7952,
+   "sha256": "ed7e64801db6bfdfa176e9b5e52f5f2d249d69848579d8628d555c8a07b52169"
+  },
+  "examples/alloy/adsorption.csv": {
+   "bytes": 1880581,
+   "sha256": "f18531ee86565b0a40b4f2aa40998b923545a2ab4b68bd9fca2139400e822045"
+  },
+  "examples/alloy/gas_references.json": {
+   "bytes": 259,
+   "sha256": "177ede371b6f03f73e4745386849f4eea672bc8dba31940f665e72cdb8fced40"
+  },
+  "examples/alloy/slabs.extxyz": {
+   "bytes": 1774329,
+   "sha256": "3177d62b6b08b9358c7c7842f3465eff524c6aa25a8fcbf961d44304762c47a1"
   },
   "examples/am-eu/AmEu1-all.mol2": {
    "bytes": 137197,
@@ -1413,6 +1429,10 @@
   "examples/logp/sangster_p.sdf": {
    "bytes": 10112240,
    "sha256": "4bbe200550cb3d8c06ba94b105e68a3afc6b51e58425edb1d279486b4b313866"
+  },
+  "examples/make_alloy_examples.py": {
+   "bytes": 18582,
+   "sha256": "37c21cfd2a6c0fb4519ec76877cc3a460a88e80150407e305e58e78a741208df"
   },
   "examples/make_antitarget_examples.py": {
    "bytes": 19719,
@@ -3003,7 +3023,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3087,6 +3107,9 @@
   "benchmarks/results/alignment/THER.json": "7567c19dd1302c90ff6bbcef3b0ff03ca7412c97693c2ee15fd8f9c96e5bdc4f",
   "benchmarks/results/alignment/THR.json": "d0886d86781c75db7766967b3418f6be1d5e224b6cd4ff25a467605afd4176bc",
   "benchmarks/results/alignment/table.md": "98818deeae5b03f185841ab32f86ace9e4f556f728fa3a74fffe35488cbf3245",
+  "benchmarks/results/alloy/data_site.json": "31c00369d526407dd74980e42fc0d61ee5e4beafaa212bd164de39f6d82ff965",
+  "benchmarks/results/alloy/data_slab.json": "d25672dda8d7503f3c5edbc32025812e35363a02a78ac4b6f22c133a0c676233",
+  "benchmarks/results/alloy/table.md": "b4f5c1f1d4f6aedbb601195472093e0dc19e3259e78272bfd645fcb03af30109",
   "benchmarks/results/am_eu/am_eu.json": "5f68559cff92e16ddbb145f8c863193a37d77c754d6c7ace8a237730f745a230",
   "benchmarks/results/am_eu/am_eu_qm.sdf": "9c86566d7ef6e7a202f8661b020e4e10dafc1f5b790d73354ed852fe36a94182",
   "benchmarks/results/am_eu/table.md": "684959922974a1e93de58cfe5baf2184663c7225f4f76a508b50a75382c3979e",
