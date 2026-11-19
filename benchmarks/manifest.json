@@ -1,6 +1,6 @@
 {
- "commit": "f2765674c8f3e68c0c325761101ae39857438d13",
- "created": "2026-11-19T09:44:36",
+ "commit": "424e04c7aa8478592c81699f533c01b831fe7403",
+ "created": "2026-11-19T10:21:59",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3023,7 +3023,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3147,6 +3147,8 @@
   "benchmarks/results/battery/difference.json": "65f46f32773b1542901fb44a7981b45929c3ed6162a3bfcb6555357ff1c2b02b",
   "benchmarks/results/battery/table.md": "244b5045b8fc8ffa4a76b0187a59d0a285ca002914a0b2a3b4a8e89218eb44c2",
   "benchmarks/results/battery/voltage.json": "31d3a44230b51435756ad0f2931dc3d24948d6fba340928a325be76d550177e8",
+  "benchmarks/results/binding/binding.json": "527f2eb352e79d7fbe1d0c443ef6e864a4e32b667e172dbcfb722a085fafc143",
+  "benchmarks/results/binding/table.md": "c9f9f16c2dbda022922a0f7f654618d79718179964611fe38aacd607df81bec3",
   "benchmarks/results/bioisostere/GPB.json": "a75c91372806c2b819d1262d6f542448f5177579231bce026f3ca6e018b6622d",
   "benchmarks/results/bioisostere/THER.json": "50a3c5e675f0b56188179fa5e219d5461bfd9adb23ca1433ce221bfe59afa063",
   "benchmarks/results/bioisostere/THR.json": "f583d7789e73bbc1631f441994fe7f5a4c7f18a130c56f939de7a91f29a3b383",
