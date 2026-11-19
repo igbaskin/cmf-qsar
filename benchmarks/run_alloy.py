@@ -857,6 +857,127 @@ def run_gnn(args, log=print) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Which part of the network gives the gain (task ablate)
+# --------------------------------------------------------------------------- #
+ABLATIONS = {
+    "full network": {},
+    "no learned element vectors": dict(use_emb=False),
+    "no tabulated element properties": dict(use_props=False),
+    "distances replaced by four shells": dict(bins=True),
+    "one layer of messages": dict(layers=1),
+    "site kind added": dict(kinds=True),
+    "one layer, four shells, no learned element vectors": dict(layers=1, bins=True,
+                                                               use_emb=False),
+}
+
+
+def run_ablate(args, log=print) -> None:
+    """H sites with whole slabs held out: the network with one part changed at a time.
+
+    Every variant is trained as the full network of ``run_gnn`` (3 members, the same rows, folds and
+    inner folds) and the seed of a member depends only on the fold and the member, so that the
+    variants are paired. The result is compared with the full network and with the best shell
+    reference."""
+    import multiprocessing as mp
+    import alloy_gnn as G
+    warnings.filterwarnings("ignore")
+    data = AlloySet()
+    with open(os.path.join(RESULTS, "data_site.json"), encoding="utf-8") as fh:
+        task = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
+    rows = site_rows(data, "H", "all", args.max_sites, np.random.RandomState(SEED))
+    if [r["log"] for r in rows] != task["rows"]:
+        raise SystemExit("the rows differ from the stored run")
+    y = np.array(task["y"])
+    design = "slab-out"
+    groups = {"slab-out": [str(r["slab"]) for r in rows],
+              "alloy-out": [data.alloy(r["slab"]) for r in rows]}
+    props = standard_properties(data.elements)
+    P = np.vstack([np.array([props[e] for e in data.elements]), np.zeros((1, len(PROPS)))])
+    P_kinds = np.vstack([P, np.zeros((len(SITE_KINDS) - 1, len(PROPS)))])
+    base = G.site_graphs(data, rows, "H", HEIGHT)
+    kind_graphs = G.with_site_kinds(base, rows, len(data.elements), SITE_KINDS)
+    variants = {}
+    for name, opt in ABLATIONS.items():
+        opt = dict(opt)
+        kinds = opt.pop("kinds", False)
+        variants[name] = (kind_graphs if kinds else base,
+                          dict(n_elements=len(data.elements), props=P_kinds if kinds else P,
+                               readout=base.readout, **opt))
+    only = [n for n in ABLATIONS if not args.only or args.only in n]
+    jobs = []
+    for k, te in enumerate(folds_for(design, len(y), groups, SEED, FOLDS)):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        sub = {d: [g[i] for i in tr] for d, g in groups.items()}
+        inner = folds_for(design, len(tr), sub, SEED, INNER)
+        for name in only:
+            for member in range(G.MEMBERS):
+                va = tr[inner[member]]
+                jobs.append((name, k, member, np.setdiff1d(tr, va), va, te))
+    log(f"site H, slabs held out: {len(only)} variants, {len(jobs)} trainings on {args.workers} workers")
+    pred = {n: np.full((G.MEMBERS, len(y)), np.nan) for n in only}
+    epochs = {n: [] for n in only}
+    t0 = time.time()
+    with mp.get_context("spawn").Pool(args.workers, initializer=G.init_ablation,
+                                      initargs=(variants, y, 1)) as pool:
+        for n, (name, k, member, te, p, ep, best, sec) in enumerate(
+                pool.imap_unordered(G.fit_variant, jobs)):
+            pred[name][member, te] = p
+            epochs[name].append(ep)
+            if (n + 1) % 20 == 0:
+                log(f"  {n + 1}/{len(jobs)} trainings, {time.time() - t0:.0f} s")
+    sh = None
+    shells_path = os.path.join(RESULTS, "shells.json")
+    if os.path.exists(shells_path):
+        with open(shells_path, encoding="utf-8") as fh:
+            t = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
+        sh = min([m for m in t["models"] if m["design"] == design], key=lambda m: m["mae"])["name"]
+        shell_pred = np.array(cross_validate(sh, shell_references(data, rows, "H")[sh], y, design,
+                                             groups)["predicted"])
+    out = {"task": "site H [all]", "design": design, "members": G.MEMBERS, "shell_reference": sh,
+           "variants": []}
+    full = pred.get("full network")
+    for name in only:
+        ens = pred[name].mean(axis=0)
+        single = [float(np.mean(np.abs(y - pred[name][m]))) for m in range(G.MEMBERS)]
+        rec = {"name": name, "q2": r2_score(y, ens), "mae": float(np.mean(np.abs(y - ens))),
+               "single_mae": single, "epochs": float(np.mean(epochs[name]))}
+        if full is not None and name != "full network":
+            d = bootstrap_mae(y, ens, full.mean(axis=0), groups=groups["slab-out"])
+            rec["against_full"] = {"delta_mae": d[0], "low": d[1], "high": d[2]}
+        if sh is not None:
+            d = bootstrap_mae(y, ens, shell_pred, groups=groups["slab-out"])
+            rec["against_shells"] = {"delta_mae": d[0], "low": d[1], "high": d[2]}
+        out["variants"].append(rec)
+        log(f"  {name:55s} MAE {rec['mae']:.3f}  one network {np.mean(single):.3f}  q2 {rec['q2']:+.3f}")
+    if full is not None:                       # the ensemble: one network against three
+        errs = np.mean([np.abs(y - full[m]) for m in range(G.MEMBERS)], axis=0)
+        eb = np.abs(y - full.mean(axis=0))
+        d = _bootstrap_errors(errs, eb, groups["slab-out"])
+        out["ensemble"] = {"one_network_mae": float(np.mean(errs)), "three_mae": float(np.mean(eb)),
+                           "delta_mae": d[0], "low": d[1], "high": d[2]}
+    path = os.path.join(RESULTS, "ablation.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(out, fh, indent=1, default=float)
+        fh.write("\n")
+    log(f"wrote {path}")
+
+
+def _bootstrap_errors(ea, eb, groups, runs: int = RUNS, seed: int = SEED):
+    """Mean of `ea` minus mean of `eb` (absolute errors of the same rows), resampling groups."""
+    labels = sorted(set(groups))
+    g = np.asarray(groups)
+    members = {lab: np.where(g == lab)[0] for lab in labels}
+    rng = np.random.RandomState(seed)
+    draws = []
+    for _ in range(runs):
+        pick = rng.randint(0, len(labels), len(labels))
+        idx = np.concatenate([members[labels[p]] for p in pick])
+        draws.append(np.mean(ea[idx] - eb[idx]))
+    return (float(np.mean(ea) - np.mean(eb)), float(np.percentile(draws, 2.5)),
+            float(np.percentile(draws, 97.5)))
+
+
+# --------------------------------------------------------------------------- #
 # The table
 # --------------------------------------------------------------------------- #
 def _load_results() -> List[dict]:
@@ -979,6 +1100,33 @@ def write_table(path: Optional[str] = None) -> str:
                 lines.append(f"| {p['design']} | {p['against']} | {p['kind']} | "
                              f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
             lines.append("")
+    abl = os.path.join(RESULTS, "ablation.json")
+    if os.path.exists(abl):
+        with open(abl, encoding="utf-8") as fh:
+            a = json.load(fh)
+        interval = lambda d: f"{d['delta_mae']:+.3f} [{d['low']:+.3f}, {d['high']:+.3f}]"   # noqa: E731
+        lines += ["## Which part of the network gives the gain", "",
+                  f"{a['task']}, folds `{a['design']}`. Each row is the network with one part "
+                  f"changed. Every variant is trained like the full network: {a['members']} "
+                  f"members, the same rows, folds and inner folds, and a seed that depends on "
+                  f"the fold and the member only. MAE in eV. *One network* is the mean MAE of "
+                  f"the {a['members']} members alone. The two last columns are differences in "
+                  f"MAE of the ensemble with an interval of 95 % (whole slabs resampled); a "
+                  f"positive number against the full network means that the change made the "
+                  f"result worse. The shell reference is `{a['shell_reference']}`.", "",
+                  "| variant | MAE of the ensemble | MAE of one network | q2 | minus the full network "
+                  "| minus the shell reference |", "| --- | --- | --- | --- | --- | --- |"]
+        for v in a["variants"]:
+            lines.append(f"| {v['name']} | {v['mae']:.3f} | {np.mean(v['single_mae']):.3f} | "
+                         f"{v['q2']:+.3f} | "
+                         f"{interval(v['against_full']) if 'against_full' in v else ''} | "
+                         f"{interval(v['against_shells']) if 'against_shells' in v else ''} |")
+        if "ensemble" in a:
+            e = a["ensemble"]
+            lines += ["", f"The ensemble alone: one network of the full model has MAE "
+                      f"{e['one_network_mae']:.3f}, the mean of {a['members']} has "
+                      f"{e['three_mae']:.3f}; difference (one network minus the ensemble) "
+                      f"{interval(e)}.", ""]
     path = path or os.path.join(RESULTS, "table.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -987,11 +1135,13 @@ def write_table(path: Optional[str] = None) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells", "gnn"),
+    ap.add_argument("--task", choices=("all", "slab", "site", "counts", "shells", "gnn", "ablate"),
                     default="all",
                     help="counts: add the neighbour-count references to the stored site results; "
                          "shells: the shell references on the stored site tasks; "
-                         "gnn: the graph neural network on every stored task")
+                         "gnn: the graph neural network on every stored task; "
+                         "ablate: the network with one part changed at a time (H sites, "
+                         "slabs held out)")
     ap.add_argument("--workers", type=int, default=20, help="processes of the task gnn")
     ap.add_argument("--only", default="", help="task gnn: only the tasks whose name has this text")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
@@ -1012,6 +1162,10 @@ def main() -> None:
         return
     if args.task == "gnn":
         run_gnn(args)
+        print("wrote", write_table())
+        return
+    if args.task == "ablate":
+        run_ablate(args)
         print("wrote", write_table())
         return
     run(args)

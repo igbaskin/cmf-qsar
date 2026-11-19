@@ -103,6 +103,17 @@ def _edges(pos_c: np.ndarray, pos_s: np.ndarray, source_index: np.ndarray):
     return c, source_index[s], d[c, s]
 
 
+def with_site_kinds(graphs: Graphs, rows: Sequence[dict], first: int, kinds: Sequence[str]) -> Graphs:
+    """A copy of the graphs in which the point node has the index ``first + kind`` (a vector of
+    its own for every kind of site). The edges and distances are shared with the original."""
+    import copy
+    out = copy.copy(graphs)
+    out.Z = graphs.Z.copy()
+    for k, r in enumerate(rows):
+        out.Z[graphs.node_ptr[k]] = first + list(kinds).index(r["site"])
+    return out
+
+
 def site_graphs(data, rows: Sequence[dict], ads: str, height: Dict[str, float]) -> Graphs:
     """Nodes of every site: node 0 is the point, then the atoms within ENV_RADIUS of it.
 
@@ -146,8 +157,16 @@ def slab_graphs(data, ids: Sequence[int]) -> Graphs:
 # --------------------------------------------------------------------------- #
 # The network
 # --------------------------------------------------------------------------- #
+SHELL_BINS = (2.5, 3.5, 4.5)            # A; the first three edges of the shell references
+SHELL_CENTRES = (2.4, 3.0, 4.0, 4.75)   # the distance the network sees for an edge in each bin
+
+
 def build_net(n_elements: int, props: np.ndarray, readout: str, hidden: int = HIDDEN,
-              layers: int = LAYERS):
+              layers: int = LAYERS, use_emb: bool = True, use_props: bool = True,
+              bins: bool = False):
+    """The network. The last three options are for the ablation study (``--task ablate``):
+    without the learned vector of the element, without the tabulated properties, and with every
+    distance replaced by the centre of its shell (up to 2.5, 3.5, 4.5 A and beyond)."""
     import torch
     from torch import nn
 
@@ -156,8 +175,11 @@ def build_net(n_elements: int, props: np.ndarray, readout: str, hidden: int = HI
             super().__init__()
             self.readout = readout
             self.register_buffer("props", torch.tensor(props, dtype=torch.float32))
-            self.emb = nn.Embedding(n_elements + 1, 16)
-            self.inp = nn.Linear(16 + props.shape[1], hidden)
+            self.emb = nn.Embedding(props.shape[0], 16)
+            self.use_emb, self.use_props, self.bins = use_emb, use_props, bins
+            self.register_buffer("bin_edges", torch.tensor(SHELL_BINS, dtype=torch.float32))
+            self.register_buffer("bin_centres", torch.tensor(SHELL_CENTRES, dtype=torch.float32))
+            self.inp = nn.Linear(16 * use_emb + props.shape[1] * use_props, hidden)
             self.filt = nn.ModuleList([nn.Sequential(nn.Linear(N_RBF, hidden), nn.SiLU(),
                                                      nn.Linear(hidden, hidden))
                                        for _ in range(layers)])
@@ -172,7 +194,11 @@ def build_net(n_elements: int, props: np.ndarray, readout: str, hidden: int = HI
             self.gamma = 0.5 / (CUTOFF / (N_RBF - 1)) ** 2
 
         def forward(self, z, c, s, d, owner, first, n_samples):
-            h = self.inp(torch.cat([self.emb(z), self.props[z]], dim=-1))
+            parts = ([self.emb(z)] if self.use_emb else []) + \
+                    ([self.props[z]] if self.use_props else [])
+            h = self.inp(torch.cat(parts, dim=-1))
+            if self.bins:
+                d = self.bin_centres[torch.bucketize(d, self.bin_edges)]
             fc = (0.5 * (torch.cos(np.pi * d / CUTOFF) + 1.0))[:, None]
             rbf = torch.exp(-self.gamma * (d[:, None] - self.mu) ** 2)
             for filt, mix, upd in zip(self.filt, self.mix, self.upd):
@@ -258,4 +284,24 @@ def fit_fold(job: Tuple[int, int, np.ndarray, np.ndarray, np.ndarray]):
     net, mean, sd, epochs, best = train_member(
         _STATE["net_args"], _STATE["graphs"], _STATE["y"], tr, va, seed=1000 * fold + member)
     return fold, member, te, predict(net, _STATE["graphs"], te, mean, sd), epochs, best, \
+        time.time() - t0
+
+
+def init_ablation(variants: Dict[str, Tuple[Graphs, dict]], y: np.ndarray, threads: int = 1):
+    """Workers of the ablation study: ``variants`` maps a name to (graphs, net_args)."""
+    import torch
+    torch.set_num_threads(threads)
+    _STATE.update(variants=variants, y=y)
+
+
+def fit_variant(job):
+    """(variant, fold number, member, training rows, validation rows, test rows) -> predictions.
+
+    The seed depends on the fold and the member only, so that the variants are paired."""
+    name, fold, member, tr, va, te = job
+    t0 = time.time()
+    graphs, net_args = _STATE["variants"][name]
+    net, mean, sd, epochs, best = train_member(net_args, graphs, _STATE["y"], tr, va,
+                                               seed=1000 * fold + member + 1)
+    return name, fold, member, te, predict(net, graphs, te, mean, sd), epochs, best, \
         time.time() - t0

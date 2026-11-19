@@ -7551,8 +7551,19 @@ What it leaves open, in order:
   `torch.set_flush_denormal(True)`. **Verdict:** a smooth field of the site environment adds
   nothing to a count of the atoms and their properties at each distance from the site, for H or
   for OH, but a learned network on the same atoms beats both by 0.02 to 0.08 eV; the shell
-  counts are not the limit of the data. What part of the network gives the gain (element
-  vectors, exact distances, depth, ensemble) is not tested. A tutorial was planned on this set
+  counts are not the limit of the data. **Ablation** (`--task ablate`, results in
+  `results/alloy/ablation.json`; H sites, slabs held out, 7 variants of 3 members, seeds paired
+  by fold and member): the full network has MAE 0.135 eV against 0.201 for the shell properties
+  (-0.066 [-0.074, -0.058]). Distances replaced by the centre of four shells: +0.036 [+0.029,
+  +0.043], more than half of the gap. A network with about the shell properties' own information
+  (one layer, four shells, tabulated properties only, no site kind, nothing beyond 5 A) still
+  beats them by -0.031 [-0.039, -0.022]: the other part of the gap is the learner (0.031 +
+  0.036 = 0.067). No learned element vectors, no tabulated properties, or one layer: about +0.010
+  each (the two element inputs replace each other). One network 0.150, the mean of three 0.135
+  (0.015 [0.013, 0.017]). Site kind added: +0.002 [-0.001, +0.006], nothing. The 0.010 changes
+  are about the seed spread of one network (members 0.145 to 0.154); a repeat of the full
+  network gave 0.135 against 0.136. Not done: OH, other folds, tuning for each variant, a network
+  with field input, an equivariant network. A tutorial was planned on this set
   and dropped for the first reason. **Not done:** the O and OOH energies
   (O.tar.gz, 6.1 GB, not downloaded; the set has no OOH, so no ORR limiting potential); the
   converged-only variant of the site tasks.

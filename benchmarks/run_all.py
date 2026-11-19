@@ -1163,15 +1163,16 @@ def registry() -> List[Benchmark]:
                   "distance shells around the site (neighbour counts), and the atom count and "
                   "standardised element properties in such shells (shell properties); and a "
                   "graph neural network of the SchNet type on the same rows and folds "
-                  "(needs PyTorch)",
+                  "(needs PyTorch), and seven variants of it that show which part of the network "
+                  "gives its gain",
                   "run_alloy.py", "alloy",
                   compute=[["--task", "slab"], ["--task", "site"], ["--task", "shells"],
-                           ["--task", "gnn"]],
+                           ["--task", "gnn"], ["--task", "ablate"]],
                   prepare=["examples/make_alloy_examples.py --scan, then --build --workers 4 "
                            "(needs H.tar.gz, 4.6 GB, and references.tar.gz from Materials Cloud "
                            "record xxdhq-f1v83 in benchmarks/cache/alloy_her; about 30 minutes; "
                            "the result is kept in examples/alloy)"],
-                  minutes="400",
+                  minutes="520",
                   report=lambda: _mod("run_alloy").write_table(),
                   tables=["alloy/table.md"]),
         Benchmark("structures",

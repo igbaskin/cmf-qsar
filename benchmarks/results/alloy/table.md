@@ -409,3 +409,19 @@ A message-passing network of the SchNet type (`benchmarks/alloy_gnn.py`): 3 laye
 | alloy-out | properties of the binding elements, site kind and slab elements | reference | -0.036 [-0.051, -0.025] |
 | alloy-out | shell properties and site kind | reference | -0.026 [-0.033, -0.020] |
 
+## Which part of the network gives the gain
+
+site H [all], folds `slab-out`. Each row is the network with one part changed. Every variant is trained like the full network: 3 members, the same rows, folds and inner folds, and a seed that depends on the fold and the member only. MAE in eV. *One network* is the mean MAE of the 3 members alone. The two last columns are differences in MAE of the ensemble with an interval of 95 % (whole slabs resampled); a positive number against the full network means that the change made the result worse. The shell reference is `shell properties and site kind`.
+
+| variant | MAE of the ensemble | MAE of one network | q2 | minus the full network | minus the shell reference |
+| --- | --- | --- | --- | --- | --- |
+| full network | 0.135 | 0.150 | +0.838 |  | -0.066 [-0.074, -0.058] |
+| no learned element vectors | 0.144 | 0.158 | +0.828 | +0.010 [+0.004, +0.016] | -0.056 [-0.064, -0.049] |
+| no tabulated element properties | 0.145 | 0.163 | +0.832 | +0.010 [+0.006, +0.014] | -0.056 [-0.065, -0.048] |
+| distances replaced by four shells | 0.171 | 0.184 | +0.783 | +0.036 [+0.029, +0.043] | -0.030 [-0.039, -0.022] |
+| one layer of messages | 0.143 | 0.158 | +0.829 | +0.009 [+0.004, +0.014] | -0.057 [-0.066, -0.049] |
+| site kind added | 0.137 | 0.153 | +0.839 | +0.002 [-0.001, +0.006] | -0.064 [-0.072, -0.056] |
+| one layer, four shells, no learned element vectors | 0.170 | 0.182 | +0.783 | +0.036 [+0.028, +0.043] | -0.031 [-0.039, -0.022] |
+
+The ensemble alone: one network of the full model has MAE 0.150, the mean of 3 has 0.135; difference (one network minus the ensemble) +0.015 [+0.013, +0.017].
+

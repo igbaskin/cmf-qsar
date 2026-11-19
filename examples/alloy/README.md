@@ -146,16 +146,51 @@ bootstrap interval of 95 %.
   site, explain most of the variance (q2 about 0.7 to 0.8). A smooth field of the environment
   around the site adds nothing to them, for H or for OH. The fields also add nothing for the
   lowest energy of a whole slab. The network shows that these shell counts are not the limit of
-  the data: it uses the same elements and the exact distances and is clearly better. This
-  benchmark does not say which part of the network is responsible. It could be the learned
-  element vectors, the continuous distances, the layers of messages or the ensemble of three
-  members. Each of them was not tested alone.
+  the data: it uses the same elements and the exact distances and is clearly better.
+- **Which part of the network gives the gain** (`--task ablate`, H sites, slabs held out; the
+  network of the table above has MAE 0.135 eV, and the shell properties 0.201 eV). Each row
+  changes one part. The variants are trained like the full network (3 members, same folds and
+  inner folds, seeds that depend on the fold and the member only). MAE in eV; the differences
+  have an interval of 95 % with whole slabs resampled:
+
+  | variant | MAE of the ensemble | MAE of one network | minus the full network | minus the shell properties |
+  | --- | --- | --- | --- | --- |
+  | full network | 0.135 | 0.150 | | -0.066 [-0.074, -0.058] |
+  | no learned element vectors | 0.144 | 0.158 | +0.010 [+0.004, +0.016] | -0.056 [-0.064, -0.049] |
+  | no tabulated element properties | 0.145 | 0.163 | +0.010 [+0.006, +0.014] | -0.056 [-0.065, -0.048] |
+  | distances replaced by four shells | 0.171 | 0.184 | +0.036 [+0.029, +0.043] | -0.030 [-0.039, -0.022] |
+  | one layer of messages | 0.143 | 0.158 | +0.009 [+0.004, +0.014] | -0.057 [-0.066, -0.049] |
+  | site kind added | 0.137 | 0.153 | +0.002 [-0.001, +0.006] | -0.064 [-0.072, -0.056] |
+  | one layer, four shells, no learned element vectors | 0.170 | 0.182 | +0.036 [+0.028, +0.043] | -0.031 [-0.039, -0.022] |
+
+  - **The exact distance is the largest part.** When every distance is replaced by the centre of
+    its shell (up to 2.5, 3.5 and 4.5 Angstrom, and beyond), the error rises by 0.036 eV, more
+    than half of the gap to the shell properties.
+  - **The learner is the other part.** The last row has about the same information as the shell
+    properties: one layer, four distance shells, tabulated properties only, no site kind and no
+    atoms between 5 and 6 Angstrom. It still beats the shell properties by 0.031 eV. So a
+    network that learns how to weigh the elements and shells does better than a Gaussian kernel
+    on the standardised sums. The two parts add up to the whole gap: 0.031 + 0.036 = 0.067, and
+    the gap is 0.066.
+  - **The smaller parts.** Removing the learned element vectors, removing the tabulated
+    properties, or using one layer instead of three each costs about 0.010 eV. The two kinds of
+    element input replace each other, so this does not show that either one is unnecessary.
+  - **The ensemble.** One network has MAE 0.150, and the mean of three has 0.135 (difference
+    0.015 [0.013, 0.017]). A single network is still about 0.05 eV better than the shell
+    properties.
+  - **The site kind adds nothing** (+0.002 [-0.001, +0.006]). Not giving it to the network was
+    not a disadvantage.
+  - **How much to trust the small parts.** The intervals count the sampling of slabs, not the
+    training randomness. The three members of one variant differ by about 0.01 eV in MAE, and
+    a repeat of the full network with other seeds gave 0.135 against 0.136 in the first run. The
+    0.036 eV change from the distances is far larger than this. The 0.010 eV changes are only
+    about as large as the seed spread of one network.
 - **What was not done for the network.** Its settings (32 features, 3 layers, learning rate
   0.002) were chosen in a small pilot with three settings on the validation parts of one
-  training part, never on a test fold. They were not tuned further. The references and field
-  methods choose their kernel and ridge value inside the training part with a larger grid.
-  No network with field input, no single network without the ensemble and no network that uses
-  directions of the bonds (an equivariant network) were run.
+  training part, never on a test fold. They were not tuned again for the variants. The
+  references and field methods choose their kernel and ridge value inside the training part with
+  a larger grid. The ablation was run for H sites with slabs held out only. No network with field
+  input and no network that uses directions of the bonds (an equivariant network) were run.
 
 ## What to keep in mind
 
