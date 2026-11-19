@@ -411,7 +411,11 @@ A message-passing network of the SchNet type (`benchmarks/alloy_gnn.py`): 3 laye
 
 ## Which part of the network gives the gain
 
-site H [all], folds `slab-out`. Each row is the network with one part changed. Every variant is trained like the full network: 3 members, the same rows, folds and inner folds, and a seed that depends on the fold and the member only. MAE in eV. *One network* is the mean MAE of the 3 members alone. The two last columns are differences in MAE of the ensemble with an interval of 95 % (whole slabs resampled); a positive number against the full network means that the change made the result worse. The shell reference is `shell properties and site kind`.
+Each row is the network with one part changed; the folds are `slab-out`. Every variant is trained like the full network: 3 members, the same rows, folds and inner folds, and a seed that depends on the fold and the member only. MAE in eV. *One network* is the mean MAE of the 3 members alone. The two last columns are differences in MAE of the ensemble with an interval of 95 % (whole slabs resampled); a positive number against the full network means that the change made the result worse.
+
+### site H [all]
+
+The shell reference is `shell properties and site kind`.
 
 | variant | MAE of the ensemble | MAE of one network | q2 | minus the full network | minus the shell reference |
 | --- | --- | --- | --- | --- | --- |
@@ -424,4 +428,20 @@ site H [all], folds `slab-out`. Each row is the network with one part changed. E
 | one layer, four shells, no learned element vectors | 0.170 | 0.182 | +0.783 | +0.036 [+0.028, +0.043] | -0.031 [-0.039, -0.022] |
 
 The ensemble alone: one network of the full model has MAE 0.150, the mean of 3 has 0.135; difference (one network minus the ensemble) +0.015 [+0.013, +0.017].
+
+### site OH [all]
+
+The shell reference is `shell properties and site kind`.
+
+| variant | MAE of the ensemble | MAE of one network | q2 | minus the full network | minus the shell reference |
+| --- | --- | --- | --- | --- | --- |
+| full network | 0.193 | 0.205 | +0.742 |  | -0.027 [-0.034, -0.020] |
+| no learned element vectors | 0.196 | 0.205 | +0.746 | +0.003 [-0.001, +0.007] | -0.024 [-0.032, -0.016] |
+| no tabulated element properties | 0.198 | 0.210 | +0.732 | +0.005 [+0.001, +0.009] | -0.022 [-0.030, -0.014] |
+| distances replaced by four shells | 0.203 | 0.214 | +0.727 | +0.010 [+0.005, +0.016] | -0.016 [-0.024, -0.009] |
+| one layer of messages | 0.210 | 0.217 | +0.719 | +0.017 [+0.012, +0.022] | -0.010 [-0.019, -0.002] |
+| site kind added | 0.189 | 0.200 | +0.744 | -0.004 [-0.007, -0.001] | -0.031 [-0.040, -0.024] |
+| one layer, four shells, no learned element vectors | 0.219 | 0.227 | +0.698 | +0.026 [+0.018, +0.035] | -0.001 [-0.010, +0.010] |
+
+The ensemble alone: one network of the full model has MAE 0.205, the mean of 3 has 0.193; difference (one network minus the ensemble) +0.012 [+0.010, +0.013].
 

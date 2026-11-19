@@ -872,7 +872,7 @@ ABLATIONS = {
 
 
 def run_ablate(args, log=print) -> None:
-    """H sites with whole slabs held out: the network with one part changed at a time.
+    """H or OH sites with whole slabs held out: the network with one part changed at a time.
 
     Every variant is trained as the full network of ``run_gnn`` (3 members, the same rows, folds and
     inner folds) and the seed of a member depends only on the fold and the member, so that the
@@ -881,10 +881,14 @@ def run_ablate(args, log=print) -> None:
     import multiprocessing as mp
     import alloy_gnn as G
     warnings.filterwarnings("ignore")
+    ads = args.adsorbate
     data = AlloySet()
     with open(os.path.join(RESULTS, "data_site.json"), encoding="utf-8") as fh:
-        task = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
-    rows = site_rows(data, "H", "all", args.max_sites, np.random.RandomState(SEED))
+        task = [t for t in json.load(fh)["tasks"] if t["task"] == f"site {ads} [all]"][0]
+    rng = np.random.RandomState(SEED)
+    if ads != "H":
+        site_rows(data, "H", "all", args.max_sites, rng)      # the draw of the first task
+    rows = site_rows(data, ads, "all", args.max_sites, rng)
     if [r["log"] for r in rows] != task["rows"]:
         raise SystemExit("the rows differ from the stored run")
     y = np.array(task["y"])
@@ -894,7 +898,7 @@ def run_ablate(args, log=print) -> None:
     props = standard_properties(data.elements)
     P = np.vstack([np.array([props[e] for e in data.elements]), np.zeros((1, len(PROPS)))])
     P_kinds = np.vstack([P, np.zeros((len(SITE_KINDS) - 1, len(PROPS)))])
-    base = G.site_graphs(data, rows, "H", HEIGHT)
+    base = G.site_graphs(data, rows, ads, HEIGHT)
     kind_graphs = G.with_site_kinds(base, rows, len(data.elements), SITE_KINDS)
     variants = {}
     for name, opt in ABLATIONS.items():
@@ -913,7 +917,7 @@ def run_ablate(args, log=print) -> None:
             for member in range(G.MEMBERS):
                 va = tr[inner[member]]
                 jobs.append((name, k, member, np.setdiff1d(tr, va), va, te))
-    log(f"site H, slabs held out: {len(only)} variants, {len(jobs)} trainings on {args.workers} workers")
+    log(f"site {ads}, slabs held out: {len(only)} variants, {len(jobs)} trainings on {args.workers} workers")
     pred = {n: np.full((G.MEMBERS, len(y)), np.nan) for n in only}
     epochs = {n: [] for n in only}
     t0 = time.time()
@@ -929,11 +933,11 @@ def run_ablate(args, log=print) -> None:
     shells_path = os.path.join(RESULTS, "shells.json")
     if os.path.exists(shells_path):
         with open(shells_path, encoding="utf-8") as fh:
-            t = [t for t in json.load(fh)["tasks"] if t["task"] == "site H [all]"][0]
+            t = [t for t in json.load(fh)["tasks"] if t["task"] == f"site {ads} [all]"][0]
         sh = min([m for m in t["models"] if m["design"] == design], key=lambda m: m["mae"])["name"]
-        shell_pred = np.array(cross_validate(sh, shell_references(data, rows, "H")[sh], y, design,
+        shell_pred = np.array(cross_validate(sh, shell_references(data, rows, ads)[sh], y, design,
                                              groups)["predicted"])
-    out = {"task": "site H [all]", "design": design, "members": G.MEMBERS, "shell_reference": sh,
+    out = {"task": f"site {ads} [all]", "design": design, "members": G.MEMBERS, "shell_reference": sh,
            "variants": []}
     full = pred.get("full network")
     for name in only:
@@ -955,7 +959,7 @@ def run_ablate(args, log=print) -> None:
         d = _bootstrap_errors(errs, eb, groups["slab-out"])
         out["ensemble"] = {"one_network_mae": float(np.mean(errs)), "three_mae": float(np.mean(eb)),
                            "delta_mae": d[0], "low": d[1], "high": d[2]}
-    path = os.path.join(RESULTS, "ablation.json")
+    path = os.path.join(RESULTS, "ablation.json" if ads == "H" else f"ablation_{ads}.json")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(out, fh, indent=1, default=float)
         fh.write("\n")
@@ -1100,20 +1104,24 @@ def write_table(path: Optional[str] = None) -> str:
                 lines.append(f"| {p['design']} | {p['against']} | {p['kind']} | "
                              f"{p['delta_mae']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] |")
             lines.append("")
-    abl = os.path.join(RESULTS, "ablation.json")
-    if os.path.exists(abl):
-        with open(abl, encoding="utf-8") as fh:
-            a = json.load(fh)
-        interval = lambda d: f"{d['delta_mae']:+.3f} [{d['low']:+.3f}, {d['high']:+.3f}]"   # noqa: E731
-        lines += ["## Which part of the network gives the gain", "",
-                  f"{a['task']}, folds `{a['design']}`. Each row is the network with one part "
-                  f"changed. Every variant is trained like the full network: {a['members']} "
-                  f"members, the same rows, folds and inner folds, and a seed that depends on "
-                  f"the fold and the member only. MAE in eV. *One network* is the mean MAE of "
-                  f"the {a['members']} members alone. The two last columns are differences in "
-                  f"MAE of the ensemble with an interval of 95 % (whole slabs resampled); a "
-                  f"positive number against the full network means that the change made the "
-                  f"result worse. The shell reference is `{a['shell_reference']}`.", "",
+    ablations = []
+    for name in ("ablation.json", "ablation_OH.json"):
+        if os.path.exists(os.path.join(RESULTS, name)):
+            with open(os.path.join(RESULTS, name), encoding="utf-8") as fh:
+                ablations.append(json.load(fh))
+    interval = lambda d: f"{d['delta_mae']:+.3f} [{d['low']:+.3f}, {d['high']:+.3f}]"   # noqa: E731
+    for k, a in enumerate(ablations):
+        if k == 0:
+            lines += ["## Which part of the network gives the gain", "",
+                      f"Each row is the network with one part changed; the folds are "
+                      f"`{a['design']}`. Every variant is trained like the full network: "
+                      f"{a['members']} members, the same rows, folds and inner folds, and a seed "
+                      f"that depends on the fold and the member only. MAE in eV. *One network* is "
+                      f"the mean MAE of the {a['members']} members alone. The two last columns "
+                      f"are differences in MAE of the ensemble with an interval of 95 % (whole "
+                      f"slabs resampled); a positive number against the full network means that "
+                      f"the change made the result worse.", ""]
+        lines += [f"### {a['task']}", "", f"The shell reference is `{a['shell_reference']}`.", "",
                   "| variant | MAE of the ensemble | MAE of one network | q2 | minus the full network "
                   "| minus the shell reference |", "| --- | --- | --- | --- | --- | --- |"]
         for v in a["variants"]:
@@ -1142,7 +1150,8 @@ def main() -> None:
                          "gnn: the graph neural network on every stored task; "
                          "ablate: the network with one part changed at a time (H sites, "
                          "slabs held out)")
-    ap.add_argument("--workers", type=int, default=20, help="processes of the task gnn")
+    ap.add_argument("--workers", type=int, default=20, help="processes of the tasks gnn and ablate")
+    ap.add_argument("--adsorbate", choices=("H", "OH"), default="H", help="task ablate: the sites")
     ap.add_argument("--only", default="", help="task gnn: only the tasks whose name has this text")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS), choices=list(VARIANTS))
     ap.add_argument("--max-sites", type=int, default=MAX_OVERLAP_SITES)

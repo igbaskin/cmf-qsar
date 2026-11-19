@@ -185,12 +185,38 @@ bootstrap interval of 95 %.
     a repeat of the full network with other seeds gave 0.135 against 0.136 in the first run. The
     0.036 eV change from the distances is far larger than this. The 0.010 eV changes are only
     about as large as the seed spread of one network.
+- **The same ablation for OH sites** (slabs held out; `--task ablate --adsorbate OH`). The full
+  network has MAE 0.193 eV and the shell properties 0.220 eV (-0.027 [-0.034, -0.020]).
+
+  | variant | MAE of the ensemble | MAE of one network | minus the full network | minus the shell properties |
+  | --- | --- | --- | --- | --- |
+  | full network | 0.193 | 0.205 | | -0.027 [-0.034, -0.020] |
+  | no learned element vectors | 0.196 | 0.205 | +0.003 [-0.001, +0.007] | -0.024 [-0.032, -0.016] |
+  | no tabulated element properties | 0.198 | 0.210 | +0.005 [+0.001, +0.009] | -0.022 [-0.030, -0.014] |
+  | distances replaced by four shells | 0.203 | 0.214 | +0.010 [+0.005, +0.016] | -0.016 [-0.024, -0.009] |
+  | one layer of messages | 0.210 | 0.217 | +0.017 [+0.012, +0.022] | -0.010 [-0.019, -0.002] |
+  | site kind added | 0.189 | 0.200 | -0.004 [-0.007, -0.001] | -0.031 [-0.040, -0.024] |
+  | one layer, four shells, no learned element vectors | 0.219 | 0.227 | +0.026 [+0.018, +0.035] | -0.001 [-0.010, +0.010] |
+
+  - **For OH the parts are different from H.** The last row, which has about the information of
+    the shell properties, is no better than they are (-0.001 [-0.010, +0.010]). So the learner
+    gives nothing by itself here. The whole gap comes from the three layers (0.017 eV), the exact
+    distances (0.010 eV) and the ensemble. The parts overlap, and the one-layer row with shells
+    and no learned vectors has the sum, 0.026 eV, against a gap of 0.027 eV.
+  - **The ensemble.** One network has MAE 0.205, the mean of three 0.193 (difference 0.012
+    [0.010, 0.013]). A single network is about 0.015 eV better than the shell properties.
+  - **The site kind helps a little** (-0.004 [-0.007, -0.001]); for H it did not. The interval
+    ends close to zero and the training randomness is not counted, so this is weak evidence.
+  - **The learned element vectors and the tabulated properties** matter little (+0.003 and
+    +0.005 eV), and one of them can replace the other.
+  - **Seed spread.** The three members of a variant differ by up to 0.005 eV in MAE, so
+    differences below about 0.005 eV should not be read as real.
 - **What was not done for the network.** Its settings (32 features, 3 layers, learning rate
   0.002) were chosen in a small pilot with three settings on the validation parts of one
   training part, never on a test fold. They were not tuned again for the variants. The
   references and field methods choose their kernel and ridge value inside the training part with
-  a larger grid. The ablation was run for H sites with slabs held out only. No network with field
-  input and no network that uses directions of the bonds (an equivariant network) were run.
+  a larger grid. The ablation was run with slabs held out only, for H and OH. No network with
+  field input and no network that uses directions of the bonds (an equivariant network) were run.
 
 ## What to keep in mind
 
