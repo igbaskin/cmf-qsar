@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 269 classes with 867 public methods, and 1455 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 140 modules, 270 classes with 871 public methods, and 1458 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -15848,11 +15848,25 @@ autocorrelation of `cmfqsar.invariant.autocorrelation`, optionally counting only
 pairs whose *first* atom lies in a chosen set, here the central repeat unit.  With every atom in
 the set the result equals the plain autocorrelation (the tests compare them).  With the central
 unit it is the field environment of one repeat unit inside a chain: its pairs with its own atoms
-and with the atoms of its neighbours, and nothing that starts at the caps.  This is what the
-periodic chain of `cmfqsar.periodic` computes per repeat length, without the need to build a
-periodic cell with the right repeat distance.  The function also replaces a dense array of
-(atoms x atoms x distance bins) by a sparse one, so an oligomer of 500 atoms at a width of
-0.01 A costs megabytes, not gigabytes; one neighbour list serves every width asked for.
+and with the atoms of its neighbours, and nothing that starts at the caps.  The function also
+replaces a dense array of (atoms x atoms x distance bins) by a sparse one, so an oligomer of 500
+atoms at a width of 0.01 A costs megabytes, not gigabytes; one neighbour list serves every width
+asked for.
+
+**The periodic chain (plan item PL3).**  The central unit of a trimer sees one neighbour on each
+side; an infinite chain sees as many as the distance cutoff reaches.  An extended trimer is not
+a chain that repeats, because its three units have different conformations, so
+`chain_screw` builds one: copies of the middle unit, related by the screw (a rotation and a
+translation) that carries the junction before the middle unit onto the junction after it.  Every
+junction of that chain then has the bond, the bond angles and the torsions of the trimer's
+junction, and the chain differs from the trimer only by the copies beyond the nearest
+neighbours and the absence of caps.  The copies can meet again a few units further on, which
+the screw's `contact` reports.  `chain_autocorrelation_rows` gives the field of one unit
+of that chain, sparse, so it works at the narrow widths where the dense periodic sum would need
+gigabytes.  When the screw is a translation, `periodic_chain` makes the cell of
+`cmfqsar.periodic` (plan item M1), periodic along the translation only, and
+`cmfqsar.periodic.periodic_autocorrelation` gives the same field, with or without the
+uniform background per repeat length.
 
 **What the module does not do.**  It does not describe chain length, its distribution, packing,
 crystallinity or crosslinking: none of these is in a field of a single oligomer.  A copolymer
@@ -15880,6 +15894,39 @@ Attributes:
 #### `RepeatUnit.ladder` -> bool  (property)
 
 #### `RepeatUnit.heavy_atoms` -> int  (property)
+
+### `class ChainScrew  (dataclass)`
+
+The operation that carries one unit of a chain onto the next: x -> R x + t.
+
+`R` is a rotation and `t` a translation; a chain of identical units is the middle unit and its
+images under the powers of this operation.  The record fields describe it: `turn` (degrees
+per unit) and `rise` (A per unit along the screw axis); `frame_residual`, the root mean
+square misfit of the atoms that define it; `rmsd_next`, how far the next unit of the
+trimer is from the image of the middle unit (0 when the trimer itself repeats); `junction`,
+the bond length between two units; `contact`, the closest approach of two atoms of the
+chain that are not bonded (below `CHAIN_CONTACT` the chain overlaps itself).
+
+Attributes:
+
+- `R: np.ndarray`
+- `t: np.ndarray`
+- `turn: float`
+- `rise: float`
+- `frame_residual: float`
+- `rmsd_next: float`
+- `junction: float`
+- `contact: float`
+
+#### `ChainScrew.apply(X: np.ndarray, k: int=1) -> np.ndarray`
+
+The positions `X` moved by the operation `k` times (k < 0 for the inverse).
+
+#### `ChainScrew.is_translation` -> bool  (property)
+
+#### `ChainScrew.overlaps` -> bool  (property)
+
+#### `ChainScrew.record() -> Dict[str, float]`
 
 ### `parse_repeat_unit(psmiles: str) -> RepeatUnit`
 
@@ -15945,7 +15992,7 @@ Returns one (molecule or None, record, error message) per input, in the input or
 molecules come back through MOL blocks, so the `cmf_unit` labels travel as the SD property
 list that `unit_labels` reads.
 
-### `autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray]=None, chunk: int=200000) -> List[np.ndarray]`
+### `autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray]=None, chunk: int=200000, atom_pairs: Optional[np.ndarray]=None) -> List[np.ndarray]`
 
 The field autocorrelation of one molecule for each spec of `specs`, from one neighbour list.
 
@@ -15955,6 +16002,55 @@ The field autocorrelation of one molecule for each spec of `specs`, from one nei
 mask are counted: the pairs inside the set twice (both ways round), the pairs from the set to
 the rest once.  Over a partition of the atoms these rows add up to the plain autocorrelation,
 so the row of the central unit is the share of one repeat unit, as a periodic cell's is.
+
+`atom_pairs`, when given, is the list of atom pairs (i < j) to count in place of all pairs within
+reach; `chain_autocorrelation_rows` passes only the pairs that start in its middle copy.
+
+### `chain_screw(mol: Chem.Mol, reach: float=12.0) -> ChainScrew`
+
+The screw of the chain that the middle unit of an oligomer stands for (plan item PL3).
+
+`mol` is an oligomer of an odd number of units, at least three, with one conformer and the
+`cmf_unit` labels (as `build` returns it).  The atoms of all units come in the same
+order, so the units correspond atom by atom (checked here).  The screw carries the junction
+before the middle unit onto the junction after it: the atom of the previous unit bonded to the
+middle unit, the middle unit's head atom and its heavy atoms up to two bonds away go onto the
+middle unit's tail atom, the next unit's head atom and the same heavy atoms of the next unit.
+The chain made of copies of the middle unit then has, at every junction, the bond, the two
+bond angles and the torsions of the trimer's junction after the middle unit.
+
+An extended trimer is not a chain that repeats: its three units have different conformations.
+A pure translation of the middle unit put atoms of a chain 0.5 A apart on four test polymers,
+and the best rigid fit of one unit onto the next does so in 57 % of a sample of 432 PL2
+trimers.  The screw of
+the junction keeps the chemistry of a junction exactly, but its copies can still meet again
+a few units further on; `contact` says so.  `reach` (A) is how far along the chain the
+contacts are looked for.
+
+### `periodic_chain(mol: Chem.Mol, mf, screw: Optional[ChainScrew]=None, name: str='', side: float=100.0)`
+
+The middle unit of an oligomer as a cell periodic along one lattice vector (plan item M1).
+
+Only a chain whose screw is a translation (`ChainScrew.is_translation`) has such a
+cell; the translation is the third lattice vector, the only periodic one, and two vectors of
+`side` angstrom normal to it complete the cell, which no pair crosses.  `mf` is the
+`cmfqsar.fields.MoleculeFields` of the whole oligomer, so that the weights of the
+middle unit (the Gasteiger charges above all) are those it has inside a chain.  Returns a
+`cmfqsar.periodic.CrystalFields` for `cmfqsar.periodic.periodic_autocorrelation`,
+which adds the uniform background per repeat length that M1 defines.
+
+### `chain_autocorrelation_rows(mol: Chem.Mol, mf, specs: Sequence, screw: Optional[ChainScrew]=None, copies: Optional[int]=None) -> List[np.ndarray]`
+
+The field autocorrelation of one unit of the chain, without a background, for each spec of
+`specs` (`cmfqsar.invariant.AutocorrelationSpec`).
+
+The middle unit is copied by the powers of the screw as far as the longest Gaussian reaches,
+and `autocorrelation_rows` counts the pairs that start in the copy at the origin.  The
+rows follow the convention of the central-unit rows of a trimer, so the two compare channel
+by channel.  For a chain whose screw is a translation they equal
+`cmfqsar.periodic.periodic_autocorrelation` on `periodic_chain` with the
+background and the taper off, times the number of atoms of the unit.  `copies` limits the
+chain to that many copies on each side (1: the nearest neighbours only, as in a trimer).
 
 ## cmfqsar.poses
 

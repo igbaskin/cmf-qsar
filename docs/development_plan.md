@@ -9394,7 +9394,18 @@ Open after PL1:
   the error halves (0.5 to 0.9). Details in the manual, *Ladder polymers*.
 * **PL3. The periodic chain against the trimer.** Item M1 computes the field of a chain per
   repeat length, but needs a cell with the right repeat distance. A builder that takes it from
-  the extended trimer would make the comparison possible.
+  the extended trimer would make the comparison possible. **Done 19 November 2026; the gate is
+  not met** (`benchmarks/run_polymer_chain.py`). The extended trimer gives no repeat: its units
+  have different conformations, and even the copy that the junction screw makes misses the
+  next unit by 4.1 A (median). `cmfqsar.polymer.chain_screw` builds the chain as copies of the middle unit
+  related by the screw that carries the junction before it onto the junction after it;
+  `chain_autocorrelation_rows` gives its field, and `periodic_chain` M1's cell when the screw is
+  a translation (one polymer of 1,725). 705 chains (41 %) meet themselves and are left out.
+  On the other 1,020, chain + counts minus central unit + counts is -0.018 to -0.089 on random
+  folds (every interval below zero) and -0.020 to -0.116 with groups held out, on the density
+  and all five gases. The chain cut to its nearest copies is close to the trimer (-0.058 to
+  +0.022); the far copies cost 0.045 to 0.094. Details in the manual, *The periodic chain
+  against the trimer*.
 * **PL4. Copolymers.** A random copolymer as the weighted mean of its repeat units' fields
   (the packed ensembles of item MS5), against a weighted mean of descriptors.
 

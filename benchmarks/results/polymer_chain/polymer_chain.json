@@ -1,0 +1,2353 @@
+{
+ "chain_sigmas": [
+  0.0005,
+  0.001,
+  0.0025,
+  0.005,
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0,
+  100.0
+ ],
+ "kernel_correlation": {
+  "0.005": {
+   "all": 0.9166510264493598,
+   "longest third of rises": 0.9794975264612291,
+   "shortest third of rises": 0.912283766697879
+  },
+  "0.1": {
+   "all": 0.8886636944002323,
+   "longest third of rises": 0.9646287351899641,
+   "shortest third of rises": 0.8936058263792142
+  }
+ },
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "not_built": {},
+ "repeats": 10,
+ "ridge_floor": 0.0001,
+ "rise_tertiles": [
+  3.3056334747926055,
+  7.273734045564898
+ ],
+ "screws": {
+  "contact": {
+   "median": 1.6071981503286417,
+   "p05": 0.23979723448511903,
+   "p95": 2.3471057057725395
+  },
+  "frame_residual": {
+   "median": 0.1434916345797249,
+   "p05": 0.009982618329308824,
+   "p95": 1.2421763278469158
+  },
+  "junction": {
+   "median": 1.4659071764610472,
+   "p05": 1.3779371864701633,
+   "p95": 1.5694540830890833
+  },
+  "overlapping": 705,
+  "rise": {
+   "median": 2.7955569978319033,
+   "p05": 0.5414516890362201,
+   "p95": 12.417935871507762
+  },
+  "rmsd_next": {
+   "median": 4.095691222548434,
+   "p05": 0.5145427220405103,
+   "p95": 15.442157429472662
+  },
+  "screws": 1725,
+  "translations": 1,
+  "translations_valid": 1,
+  "trimers": 1725,
+  "turn": {
+   "median": 133.32516784845907,
+   "p05": 55.03723636719707,
+   "p95": 175.5122562708371
+  }
+ },
+ "seconds": 651.6,
+ "sigmas": [
+  0.001,
+  0.0025,
+  0.005,
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "targets": {
+  "CH4": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.02457603334378979,
+     "lo": -0.06821286977624665,
+     "mean": -0.04577902820752755,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": 0.0016196088530050189,
+     "lo": -0.08603539231318144,
+     "mean": -0.03665574458556864,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.036731741118780345,
+     "lo": -0.12349021853797978,
+     "mean": -0.08077828946735821,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.013102110804059491,
+     "lo": -0.20108293419474643,
+     "mean": -0.09715510009957307,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.019248145537257462,
+     "lo": -0.037911873119832955,
+     "mean": -0.010738838190970879,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.03417930128821842,
+     "lo": -0.053094596645150705,
+     "mean": -0.006363753439733166,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.0379868364010763,
+     "lo": -0.1020619394390027,
+     "mean": -0.07003945127638733,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.03516322351069982,
+     "lo": -0.1606311360425727,
+     "mean": -0.0907913466598399,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06368848423020439,
+     "lo": -0.01049275519955771,
+     "mean": 0.027168931590904055,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.10356270784690606,
+     "lo": -0.04423770298647803,
+     "mean": 0.02885969263299093,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.10909704620192742,
+     "lo": 0.034959622536156504,
+     "mean": 0.0729479597984316,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.13659364455713688,
+     "lo": 0.01585175681326693,
+     "mean": 0.06551543721855957,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 83,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 4 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 4 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 4 bonds, width 1, h 3, ridge 1": 3,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 3, ridge 1": 3,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 6,
+       "up to 6 bonds, width 1, h 10, ridge 1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 10,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 6
+      },
+      "q2_mean": 0.40440324514744574,
+      "q2_range": 0.20863541014645737,
+      "q2_ridge_floor": 0.40440324514744574,
+      "rmse_mean": 0.9149792923108014
+     },
+     "random": {
+      "chosen": {
+       "up to 4 bonds, width 1, h 3, ridge 1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 3, ridge 1": 2,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 3,
+       "up to 6 bonds, width 1, h 10, ridge 1": 5,
+       "up to 6 bonds, width 1, h 3, ridge 1": 4,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 12,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 6,
+       "up to 8 bonds, width 1, h 10, ridge 1": 4,
+       "up to 8 bonds, width 1, h 3, ridge 1": 4
+      },
+      "q2_mean": 0.5861137360340228,
+      "q2_range": 0.04401853859630045,
+      "q2_ridge_floor": 0.5861137360340228,
+      "rmse_mean": 0.7636660882957287
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 4 bonds, ridge 0.1": 6,
+       "up to 6 bonds, ridge 0.1": 11,
+       "up to 8 bonds, ridge 0.1": 33
+      },
+      "q2_mean": 0.3468653864322433,
+      "q2_range": 0.1636625694972188,
+      "q2_ridge_floor": 0.3468653864322433,
+      "rmse_mean": 0.9589138131694221
+     },
+     "random": {
+      "chosen": {
+       "up to 4 bonds, ridge 0.1": 1,
+       "up to 6 bonds, ridge 0.1": 20,
+       "up to 8 bonds, ridge 0.1": 29
+      },
+      "q2_mean": 0.5021619201847046,
+      "q2_range": 0.10490638125836937,
+      "q2_ridge_floor": 0.5021619201847046,
+      "rmse_mean": 0.8373551969620487
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 5,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 3,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 7,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 8,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 6,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 2,
+       "sigma 0.03, width 1, h 3, ridge 0.1": 7
+      },
+      "q2_mean": 0.5105155310901394,
+      "q2_range": 0.1543935643023211,
+      "q2_ridge_floor": 0.5105204120214537,
+      "rmse_mean": 0.8296740767815672
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 3,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 15,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.005, width 1, h 3, ridge 0.1": 14,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 6,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.6765016360474443,
+      "q2_range": 0.049942366164419605,
+      "q2_ridge_floor": 0.6764991818324733,
+      "rmse_mean": 0.6750858231250445
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 7,
+       "width 0.5, ridge 0.1": 16,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 26
+      },
+      "q2_mean": 0.39085382768098204,
+      "q2_range": 0.11770389516515922,
+      "q2_ridge_floor": 0.39085382768098204,
+      "rmse_mean": 0.9259827406185666
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 2,
+       "width 0.5, ridge 0.1": 6,
+       "width 1, ridge 0.1": 42
+      },
+      "q2_mean": 0.5425356036908234,
+      "q2_range": 0.03547793665921417,
+      "q2_ridge_floor": 0.5425356036908234,
+      "rmse_mean": 0.8028918067482911
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 19,
+       "sigma 0.005, ridge 0.001": 2,
+       "sigma 0.005, ridge 0.01": 4,
+       "sigma 0.005, ridge 1e-08": 14,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.02, ridge 0.01": 2,
+       "sigma 0.02, ridge 0.1": 1,
+       "sigma 0.03, ridge 0.01": 7
+      },
+      "q2_mean": 0.4727928018599895,
+      "q2_range": 0.11990991224228598,
+      "q2_ridge_floor": 0.4727964211322976,
+      "rmse_mean": 0.8615966947901225
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 22,
+       "sigma 0.005, ridge 0.001": 3,
+       "sigma 0.005, ridge 0.01": 10,
+       "sigma 0.005, ridge 1e-08": 12,
+       "sigma 0.01, ridge 0.1": 2,
+       "sigma 0.02, ridge 0.1": 1
+      },
+      "q2_mean": 0.5865018578806601,
+      "q2_range": 0.051580080265081873,
+      "q2_ridge_floor": 0.5864979970833362,
+      "rmse_mean": 0.7632456441454318
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 40,
+       "sigma 0.005, ridge 1e-08": 9,
+       "sigma 0.01, ridge 1e-08": 1
+      },
+      "q2_mean": 0.48781471761630557,
+      "q2_range": 0.0740097440191555,
+      "q2_ridge_floor": 0.4878147680643127,
+      "rmse_mean": 0.849402534727292
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 48,
+       "sigma 0.005, ridge 1e-08": 2
+      },
+      "q2_mean": 0.5813238387528182,
+      "q2_range": 0.049741748099422445,
+      "q2_ridge_floor": 0.5813175140977782,
+      "rmse_mean": 0.7680433202518031
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 18,
+       "sigma 0.0025, ridge 0.1": 17,
+       "sigma 0.0025, ridge 1e-08": 4,
+       "sigma 0.005, ridge 1e-08": 6,
+       "sigma 0.5, ridge 1": 1,
+       "sigma 1, ridge 0.1": 3,
+       "sigma 1, ridge 1": 1
+      },
+      "q2_mean": 0.3716630544085412,
+      "q2_range": 0.13775506930234616,
+      "q2_ridge_floor": 0.371657826776687,
+      "rmse_mean": 0.9404584859563616
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 18,
+       "sigma 0.0025, ridge 0.01": 4,
+       "sigma 0.0025, ridge 0.1": 27,
+       "sigma 0.0025, ridge 1e-08": 1
+      },
+      "q2_mean": 0.5114305644295876,
+      "q2_range": 0.04283366259714283,
+      "q2_ridge_floor": 0.5114279868080389,
+      "rmse_mean": 0.8297300079190302
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 5,
+       "sigma 0.001, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 7,
+       "sigma 0.001, width 1, h 10, ridge 0.1": 1,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 4,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 4,
+       "sigma 0.0025, width 1, h 10, ridge 0.1": 1,
+       "sigma 0.0025, width 1, h 3, ridge 0.1": 9,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 4,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 3,
+       "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 2,
+       "sigma 0.5, width 1, h 3, ridge 1": 1,
+       "sigma 1, width 0.5, h 3, ridge 1": 4
+      },
+      "q2_mean": 0.46680214375660734,
+      "q2_range": 0.14557364255406058,
+      "q2_ridge_floor": 0.46680281330854567,
+      "rmse_mean": 0.8660812796751486
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 4,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 13,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.1": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.0025, width 1, h 10, ridge 1": 8,
+       "sigma 0.0025, width 1, h 3, ridge 0.1": 20,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 1
+      },
+      "q2_mean": 0.6283421124671346,
+      "q2_range": 0.039121267921241265,
+      "q2_ridge_floor": 0.628340887642056,
+      "rmse_mean": 0.7236716062393116
+     }
+    }
+   },
+   "polymers": 359,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": -0.08199944289693592,
+    "sd": 1.187169789233055
+   }
+  },
+  "CO2": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.043048485436157864,
+     "lo": -0.13423141669399014,
+     "mean": -0.0886940365242147,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.004450619993649938,
+     "lo": -0.1711572982759285,
+     "mean": -0.07584145173246126,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.07074906752192278,
+     "lo": -0.2034388820893424,
+     "mean": -0.13298748316027653,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.006827662069637709,
+     "lo": -0.22229338587464714,
+     "mean": -0.10422996617818137,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.01731671063101677,
+     "lo": -0.10419389335298568,
+     "mean": -0.058101840220809,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.018573304731998436,
+     "lo": -0.09789750650730455,
+     "mean": -0.03483198393484621,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.03417865538158266,
+     "lo": -0.11208438482038272,
+     "mean": -0.07488564293946753,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.006374819391448943,
+     "lo": -0.14029093660129327,
+     "mean": -0.06939798224333515,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03089059058622224,
+     "lo": -0.11927214193196127,
+     "mean": -0.045872562982777865,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.06595182599968415,
+     "lo": -0.1523425551019851,
+     "mean": -0.031783497213597856,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.09779184270499959,
+     "lo": -0.006944491695518032,
+     "mean": 0.04282147354143684,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.11846932593676304,
+     "lo": -0.013391613356704067,
+     "mean": 0.04405795451886341,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 99,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 12 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.125, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 8,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 11
+      },
+      "q2_mean": 0.3617363199055377,
+      "q2_range": 0.20431492206272373,
+      "q2_ridge_floor": 0.3617363199055377,
+      "rmse_mean": 0.8227005950653403
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+       "up to 12 bonds, width 1, h 0.3, ridge 0.1": 4,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 3,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 0.5, h 0.1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 12,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 8
+      },
+      "q2_mean": 0.5261160005338875,
+      "q2_range": 0.12140351703483165,
+      "q2_ridge_floor": 0.5261160005338875,
+      "rmse_mean": 0.7090697108096751
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 13,
+       "up to 6 bonds, ridge 0.1": 12,
+       "up to 8 bonds, ridge 0.01": 1,
+       "up to 8 bonds, ridge 0.1": 24
+      },
+      "q2_mean": 0.2798349464741123,
+      "q2_range": 0.15636811324230104,
+      "q2_ridge_floor": 0.2798349464741123,
+      "rmse_mean": 0.8741980255763359
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 12,
+       "up to 6 bonds, ridge 0.1": 8,
+       "up to 8 bonds, ridge 0.1": 30
+      },
+      "q2_mean": 0.4397860091599564,
+      "q2_range": 0.14397901761535137,
+      "q2_ridge_floor": 0.4397860091599564,
+      "rmse_mean": 0.7709774451471278
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 3,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 5,
+       "sigma 0.01, width 0.125, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 7,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 2,
+       "sigma 0.02, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.5, h 0.3, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 3,
+       "sigma 0.03, width 1, h 0.3, ridge 0.01": 1,
+       "sigma 0.03, width 1, h 1, ridge 0.1": 2,
+       "sigma 0.05, width 0.5, h 0.3, ridge 0.1": 1,
+       "sigma 0.05, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.43792938121898206,
+      "q2_range": 0.09488187047177421,
+      "q2_ridge_floor": 0.4379339047392482,
+      "rmse_mean": 0.7725357209512052
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 3,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 0.5, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 8,
+       "sigma 0.01, width 0.25, h 0.3, ridge 1e-08": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 0.3, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 6,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.02, width 0.25, h 0.3, ridge 0.01": 1,
+       "sigma 0.02, width 0.25, h 0.3, ridge 1e-08": 3,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 3,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 4,
+       "sigma 0.03, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.03, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.5928150451865855,
+      "q2_range": 0.0739064450519129,
+      "q2_ridge_floor": 0.5928144461074543,
+      "rmse_mean": 0.6574953047498332
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.125, ridge 0.1": 1,
+       "width 0.25, ridge 0.1": 8,
+       "width 0.25, ridge 1": 10,
+       "width 0.5, ridge 0.1": 8,
+       "width 0.5, ridge 1": 1,
+       "width 1, ridge 0.1": 22
+      },
+      "q2_mean": 0.22153354433857936,
+      "q2_range": 0.12665065087298522,
+      "q2_ridge_floor": 0.22153354433857936,
+      "rmse_mean": 0.9091437617386264
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 7,
+       "width 0.25, ridge 1": 8,
+       "width 0.5, ridge 1": 4,
+       "width 1, ridge 0.1": 31
+      },
+      "q2_mean": 0.3874793177323072,
+      "q2_range": 0.049161766456306766,
+      "q2_ridge_floor": 0.3874793177323072,
+      "rmse_mean": 0.8065943679051826
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 1e-08": 13,
+       "sigma 0.01, ridge 0.0001": 2,
+       "sigma 0.01, ridge 0.001": 1,
+       "sigma 0.01, ridge 0.01": 11,
+       "sigma 0.01, ridge 0.1": 6,
+       "sigma 0.01, ridge 1e-08": 2,
+       "sigma 0.02, ridge 0.001": 2,
+       "sigma 0.02, ridge 0.01": 1,
+       "sigma 0.02, ridge 0.1": 6,
+       "sigma 0.02, ridge 1e-08": 1,
+       "sigma 0.03, ridge 0.01": 3,
+       "sigma 0.05, ridge 0.1": 2
+      },
+      "q2_mean": 0.4083386603732591,
+      "q2_range": 0.1180453975205249,
+      "q2_ridge_floor": 0.4083400764711126,
+      "rmse_mean": 0.7925376019365289
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 2,
+       "sigma 0.005, ridge 1e-08": 16,
+       "sigma 0.01, ridge 0.01": 8,
+       "sigma 0.01, ridge 0.1": 5,
+       "sigma 0.01, ridge 1e-08": 5,
+       "sigma 0.02, ridge 0.1": 12,
+       "sigma 0.03, ridge 0.1": 2
+      },
+      "q2_mean": 0.5319977578685503,
+      "q2_range": 0.0438562099813814,
+      "q2_ridge_floor": 0.5319965883981743,
+      "rmse_mean": 0.7050544047185671
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 1e-08": 39,
+       "sigma 0.01, ridge 1e-08": 8,
+       "sigma 0.03, ridge 0.1": 1,
+       "sigma 0.05, ridge 0.1": 2
+      },
+      "q2_mean": 0.3846500861919491,
+      "q2_range": 0.1319773568435748,
+      "q2_ridge_floor": 0.38465418825605047,
+      "rmse_mean": 0.8082051588224066
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 5,
+       "sigma 0.005, ridge 1e-08": 45
+      },
+      "q2_mean": 0.48602258326482267,
+      "q2_range": 0.04015769220736731,
+      "q2_ridge_floor": 0.48601989063349393,
+      "rmse_mean": 0.7389085370612355
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 6,
+       "sigma 0.0025, ridge 0.001": 2,
+       "sigma 0.0025, ridge 0.01": 13,
+       "sigma 0.0025, ridge 1e-08": 19,
+       "sigma 0.005, ridge 1e-08": 7,
+       "sigma 0.02, ridge 0.1": 1,
+       "sigma 0.03, ridge 0.1": 1,
+       "sigma 0.05, ridge 0.1": 1
+      },
+      "q2_mean": 0.31762176669539943,
+      "q2_range": 0.15380718219505063,
+      "q2_ridge_floor": 0.31762392381255916,
+      "rmse_mean": 0.8510742850652646
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 7,
+       "sigma 0.0025, ridge 0.001": 1,
+       "sigma 0.0025, ridge 0.01": 20,
+       "sigma 0.0025, ridge 1e-08": 21,
+       "sigma 0.005, ridge 0.01": 1
+      },
+      "q2_mean": 0.4141869472479702,
+      "q2_range": 0.033021446930916576,
+      "q2_ridge_floor": 0.4141864381294281,
+      "rmse_mean": 0.7888724341579432
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.125, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 14,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 3,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 11,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.03, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.05, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.3608477555638342,
+      "q2_range": 0.09729800946263123,
+      "q2_ridge_floor": 0.3608509811409607,
+      "rmse_mean": 0.823747942263339
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 6,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 14,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.0025, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 21,
+       "sigma 0.005, width 1, h 1, ridge 0.01": 1
+      },
+      "q2_mean": 0.5109095877268278,
+      "q2_range": 0.05176001414895093,
+      "q2_ridge_floor": 0.5109074149064938,
+      "rmse_mean": 0.7207236477305483
+     }
+    }
+   },
+   "polymers": 399,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 1.1859954887218045,
+    "sd": 1.0307402781166695
+   }
+  },
+  "H2": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.0024467459820106795,
+     "lo": -0.033968496639677735,
+     "mean": -0.017517406117193657,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": 0.010662603439090895,
+     "lo": -0.06369141011271656,
+     "mean": -0.020396717671305575,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.00472901406563901,
+     "lo": -0.08621840849149894,
+     "mean": -0.04213582023293705,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.04220828503094358,
+     "lo": -0.12919163572513345,
+     "mean": -0.03528692051839277,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.03635166056092295,
+     "lo": -0.02978550747056358,
+     "mean": 0.0031656219426480225,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.07175840046676499,
+     "lo": -0.03635660124345425,
+     "mean": 0.022015834440861193,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.011125884846997947,
+     "lo": -0.077775417647371,
+     "mean": -0.04530144217558507,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.010240536598927662,
+     "lo": -0.11701936638491114,
+     "mean": -0.057302754959253965,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.028942530462181742,
+     "lo": -0.06340847128796298,
+     "mean": -0.019601910074246387,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.08186722525942193,
+     "lo": -0.09880745712302226,
+     "mean": 0.003383071595390974,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.04556690020653421,
+     "lo": -0.04474377221749638,
+     "mean": -0.00208450395705273,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.09190745188936576,
+     "lo": -0.0525353158932591,
+     "mean": 0.02377978926669655,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 66,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 1, ridge 0.1": 3,
+       "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 8,
+       "up to 6 bonds, width 0.25, h 1, ridge 0.1": 15,
+       "up to 6 bonds, width 0.5, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 5,
+       "up to 6 bonds, width 0.5, h 3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 3, ridge 1": 1,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.32761181414479135,
+      "q2_range": 0.24166904398351507,
+      "q2_ridge_floor": 0.32761181414479135,
+      "rmse_mean": 0.6617593589543277
+     },
+     "random": {
+      "chosen": {
+       "up to 6 bonds, width 0.25, h 0.1, ridge 0.01": 4,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 1, ridge 0.1": 15,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 7,
+       "up to 6 bonds, width 0.5, h 1, ridge 0.1": 11,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 4,
+       "up to 8 bonds, width 0.25, h 3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.5, h 10, ridge 1": 1
+      },
+      "q2_mean": 0.5911193792335532,
+      "q2_range": 0.09694917985995333,
+      "q2_ridge_floor": 0.5911193792335532,
+      "rmse_mean": 0.5165769628866268
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 3,
+       "up to 6 bonds, ridge 0.01": 15,
+       "up to 6 bonds, ridge 0.1": 22,
+       "up to 8 bonds, ridge 0.01": 2,
+       "up to 8 bonds, ridge 0.1": 8
+      },
+      "q2_mean": 0.2704618307900799,
+      "q2_range": 0.185722115381465,
+      "q2_ridge_floor": 0.2704618307900799,
+      "rmse_mean": 0.6898912723451184
+     },
+     "random": {
+      "chosen": {
+       "up to 6 bonds, ridge 0.01": 5,
+       "up to 6 bonds, ridge 0.1": 35,
+       "up to 8 bonds, ridge 0.1": 10
+      },
+      "q2_mean": 0.4651464494004472,
+      "q2_range": 0.0707828498199955,
+      "q2_ridge_floor": 0.4651464494004472,
+      "rmse_mean": 0.5909624235828135
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 0.25, h 3, ridge 1e-08": 24,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 10, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 8,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.01, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 2,
+       "sigma 0.02, width 0.5, h 1, ridge 1e-08": 1
+      },
+      "q2_mean": 0.40214472457783046,
+      "q2_range": 0.1562070997812104,
+      "q2_ridge_floor": 0.4021374144627914,
+      "rmse_mean": 0.6245332504480503
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 3, ridge 1e-08": 24,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 16,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.1": 1
+      },
+      "q2_mean": 0.608087561602854,
+      "q2_range": 0.11147256342902623,
+      "q2_ridge_floor": 0.60808575914576,
+      "rmse_mean": 0.5056837404440367
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 30,
+       "width 0.5, ridge 0.1": 16,
+       "width 1, ridge 0.1": 4
+      },
+      "q2_mean": 0.282538637594106,
+      "q2_range": 0.1533248859599572,
+      "q2_ridge_floor": 0.282538637594106,
+      "rmse_mean": 0.6843424991577507
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 25,
+       "width 0.5, ridge 0.1": 23,
+       "width 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.5195966358012476,
+      "q2_range": 0.13961854744456925,
+      "q2_ridge_floor": 0.5195966358012476,
+      "rmse_mean": 0.5598370770830321
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 1e-08": 41,
+       "sigma 0.01, ridge 1e-08": 8,
+       "sigma 0.02, ridge 1e-08": 1
+      },
+      "q2_mean": 0.4110160345825541,
+      "q2_range": 0.07655780675308554,
+      "q2_ridge_floor": 0.41101017582209654,
+      "rmse_mean": 0.6201927767464309
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.0001": 1,
+       "sigma 0.005, ridge 0.01": 4,
+       "sigma 0.005, ridge 1e-08": 44,
+       "sigma 0.01, ridge 0.01": 1
+      },
+      "q2_mean": 0.540441178574796,
+      "q2_range": 0.06052716062586094,
+      "q2_ridge_floor": 0.5404318558916172,
+      "rmse_mean": 0.547851852486694
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 1e-08": 45,
+       "sigma 0.01, ridge 1e-08": 4,
+       "sigma 0.02, ridge 1e-08": 1
+      },
+      "q2_mean": 0.43473952792614845,
+      "q2_range": 0.0731351561114798,
+      "q2_ridge_floor": 0.4347387957795763,
+      "rmse_mean": 0.6076018313093396
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 2,
+       "sigma 0.005, ridge 1e-08": 48
+      },
+      "q2_mean": 0.5439212088125817,
+      "q2_range": 0.04422473320141895,
+      "q2_ridge_floor": 0.5439151240058543,
+      "rmse_mean": 0.545811583069818
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 28,
+       "sigma 0.0025, ridge 0.01": 3,
+       "sigma 0.0025, ridge 0.1": 9,
+       "sigma 0.005, ridge 1e-08": 10
+      },
+      "q2_mean": 0.3793009112852795,
+      "q2_range": 0.05942688022532372,
+      "q2_ridge_floor": 0.3792908497909687,
+      "rmse_mean": 0.6367540793002658
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 26,
+       "sigma 0.0025, ridge 0.01": 6,
+       "sigma 0.0025, ridge 0.1": 17,
+       "sigma 0.0025, ridge 1e-08": 1
+      },
+      "q2_mean": 0.5014544343135009,
+      "q2_range": 0.03338791889252646,
+      "q2_ridge_floor": 0.5014494911709421,
+      "rmse_mean": 0.5706831800278961
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 10, ridge 0.01": 1,
+       "sigma 0.001, width 0.25, h 10, ridge 1e-08": 7,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 13,
+       "sigma 0.001, width 0.5, h 10, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 5,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.25, h 3, ridge 1e-08": 9,
+       "sigma 0.0025, width 0.5, h 10, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 5,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 2
+      },
+      "q2_mean": 0.37717802518618815,
+      "q2_range": 0.15601159365685702,
+      "q2_ridge_floor": 0.37717729159644103,
+      "rmse_mean": 0.6374846143051696
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 10, ridge 1e-08": 4,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 9,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 11,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.25, h 10, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.25, h 3, ridge 1e-08": 10,
+       "sigma 0.0025, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.001": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 0.01": 1,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 9
+      },
+      "q2_mean": 0.5886756207776556,
+      "q2_range": 0.08902876991292685,
+      "q2_ridge_floor": 0.588675808309312,
+      "rmse_mean": 0.5181787875106689
+     }
+    }
+   },
+   "polymers": 273,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 1.5057967032967032,
+    "sd": 0.8082874344743078
+   }
+  },
+  "N2": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.029826010555643795,
+     "lo": -0.09024701100601847,
+     "mean": -0.059285182624601585,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": 0.012390675084205103,
+     "lo": -0.10773050353696778,
+     "mean": -0.03598682123949559,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.028261337364048046,
+     "lo": -0.1257849002457468,
+     "mean": -0.0759869903295185,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.009316337377482515,
+     "lo": -0.17855887336296064,
+     "mean": -0.0678739557274074,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.010070342084917276,
+     "lo": -0.05101451068797335,
+     "mean": -0.020372489401727978,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.016632217119229558,
+     "lo": -0.08427453026332266,
+     "mean": -0.023969597212286198,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.02211054686263157,
+     "lo": -0.08968701629461774,
+     "mean": -0.05561450092779052,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": 0.007169125786555406,
+     "lo": -0.102333053150456,
+     "mean": -0.0439043585151212,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.07114015706605699,
+     "lo": -0.034385494065281116,
+     "mean": 0.020383826482719636,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.15391152885356493,
+     "lo": -0.044450801038431575,
+     "mean": 0.056033393191533554,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.1219210138679362,
+     "lo": 0.03731832872435734,
+     "mean": 0.07966900910732122,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.18466499171072265,
+     "lo": 0.026419666960743975,
+     "mean": 0.09202021443102915,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 104,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 2,
+       "up to 12 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.03, ridge 0.01": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 6 bonds, width 0.5, h 0.1, ridge 0.1": 2,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 17,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 8,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.353620244870471,
+      "q2_range": 0.12618432705658833,
+      "q2_ridge_floor": 0.353620244870471,
+      "rmse_mean": 0.8660361534754906
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 1, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 6,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 28,
+       "up to 6 bonds, width 1, h 1, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 3
+      },
+      "q2_mean": 0.5371109445784751,
+      "q2_range": 0.051799896452655814,
+      "q2_ridge_floor": 0.5371109445784751,
+      "rmse_mean": 0.7330608044725218
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 4,
+       "up to 6 bonds, ridge 0.01": 2,
+       "up to 6 bonds, ridge 0.1": 32,
+       "up to 8 bonds, ridge 0.1": 12
+      },
+      "q2_mean": 0.3439852735942125,
+      "q2_range": 0.13715124627627373,
+      "q2_ridge_floor": 0.3439852735942125,
+      "rmse_mean": 0.872385570972088
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 2,
+       "up to 6 bonds, ridge 0.1": 43,
+       "up to 8 bonds, ridge 0.1": 5
+      },
+      "q2_mean": 0.4831649380260445,
+      "q2_range": 0.07725393187776963,
+      "q2_ridge_floor": 0.4831649380260445,
+      "rmse_mean": 0.7745099315237163
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 5,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 19,
+       "sigma 0.005, width 0.5, h 3, ridge 1e-08": 2,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 10,
+       "sigma 0.01, width 0.5, h 0.3, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 4
+      },
+      "q2_mean": 0.4740982853853448,
+      "q2_range": 0.11635658170326302,
+      "q2_ridge_floor": 0.4741012424614552,
+      "rmse_mean": 0.7809557909661986
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 8,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 1, h 3, ridge 0.0001": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.001": 1,
+       "sigma 0.005, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.005, width 1, h 3, ridge 0.1": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 20,
+       "sigma 0.02, width 1, h 3, ridge 0.1": 1
+      },
+      "q2_mean": 0.629553697283606,
+      "q2_range": 0.06681380535704617,
+      "q2_ridge_floor": 0.6295474550802234,
+      "rmse_mean": 0.6556136458596955
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 4,
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 20,
+       "width 0.5, ridge 1": 8,
+       "width 1, ridge 0.1": 16
+      },
+      "q2_mean": 0.2846370348948513,
+      "q2_range": 0.15622720166163273,
+      "q2_ridge_floor": 0.2846370348948513,
+      "rmse_mean": 0.9109647767311746
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 6,
+       "width 0.25, ridge 1": 2,
+       "width 0.5, ridge 0.1": 6,
+       "width 1, ridge 0.1": 36
+      },
+      "q2_mean": 0.4471264018281886,
+      "q2_range": 0.09448555227278,
+      "q2_ridge_floor": 0.4471264018281886,
+      "rmse_mean": 0.801045678132678
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 5,
+       "sigma 0.005, ridge 0.001": 4,
+       "sigma 0.005, ridge 0.01": 9,
+       "sigma 0.005, ridge 1e-08": 24,
+       "sigma 0.01, ridge 1e-08": 8
+      },
+      "q2_mean": 0.46182307330861805,
+      "q2_range": 0.09748720238266217,
+      "q2_ridge_floor": 0.46182417169694306,
+      "rmse_mean": 0.790275383756087
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 10,
+       "sigma 0.005, ridge 0.001": 3,
+       "sigma 0.005, ridge 0.01": 8,
+       "sigma 0.005, ridge 0.1": 1,
+       "sigma 0.005, ridge 1e-08": 27,
+       "sigma 0.02, ridge 0.1": 1
+      },
+      "q2_mean": 0.5486135060220236,
+      "q2_range": 0.057422078743194715,
+      "q2_ridge_floor": 0.5486088598202868,
+      "rmse_mean": 0.7238377310243564
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 37,
+       "sigma 0.005, ridge 1e-08": 11,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.05, ridge 0.1": 1
+      },
+      "q2_mean": 0.44290424979082144,
+      "q2_range": 0.10333940635269756,
+      "q2_ridge_floor": 0.44290577821424615,
+      "rmse_mean": 0.8039307424862463
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 45,
+       "sigma 0.005, ridge 1e-08": 5
+      },
+      "q2_mean": 0.5342557699910582,
+      "q2_range": 0.039546414725983414,
+      "q2_ridge_floor": 0.534249431293195,
+      "rmse_mean": 0.7353776689652493
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 34,
+       "sigma 0.0025, ridge 0.01": 3,
+       "sigma 0.0025, ridge 0.1": 2,
+       "sigma 0.0025, ridge 1e-08": 7,
+       "sigma 0.005, ridge 1e-08": 4
+      },
+      "q2_mean": 0.40367360963731463,
+      "q2_range": 0.09495490223275749,
+      "q2_ridge_floor": 0.4036683964224642,
+      "rmse_mean": 0.8319130710836623
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 39,
+       "sigma 0.0025, ridge 0.0001": 1,
+       "sigma 0.0025, ridge 0.001": 1,
+       "sigma 0.0025, ridge 0.01": 4,
+       "sigma 0.0025, ridge 0.1": 4,
+       "sigma 0.0025, ridge 1e-08": 1
+      },
+      "q2_mean": 0.48102311056743685,
+      "q2_range": 0.0234736594731888,
+      "q2_ridge_floor": 0.4810168155749466,
+      "rmse_mean": 0.7762913297760569
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 1, ridge 1e-08": 9,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 12,
+       "sigma 0.001, width 1, h 10, ridge 1e-08": 1,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 7,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 3,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 2,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 2
+      },
+      "q2_mean": 0.4385529349062306,
+      "q2_range": 0.11204088081242403,
+      "q2_ridge_floor": 0.43855236175945356,
+      "rmse_mean": 0.8070208268756959
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 6,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 4,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 27,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 3,
+       "sigma 0.0025, width 1, h 3, ridge 0.1": 4,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 2
+      },
+      "q2_mean": 0.5725495479131302,
+      "q2_range": 0.04367606926885936,
+      "q2_ridge_floor": 0.5725445883970911,
+      "rmse_mean": 0.7044662322303182
+     }
+    }
+   },
+   "polymers": 417,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": -0.15113429256594724,
+    "sd": 1.0776119881374266
+   }
+  },
+  "O2": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.04476921502752638,
+     "lo": -0.11943623582777842,
+     "mean": -0.07970405312396345,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.01034902251516627,
+     "lo": -0.14493067557984823,
+     "mean": -0.06894730274865568,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.051757120480508186,
+     "lo": -0.1590192078641373,
+     "mean": -0.10429431045444937,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.012171403129848992,
+     "lo": -0.19232066778299067,
+     "mean": -0.0946635318828366,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.0017862258040131109,
+     "lo": -0.07242198581074509,
+     "mean": -0.03663111359181148,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.0030702797515869628,
+     "lo": -0.1017264468117078,
+     "mean": -0.04603408374540785,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.030911887482555564,
+     "lo": -0.10499200731610661,
+     "mean": -0.06766319686263789,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": 0.0025255509113456453,
+     "lo": -0.10917338676230451,
+     "mean": -0.048629448137428755,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03391354129116755,
+     "lo": -0.11519134786728098,
+     "mean": -0.03988745198921495,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.08437336690753572,
+     "lo": -0.13713775932430486,
+     "mean": -0.02494197612898319,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.09581151483839156,
+     "lo": -0.013225602132575622,
+     "mean": 0.0398166011347485,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.12524767961033736,
+     "lo": -0.02332922425937061,
+     "mean": 0.04400532661967249,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 107,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, width 0.25, h 0.3, ridge 0.1": 5,
+       "up to 12 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 12 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.5, h 0.1, ridge 0.01": 1,
+       "up to 6 bonds, width 0.5, h 0.3, ridge 0.1": 1,
+       "up to 8 bonds, width 0.25, h 0.1, ridge 0.01": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 16,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 8,
+       "up to 8 bonds, width 0.5, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 8,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 6
+      },
+      "q2_mean": 0.39557272247456077,
+      "q2_range": 0.24743522582887423,
+      "q2_ridge_floor": 0.39557272247456077,
+      "rmse_mean": 0.7914011759674103
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, width 1, h 0.3, ridge 0.1": 3,
+       "up to 12 bonds, width 1, h 1, ridge 0.1": 1,
+       "up to 6 bonds, width 0.25, h 0.3, ridge 0.1": 2,
+       "up to 6 bonds, width 1, h 0.3, ridge 0.1": 2,
+       "up to 8 bonds, width 0.25, h 0.3, ridge 0.1": 7,
+       "up to 8 bonds, width 0.25, h 1, ridge 0.1": 1,
+       "up to 8 bonds, width 0.5, h 0.3, ridge 0.1": 3,
+       "up to 8 bonds, width 1, h 0.3, ridge 0.1": 24,
+       "up to 8 bonds, width 1, h 1, ridge 0.1": 7
+      },
+      "q2_mean": 0.5857225005993539,
+      "q2_range": 0.05016763624691578,
+      "q2_ridge_floor": 0.5857225005993539,
+      "rmse_mean": 0.6562018925990631
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 7,
+       "up to 6 bonds, ridge 0.1": 2,
+       "up to 8 bonds, ridge 0.1": 41
+      },
+      "q2_mean": 0.36206313762296183,
+      "q2_range": 0.1627757595728344,
+      "q2_ridge_floor": 0.36206313762296183,
+      "rmse_mean": 0.8138842372438901
+     },
+     "random": {
+      "chosen": {
+       "up to 12 bonds, ridge 0.1": 4,
+       "up to 6 bonds, ridge 0.1": 4,
+       "up to 8 bonds, ridge 0.1": 42
+      },
+      "q2_mean": 0.5154949484426183,
+      "q2_range": 0.05320910512508992,
+      "q2_ridge_floor": 0.5154949484426183,
+      "rmse_mean": 0.709703808832986
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 17,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 10,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 4,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 4,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 5,
+       "sigma 0.02, width 0.25, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 0.5, h 0.3, ridge 1e-08": 1,
+       "sigma 0.02, width 0.5, h 1, ridge 0.1": 1,
+       "sigma 0.02, width 1, h 1, ridge 0.01": 1,
+       "sigma 0.02, width 1, h 1, ridge 1e-08": 1,
+       "sigma 0.03, width 1, h 1, ridge 0.01": 1
+      },
+      "q2_mean": 0.46251850050711807,
+      "q2_range": 0.15671217676324978,
+      "q2_ridge_floor": 0.4625223375226155,
+      "rmse_mean": 0.7467761537576404
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, width 0.25, h 0.3, ridge 1e-08": 1,
+       "sigma 0.005, width 0.25, h 1, ridge 1e-08": 7,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.005, width 1, h 1, ridge 0.001": 1,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 6,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 19,
+       "sigma 0.01, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 0.5, h 1, ridge 1e-08": 1,
+       "sigma 0.01, width 1, h 1, ridge 0.1": 1,
+       "sigma 0.01, width 1, h 1, ridge 1e-08": 2,
+       "sigma 0.01, width 1, h 3, ridge 0.01": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.1": 2,
+       "sigma 0.01, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.02, width 1, h 1, ridge 0.1": 2
+      },
+      "q2_mean": 0.6426278254775305,
+      "q2_range": 0.04644260465083161,
+      "q2_ridge_floor": 0.6426242362475392,
+      "rmse_mean": 0.609403303976366
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 17,
+       "width 0.25, ridge 1": 6,
+       "width 0.5, ridge 0.1": 13,
+       "width 1, ridge 0.1": 14
+      },
+      "q2_mean": 0.2563791528160512,
+      "q2_range": 0.18223756323624085,
+      "q2_ridge_floor": 0.2563791528160512,
+      "rmse_mean": 0.8786798388032979
+     },
+     "random": {
+      "chosen": {
+       "width 0.25, ridge 0.1": 10,
+       "width 0.5, ridge 0.1": 3,
+       "width 1, ridge 0.1": 37
+      },
+      "q2_mean": 0.45796030723568837,
+      "q2_range": 0.05887266022667592,
+      "q2_ridge_floor": 0.45796030723568837,
+      "rmse_mean": 0.7506591711961669
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.005, ridge 0.001": 1,
+       "sigma 0.005, ridge 1e-08": 32,
+       "sigma 0.01, ridge 0.01": 3,
+       "sigma 0.01, ridge 0.1": 2,
+       "sigma 0.01, ridge 1e-08": 6,
+       "sigma 0.02, ridge 0.001": 1,
+       "sigma 0.02, ridge 0.01": 1,
+       "sigma 0.02, ridge 0.1": 1,
+       "sigma 0.02, ridge 1e-08": 2,
+       "sigma 0.03, ridge 0.01": 1
+      },
+      "q2_mean": 0.4587092074761566,
+      "q2_range": 0.1074543652305282,
+      "q2_ridge_floor": 0.458709167841955,
+      "rmse_mean": 0.7497158361620471
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.005, ridge 0.01": 4,
+       "sigma 0.005, ridge 1e-08": 32,
+       "sigma 0.01, ridge 0.01": 3,
+       "sigma 0.01, ridge 0.1": 8,
+       "sigma 0.01, ridge 1e-08": 1,
+       "sigma 0.02, ridge 0.1": 2
+      },
+      "q2_mean": 0.5726202136549171,
+      "q2_range": 0.06657527454282874,
+      "q2_ridge_floor": 0.5726163522043574,
+      "rmse_mean": 0.6664931047094388
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 1,
+       "sigma 0.005, ridge 1e-08": 40,
+       "sigma 0.01, ridge 1e-08": 6,
+       "sigma 0.02, ridge 0.01": 2,
+       "sigma 0.05, ridge 0.1": 1
+      },
+      "q2_mean": 0.4209146813561322,
+      "q2_range": 0.10587836085116853,
+      "q2_ridge_floor": 0.4209213248904865,
+      "rmse_mean": 0.7757185896465746
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.0025, ridge 1e-08": 2,
+       "sigma 0.005, ridge 1e-08": 48
+      },
+      "q2_mean": 0.5414022120933686,
+      "q2_range": 0.037392569386330066,
+      "q2_ridge_floor": 0.5413987901156498,
+      "rmse_mean": 0.6905060593952232
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 13,
+       "sigma 0.0025, ridge 0.001": 2,
+       "sigma 0.0025, ridge 0.01": 14,
+       "sigma 0.0025, ridge 0.1": 1,
+       "sigma 0.0025, ridge 1e-08": 10,
+       "sigma 0.005, ridge 1e-08": 10
+      },
+      "q2_mean": 0.37886903233711544,
+      "q2_range": 0.056488505029477665,
+      "q2_ridge_floor": 0.3788681686790233,
+      "rmse_mean": 0.8035744966801422
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, ridge 1e-08": 7,
+       "sigma 0.0025, ridge 0.001": 1,
+       "sigma 0.0025, ridge 0.01": 21,
+       "sigma 0.0025, ridge 0.1": 1,
+       "sigma 0.0025, ridge 1e-08": 20
+      },
+      "q2_mean": 0.47687871371152896,
+      "q2_range": 0.03162811593092485,
+      "q2_ridge_floor": 0.4768759714105526,
+      "rmse_mean": 0.7375136221401487
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 7,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 2,
+       "sigma 0.001, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 12,
+       "sigma 0.0025, width 0.25, h 3, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 4,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 5,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 4,
+       "sigma 0.005, width 0.5, h 1, ridge 1e-08": 3,
+       "sigma 0.005, width 1, h 1, ridge 1e-08": 4,
+       "sigma 0.005, width 1, h 3, ridge 1e-08": 3
+      },
+      "q2_mean": 0.40084871632895486,
+      "q2_range": 0.14834114757278838,
+      "q2_ridge_floor": 0.40085148998631925,
+      "rmse_mean": 0.7886290918022361
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.001, width 0.25, h 1, ridge 1e-08": 2,
+       "sigma 0.001, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.001, width 1, h 10, ridge 1e-08": 1,
+       "sigma 0.001, width 1, h 3, ridge 1e-08": 3,
+       "sigma 0.0025, width 0.25, h 1, ridge 1e-08": 6,
+       "sigma 0.0025, width 0.25, h 3, ridge 1e-08": 1,
+       "sigma 0.0025, width 0.5, h 1, ridge 1e-08": 2,
+       "sigma 0.0025, width 0.5, h 3, ridge 1e-08": 1,
+       "sigma 0.0025, width 1, h 3, ridge 0.001": 2,
+       "sigma 0.0025, width 1, h 3, ridge 0.01": 6,
+       "sigma 0.0025, width 1, h 3, ridge 1e-08": 25
+      },
+      "q2_mean": 0.5649047130933749,
+      "q2_range": 0.05810283776886038,
+      "q2_ridge_floor": 0.5649038213615295,
+      "rmse_mean": 0.6724903463501983
+     }
+    }
+   },
+   "polymers": 427,
+   "unit": "log10 Barrer",
+   "y": {
+    "mean": 0.5135407494145199,
+    "sd": 1.0197269367363802
+   }
+  },
+  "density": {
+   "comparisons": [
+    {
+     "against": "central unit + eight counts",
+     "hi": -0.02605701212180952,
+     "lo": -0.08607434777466988,
+     "mean": -0.05591620150469179,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "central unit + eight counts",
+     "hi": 0.006993126665097258,
+     "lo": -0.3353253958625026,
+     "mean": -0.11647015652327697,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.07193940179182441,
+     "lo": -0.1273917493186614,
+     "mean": -0.0994672123237178,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": -0.05719265025248176,
+     "lo": -0.17601595854931756,
+     "mean": -0.11272982872063342,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.011786101337210192,
+     "lo": -0.021216367038896226,
+     "mean": -0.005039156569170422,
+     "model": "field kernel, nearest copies only",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, central unit",
+     "hi": 0.03643766699912925,
+     "lo": -0.11281163343544316,
+     "mean": -0.023762475132917404,
+     "model": "field kernel, nearest copies only",
+     "scheme": "group"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.07030860276898446,
+     "lo": -0.11884615141978061,
+     "mean": -0.09442805575454738,
+     "model": "field kernel, periodic chain",
+     "scheme": "random"
+    },
+    {
+     "against": "field kernel, nearest copies only",
+     "hi": -0.005194285676542851,
+     "lo": -0.15307705692470547,
+     "mean": -0.08896735358771601,
+     "model": "field kernel, periodic chain",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": -0.03564316472008994,
+     "lo": -0.09779303433228531,
+     "mean": -0.06719315303871709,
+     "model": "periodic chain + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": -0.014142087419403442,
+     "lo": -0.33045096144812824,
+     "mean": -0.1262875365135968,
+     "model": "periodic chain + eight counts",
+     "scheme": "group"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.015624800657854997,
+     "lo": -0.04197251625837617,
+     "mean": -0.011276951534025303,
+     "model": "central unit + eight counts",
+     "scheme": "random"
+    },
+    {
+     "against": "bond-count kernel + eight counts",
+     "hi": 0.03551387226869329,
+     "lo": -0.037148592711502254,
+     "mean": -0.009817379990319841,
+     "model": "central unit + eight counts",
+     "scheme": "group"
+    }
+   ],
+   "groups": 18,
+   "models": {
+    "bond-count kernel + eight counts": {
+     "group": {
+      "chosen": {
+       "up to 2 bonds, width 2, h 0.1, ridge 0.001": 6,
+       "up to 2 bonds, width 2, h 0.3, ridge 0.001": 1,
+       "up to 2 bonds, width 2, h 0.3, ridge 0.01": 8,
+       "up to 2 bonds, width 2, h 1, ridge 0.01": 10,
+       "up to 2 bonds, width 2, h 3, ridge 0.01": 1,
+       "up to 4 bonds, width 1, h 0.03, ridge 0.001": 13,
+       "up to 4 bonds, width 1, h 0.1, ridge 0.001": 3,
+       "up to 4 bonds, width 2, h 0.1, ridge 0.001": 5,
+       "up to 4 bonds, width 2, h 0.3, ridge 0.001": 3
+      },
+      "q2_mean": 0.6955303682329079,
+      "q2_range": 0.18154994186841766,
+      "q2_ridge_floor": 0.6955303682329079,
+      "rmse_mean": 0.10028821563771921
+     },
+     "random": {
+      "chosen": {
+       "up to 2 bonds, width 2, h 0.1, ridge 0.001": 6,
+       "up to 2 bonds, width 2, h 0.3, ridge 0.01": 5,
+       "up to 2 bonds, width 2, h 1, ridge 0.01": 28,
+       "up to 4 bonds, width 2, h 0.1, ridge 0.001": 7,
+       "up to 4 bonds, width 2, h 0.3, ridge 0.001": 4
+      },
+      "q2_mean": 0.8809782003505251,
+      "q2_range": 0.02074525460295651,
+      "q2_ridge_floor": 0.8809782003505251,
+      "rmse_mean": 0.06287564284055433
+     }
+    },
+    "bond-count kernel, central unit": {
+     "group": {
+      "chosen": {
+       "up to 2 bonds, ridge 0.001": 1,
+       "up to 2 bonds, ridge 0.01": 25,
+       "up to 4 bonds, ridge 0.001": 21,
+       "up to 4 bonds, ridge 0.01": 3
+      },
+      "q2_mean": 0.7328948784030065,
+      "q2_range": 0.12675721347356872,
+      "q2_ridge_floor": 0.7328948784030065,
+      "rmse_mean": 0.09401455517586213
+     },
+     "random": {
+      "chosen": {
+       "up to 2 bonds, ridge 0.01": 39,
+       "up to 4 bonds, ridge 0.001": 10,
+       "up to 4 bonds, ridge 0.01": 1
+      },
+      "q2_mean": 0.8515406100602542,
+      "q2_range": 0.02325465428205209,
+      "q2_ridge_floor": 0.8515406100602542,
+      "rmse_mean": 0.07022491688354211
+     }
+    },
+    "central unit + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, width 1, h 10, ridge 0.0001": 5,
+       "sigma 0.01, width 1, h 10, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 3, ridge 0.001": 2,
+       "sigma 0.01, width 1, h 30, ridge 0.0001": 2,
+       "sigma 0.01, width 2, h 10, ridge 0.0001": 2,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 6,
+       "sigma 0.01, width 2, h 100, ridge 0.0001": 1,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 3,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 16,
+       "sigma 0.02, width 1, h 10, ridge 0.0001": 1,
+       "sigma 0.02, width 1, h 3, ridge 0.0001": 2,
+       "sigma 0.02, width 1, h 3, ridge 0.001": 3,
+       "sigma 0.02, width 2, h 10, ridge 0.0001": 1,
+       "sigma 0.02, width 2, h 10, ridge 0.001": 5
+      },
+      "q2_mean": 0.7128012313903288,
+      "q2_range": 0.10691728250882049,
+      "q2_ridge_floor": 0.7128012313903288,
+      "rmse_mean": 0.09756817571265763
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, width 2, h 10, ridge 0.0001": 4,
+       "sigma 0.01, width 2, h 10, ridge 0.001": 3,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 11,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 16,
+       "sigma 0.02, width 2, h 10, ridge 0.0001": 4,
+       "sigma 0.02, width 2, h 10, ridge 0.001": 9,
+       "sigma 0.02, width 2, h 30, ridge 0.0001": 1,
+       "sigma 0.02, width 2, h 30, ridge 0.001": 2
+      },
+      "q2_mean": 0.8736553073654644,
+      "q2_range": 0.017635757484780412,
+      "q2_ridge_floor": 0.8736553073654644,
+      "rmse_mean": 0.06479510807524683
+     }
+    },
+    "eight counts": {
+     "group": {
+      "chosen": {
+       "width 1, ridge 0.01": 16,
+       "width 2, ridge 0.001": 20,
+       "width 2, ridge 0.01": 14
+      },
+      "q2_mean": 0.40278166067731014,
+      "q2_range": 0.2868043485965579,
+      "q2_ridge_floor": 0.40278166067731014,
+      "rmse_mean": 0.1402166504871659
+     },
+     "random": {
+      "chosen": {
+       "width 2, ridge 0.001": 25,
+       "width 2, ridge 0.01": 25
+      },
+      "q2_mean": 0.6407310322271892,
+      "q2_range": 0.033194100452323516,
+      "q2_ridge_floor": 0.6407310322271892,
+      "rmse_mean": 0.10927191638784153
+     }
+    },
+    "field kernel, central unit": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 13,
+       "sigma 0.01, ridge 0.001": 25,
+       "sigma 0.02, ridge 0.0001": 4,
+       "sigma 0.02, ridge 0.001": 8
+      },
+      "q2_mean": 0.7683469203035024,
+      "q2_range": 0.029526189434755268,
+      "q2_ridge_floor": 0.7683469203035024,
+      "rmse_mean": 0.08773367074661859
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 14,
+       "sigma 0.01, ridge 0.001": 19,
+       "sigma 0.01, ridge 1e-05": 1,
+       "sigma 0.02, ridge 0.0001": 4,
+       "sigma 0.02, ridge 0.001": 11,
+       "sigma 0.02, ridge 1e-05": 1
+      },
+      "q2_mean": 0.8457894278875239,
+      "q2_range": 0.012345413721131182,
+      "q2_ridge_floor": 0.8457897751071328,
+      "rmse_mean": 0.07159168316293449
+     }
+    },
+    "field kernel, nearest copies only": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 1,
+       "sigma 0.02, ridge 0.0001": 16,
+       "sigma 0.02, ridge 0.001": 33
+      },
+      "q2_mean": 0.744485852281932,
+      "q2_range": 0.017807091735974834,
+      "q2_ridge_floor": 0.744485852281932,
+      "rmse_mean": 0.09215397551260311
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 1,
+       "sigma 0.02, ridge 0.0001": 17,
+       "sigma 0.02, ridge 0.001": 30,
+       "sigma 0.02, ridge 1e-05": 2
+      },
+      "q2_mean": 0.8393782723151997,
+      "q2_range": 0.020914293843708798,
+      "q2_ridge_floor": 0.8393787730903796,
+      "rmse_mean": 0.07305506463252709
+     }
+    },
+    "field kernel, periodic chain": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 10,
+       "sigma 0.01, ridge 0.001": 23,
+       "sigma 0.01, ridge 1e-05": 1,
+       "sigma 0.02, ridge 0.0001": 3,
+       "sigma 0.02, ridge 0.001": 10,
+       "sigma 0.02, ridge 1e-05": 3
+      },
+      "q2_mean": 0.6501061397205402,
+      "q2_range": 0.028081775444859347,
+      "q2_ridge_floor": 0.6501073426676596,
+      "rmse_mean": 0.10783420495042251
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, ridge 0.0001": 12,
+       "sigma 0.01, ridge 0.001": 25,
+       "sigma 0.01, ridge 1e-05": 5,
+       "sigma 0.02, ridge 0.0001": 1,
+       "sigma 0.02, ridge 0.001": 5,
+       "sigma 0.02, ridge 1e-05": 2
+      },
+      "q2_mean": 0.7424460581372142,
+      "q2_range": 0.032021081650667305,
+      "q2_ridge_floor": 0.7424490137514533,
+      "rmse_mean": 0.09251071054046996
+     }
+    },
+    "periodic chain + eight counts": {
+     "group": {
+      "chosen": {
+       "sigma 0.01, width 1, h 10, ridge 0.0001": 4,
+       "sigma 0.01, width 1, h 10, ridge 0.001": 1,
+       "sigma 0.01, width 1, h 30, ridge 0.0001": 2,
+       "sigma 0.01, width 2, h 100, ridge 0.0001": 3,
+       "sigma 0.01, width 2, h 100, ridge 0.001": 11,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 2,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 11,
+       "sigma 0.02, width 1, h 10, ridge 0.0001": 4,
+       "sigma 0.02, width 1, h 10, ridge 0.001": 5,
+       "sigma 0.02, width 2, h 100, ridge 0.0001": 1,
+       "sigma 0.02, width 2, h 30, ridge 0.0001": 1,
+       "sigma 0.02, width 2, h 30, ridge 0.001": 5
+      },
+      "q2_mean": 0.5965466375611546,
+      "q2_range": 0.09145013834350812,
+      "q2_ridge_floor": 0.5965466375611546,
+      "rmse_mean": 0.11572696382343198
+     },
+     "random": {
+      "chosen": {
+       "sigma 0.01, width 2, h 100, ridge 0.0001": 10,
+       "sigma 0.01, width 2, h 100, ridge 0.001": 14,
+       "sigma 0.01, width 2, h 30, ridge 0.0001": 7,
+       "sigma 0.01, width 2, h 30, ridge 0.001": 11,
+       "sigma 0.02, width 2, h 30, ridge 0.0001": 3,
+       "sigma 0.02, width 2, h 30, ridge 0.001": 5
+      },
+      "q2_mean": 0.8155677117164346,
+      "q2_range": 0.02323974821746322,
+      "q2_ridge_floor": 0.8155677117164346,
+      "rmse_mean": 0.07828215828079832
+     }
+    }
+   },
+   "polymers": 641,
+   "unit": "g/cm3",
+   "y": {
+    "mean": 1.1531650310655226,
+    "sd": 0.18232051836744878
+   }
+  }
+ },
+ "topo_max": [
+  2,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "valid": 1020
+}

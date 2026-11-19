@@ -49,11 +49,25 @@ autocorrelation of :func:`cmfqsar.invariant.autocorrelation`, optionally countin
 pairs whose *first* atom lies in a chosen set, here the central repeat unit.  With every atom in
 the set the result equals the plain autocorrelation (the tests compare them).  With the central
 unit it is the field environment of one repeat unit inside a chain: its pairs with its own atoms
-and with the atoms of its neighbours, and nothing that starts at the caps.  This is what the
-periodic chain of :mod:`cmfqsar.periodic` computes per repeat length, without the need to build a
-periodic cell with the right repeat distance.  The function also replaces a dense array of
-(atoms x atoms x distance bins) by a sparse one, so an oligomer of 500 atoms at a width of
-0.01 A costs megabytes, not gigabytes; one neighbour list serves every width asked for.
+and with the atoms of its neighbours, and nothing that starts at the caps.  The function also
+replaces a dense array of (atoms x atoms x distance bins) by a sparse one, so an oligomer of 500
+atoms at a width of 0.01 A costs megabytes, not gigabytes; one neighbour list serves every width
+asked for.
+
+**The periodic chain (plan item PL3).**  The central unit of a trimer sees one neighbour on each
+side; an infinite chain sees as many as the distance cutoff reaches.  An extended trimer is not
+a chain that repeats, because its three units have different conformations, so
+:func:`chain_screw` builds one: copies of the middle unit, related by the screw (a rotation and a
+translation) that carries the junction before the middle unit onto the junction after it.  Every
+junction of that chain then has the bond, the bond angles and the torsions of the trimer's
+junction, and the chain differs from the trimer only by the copies beyond the nearest
+neighbours and the absence of caps.  The copies can meet again a few units further on, which
+the screw's ``contact`` reports.  :func:`chain_autocorrelation_rows` gives the field of one unit
+of that chain, sparse, so it works at the narrow widths where the dense periodic sum would need
+gigabytes.  When the screw is a translation, :func:`periodic_chain` makes the cell of
+:mod:`cmfqsar.periodic` (plan item M1), periodic along the translation only, and
+:func:`cmfqsar.periodic.periodic_autocorrelation` gives the same field, with or without the
+uniform background per repeat length.
 
 **What the module does not do.**  It does not describe chain length, its distribution, packing,
 crystallinity or crosslinking: none of these is in a field of a single oligomer.  A copolymer
@@ -451,7 +465,8 @@ def _pair_columns(W: np.ndarray, i: np.ndarray, j: np.ndarray, c: np.ndarray,
 
 
 def autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray] = None,
-                         chunk: int = 200_000) -> List[np.ndarray]:
+                         chunk: int = 200_000,
+                         atom_pairs: Optional[np.ndarray] = None) -> List[np.ndarray]:
     """The field autocorrelation of one molecule for each spec of `specs`, from one neighbour list.
 
     `mol` is a :class:`cmfqsar.fields.MoleculeFields`.  With `centre` None the rows equal those of
@@ -460,6 +475,9 @@ def autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray] = No
     mask are counted: the pairs inside the set twice (both ways round), the pairs from the set to
     the rest once.  Over a partition of the atoms these rows add up to the plain autocorrelation,
     so the row of the central unit is the share of one repeat unit, as a periodic cell's is.
+
+    `atom_pairs`, when given, is the list of atom pairs (i < j) to count in place of all pairs within
+    reach; :func:`chain_autocorrelation_rows` passes only the pairs that start in its middle copy.
     """
     from scipy.sparse import csr_matrix
     from scipy.spatial import cKDTree
@@ -488,7 +506,8 @@ def autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray] = No
         if s.include_self:
             o += self_sum[:, None] * np.exp(-(s.centres ** 2) / (2.0 * s.sigma ** 2))[None, :]
     reach = max(s.d_max + _TAIL * s.sigma for s in specs)
-    ij = cKDTree(X).query_pairs(reach, output_type="ndarray")
+    ij = (cKDTree(X).query_pairs(reach, output_type="ndarray") if atom_pairs is None
+          else np.asarray(atom_pairs, int).reshape(-1, 2))
     if centre is not None and len(ij):
         keep = (c[ij[:, 0]] > 0) | (c[ij[:, 1]] > 0)
         ij = ij[keep]
@@ -512,3 +531,242 @@ def autocorrelation_rows(mol, specs: Sequence, centre: Optional[np.ndarray] = No
             G = csr_matrix((vals[ok], (rows[ok], K[ok])), shape=(len(dd), nb))
             o += (G.T @ UU).T
     return [o.ravel() for o in outs]
+
+
+# --------------------------------------------------------------------------- the periodic chain
+
+#: two atoms of a chain closer than this (A), without a bond between them, sit on top of each
+#: other; :func:`cmfqsar.orca.geometry_faults` uses the same limit
+CHAIN_CONTACT = 1.3
+#: a screw that turns by less than this (degrees) per unit is taken as a translation, and the
+#: chain then has the periodic cell of :func:`periodic_chain`
+TRANSLATION_TURN = 5.0
+
+
+@dataclass
+class ChainScrew:
+    """The operation that carries one unit of a chain onto the next: x -> R x + t.
+
+    `R` is a rotation and `t` a translation; a chain of identical units is the middle unit and its
+    images under the powers of this operation.  The record fields describe it: ``turn`` (degrees
+    per unit) and ``rise`` (A per unit along the screw axis); ``frame_residual``, the root mean
+    square misfit of the atoms that define it; ``rmsd_next``, how far the next unit of the
+    trimer is from the image of the middle unit (0 when the trimer itself repeats); ``junction``,
+    the bond length between two units; ``contact``, the closest approach of two atoms of the
+    chain that are not bonded (below :data:`CHAIN_CONTACT` the chain overlaps itself).
+    """
+    R: np.ndarray
+    t: np.ndarray
+    turn: float
+    rise: float
+    frame_residual: float
+    rmsd_next: float
+    junction: float
+    contact: float
+
+    def apply(self, X: np.ndarray, k: int = 1) -> np.ndarray:
+        """The positions `X` moved by the operation `k` times (k < 0 for the inverse)."""
+        Y = np.asarray(X, float)
+        for _ in range(abs(int(k))):
+            Y = Y @ self.R.T + self.t if k > 0 else (Y - self.t) @ self.R
+        return Y
+
+    @property
+    def is_translation(self) -> bool:
+        return self.turn < TRANSLATION_TURN
+
+    @property
+    def overlaps(self) -> bool:
+        return self.contact < CHAIN_CONTACT
+
+    def record(self) -> Dict[str, float]:
+        return {"turn": self.turn, "rise": self.rise, "frame_residual": self.frame_residual,
+                "rmsd_next": self.rmsd_next, "junction": self.junction, "contact": self.contact}
+
+
+def _unit_atoms(labels: np.ndarray, k: int) -> np.ndarray:
+    return np.where(labels == k)[0]
+
+
+def _chain_bonds(mol: Chem.Mol, labels: np.ndarray, mid: int):
+    """The bonds of one unit as pairs of positions in the unit, and the junction bonds as
+    (position in this unit, position in the next unit)."""
+    u = _unit_atoms(labels, mid)
+    nxt = _unit_atoms(labels, mid + 1)
+    pos = {int(a): p for p, a in enumerate(u)}
+    pos_next = {int(a): p for p, a in enumerate(nxt)}
+    inner, junction = [], []
+    for b in mol.GetBonds():
+        a1, a2 = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
+        if a1 in pos and a2 in pos:
+            inner.append((pos[a1], pos[a2]))
+        elif a1 in pos and a2 in pos_next:
+            junction.append((pos[a1], pos_next[a2]))
+        elif a2 in pos and a1 in pos_next:
+            junction.append((pos[a2], pos_next[a1]))
+    return inner, junction
+
+
+def _kabsch(A: np.ndarray, B: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """The rotation R and translation t with B ~ A R^T + t, in the least-squares sense."""
+    ca, cb = A.mean(axis=0), B.mean(axis=0)
+    U, _, Vt = np.linalg.svd((A - ca).T @ (B - cb))
+    d = np.sign(np.linalg.det(Vt.T @ U.T))
+    R = Vt.T @ np.diag([1.0, 1.0, d]) @ U.T
+    return R, cb - ca @ R.T
+
+
+def _screw_contact(X: np.ndarray, screw_R, screw_t, junction, rise: float, reach: float) -> float:
+    best = np.inf
+    Y = X.copy()
+    extent = 2.0 * float(np.max(np.linalg.norm(X - X.mean(axis=0), axis=1)))
+    K = int(min(200, math.ceil((reach + extent) / max(rise, 0.1)) + 1))
+    for k in range(1, K + 1):
+        Y = Y @ screw_R.T + screw_t
+        D = np.linalg.norm(X[:, None, :] - Y[None, :, :], axis=-1)
+        if k == 1:
+            for a, b in junction:
+                D[a, b] = np.inf
+        best = min(best, float(D.min()))
+    return best
+
+
+def chain_screw(mol: Chem.Mol, reach: float = 12.0) -> ChainScrew:
+    """The screw of the chain that the middle unit of an oligomer stands for (plan item PL3).
+
+    `mol` is an oligomer of an odd number of units, at least three, with one conformer and the
+    ``cmf_unit`` labels (as :func:`build` returns it).  The atoms of all units come in the same
+    order, so the units correspond atom by atom (checked here).  The screw carries the junction
+    before the middle unit onto the junction after it: the atom of the previous unit bonded to the
+    middle unit, the middle unit's head atom and its heavy atoms up to two bonds away go onto the
+    middle unit's tail atom, the next unit's head atom and the same heavy atoms of the next unit.
+    The chain made of copies of the middle unit then has, at every junction, the bond, the two
+    bond angles and the torsions of the trimer's junction after the middle unit.
+
+    An extended trimer is not a chain that repeats: its three units have different conformations.
+    A pure translation of the middle unit put atoms of a chain 0.5 A apart on four test polymers,
+    and the best rigid fit of one unit onto the next does so in 57 % of a sample of 432 PL2
+    trimers.  The screw of
+    the junction keeps the chemistry of a junction exactly, but its copies can still meet again
+    a few units further on; ``contact`` says so.  `reach` (A) is how far along the chain the
+    contacts are looked for.
+    """
+    labels = unit_labels(mol)
+    n = int(labels.max()) + 1
+    if n < 3 or n % 2 == 0:
+        raise ValueError(f"a chain screw needs an odd number of units, at least three; this "
+                         f"oligomer has {n}")
+    mid = n // 2
+    units = [_unit_atoms(labels, k) for k in (mid - 1, mid, mid + 1)]
+    z = [np.array([mol.GetAtomWithIdx(int(i)).GetAtomicNum() for i in u]) for u in units]
+    if not (len(z[0]) == len(z[1]) == len(z[2]) and (z[0] == z[1]).all()
+            and (z[1] == z[2]).all()):
+        raise ValueError("the units of this oligomer do not have their atoms in the same order")
+    _, j_next = _chain_bonds(mol, labels, mid)
+    _, j_prev = _chain_bonds(mol, labels, mid - 1)
+    if not j_next or sorted(j_next) != sorted(j_prev):
+        raise ValueError("the junctions before and after the middle unit could not be matched")
+    X = np.asarray(mol.GetConformer().GetPositions(), float)
+    pos = {int(a): p for p, a in enumerate(units[1])}
+    src, dst = [], []
+    for tp, hp in j_next:
+        src += [X[units[0][tp]], X[units[1][hp]]]
+        dst += [X[units[1][tp]], X[units[2][hp]]]
+        shell = {int(units[1][hp])}
+        for _ in range(2):
+            shell |= {nb.GetIdx() for a in list(shell)
+                      for nb in mol.GetAtomWithIdx(a).GetNeighbors()
+                      if nb.GetIdx() in pos and nb.GetAtomicNum() > 1}
+        for a in sorted(shell - {int(units[1][hp])}):
+            src.append(X[a])
+            dst.append(X[units[2][pos[a]]])
+    src, dst = np.array(src), np.array(dst)
+    R, t = _kabsch(src, dst)
+    residual = float(np.sqrt(np.mean(np.sum((src @ R.T + t - dst) ** 2, axis=1))))
+    turn = float(np.degrees(np.arccos(np.clip((np.trace(R) - 1.0) / 2.0, -1.0, 1.0))))
+    w, v = np.linalg.eig(R)
+    axis = np.real(v[:, int(np.argmin(np.abs(w - 1.0)))])
+    rise = abs(float(t @ axis))
+    heavy = z[1] > 1
+    A = X[units[1]]
+    moved = A @ R.T + t
+    rmsd = float(np.sqrt(np.mean(np.sum((moved[heavy] - X[units[2]][heavy]) ** 2, axis=1))))
+    junction = float(np.mean([np.linalg.norm(X[units[1][a]] - X[units[2][b]]) for a, b in j_next]))
+    contact = _screw_contact(A, R, t, j_next, rise, reach)
+    return ChainScrew(R=R, t=t, turn=turn, rise=rise, frame_residual=residual, rmsd_next=rmsd,
+                      junction=junction, contact=contact)
+
+
+def periodic_chain(mol: Chem.Mol, mf, screw: Optional[ChainScrew] = None, name: str = "",
+                   side: float = 100.0):
+    """The middle unit of an oligomer as a cell periodic along one lattice vector (plan item M1).
+
+    Only a chain whose screw is a translation (:attr:`ChainScrew.is_translation`) has such a
+    cell; the translation is the third lattice vector, the only periodic one, and two vectors of
+    `side` angstrom normal to it complete the cell, which no pair crosses.  `mf` is the
+    :class:`cmfqsar.fields.MoleculeFields` of the whole oligomer, so that the weights of the
+    middle unit (the Gasteiger charges above all) are those it has inside a chain.  Returns a
+    :class:`cmfqsar.periodic.CrystalFields` for :func:`cmfqsar.periodic.periodic_autocorrelation`,
+    which adds the uniform background per repeat length that M1 defines.
+    """
+    from .periodic import CrystalFields
+    screw = chain_screw(mol) if screw is None else screw
+    if not screw.is_translation:
+        raise ValueError(f"the chain turns by {screw.turn:.1f} degrees per unit, so it has no "
+                         f"periodic cell; use chain_autocorrelation_rows")
+    labels = unit_labels(mol)
+    u = _unit_atoms(labels, int(labels.max()) // 2)
+    tvec = np.asarray(screw.t, float)
+    e = tvec / max(float(np.linalg.norm(tvec)), 1e-12)
+    trial = np.array([1.0, 0.0, 0.0]) if abs(e[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    a = np.cross(e, trial)
+    a /= np.linalg.norm(a)
+    b = np.cross(e, a)
+    radii = getattr(mf, "radii", None)
+    radii = np.ones(len(u)) if radii is None else np.asarray(radii, float)[u]
+    return CrystalFields(name=name, coords=np.asarray(mf.coords, float)[u],
+                         weights=np.asarray(mf.weights, float)[u], radii=radii,
+                         symbols=[mol.GetAtomWithIdx(int(i)).GetSymbol() for i in u],
+                         cell=np.array([side * a, side * b, tvec]), pbc=(False, False, True))
+
+
+def chain_autocorrelation_rows(mol: Chem.Mol, mf, specs: Sequence,
+                               screw: Optional[ChainScrew] = None,
+                               copies: Optional[int] = None) -> List[np.ndarray]:
+    """The field autocorrelation of one unit of the chain, without a background, for each spec of
+    `specs` (:class:`cmfqsar.invariant.AutocorrelationSpec`).
+
+    The middle unit is copied by the powers of the screw as far as the longest Gaussian reaches,
+    and :func:`autocorrelation_rows` counts the pairs that start in the copy at the origin.  The
+    rows follow the convention of the central-unit rows of a trimer, so the two compare channel
+    by channel.  For a chain whose screw is a translation they equal
+    :func:`cmfqsar.periodic.periodic_autocorrelation` on :func:`periodic_chain` with the
+    background and the taper off, times the number of atoms of the unit.  `copies` limits the
+    chain to that many copies on each side (1: the nearest neighbours only, as in a trimer).
+    """
+    from types import SimpleNamespace
+    screw = chain_screw(mol) if screw is None else screw
+    labels = unit_labels(mol)
+    u = _unit_atoms(labels, int(labels.max()) // 2)
+    X = np.asarray(mf.coords, float)[u]
+    W = np.asarray(mf.weights, float)[u]
+    reach = max(s.d_max + _TAIL * s.sigma for s in specs)
+    extent = 2.0 * float(np.max(np.linalg.norm(X - X.mean(axis=0), axis=1)))
+    K = int(min(200, math.ceil((reach + extent) / max(screw.rise, 0.1)) + 1))
+    if copies is not None:
+        K = min(K, int(copies))
+    images = [X] + [screw.apply(X, k) for k in range(1, K + 1)] + \
+             [screw.apply(X, -k) for k in range(1, K + 1)]
+    Xall = np.concatenate(images)
+    Wall = np.tile(W, (len(images), 1))
+    centre = np.zeros(len(Xall), bool)
+    centre[:len(u)] = True
+    # only the pairs that start in the middle copy count: search from it alone
+    from scipy.spatial import cKDTree
+    near = cKDTree(X).query_ball_tree(cKDTree(Xall), reach)
+    i = np.repeat(np.arange(len(u)), [len(v) for v in near])
+    j = np.concatenate([np.asarray(v, int) for v in near]) if len(i) else np.zeros(0, int)
+    keep = (j != i) & ((j >= len(u)) | (i < j))
+    ij = np.stack([np.minimum(i, j)[keep], np.maximum(i, j)[keep]], axis=1)
+    return autocorrelation_rows(SimpleNamespace(coords=Xall, weights=Wall), specs, centre=centre,
+                                atom_pairs=ij)

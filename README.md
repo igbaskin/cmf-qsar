@@ -1306,6 +1306,11 @@ about one to two log units and none ranks them; the field is worst, 0.26 to 0.60
 behind the bond-count kernel. With other ladders in the training set the error halves. PL6
 also found that 101 of the 742 linear repeat units of the source are written with a broken
 benzene ring or a methylene for a carbonyl oxygen; repairing them changes PL2's numbers little.
+Plan item PL3 (`benchmarks/run_polymer_chain.py`) builds an infinite chain from the trimer:
+copies of the middle unit, related by the screw that carries one junction onto the next. Its
+field is worse than the trimer's middle unit on all six targets, by 0.02 to 0.12 in q2, because
+the copies beyond the nearest neighbours dilute the kernel. 41 % of these chains meet
+themselves a few units on, and only one is a pure translation, so the trimer stays the sample.
 
 ### A measured curve as the sample: no structure needed
 

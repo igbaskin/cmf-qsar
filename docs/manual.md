@@ -12814,7 +12814,9 @@ setting is kept in `benchmarks/cache/polymer_tg/settings/`, so a run with a wide
 only the settings it adds.
 
 **What is not done.** The periodic chain of plan item M1 is not used here: it would need a cell
-with the right repeat distance for each polymer, which the extended trimer avoids. Copolymers
+with the right repeat distance for each polymer, which the extended trimer avoids. Plan item PL3
+builds a chain from the trimer (*The periodic chain against the trimer* below), and it describes
+the polymers worse than the trimer does. Copolymers
 need a sequence, which the builder does not choose. Chain length, its distribution, crystallinity
 and the measurement method are not in any field of a single oligomer.
 
@@ -13147,6 +13149,100 @@ the bond-count kernel plus counts, in 16 of its 1,000 blocks.
 
 **Costs.** The 97 new trimers took 5 minutes with 6 processes and the models 66 minutes; the PL2
 trimers are read from its cache.
+
+### The periodic chain against the trimer
+
+The middle unit of a trimer sees one neighbouring unit on each side. A real chain has
+neighbours as far as the distance cutoff reaches, and item M1 can compute the field of a chain
+per repeat length, if it is given a cell with the right repeat. Plan item PL3
+(`benchmarks/run_polymer_chain.py`) builds such a chain from the trimer and compares it with the
+trimer on the targets and folds of PL2.
+
+**An extended trimer does not give a repeat.** Its three units have different conformations:
+the trimer is extended from end to end, but its torsions are not the same in every unit.
+On four test polymers, moving the middle unit by the vector between two head atoms missed the
+next unit by 1.7 to 11 Å (root mean square over the heavy atoms), and a cell built with that
+vector put atoms of neighbouring units 0.5 Å apart. Even the best rigid fit of one unit onto
+the next makes such overlaps in 57 % of a sample of 432 trimers.
+
+**The chain that is built.** `cmfqsar.polymer.chain_screw` makes copies of the middle unit
+related by one screw, a rotation and a translation. The screw carries the junction before the
+middle unit onto the junction after it. Every junction of the chain then has the bond, the two
+bond angles and the torsions of the trimer's junction, and the middle unit keeps its conformation.
+So the chain differs from the trimer in two ways only: the copies beyond the nearest neighbours,
+and no caps. `chain_autocorrelation_rows` gives the field of one unit of this chain in the
+convention of the trimer's central-unit rows, so the two compare channel by channel. When the
+screw is a pure translation, `periodic_chain` gives M1's periodic cell, and the two routes agree to
+10⁻¹² (tested).
+
+Of the 1,725 trimers of PL2:
+
+* The screw turns by 133° per unit and rises by 2.8 Å along its axis (medians; the rise is 0.5
+  to 12.4 Å between the 5th and 95th percentiles). Only one screw is a translation, so M1's cell
+  fits one polymer.
+* The copy of the middle unit that the screw makes misses the trimer's own next unit by 4.1 Å
+  (median root mean square over the heavy atoms): the junction is the same, the rest of the
+  unit is not.
+* 705 chains (41 %) bring two atoms closer than 1.3 Å a few units further on: the helix meets
+  itself. They are left out, and every model is compared on the other 1,020 polymers (641 for the
+  density, 273 to 427 per gas).
+* Setting every backbone torsion to 180° before taking the screw (an all-trans chain) still left
+  29 % of a sample of 108 overlapping, so it was not used.
+
+**The question, fixed before the run.** Does the field of the chain describe a polymer better
+than the field of the trimer's middle unit? The gate is periodic chain plus counts minus central
+unit plus counts, with the interval above zero. A third description separates the two
+differences: the chain cut to its nearest copy on each side ("nearest copies only").
+
+**The gate is not met: the chain is worse on every target.** q² on random folds / with groups
+held out (classes for the density, clusters for the gases):
+
+| Target | Polymers | central unit + counts | periodic chain + counts | chain minus central, random folds | chain minus central, groups held out |
+|---|---|---|---|---|---|
+| density | 641 | +0.874 / +0.713 | +0.816 / +0.597 | -0.056 [-0.086, -0.026] | -0.116 [-0.335, +0.007] |
+| CH4 | 359 | +0.677 / +0.511 | +0.628 / +0.467 | -0.046 [-0.068, -0.025] | -0.037 [-0.086, +0.002] |
+| CO2 | 399 | +0.593 / +0.438 | +0.511 / +0.361 | -0.089 [-0.134, -0.043] | -0.076 [-0.171, -0.004] |
+| H2 | 273 | +0.608 / +0.402 | +0.589 / +0.377 | -0.018 [-0.034, -0.002] | -0.020 [-0.064, +0.011] |
+| N2 | 417 | +0.630 / +0.474 | +0.573 / +0.439 | -0.059 [-0.090, -0.030] | -0.036 [-0.108, +0.012] |
+| O2 | 427 | +0.643 / +0.463 | +0.565 / +0.401 | -0.080 [-0.119, -0.045] | -0.069 [-0.145, -0.010] |
+
+**The field kernels alone** (q², random folds / groups held out):
+
+| Target | central unit of the trimer | nearest copies only | periodic chain |
+|---|---|---|---|
+| density | +0.846 / +0.768 | +0.839 / +0.744 | +0.742 / +0.650 |
+| CH4 | +0.587 / +0.473 | +0.581 / +0.488 | +0.511 / +0.372 |
+| CO2 | +0.532 / +0.408 | +0.486 / +0.385 | +0.414 / +0.318 |
+| H2 | +0.540 / +0.411 | +0.544 / +0.435 | +0.501 / +0.379 |
+| N2 | +0.549 / +0.462 | +0.534 / +0.443 | +0.481 / +0.404 |
+| O2 | +0.573 / +0.459 | +0.541 / +0.421 | +0.477 / +0.379 |
+
+**What it says.**
+
+* **The far copies make the field worse.** The full chain minus the nearest copies is -0.045 to
+  -0.094 on random folds (every interval below zero) and -0.044 to -0.091 with groups held out.
+  The nearest copies minus the central unit is -0.058 to +0.022; only O2 has both intervals below
+  zero. So the idealised neighbours and the missing caps cost little, and the copies beyond them
+  cost most. They add the same distances again and again at long range, and under the cosine
+  normalisation these channels dilute the ones that carry information, as the long-range channels
+  did in PL5.
+* **The copies do change the description.** The correlation of the two field kernels over all
+  pairs of polymers is 0.92 at 0.005 Å and 0.89 at 0.1 Å; it is lower for the third of the
+  polymers with the shortest rise per unit (0.91 and 0.89) than for the third with the longest
+  (0.98 and 0.96), as expected: a long unit already sees most of its neighbours inside itself.
+* **The trimer stays the sample.** On the same 1,020 polymers the PL2 margin of the central unit
+  plus counts over the bond-count kernel plus counts is -0.002 to +0.092 on the gases, with the
+  interval above zero for CH4 and N2 on both kinds of folds.
+
+**The settings chosen.** The chain chose narrower widths than the central unit: 0.0025 Å or
+0.001 Å in most blocks, against 0.005 Å. 0.001 Å is the narrowest width of PL2's list, so a second
+run offered 0.0005 Å; it was chosen in none of the 600 blocks, and no number changed. Every model
+chose the smallest ridge (10⁻⁸) in about half of its blocks, as in PL2; selecting again with the
+ridges below 10⁻⁴ removed changed no q² in the fourth decimal.
+
+**Costs.** The screws and the chain rows took 2 minutes with 12 processes, the models 75 minutes,
+and the second run (the narrower width and the nearest copies) 12 minutes. The trimers are those
+of PL2.
 
 ## Designing a crystal: a prototype, a budget and a loop
 

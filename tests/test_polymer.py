@@ -193,6 +193,52 @@ def test_the_span_of_a_ladder_runs_from_the_first_to_the_last_unit():
     assert {int(labels[a]), int(labels[b])} == {0, 2}
 
 
+def test_the_chain_screw_keeps_the_junction_of_the_trimer(trimer):
+    # every junction of the chain of copies has the bond of the trimer's junction after the
+    # middle unit, and the screw and its inverse undo each other
+    from cmfqsar.polymer import _chain_bonds, chain_screw
+    mol, _ = trimer
+    s = chain_screw(mol)
+    labels = unit_labels(mol)
+    X = mol.GetConformer().GetPositions()
+    mid = X[labels == 1]
+    _, junction = _chain_bonds(mol, labels, 1)
+    (tp, hp), = junction
+    nxt = s.apply(mid, 1)
+    assert abs(np.linalg.norm(mid[tp] - nxt[hp]) - s.junction) < 0.05
+    assert np.allclose(s.apply(nxt, -1), mid, atol=1e-9)
+    assert s.frame_residual < 0.2
+    assert set(s.record()) == {"turn", "rise", "frame_residual", "rmsd_next", "junction", "contact"}
+    with pytest.raises(ValueError, match="odd number"):
+        chain_screw(oligomer(STYRENE, n=2))
+
+
+def test_a_translation_chain_is_the_periodic_cell_of_m1(trimer, fs):
+    # with the screw replaced by a pure translation, the sparse rows of the chain equal the
+    # periodic autocorrelation of M1 on the cell (background and taper off) times the atoms
+    from cmfqsar.periodic import PeriodicSpec, periodic_autocorrelation
+    from cmfqsar.polymer import ChainScrew, chain_autocorrelation_rows, periodic_chain
+    mol, _ = trimer
+    mf = build_fields(mol, fs, "ps")
+    s = ChainScrew(R=np.eye(3), t=np.array([0.0, 0.0, 6.5]), turn=0.0, rise=6.5,
+                   frame_residual=0.0, rmsd_next=0.0, junction=1.5, contact=2.0)
+    cell = periodic_chain(mol, mf, s)
+    assert cell.pbc == (False, False, True) and abs(cell.measure - 6.5) < 1e-12
+    sig, rmax = 0.1, 9.0
+    ps = PeriodicSpec(r_max=rmax, step=sig, sigma=sig, taper=0.0, background=False)
+    a = periodic_autocorrelation(cell, ps) * cell.n_atoms
+    b = chain_autocorrelation_rows(mol, mf, [AutocorrelationSpec(d_max=rmax, step=sig,
+                                                                 sigma=sig)], s)[0]
+    ok = ps.centres <= rmax - 8 * sig
+    A, B = a.reshape(-1, len(ps.centres))[:, ok], b.reshape(-1, len(ps.centres))[:, ok]
+    assert np.abs(A - B).max() <= 1e-12 * np.abs(A).max()
+    turned = ChainScrew(R=np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
+                        t=np.array([0.0, 0.0, 6.5]), turn=90.0, rise=6.5, frame_residual=0.0,
+                        rmsd_next=0.0, junction=1.5, contact=2.0)
+    with pytest.raises(ValueError, match="no periodic cell"):
+        periodic_chain(mol, mf, turned)
+
+
 def test_build_many_keeps_the_order_and_reports_failures():
     out = build_many([STYRENE, "[*]CC", "[*]CC[*]"], n=3, conformers=2, jobs=1)
     assert [m is not None for m, _, _ in out] == [True, False, True]

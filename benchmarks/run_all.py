@@ -1129,6 +1129,17 @@ def registry() -> List[Benchmark]:
                            "benchmark reads permeability_pl6.csv and the PL2 trimers"],
                   report=lambda: _mod("run_polymer_ladders").report(),
                   tables=["polymer_ladders/table.md"]),
+        Benchmark("polymer_chain",
+                  "the periodic chain against the trimer (plan item PL3): copies of the "
+                  "trimer's middle unit related by the screw that carries one junction onto the "
+                  "next, against the middle unit of the trimer, on the density and the "
+                  "permeability targets and folds of PL2",
+                  "run_polymer_chain.py", "polymer_chain",
+                  compute=[[]], minutes="90",
+                  prepare=["run_polymer_packing.py first: this benchmark reads its trimers "
+                           "and their rows"],
+                  report=lambda: _mod("run_polymer_chain").report(),
+                  tables=["polymer_chain/table.md"]),
         Benchmark("porphyrin",
                   "HER and ORR descriptors (the adsorption free energies of H, OH, O and OOH and "
                   "the ORR limiting potential) of substituted cobalt and iron porphyrins, "
