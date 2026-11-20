@@ -125,13 +125,27 @@ def available() -> Dict[str, bool]:
     return out
 
 
+def _import_error(module: str) -> str:
+    """The text of the error that importing `module` raises, or an empty text."""
+    try:
+        __import__(module)
+    except Exception as exc:                 # noqa: BLE001 - the reason is the point
+        return f"{type(exc).__name__}: {exc}"
+    return ""
+
+
 def require() -> None:
     missing = [k for k, v in available().items() if not v]
     if missing:
+        modules = {"openmm": "openmm", "openmmforcefields": "openmmforcefields",
+                   "openff": "openff.toolkit", "nagl": "openff.nagl"}
+        reasons = [f"import of {modules[k]}: {_import_error(modules[k])}"
+                   for k in missing if k in modules]
         raise ElectrolyteError(
             f"a bulk simulation needs {', '.join(missing)}, which is not usable here. The stack "
             f"is conda-forge only: micromamba create -n md -c conda-forge openmm packmol "
-            f"ambertools openmmforcefields openff-toolkit openff-nagl rdkit")
+            f"ambertools openmmforcefields openff-toolkit openff-nagl rdkit"
+            + ("".join(f"\n  {r}" for r in reasons)))
 
 
 # ----------------------------------------------------------------------------------------------

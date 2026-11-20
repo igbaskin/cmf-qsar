@@ -212,6 +212,17 @@ def test_the_report_of_what_is_installed_matches_what_require_does():
                 assert name in str(err.value)
 
 
+def test_require_names_the_error_of_a_module_that_cannot_be_imported(monkeypatch):
+    state = {"packmol": True, "antechamber": True, "openmm": True, "openmmforcefields": True,
+             "openff": True, "nagl": False}
+    monkeypatch.setattr(EL, "available", lambda: state)
+    monkeypatch.setattr(EL, "_import_error", lambda module: "ImportError: libfoo.so is missing")
+    with pytest.raises(EL.ElectrolyteError) as err:
+        EL.require()
+    assert "needs nagl" in str(err.value)
+    assert "import of openff.nagl: ImportError: libfoo.so is missing" in str(err.value)
+
+
 def test_putting_the_tools_on_the_path_does_not_fail_without_them():
     found = EL.tools_on_path()
     assert isinstance(found, list)
