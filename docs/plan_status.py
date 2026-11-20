@@ -60,7 +60,9 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "set with a structure or a composition beside it is missing"),
     "BT9": ("partly", "the label and its two tests on one electrolyte built and measured "
                       "14 November 2026; gate (a) measured over the range of concentrations "
-                      "and not met; the 62 formulations and the model are left"),
+                      "and not met; the charge factor transfers to 21 other solvent "
+                      "compositions in rank and level (20 November 2026); the 40 other "
+                      "formulations of the 62 and the model are left"),
     "MC3": ("partly", "the series built from ChEMBL and measured 13 November 2026: the "
                       "handedness channels name the better enantiomer more often than chance "
                       "and read it at the stereocentre, but they do not improve the potency "

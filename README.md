@@ -4001,6 +4001,11 @@ for it:
   place of the measured one, the discharge capacity changes by 0.6 % or less up to twice the
   one-hour rate, and by -2.3 % to +1.4 % at 2.5 times that rate with both corrections. No box
   was simulated in the cold, where the cell needs the coefficient within 4 to 10 %.
+- The factor of 0.7 on the charges, chosen on one electrolyte, transfers to other solvents. One
+  formulation of each of 22 solvent compositions of CALiSol-23, near 1.1 mol/kg, gives a rank
+  correlation of 0.83 between the simulated and the measured conductivity (95 % interval 0.54
+  to 0.95), and the geometric mean of the ratio is 0.72. Single formulations are not
+  accurate: the ratio runs from 0.38 to 1.80.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

@@ -19272,6 +19272,92 @@ capacity, and the tolerance stage allows 5 %.
   the box the cell then loses 9.4 % at 2.5C. A reading in the cell has to be made with the
   corrected series.
 
+### Other solvents: does the charge factor transfer?
+
+Rule 2 asks that a simulated label is checked against a measurement before a model is fitted on
+it. The factor of 0.7 on the charges of the ions was chosen on one electrolyte, EC:EMC 3:7. This
+test uses CALiSol-23, which holds measured conductivities of LiPF6 in 22 compositions of
+carbonate solvents. One formulation of each composition was simulated with the same settings as
+the series: the one whose molality is nearest to 1.11 mol/kg, so that the solvent changes and
+the concentration stays near that of the reference cell. That is 21 new boxes of 4 ns. EC:EMC
+3:7 is the mean of the two starts of the series. The measured value is the fit of CALiSol-23 at
+298 K for that formulation.
+
+The reading rule was fixed before the boxes were run. The rank part holds if the lower end of
+the 95 % interval of the rank correlation is above zero. The level part holds if the geometric
+mean of the ratios of the other 21 compositions lies inside the range of ratios that the series
+found. A box whose exponent of the cation is below 0.8 is too short at 4 ns.
+
+| Formulation | Molality, mol/kg | Measured conductivity, S/m | Simulated conductivity, S/m | Ratio to the measured | Exponent of the cation |
+|---|---:|---:|---|---:|---:|
+| LiPF6_EMC100_m1p500 | 1.500 | 0.523 | 0.293 +/- 0.093 | 0.56 | 0.77 |
+| LiPF6_EC15_PC85_m0p446 | 0.446 | 0.593 | 0.273 +/- 0.051 | 0.46 | 0.86 |
+| LiPF6_DEC50_PC50_m0p465 | 0.465 | 0.677 | 0.254 +/- 0.025 | 0.38 | 0.85 |
+| LiPF6_DEC70_PC30_m0p898 | 0.898 | 0.679 | 0.352 +/- 0.084 | 0.52 | 0.78 |
+| LiPF6_DEC20_PC80_m0p892 | 0.892 | 0.711 | 0.447 +/- 0.065 | 0.63 | 0.83 |
+| LiPF6_EC10_EMC90_m1p500 | 1.500 | 0.713 | 0.730 +/- 0.082 | 1.02 | 0.78 |
+| LiPF6_DEC60_PC40_m0p750 | 0.750 | 0.738 | 0.434 +/- 0.103 | 0.59 | 0.84 |
+| LiPF6_EC60_PC40_m0p813 | 0.813 | 0.751 | 0.976 +/- 0.196 | 1.30 | 0.83 |
+| LiPF6_DEC40_PC60_m0p802 | 0.802 | 0.760 | 0.470 +/- 0.151 | 0.62 | 0.81 |
+| LiPF6_EC20_EMC80_m1p110 | 1.110 | 0.811 | 0.678 +/- 0.143 | 0.84 | 0.84 |
+| LiPF6_EC30_EMC70_m1p110 (the reference electrolyte, two starts) | 1.110 | 0.883 | 0.666 +/- 0.044 | 0.75 | 0.84 |
+| LiPF6_EC50_EMC50_m1p212 | 1.212 | 0.912 | 0.445 +/- 0.083 | 0.49 | 0.82 |
+| LiPF6_EC40_EMC60_m1p077 | 1.077 | 0.918 | 0.748 +/- 0.101 | 0.81 | 0.85 |
+| LiPF6_DMC100_m1p500 | 1.500 | 0.943 | 0.840 +/- 0.223 | 0.89 | 0.87 |
+| LiPF6_EC30_EMC60_MA10_m1p596 | 1.596 | 0.973 | 0.809 +/- 0.147 | 0.83 | 0.78 |
+| LiPF6_DMC90_EC10_m1p500 | 1.500 | 1.107 | 0.965 +/- 0.175 | 0.87 | 0.84 |
+| LiPF6_DMC80_EC20_m1p500 | 1.500 | 1.141 | 0.538 +/- 0.205 | 0.47 | 0.84 |
+| LiPF6_EC30_EMC50_MA20_m1p492 | 1.492 | 1.148 | 0.822 +/- 0.081 | 0.72 | 0.85 |
+| LiPF6_DMC70_EC25_EMC05_m1p200 | 1.200 | 1.198 | 0.897 +/- 0.137 | 0.75 | 0.85 |
+| LiPF6_DMC70_EC30_m1p000 | 1.000 | 1.212 | 2.182 +/- 0.533 | 1.80 | 0.89 |
+| LiPF6_DMC60_EC30_MA10_m1p491 | 1.491 | 1.298 | 1.399 +/- 0.284 | 1.08 | 0.86 |
+| LiPF6_DMC50_EC30_MA20_m1p500 | 1.500 | 1.486 | 1.068 +/- 0.298 | 0.72 | 0.85 |
+
+* **The rank part holds.** The rank correlation of Spearman between the simulated and the
+  measured conductivity is 0.83 over the 22 formulations. Its 95 % interval, from resampling
+  the formulations, is 0.54 to 0.95. One start of 4 ns scatters by 24 % in the logarithm of
+  the conductivity, taken from the pairs of starts of the series. With that scatter alone, a
+  simulation without any bias would reach a rank correlation of about 0.75.
+* **The level part holds.** The geometric mean of the ratios of the other 21 compositions is
+  0.72, inside the range of 0.59 to 1.02 that the series gave.
+* **Single formulations are not accurate.** The ratios run from 0.38 (DEC:PC 1:1) to 1.80
+  (DMC:EC 7:3). That is a factor of almost five. The scatter of one start is 24 %, and the
+  largest value is one start.
+* **By solvent.** The geometric mean of the ratio is lowest for DEC (0.54, five
+  formulations) and for PC (0.60, seven formulations), and highest for DMC (0.87, seven
+  formulations). The difference between DEC and DMC is about three times the error that the
+  scatter of the starts explains, if the formulations were independent. They share solvents,
+  so the reading by solvent is a lead and not a result.
+* **Part of the rank is the concentration.** The molalities run from 0.45 to 1.6 mol/kg,
+  because the molality nearest to 1.11 differs among compositions. The measured conductivity
+  depends on the concentration, so part of the rank correlation is the effect of it and not
+  of the solvent.
+* **Four boxes are too short.** The exponent of the cation is below 0.8 for EMC 100 %,
+  DEC:PC 7:3, EC:EMC 1:9 and EC:EMC:MA 30:60:10. Their runs of 20 ns, about 1.5 hours each,
+  were not made. If all four conductivities changed by a factor of 0.6 or 1.5, the geometric
+  mean of the ratios would be 0.66 or 0.78, still inside the range. The rank part was not
+  tested in the same way.
+* **What it cost.** The 21 boxes took 6.3 hours of equilibration and production on this
+  graphics card (15 to 29 minutes each, 230 to 435 ns/day, 11,700 to 17,100 atoms). The 40 other
+  formulations of the 62 would take about 12 hours.
+
+**Boxes on another machine.** The script `benchmarks/colab/colab_transport.py` runs the same
+boxes with the same code on a machine whose files disappear at the end of a session, for
+example Google Colab. After every box it copies the finished box to a store folder (on Colab, a
+folder on Google Drive). A box that is in the store is not run again. A new box is not started
+if it is unlikely to finish within the time limit. After every box one line goes to
+`colab_log.jsonl` in the store: the graphics card, the time and the speed in ns/day, from which
+the cost in compute units is read. `benchmarks/colab/make_bundle.py` packs the code into one zip
+file, and the notebook `benchmarks/colab/cmf_transport_colab.ipynb` installs the simulation
+environment and runs the script. Nothing is uploaded by these scripts. The runner was tested on
+a short box on the CPU. The notebook has not been run on Colab, and the version of CUDA in its
+install cell is the setting most likely to need a change.
+
+```bash
+python benchmarks/colab/make_bundle.py                 # the zip file to copy to Google Drive
+python benchmarks/colab/colab_transport.py --store STORE --dry-run   # which boxes would run
+```
+
 ### What this says about a label
 
 * **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient
@@ -19300,8 +19386,9 @@ capacity, and the tolerance stage allows 5 %.
 * **What stays open.** The ideal-solution formula with the measured thermodynamic factor is
   not the relation of a concentrated solution, and this program has no prediction of that
   factor (plan item BT11). The correction for the size of the box is a range and not a
-  number. The factor on the charges of the ions was tested on one solvent mixture. And no
-  box was simulated in the cold, where the cell is strict.
+  number. The factor on the charges of the ions was tested on 22 solvent compositions at one
+  concentration each, and not at other concentrations than that of EC:EMC 3:7. And no box was
+  simulated in the cold, where the cell is strict.
 
 ```bash
 python benchmarks/run_diffusion.py --stage simulate   # in the simulation environment; hours

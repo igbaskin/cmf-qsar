@@ -6082,11 +6082,40 @@ concentration was driven, and the stage counts only discharges that ended at the
   ratios at the high concentrations, and without the size correction the cell then loses
   9.4 % at 2.5C. The length of the run and the size of the box change a coefficient in
   opposite directions, so a reading that applies one of them alone is not a result.
-  *Next, in this order:* the conductivity of a part of the 62 formulations at the same
-  factor, which is rule 2's test of the calibration on other solvents, with runs of 20 ns
-  where the exponent is below about 0.8; then the 62 formulations; then the model of gate
-  (b). The thermodynamic factor of BT11 is needed before a label for an electrolyte without
-  a measured factor can be made.
+  *Other solvents: rule 2 (20 November 2026).* The factor of 0.7 was chosen on EC:EMC 3:7.
+  One formulation of each of the 22 solvent compositions of CALiSol-23 was simulated with the
+  same settings: the one whose molality is nearest to 1.11 mol/kg. That is 21 new boxes of 4 ns
+  (11,700 to 17,100 atoms, 230 to 435 ns/day, 15 to 29 minutes each with equilibration, 6.3
+  hours in all). EC:EMC 3:7 is the mean of the two starts of the series. The reading rule was
+  fixed before the boxes were run. *The rank part holds:* the rank correlation of Spearman
+  between the simulated and the measured conductivity is 0.83 over the 22 formulations, with
+  a 95 % interval of 0.54 to 0.95. One start scatters by 24 % in the logarithm of the
+  conductivity, and with that scatter alone a simulation without any bias would reach about
+  0.75. *The level part holds:* the geometric mean of the ratios of the 21 other compositions
+  is 0.72, inside the range 0.59 to 1.02 that the series found. The ratios of single
+  formulations run from 0.38 (DEC:PC 1:1) to 1.80 (DMC:EC 7:3). By solvent, the geometric
+  mean of the ratio is lowest for DEC (0.54, five formulations) and PC (0.60, seven) and
+  highest for DMC (0.87, seven). The difference between DEC and DMC is about three times the
+  error that the scatter of the starts explains, if the formulations were independent. They
+  share solvents, so the reading by solvent is a lead and not a result.
+  *What this does not say.* The label is not accurate formulation by formulation: one start
+  scatters by 24 %, and the ratio spreads over a factor of five. The molalities of the 22
+  formulations run from 0.45 to 1.6 mol/kg, because the nearest molality to 1.11 differs
+  among compositions, so part of the rank correlation is the effect of the concentration.
+  The test was made at one concentration per composition. And four boxes have an exponent of
+  the cation below 0.8 (EMC 100 %, DEC:PC 7:3, EC:EMC 1:9, and EC:EMC:MA 30:60:10), which the
+  series showed to be too short at 4 ns. Their 20 ns runs, about 1.5 hours each, were not
+  made. If all four conductivities changed by a factor of 0.6 or of 1.5, the geometric mean
+  would be 0.66 or 0.78, still inside the range, so the level verdict does not depend on
+  them; the rank verdict was not tested in the same way.
+  *The cost.* The 21 boxes ran on this desktop in one night. A runner for another machine,
+  `benchmarks/colab/colab_transport.py`, with a notebook for Google Colab, copies each
+  finished box to a store folder and skips boxes that are there. It was tested on a short box
+  on the CPU and has not been run on Colab.
+  *Next, in this order:* the 40 other formulations of the 62 at the same factor, about 12
+  hours on this desktop, with 20 ns runs where the exponent is below about 0.8; then the
+  model of gate (b). The thermodynamic factor of BT11 is needed before a label for an
+  electrolyte without a measured factor can be made.
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated

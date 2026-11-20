@@ -49,6 +49,11 @@ differ in one setting each, and :data:`RUNS` lists them.
   that give those concentrations.
 * ``conc_c1p1_long`` and ``conc_c3p0_long``: two boxes of the series run for 20 ns in place of
   4 ns. They say how much a short run overstates a coefficient.
+* ``form_<solvents>``: rule 2 on other solvents. One formulation of each of the 22 solvent
+  compositions of CALiSol-23, the one nearest to the molality of the reference cell, simulated
+  with the settings of the series. Their conductivities against the measured ones say whether
+  the factor on the charges, chosen on one electrolyte, holds for other solvents.
+  :data:`FORMULATION_RUNS` lists them, and EC:EMC 3:7 is the box of the series.
 
 The cell stage
 --------------
@@ -167,6 +172,76 @@ for _key, _name in LONG_RUNS.items():
         "label": f"{CONCENTRATIONS[_key]:g} mol/kg, 20 ns",
         "molality": CONCENTRATIONS[_key],
         "settings": dict(SERIES_SETTINGS, production_ps=20000.0, sample_ps=2.0)}
+#: rule 2 on other solvents. CALiSol-23 holds the measured conductivity of 62 formulations of
+#: LiPF6 in 22 solvent compositions. One formulation of each composition is simulated with the
+#: settings of the series: the one whose molality is nearest to that of the reference cell, so
+#: that the solvent changes and the concentration stays near 1 mol/kg. For EC:EMC 3:7 that is
+#: the box of the series itself, whose two starts are used. The rule was fixed before any of
+#: these boxes was run.
+FORMULATIONS_CSV = os.path.join(ROOT, "examples", "electrolyte", "formulations.csv")
+FORMULATION_TARGET = MOLALITY
+#: weight fraction above which a solvent counts as part of a composition in the reading by solvent
+SOLVENT_SHARE = 0.20
+
+
+def calisol_rows(path: str = FORMULATIONS_CSV) -> List[dict]:
+    """The formulations of CALiSol-23 as this repository holds them: id, molality, solvent weight
+    fractions and the measured conductivity at 298 K in S/m."""
+    import csv
+    if not os.path.isfile(path):
+        return []
+    out = []
+    with open(path, encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            solvents = {k[2:]: float(v) for k, v in row.items()
+                        if k.startswith("w_") and v and float(v) > 0}
+            out.append({"id": row["id"], "salt": row["salt"], "molality": float(row["molality"]),
+                        "solvents": solvents,
+                        "conductivity": 0.1 * 10.0 ** float(row["log10_k_298"])})  # mS/cm to S/m
+    return out
+
+
+def chosen_formulations(rows: Sequence[dict], target: float = FORMULATION_TARGET) -> List[dict]:
+    """One formulation of every solvent composition: the one whose molality is nearest to
+    `target`, the lower molality on a tie. In the order in which they are run: sorted by the
+    measured conductivity and taken alternately from the lowest and the highest, so that a part
+    of the runs already spans the range."""
+    by_comp: Dict[str, List[dict]] = {}
+    for r in rows:
+        by_comp.setdefault(r["id"].rsplit("_m", 1)[0], []).append(r)
+    chosen = [min(v, key=lambda r: (abs(r["molality"] - target), r["molality"]))
+              for v in by_comp.values()]
+    chosen.sort(key=lambda r: r["conductivity"])
+    order = []
+    lo, hi = 0, len(chosen) - 1
+    while lo <= hi:
+        order.append(chosen[lo])
+        if hi != lo:
+            order.append(chosen[hi])
+        lo, hi = lo + 1, hi - 1
+    return order
+
+
+def formulation_run_name(fid: str) -> str:
+    """The name of the run of one formulation: ``form_`` and the solvents, e.g. form_DEC20_PC80."""
+    return "form_" + fid.split("_", 1)[1].rsplit("_m", 1)[0]
+
+
+#: the run(s) of each composition, by the CALiSol id: a new box for every composition but that
+#: of the reference cell, which is the box of the series
+FORMULATION_RUNS: Dict[str, tuple] = {}
+for _row in chosen_formulations(calisol_rows()):
+    if _row["id"] == ELECTROLYTE_ID:
+        FORMULATION_RUNS[_row["id"]] = CONCENTRATION_RUNS["c1p1"]
+        continue
+    _name = formulation_run_name(_row["id"])
+    FORMULATION_RUNS[_row["id"]] = (_name,)
+    RUNS[_name] = {"label": f"{_row['id']}, charges multiplied by 0.7, 1,000 solvent molecules",
+                   "molality": _row["molality"], "solvents": dict(_row["solvents"]),
+                   "formulation": _row["id"], "settings": dict(SERIES_SETTINGS)}
+#: the new boxes of the transfer test, in the order in which they are run
+FORMULATION_NAMES = [n for names in FORMULATION_RUNS.values() for n in names
+                     if n.startswith("form_")]
 #: the smaller box that has the charge factor and the concentration of one box of the series,
 #: and the key of that box of the series: two sizes at the factor that the series uses
 PAIR_SMALL = "scaled_07"
@@ -193,15 +268,23 @@ def molality_of(name: str) -> float:
     return float(RUNS.get(name, {}).get("molality", MOLALITY))
 
 
+def solvents_of(name: str) -> Dict[str, float]:
+    """The solvent weight fractions of one run."""
+    return dict(RUNS.get(name, {}).get("solvents", SOLVENTS))
+
+
 def run_dir(name: str, cache: str = CACHE) -> str:
     # the same name as Formulation.label() gives, so a box says which electrolyte it holds
+    if "formulation" in RUNS.get(name, {}):
+        return os.path.join(cache, f"{RUNS[name]['formulation']}_{name}")
     stem = ELECTROLYTE_ID.rsplit("_m", 1)[0]
     return os.path.join(cache, f"{stem}_m{molality_of(name):.3f}".replace(".", "p") + f"_{name}")
 
 
-def formulation(temperature: float = ROOM, molality: float = MOLALITY):
+def formulation(temperature: float = ROOM, molality: float = MOLALITY,
+                solvents: Optional[Dict[str, float]] = None):
     from cmfqsar.electrolyte import Formulation
-    return Formulation(SALT, dict(SOLVENTS), molality, temperature=temperature)
+    return Formulation(SALT, dict(solvents or SOLVENTS), molality, temperature=temperature)
 
 
 def settings_of(name: str):
@@ -221,8 +304,8 @@ def stage_simulate(names: Sequence[str], cache: str = CACHE) -> None:
         s = settings_of(name)
         t0 = time.time()
         done = os.path.isfile(os.path.join(run_dir(name, cache), "run.json"))
-        run = run_transport(formulation(s.temperature, molality_of(name)), run_dir(name, cache), s,
-                            progress=log)
+        run = run_transport(formulation(s.temperature, molality_of(name), solvents_of(name)),
+                            run_dir(name, cache), s, progress=log)
         log(f"{name}: {run['atoms']} atoms, {run['pairs']} ion pairs, side {run['side']:.2f} A, "
             f"density {run['density']:.3f} g/cm3, {run['molarity']:.3f} mol/L, "
             f"{run['production_ps']:.0f} ps at {run['ns_per_day']:.0f} ns/day"
@@ -290,12 +373,9 @@ def calisol_conductivity() -> Optional[float]:
     return None
 
 
-def analyse_run(name: str, cache: str = CACHE) -> dict:
+def _lengths(run: dict, whole: dict) -> List[dict]:
+    """The coefficients of one run read at the lengths of :data:`LENGTHS` that it reaches."""
     from cmfqsar import transport as T
-
-    run = read_run(name, cache)
-    whole = T.analyse(run)
-    ref = measured_reference(whole["molarity"], float(run["temperature"]))
     lengths = []
     for length in LENGTHS:
         if length > whole["length_ps"] + 1e-6:
@@ -306,6 +386,42 @@ def analyse_run(name: str, cache: str = CACHE) -> dict:
                         "anion": {k: part["anion"][k] for k in ("d", "se", "exponent")},
                         "salt": part["salt"],
                         "conductivity": {k: part["conductivity"][k] for k in ("sigma", "se")}})
+    return lengths
+
+
+def analyse_formulation(name: str, cache: str = CACHE) -> dict:
+    """One box of another solvent composition: its coefficients and conductivity against the
+    conductivity that CALiSol-23 holds for the formulation. No measured diffusion coefficient
+    exists for these, so no ratio of one is formed."""
+    from cmfqsar import transport as T
+
+    run = read_run(name, cache)
+    whole = T.analyse(run)
+    fid = RUNS[name]["formulation"]
+    measured = {r["id"]: r for r in calisol_rows()}.get(fid)
+    sigma = measured["conductivity"] if measured else float("nan")
+    return {"run": name, "label": RUNS[name]["label"], "formulation": fid,
+            "solvents": solvents_of(name), "molality": molality_of(name),
+            "settings": run["settings"], "atoms": run["atoms"], "pairs": run["pairs"],
+            "side": run["side"], "density": run["density"], "molarity": whole["molarity"],
+            "realised_molality": run["realised_molality"], "temperature": run["temperature"],
+            "mean_kinetic_temperature": run["mean_kinetic_temperature"],
+            "ns_per_day": run["ns_per_day"], "seconds": run["seconds"],
+            "whole": whole, "lengths": _lengths(run, whole),
+            "measured_conductivity": sigma,
+            "ratio_conductivity": whole["conductivity"]["sigma"] / sigma,
+            "ratio_nernst_einstein": whole["nernst_einstein"] / sigma}
+
+
+def analyse_run(name: str, cache: str = CACHE) -> dict:
+    from cmfqsar import transport as T
+
+    if "formulation" in RUNS.get(name, {}):
+        return analyse_formulation(name, cache)
+    run = read_run(name, cache)
+    whole = T.analyse(run)
+    ref = measured_reference(whole["molarity"], float(run["temperature"]))
+    lengths = _lengths(run, whole)
     factor = ref["thermodynamic_factor"]
     out = {"run": name, "label": RUNS[name]["label"], "settings": run["settings"],
            "atoms": run["atoms"], "pairs": run["pairs"], "side": run["side"],
@@ -330,13 +446,19 @@ def stage_analyse(names: Sequence[str], results: str = RESULTS, cache: str = CAC
     for name in names:
         res = analyse_run(name, cache)
         w = res["whole"]
-        log(f"{name}: D+ {w['cation']['d']:.3e} +/- {w['cation']['se']:.1e} "
-            f"(exponent {w['cation']['exponent']:.2f}), D- {w['anion']['d']:.3e} +/- "
-            f"{w['anion']['se']:.1e}, salt {res['salt_ideal']:.3e}, with the measured factor "
-            f"{res['salt_with_factor']:.3e} against the measured "
-            f"{res['measured']['diffusivity']:.3e} m2/s (ratio {res['ratio_with_factor']:.2f}); "
-            f"conductivity {w['conductivity']['sigma']:.3f} +/- {w['conductivity']['se']:.3f} "
-            f"S/m against {res['measured']['conductivity']:.3f}")
+        if "formulation" in res:
+            log(f"{name}: D+ {w['cation']['d']:.3e} (exponent {w['cation']['exponent']:.2f}), "
+                f"D- {w['anion']['d']:.3e}; conductivity {w['conductivity']['sigma']:.3f} +/- "
+                f"{w['conductivity']['se']:.3f} S/m against {res['measured_conductivity']:.3f} "
+                f"(ratio {res['ratio_conductivity']:.2f})")
+        else:
+            log(f"{name}: D+ {w['cation']['d']:.3e} +/- {w['cation']['se']:.1e} "
+                f"(exponent {w['cation']['exponent']:.2f}), D- {w['anion']['d']:.3e} +/- "
+                f"{w['anion']['se']:.1e}, salt {res['salt_ideal']:.3e}, with the measured factor "
+                f"{res['salt_with_factor']:.3e} against the measured "
+                f"{res['measured']['diffusivity']:.3e} m2/s (ratio {res['ratio_with_factor']:.2f}); "
+                f"conductivity {w['conductivity']['sigma']:.3f} +/- {w['conductivity']['se']:.3f} "
+                f"S/m against {res['measured']['conductivity']:.3f}")
         with open(os.path.join(results, f"run_{name}.json"), "w", encoding="utf-8") as fh:
             json.dump(res, fh, indent=1)
 
@@ -1030,6 +1152,190 @@ def pair_lines(pair: dict, correction: Optional[Sequence[float]] = None) -> List
     return out
 
 
+def _ranks(x: Sequence[float]) -> np.ndarray:
+    """Ranks from 0, ties given their mean rank."""
+    x = np.asarray(x, float)
+    order = np.argsort(x, kind="mergesort")
+    ranks = np.empty(len(x))
+    ranks[order] = np.arange(len(x), dtype=float)
+    for v in np.unique(x):
+        tie = x == v
+        if tie.sum() > 1:
+            ranks[tie] = ranks[tie].mean()
+    return ranks
+
+
+def spearman(x: Sequence[float], y: Sequence[float]) -> float:
+    """The rank correlation of Spearman."""
+    rx, ry = _ranks(x), _ranks(y)
+    if np.std(rx) == 0 or np.std(ry) == 0:
+        return float("nan")
+    return float(np.corrcoef(rx, ry)[0, 1])
+
+
+def start_scatter(series: Sequence[dict]) -> Optional[float]:
+    """The standard deviation of the logarithm of the conductivity of one start of 4 ns, from the
+    pairs of starts of the concentration series: the mean of (ln a - ln b) squared, halved."""
+    by_run = {r["run"]: r for r in series}
+    d = [np.log(by_run[a]["whole"]["conductivity"]["sigma"]
+                / by_run[b]["whole"]["conductivity"]["sigma"])
+         for a, b in CONCENTRATION_RUNS.values() if a in by_run and b in by_run]
+    if not d:
+        return None
+    return float(np.sqrt(np.mean(np.square(d)) / 2.0))
+
+
+def formulation_study(rows: Sequence[dict], series: Sequence[dict], draws: int = 2000,
+                      seed: int = 0) -> Optional[dict]:
+    """The transfer test of the charge factor: the simulated conductivity of one formulation of
+    each solvent composition against CALiSol-23.
+
+    *Rank:* Spearman's correlation, with a 95 % interval from resampling the formulations, and
+    the correlation that a simulation without any bias would reach with the scatter of one start
+    (the median over `draws` sets of measured values, each multiplied by a random factor with the
+    scatter of :func:`start_scatter`). *Level:* the geometric mean of the ratios to the measured
+    conductivity against the range of ratios that the series found over the concentration of the
+    reference electrolyte. The rank part holds if the lower end of the interval is above zero;
+    the level part holds if the geometric mean lies inside that range. None with fewer than three
+    formulations.
+    """
+    measured = {r["id"]: r for r in calisol_rows()}
+    by_run = {r["run"]: r for r in list(rows) + list(series)}
+    points = []
+    for fid, names in FORMULATION_RUNS.items():
+        got = [by_run[n] for n in names if n in by_run]
+        if not got or fid not in measured:
+            continue
+        sig = [g["whole"]["conductivity"]["sigma"] for g in got]
+        points.append({
+            "id": fid, "runs": [g["run"] for g in got], "solvents": measured[fid]["solvents"],
+            "molality": measured[fid]["molality"], "pairs": int(got[0]["pairs"]),
+            "measured": float(measured[fid]["conductivity"]),
+            "simulated": float(np.mean(sig)),
+            "se": (float(np.std(sig, ddof=1) / np.sqrt(len(sig))) if len(sig) > 1
+                   else float(got[0]["whole"]["conductivity"]["se"])),
+            "nernst_einstein": float(np.mean([g["whole"]["nernst_einstein"] for g in got])),
+            "exponent": float(np.mean([g["whole"]["cation"]["exponent"] for g in got])),
+            "reference": fid == ELECTROLYTE_ID})
+    if len(points) < 3:
+        return None
+    for p in points:
+        p["ratio"] = p["simulated"] / p["measured"]
+        p["ionicity"] = p["simulated"] / p["nernst_einstein"]
+    meas = np.array([p["measured"] for p in points])
+    sim = np.array([p["simulated"] for p in points])
+    rng = np.random.default_rng(seed)
+    boot = []
+    for _ in range(draws):
+        i = rng.integers(0, len(points), len(points))
+        r = spearman(meas[i], sim[i])
+        if np.isfinite(r):
+            boot.append(r)
+    scatter = start_scatter(series)
+    ceiling = None
+    if scatter is not None:
+        ceiling = float(np.median([spearman(meas, meas * np.exp(rng.normal(0.0, scatter,
+                                                                           len(meas))))
+                                   for _ in range(draws)]))
+    conc = [r for r in series if r["run"] in {n for v in CONCENTRATION_RUNS.values() for n in v}]
+    series_ratios = []
+    for key, names in CONCENTRATION_RUNS.items():
+        got = [r for r in conc if r["run"] in names]
+        if got:
+            series_ratios.append(float(np.mean([r["whole"]["conductivity"]["sigma"]
+                                                for r in got]) / got[0]["measured"]["conductivity"]))
+    others = [p for p in points if not p["reference"]]
+    gmean = float(np.exp(np.mean([np.log(p["ratio"]) for p in others]))) if others else float("nan")
+    band = [min(series_ratios), max(series_ratios)] if series_ratios else None
+    by_solvent = {}
+    for name in sorted({k for p in points for k in p["solvents"]}):
+        part = [p for p in points if p["solvents"].get(name, 0.0) >= SOLVENT_SHARE]
+        if part:
+            by_solvent[name] = {"n": len(part), "ratio": float(np.exp(np.mean(
+                [np.log(p["ratio"]) for p in part])))}
+    rho = spearman(meas, sim)
+    lo, hi = (np.percentile(boot, [2.5, 97.5]) if boot else (float("nan"), float("nan")))
+    return {"points": points, "spearman": rho, "interval": [float(lo), float(hi)],
+            "ceiling": ceiling, "scatter": scatter, "geometric_mean": gmean,
+            "series_band": band, "by_solvent": by_solvent,
+            "complete": len(points) == len(FORMULATION_RUNS),
+            "rank_holds": bool(np.isfinite(lo) and lo > 0),
+            "level_holds": bool(band is not None and band[0] <= gmean <= band[1]),
+            "short": [p["id"] for p in points if p["exponent"] < 0.8]}
+
+
+def formulation_lines(study: dict) -> List[str]:
+    """The section of the table on the transfer test to other solvents."""
+    out: List[str] = []
+    w = out.append
+    pts = sorted(study["points"], key=lambda p: p["measured"])
+    w("## Other solvents: does the charge factor transfer?")
+    w("")
+    w("Rule 2 asks that the simulation reproduces the measured conductivities of CALiSol-23 in "
+      "rank and in level before a model is fitted on simulated labels. The factor of 0.7 on the "
+      "charges of the ions was chosen on one electrolyte, EC:EMC 3:7. Here one formulation of "
+      "each of the 22 solvent compositions is simulated with the same settings: the one whose "
+      f"molality is nearest to {FORMULATION_TARGET:g} mol/kg, so that the solvent changes and "
+      "the concentration stays near that of the reference cell. Each box is one start of 4 ns, "
+      "except EC:EMC 3:7, which is the mean of the two starts of the series. The measured value "
+      "is the fit of CALiSol-23 at 298 K for that formulation. The reading rule was fixed before "
+      "the boxes were run: the rank part holds if the lower end of the 95 % interval of the rank "
+      "correlation is above zero, and the level part holds if the geometric mean of the ratios "
+      "of the other compositions lies inside the range of ratios that the series found over the "
+      "concentration of EC:EMC 3:7.")
+    w("")
+    w("| Formulation | Molality, mol/kg | Ion pairs | Measured conductivity, S/m | Simulated, "
+      "S/m | Ratio to the measured | Exponent of the cation | Ratio of the conductivity to "
+      "the Nernst-Einstein value |")
+    w("|---|---:|---:|---:|---|---:|---:|---:|")
+    for p in pts:
+        name = p["id"] + (" (the reference electrolyte, two starts)" if p["reference"] else "")
+        w(f"| {name} | {_f(p['molality'], 3)} | {p['pairs']} | {_f(p['measured'], 3)} | "
+          f"{_f(p['simulated'], 3)} +/- {_f(p['se'], 3)} | {_f(p['ratio'])} | "
+          f"{_f(p['exponent'])} | {_f(p['ionicity'])} |")
+    w("")
+    n = len(study["points"])
+    lo, hi = study["interval"]
+    text = (f"**Rank.** Over {n} formulations the rank correlation of Spearman between the "
+            f"simulated and the measured conductivity is {_f(study['spearman'])} (95 % interval "
+            f"{_f(lo)} to {_f(hi)}, from resampling the formulations).")
+    if study["ceiling"] is not None:
+        text += (f" One start of 4 ns scatters by {100 * study['scatter']:.0f} % in the "
+                 "logarithm of the conductivity, from the pairs of starts of the series. With "
+                 "that scatter alone, a simulation without any bias would reach a rank "
+                 f"correlation of about {_f(study['ceiling'])}.")
+    text += " The rank part " + ("holds." if study["rank_holds"] else "does not hold.")
+    w(text)
+    w("")
+    band = study["series_band"]
+    text = (f"**Level.** The geometric mean of the ratios of the other compositions is "
+            f"{_f(study['geometric_mean'])}.")
+    if band is not None:
+        text += (f" The series of EC:EMC 3:7 gave ratios from {_f(band[0])} to {_f(band[1])} "
+                 "over the concentration. The level part "
+                 + ("holds." if study["level_holds"] else "does not hold."))
+    w(text)
+    w("")
+    w("**By solvent.** The geometric mean of the ratio over the formulations that hold a "
+      f"solvent at {100 * SOLVENT_SHARE:.0f} % of the weight or more:")
+    w("")
+    w("| Solvent | Formulations | Geometric mean of the ratio to the measured |")
+    w("|---|---:|---:|")
+    for name, v in study["by_solvent"].items():
+        w(f"| {name} | {v['n']} | {_f(v['ratio'])} |")
+    w("")
+    if study["short"]:
+        w("The exponent of the cation is below 0.8 for " + ", ".join(study["short"])
+          + ". The concentration series showed that a run of 4 ns then overstates the "
+          "coefficients, so these boxes need runs of 20 ns before their values are final.")
+        w("")
+    if not study["complete"]:
+        w(f"Not every composition was run yet: {n} of {len(FORMULATION_RUNS)}. The reading is "
+          "therefore not final.")
+        w("")
+    return out
+
+
 def size_range(rows: Sequence[dict]) -> Optional[List[float]]:
     """The share that the correction for the size of the box adds to the salt diffusion
     coefficient of the largest box, as the range between the two size fits: [low, high]. None
@@ -1400,12 +1706,18 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
     w = out.append
     series_names = {n for names in CONCENTRATION_RUNS.values() for n in names}
     long_names = set(LONG_RUNS.values())
+    form_names = set(FORMULATION_NAMES)
     series = [r for r in rows if r["run"] in series_names]
     longs = [r for r in rows if r["run"] in long_names]
-    rows = [r for r in rows if r["run"] not in series_names | long_names]
+    forms = [r for r in rows if r["run"] in form_names]
+    rows = [r for r in rows if r["run"] not in series_names | long_names | form_names]
     if not rows:
         w("# Item BT9: the salt diffusion coefficient of an electrolyte from simulation")
         w("")
+        if forms:
+            others = formulation_study(forms, series)
+            if others is not None:
+                out.extend(formulation_lines(others))
         if series:
             out.extend(concentration_lines(concentration_study(series), limits))
         lengths = long_study(series + longs)
@@ -1568,6 +1880,10 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
             out.extend(length_lines(factors, size_range(rows)))
     if cell is not None:
         out.extend(cell_lines(cell))
+    if forms and rows:
+        others = formulation_study(forms, series)
+        if others is not None:
+            out.extend(formulation_lines(others))
     return out
 
 

@@ -324,3 +324,49 @@ Gate (a) compares two coefficients. This section asks what the difference costs.
 
 Inside the tolerance: as simulated, at 1C, 1.5C, 2C, 2.5C; with the smaller correction for the box, at 1C, 1.5C, 2C, 2.5C; with the larger correction for the box, at 1C, 1.5C, 2C, 2.5C; corrected for the length of the run, at 1C, 1.5C, 2C; corrected for the length, with the smaller correction for the box, at 1C, 1.5C, 2C, 2.5C; corrected for the length, with the larger correction for the box, at 1C, 1.5C, 2C, 2.5C.
 
+## Other solvents: does the charge factor transfer?
+
+Rule 2 asks that the simulation reproduces the measured conductivities of CALiSol-23 in rank and in level before a model is fitted on simulated labels. The factor of 0.7 on the charges of the ions was chosen on one electrolyte, EC:EMC 3:7. Here one formulation of each of the 22 solvent compositions is simulated with the same settings: the one whose molality is nearest to 1.11 mol/kg, so that the solvent changes and the concentration stays near that of the reference cell. Each box is one start of 4 ns, except EC:EMC 3:7, which is the mean of the two starts of the series. The measured value is the fit of CALiSol-23 at 298 K for that formulation. The reading rule was fixed before the boxes were run: the rank part holds if the lower end of the 95 % interval of the rank correlation is above zero, and the level part holds if the geometric mean of the ratios of the other compositions lies inside the range of ratios that the series found over the concentration of EC:EMC 3:7.
+
+| Formulation | Molality, mol/kg | Ion pairs | Measured conductivity, S/m | Simulated, S/m | Ratio to the measured | Exponent of the cation | Ratio of the conductivity to the Nernst-Einstein value |
+|---|---:|---:|---:|---|---:|---:|---:|
+| LiPF6_EMC100_m1p500 | 1.500 | 156 | 0.523 | 0.293 +/- 0.093 | 0.56 | 0.77 | 0.36 |
+| LiPF6_EC15_PC85_m0p446 | 0.446 | 44 | 0.593 | 0.273 +/- 0.051 | 0.46 | 0.86 | 0.47 |
+| LiPF6_DEC50_PC50_m0p465 | 0.465 | 51 | 0.677 | 0.254 +/- 0.025 | 0.38 | 0.85 | 0.49 |
+| LiPF6_DEC70_PC30_m0p898 | 0.898 | 101 | 0.679 | 0.352 +/- 0.084 | 0.52 | 0.78 | 0.61 |
+| LiPF6_DEC20_PC80_m0p892 | 0.892 | 94 | 0.711 | 0.447 +/- 0.065 | 0.63 | 0.83 | 0.63 |
+| LiPF6_EC10_EMC90_m1p500 | 1.500 | 153 | 0.713 | 0.730 +/- 0.082 | 1.02 | 0.78 | 0.82 |
+| LiPF6_DEC60_PC40_m0p750 | 0.750 | 83 | 0.738 | 0.434 +/- 0.103 | 0.59 | 0.84 | 0.72 |
+| LiPF6_EC60_PC40_m0p813 | 0.813 | 76 | 0.751 | 0.976 +/- 0.196 | 1.30 | 0.83 | 0.95 |
+| LiPF6_DEC40_PC60_m0p802 | 0.802 | 87 | 0.760 | 0.470 +/- 0.151 | 0.62 | 0.81 | 0.74 |
+| LiPF6_EC20_EMC80_m1p110 | 1.110 | 111 | 0.811 | 0.678 +/- 0.143 | 0.84 | 0.84 | 0.65 |
+| LiPF6_EC30_EMC70_m1p110 (the reference electrolyte, two starts) | 1.110 | 110 | 0.883 | 0.666 +/- 0.044 | 0.75 | 0.84 | 0.59 |
+| LiPF6_EC50_EMC50_m1p212 | 1.212 | 116 | 0.912 | 0.445 +/- 0.083 | 0.49 | 0.82 | 0.41 |
+| LiPF6_EC40_EMC60_m1p077 | 1.077 | 105 | 0.918 | 0.748 +/- 0.101 | 0.81 | 0.85 | 0.62 |
+| LiPF6_DMC100_m1p500 | 1.500 | 135 | 0.943 | 0.840 +/- 0.223 | 0.89 | 0.87 | 0.51 |
+| LiPF6_EC30_EMC60_MA10_m1p596 | 1.596 | 152 | 0.973 | 0.809 +/- 0.147 | 0.83 | 0.78 | 0.68 |
+| LiPF6_DMC90_EC10_m1p500 | 1.500 | 135 | 1.107 | 0.965 +/- 0.175 | 0.87 | 0.84 | 0.60 |
+| LiPF6_DMC80_EC20_m1p500 | 1.500 | 135 | 1.141 | 0.538 +/- 0.205 | 0.47 | 0.84 | 0.33 |
+| LiPF6_EC30_EMC50_MA20_m1p492 | 1.492 | 137 | 1.148 | 0.822 +/- 0.081 | 0.72 | 0.85 | 0.50 |
+| LiPF6_DMC70_EC25_EMC05_m1p200 | 1.200 | 108 | 1.198 | 0.897 +/- 0.137 | 0.75 | 0.85 | 0.53 |
+| LiPF6_DMC70_EC30_m1p000 | 1.000 | 89 | 1.212 | 2.182 +/- 0.533 | 1.80 | 0.89 | 1.18 |
+| LiPF6_DMC60_EC30_MA10_m1p491 | 1.491 | 131 | 1.298 | 1.399 +/- 0.284 | 1.08 | 0.86 | 0.71 |
+| LiPF6_DMC50_EC30_MA20_m1p500 | 1.500 | 129 | 1.486 | 1.068 +/- 0.298 | 0.72 | 0.85 | 0.49 |
+
+**Rank.** Over 22 formulations the rank correlation of Spearman between the simulated and the measured conductivity is 0.83 (95 % interval 0.54 to 0.95, from resampling the formulations). One start of 4 ns scatters by 24 % in the logarithm of the conductivity, from the pairs of starts of the series. With that scatter alone, a simulation without any bias would reach a rank correlation of about 0.75. The rank part holds.
+
+**Level.** The geometric mean of the ratios of the other compositions is 0.72. The series of EC:EMC 3:7 gave ratios from 0.59 to 1.02 over the concentration. The level part holds.
+
+**By solvent.** The geometric mean of the ratio over the formulations that hold a solvent at 20 % of the weight or more:
+
+| Solvent | Formulations | Geometric mean of the ratio to the measured |
+|---|---:|---:|
+| DEC | 5 | 0.54 |
+| DMC | 7 | 0.87 |
+| EC | 12 | 0.82 |
+| EMC | 8 | 0.74 |
+| MA | 2 | 0.72 |
+| PC | 7 | 0.60 |
+
+The exponent of the cation is below 0.8 for LiPF6_EMC100_m1p500, LiPF6_DEC70_PC30_m0p898, LiPF6_EC10_EMC90_m1p500, LiPF6_EC30_EMC60_MA10_m1p596. The concentration series showed that a run of 4 ns then overstates the coefficients, so these boxes need runs of 20 ns before their values are final.
+

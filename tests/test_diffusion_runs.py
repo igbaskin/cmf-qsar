@@ -566,6 +566,94 @@ def test_the_series_is_corrected_for_the_length_of_the_run():
         "as simulated", "corrected for the length of the run"]
 
 
+def test_one_formulation_of_every_composition_is_chosen():
+    rows = R.calisol_rows()
+    assert len(rows) == 62
+    chosen = R.chosen_formulations(rows)
+    assert len(chosen) == 22
+    assert len({r["id"].rsplit("_m", 1)[0] for r in chosen}) == 22
+    by_id = {r["id"]: r for r in chosen}
+    # nearest to 1.11 mol/kg; 1.5 is nearer than 0.5 for pure DMC
+    assert "LiPF6_DMC100_m1p500" in by_id and "LiPF6_EC30_EMC70_m1p110" in by_id
+    assert "LiPF6_EC30_EMC60_MA10_m1p596" in by_id     # 0.49 from 1.11, against 0.54
+    # run alternately from the lowest and the highest measured conductivity
+    k = [r["conductivity"] for r in chosen]
+    assert k[0] == min(k) and k[1] == max(k) and k[2] == sorted(k)[1]
+    # the reference composition is the box of the series; the others are new boxes
+    assert R.FORMULATION_RUNS["LiPF6_EC30_EMC70_m1p110"] == R.CONCENTRATION_RUNS["c1p1"]
+    assert len(R.FORMULATION_NAMES) == 21
+    name = R.formulation_run_name("LiPF6_DMC70_EC25_EMC05_m1p200")
+    assert name == "form_DMC70_EC25_EMC05" and name in R.RUNS
+    assert R.run_dir(name, "c").endswith("LiPF6_DMC70_EC25_EMC05_m1p200_form_DMC70_EC25_EMC05")
+    assert R.solvents_of(name) == pytest.approx({"DMC": 0.70, "EC": 0.25, "EMC": 0.05})
+    assert R.settings_of(name).ion_charge_scale == 0.7
+    assert R.settings_of(name).n_solvent == 1000
+    # the boxes of the first part keep their directories and their solvents
+    assert R.run_dir("scaled", "c").endswith("LiPF6_EC30_EMC70_m1p110_scaled")
+    assert R.solvents_of("scaled") == R.SOLVENTS
+
+
+def test_the_formulation_box_is_built_from_its_own_solvents():
+    name = "form_DEC20_PC80"
+    f = R.formulation(298.15, R.molality_of(name), R.solvents_of(name))
+    assert f.label() == R.RUNS[name]["formulation"] == "LiPF6_DEC20_PC80_m0p892"
+
+
+def test_spearman_and_the_scatter_of_one_start():
+    assert R.spearman([1, 2, 3, 4], [10, 20, 30, 40]) == pytest.approx(1.0)
+    assert R.spearman([1, 2, 3, 4], [4, 3, 2, 1]) == pytest.approx(-1.0)
+    assert R.spearman([1, 2, 2, 3], [1, 2, 3, 4]) == pytest.approx(0.9486833, rel=1e-6)
+    series = []
+    for j, (a, b) in enumerate(R.CONCENTRATION_RUNS.values()):
+        one, two = _point(a, 0.1 + 0.5 * j, 1.0, sigma=0.5), _point(b, 0.1 + 0.5 * j, 1.0,
+                                                                    sigma=0.5 * np.e ** 0.2)
+        series += [one, two]
+    # every pair differs by 0.2 in the logarithm: one start scatters by 0.2 / sqrt(2)
+    assert R.start_scatter(series) == pytest.approx(0.2 / np.sqrt(2.0))
+    assert R.start_scatter([]) is None
+
+
+def _form(name, sigma):
+    row = _point(name, 1.0, 1.0, sigma=sigma)
+    row["formulation"] = R.RUNS[name]["formulation"]
+    return row
+
+
+def test_the_transfer_test_reads_rank_and_level():
+    measured = {r["id"]: r["conductivity"] for r in R.calisol_rows()}
+    series = []
+    for j, (key, (a, b)) in enumerate(R.CONCENTRATION_RUNS.items()):
+        for n in (a, b):
+            row = _point(n, 0.1 + 0.5 * j, 1.0, sigma=0.8 * (0.9 + 0.1 * j))
+            row["measured"]["conductivity"] = 1.0
+            series.append(row)
+    # every other solvent at 0.8 of its measured value: perfect rank, level inside 0.72 to 1.12
+    forms = [_form(n, 0.8 * measured[R.RUNS[n]["formulation"]]) for n in R.FORMULATION_NAMES]
+    study = R.formulation_study(forms, series)
+    assert study["complete"] and len(study["points"]) == 22
+    assert study["geometric_mean"] == pytest.approx(0.8)
+    assert study["series_band"] == pytest.approx([0.72, 1.12])
+    assert study["rank_holds"] and study["level_holds"]
+    assert study["spearman"] > 0.9
+    assert study["by_solvent"]["PC"]["ratio"] == pytest.approx(0.8, rel=0.02)
+    text = "\n".join(R.formulation_lines(study))
+    assert "The rank part holds." in text and "The level part holds." in text
+    assert "(the reference electrolyte, two starts)" in text
+    assert "Not every composition was run yet" not in text
+    # all at a third of the measured value: the level part fails; a reversed order fails the rank
+    low = R.formulation_study([_form(n, 0.33 * measured[R.RUNS[n]["formulation"]])
+                               for n in R.FORMULATION_NAMES], series)
+    assert low["rank_holds"] and not low["level_holds"]
+    rev = R.formulation_study([_form(n, 1.0 / measured[R.RUNS[n]["formulation"]])
+                               for n in R.FORMULATION_NAMES], series)
+    assert not rev["rank_holds"]
+    # a part of the runs is read and marked as not final; fewer than three gives nothing
+    part = R.formulation_study(forms[:5], series)
+    assert not part["complete"]
+    assert "Not every composition was run yet: 6 of 22" in "\n".join(R.formulation_lines(part))
+    assert R.formulation_study(forms[:1], []) is None
+
+
 def test_the_report_needs_a_result(tmp_path):
     with pytest.raises(SystemExit, match="--stage analyse"):
         R.report(str(tmp_path))
