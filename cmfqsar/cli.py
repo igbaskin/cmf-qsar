@@ -1847,7 +1847,49 @@ def cmd_lowrank(args):
             for n, a, p in zip(names, y, fitted):
                 writer.writerow([n, f"{a:.4f}", f"{p:.4f}"])
         print(f"  {len(names)} rows written to {args.csv}")
+    if args.features:
+        _write_features(args, low, fieldset, names, y, Phi)
     print(f"Elapsed {time.time() - t0:.1f} s")
+
+
+def _write_features(args, low, fieldset, names, y, Phi):
+    """The feature rows of `cmf lowrank --features`: the CMF vector of every molecule.
+
+    The inner product of two rows is the (approximate) joint kernel of the two molecules, so
+    the rows are what any method that takes vectors needs in order to use the fields: a
+    network, a forest, a clustering.  `--features-for` adds the rows of other molecules in the
+    same frame, made with the same landmarks, which is how a model fitted elsewhere on these
+    rows is applied to new molecules.
+    """
+    import numpy as np
+
+    rows_names, source, measured, rows = list(names), ["data"] * len(names), list(y), [Phi]
+    if args.features_for:
+        other = load_dataset(args.features_for, activity_prop=args.activity)
+        table = AtomTable.from_molecules([build_fields(m, fieldset, n)
+                                          for m, n in zip(other.mols, other.names)])
+        rows.append(low.transform(table, block=args.block))
+        rows_names += list(other.names)
+        source += ["other"] * len(other.names)
+        act = np.asarray(other.activity, float)
+        if len(act) != len(other.names):              # a file without the activity
+            act = np.full(len(other.names), np.nan)
+        measured += list(act)
+    X = np.vstack(rows)
+    if str(args.features).lower().endswith(".csv"):
+        import csv
+        with open(args.features, "w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["name", "source", "measured"] + [f"f{k}" for k in range(X.shape[1])])
+            for n, s, a, row in zip(rows_names, source, measured, X):
+                writer.writerow([n, s, "" if not np.isfinite(a) else f"{a:.6g}"]
+                                + [f"{v:.8g}" for v in row])
+    else:
+        np.savez_compressed(args.features, names=np.array(rows_names), source=np.array(source),
+                            measured=np.asarray(measured, float), features=X)
+    print(f"  {X.shape[0]} rows of {X.shape[1]} features written to {args.features}"
+          + (f" ({len(names)} of the data set, {X.shape[0] - len(names)} of "
+             f"{args.features_for})" if args.features_for else ""))
 
 
 def cmd_isosteres(args):
@@ -6148,6 +6190,15 @@ def main(argv=None):
                     help="molecules per block when the features are built; the memory of a fit "
                          "does not depend on it (default 256)")
     lr.add_argument("--csv", default=None, metavar="FILE")
+    lr.add_argument("--features", default=None, metavar="FILE",
+                    help="write the feature row of every molecule, whose inner products are "
+                         "the kernel: the fields as a vector for any method that takes vectors "
+                         "(plan item ND1). A .csv file gets one row per molecule; any other "
+                         "name gets a NumPy .npz file with names, source, measured, features")
+    lr.add_argument("--features-for", default=None, metavar="FILE",
+                    help="with --features: also write the rows of the molecules of this file, "
+                         "which must be in the frame of the data set; they are made with the "
+                         "same landmarks")
     lr.set_defaults(func=cmd_lowrank)
 
     bi = sub.add_parser("isosteres",

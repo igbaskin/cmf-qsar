@@ -8233,6 +8233,166 @@ later, and they keep working at a narrow field, where a grid of centres does not
 sequence and 256 to 1024 frequencies per field. The lattice is exact and deterministic, and is
 worth it for broad fields only.
 
+### The fields as a vector for another method
+
+The features $\Phi$ of the landmark map are more than a way to fit a large set. They are a
+vector for every molecule, and the inner product of two such vectors is the kernel of the two
+molecules. Any method that takes vectors can therefore use the fields: a neural network, a
+random forest, a clustering, or a model of another program. Plan item ND1 asked what is gained
+by doing so.
+
+**How to get the vector.** `cmf lowrank --features FILE` writes one row per molecule. A name that
+ends in `.csv` gives a table with the columns `name`, `source`, `measured` and `f0`, `f1`, ...;
+any other name gives a NumPy `.npz` file with the arrays `names`, `source`, `measured` and
+`features`. `--features-for OTHER.sdf` adds the rows of the molecules of a second file, which
+must be in the frame of the data set. They are made with the same landmarks, so a model fitted
+elsewhere on the rows of the data set can be applied to them. The column `source` says `data` or
+`other`.
+
+```bash
+cmf lowrank examples/sutherland/ACE.sdf --landmarks molecules:60 --alpha 0.5 \
+    --charges file --features ace_rows.csv
+```
+
+This writes 114 rows of 290 features: 60 landmark molecules give at most 60 columns for each of
+the five fields. A ridge regression on these rows is the low-rank CMF model itself. The rows
+keep the relative lengths of their columns, and these lengths are the weights the kernel gives
+to the directions of the field space. Do not standardise the columns one by one. On two
+COMPAS splits a multilayer network on standardised columns had a mean absolute error of 0.102
+and 0.098 eV, and the same network on the unchanged columns 0.057 and 0.054 eV. Centre the
+columns and divide the whole block by one number.
+
+**What was measured** (`benchmarks/run_featuriser.py`, `benchmarks/results/featuriser/table.md`).
+The plan names three things to compare: CMF alone, "the device" alone, and the two combined. The
+device is the QSPR Neural Device of Baskin, Palyulin and Zefirov (J. Chem. Inf. Comput. Sci.
+1997, 37, 715–721), an early graph neural network and a separate project. Small networks with
+shared weights read the atoms, the bonds and the two-bond paths of the molecular graph. Their
+outputs are summed over the molecule into a few numbers, the *collectors* (15 here). A last
+network maps the collectors to the property. The collectors are the descriptors the device has
+learned. Two versions of the device were run with their shipped settings: *one-shot*, which
+has no message passing, and *message passing*, in which the atoms exchange information with
+their neighbours three times before they are read.
+
+The sets are COMPAS-1D, which the plan names (the HOMO-LUMO gap of 8,678 polybenzenoid
+hydrocarbons, five fields made from the structure, 1,000 landmark molecules), and the eight
+Sutherland series (66 to 361 superimposed molecules, five fields, every training molecule a
+landmark). The split is the one of the device's own protocol: random, 70 % training, 15 %
+validation, 15 % test; five seeds on COMPAS and ten on each Sutherland series. Every setting of
+every model is chosen on the validation rows, and every number below is from the test rows.
+
+Three learners were fitted on vectors: a ridge regression, a multilayer network trained by
+back-propagation (one or two hidden layers), and a random forest. Each had five inputs: the CMF
+vector, the collectors of each device, and the CMF vector joined with the collectors of each
+device. The device has no input for a vector of the whole molecule, so "combined" means joining
+after the device is trained: its collectors are fixed, and the fields do not change what the
+device learns. Before joining, each block is centred and divided by the root mean square length
+of its rows, so that the two blocks have the same weight; the collectors are also standardised
+column by column. Two simpler combinations were added: the mean of the two predictions, and a
+weighted mean with the weight chosen on the validation rows.
+
+On COMPAS-1D (mean over five seeds; the mean absolute error is in eV):
+
+| Model | Test $R^2$ | Mean absolute error |
+|---|---:|---:|
+| CMF kernel model (linear) | 0.869 | 0.111 |
+| CMF kernel model with the Gaussian layer | 0.966 | 0.053 |
+| CMF vector, ridge regression | 0.870 | 0.112 |
+| CMF vector, multilayer network | 0.963 | 0.055 |
+| CMF vector, random forest | 0.768 | 0.149 |
+| Fingerprint (ECFP4 counts, Tanimoto kernel) | 0.939 | 0.066 |
+| Device, one-shot | 0.633 | 0.183 |
+| Device, message passing | 0.982 | 0.035 |
+| Collectors of message passing, multilayer network | 0.983 | 0.033 |
+| CMF vector + collectors of message passing, multilayer network | 0.987 | 0.029 |
+| Weighted mean of the CMF kernel model and the device, message passing | 0.983 | 0.036 |
+
+On the eight Sutherland series (test $R^2$, mean over ten seeds and eight series):
+
+| Model | Mean test $R^2$ |
+|---|---:|
+| CMF kernel model | 0.412 |
+| CMF vector, ridge regression | 0.430 |
+| CMF vector, multilayer network | 0.475 |
+| CMF vector, random forest | 0.336 |
+| Fingerprint | 0.429 |
+| Device, one-shot | 0.203 |
+| Device, message passing | 0.356 |
+| CMF vector + collectors of one-shot, multilayer network | 0.490 |
+| CMF vector + collectors of message passing, multilayer network | 0.440 |
+| Mean of the CMF kernel model and the device, message passing | 0.506 |
+| Weighted mean of the same two | 0.488 |
+
+Differences are judged by the paired difference of the absolute error on the same test
+molecules, with a 95 % bootstrap interval; a molecule that is in the test part of several seeds
+counts once. On a small series most intervals include zero, so the count of series with a
+resolved difference is given.
+
+* **The vector is the kernel.** A ridge regression on the CMF vector gives the kernel model
+  again: the difference is 0.001 eV on COMPAS, and on the Sutherland series the vector is
+  better in three series by 0.017 to 0.026 and worse in none.
+* **A network on the vector gains what the Gaussian layer gains, and needs a large set to show
+  it.** On COMPAS the multilayer network lowers the error of the ridge regression from 0.112 to
+  0.055 eV (difference -0.055, interval -0.058 to -0.053). This is the level of the Gaussian
+  kernel layer on the same fields (0.053 eV). On the Sutherland series the mean $R^2$ rises
+  from 0.430 to 0.475, but the difference is resolved in two series only, one in each
+  direction.
+* **A random forest on the vector loses.** It is worse than the ridge regression by 0.037 eV on
+  COMPAS and in five of the eight series. A possible reason: a tree asks about one column at a
+  time, and the property depends on sums over many columns of the vector.
+* **With message passing the device is the best single model on the large set, and not on the
+  small ones.** On COMPAS its error is 0.035 eV against 0.053 eV for the best CMF model. On the
+  Sutherland series the CMF kernel model has the smaller error in two series and the device in
+  none; the mean $R^2$ is 0.412 against 0.356. The one-shot device is far behind on COMPAS
+  (0.183 eV).
+* **The two combined give the best row on COMPAS, and the fields add a small part of it.** A
+  network on the CMF vector joined with the collectors of message passing reaches 0.029 eV,
+  0.006 eV below the device (interval 0.005 to 0.007). Part of this is the learner: a network
+  on the collectors alone already reaches 0.033 eV. With the learner held fixed, adding the CMF
+  vector to the collectors lowers the error by 0.003 eV (interval 0.002 to 0.004), and adding
+  the collectors to the CMF vector lowers it by 0.026 eV (interval 0.025 to 0.027). So on this
+  set the fields remove about a tenth of the error of the learned descriptors, and the learned
+  descriptors remove about half of the error of the fields.
+* **On the small series the direction is the opposite.** With the learner held fixed, adding
+  the CMF vector to the collectors lowers the error in seven of the eight series for the
+  one-shot device and in four for message passing, and raises it in none. Adding the collectors
+  of message passing to the CMF vector lowers it in one series under a network. Under a ridge
+  regression it lowers it in none and raises it in two.
+* **A mean of the two predictions helps on the small series only.** On the Sutherland series
+  the plain mean of the CMF kernel model and the device with message passing has the highest
+  mean $R^2$ of the table (0.506), and the weighted mean has a smaller error than the CMF model
+  in four series and than the device in four. On COMPAS the weighted mean gives the fields a
+  weight of 0.1 in four seeds of five and is not better than the device (+0.001 eV).
+
+**What this says.** The fields can be given to another method as a vector without loss, and a
+nonlinear learner on the vector then does what the Gaussian layer does. On a few hundred
+superimposed molecules the fields hold most of what can be learned, and a graph model adds to
+them through a mean of the predictions. On thousands of molecules a graph model with message
+passing is ahead, and the fields add a small, resolved amount to it.
+
+**Limits.** (1) The joining is done after the device is trained. A device that receives the
+vector while it trains may gain more or less; that needs a change in the device and belongs to
+the later stages of the plan. (2) The split is random, as in the device's protocol, so the
+numbers say nothing about a new scaffold. (3) The three comparisons with the learner held fixed
+were added after the first COMPAS seed had been read, because a network on the collectors alone
+already differed from the device; the other comparisons were fixed before any run. (4) The
+linear CMF model on COMPAS chose the smallest ridge of its grid in most seeds. A check with
+ridges down to $10^{-10}$ did not lower its validation error on any seed, so the grid is not
+what limits it. (5) The device ran with its shipped settings and was not tuned here.
+
+**Cost.** One training of the device with message passing on COMPAS took 2.1 to 4.0 hours on
+the processor, with four trainings running at the same time. The CMF model of one COMPAS split
+took 13 to 19 minutes from the stored kernels, and the learners of one split about 9 minutes.
+The predictions and the collectors of every device training are kept in
+`benchmarks/results/featuriser/device/`, so the table can be remade without the device:
+
+```bash
+python benchmarks/run_featuriser.py --stage reference --stage models   # 160 minutes
+python benchmarks/run_featuriser.py --report                           # the table only
+```
+
+`--stage device --device-root PATH` trains the device again; it needs the checkout of the device
+project and the Python environment of that project.
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right

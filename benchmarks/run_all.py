@@ -1599,6 +1599,19 @@ def registry() -> List[Benchmark]:
                   minutes="3",          # measured: 2.7; the geometries are in the repository
                   report=lambda: _mod("run_crowns").write_table(_r("crowns")),
                   tables=["crowns/table.md"]),
+        Benchmark("featuriser",
+                  "CMF as a featuriser (plan item ND1): the kernel as a vector for a ridge "
+                  "regression, a multilayer network and a random forest, against the CMF "
+                  "kernel model and the QSPR Neural Device, alone and joined, on COMPAS-1D "
+                  "and the eight Sutherland sets (the device's predictions and collectors are "
+                  "kept in the repository; --stage device remakes them and needs the device "
+                  "project; COMPAS needs the stored kernels of the compas benchmark)",
+                  "run_featuriser.py", "featuriser",
+                  compute=[["--stage", "reference"], ["--stage", "models"]],
+                  minutes="160",       # measured: 85 the CMF models of the five COMPAS
+                                       # splits, 50 their learners, 25 the Sutherland sets
+                  report=lambda: _mod("run_featuriser").write_table(),
+                  tables=["featuriser/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

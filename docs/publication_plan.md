@@ -339,8 +339,8 @@ What is left of the step is the reading of the 30 tables under rule 4.
 Short communication, written only if a journal asks for a separate note: increments fitted to
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
 otherwise supplementary material of paper 1. Not yet a paper: the CMF-neural integration of the
-development plan (stages ND1 to ND3), which has a plan and no measurement; it becomes paper 19
-when ND1 and ND2 are measured on COMPAS-1.
+development plan (stages ND1 to ND3). ND1 was measured on 20 November 2026
+(`results/featuriser/`); it becomes paper 19 when ND2 is measured on COMPAS-1 as well.
 
 ### 1. Software paper
 
@@ -1040,8 +1040,11 @@ point. The positive control is the crystal pose itself, which every ensemble is 
 
 The development plan's ND1 to ND3 (the kernel rows as a featuriser, trainable widths and mixing
 weights with the co-field kept exportable, field values as node attributes of an equivariant
-network) have a plan and no measurement. The paper exists when ND1 and ND2 are measured on
-COMPAS-1 against paper 16's model and the published networks; until then it is not counted.
+network) are the content. ND1 was measured on 20 November 2026 on COMPAS-1D and the eight
+Sutherland series: the fields as a vector lose nothing against the kernel, and joined with the
+learned descriptors of the neural device they lower its error by 0.006 eV on COMPAS-1D. The
+paper exists when ND2 is measured on COMPAS-1 against paper 16's model and the published
+networks; until then it is not counted.
 
 ### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
 

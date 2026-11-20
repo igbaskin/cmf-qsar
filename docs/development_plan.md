@@ -7752,6 +7752,38 @@ CMF currently fixes.
 * **ND1. CMF as a featuriser.** Compute the CMF kernel rows of every molecule (or a Nyström or
   random-feature approximation of them) and feed them as an input vector to the existing model.
   Baseline: CMF alone, the device alone, and the two combined.
+  **Done 20 November 2026.** "The device" is the QSPR Neural Device (the project `bpz`, package
+  `neurodevice`). `cmf lowrank --features` writes the CMF vector, whose inner products are the
+  kernel, and `benchmarks/run_featuriser.py` measures it with `benchmarks/featuriser_device.py`,
+  which runs the device and stores its prediction and its collectors (its learned descriptors)
+  for every split. The device has no input for a vector of the whole molecule, so the two are
+  combined after the device is trained: a ridge regression, a multilayer network or a random
+  forest on the CMF vector joined with the collectors, and a mean of the two predictions.
+  Random splits 70/15/15 of the device's protocol; every setting chosen on the validation rows.
+  **COMPAS-1D** (8,678 molecules, five seeds, mean absolute error on the test rows): linear CMF
+  model 0.111 eV, ridge regression on the CMF vector 0.112, multilayer network on the vector
+  0.055, CMF model with the Gaussian layer 0.053, fingerprint 0.066, device one-shot 0.183,
+  device with message passing 0.035, network on the collectors of message passing 0.033,
+  network on the vector joined with these collectors **0.029**. Paired on the same test
+  molecules: the joined network against the device -0.006 eV (95 % interval -0.007 to -0.005);
+  with the learner held fixed, the vector added to the collectors -0.003 (-0.004 to -0.002)
+  and the collectors added to the vector -0.026 (-0.027 to -0.025). A weighted mean of the two
+  predictions is not better than the device (+0.001). **The eight Sutherland series** (ten
+  seeds each, mean test R2): CMF kernel model 0.412, ridge regression on the vector 0.430,
+  network on the vector 0.475, device one-shot 0.203, device with message passing 0.356,
+  network on the vector joined with the one-shot collectors 0.490, plain mean of the CMF model
+  and the device with message passing **0.506**. With the learner held fixed, the vector added
+  to the collectors lowers the error in seven series (one-shot) and four (message passing) of
+  eight and raises it in none. A random forest on the vector is worse than the ridge
+  regression on COMPAS and in five series.
+  **What it says:** the vector loses nothing against the kernel; a network on it gains what
+  the Gaussian layer gains; on small superimposed series the fields hold most and the device
+  adds through a mean of predictions; on the large set the device with message passing is
+  ahead and the fields remove about a tenth of its error. The three comparisons with the
+  learner held fixed were added after the first COMPAS seed had been read.
+  **Open:** a device that receives the vector while it trains (this needs an input for a
+  molecule vector in the device, and is the first step of ND2); a split that holds out
+  scaffolds; the device with tuned settings.
 * **ND2. A learnable CMF layer.** Make the Gaussian widths and the mixing weights of the field
   types trainable end to end; keep the regression-coefficient field (the co-field) exportable as
   a 3D map, so that the reading is not lost.
@@ -10069,14 +10101,14 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
-| H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
+| H. Deep learning | 19 | 3 | ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
 | H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**186 items: 151 finished, 7 partly, 28 open.**
+**186 items: 152 finished, 7 partly, 27 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -10102,7 +10134,8 @@ equally blocked.
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5 extends.
 * **Open on their own merits.** SC8, MC10, E11's remaining three
-  versions, and the whole deep-learning part ND1 to ND14, which has not been started. BT9 to BT11,
+  versions, and the deep-learning part ND2 to ND14. ND1, the fields as a vector for the neural device,
+  was measured on 20 November 2026; the other stages have not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the
   diffusion coefficient needs a prediction under every condition and the other two only in

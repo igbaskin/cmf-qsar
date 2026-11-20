@@ -6441,6 +6441,37 @@ cmf predict model.cmf new.sdf --out predicted.csv
 python benchmarks/run_lowrank.py        # results/lowrank/table.md
 ```
 
+### The fields as a vector for another method
+
+The features of the landmark map are a vector for every molecule, and the inner product of two
+such vectors is the kernel of the two molecules. `cmf lowrank --features FILE` writes them, one
+row per molecule, as a `.csv` table or a NumPy `.npz` file; `--features-for OTHER.sdf` adds the
+rows of other molecules in the same frame, made with the same landmarks. Any method that takes
+vectors can then use the fields. Keep the relative lengths of the columns: they are the weights
+of the kernel, and a network on columns standardised one by one had nearly twice the error.
+
+Plan item ND1 measured what this gains (`benchmarks/run_featuriser.py`), against the CMF kernel
+model and against the QSPR Neural Device, an early graph neural network that is a separate
+project. Its learned descriptors, the collectors, were joined with the CMF vector after its
+training. On the gap of 8,678 polybenzenoid hydrocarbons (COMPAS-1D, five random splits, mean
+absolute error on the test molecules): the linear CMF model 0.111 eV, a ridge regression on the
+CMF vector 0.112 eV, a multilayer network on the vector 0.055 eV, the CMF model with the
+Gaussian layer 0.053 eV, the device with message passing 0.035 eV, and a network on the vector
+joined with the collectors 0.029 eV. With the learner held fixed, the fields lower the error of
+the collectors by 0.003 eV (95 % interval 0.002 to 0.004) and the collectors lower the error of
+the fields by 0.026 eV. On the eight Sutherland series (66 to 361 molecules, ten splits each)
+the direction is the opposite: the CMF kernel model reaches a mean test R2 of 0.412 and the
+device 0.356, adding the fields to the collectors lowers the error in four to seven of the
+eight series, and the plain mean of the two predictions is the best row (0.506). A random
+forest on the vector is worse than the ridge regression on both.
+
+```bash
+cmf lowrank series.sdf --activity pKi --landmarks molecules:60 --features rows.csv
+cmf lowrank series.sdf --activity pKi --landmarks molecules:60 \
+    --features rows.npz --features-for new.sdf
+python benchmarks/run_featuriser.py --report      # results/featuriser/table.md
+```
+
 
 ### A simulation as a conformational ensemble
 
