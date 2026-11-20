@@ -54,6 +54,9 @@ differ in one setting each, and :data:`RUNS` lists them.
   with the settings of the series. Their conductivities against the measured ones say whether
   the factor on the charges, chosen on one electrolyte, holds for other solvents.
   :data:`FORMULATION_RUNS` lists them, and EC:EMC 3:7 is the box of the series.
+* ``form_<solvents>_m<molality>``: the 40 other formulations of CALiSol-23, each at its own
+  molality (:data:`REST_NAMES`). They are simulated with the same settings. The table does not
+  read them yet; their results are stored in ``run_<name>.json``.
 
 The cell stage
 --------------
@@ -211,13 +214,19 @@ def chosen_formulations(rows: Sequence[dict], target: float = FORMULATION_TARGET
         by_comp.setdefault(r["id"].rsplit("_m", 1)[0], []).append(r)
     chosen = [min(v, key=lambda r: (abs(r["molality"] - target), r["molality"]))
               for v in by_comp.values()]
-    chosen.sort(key=lambda r: r["conductivity"])
+    return alternating_by_conductivity(chosen)
+
+
+def alternating_by_conductivity(rows: Sequence[dict]) -> List[dict]:
+    """The formulations sorted by the measured conductivity and taken alternately from the lowest
+    and the highest, so that the first part of a list already spans the range."""
+    ordered = sorted(rows, key=lambda r: r["conductivity"])
     order = []
-    lo, hi = 0, len(chosen) - 1
+    lo, hi = 0, len(ordered) - 1
     while lo <= hi:
-        order.append(chosen[lo])
+        order.append(ordered[lo])
         if hi != lo:
-            order.append(chosen[hi])
+            order.append(ordered[hi])
         lo, hi = lo + 1, hi - 1
     return order
 
@@ -242,6 +251,19 @@ for _row in chosen_formulations(calisol_rows()):
 #: the new boxes of the transfer test, in the order in which they are run
 FORMULATION_NAMES = [n for names in FORMULATION_RUNS.values() for n in names
                      if n.startswith("form_")]
+#: the other formulations of CALiSol-23, the 40 that the transfer test did not take: every one is
+#: simulated at its own molality with the same settings. A run is named by the id of the
+#: formulation without the salt, for example form_DEC20_PC80_m0p282, because several
+#: formulations of one composition differ only in the molality. The names are in the order in
+#: which they are run: alternately from the lowest and the highest measured conductivity.
+REST_NAMES: List[str] = []
+for _row in alternating_by_conductivity([r for r in calisol_rows()
+                                         if r["id"] not in FORMULATION_RUNS]):
+    _name = "form_" + _row["id"].split("_", 1)[1]
+    REST_NAMES.append(_name)
+    RUNS[_name] = {"label": f"{_row['id']}, charges multiplied by 0.7, 1,000 solvent molecules",
+                   "molality": _row["molality"], "solvents": dict(_row["solvents"]),
+                   "formulation": _row["id"], "settings": dict(SERIES_SETTINGS)}
 #: the smaller box that has the charge factor and the concentration of one box of the series,
 #: and the key of that box of the series: two sizes at the factor that the series uses
 PAIR_SMALL = "scaled_07"
@@ -1706,10 +1728,10 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
     w = out.append
     series_names = {n for names in CONCENTRATION_RUNS.values() for n in names}
     long_names = set(LONG_RUNS.values())
-    form_names = set(FORMULATION_NAMES)
+    form_names = set(FORMULATION_NAMES) | set(REST_NAMES)
     series = [r for r in rows if r["run"] in series_names]
     longs = [r for r in rows if r["run"] in long_names]
-    forms = [r for r in rows if r["run"] in form_names]
+    forms = [r for r in rows if r["run"] in set(FORMULATION_NAMES)]
     rows = [r for r in rows if r["run"] not in series_names | long_names | form_names]
     if not rows:
         w("# Item BT9: the salt diffusion coefficient of an electrolyte from simulation")

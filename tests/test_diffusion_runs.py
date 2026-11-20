@@ -657,3 +657,31 @@ def test_the_transfer_test_reads_rank_and_level():
 def test_the_report_needs_a_result(tmp_path):
     with pytest.raises(SystemExit, match="--stage analyse"):
         R.report(str(tmp_path))
+
+
+def test_the_other_40_formulations_are_runs_of_their_own():
+    rows = R.calisol_rows()
+    assert len(rows) == 62
+    assert len(R.REST_NAMES) == 40 and len(set(R.REST_NAMES)) == 40
+    assert not set(R.REST_NAMES) & set(R.FORMULATION_NAMES)
+    ids = {R.RUNS[n]["formulation"] for n in R.REST_NAMES}
+    taken = set(R.FORMULATION_RUNS)
+    assert len(ids) == 40 and not ids & taken and ids | taken == {r["id"] for r in rows}
+    for n in R.REST_NAMES:
+        run = R.RUNS[n]
+        assert n == "form_" + run["formulation"].split("_", 1)[1]
+        assert run["settings"] == R.SERIES_SETTINGS
+        assert run["molality"] == pytest.approx(
+            next(r["molality"] for r in rows if r["id"] == run["formulation"]))
+        assert os.path.basename(R.run_dir(n, "")) == f"{run['formulation']}_{n}"
+    # the first boxes span the range of the measured conductivity
+    k = {r["id"]: r["conductivity"] for r in rows}
+    first = [k[R.RUNS[n]["formulation"]] for n in R.REST_NAMES[:2]]
+    assert first[0] == min(k[i] for i in ids) and first[1] == max(k[i] for i in ids)
+
+
+def test_the_report_leaves_the_other_formulations_out_of_the_series_boxes():
+    name = R.REST_NAMES[0]
+    row = _form(name, 0.5)
+    lines = R.report_lines([row], [])
+    assert not any(name in line for line in lines)

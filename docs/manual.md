@@ -19349,9 +19349,13 @@ if it is unlikely to finish within the time limit. After every box one line goes
 `colab_log.jsonl` in the store: the graphics card, the time and the speed in ns/day, from which
 the cost in compute units is read. `benchmarks/colab/make_bundle.py` packs the code into one zip
 file, and the notebook `benchmarks/colab/cmf_transport_colab.ipynb` installs the simulation
-environment and runs the script. Nothing is uploaded by these scripts. The runner was tested on
-a short box on the CPU. The notebook has not been run on Colab, and the version of CUDA in its
-install cell is the setting most likely to need a change.
+environment and runs the script. Nothing is uploaded by these scripts. The notebook ran one box
+on a Colab T4 on 20 November 2026: 13,218 atoms in 19.1 minutes at 354 ns/day, which costs about
+0.4 compute units on Colab Pro. The desktop took about 16 minutes for the same box. Two faults
+had to be repaired first. OpenMM 8.3.1 needs CUDA 12.6 or higher, so the install cell pins
+`cuda-version` 12.6. Colab also sets a matplotlib backend that the separate environment does not
+have, so the notebook sets `MPLBACKEND=Agg`. The option `--runs rest` selects the 40
+formulations of the 62 that the transfer test did not take.
 
 ```bash
 python benchmarks/colab/make_bundle.py                 # the zip file to copy to Google Drive

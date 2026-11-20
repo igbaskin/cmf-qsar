@@ -47,6 +47,8 @@ def test_the_transfer_list_has_the_21_boxes_and_the_order_is_reversed():
     with pytest.raises(SystemExit, match="unknown run name"):
         C.names_for("form_EMC100,no_such_run")
     assert C.names_for("form_EMC100,form_DMC100") == ["form_EMC100", "form_DMC100"]
+    assert C.names_for("rest") == list(R.REST_NAMES) and len(C.names_for("rest")) == 40
+    assert C.names_for("all") == list(R.FORMULATION_NAMES) + list(R.REST_NAMES)
 
 
 def test_a_box_in_the_store_is_left_out(tmp_path):

@@ -6110,10 +6110,14 @@ concentration was driven, and the stage counts only discharges that ended at the
   them; the rank verdict was not tested in the same way.
   *The cost.* The 21 boxes ran on this desktop in one night. A runner for another machine,
   `benchmarks/colab/colab_transport.py`, with a notebook for Google Colab, copies each
-  finished box to a store folder and skips boxes that are there. It was tested on a short box
-  on the CPU and has not been run on Colab.
-  *Next, in this order:* the 40 other formulations of the 62 at the same factor, about 12
-  hours on this desktop, with 20 ns runs where the exponent is below about 0.8; then the
+  finished box to a store folder and skips boxes that are there. One box ran on a Colab T4 on
+  20 November 2026 (Colab Pro): 13,218 atoms, 19.1 minutes at 354 ns/day, about 0.4 compute
+  units. The desktop needed about 16 minutes for the same box. Two faults of the notebook had
+  to be repaired first: OpenMM 8.3.1 needs CUDA 12.6 or higher, and Colab sets a matplotlib
+  backend that the separate environment does not have.
+  *Next, in this order:* the 40 other formulations of the 62 at the same factor (`REST_NAMES`
+  of `run_diffusion.py`), about 12 hours on this desktop or about 15 compute units on Colab,
+  with 20 ns runs where the exponent is below about 0.8; then the
   model of gate (b). The thermodynamic factor of BT11 is needed before a label for an
   electrolyte without a measured factor can be made.
 

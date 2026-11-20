@@ -27,8 +27,9 @@ Usage
     python benchmarks/colab/colab_transport.py --store STORE --max-boxes 1     # a timing run
     python benchmarks/colab/colab_transport.py --store STORE --dry-run         # only the plan
 
-``--runs`` is ``transfer`` (the boxes of other solvents, ``FORMULATION_NAMES`` of
-``run_diffusion.py``) or run names separated by commas. The result is read by copying the box
+``--runs`` is ``transfer`` (the 21 boxes of other solvents, ``FORMULATION_NAMES`` of
+``run_diffusion.py``), ``rest`` (the 40 other formulations, ``REST_NAMES``), ``all`` (both) or
+run names separated by commas. The result is read by copying the box
 folders from the store into ``benchmarks/cache/transport`` and running
 ``python benchmarks/run_diffusion.py --stage analyse``.
 
@@ -77,11 +78,15 @@ def names_for(spec: str) -> List[str]:
     import run_diffusion as R
     if spec == "transfer":
         return list(R.FORMULATION_NAMES)
+    if spec == "rest":
+        return list(R.REST_NAMES)
+    if spec == "all":
+        return list(R.FORMULATION_NAMES) + list(R.REST_NAMES)
     names = [n for n in spec.split(",") if n]
     unknown = [n for n in names if n not in R.RUNS]
     if unknown:
-        raise SystemExit(f"unknown run name(s): {', '.join(unknown)}. Use `transfer` or names "
-                         f"from RUNS in benchmarks/run_diffusion.py, separated by commas")
+        raise SystemExit(f"unknown run name(s): {', '.join(unknown)}. Use `transfer`, `rest`, `all` "
+                         f"or names from RUNS in benchmarks/run_diffusion.py, separated by commas")
     return names
 
 
@@ -172,8 +177,9 @@ def run_boxes(names: Sequence[str], cache: str, store: str, max_hours: float = 0
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
-    ap.add_argument("--runs", default="transfer",
-                    help="`transfer` or run names separated by commas (default: transfer)")
+    ap.add_argument("--runs", default="rest",
+                    help="`transfer`, `rest`, `all` or run names separated by commas "
+                         "(default: rest)")
     ap.add_argument("--store", required=True,
                     help="the folder that keeps the finished boxes, for example on Google Drive")
     ap.add_argument("--cache", default=os.path.join(ROOT, "benchmarks", "cache", "transport"),
