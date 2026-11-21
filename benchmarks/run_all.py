@@ -1639,6 +1639,22 @@ def registry() -> List[Benchmark]:
                                        # splits, 50 their learners, 25 the Sutherland sets
                   report=lambda: _mod("run_featuriser").write_table(),
                   tables=["featuriser/table.md"]),
+        Benchmark("learnable",
+                  "a learnable CMF layer (plan item ND2): the attenuation and the weight of "
+                  "every field trained by gradient through the closed-form ridge solution, "
+                  "against the grid search, and a multilayer network trained with the layer, "
+                  "on COMPAS-1D and the eight Sutherland sets, with the splits and the device "
+                  "collectors of the featuriser benchmark (needs PyTorch; the minutes are with "
+                  "a GPU, and COMPAS-1D was not timed on a processor alone)",
+                  "run_learnable.py", "learnable",
+                  compute=[["--stage", "pack"], ["--stage", "ridge"], ["--stage", "network"],
+                           ["--stage", "cofield"]],
+                  minutes="745",       # measured: 516 the closed-form models of the five
+                                       # COMPAS splits, 43 those of the Sutherland sets, 109
+                                       # the networks, 73 the co-field maps; the packing
+                                       # takes a few minutes and was not timed
+                  report=lambda: _mod("run_learnable").write_table(),
+                  tables=["learnable/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

@@ -1806,6 +1806,11 @@ def cmd_lowrank(args):
     else:
         raise SystemExit(f"--landmarks takes grid:SPACING, atoms:SPACING, molecules:N, "
                          f"fourier:N or lattice:TOL, not {args.landmarks!r}")
+    if args.train:
+        if kind != "molecules":
+            raise SystemExit("--train needs landmarks that are molecules: --landmarks "
+                             "molecules:N")
+        fieldset = _train_fields(args, fieldset, table, y, rows)
     if Z is not None:
         low = LR.build(Z, fieldset, normalize=True, kind=kind)
         print(f"  {how}: {Z.n_mol} landmarks, {low.rank} columns of features")
@@ -1849,7 +1854,80 @@ def cmd_lowrank(args):
         print(f"  {len(names)} rows written to {args.csv}")
     if args.features:
         _write_features(args, low, fieldset, names, y, Phi)
+    if args.cofield:
+        if Z is None:
+            raise SystemExit("--cofield needs landmarks in space (grid, atoms or molecules), "
+                             "not Fourier features")
+        _write_cofield(args.cofield, low, w)
     print(f"Elapsed {time.time() - t0:.1f} s")
+
+
+def _train_fields(args, fieldset, table, y, landmark_rows):
+    """`cmf lowrank --train`: the attenuation and the weight of every field trained by gradient
+    (plan item ND2).  Returns the field set with the trained settings."""
+    import numpy as np
+
+    from cmfqsar import learnable as L
+
+    if not L.available():
+        raise SystemExit(L.INSTALL)
+    what = {w.strip() for w in str(args.train).split(",") if w.strip()}
+    unknown = what - {"widths", "weights"}
+    if unknown or not what:
+        raise SystemExit("--train takes widths, weights or widths,weights, not "
+                         f"{args.train!r}")
+    learn = (["alpha"] if "widths" in what else []) + (["weights"] if "weights" in what else [])
+    learn.append("lam")
+    specs = [s for s in fieldset.specs if s.enabled]
+    packed = L.pack(table, specs)
+    n = table.n_mol
+    rng = np.random.RandomState(args.seed)
+    held = int(round(float(args.train_holdout) * n))
+    order = rng.permutation(n)
+    valid = np.sort(order[:held])
+    out = set(valid.tolist())
+    train = np.array([i for i in range(n) if i not in out])
+    land = np.array([i for i in landmark_rows if i not in out])
+    if len(train) < 10 or len(land) < 2:
+        raise SystemExit("--train: too few molecules are left after the held-out part")
+    lams = _floats(args.lams) if args.lams else (0.1,)
+    res = L.train(packed, y, train, land, valid=valid if held else None,
+                  alpha=[s.alpha for s in specs], h=[s.h for s in specs], lam=float(lams[0]),
+                  learn=learn, normalize="cosine", steps=args.train_steps, seed=args.seed,
+                  predict=[])
+    best = min(h["cv"] for h in res.history)
+    print(f"  trained {' and '.join(sorted(what))} by gradient: {len(res.history)} evaluations "
+          f"in {res.seconds:.1f} s; the out-of-fold error of the training part, as a share of "
+          f"its variance, went from {res.start['cv']:.3f} to {best:.3f}")
+    if held:
+        kept = min(h["valid_rmse"] for h in res.history)
+        print(f"  early stopping on {held} held-out molecules: their RMSE went from "
+              f"{res.start['valid_rmse']:.3f} to {kept:.3f}; the settings of that evaluation "
+              "are kept")
+    else:
+        print("  no molecules were held out, so the settings at the lowest error are kept; "
+              "on a small series these can fit the training part too closely")
+    print(f"    {'field':<16}{'attenuation':>14}{'trained':>10}{'weight':>10}{'trained':>10}")
+    for s, a, w in zip(specs, res.alpha, res.h):
+        print(f"    {s.name:<16}{s.alpha:>14.3g}{a:>10.3g}{s.h:>10.3g}{w:>10.3g}")
+    return L.fieldset_of(res, fieldset)
+
+
+def _write_cofield(prefix, low, w):
+    """`cmf lowrank --cofield`: the co-field of every field as a Gaussian cube file."""
+    import numpy as np
+
+    from cmfqsar import lowrank as LR
+    from cmfqsar.cofields import evaluate_gaussians, export_cube, make_grid
+
+    grid = make_grid(np.asarray(low.landmarks.coords, float))
+    points = grid.points()
+    for f, spec in enumerate(low.specs):
+        centres, coeffs, widths = LR.cofield_gaussians(low, w, f)
+        volume = evaluate_gaussians(points, centres, coeffs, widths).reshape(grid.shape)
+        path = f"{prefix}_{spec.name.replace(':', '-')}.cube"
+        export_cube(path, grid, volume, title=f"CMF co-field of the field {spec.name}")
+        print(f"  co-field of {spec.name} (attenuation {spec.alpha:.3g}) written to {path}")
 
 
 def _write_features(args, low, fieldset, names, y, Phi):
@@ -6195,6 +6273,22 @@ def main(argv=None):
                          "the kernel: the fields as a vector for any method that takes vectors "
                          "(plan item ND1). A .csv file gets one row per molecule; any other "
                          "name gets a NumPy .npz file with names, source, measured, features")
+    lr.add_argument("--train", default=None, metavar="WHAT",
+                    help="train settings of the fields by gradient before the fit (plan item "
+                         "ND2; needs PyTorch and --landmarks molecules:N): widths (the "
+                         "attenuation of every field), weights (the mixing weight of every "
+                         "field) or widths,weights. The ridge is trained with them. --alpha "
+                         "is the start")
+    lr.add_argument("--train-steps", type=int, default=30, metavar="N",
+                    help="with --train: the largest number of iterations (default 30)")
+    lr.add_argument("--train-holdout", type=float, default=0.15, metavar="SHARE",
+                    help="with --train: the share of the molecules held out for early "
+                         "stopping; the settings with the lowest error on them are kept, and "
+                         "the model is then fitted on all molecules. 0 keeps the settings "
+                         "with the lowest error inside the training part (default 0.15)")
+    lr.add_argument("--cofield", default=None, metavar="PREFIX",
+                    help="write the co-field of every field of the fitted model as a Gaussian "
+                         "cube file PREFIX_<field>.cube")
     lr.add_argument("--features-for", default=None, metavar="FILE",
                     help="with --features: also write the rows of the molecules of this file, "
                          "which must be in the frame of the data set; they are made with the "

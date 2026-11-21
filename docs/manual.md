@@ -8393,6 +8393,226 @@ python benchmarks/run_featuriser.py --report                           # the tab
 `--stage device --device-root PATH` trains the device again; it needs the checkout of the device
 project and the Python environment of that project.
 
+### Training the widths and the weights of the fields
+
+A CMF model fixes two kinds of settings before it sees an activity. The attenuation $\alpha_f$
+of a field sets the width of the Gaussian on every atom. The mixing weight $h_f$ sets the share
+of the field in the joint kernel. The program chooses the attenuation from a grid of a few
+values and leaves the weights equal. Plan item ND2 makes both continuous numbers and trains them
+by gradient, with the ridge. `cmfqsar/learnable.py` holds the method; it needs PyTorch
+(`pip install cmfqsar[fieldae]`), and it uses a graphics processor (GPU) when there is one.
+
+**What is trained.** The model stays the kernel model over landmark molecules $z$,
+
+$$
+y(x) = \sum_z c_z \sum_f h_f\, K_f(x, z; \alpha_f) + b .
+$$
+
+The coefficients $c_z$ and the bias $b$ are not trained by gradient. For every value of the
+settings they are the ridge solution in closed form, so the model at every step is the model the
+program would fit with these settings. Only the settings move: one $\log \alpha_f$ and one weight
+per field, and the ridge $\lambda$. The weights are written through free numbers $u_f$,
+
+$$
+h_f = T\, \dfrac{e^{u_f}}{\sum_g e^{u_g}} ,
+$$
+
+so their sum $T$ does not change and the ridge keeps its meaning.
+
+**The criterion.** The settings are chosen by the criterion of the grid search: the squared
+error of the out-of-fold predictions of five folds inside the training part, divided by the
+variance of the activity. The ridge solution is a differentiable function of the kernel, and the
+kernel is an analytic function of $\alpha_f$. The overlap of two atoms is
+
+$$
+E = \left(\dfrac{2\pi}{\alpha s}\right)^{3/2} \exp\left(-\alpha\, t\, d^2\right), \qquad s = c_l + c_m, \qquad t = \dfrac{c_l c_m}{2 s},
+$$
+
+with $c = 1$ for an ordinary field and $c = 1/R^2$ for the steric field, and its derivative is
+
+$$
+\dfrac{\partial E}{\partial \log \alpha} = -E \left(\dfrac{3}{2} + \alpha\, t\, d^2\right).
+$$
+
+So one pass over the atom pairs gives a field kernel and its derivative, and the criterion has
+an exact gradient. A quasi-Newton method (L-BFGS-B, which keeps every number between two
+limits) minimises it. Every evaluation recomputes the field kernels at the attenuations it asks
+for, so no evaluation is approximate. The attenuation may move between 0.001 and 100.
+
+**The first step of the optimiser.** When every number has limits, L-BFGS-B takes the gradient
+itself as its first step. The gradient of this criterion can be small: on COMPAS-1D its length
+was about 0.0005. The first step then lowers the criterion by less than the stopping tolerance,
+and the method reports convergence at the start. This happened in the first run of the
+benchmark on three COMPAS splits of five. The numbers are therefore scaled so that the first
+step has the length 0.5 in the logarithms. Every number of the closed-form models below is
+from the run after this correction.
+
+**Early stopping.** The criterion is computed on the training part, and the settings can fit
+that part too closely. When validation molecules are given, the evaluation with the lowest
+error on them is kept. Without them the evaluation with the lowest criterion is kept.
+
+**The co-field is kept.** The model is linear in the fields, so its field of regression
+coefficients exists as before. `cmfqsar.learnable.cofield_gaussians` returns it as
+atom-centred Gaussians, and `cmfqsar.learnable.fieldset_of` writes the trained attenuations and
+weights into a field set, from which every other part of the program builds its own model.
+
+**On the command line.** `cmf lowrank --train widths,weights` trains the settings before the
+fit. It needs landmarks that are molecules. `--train widths` or `--train weights` trains one of
+the two. A share of the molecules (`--train-holdout`, 0.15 by default) is held out for early
+stopping; the model is then fitted on all molecules with the settings that were kept.
+`--train-steps` is the largest number of iterations (30 by default). `--cofield PREFIX` writes
+the co-field of every field of the fitted model as a Gaussian cube file, with or without
+`--train`.
+
+```bash
+cmf lowrank examples/sutherland/GPB.sdf --landmarks molecules:40 --alpha 0.5 \
+    --charges file --train widths,weights --cofield gpb
+```
+
+On these 66 molecules the training takes 36 evaluations and 3 seconds on the processor. The
+criterion falls from 0.599 to 0.244, and the error on the 10 held-out molecules from 1.256 to
+0.762. The program prints the start and the trained value of every setting, and writes five
+cube files, `gpb_electrostatic.cube` to `gpb_hbd.cube`. The trained attenuation of the
+electrostatic field is 100, the upper limit. A value at a limit is a sign that the set is too
+small to fix this number, and the benchmark below shows what follows from that on small series.
+
+**What was measured** (`benchmarks/run_learnable.py`, `benchmarks/results/learnable/table.md`).
+The sets, the splits and the fields are those of the section above (plan item ND1): COMPAS-1D
+with nine fields and 1,000 landmark molecules, five seeds; the eight Sutherland series with
+five fields and every training molecule a landmark, ten seeds each; a random split into 70 %
+training, 15 % validation and 15 % test. Every training starts from the settings that the grid
+search chose for the same split. Every number is from the test rows. The models differ in what
+was trained:
+
+| Name of the model | What was trained |
+|---|---|
+| grid | nothing: the attenuations and the ridge of the grid search |
+| ridge | the ridge only, as a continuous number |
+| weights | the weight of every field, and the ridge |
+| widths | the attenuation of every field, and the ridge |
+| widths + weights | all three, with early stopping on the validation rows |
+| widths + weights, to the minimum | the same training, but the evaluation with the lowest criterion is kept |
+
+On COMPAS-1D the same was done with the Gaussian kernel layer on top of the joint kernel; the
+width of the layer is then trained with the ridge. A training had at most 30 iterations. The
+comparisons were fixed before any run. They are paired differences of the absolute error on
+the same test molecules with a 95 % bootstrap interval, as in the section above.
+
+On COMPAS-1D (mean over five seeds; the mean absolute error is in eV):
+
+| Model | Test $R^2$ | Mean absolute error |
+|---|---:|---:|
+| grid | 0.853 | 0.114 |
+| ridge | 0.863 | 0.114 |
+| weights | 0.863 | 0.114 |
+| widths | 0.857 | 0.114 |
+| widths + weights | 0.857 | 0.114 |
+| widths + weights, to the minimum | 0.857 | 0.114 |
+| grid, with the Gaussian layer | 0.934 | 0.075 |
+| ridge, with the Gaussian layer | 0.938 | 0.074 |
+| widths + weights, with the Gaussian layer | 0.960 | 0.058 |
+| Multilayer network on the kernel rows, fields fixed | 0.965 | 0.054 |
+| Multilayer network on the kernel rows, fields trained with it | 0.959 | 0.059 |
+| The same network with the device collectors joined, fields fixed | 0.987 | 0.028 |
+| The same network with the device collectors joined, fields trained with it | 0.987 | 0.028 |
+| From ND1: CMF kernel model with the Gaussian layer, all 6,074 training molecules | 0.966 | 0.053 |
+| From ND1: device, message passing | 0.982 | 0.035 |
+
+On the eight Sutherland series (test $R^2$):
+
+| Model | Mean over the series | Median over the 80 splits | Lowest criterion (the start is 0.738) |
+|---|---:|---:|---:|
+| grid | 0.412 | 0.504 | 0.738 |
+| ridge | 0.425 | 0.523 | 0.514 |
+| weights | 0.437 | 0.513 | 0.432 |
+| widths | 0.440 | 0.514 | 0.402 |
+| widths + weights | 0.385 | 0.521 | 0.351 |
+| widths + weights, to the minimum | 0.337 | 0.450 | 0.351 |
+
+* **With the linear kernel, training changes nothing on the large set.** On COMPAS-1D all six
+  comparisons between the linear models have an interval that includes zero, and no difference
+  is larger than 0.0004 eV. The criterion falls by 6 % (0.1398 to 0.1313), and the error on the
+  validation rows by less than 1 %. The trained weights stay close to equal: the share of a
+  field is between 0.09 and 0.13, where equal weights give 0.11. The grid search had already
+  found settings that the gradient does not improve.
+* **With the Gaussian layer, training the fields lowers the error by a fifth.** The error falls
+  from 0.074 to 0.058 eV (difference -0.0152, interval -0.0167 to -0.0136), on each of the five
+  seeds. The layer makes the model nonlinear in the fields, so the widths matter more. This row
+  is a model over 1,000 landmarks. The model of ND1 on all 6,074 training molecules, with the
+  settings of the grid, is still better (0.053 eV). So on this set the training recovers most of
+  what the landmarks lose, and no more.
+* **A continuous ridge is the one part that helps on small series.** It lowers the error in six
+  of the eight Sutherland series and raises it in none; the mean $R^2$ rises by 0.012.
+* **The weights or the widths, each alone, are not resolved on small series.** The mean $R^2$
+  rises from 0.425 to 0.437 and 0.440, but no series has a resolved gain over the ridge model,
+  and one series has a resolved loss in each case.
+* **Both together fit the training part and fail on some splits.** The criterion falls furthest
+  (0.738 to 0.351), and the mean test $R^2$ falls to 0.385. The median over the 80 splits is
+  0.521 against 0.504 for the grid, so most splits are unchanged or a little better, and the
+  mean is lowered by a few failed splits (one AChE split has $R^2$ = -3.6, one BZR split -1.1).
+  No series has a resolved difference in either direction. A series has 10 to 54 validation
+  molecules. Early stopping on so few molecules is itself uncertain: it kept the start in 35 %
+  of these trainings, and it did not prevent the failed splits.
+* **Without early stopping the result is worse.** The model at the lowest criterion has a mean
+  $R^2$ of 0.337 and a median of 0.450. On COMPAS-1D it makes no difference.
+* **A network trained together with the fields is worse than the same network on fixed
+  fields.** The error is 0.059 against 0.054 eV, worse on each of the five seeds (difference
+  +0.0049, interval +0.0036 to +0.0062). With the device collectors joined to the input the
+  difference is small and still positive (+0.0007, interval +0.0002 to +0.0012). The best
+  number on COMPAS-1D therefore stays that of ND1: about 0.028 eV for a network on the fixed
+  CMF vector joined with the collectors.
+* **The trained attenuations rarely end at a limit.** None does on COMPAS-1D, and at most 6 %
+  do on the Sutherland series. On COMPAS-1D the largest move is that of the steric field (a
+  geometric mean of 0.68 over the seeds, from 0.2 to 1 in the grid); the other fields stay
+  within a factor of about two of the grid value.
+* **The co-field stays exportable, and the training moves it no further than a new draw of
+  the training molecules does.** The co-field of every field
+  was written as a 3D map for the grid model and for the trained models of the same split, and
+  the two maps were compared by their correlation coefficient over the grid points. Where the
+  training changed the settings, the mean correlation is 0.66 on COMPAS-1D and 0.55 to 0.80 on
+  the Sutherland series. For the model at the lowest criterion it is 0.32 to 0.50 on the
+  Sutherland series. The reference is the same correlation between the grid models of two
+  splits of a set, which differ in their training molecules only: 0.71 on COMPAS-1D and 0.37
+  to 0.53 on the Sutherland series. So a trained model with early stopping is as close to
+  the grid model as two grid models are to each other, or closer. The map of one split is
+  itself uncertain on these sets, with or without training: single fields with a correlation
+  near zero occur in both comparisons.
+
+**What this says.** The layer can be trained, the gradient is exact, and the model keeps its
+closed form and its co-field. What the training gains depends on the kernel and on the size of
+the set. With the linear kernel the grid search is enough. With the Gaussian layer on thousands
+of molecules the training gains a fifth of the error. On series of a few hundred molecules
+only the continuous ridge is a reliable gain, and training the widths and the weights together
+is a risk. The grid search therefore stays the default of the program, and `--train` is an
+option for large sets and for the Gaussian layer.
+
+**Limits.** (1) The neural device was not trained together with the layer. The device has no
+input for a vector of the whole molecule, so this needs a change in the device project; here
+the collectors of ND1 were joined to the input as fixed numbers. (2) The split is random, so
+the numbers say nothing about a new scaffold. (3) A training had at most 30 iterations, and
+20 to 54 % of the trainings of the widths used all of them. "To the minimum" is therefore the
+lowest criterion that was reached, not a proven minimum. A further 15 to 60 % ended because
+the search along the last direction found no lower value. On a GPU the kernels are computed in
+single precision, which may be the reason; this was not tested. (4) Every training starts from
+the choice of the grid search, so it explores the settings near that choice only. (5) The folds
+of the criterion are one fixed set of five. (6) The median over the splits and the reference of
+the co-field comparison were added after the results had been read. (7) The network stage ran
+before the correction of the first step. It uses stochastic gradient descent (Adam), which the
+fault does not concern, and it was not run again.
+
+**Cost.** On a GPU (RTX 4070 Laptop, 8 GB), one pass over the atom pairs of a COMPAS-1D split
+takes 44 to 47 seconds, and a training of the widths about 33 minutes. The closed-form models
+of the five COMPAS splits took 8.6 hours, those of the 80 Sutherland splits 43 minutes, the
+networks 109 minutes, and the co-field maps 73 minutes on the processor. COMPAS-1D was
+not timed on a processor alone; a training on a Sutherland series takes seconds there.
+
+```bash
+python benchmarks/run_learnable.py --stage pack                         # the atoms, once
+python benchmarks/run_learnable.py --stage ridge --stage network        # uses a GPU if any
+python benchmarks/run_learnable.py --stage cofield                      # processor only
+python benchmarks/run_learnable.py --report                             # the table only
+```
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right

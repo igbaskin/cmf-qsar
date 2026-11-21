@@ -7905,11 +7905,50 @@ CMF currently fixes.
   ahead and the fields remove about a tenth of its error. The three comparisons with the
   learner held fixed were added after the first COMPAS seed had been read.
   **Open:** a device that receives the vector while it trains (this needs an input for a
-  molecule vector in the device, and is the first step of ND2); a split that holds out
-  scaffolds; the device with tuned settings.
+  molecule vector in the device; ND2 did not do it, and it stays open there); a split that
+  holds out scaffolds; the device with tuned settings.
 * **ND2. A learnable CMF layer.** Make the Gaussian widths and the mixing weights of the field
   types trainable end to end; keep the regression-coefficient field (the co-field) exportable as
   a 3D map, so that the reading is not lost.
+  **Done 21 November 2026.** `cmfqsar/learnable.py` trains the attenuation of every field (the
+  width of the Gaussian on every atom), the weight of every field and the ridge by gradient.
+  The coefficients stay the closed-form ridge solution over landmark molecules, so the model
+  stays the kernel model. The criterion is the out-of-fold squared error of five folds inside
+  the training part; its gradient is exact, because the derivative of a Gaussian overlap with
+  respect to the attenuation has a closed form. The optimiser is L-BFGS-B, with early stopping
+  on the validation rows. `cmf lowrank --train widths,weights` trains before the fit, and
+  `--cofield PREFIX` writes the co-field of every field as a cube file.
+  `benchmarks/run_learnable.py` measures it on the sets, the splits and the starts of ND1
+  (every training starts from the settings of the grid search).
+  **COMPAS-1D** (1,000 landmarks, five seeds, mean absolute error on the test rows): with the
+  linear kernel 0.114 eV for the grid and for every trained model, and every paired interval
+  includes zero. With the Gaussian kernel layer: grid 0.075, ridge 0.074, widths and weights
+  **0.058** (against the ridge -0.0152 eV, 95 % interval -0.0167 to -0.0136); the untrained
+  model of ND1 on all 6,074 training molecules has 0.053. A multilayer network trained with
+  the fields 0.059 against 0.054 on fixed fields (+0.0049, +0.0036 to +0.0062); with the
+  collectors of the device joined 0.028 in both cases (+0.0007, +0.0002 to +0.0012).
+  **The eight Sutherland series** (ten seeds each, mean test R2): grid 0.412, ridge 0.425
+  (better in six series, worse in none), weights 0.437, widths 0.440, widths and weights
+  0.385, the same without early stopping 0.337. The median over the 80 splits is 0.504 for
+  the grid and 0.521 for widths and weights: the mean is lowered by a few failed splits, and
+  no series has a resolved difference. The criterion falls from 0.738 to 0.351.
+  **The co-field** was written as a 3D map for every split. Where the training changed the
+  settings, the map of the trained model correlates with the map of the grid model at
+  0.66 on COMPAS and 0.55 to 0.80 on the Sutherland series (0.32 to 0.50 without early
+  stopping). The reference, the grid models of two splits of a set, gives 0.71 and 0.37 to
+  0.53: the training moves the map no further than a new draw of the training molecules.
+  **What it says:** training gains with the Gaussian layer on the large set and nothing with
+  the linear kernel; on small series only the continuous ridge is a reliable gain; a network
+  trained with the fields is worse than a network on fixed fields. The grid search stays the
+  default and `--train` is an option. ND2 does not lower the best COMPAS number of ND1
+  (0.028 to 0.029 eV).
+  **A fault found on the way:** with limits on every number, L-BFGS-B takes the gradient
+  itself as its first step; on COMPAS the gradient is small and the method reported
+  convergence at the start on three splits of five. The numbers are now scaled so that the
+  first step has the length 0.5 in the logarithms, and all closed-form models were run again.
+  **Open:** a device trained together with the layer (the device has no input for a vector of
+  the whole molecule; this is a change in the device project and was not started); a split
+  that holds out scaffolds; more than 30 iterations.
 * **ND3. Field-to-graph fusion (optional, later).** Sample the field values at the atoms or at
   probe points and use them as node or edge attributes of an equivariant GNN, which removes the
   superposition requirement.
@@ -10220,18 +10259,18 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 12 | 11 | EC9 |
-| H. Battery science | 13 | 9 | BT9 (partly), BT10, BT11, BT13 |
+| H. Battery science | 13 | 9 | BT9 (partly), BT10, BT11 (partly), BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
-| H. Deep learning | 19 | 3 | ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
+| H. Deep learning | 19 | 4 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
 | H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**186 items: 152 finished, 7 partly, 27 open.**
+**186 items: 153 finished, 8 partly, 25 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -10257,8 +10296,9 @@ equally blocked.
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5 extends.
 * **Open on their own merits.** SC8, MC10, E11's remaining three
-  versions, and the deep-learning part ND2 to ND14. ND1, the fields as a vector for the neural device,
-  was measured on 20 November 2026; the other stages have not been started. BT9 to BT11,
+  versions, and the deep-learning part ND3 to ND14. ND1, the fields as a vector for the neural device,
+  was measured on 20 November 2026, and ND2, the learnable layer, on 21 November 2026; the
+  other stages have not been started. BT9 to BT11,
   the three electrolyte parameters of a cell model that MS9 found without a prediction, were
   opened on 13 November 2026; their first stage was run the same day and says that the
   diffusion coefficient needs a prediction under every condition and the other two only in

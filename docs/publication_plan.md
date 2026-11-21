@@ -340,7 +340,8 @@ Short communication, written only if a journal asks for a separate note: increme
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
 otherwise supplementary material of paper 1. Not yet a paper: the CMF-neural integration of the
 development plan (stages ND1 to ND3). ND1 was measured on 20 November 2026
-(`results/featuriser/`); it becomes paper 19 when ND2 is measured on COMPAS-1 as well.
+(`results/featuriser/`) and ND2 on 21 November 2026 (`results/learnable/`); it becomes paper 19
+when the two are compared with the published networks on COMPAS-1.
 
 ### 1. Software paper
 
@@ -1042,9 +1043,13 @@ The development plan's ND1 to ND3 (the kernel rows as a featuriser, trainable wi
 weights with the co-field kept exportable, field values as node attributes of an equivariant
 network) are the content. ND1 was measured on 20 November 2026 on COMPAS-1D and the eight
 Sutherland series: the fields as a vector lose nothing against the kernel, and joined with the
-learned descriptors of the neural device they lower its error by 0.006 eV on COMPAS-1D. The
-paper exists when ND2 is measured on COMPAS-1 against paper 16's model and the published
-networks; until then it is not counted.
+learned descriptors of the neural device they lower its error by 0.006 eV on COMPAS-1D. ND2
+was measured on 21 November 2026 on the same sets: training the widths and the weights of the
+fields gains nothing with the linear kernel, lowers the error of the model with the Gaussian
+layer over 1,000 landmarks from 0.074 to 0.058 eV on COMPAS-1D, and does not lower the best
+number of ND1. This is a result against paper 16's model. The comparison with the published
+networks is not made, and the result of ND2 is mostly negative; until that comparison exists
+the paper is not counted.
 
 ### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
 
@@ -1547,7 +1552,7 @@ targets.
 | 4 | Months 9 to 12 | 22, 7, 8 | 22 closes the materials group with the boundary statement; the co-field read four ways; the posterior |
 | 5 | Months 12 to 15 | 5, 6, 12 | The quantum stage with its share of helped series; the corrosion data paper, now on five nodes; the design questions with their three negatives |
 | 6 | Months 15 to 18 | 17, 23, 13 | 17 no longer waits for DFT barriers and needs only its co-author; 23 has results on computed and on measured spectra; 13 is complete |
-| 7 | Year 2 | 18, 11, 24, then 15 and 19 if ND1 and ND2 are measured | 18 and 11 fold into others if needed; 24 waits for the rest of BT9 and a co-author in battery modelling; the review comes after tiers 1 to 4 are in print |
+| 7 | Year 2 | 18, 11, 24, then 15, and 19 when ND1 and ND2 are compared with the published networks | 18 and 11 fold into others if needed; 24 waits for the rest of BT9 and a co-author in battery modelling; the review comes after tiers 1 to 4 are in print |
 
 Twenty-three papers in eighteen months is not realistic for one author, and the plan does not
 assume it is. The tiers are an order of priority, and rule 5 limits the work in progress to

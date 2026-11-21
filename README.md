@@ -6492,6 +6492,39 @@ python benchmarks/run_featuriser.py --report      # results/featuriser/table.md
 ```
 
 
+### Training the widths and the weights of the fields
+
+The program chooses the attenuation of a field (the width of the Gaussian on every atom) from a
+grid and gives every field the same weight. `cmf lowrank --train widths,weights` trains both by
+gradient, with the ridge, before the fit (`cmfqsar/learnable.py`; needs PyTorch). The
+coefficients stay the closed-form ridge solution, so the model stays the kernel model, and
+`--cofield PREFIX` writes its co-field as cube files. A share of the molecules is held out, and
+the settings with the lowest error on them are kept (early stopping).
+
+Plan item ND2 measured what the training gains (`benchmarks/run_learnable.py`), on the sets and
+the splits of the section above. On COMPAS-1D with the linear kernel it gains nothing: the mean
+absolute error is 0.114 eV with or without training, and every paired difference has an
+interval that includes zero. With the Gaussian kernel layer on top, training the fields lowers
+the error from 0.074 to 0.058 eV (difference -0.015, 95 % interval -0.017 to -0.014); this
+model has 1,000 landmark molecules, and the untrained model on all 6,074 training molecules is
+still better (0.053 eV). A multilayer network trained together with the fields is worse than
+the same network on fixed fields (0.059 against 0.054 eV). On the eight Sutherland series a
+continuous ridge alone lowers the error in six series and raises it in none. Training the
+widths and the weights together fits the training part (the criterion falls from 0.738 to
+0.351) and fails on a few splits: the mean test R2 falls from 0.412 to 0.385, the median over
+the 80 splits is 0.521 against 0.504, and no series has a resolved difference. Without early
+stopping the mean is 0.337. The co-field of a trained model correlates with that of the grid
+model at 0.66 on COMPAS-1D and at 0.55 to 0.80 on the Sutherland series. The grid models of
+two splits correlate at 0.71 and at 0.37 to 0.53, so the training moves the map no further
+than a new draw of the training molecules does. The grid search stays the default.
+
+```bash
+cmf lowrank examples/sutherland/GPB.sdf --landmarks molecules:40 --alpha 0.5 \
+    --charges file --train widths,weights --cofield gpb
+python benchmarks/run_learnable.py --report       # results/learnable/table.md
+```
+
+
 ### A simulation as a conformational ensemble
 
 The ensemble mode does not care where the conformations come from. `cmfqsar/trajectory.py` (plan

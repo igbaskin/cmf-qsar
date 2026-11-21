@@ -61,6 +61,8 @@ md = ["mdtraj>=1.9"]
 # closed-form field distance.  Without it the module imports, `fieldae.available()` is false and
 # nothing else in the program changes: no model and no kernel needs it.  The processor build is
 # enough -- the networks are small and the batches are a few hundred atoms.
+# cmfqsar/learnable.py (`cmf lowrank --train`) needs the same package; it uses a GPU when the
+# installed build has one, and a set of thousands of molecules needs that.
 fieldae = ["torch>=2.0"]
 # cmfqsar/electrolyte.py: building and running a bulk electrolyte box, for the sampled shells of
 # plan item BT5.  This is deliberately not a pip extra, because its parts are conda packages and

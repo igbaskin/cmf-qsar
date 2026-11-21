@@ -1,0 +1,2918 @@
+{
+ "compas-1D_0": {
+  "points": 10230,
+  "fields": {
+   "steric": {
+    "widths + weights": 0.6269115956942074,
+    "widths + weights, to the minimum": 0.7168265877903841
+   },
+   "prop:q_xtb": {
+    "widths + weights": 0.3625277190537858,
+    "widths + weights, to the minimum": 0.5332378042844074
+   },
+   "cif:C.H": {
+    "widths + weights": 0.5920747090474144,
+    "widths + weights, to the minimum": 0.7571120542743723
+   },
+   "cif:C.2r": {
+    "widths + weights": 0.6367725385946297,
+    "widths + weights, to the minimum": 0.7052580903840999
+   },
+   "ring:terminal": {
+    "widths + weights": 0.4360105549017233,
+    "widths + weights, to the minimum": 0.32442370476056565
+   },
+   "ring:linear": {
+    "widths + weights": 0.3734223160584929,
+    "widths + weights, to the minimum": 0.7573818192780275
+   },
+   "ring:angular": {
+    "widths + weights": 0.4893507840294143,
+    "widths + weights, to the minimum": 0.050487915051527284
+   },
+   "ring:branched": {
+    "widths + weights": 0.515204147561266,
+    "widths + weights, to the minimum": 0.6593636347252799
+   },
+   "ring:sextet": {
+    "widths + weights": 0.8081198472721606,
+    "widths + weights, to the minimum": 0.3881767500492184
+   }
+  },
+  "cubes": [
+   "cofield_compas-1D_0_0.cube",
+   "cofield_compas-1D_0_1.cube",
+   "cofield_compas-1D_0_2.cube",
+   "cofield_compas-1D_0_3.cube",
+   "cofield_compas-1D_0_4.cube",
+   "cofield_compas-1D_0_5.cube",
+   "cofield_compas-1D_0_6.cube",
+   "cofield_compas-1D_0_7.cube",
+   "cofield_compas-1D_0_8.cube"
+  ],
+  "reference": {
+   "steric": 0.6874267037842912,
+   "prop:q_xtb": 0.7841094503385618,
+   "cif:C.H": 0.5197666606565767,
+   "cif:C.2r": 0.6110456651505213,
+   "ring:terminal": 0.7410425474705352,
+   "ring:linear": 0.7894528239002605,
+   "ring:angular": 0.8244382831827722,
+   "ring:branched": 0.8321575831267256,
+   "ring:sextet": 0.8545439333710014
+  },
+  "reference_seed": 1
+ },
+ "compas-1D_1": {
+  "points": 9548,
+  "fields": {
+   "steric": {
+    "widths + weights": 0.8684156779162611,
+    "widths + weights, to the minimum": 0.9037869823879042
+   },
+   "prop:q_xtb": {
+    "widths + weights": 0.5842892236866505,
+    "widths + weights, to the minimum": 0.597526117239043
+   },
+   "cif:C.H": {
+    "widths + weights": 0.7940044570062477,
+    "widths + weights, to the minimum": 0.8419520268928136
+   },
+   "cif:C.2r": {
+    "widths + weights": 0.8733885918485036,
+    "widths + weights, to the minimum": 0.832899477996894
+   },
+   "ring:terminal": {
+    "widths + weights": 0.7313291915079339,
+    "widths + weights, to the minimum": 0.766216015134802
+   },
+   "ring:linear": {
+    "widths + weights": 0.838149835333994,
+    "widths + weights, to the minimum": 0.7476668285760985
+   },
+   "ring:angular": {
+    "widths + weights": 0.3996578465241134,
+    "widths + weights, to the minimum": 0.35118634082895406
+   },
+   "ring:branched": {
+    "widths + weights": 0.7268125977442825,
+    "widths + weights, to the minimum": 0.8242914726909634
+   },
+   "ring:sextet": {
+    "widths + weights": 0.790851192677326,
+    "widths + weights, to the minimum": 0.8210606558124837
+   }
+  },
+  "reference": {
+   "steric": 0.49011137232876506,
+   "prop:q_xtb": 0.8141403964408832,
+   "cif:C.H": 0.4861059944549097,
+   "cif:C.2r": 0.5734384777180891,
+   "ring:terminal": 0.44840433935894664,
+   "ring:linear": 0.7871706194040486,
+   "ring:angular": 0.7745279184300065,
+   "ring:branched": 0.484869482253358,
+   "ring:sextet": 0.8628470351611689
+  },
+  "reference_seed": 2
+ },
+ "compas-1D_2": {
+  "points": 10230,
+  "fields": {
+   "steric": {
+    "widths + weights": 0.6246682218632316,
+    "widths + weights, to the minimum": 0.6340524882500195
+   },
+   "prop:q_xtb": {
+    "widths + weights": 0.5430729474418087,
+    "widths + weights, to the minimum": 0.5375482617470396
+   },
+   "cif:C.H": {
+    "widths + weights": 0.7176245622260427,
+    "widths + weights, to the minimum": 0.7352165833061127
+   },
+   "cif:C.2r": {
+    "widths + weights": 0.40487960780890336,
+    "widths + weights, to the minimum": 0.3665373303152799
+   },
+   "ring:terminal": {
+    "widths + weights": 0.5422869229311091,
+    "widths + weights, to the minimum": 0.5201774724996607
+   },
+   "ring:linear": {
+    "widths + weights": 0.3615853565470865,
+    "widths + weights, to the minimum": 0.34146473636632846
+   },
+   "ring:angular": {
+    "widths + weights": 0.32815420505117826,
+    "widths + weights, to the minimum": 0.32264061184413106
+   },
+   "ring:branched": {
+    "widths + weights": 0.5985555510615443,
+    "widths + weights, to the minimum": 0.3757558370153134
+   },
+   "ring:sextet": {
+    "widths + weights": 0.7761721184911148,
+    "widths + weights, to the minimum": 0.7727890786245625
+   }
+  },
+  "reference": {
+   "steric": 0.7291041705260642,
+   "prop:q_xtb": 0.8525651304201883,
+   "cif:C.H": 0.6350004310465522,
+   "cif:C.2r": 0.5914122589344712,
+   "ring:terminal": 0.7378819075886933,
+   "ring:linear": 0.7770223758368133,
+   "ring:angular": 0.8308435072481486,
+   "ring:branched": 0.6668401315468268,
+   "ring:sextet": 0.8690629272768238
+  },
+  "reference_seed": 3
+ },
+ "compas-1D_3": {
+  "points": 9240,
+  "fields": {
+   "steric": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.6017784297406544
+   },
+   "prop:q_xtb": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.6219648917003113
+   },
+   "cif:C.H": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7780248946087229
+   },
+   "cif:C.2r": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6564782869210718
+   },
+   "ring:terminal": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5891508583381468
+   },
+   "ring:linear": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.8075272438071246
+   },
+   "ring:angular": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.4861443074587671
+   },
+   "ring:branched": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.7157360059917726
+   },
+   "ring:sextet": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5683942055560397
+   }
+  },
+  "reference": {
+   "steric": 0.7305418737455275,
+   "prop:q_xtb": 0.808883023239083,
+   "cif:C.H": 0.607430492554202,
+   "cif:C.2r": 0.5479755884017136,
+   "ring:terminal": 0.5982899855037077,
+   "ring:linear": 0.7945770417895874,
+   "ring:angular": 0.8425462517303682,
+   "ring:branched": 0.601405550146389,
+   "ring:sextet": 0.8854619318100038
+  },
+  "reference_seed": 4
+ },
+ "compas-1D_4": {
+  "points": 9114,
+  "fields": {
+   "steric": {
+    "widths + weights": 0.9192664559189289,
+    "widths + weights, to the minimum": 0.9184415294595418
+   },
+   "prop:q_xtb": {
+    "widths + weights": 0.9035867667404113,
+    "widths + weights, to the minimum": 0.9035087516901744
+   },
+   "cif:C.H": {
+    "widths + weights": 0.9549686564723965,
+    "widths + weights, to the minimum": 0.9553040039617069
+   },
+   "cif:C.2r": {
+    "widths + weights": 0.8867297731080059,
+    "widths + weights, to the minimum": 0.885088364790355
+   },
+   "ring:terminal": {
+    "widths + weights": 0.48561578132248245,
+    "widths + weights, to the minimum": 0.48639904379226434
+   },
+   "ring:linear": {
+    "widths + weights": 0.8527499612632957,
+    "widths + weights, to the minimum": 0.854598288518432
+   },
+   "ring:angular": {
+    "widths + weights": 0.7991734574093258,
+    "widths + weights, to the minimum": 0.796479423966209
+   },
+   "ring:branched": {
+    "widths + weights": 0.7413021903453136,
+    "widths + weights, to the minimum": 0.7407942926081615
+   },
+   "ring:sextet": {
+    "widths + weights": 0.8710234674173291,
+    "widths + weights, to the minimum": 0.8703558667943754
+   }
+  },
+  "reference": {
+   "steric": 0.3160767747222655,
+   "prop:q_xtb": 0.7403614360834575,
+   "cif:C.H": 0.7858723333426223,
+   "cif:C.2r": 0.8551073282441404,
+   "ring:terminal": 0.7341241380031485,
+   "ring:linear": 0.7439487171897124,
+   "ring:angular": 0.7645618371470015,
+   "ring:branched": 0.7595984246605888,
+   "ring:sextet": 0.8523004510431285
+  },
+  "reference_seed": 0
+ },
+ "ACE_0": {
+  "points": 10925,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9920369898352113,
+    "widths + weights, to the minimum": 0.018497462483410606
+   },
+   "steric": {
+    "widths + weights": 0.9972447254226828,
+    "widths + weights, to the minimum": 0.06811840387471524
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9911606894313897,
+    "widths + weights, to the minimum": 0.28116980319470475
+   },
+   "hba": {
+    "widths + weights": 0.9878694810405685,
+    "widths + weights, to the minimum": 0.5989753128558654
+   },
+   "hbd": {
+    "widths + weights": 0.9830659107096555,
+    "widths + weights, to the minimum": 0.25521673926995975
+   }
+  },
+  "reference": {
+   "electrostatic": 0.9370676159607584,
+   "steric": 0.9788103960186508,
+   "hydrophobic": 0.9261764247810292,
+   "hba": 0.928951464357214,
+   "hbd": 0.8926359218790753
+  },
+  "reference_seed": 1
+ },
+ "ACE_1": {
+  "points": 10051,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5745216275954165,
+    "widths + weights, to the minimum": 0.6026621880287197
+   },
+   "steric": {
+    "widths + weights": 0.6206641300051122,
+    "widths + weights, to the minimum": 0.09617406689935469
+   },
+   "hydrophobic": {
+    "widths + weights": 0.14774561088110527,
+    "widths + weights, to the minimum": 0.14841374975072258
+   },
+   "hba": {
+    "widths + weights": 0.6527501583454243,
+    "widths + weights, to the minimum": 0.6679335171403049
+   },
+   "hbd": {
+    "widths + weights": 0.6075053551860237,
+    "widths + weights, to the minimum": 0.14435041401266774
+   }
+  },
+  "reference": {
+   "electrostatic": 0.48344537438014507,
+   "steric": 0.760290653508512,
+   "hydrophobic": 0.5475274823914766,
+   "hba": 0.5217247852610277,
+   "hbd": 0.5050222215086725
+  },
+  "reference_seed": 2
+ },
+ "ACE_2": {
+  "points": 10488,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7993222273386767,
+    "widths + weights, to the minimum": 0.7165962091325193
+   },
+   "steric": {
+    "widths + weights": 0.7915875942534566,
+    "widths + weights, to the minimum": 0.7125470999256626
+   },
+   "hydrophobic": {
+    "widths + weights": 0.03793415023008254,
+    "widths + weights, to the minimum": 0.1329178839030963
+   },
+   "hba": {
+    "widths + weights": 0.8535064326920732,
+    "widths + weights, to the minimum": 0.13134910339392075
+   },
+   "hbd": {
+    "widths + weights": 0.7347249191276872,
+    "widths + weights, to the minimum": 0.6057879058947477
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5530345240659943,
+   "steric": 0.7765267261839789,
+   "hydrophobic": 0.6339281007875466,
+   "hba": 0.6398567222047935,
+   "hbd": 0.45776251572972504
+  },
+  "reference_seed": 3
+ },
+ "ACE_3": {
+  "points": 9614,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7742723911031559,
+    "widths + weights, to the minimum": 0.7772229073470551
+   },
+   "steric": {
+    "widths + weights": 0.849082301059193,
+    "widths + weights, to the minimum": 0.1734695914191696
+   },
+   "hydrophobic": {
+    "widths + weights": 0.21715154755575883,
+    "widths + weights, to the minimum": 0.43897818977465414
+   },
+   "hba": {
+    "widths + weights": 0.863006466645429,
+    "widths + weights, to the minimum": 0.5470824339066565
+   },
+   "hbd": {
+    "widths + weights": 0.3965089481266908,
+    "widths + weights, to the minimum": 0.05518680583027562
+   }
+  },
+  "reference": {
+   "electrostatic": 0.3053628701063431,
+   "steric": 0.39569234587425733,
+   "hydrophobic": 0.2931064281127444,
+   "hba": 0.24013872456140176,
+   "hbd": 0.19213724461085205
+  },
+  "reference_seed": 4
+ },
+ "ACE_4": {
+  "points": 10925,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9897382765889629,
+    "widths + weights, to the minimum": 0.12046360068651278
+   },
+   "steric": {
+    "widths + weights": 0.9962981894063604,
+    "widths + weights, to the minimum": 0.35873209539402884
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9909631607563094,
+    "widths + weights, to the minimum": 0.42040864241527487
+   },
+   "hba": {
+    "widths + weights": 0.9883898639916132,
+    "widths + weights, to the minimum": 0.18966655625605336
+   },
+   "hbd": {
+    "widths + weights": 0.9903330718593335,
+    "widths + weights, to the minimum": -0.016127105042967268
+   }
+  },
+  "reference": {
+   "electrostatic": 0.1872982561541273,
+   "steric": 0.4587889749235237,
+   "hydrophobic": 0.3539711470407598,
+   "hba": 0.28135990991972853,
+   "hbd": 0.2361737989086905
+  },
+  "reference_seed": 5
+ },
+ "ACE_5": {
+  "points": 10051,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9856318193336123,
+    "widths + weights, to the minimum": 0.5495723662380343
+   },
+   "steric": {
+    "widths + weights": 0.9942409589822649,
+    "widths + weights, to the minimum": 0.5436609836362588
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9933163135055484,
+    "widths + weights, to the minimum": 0.036080167605394085
+   },
+   "hba": {
+    "widths + weights": 0.9935075633505631,
+    "widths + weights, to the minimum": 0.10995995065530792
+   },
+   "hbd": {
+    "widths + weights": 0.9962377300956822,
+    "widths + weights, to the minimum": 0.6776605910073344
+   }
+  },
+  "reference": {
+   "electrostatic": 0.22899136468498316,
+   "steric": 0.4716119225119598,
+   "hydrophobic": 0.2923438609487322,
+   "hba": 0.2397323588450534,
+   "hbd": 0.34216492351848876
+  },
+  "reference_seed": 6
+ },
+ "ACE_6": {
+  "points": 10925,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.2666950271390735
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.16627888029856383
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.4891913321410488
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5346733027617783
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.10422497011982347
+   }
+  },
+  "reference": {
+   "electrostatic": 0.13999430846427766,
+   "steric": 0.3616572926892831,
+   "hydrophobic": 0.30167565025683496,
+   "hba": 0.13123303640788597,
+   "hbd": 0.1991680884874585
+  },
+  "reference_seed": 7
+ },
+ "ACE_7": {
+  "points": 10925,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7688017363229787
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.9236701792527694
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.24959029849012332
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.3925836044153179
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.8635243604429266
+   }
+  },
+  "reference": {
+   "electrostatic": 0.7246417831751694,
+   "steric": 0.8951644397626014,
+   "hydrophobic": 0.7587742057987865,
+   "hba": 0.8098925443843291,
+   "hbd": 0.5690004246274346
+  },
+  "reference_seed": 8
+ },
+ "ACE_8": {
+  "points": 10488,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.673217519782581,
+    "widths + weights, to the minimum": 0.4229810158275261
+   },
+   "steric": {
+    "widths + weights": 0.46447355633128207,
+    "widths + weights, to the minimum": 0.4164662873198114
+   },
+   "hydrophobic": {
+    "widths + weights": 0.6481213477263238,
+    "widths + weights, to the minimum": 0.38820112786060207
+   },
+   "hba": {
+    "widths + weights": 0.8672449303573572,
+    "widths + weights, to the minimum": 0.6191620548313138
+   },
+   "hbd": {
+    "widths + weights": 0.6514826488850273,
+    "widths + weights, to the minimum": 0.3694701009438881
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2664215558764726,
+   "steric": 0.3981147214965252,
+   "hydrophobic": 0.3743812240962745,
+   "hba": 0.21920923267211204,
+   "hbd": 0.3271025462756073
+  },
+  "reference_seed": 9
+ },
+ "ACE_9": {
+  "points": 10051,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.22188278433294142
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.13375778562328636
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.2631477614034683
+   },
+   "hba": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.21939357984339322
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.20851377095884277
+   }
+  },
+  "reference": {
+   "electrostatic": 0.41100123375664976,
+   "steric": 0.5076441215099006,
+   "hydrophobic": 0.3491099582306027,
+   "hba": 0.23383997962566835,
+   "hbd": 0.41513498687791484
+  },
+  "reference_seed": 0
+ },
+ "AChE_0": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.015899866452233718,
+    "widths + weights, to the minimum": 0.4139014006208791
+   },
+   "steric": {
+    "widths + weights": 0.7786917053661658,
+    "widths + weights, to the minimum": 0.21902736898949088
+   },
+   "hydrophobic": {
+    "widths + weights": 0.36815243409515125,
+    "widths + weights, to the minimum": 0.3267621682388332
+   },
+   "hba": {
+    "widths + weights": 0.715239567434564,
+    "widths + weights, to the minimum": 0.8074893107066017
+   },
+   "hbd": {
+    "widths + weights": 0.5391514266069345,
+    "widths + weights, to the minimum": 0.03945928755023345
+   }
+  },
+  "reference": {
+   "electrostatic": 0.42064182613133316,
+   "steric": 0.49186776286322004,
+   "hydrophobic": 0.5431356687141617,
+   "hba": 0.5063406102532795,
+   "hbd": 0.3092671447208889
+  },
+  "reference_seed": 1
+ },
+ "AChE_1": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7572388196238908
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.9218000092592936
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.7705662362246838
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7021225791226524
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.2224911761973332
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5936668517205178,
+   "steric": 0.406666768770491,
+   "hydrophobic": 0.7429500569278653,
+   "hba": 0.6478096595537423,
+   "hbd": 0.3653549833079384
+  },
+  "reference_seed": 2
+ },
+ "AChE_2": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.2828944483865137
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.3426731409152548
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.4512038800358503
+   },
+   "hba": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.583372387315155
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.27638647959761325
+   }
+  },
+  "reference": {
+   "electrostatic": 0.11013002541595417,
+   "steric": 0.3619192490729986,
+   "hydrophobic": 0.33383871108138397,
+   "hba": 0.25890270795149983,
+   "hbd": 0.2644513905305666
+  },
+  "reference_seed": 3
+ },
+ "AChE_3": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.14999374908239316
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.726812258350706
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.38054757511653475
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.35380806051164454
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.0752724281549837
+   }
+  },
+  "reference": {
+   "electrostatic": 0.04470214984937305,
+   "steric": 0.17817640030410103,
+   "hydrophobic": 0.2510902233093211,
+   "hba": 0.305917074798823,
+   "hbd": 0.24515718917713972
+  },
+  "reference_seed": 4
+ },
+ "AChE_4": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5709252171545289,
+    "widths + weights, to the minimum": 0.1518506141164947
+   },
+   "steric": {
+    "widths + weights": 0.7626565107269535,
+    "widths + weights, to the minimum": 0.7102926565730454
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7408186543244611,
+    "widths + weights, to the minimum": 0.7891950896829881
+   },
+   "hba": {
+    "widths + weights": 0.2315700065308288,
+    "widths + weights, to the minimum": 0.2160585224986699
+   },
+   "hbd": {
+    "widths + weights": 0.38453782083151455,
+    "widths + weights, to the minimum": 0.09627937064753621
+   }
+  },
+  "reference": {
+   "electrostatic": 0.44161788846020966,
+   "steric": 0.6087358358875542,
+   "hydrophobic": 0.5373581356309346,
+   "hba": 0.4815098728763617,
+   "hbd": 0.39211387116948254
+  },
+  "reference_seed": 5
+ },
+ "AChE_5": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.4038212387846024
+   },
+   "steric": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": -0.36383947492245
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5334768447158581
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.516252490912526
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.397098279095972
+   }
+  },
+  "reference": {
+   "electrostatic": 0.39605018911301604,
+   "steric": 0.25224236957509677,
+   "hydrophobic": 0.5617070974426248,
+   "hba": 0.45831514543156865,
+   "hbd": 0.46772960539878305
+  },
+  "reference_seed": 6
+ },
+ "AChE_6": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.331917534390851,
+    "widths + weights, to the minimum": 0.6532951037058239
+   },
+   "steric": {
+    "widths + weights": 0.4433840772275566,
+    "widths + weights, to the minimum": 0.40008899406936904
+   },
+   "hydrophobic": {
+    "widths + weights": 0.6272949432999292,
+    "widths + weights, to the minimum": 0.6958046767222458
+   },
+   "hba": {
+    "widths + weights": 0.14494347322259715,
+    "widths + weights, to the minimum": 0.36958801894332344
+   },
+   "hbd": {
+    "widths + weights": 0.21392460460289342,
+    "widths + weights, to the minimum": 0.5310338558449192
+   }
+  },
+  "reference": {
+   "electrostatic": 0.4912015791151274,
+   "steric": 0.3163901291449206,
+   "hydrophobic": 0.5022334436551126,
+   "hba": 0.34063806783617323,
+   "hbd": 0.48591386875446224
+  },
+  "reference_seed": 7
+ },
+ "AChE_7": {
+  "points": 10080,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.43655654086130274,
+    "widths + weights, to the minimum": 0.29946034646366726
+   },
+   "steric": {
+    "widths + weights": 0.6582459545625023,
+    "widths + weights, to the minimum": 0.5000526589197561
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7097789666373133,
+    "widths + weights, to the minimum": 0.5292243965833802
+   },
+   "hba": {
+    "widths + weights": 0.4524296154669801,
+    "widths + weights, to the minimum": 0.42279398942901325
+   },
+   "hbd": {
+    "widths + weights": 0.0291846783362892,
+    "widths + weights, to the minimum": 0.02290381006915381
+   }
+  },
+  "reference": {
+   "electrostatic": 0.7774139850465794,
+   "steric": 0.8245088270988791,
+   "hydrophobic": 0.7184232907003312,
+   "hba": 0.749363136355421,
+   "hbd": 0.21153549679889963
+  },
+  "reference_seed": 8
+ },
+ "AChE_8": {
+  "points": 10120,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.44849914683875186
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7740237772616723
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.12546502388672512
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7964896791968016
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.03627847261638217
+   }
+  },
+  "reference": {
+   "electrostatic": 0.34523859733401696,
+   "steric": 0.5193654767283478,
+   "hydrophobic": 0.4669006310305569,
+   "hba": 0.49181982961842885,
+   "hbd": -0.13619915354141557
+  },
+  "reference_seed": 9
+ },
+ "AChE_9": {
+  "points": 10560,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9167457958528932,
+    "widths + weights, to the minimum": 0.2223857561954378
+   },
+   "steric": {
+    "widths + weights": 0.907687532966123,
+    "widths + weights, to the minimum": 0.5270960522789574
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9646470650912907,
+    "widths + weights, to the minimum": 0.10567788427980154
+   },
+   "hba": {
+    "widths + weights": 0.9475674987808748,
+    "widths + weights, to the minimum": 0.1518830825276373
+   },
+   "hbd": {
+    "widths + weights": 0.9162944026638343,
+    "widths + weights, to the minimum": 0.06078261891257379
+   }
+  },
+  "reference": {
+   "electrostatic": 0.3742446713979679,
+   "steric": 0.5623259720691217,
+   "hydrophobic": 0.4962013472651643,
+   "hba": 0.4876168179683018,
+   "hbd": 0.3664520784995433
+  },
+  "reference_seed": 0
+ },
+ "BZR_0": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5248260130551171
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6202647601020379
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.03971866021314726
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.0923787264115522
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.45719371581776547
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5190336204776539,
+   "steric": 0.5317534314945253,
+   "hydrophobic": 0.519777271460172,
+   "hba": 0.4427109486690065,
+   "hbd": 0.704580605646039
+  },
+  "reference_seed": 1
+ },
+ "BZR_1": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.12352899936930593,
+    "widths + weights, to the minimum": 0.014606593380840869
+   },
+   "steric": {
+    "widths + weights": 0.6650556360374373,
+    "widths + weights, to the minimum": 0.40566503843940876
+   },
+   "hydrophobic": {
+    "widths + weights": 0.6355699805830345,
+    "widths + weights, to the minimum": 0.23575293493016508
+   },
+   "hba": {
+    "widths + weights": 0.35925985780495345,
+    "widths + weights, to the minimum": 0.2943178757206458
+   },
+   "hbd": {
+    "widths + weights": 0.5888933365754706,
+    "widths + weights, to the minimum": 0.1905206413756221
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6740276329635888,
+   "steric": 0.7331830368338061,
+   "hydrophobic": 0.6548946204658523,
+   "hba": 0.7053251644931253,
+   "hbd": 0.6150128089177862
+  },
+  "reference_seed": 2
+ },
+ "BZR_2": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.0245208030981916
+   },
+   "steric": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.6653577997072413
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.36258621634593674
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.1272731793540736
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.35443416967417646
+   }
+  },
+  "reference": {
+   "electrostatic": 0.06437452653455442,
+   "steric": 0.2457727889397761,
+   "hydrophobic": 0.21108420523492943,
+   "hba": 0.11895374371056473,
+   "hbd": 0.08415680579408294
+  },
+  "reference_seed": 3
+ },
+ "BZR_3": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.1368264461230887
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.602859842332519
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7007742317966095
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.2761113524139405
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.132300436661187
+   }
+  },
+  "reference": {
+   "electrostatic": 0.8205850215670705,
+   "steric": 0.8263838643899878,
+   "hydrophobic": 0.7565969565290763,
+   "hba": 0.5955097455907133,
+   "hbd": 0.5661887955943347
+  },
+  "reference_seed": 4
+ },
+ "BZR_4": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7975243471452129
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.3180760949910839
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.41813935085813014
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.07890339231941494
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4280549588379224
+   }
+  },
+  "reference": {
+   "electrostatic": 0.3416462248525431,
+   "steric": 0.7085277767066612,
+   "hydrophobic": 0.2832238156717843,
+   "hba": 0.40072187303911305,
+   "hbd": 0.5136328842466054
+  },
+  "reference_seed": 5
+ },
+ "BZR_5": {
+  "points": 6336,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.09854047518980323,
+    "widths + weights, to the minimum": 0.09613702739839367
+   },
+   "steric": {
+    "widths + weights": 0.3100047804476485,
+    "widths + weights, to the minimum": 0.29170936501558176
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5560538583299747,
+    "widths + weights, to the minimum": 0.5535841573642855
+   },
+   "hba": {
+    "widths + weights": 0.033196179393189064,
+    "widths + weights, to the minimum": 0.033981965727017935
+   },
+   "hbd": {
+    "widths + weights": 0.37373336923065287,
+    "widths + weights, to the minimum": 0.3452598181212968
+   }
+  },
+  "reference": {
+   "electrostatic": 0.014376870134796533,
+   "steric": 0.15954145450675702,
+   "hydrophobic": 0.14765222870307065,
+   "hba": 0.009243480579225116,
+   "hbd": 0.16075885477669516
+  },
+  "reference_seed": 6
+ },
+ "BZR_6": {
+  "points": 5472,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.49971281733457523,
+    "widths + weights, to the minimum": 0.501023217727568
+   },
+   "steric": {
+    "widths + weights": 0.7404272547038179,
+    "widths + weights, to the minimum": 0.732115359745329
+   },
+   "hydrophobic": {
+    "widths + weights": 0.3077110305318215,
+    "widths + weights, to the minimum": 0.09698617685099428
+   },
+   "hba": {
+    "widths + weights": 0.5208737017711829,
+    "widths + weights, to the minimum": 0.4199961551620179
+   },
+   "hbd": {
+    "widths + weights": 0.14350432886935102,
+    "widths + weights, to the minimum": 0.21906331670397564
+   }
+  },
+  "reference": {
+   "electrostatic": 0.23435245171102168,
+   "steric": 0.2182943027192061,
+   "hydrophobic": 0.29753673333298736,
+   "hba": 0.09641331655279298,
+   "hbd": 0.6454156634272334
+  },
+  "reference_seed": 7
+ },
+ "BZR_7": {
+  "points": 5760,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9934123599864031,
+    "widths + weights, to the minimum": 0.2622792280266165
+   },
+   "steric": {
+    "widths + weights": 0.9928879822948146,
+    "widths + weights, to the minimum": 0.40925813285418994
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9861867070435015,
+    "widths + weights, to the minimum": 0.2068126259793548
+   },
+   "hba": {
+    "widths + weights": 0.9848853363004231,
+    "widths + weights, to the minimum": 0.25855424900904384
+   },
+   "hbd": {
+    "widths + weights": 0.990251670590685,
+    "widths + weights, to the minimum": 0.013563957635184596
+   }
+  },
+  "reference": {
+   "electrostatic": 0.507583031276188,
+   "steric": 0.5574071668896813,
+   "hydrophobic": 0.41381596443042445,
+   "hba": 0.42664488241606113,
+   "hbd": 0.5174398743047993
+  },
+  "reference_seed": 8
+ },
+ "BZR_8": {
+  "points": 5760,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5593017113456296
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.8654552938466683
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.0843079362677605
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.03750742452092804
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7882319947859405
+   }
+  },
+  "reference": {
+   "electrostatic": 0.1495009490868338,
+   "steric": 0.38868615628119535,
+   "hydrophobic": 0.26122525423234405,
+   "hba": 0.0286163195401476,
+   "hbd": 0.23631717508870714
+  },
+  "reference_seed": 9
+ },
+ "BZR_9": {
+  "points": 6048,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.30998061690649287
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.15639230186965897
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.06278530129800833
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.04605653782470855
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.18076080026742136
+   }
+  },
+  "reference": {
+   "electrostatic": 0.4796652490474381,
+   "steric": 0.6851938960315631,
+   "hydrophobic": 0.5703439420416647,
+   "hba": 0.29822049794198646,
+   "hbd": 0.6427380253964728
+  },
+  "reference_seed": 0
+ },
+ "COX2_0": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5351263420997043,
+    "widths + weights, to the minimum": 0.6660189139977346
+   },
+   "steric": {
+    "widths + weights": 0.27993982081261154,
+    "widths + weights, to the minimum": 0.4120814837028888
+   },
+   "hydrophobic": {
+    "widths + weights": 0.06429790792768943,
+    "widths + weights, to the minimum": 0.11538497520231993
+   },
+   "hba": {
+    "widths + weights": 0.42685242387009376,
+    "widths + weights, to the minimum": 0.4823683601165221
+   },
+   "hbd": {
+    "widths + weights": 0.30679253721900474,
+    "widths + weights, to the minimum": 0.3300358157204947
+   }
+  },
+  "reference": {
+   "electrostatic": 0.3377352104286985,
+   "steric": 0.2721002975370458,
+   "hydrophobic": 0.42959989529731535,
+   "hba": 0.46354596380651863,
+   "hbd": 0.5302433835690946
+  },
+  "reference_seed": 1
+ },
+ "COX2_1": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5804711304797143,
+    "widths + weights, to the minimum": 0.8245909160612457
+   },
+   "steric": {
+    "widths + weights": 0.04102484257202518,
+    "widths + weights, to the minimum": 0.21661200903466557
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7034102809434318,
+    "widths + weights, to the minimum": 0.7966581379542864
+   },
+   "hba": {
+    "widths + weights": 0.806892443767392,
+    "widths + weights, to the minimum": 0.9245488748892795
+   },
+   "hbd": {
+    "widths + weights": 0.7173965969738884,
+    "widths + weights, to the minimum": 0.7941014359637394
+   }
+  },
+  "reference": {
+   "electrostatic": 0.19967920251551466,
+   "steric": 0.17183147246319258,
+   "hydrophobic": 0.31248772698784577,
+   "hba": 0.32315396697240867,
+   "hbd": 0.37780844821856907
+  },
+  "reference_seed": 2
+ },
+ "COX2_2": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": -0.018001561205966327,
+    "widths + weights, to the minimum": -0.024598591204289838
+   },
+   "steric": {
+    "widths + weights": 0.5858678387815776,
+    "widths + weights, to the minimum": 0.6079039581064615
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5670063692391798,
+    "widths + weights, to the minimum": 0.4488454442953904
+   },
+   "hba": {
+    "widths + weights": 0.2296917087187566,
+    "widths + weights, to the minimum": 0.31987605378001926
+   },
+   "hbd": {
+    "widths + weights": 0.14222953654902298,
+    "widths + weights, to the minimum": 0.1977247385140445
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2489656464940671,
+   "steric": 0.45461849548436856,
+   "hydrophobic": 0.4180467737255418,
+   "hba": 0.48542654580055145,
+   "hbd": 0.44367419312233375
+  },
+  "reference_seed": 3
+ },
+ "COX2_3": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9890149689472777,
+    "widths + weights, to the minimum": 0.5648465018757967
+   },
+   "steric": {
+    "widths + weights": 0.994616396419845,
+    "widths + weights, to the minimum": 0.6384937070425323
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9927627026352115,
+    "widths + weights, to the minimum": 0.5880672073492403
+   },
+   "hba": {
+    "widths + weights": 0.9928911973112328,
+    "widths + weights, to the minimum": 0.4852770753067591
+   },
+   "hbd": {
+    "widths + weights": 0.9948533904100757,
+    "widths + weights, to the minimum": 0.38356758620999487
+   }
+  },
+  "reference": {
+   "electrostatic": 0.31019871558107204,
+   "steric": 0.5638624184421942,
+   "hydrophobic": 0.4668972534877471,
+   "hba": 0.505090914629208,
+   "hbd": 0.5127236878381431
+  },
+  "reference_seed": 4
+ },
+ "COX2_4": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9831661664428706,
+    "widths + weights, to the minimum": 0.5893278887993454
+   },
+   "steric": {
+    "widths + weights": 0.9899173309987598,
+    "widths + weights, to the minimum": 0.6444604491134931
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9625023928232227,
+    "widths + weights, to the minimum": 0.3382059699222785
+   },
+   "hba": {
+    "widths + weights": 0.9927759993393059,
+    "widths + weights, to the minimum": 0.07602110614584016
+   },
+   "hbd": {
+    "widths + weights": 0.9858586283340864,
+    "widths + weights, to the minimum": 0.7921243935807998
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6641876381029264,
+   "steric": 0.7866162305696596,
+   "hydrophobic": 0.6534227022714073,
+   "hba": 0.7755593824608388,
+   "hbd": 0.6298728435503514
+  },
+  "reference_seed": 5
+ },
+ "COX2_5": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.1801801042073279,
+    "widths + weights, to the minimum": 0.22919014398947185
+   },
+   "steric": {
+    "widths + weights": 0.44389816002755556,
+    "widths + weights, to the minimum": 0.25088186306300736
+   },
+   "hydrophobic": {
+    "widths + weights": 0.8014573371527471,
+    "widths + weights, to the minimum": 0.6080978852846581
+   },
+   "hba": {
+    "widths + weights": 0.839482224053327,
+    "widths + weights, to the minimum": 0.7039207246076913
+   },
+   "hbd": {
+    "widths + weights": 0.636557042185655,
+    "widths + weights, to the minimum": 0.7709140000647342
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5396308811963131,
+   "steric": 0.514785074939796,
+   "hydrophobic": 0.5200195407267958,
+   "hba": 0.5767597185472133,
+   "hbd": 0.5462235261275303
+  },
+  "reference_seed": 6
+ },
+ "COX2_6": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9918169222353765,
+    "widths + weights, to the minimum": 0.6415040780778879
+   },
+   "steric": {
+    "widths + weights": 0.9925499172926553,
+    "widths + weights, to the minimum": 0.825453787132046
+   },
+   "hydrophobic": {
+    "widths + weights": 0.990260543605403,
+    "widths + weights, to the minimum": 0.4448978387480757
+   },
+   "hba": {
+    "widths + weights": 0.9890984721824033,
+    "widths + weights, to the minimum": 0.38220241723190723
+   },
+   "hbd": {
+    "widths + weights": 0.994596625786959,
+    "widths + weights, to the minimum": 0.3444552265793356
+   }
+  },
+  "reference": {
+   "electrostatic": 0.4147833689339427,
+   "steric": 0.2761715664340104,
+   "hydrophobic": 0.3312872297306076,
+   "hba": 0.4628238140831163,
+   "hbd": 0.20664116097762103
+  },
+  "reference_seed": 7
+ },
+ "COX2_7": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7588282244224925,
+    "widths + weights, to the minimum": 0.15577674000153263
+   },
+   "steric": {
+    "widths + weights": 0.8840799293399134,
+    "widths + weights, to the minimum": 0.6483866397314078
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9580938234501819,
+    "widths + weights, to the minimum": 0.5385229874279254
+   },
+   "hba": {
+    "widths + weights": 0.7238768279772515,
+    "widths + weights, to the minimum": 0.7909515013316775
+   },
+   "hbd": {
+    "widths + weights": 0.9674344383852386,
+    "widths + weights, to the minimum": 0.6706267799244383
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6598645120024145,
+   "steric": 0.8732278953257973,
+   "hydrophobic": 0.7728819499056859,
+   "hba": 0.7691925962810258,
+   "hbd": 0.5918840114661111
+  },
+  "reference_seed": 8
+ },
+ "COX2_8": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.12517066093318022
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6302418661296906
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.2203078946040473
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.053313984796468615
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.47169266762673157
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2873103594823427,
+   "steric": 0.5040301509098666,
+   "hydrophobic": 0.37072157281683904,
+   "hba": 0.3777182591087973,
+   "hbd": 0.3193050473502969
+  },
+  "reference_seed": 9
+ },
+ "COX2_9": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9940639987479299,
+    "widths + weights, to the minimum": 0.7927321162261632
+   },
+   "steric": {
+    "widths + weights": 0.9983146927176955,
+    "widths + weights, to the minimum": 0.8274028048106576
+   },
+   "hydrophobic": {
+    "widths + weights": 0.981818332004229,
+    "widths + weights, to the minimum": 0.017426077138285687
+   },
+   "hba": {
+    "widths + weights": 0.9956093638173038,
+    "widths + weights, to the minimum": 0.7126647499801033
+   },
+   "hbd": {
+    "widths + weights": 0.9963429637126517,
+    "widths + weights, to the minimum": 0.844511776540752
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2680451467026707,
+   "steric": 0.45318755888063417,
+   "hydrophobic": 0.2940641135991904,
+   "hba": 0.27903972296357854,
+   "hbd": 0.25201719122898897
+  },
+  "reference_seed": 0
+ },
+ "DHFR_0": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.8296745622932032,
+    "widths + weights, to the minimum": 0.917777749664342
+   },
+   "steric": {
+    "widths + weights": 0.7713057316783789,
+    "widths + weights, to the minimum": 0.8980070289861456
+   },
+   "hydrophobic": {
+    "widths + weights": 0.4426759765661187,
+    "widths + weights, to the minimum": 0.5443286707901663
+   },
+   "hba": {
+    "widths + weights": 0.06380319043032527,
+    "widths + weights, to the minimum": 0.027804069852702035
+   },
+   "hbd": {
+    "widths + weights": 0.5004741357758182,
+    "widths + weights, to the minimum": 0.04040116426691676
+   }
+  },
+  "reference": {
+   "electrostatic": 0.07122191529534823,
+   "steric": 0.35718942237186485,
+   "hydrophobic": 0.0975048427858201,
+   "hba": 0.16445198771469674,
+   "hbd": 0.16326804565078937
+  },
+  "reference_seed": 1
+ },
+ "DHFR_1": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9850737627522592,
+    "widths + weights, to the minimum": 0.6420591622238084
+   },
+   "steric": {
+    "widths + weights": 0.9918743145233837,
+    "widths + weights, to the minimum": 0.5057915414765222
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9703660202566198,
+    "widths + weights, to the minimum": 0.03600797828144378
+   },
+   "hba": {
+    "widths + weights": 0.9781029659949324,
+    "widths + weights, to the minimum": 0.044868132883891916
+   },
+   "hbd": {
+    "widths + weights": 0.9713498622356176,
+    "widths + weights, to the minimum": 0.20575048247245015
+   }
+  },
+  "reference": {
+   "electrostatic": 0.8999501548756136,
+   "steric": 0.9674801900405944,
+   "hydrophobic": 0.8762770050231324,
+   "hba": 0.8978173320492622,
+   "hbd": 0.9590320736489125
+  },
+  "reference_seed": 2
+ },
+ "DHFR_2": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9888169357878591,
+    "widths + weights, to the minimum": 0.7234080935373771
+   },
+   "steric": {
+    "widths + weights": 0.9934314806313528,
+    "widths + weights, to the minimum": 0.7807997509020901
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9795973309224272,
+    "widths + weights, to the minimum": 0.057425504721979506
+   },
+   "hba": {
+    "widths + weights": 0.9879376935666749,
+    "widths + weights, to the minimum": 0.20788213230683766
+   },
+   "hbd": {
+    "widths + weights": 0.9692285370882914,
+    "widths + weights, to the minimum": 0.6075696499554945
+   }
+  },
+  "reference": {
+   "electrostatic": 0.07375286036284255,
+   "steric": 0.3738192563894665,
+   "hydrophobic": 0.10760662314366536,
+   "hba": 0.13727874722935887,
+   "hbd": 0.16042058170553902
+  },
+  "reference_seed": 3
+ },
+ "DHFR_3": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9973234384735368,
+    "widths + weights, to the minimum": 0.4026540034147466
+   },
+   "steric": {
+    "widths + weights": 0.99623340372266,
+    "widths + weights, to the minimum": 0.26966406863022363
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9584803570217076,
+    "widths + weights, to the minimum": 0.5835762371203809
+   },
+   "hba": {
+    "widths + weights": 0.9963691044147105,
+    "widths + weights, to the minimum": -0.019444210776658137
+   },
+   "hbd": {
+    "widths + weights": 0.9965168198682096,
+    "widths + weights, to the minimum": 0.13465091575180999
+   }
+  },
+  "reference": {
+   "electrostatic": 0.02939050813814045,
+   "steric": 0.27172783057692407,
+   "hydrophobic": 0.018797386383861858,
+   "hba": 0.053890111061862624,
+   "hbd": 0.09391444640830751
+  },
+  "reference_seed": 4
+ },
+ "DHFR_4": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.49099098251662526
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.8718011293992085
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.09764432991700307
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5792743685109292
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.33598958662373085
+   }
+  },
+  "reference": {
+   "electrostatic": 0.02022179488418176,
+   "steric": 0.2942411253261834,
+   "hydrophobic": 0.030660445489608765,
+   "hba": 0.05021721219857851,
+   "hbd": 0.08841372097647794
+  },
+  "reference_seed": 5
+ },
+ "DHFR_5": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.8632165148125944,
+    "widths + weights, to the minimum": 0.868617131221049
+   },
+   "steric": {
+    "widths + weights": 0.39913270922215394,
+    "widths + weights, to the minimum": 0.3836965330642922
+   },
+   "hydrophobic": {
+    "widths + weights": 0.6730378788587812,
+    "widths + weights, to the minimum": 0.42758793500745196
+   },
+   "hba": {
+    "widths + weights": 0.7387047001563332,
+    "widths + weights, to the minimum": 0.49979323337424103
+   },
+   "hbd": {
+    "widths + weights": 0.6138992639070237,
+    "widths + weights, to the minimum": 0.5265522890656953
+   }
+  },
+  "reference": {
+   "electrostatic": 0.7899178278980857,
+   "steric": 0.893819182322888,
+   "hydrophobic": 0.7533916987483936,
+   "hba": 0.7693831308057807,
+   "hbd": 0.8436628118165377
+  },
+  "reference_seed": 6
+ },
+ "DHFR_6": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.29897264937369694,
+    "widths + weights, to the minimum": 0.8538641860581703
+   },
+   "steric": {
+    "widths + weights": 0.5364083083703001,
+    "widths + weights, to the minimum": 0.3393771194529259
+   },
+   "hydrophobic": {
+    "widths + weights": 0.2924613936193541,
+    "widths + weights, to the minimum": 0.7583788739362755
+   },
+   "hba": {
+    "widths + weights": 0.7068507194719621,
+    "widths + weights, to the minimum": 0.6213920449851663
+   },
+   "hbd": {
+    "widths + weights": 0.24710679125139073,
+    "widths + weights, to the minimum": 0.8264998664614346
+   }
+  },
+  "reference": {
+   "electrostatic": 0.8289293796322237,
+   "steric": 0.8699478018936524,
+   "hydrophobic": 0.7779704966569841,
+   "hba": 0.8476119458489642,
+   "hbd": 0.8432422164879446
+  },
+  "reference_seed": 7
+ },
+ "DHFR_7": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9956440950317743,
+    "widths + weights, to the minimum": 0.9001221245688216
+   },
+   "steric": {
+    "widths + weights": 0.9902444227781904,
+    "widths + weights, to the minimum": 0.7427346783574337
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9892369351994443,
+    "widths + weights, to the minimum": 0.6804139729073935
+   },
+   "hba": {
+    "widths + weights": 0.9946533966110243,
+    "widths + weights, to the minimum": 0.8606121481445158
+   },
+   "hbd": {
+    "widths + weights": 0.9939937581031146,
+    "widths + weights, to the minimum": -0.1463115363731044
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6529066352815444,
+   "steric": 0.8055131217469281,
+   "hydrophobic": 0.6013725021398065,
+   "hba": 0.6999715953604806,
+   "hbd": 0.48575751054758426
+  },
+  "reference_seed": 8
+ },
+ "DHFR_8": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7614874237475667
+   },
+   "steric": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.2714798624753672
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.39898069311954426
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.3031775173459739
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.3571573675697533
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6613121339599762,
+   "steric": 0.8093709125573012,
+   "hydrophobic": 0.6699056528489346,
+   "hba": 0.7744128340067875,
+   "hbd": 0.52064670941308
+  },
+  "reference_seed": 9
+ },
+ "DHFR_9": {
+  "points": 6840,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7876115963818231,
+    "widths + weights, to the minimum": 0.8365497055243943
+   },
+   "steric": {
+    "widths + weights": 0.1394022673115264,
+    "widths + weights, to the minimum": 0.29397742558034623
+   },
+   "hydrophobic": {
+    "widths + weights": 0.2644273183670635,
+    "widths + weights, to the minimum": 0.7653506476273146
+   },
+   "hba": {
+    "widths + weights": 0.07643758149656489,
+    "widths + weights, to the minimum": 0.8633199779023973
+   },
+   "hbd": {
+    "widths + weights": 0.024034490707432736,
+    "widths + weights, to the minimum": 0.16101439280952423
+   }
+  },
+  "reference": {
+   "electrostatic": 0.8388317994978781,
+   "steric": 0.9263213725795907,
+   "hydrophobic": 0.8923192639982779,
+   "hba": 0.9007235138810276,
+   "hbd": 0.6921135590869256
+  },
+  "reference_seed": 0
+ },
+ "GPB_0": {
+  "points": 5415,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.6332831787947143,
+    "widths + weights, to the minimum": 0.816459111347017
+   },
+   "steric": {
+    "widths + weights": 0.9128508504068336,
+    "widths + weights, to the minimum": 0.10050495906243154
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5494257313338757,
+    "widths + weights, to the minimum": 0.6179469320772015
+   },
+   "hba": {
+    "widths + weights": 0.9271749292884199,
+    "widths + weights, to the minimum": 0.33138300289524325
+   },
+   "hbd": {
+    "widths + weights": 0.9621550091607568,
+    "widths + weights, to the minimum": 0.889366434999436
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6508280110495971,
+   "steric": 0.3154734661299108,
+   "hydrophobic": 0.36236573767907326,
+   "hba": 0.6017683614590782,
+   "hbd": 0.6754563773618141
+  },
+  "reference_seed": 1
+ },
+ "GPB_1": {
+  "points": 5415,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.8553049619682217,
+    "widths + weights, to the minimum": 0.02784965142659184
+   },
+   "steric": {
+    "widths + weights": 0.7144418906052994,
+    "widths + weights, to the minimum": 0.37666344526888623
+   },
+   "hydrophobic": {
+    "widths + weights": 0.8843986953411758,
+    "widths + weights, to the minimum": 0.8282721377331489
+   },
+   "hba": {
+    "widths + weights": 0.7032214352326698,
+    "widths + weights, to the minimum": 0.07439142132872875
+   },
+   "hbd": {
+    "widths + weights": 0.642032494440641,
+    "widths + weights, to the minimum": 0.8532019022837075
+   }
+  },
+  "reference": {
+   "electrostatic": 0.09149875260127487,
+   "steric": 0.3235401184893833,
+   "hydrophobic": 0.24144240843118642,
+   "hba": 0.029847454684973247,
+   "hbd": 0.35043054504348853
+  },
+  "reference_seed": 2
+ },
+ "GPB_2": {
+  "points": 5415,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.42099285931572406
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.09222964768481536
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.10381844082887103
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": -0.08475161295489472
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.27944671323089054
+   }
+  },
+  "reference": {
+   "electrostatic": 0.21678538730242047,
+   "steric": 0.5405248305851362,
+   "hydrophobic": 0.000946843159984772,
+   "hba": 0.05964579602291346,
+   "hbd": 0.3717778025565861
+  },
+  "reference_seed": 3
+ },
+ "GPB_3": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.4255758517876317,
+    "widths + weights, to the minimum": 0.4255758517876317
+   },
+   "steric": {
+    "widths + weights": 0.747388319346888,
+    "widths + weights, to the minimum": 0.747388319346888
+   },
+   "hydrophobic": {
+    "widths + weights": -0.08608325014419063,
+    "widths + weights, to the minimum": -0.08608325014419063
+   },
+   "hba": {
+    "widths + weights": -0.2260104887000504,
+    "widths + weights, to the minimum": -0.2260104887000504
+   },
+   "hbd": {
+    "widths + weights": 0.10225637545631815,
+    "widths + weights, to the minimum": 0.10225637545631815
+   }
+  },
+  "reference": {
+   "electrostatic": 0.03167354337796758,
+   "steric": 0.13514044565654734,
+   "hydrophobic": -0.0811823800883355,
+   "hba": -0.013161409758656243,
+   "hbd": 0.17658228583538665
+  },
+  "reference_seed": 4
+ },
+ "GPB_4": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.815965446335304
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7668485377840045
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4357196035676921
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.03869390826159137
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.5151915784202518
+   }
+  },
+  "reference": {
+   "electrostatic": 0.41889990174267666,
+   "steric": 0.6223539125223818,
+   "hydrophobic": 0.10371285637433375,
+   "hba": 0.43007626589960707,
+   "hbd": 0.6420043872201286
+  },
+  "reference_seed": 5
+ },
+ "GPB_5": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6071236500378773
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.08015909647865102
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6762657639152002
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.02260054288876379
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.14586197894744465
+   }
+  },
+  "reference": {
+   "electrostatic": 0.8961012499749558,
+   "steric": 0.8613271298323195,
+   "hydrophobic": 0.8339062480520091,
+   "hba": 0.8725341439113818,
+   "hbd": 0.8624349103829715
+  },
+  "reference_seed": 6
+ },
+ "GPB_6": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9966373811033916,
+    "widths + weights, to the minimum": 0.8564257169213826
+   },
+   "steric": {
+    "widths + weights": 0.9935878256779832,
+    "widths + weights, to the minimum": 0.7088119474290522
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9918704520698475,
+    "widths + weights, to the minimum": 0.7349939375223878
+   },
+   "hba": {
+    "widths + weights": 0.9947569134451545,
+    "widths + weights, to the minimum": 0.7449713324050696
+   },
+   "hbd": {
+    "widths + weights": 0.9966526290785178,
+    "widths + weights, to the minimum": 0.46254487441155134
+   }
+  },
+  "reference": {
+   "electrostatic": 0.22667357143247596,
+   "steric": 0.4973418985271385,
+   "hydrophobic": 0.4414709227220868,
+   "hba": 0.41911734502469766,
+   "hbd": 0.46515762035690933
+  },
+  "reference_seed": 7
+ },
+ "GPB_7": {
+  "points": 5415,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.1846171579493576,
+    "widths + weights, to the minimum": 0.06466463989784188
+   },
+   "steric": {
+    "widths + weights": 0.7697385628401232,
+    "widths + weights, to the minimum": 0.7599980317616242
+   },
+   "hydrophobic": {
+    "widths + weights": 0.814682131527371,
+    "widths + weights, to the minimum": 0.5547094349293292
+   },
+   "hba": {
+    "widths + weights": 0.45477499612523453,
+    "widths + weights, to the minimum": 0.07483301874285539
+   },
+   "hbd": {
+    "widths + weights": 0.16606314489340826,
+    "widths + weights, to the minimum": 0.09877592761575626
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2114759127867841,
+   "steric": 0.6070423166689546,
+   "hydrophobic": 0.3234677906685086,
+   "hba": 0.3394986169081734,
+   "hbd": 0.39519431061398086
+  },
+  "reference_seed": 8
+ },
+ "GPB_8": {
+  "points": 5700,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.384712078546765,
+    "widths + weights, to the minimum": 0.28739487674539876
+   },
+   "steric": {
+    "widths + weights": 0.7249530566363966,
+    "widths + weights, to the minimum": 0.6167834255254523
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7287869529401686,
+    "widths + weights, to the minimum": 0.4912002608849606
+   },
+   "hba": {
+    "widths + weights": 0.6639131577501194,
+    "widths + weights, to the minimum": 0.5881282618305282
+   },
+   "hbd": {
+    "widths + weights": 0.6786232504229976,
+    "widths + weights, to the minimum": 0.648287534172564
+   }
+  },
+  "reference": {
+   "electrostatic": 0.7773525619749412,
+   "steric": 0.7243024325814761,
+   "hydrophobic": 0.3646261281054382,
+   "hba": 0.5800885245414149,
+   "hbd": 0.7473869129067501
+  },
+  "reference_seed": 9
+ },
+ "GPB_9": {
+  "points": 5415,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7686167424427294,
+    "widths + weights, to the minimum": 0.8339616259408725
+   },
+   "steric": {
+    "widths + weights": 0.7753115248764046,
+    "widths + weights, to the minimum": 0.7964962760271626
+   },
+   "hydrophobic": {
+    "widths + weights": 0.6016344114821832,
+    "widths + weights, to the minimum": 0.7194940854828658
+   },
+   "hba": {
+    "widths + weights": 0.7098696083427493,
+    "widths + weights, to the minimum": 0.7552095851647934
+   },
+   "hbd": {
+    "widths + weights": 0.9387778581927365,
+    "widths + weights, to the minimum": 0.31626319493611776
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6347808353250798,
+   "steric": 0.6600354332015558,
+   "hydrophobic": 0.464120857794612,
+   "hba": 0.5376403031592921,
+   "hbd": 0.7846681636480553
+  },
+  "reference_seed": 0
+ },
+ "THER_0": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.14574377807076985
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.21879845497837794
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.43207481942740117
+   },
+   "hba": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.11903204429752809
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.46092459066200714
+   }
+  },
+  "reference": {
+   "electrostatic": 0.12875798194945628,
+   "steric": 0.2525810754837142,
+   "hydrophobic": 0.17056280850020478,
+   "hba": 0.08153027471968334,
+   "hbd": 0.3482685130522629
+  },
+  "reference_seed": 1
+ },
+ "THER_1": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9862931986553236,
+    "widths + weights, to the minimum": 0.05797992130669292
+   },
+   "steric": {
+    "widths + weights": 0.9782994391811585,
+    "widths + weights, to the minimum": 0.40847682450412137
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9842425575484749,
+    "widths + weights, to the minimum": 0.0443728481773362
+   },
+   "hba": {
+    "widths + weights": 0.9810910575408235,
+    "widths + weights, to the minimum": 0.15914844807028675
+   },
+   "hbd": {
+    "widths + weights": 0.9798931063029371,
+    "widths + weights, to the minimum": 0.21781754289416225
+   }
+  },
+  "reference": {
+   "electrostatic": 0.29627761785835166,
+   "steric": 0.3879811802850323,
+   "hydrophobic": 0.2732371776351419,
+   "hba": 0.2638073434295472,
+   "hbd": 0.4728781417124349
+  },
+  "reference_seed": 2
+ },
+ "THER_2": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.8603857966439702,
+    "widths + weights, to the minimum": 0.757518363606847
+   },
+   "steric": {
+    "widths + weights": 0.9563732102048234,
+    "widths + weights, to the minimum": 0.006360805525633277
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7574333636230327,
+    "widths + weights, to the minimum": 0.8988329606676555
+   },
+   "hba": {
+    "widths + weights": 0.851761322559756,
+    "widths + weights, to the minimum": 0.6309981370379897
+   },
+   "hbd": {
+    "widths + weights": 0.7823154135825847,
+    "widths + weights, to the minimum": -0.03599410439291548
+   }
+  },
+  "reference": {
+   "electrostatic": 0.6782516863361188,
+   "steric": 0.7090114546496864,
+   "hydrophobic": 0.6731538636900743,
+   "hba": 0.28240167683433404,
+   "hbd": 0.6395233747439221
+  },
+  "reference_seed": 3
+ },
+ "THER_3": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7131312187891967
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.16343336819623508
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.18909940373723977
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4180091782060993
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5516160316277811
+   }
+  },
+  "reference": {
+   "electrostatic": 0.18793820046661788,
+   "steric": 0.3664389324035945,
+   "hydrophobic": 0.09308091100118865,
+   "hba": 0.2284488145744088,
+   "hbd": 0.08517470468263959
+  },
+  "reference_seed": 4
+ },
+ "THER_4": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": -0.13143119265852723
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.06729336747801633
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.2073254574260647
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.030541185113234778
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": -0.26191528237828066
+   }
+  },
+  "reference": {
+   "electrostatic": 0.2306946626723118,
+   "steric": 0.30440798324617063,
+   "hydrophobic": 0.09682081516313523,
+   "hba": 0.03106708729412964,
+   "hbd": 0.029144902180939875
+  },
+  "reference_seed": 5
+ },
+ "THER_5": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.844387172522079,
+    "widths + weights, to the minimum": 0.8614008228694521
+   },
+   "steric": {
+    "widths + weights": 0.0469351040159719,
+    "widths + weights, to the minimum": 0.025523044318522134
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5390159722434814,
+    "widths + weights, to the minimum": 0.7169524896346546
+   },
+   "hba": {
+    "widths + weights": 0.09334691727777968,
+    "widths + weights, to the minimum": 0.095514428796127
+   },
+   "hbd": {
+    "widths + weights": -0.011137531667590355,
+    "widths + weights, to the minimum": -0.02793783070391654
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5223769846890416,
+   "steric": 0.4656335324384918,
+   "hydrophobic": 0.40942214994309056,
+   "hba": 0.3633612105783049,
+   "hbd": 0.3639614482752695
+  },
+  "reference_seed": 6
+ },
+ "THER_6": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.921253416134638,
+    "widths + weights, to the minimum": 0.2976675320396539
+   },
+   "steric": {
+    "widths + weights": 0.9070576624270764,
+    "widths + weights, to the minimum": 0.07566033099295318
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7410559764239413,
+    "widths + weights, to the minimum": 0.66182081900052
+   },
+   "hba": {
+    "widths + weights": 0.5841084276983922,
+    "widths + weights, to the minimum": 0.1615315633726872
+   },
+   "hbd": {
+    "widths + weights": 0.8910236630837415,
+    "widths + weights, to the minimum": 0.6232030851278618
+   }
+  },
+  "reference": {
+   "electrostatic": 0.4718684947063074,
+   "steric": 0.4400818565132375,
+   "hydrophobic": 0.47500289188947376,
+   "hba": 0.28493757128812275,
+   "hbd": 0.36921227867915946
+  },
+  "reference_seed": 7
+ },
+ "THER_7": {
+  "points": 11000,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9793401306510112,
+    "widths + weights, to the minimum": 0.7828029655637289
+   },
+   "steric": {
+    "widths + weights": 0.9929593959856745,
+    "widths + weights, to the minimum": 0.7313853063236389
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9947977369792118,
+    "widths + weights, to the minimum": 0.008219867611544696
+   },
+   "hba": {
+    "widths + weights": 0.9907287404884676,
+    "widths + weights, to the minimum": 0.034871846482728695
+   },
+   "hbd": {
+    "widths + weights": 0.9814741282049694,
+    "widths + weights, to the minimum": 0.06302922471435642
+   }
+  },
+  "reference": {
+   "electrostatic": 0.661778436385259,
+   "steric": 0.6528714378694885,
+   "hydrophobic": 0.615472725782348,
+   "hba": 0.23468496488867352,
+   "hbd": 0.5272009033992355
+  },
+  "reference_seed": 8
+ },
+ "THER_8": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9251434811741602,
+    "widths + weights, to the minimum": 0.6513431825218402
+   },
+   "steric": {
+    "widths + weights": 0.9593306060101241,
+    "widths + weights, to the minimum": 0.1400519708786806
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7675875214342602,
+    "widths + weights, to the minimum": -0.0158215765663317
+   },
+   "hba": {
+    "widths + weights": 0.9117831940177447,
+    "widths + weights, to the minimum": 0.42145642432555575
+   },
+   "hbd": {
+    "widths + weights": 0.814231346075862,
+    "widths + weights, to the minimum": 0.43507585528992315
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5206597389966475,
+   "steric": 0.5377958677084019,
+   "hydrophobic": 0.4555283293444476,
+   "hba": 0.33484602967219385,
+   "hbd": 0.5139616902829223
+  },
+  "reference_seed": 9
+ },
+ "THER_9": {
+  "points": 11440,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.8341927373423078
+   },
+   "steric": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.10144497546701654
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.9077393034235268
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.46692267584945485
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.30843195941049656
+   }
+  },
+  "reference": {
+   "electrostatic": 0.4601946719215631,
+   "steric": 0.5107897993060397,
+   "hydrophobic": 0.45882399064333396,
+   "hba": 0.2396346674933985,
+   "hbd": 0.35228072457755366
+  },
+  "reference_seed": 0
+ },
+ "THR_0": {
+  "points": 7524,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.15566758443095494,
+    "widths + weights, to the minimum": 0.3487648076390024
+   },
+   "steric": {
+    "widths + weights": 0.3201447200322942,
+    "widths + weights, to the minimum": 0.4914505416905363
+   },
+   "hydrophobic": {
+    "widths + weights": 0.40642269918577734,
+    "widths + weights, to the minimum": -0.008395345652636006
+   },
+   "hba": {
+    "widths + weights": 0.3310839686917842,
+    "widths + weights, to the minimum": -0.22098538082288913
+   },
+   "hbd": {
+    "widths + weights": 0.8033978094312619,
+    "widths + weights, to the minimum": 0.6255328045358224
+   }
+  },
+  "reference": {
+   "electrostatic": 0.0714677307296862,
+   "steric": 0.3659084914606122,
+   "hydrophobic": 0.3626354808073963,
+   "hba": 0.22775332829498693,
+   "hbd": 0.5060611945463701
+  },
+  "reference_seed": 1
+ },
+ "THR_1": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9868222666702344,
+    "widths + weights, to the minimum": 0.32770748197419564
+   },
+   "steric": {
+    "widths + weights": 0.9958422999223631,
+    "widths + weights, to the minimum": 0.5929950124018847
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9938787716199765,
+    "widths + weights, to the minimum": 0.8258070844525793
+   },
+   "hba": {
+    "widths + weights": 0.9937036168223596,
+    "widths + weights, to the minimum": 0.43363498631885605
+   },
+   "hbd": {
+    "widths + weights": 0.9976819079215076,
+    "widths + weights, to the minimum": 0.4159771916841108
+   }
+  },
+  "reference": {
+   "electrostatic": 0.0800611324843984,
+   "steric": 0.3199690648543802,
+   "hydrophobic": 0.20948503840934088,
+   "hba": 0.0940911485861387,
+   "hbd": 0.27230741399701386
+  },
+  "reference_seed": 2
+ },
+ "THR_2": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5975683362730368,
+    "widths + weights, to the minimum": 0.6010762287574083
+   },
+   "steric": {
+    "widths + weights": 0.7371591110672772,
+    "widths + weights, to the minimum": 0.7378603743649672
+   },
+   "hydrophobic": {
+    "widths + weights": 0.3653836381952561,
+    "widths + weights, to the minimum": 0.3891605002455917
+   },
+   "hba": {
+    "widths + weights": 0.2874337649784914,
+    "widths + weights, to the minimum": 0.2927296967516702
+   },
+   "hbd": {
+    "widths + weights": 0.7330643833717488,
+    "widths + weights, to the minimum": 0.74722236924722
+   }
+  },
+  "reference": {
+   "electrostatic": 0.01663104615967784,
+   "steric": 0.23989077534690367,
+   "hydrophobic": 0.05355874232761866,
+   "hba": 0.046559436182166354,
+   "hbd": 0.07645739905385908
+  },
+  "reference_seed": 3
+ },
+ "THR_3": {
+  "points": 7920,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.08119156602857418,
+    "widths + weights, to the minimum": 0.08201391094876635
+   },
+   "steric": {
+    "widths + weights": 0.4786766730658089,
+    "widths + weights, to the minimum": 0.4954351356788749
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5340597075422883,
+    "widths + weights, to the minimum": 0.4999908975619243
+   },
+   "hba": {
+    "widths + weights": 0.024336870695220017,
+    "widths + weights, to the minimum": 0.015592603158933013
+   },
+   "hbd": {
+    "widths + weights": 0.3165636840515894,
+    "widths + weights, to the minimum": 0.3143855403262872
+   }
+  },
+  "reference": {
+   "electrostatic": 0.1912947745386686,
+   "steric": 0.7567112054786591,
+   "hydrophobic": 0.38832848277693377,
+   "hba": 0.4150588299325074,
+   "hbd": 0.6151662247969413
+  },
+  "reference_seed": 4
+ },
+ "THR_4": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4342958248881199
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.6226310742407182
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7639453540856469
+   },
+   "hba": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.4834255952463597
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4411078850210621
+   }
+  },
+  "reference": {
+   "electrostatic": 0.5627027665728054,
+   "steric": 0.879096013840509,
+   "hydrophobic": 0.7851607729089052,
+   "hba": 0.6157883021988828,
+   "hbd": 0.6908629943245885
+  },
+  "reference_seed": 5
+ },
+ "THR_5": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.07351569392128808
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.4019406499338124
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.5083253536587165
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.05669745772454107
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.568733425570087
+   }
+  },
+  "reference": {
+   "electrostatic": 0.34036947123456773,
+   "steric": 0.8021850220484079,
+   "hydrophobic": 0.46512399605707266,
+   "hba": 0.3818001346550491,
+   "hbd": 0.6698130877809962
+  },
+  "reference_seed": 6
+ },
+ "THR_6": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.014078797404221395
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.7044736079883762
+   },
+   "hydrophobic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.4025193093301959
+   },
+   "hba": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": -0.052135160804639404
+   },
+   "hbd": {
+    "widths + weights": 0.9999999999999998,
+    "widths + weights, to the minimum": 0.12823023747218723
+   }
+  },
+  "reference": {
+   "electrostatic": 0.10364693798640824,
+   "steric": 0.19912008433925887,
+   "hydrophobic": 0.25363589268000486,
+   "hba": 0.19979012583502148,
+   "hbd": 0.28876896349807935
+  },
+  "reference_seed": 7
+ },
+ "THR_7": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.7454656243339439,
+    "widths + weights, to the minimum": 0.6580651574716601
+   },
+   "steric": {
+    "widths + weights": 0.4458988371933275,
+    "widths + weights, to the minimum": 0.13003966132959144
+   },
+   "hydrophobic": {
+    "widths + weights": 0.5410290969309808,
+    "widths + weights, to the minimum": 0.4172685673002666
+   },
+   "hba": {
+    "widths + weights": 0.7601296765626964,
+    "widths + weights, to the minimum": 0.250028414691926
+   },
+   "hbd": {
+    "widths + weights": 0.9701330030077612,
+    "widths + weights, to the minimum": 0.4931203147070465
+   }
+  },
+  "reference": {
+   "electrostatic": 0.515840876430994,
+   "steric": 0.9210110450762369,
+   "hydrophobic": 0.808426050680099,
+   "hba": 0.73947506620911,
+   "hbd": 0.7865380848627955
+  },
+  "reference_seed": 8
+ },
+ "THR_8": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.5891201282413244,
+    "widths + weights, to the minimum": -0.013744638641141553
+   },
+   "steric": {
+    "widths + weights": 0.952274807291168,
+    "widths + weights, to the minimum": 0.7528661808398354
+   },
+   "hydrophobic": {
+    "widths + weights": 0.7773778284245324,
+    "widths + weights, to the minimum": 0.7357570305583259
+   },
+   "hba": {
+    "widths + weights": 0.7450748033919704,
+    "widths + weights, to the minimum": 0.4475497089542534
+   },
+   "hbd": {
+    "widths + weights": 0.9459893201042626,
+    "widths + weights, to the minimum": 0.8067092289296671
+   }
+  },
+  "reference": {
+   "electrostatic": 0.14151378735069522,
+   "steric": 0.5387737535449965,
+   "hydrophobic": 0.24668260726429292,
+   "hba": 0.2713836387199703,
+   "hbd": 0.44837075728830184
+  },
+  "reference_seed": 9
+ },
+ "THR_9": {
+  "points": 8316,
+  "fields": {
+   "electrostatic": {
+    "widths + weights": 0.9999999999999999,
+    "widths + weights, to the minimum": 0.2674326829018846
+   },
+   "steric": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.22571527125829666
+   },
+   "hydrophobic": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.10485816466177911
+   },
+   "hba": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.04729735114591511
+   },
+   "hbd": {
+    "widths + weights": 1.0,
+    "widths + weights, to the minimum": 0.42677956280556834
+   }
+  },
+  "reference": {
+   "electrostatic": 0.01772449724040626,
+   "steric": 0.4671781354008181,
+   "hydrophobic": 0.31027120836263455,
+   "hba": 0.2502844190633155,
+   "hbd": 0.5046095150095802
+  },
+  "reference_seed": 0
+ }
+}
