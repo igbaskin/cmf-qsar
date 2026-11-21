@@ -67,6 +67,10 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "read and the composition alone is the better model; gate (c) measured "
                       "(21 November 2026) and not met: the interval holds the capacity under 6 "
                       "of 8 conditions and misses in the cold at 1.5C"),
+    "BT10": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026): one start "
+                       "of 4 ns scatters by 0.136 in the number, so a label needs about 30 ns "
+                       "per box, and the simulated number does not fall with the concentration "
+                       "as the measured one does; the longer runs are not started"),
     "BT11": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026) shows a "
                        "reproducible trend of the factor with the concentration and not the "
                        "measured level, and weaker charges on the ions do not raise it above about "

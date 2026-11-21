@@ -19805,6 +19805,58 @@ python benchmarks/run_cellgate.py --stage cell       # the cell, needs pybamm, u
 python benchmarks/run_cellgate.py --stage report     # the table
 ```
 
+### A pilot for the transference number
+
+Item BT10 asks for the cation transference number that the cell model reads: the share of the
+current that the cations carry, counted against the motion of the solvent. A cation and an anion
+that move as a pair carry no current, so the number is not the ratio of the self-diffusion
+coefficients. `benchmarks/run_onsager.py` reads it from the Onsager coefficients in the stored
+boxes of item BT9, which hold the centre of every molecule once per picosecond for 4 ns.
+
+The collective coordinate of a species, relative to the solvent, is the sum of the unwrapped
+positions of its molecules minus their number times the centre of mass of the solvent. The
+coefficients L++, L-- and L+- are the slopes of the mean squared displacements of these
+coordinates and of their cross term, in the window of the conductivity of item BT9. The share of
+the current is (L++ - L+-) / (L++ + L-- - 2 L+-). Three cases are exact and tested: independent
+ions give the ratio of the self-diffusion coefficients, ions that move as pairs carry no current,
+and a motion that is common to all molecules changes nothing. The conductivity from the same
+charge displacement equals that of item BT9 to six digits.
+
+| Concentration, mol/L | Onsager, first start | Onsager, second start | Onsager, 20 ns | Self ratio | Measured |
+|---:|---:|---:|---:|---:|---:|
+| 0.10 | 0.350 +/- 0.112 | 0.368 +/- 0.140 | | 0.39 to 0.44 | 0.373 |
+| 0.49 | 0.124 +/- 0.091 | 0.256 +/- 0.157 | | 0.41 to 0.45 | 0.307 |
+| 1.13 | 0.179 +/- 0.074 | 0.469 +/- 0.132 | 0.372 +/- 0.032 | 0.40 to 0.41 | 0.201 |
+| 1.49 | 0.321 +/- 0.238 | 0.256 +/- 0.169 | | 0.41 to 0.43 | 0.152 |
+| 1.98 | 0.287 +/- 0.099 | 0.185 +/- 0.096 | | 0.43 to 0.44 | 0.107 |
+| 2.97 | 0.049 +/- 0.241 | 0.372 +/- 0.213 | 0.309 +/- 0.079 | 0.44 to 0.46 | 0.143 |
+
+The reading was fixed before the boxes were read: the number is usable at room temperature if one
+start of 4 ns scatters by at most 0.05, about a third of the shift of 0.13 that the cell tolerates
+at 298 K for a loss of 5 % of the capacity.
+
+* **It is not usable at 4 ns.** One start scatters by 0.136, and the block errors are 0.07 to 0.24.
+  Over the 62 formulations the number runs from 0.04 to 0.69, which is the size of its error, and
+  its rank correlation with the self ratio is -0.18.
+* **A run of 20 ns is better.** The errors are 0.03 and 0.08. If the error falls as the square
+  root of the time, a scatter of 0.05 needs about 30 ns per box, which is 2 hours of the
+  graphics card of this machine.
+* **The level is not reproduced.** The self ratio is 0.36 to 0.48 in every box and does not fall
+  with the concentration. The measured number falls from 0.37 at 0.1 mol/L to 0.11 to 0.15 above
+  1.5 mol/L. At 1.13 mol/L the long run gives 0.37 against the measured 0.20.
+* **The pilot cannot say whether the correlations of the ions matter.** The difference of the
+  Onsager number from the self ratio is -0.16 on average (standard deviation 0.12), which is the
+  size of the scatter.
+* **The use.** At 298 K the tolerance stage says that the published constant is enough. The item
+  is needed for the cold cells, where it needs a value at their own temperature and runs that are
+  several times longer. It is not started.
+
+```bash
+python benchmarks/run_onsager.py --stage series    # the six concentrations, both starts, and the 20 ns runs
+python benchmarks/run_onsager.py --stage all62     # the 62 formulations
+python benchmarks/run_onsager.py --stage report    # the table
+```
+
 ### What this says about a label
 
 * **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient

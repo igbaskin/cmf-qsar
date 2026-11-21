@@ -693,6 +693,22 @@ def registry() -> List[Benchmark]:
                   minutes="2",
                   report=lambda: _mod("run_cellgate").write_table(_r("cellgate")),
                   tables=["cellgate/table.md"]),
+        Benchmark("onsager",
+                  "a free pilot for plan item BT10: the cation transference number from the "
+                  "Onsager coefficients in the frame of the solvent, read from the stored "
+                  "centres of the boxes that item BT9 simulated (the six concentrations from "
+                  "two starts and the two runs of 20 ns, and the 62 formulations), against the "
+                  "ratio of the self-diffusion coefficients and the measured number (the boxes "
+                  "are simulated by the prepare step of the diffusion benchmark and are not in "
+                  "the repository; the analysis reads their stored centres from "
+                  "benchmarks/cache/transport and needs pybamm for the measured number "
+                  "stored with the series)",
+                  "run_onsager.py", "onsager",
+                  compute=[["--stage", "series"], ["--stage", "all62"]],
+                  prepare=["run_diffusion.py --stage simulate"],
+                  minutes="2",
+                  report=lambda: _mod("run_onsager").write_table(_r("onsager")),
+                  tables=["onsager/table.md"]),
         Benchmark("kbpilot",
                   "a free pilot for plan item BT11: the thermodynamic factor of the salt read "
                   "from the number fluctuations in cubes of the boxes that item BT9 stored "

@@ -4021,6 +4021,10 @@ for it:
   the measured electrolyte under 6 of the 8 conditions of the stress stage. It misses at 263 K
   and 253 K at 1.5C. At room temperature it is useful up to 2C
   ([run_cellgate.py](benchmarks/run_cellgate.py)).
+- A free pilot for item BT10 reads the cation transference number from the Onsager coefficients
+  in the stored boxes ([run_onsager.py](benchmarks/run_onsager.py)). One start of 4 ns scatters by
+  0.136 in the number, far above the 0.05 that the pilot asked for, so a label needs about 30 ns
+  per box. The simulated number does not fall with the concentration as the measured one does.
 - A free pilot for item BT11 reads the thermodynamic factor from the number fluctuations in the
   boxes of item BT9 ([run_kbpilot.py](benchmarks/run_kbpilot.py)). It shows a reproducible trend
   with the concentration (one start scatters by 4 %), and it does not reach the measured level:

@@ -6239,6 +6239,34 @@ concentration was driven, and the stage counts only discharges that ended at the
   so that verdict compares two assumed values. What a cold cell needs first is therefore a
   value at its own temperature and not a model. The ratio of the self-diffusion coefficients
   from the trajectories of BT9 gives one at no further cost.
+  *A free pilot (21 November 2026), the transference number from the stored boxes*
+  (`benchmarks/run_onsager.py`, 7 tests in `tests/test_onsager.py`, the manual under *A pilot
+  for the transference number*). The Onsager coefficients in the frame of the solvent were read
+  from the stored centres of the boxes of BT9, with the slopes in the window of the conductivity
+  of BT9. The share of the current that the cations carry is (L++ - L+-) / (L++ + L-- - 2 L+-).
+  The tests check three exact cases: independent ions give the ratio of the self-diffusion
+  coefficients (averaged over 24 boxes), ions that move as pairs carry no current, and a motion
+  common to all molecules changes nothing. The conductivity from the same charge displacement
+  equals that of BT9 to six digits. The reading was fixed before the boxes were read: the number
+  is usable at room temperature if one start of 4 ns scatters by at most 0.05 in t+. *It does
+  not.* The scatter of one start, from the two starts of the six concentrations, is 0.136, and
+  the block errors are 0.07 to 0.24. The values of the 62 boxes run from 0.04 to 0.69, a spread
+  that is the size of their error, and their rank correlation with the self ratio is -0.18. The
+  two boxes of 20 ns are better: 0.372 +/- 0.032 at 1.13 mol/L and 0.309 +/- 0.079 at 3.0
+  mol/L. With an error that falls as the square root of the time, a scatter of 0.05 needs about
+  7 times the 4 ns, so about 30 ns per box, 2 hours of this graphics card. *The level.* The self
+  ratio is 0.36 to 0.48 in all boxes (standard deviation 0.02) and does not fall with the
+  concentration, while the measured number falls from 0.37 at 0.1 mol/L to 0.11 to 0.15 above 1.5
+  mol/L. At 1.13 mol/L the long run gives 0.37 and the measured number is 0.20. So the
+  simulation, with the charges of the ions multiplied by 0.7, does not reproduce the measured
+  fall, and the pilot cannot say whether the correlations of the ions matter, because the
+  difference of the Onsager number from the self ratio (-0.16 on average, standard deviation
+  0.12) is the size of the scatter. *Verdict.* A label for the transference number is possible
+  with about 30 ns per box (about 12 to 15 hours for EC:EMC 3:7 at six concentrations, about 50
+  hours for 22 mixtures), and nothing in the pilot says that it would agree with the
+  measurement. At 298 K the tolerance stage says that the published constant is enough, so the
+  item needs this only for the cold cells, where it needs a value at their own temperature and
+  runs that are several times longer. It is not started.
 
 * **BT11. The thermodynamic factor.** This is an equilibrium property and not a transport
   coefficient: it says how far the salt is from an ideal solution at each concentration. It
