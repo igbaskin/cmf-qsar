@@ -4011,6 +4011,11 @@ for it:
   the ratio is 0.78. One start of 4 ns is noisy: the same box on two graphics cards gave
   conductivities that differ by a factor of 2.6, so the label of one formulation is uncertain
   by a factor of about 1.4.
+- Gate (b) of item BT9 holds for the diffusion coefficient as it was read and does not hold for
+  the conductivity. The gate is a low bar. The composition alone predicts the simulated salt
+  diffusion coefficient of a new solvent mixture to about 5 %, better than the solvation shells,
+  and the simulated conductivity adds nothing measurable to the composition for the measured
+  conductivity ([run_labelmodel.py](benchmarks/run_labelmodel.py)).
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

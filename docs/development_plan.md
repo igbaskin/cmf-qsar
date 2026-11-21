@@ -6146,11 +6146,38 @@ concentration was driven, and the stage counts only discharges that ended at the
   rank correlation and the geometric mean by about 0.01, and both verdicts
   stay. The label of one formulation is therefore uncertain by a factor of about 1.4 (one
   standard deviation), and a model fitted on 62 of them has to be fitted with that noise.
-  *Next, in this order:* the model of gate (b) on the 62 labels, with the noise of the label in
-  the error bars; the 20 ns runs of the 17 boxes of high concentration only if the model needs
-  them (about 25 hours on this desktop, or about 30 compute units on Colab). The thermodynamic
-  factor of BT11 is needed before a label for an electrolyte without a measured factor can be
-  made.
+  *Gate (b) (21 November 2026)* (`benchmarks/run_labelmodel.py`, 8 tests in
+  `tests/test_labelmodel.py`, the manual under *Gate (b): a model of the simulated label*). The
+  question: can a model give the label of a solvent mixture that it has not seen? The data are
+  the 62 labels. The description is the ensemble of shells of BT5. The folds hold out whole
+  solvent mixtures and are repeated with five seeds. The models are Gaussian processes with the
+  kernel and the ridge chosen inside each fold. The reading of the gate was fixed before the
+  runs: for the model `shells-free`, the standardised error between 0.8 and 1.25, and a
+  paired interval above zero against the Nernst-Einstein reference. *On the diffusion
+  coefficient the gate holds as read:* the standardised error is 1.19 and the model is ahead of
+  the reference by 0.136 in the natural logarithm (95 % interval 0.087 to 0.191). *On the
+  conductivity it does not:* the difference is -0.028 (-0.085 to +0.025). *But the gate is
+  a low bar, and the shells add nothing.* The reference is a straight line on the measured
+  conductivity, and it is poor for the diffusion coefficient (mean absolute error 0.246). The
+  composition alone (the molality and the solvent fractions) predicts the diffusion
+  coefficient of a new mixture to 0.045 in the logarithm, which is about 5 %, against 0.110
+  for the shells and 0.154 for the framed shells. The composition is better than the shells by
+  0.066 (0.049 to 0.084). The error of 0.045 is as small as the scatter of one start
+  (7 %, from six pairs of starts), so the diffusion coefficient of these 62 labels is a smooth
+  function of the composition and the molality. For the conductivity no model beats the others
+  clearly (composition 0.298, reference 0.284, shells 0.312), because its label scatters by 24 %.
+  *What the simulation adds.* For the measured conductivity of a new mixture the composition
+  alone has an error of 0.148, the simulated conductivity alone 0.215, and both together 0.137.
+  The gain of the simulation over the composition is +0.011 (-0.008 to +0.031), which includes
+  zero. *What this means.* Within the 22 mixtures of CALiSol-23, the simulated diffusion
+  coefficient is predicted from the composition without more simulation, and the shells are not
+  needed. A new mixture far from those, another salt, or a property that the composition does
+  not determine would need the simulation again. The label still carries the error of gate (a),
+  which is not met, and it has the ideal-solution form without the thermodynamic factor.
+  *Next, in this order:* BT11, the thermodynamic factor, because the label is needed in the form
+  that the cell reads; then gate (c), with the composition model as the source of the
+  coefficient; the 20 ns runs of the 17 boxes of high concentration only if a later step needs
+  them (about 25 hours on this desktop, or about 30 compute units on Colab).
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated

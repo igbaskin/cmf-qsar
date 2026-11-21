@@ -668,6 +668,19 @@ def registry() -> List[Benchmark]:
                   minutes="10",
                   report=lambda: _mod("run_diffusion").report(),
                   tables=["diffusion/table.md"]),
+        Benchmark("labelmodel",
+                  "gate (b) of plan item BT9: a model of the simulated label of an "
+                  "electrolyte, read on solvent mixtures it has not seen, from the sampled "
+                  "shells of item BT5, the composition, the molality and the Nernst-Einstein "
+                  "reference, with the calibration of its deviation and the paired intervals "
+                  "of rule 4; then what the simulated conductivity adds to the composition "
+                  "for the measured conductivity (reads the 62 simulated labels in "
+                  "results/diffusion and the shells of examples/electrolyte)",
+                  "run_labelmodel.py", "labelmodel",
+                  compute=[["--stage", "data"], ["--stage", "gate"], ["--stage", "value"]],
+                  minutes="8",
+                  report=lambda: _mod("run_labelmodel").write_table(_r("labelmodel")),
+                  tables=["labelmodel/table.md"]),
         Benchmark("phenazine",
                   "quantum fields (Hirshfeld charge, Fukui indices, the spin of the radical "
                   "anion) against the five ordinary fields and against the global quantum "

@@ -19407,6 +19407,72 @@ the result and do not test it.
   geometric mean by about 0.01, so both verdicts stay. The label of one formulation is
   uncertain by a factor of about 1.4 (one standard deviation).
 
+### Gate (b): a model of the simulated label
+
+A simulation of one electrolyte takes about 20 minutes of a graphics card. Gate (b) of item BT9
+asks whether a model can give the same label for a solvent mixture that it has not seen, with a
+deviation that means what it says. `benchmarks/run_labelmodel.py` tests this on the 62 labels of
+the previous sections. The folds hold out whole solvent mixtures (22 mixtures, 5 folds) and are
+repeated with five seeds. Every model is a Gaussian process. The kernel and the ridge are chosen
+inside each fold, on inner folds that also hold out whole mixtures. The label is the natural
+logarithm of the salt diffusion coefficient with the ideal-solution formula, or of the simulated
+conductivity.
+
+| Model | What it is given |
+|---|---|
+| `conditions` | the molality |
+| `composition` | the molality and the weight fractions of the solvents |
+| `shells` | the sampled solvation shells of item BT5, through the overlap kernel in the cation frame, mixed in equal parts with a kernel on the molality |
+| `shells-free` | the same shells through the alignment-free kernel (the model of the gate) |
+| `reference` | the Nernst-Einstein reference: one straight line on the measured conductivity of the test electrolyte, fitted on the training part |
+
+The reading of the gate was fixed before the models were run. For `shells-free` the root mean
+square of the standardised error must be between 0.8 and 1.25, and the 95 % interval of the
+paired difference of the absolute errors against the reference, from resampling the solvent
+mixtures, must be above zero. The comparison with the composition is reported and is not part
+of the gate.
+
+| Label | Model | Mean absolute error | Standardised error | Difference against the reference |
+|---|---|---:|---:|---|
+| Diffusion coefficient | `conditions` | 0.315 | 1.16 | |
+| Diffusion coefficient | `composition` | 0.045 | 0.78 | |
+| Diffusion coefficient | `shells` | 0.154 | 1.02 | +0.092 (+0.036 to +0.154) |
+| Diffusion coefficient | `shells-free` | 0.110 | 1.19 | +0.136 (+0.087 to +0.191) |
+| Diffusion coefficient | `reference` | 0.246 | 1.00 | |
+| Conductivity | `composition` | 0.298 | 1.15 | |
+| Conductivity | `shells-free` | 0.312 | 1.10 | -0.028 (-0.085 to +0.025) |
+| Conductivity | `reference` | 0.284 | 1.03 | |
+
+The errors are in the natural logarithm, so 0.1 is about 10 %. Predicting the mean costs 0.455
+for the diffusion coefficient and 0.432 for the conductivity.
+
+* **The gate holds for the diffusion coefficient and does not hold for the conductivity.** For the
+  diffusion coefficient the standardised error is 1.19 and the model is ahead of the reference.
+  For the conductivity the model is not clearly ahead.
+* **The gate is a low bar.** The reference is poor for the diffusion coefficient. The composition
+  alone predicts the diffusion coefficient of a new mixture with an error of 0.045, which is about
+  5 %, and is better than the shells by 0.066 (0.049 to 0.084). The plan expected this: a static
+  shell holds no dynamics. The shells add nothing to the composition.
+* **The composition model is at the noise of the label.** One start of 4 ns scatters by 7 % in
+  the logarithm of the diffusion coefficient and by 24 % in that of the conductivity (six pairs
+  of starts). An error of 0.045 is as small as the first, so the diffusion coefficient of these 62
+  labels is a smooth function of the composition and the molality. For the conductivity no model
+  is clearly better than another.
+* **What the simulation adds.** For the measured conductivity of a new mixture the composition
+  has an error of 0.148, the simulated conductivity alone 0.215, and both together 0.137. The gain
+  of the simulation over the composition is +0.011 (-0.008 to +0.031), which includes zero.
+* **Limits.** The 22 mixtures are those of CALiSol-23 with one salt. A mixture far from them,
+  another salt or a quantity that the composition does not fix would need the simulation again.
+  The label carries the error of gate (a), which is not met, and it has the ideal-solution form
+  without the thermodynamic factor.
+
+```bash
+python benchmarks/run_labelmodel.py --stage data     # the labels
+python benchmarks/run_labelmodel.py --stage gate     # gate (b); the first run builds the kernels, 3 minutes
+python benchmarks/run_labelmodel.py --stage value    # what the simulation adds
+python benchmarks/run_labelmodel.py --stage report   # the table
+```
+
 ### What this says about a label
 
 * **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient
