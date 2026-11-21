@@ -4006,6 +4006,11 @@ for it:
   correlation of 0.83 between the simulated and the measured conductivity (95 % interval 0.54
   to 0.95), and the geometric mean of the ratio is 0.72. Single formulations are not
   accurate: the ratio runs from 0.38 to 1.80.
+- The same holds for all 62 formulations of CALiSol-23 at their own molalities (0.24 to 2.4
+  mol/kg): the rank correlation is 0.83 (95 % interval 0.72 to 0.90) and the geometric mean of
+  the ratio is 0.78. One start of 4 ns is noisy: the same box on two graphics cards gave
+  conductivities that differ by a factor of 2.6, so the label of one formulation is uncertain
+  by a factor of about 1.4.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

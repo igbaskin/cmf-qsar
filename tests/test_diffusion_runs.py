@@ -685,3 +685,59 @@ def test_the_report_leaves_the_other_formulations_out_of_the_series_boxes():
     row = _form(name, 0.5)
     lines = R.report_lines([row], [])
     assert not any(name in line for line in lines)
+
+
+def _all_62_rows(factor=0.8):
+    """Rows for the 62 formulations, every simulated conductivity `factor` times the measured one,
+    and the series boxes, which the reference electrolyte takes."""
+    measured = {r["id"]: r["conductivity"] for r in R.calisol_rows()}
+    series = []
+    for j, (key, (a, b)) in enumerate(R.CONCENTRATION_RUNS.items()):
+        for n in (a, b):
+            sigma = (factor * measured[R.ELECTROLYTE_ID] if key == "c1p1"
+                     else factor * (0.9 + 0.1 * j))
+            row = _point(n, 0.1 + 0.5 * j, 1.0, sigma=sigma)
+            row["measured"]["conductivity"] = 1.0
+            series.append(row)
+    forms = [_form(n, factor * measured[R.RUNS[n]["formulation"]])
+             for n in list(R.FORMULATION_NAMES) + list(R.REST_NAMES)]
+    return forms, series
+
+
+def test_the_study_of_all_62_formulations_reads_rank_level_and_bands():
+    forms, series = _all_62_rows()
+    assert len(R.ALL_FORMULATION_RUNS) == 62
+    assert set(R.ALL_FORMULATION_RUNS) == {r["id"] for r in R.calisol_rows()}
+    study = R.all_formulations_study(forms, series)
+    assert study["complete"] and len(study["points"]) == 62
+    assert study["geometric_mean"] == pytest.approx(0.8)
+    assert study["rank_holds"] and study["level_holds"] and study["spearman"] > 0.95
+    assert sum(b["n"] for b in study["bands"]) == 62 and len(study["bands"]) == 3
+    assert all(b["ratio"] == pytest.approx(0.8, rel=0.02) for b in study["bands"])
+    # a simulation proportional to the measurement moves every composition the same way
+    moved = study["same_direction"]
+    assert moved[0] == moved[1] > 10
+    assert abs(study["ratio_with_molality"]) < 0.5
+    assert not study["short"]
+
+
+def test_the_boxes_that_are_too_short_move_the_level_by_the_given_factors():
+    forms, series = _all_62_rows()
+    for row in forms[:4]:
+        row["whole"]["cation"]["exponent"] = 0.5
+    study = R.all_formulations_study(forms, series)
+    assert len(study["short"]) == 4
+    low, high = R.SHORT_FACTORS
+    for factor in (low, high):
+        want = 0.8 * factor ** (4 / 61)
+        assert study["short_sensitivity"][factor] == pytest.approx(want, rel=1e-6)
+
+
+def test_the_report_adds_the_section_of_all_62_formulations():
+    forms, series = _all_62_rows()
+    lines = R.report_lines(forms + series, [])
+    text = "\n".join(lines)
+    assert "## All 62 formulations of CALiSol-23" in text
+    assert "**Bands of molality.**" in text
+    # the table of the transfer test keeps its 22 compositions
+    assert "Over 22 formulations" in text and "Over 62 formulations" in text

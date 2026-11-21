@@ -6115,11 +6115,42 @@ concentration was driven, and the stage counts only discharges that ended at the
   units. The desktop needed about 16 minutes for the same box. Two faults of the notebook had
   to be repaired first: OpenMM 8.3.1 needs CUDA 12.6 or higher, and Colab sets a matplotlib
   backend that the separate environment does not have.
-  *Next, in this order:* the 40 other formulations of the 62 at the same factor (`REST_NAMES`
-  of `run_diffusion.py`), about 12 hours on this desktop or about 15 compute units on Colab,
-  with 20 ns runs where the exponent is below about 0.8; then the
-  model of gate (b). The thermodynamic factor of BT11 is needed before a label for an
-  electrolyte without a measured factor can be made.
+  *All 62 formulations (21 November 2026).* The 40 other formulations (`REST_NAMES` of
+  `run_diffusion.py`) were simulated at their own molalities, 0.24 to 2.4 mol/kg, with the same
+  settings. They ran on Google Colab (a T4 card, 41 boxes in 13.6 hours of run time, about 16
+  compute units, 280 to 420 ns/day) and were analysed on this desktop. The reading rule of the
+  transfer test was kept. *The rank part holds:* the rank correlation of Spearman is 0.83 over
+  the 62 formulations (95 % interval 0.72 to 0.90). A simulation without any bias but with the
+  scatter of one start of 24 % would reach 0.83, so the rank is at that limit. *The level part
+  holds:* the geometric mean of the ratio of the 61 formulations other than the reference is
+  0.78, inside the range 0.59 to 1.02 of the series. The ratios of single formulations run from
+  0.38 to 1.88. In three bands of molality the rank correlation is 0.76 (25 formulations below
+  0.7 mol/kg), 0.68 (11 formulations from 0.7 to 1.4) and 0.84 (26 formulations of 1.4 or
+  more), and the geometric mean of the ratio is 0.76, 0.76 and 0.80. The rank correlation of the
+  ratio with the molality is 0.14, so the factor of 0.7 does not depend much on the
+  concentration. Within one composition (20 compositions have two or more molalities) the
+  simulation moves the conductivity in the direction of the measurement in 14 of 20: this
+  reading is weak. By solvent the geometric mean of the ratio is lowest for DEC (0.61, 15
+  formulations) and PC (0.68, 19) and highest for DMC (0.89, 19) and EC (0.86, 34).
+  *What this does not say.* The exponent of the cation is below 0.8 for 18 of the 62 boxes, 17
+  of them at 1.4 mol/kg or more, so the boxes of high concentration are too short at 4 ns.
+  If all 18 conductivities changed by a factor of 0.6 or 1.5, the geometric mean would be 0.67
+  or 0.88, still inside the range. Their runs of 20 ns, about 1.5 hours each on this desktop,
+  were not made. *A noisy start.* The first Colab box repeats a desktop box (EC:EMC 5:5 at 1.21
+  mol/kg). The two cards give different trajectories from the same input. D+ differs by 4 % and
+  D- by 7 %, but the conductivity is 0.445 +/- 0.083 S/m on the desktop and 1.136 +/- 0.293 S/m on
+  Colab: a factor of 2.6, with the largest difference of any pair so far. With that pair among
+  the seven pairs of two starts, the scatter of one start in the logarithm of the conductivity
+  is 33 % and not 24 %, and the rank correlation that a simulation without any bias would reach
+  is 0.74. Replacing the desktop value by the Colab value, or by the mean of the two, changes the
+  rank correlation and the geometric mean by about 0.01, and both verdicts
+  stay. The label of one formulation is therefore uncertain by a factor of about 1.4 (one
+  standard deviation), and a model fitted on 62 of them has to be fitted with that noise.
+  *Next, in this order:* the model of gate (b) on the 62 labels, with the noise of the label in
+  the error bars; the 20 ns runs of the 17 boxes of high concentration only if the model needs
+  them (about 25 hours on this desktop, or about 30 compute units on Colab). The thermodynamic
+  factor of BT11 is needed before a label for an electrolyte without a measured factor can be
+  made.
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated

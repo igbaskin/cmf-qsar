@@ -370,3 +370,99 @@ Rule 2 asks that the simulation reproduces the measured conductivities of CALiSo
 
 The exponent of the cation is below 0.8 for LiPF6_EMC100_m1p500, LiPF6_DEC70_PC30_m0p898, LiPF6_EC10_EMC90_m1p500, LiPF6_EC30_EMC60_MA10_m1p596. The concentration series showed that a run of 4 ns then overstates the coefficients, so these boxes need runs of 20 ns before their values are final.
 
+## All 62 formulations of CALiSol-23
+
+The transfer test above takes one formulation of each solvent composition. This section adds the other formulations: every one of the 62 is simulated at its own molality, with the same settings (charges of the ions multiplied by 0.7, 1,000 solvent molecules, one start of 4 ns), except EC:EMC 3:7 at 1.11 mol/kg, which is the mean of the two starts of the series. The reading rule of the transfer test is kept: the rank part holds if the lower end of the 95 % interval of the rank correlation is above zero, and the level part holds if the geometric mean of the ratios of all formulations but the reference electrolyte lies inside the range of ratios of the series. The four readings after the rank and the level (the bands of molality, the direction within a composition, the ratio against the molality and the boxes that are too short) were chosen after the first numbers had been seen, so they are descriptions and not tests.
+
+| Formulation | Molality, mol/kg | Measured conductivity, S/m | Simulated, S/m | Ratio to the measured | Exponent of the cation |
+|---|---:|---:|---|---:|---:|
+| LiPF6_DEC20_PC80_m0p282 | 0.282 | 0.512 | 0.340 +/- 0.107 | 0.66 | 0.88 |
+| LiPF6_DEC20_PC80_m0p892 | 0.892 | 0.711 | 0.447 +/- 0.065 | 0.63 | 0.83 |
+| LiPF6_DEC20_PC80_m2p373 | 2.373 | 0.190 | 0.189 +/- 0.088 | 1.00 | 0.60 |
+| LiPF6_DEC40_PC60_m0p320 | 0.320 | 0.563 | 0.225 +/- 0.070 | 0.40 | 0.88 |
+| LiPF6_DEC40_PC60_m0p802 | 0.802 | 0.760 | 0.470 +/- 0.151 | 0.62 | 0.81 |
+| LiPF6_DEC40_PC60_m1p741 | 1.741 | 0.440 | 0.280 +/- 0.064 | 0.64 | 0.71 |
+| LiPF6_DEC50_PC50_m0p271 | 0.271 | 0.504 | 0.390 +/- 0.081 | 0.77 | 0.87 |
+| LiPF6_DEC50_PC50_m0p386 | 0.386 | 0.618 | 0.382 +/- 0.083 | 0.62 | 0.86 |
+| LiPF6_DEC50_PC50_m0p465 | 0.465 | 0.677 | 0.254 +/- 0.025 | 0.38 | 0.85 |
+| LiPF6_DEC60_PC40_m0p245 | 0.245 | 0.433 | 0.348 +/- 0.052 | 0.80 | 0.89 |
+| LiPF6_DEC60_PC40_m0p539 | 0.539 | 0.666 | 0.446 +/- 0.014 | 0.67 | 0.86 |
+| LiPF6_DEC60_PC40_m0p750 | 0.750 | 0.738 | 0.434 +/- 0.103 | 0.59 | 0.84 |
+| LiPF6_DEC70_PC30_m0p259 | 0.259 | 0.377 | 0.237 +/- 0.083 | 0.63 | 0.84 |
+| LiPF6_DEC70_PC30_m0p550 | 0.550 | 0.581 | 0.322 +/- 0.112 | 0.55 | 0.83 |
+| LiPF6_DEC70_PC30_m0p898 | 0.898 | 0.679 | 0.352 +/- 0.084 | 0.52 | 0.78 |
+| LiPF6_DMC50_EC30_MA20_m0p491 | 0.491 | 1.081 | 0.998 +/- 0.189 | 0.92 | 0.96 |
+| LiPF6_DMC50_EC30_MA20_m1p500 | 1.500 | 1.486 | 1.068 +/- 0.298 | 0.72 | 0.85 |
+| LiPF6_DMC50_EC30_MA20_m2p000 | 2.000 | 1.408 | 1.626 +/- 0.124 | 1.15 | 0.83 |
+| LiPF6_DMC60_EC30_MA10_m0p500 | 0.500 | 1.022 | 0.867 +/- 0.057 | 0.85 | 0.93 |
+| LiPF6_DMC60_EC30_MA10_m1p491 | 1.491 | 1.298 | 1.399 +/- 0.284 | 1.08 | 0.86 |
+| LiPF6_DMC60_EC30_MA10_m1p982 | 1.982 | 1.213 | 1.113 +/- 0.181 | 0.92 | 0.82 |
+| LiPF6_DMC70_EC25_EMC05_m1p200 | 1.200 | 1.198 | 0.897 +/- 0.137 | 0.75 | 0.85 |
+| LiPF6_DMC70_EC30_m0p491 | 0.491 | 1.010 | 0.611 +/- 0.242 | 0.61 | 0.90 |
+| LiPF6_DMC70_EC30_m1p000 | 1.000 | 1.212 | 2.182 +/- 0.533 | 1.80 | 0.89 |
+| LiPF6_DMC70_EC30_m2p000 | 2.000 | 1.052 | 1.124 +/- 0.217 | 1.07 | 0.80 |
+| LiPF6_DMC80_EC20_m0p500 | 0.500 | 0.865 | 0.587 +/- 0.124 | 0.68 | 0.90 |
+| LiPF6_DMC80_EC20_m1p500 | 1.500 | 1.141 | 0.538 +/- 0.205 | 0.47 | 0.84 |
+| LiPF6_DMC80_EC20_m2p000 | 2.000 | 0.994 | 1.087 +/- 0.382 | 1.09 | 0.78 |
+| LiPF6_DMC90_EC10_m0p500 | 0.500 | 0.632 | 0.531 +/- 0.100 | 0.84 | 0.93 |
+| LiPF6_DMC90_EC10_m1p500 | 1.500 | 1.107 | 0.965 +/- 0.175 | 0.87 | 0.84 |
+| LiPF6_DMC90_EC10_m2p000 | 2.000 | 1.017 | 0.707 +/- 0.120 | 0.69 | 0.79 |
+| LiPF6_DMC100_m0p500 | 0.500 | 0.262 | 0.494 +/- 0.133 | 1.88 | 0.94 |
+| LiPF6_DMC100_m1p500 | 1.500 | 0.943 | 0.840 +/- 0.223 | 0.89 | 0.87 |
+| LiPF6_DMC100_m2p000 | 2.000 | 0.993 | 0.632 +/- 0.160 | 0.64 | 0.81 |
+| LiPF6_EC10_EMC90_m0p500 | 0.500 | 0.383 | 0.509 +/- 0.127 | 1.33 | 0.87 |
+| LiPF6_EC10_EMC90_m1p500 | 1.500 | 0.713 | 0.730 +/- 0.082 | 1.02 | 0.78 |
+| LiPF6_EC10_EMC90_m2p000 | 2.000 | 0.666 | 0.395 +/- 0.045 | 0.59 | 0.73 |
+| LiPF6_EC15_PC85_m0p446 | 0.446 | 0.593 | 0.273 +/- 0.051 | 0.46 | 0.86 |
+| LiPF6_EC20_EMC80_m0p454 | 0.454 | 0.647 | 0.980 +/- 0.240 | 1.51 | 0.91 |
+| LiPF6_EC20_EMC80_m1p110 | 1.110 | 0.811 | 0.678 +/- 0.143 | 0.84 | 0.84 |
+| LiPF6_EC20_EMC80_m2p000 | 2.000 | 0.660 | 0.405 +/- 0.145 | 0.61 | 0.73 |
+| LiPF6_EC30_EMC50_MA20_m0p508 | 0.508 | 0.918 | 0.889 +/- 0.180 | 0.97 | 0.89 |
+| LiPF6_EC30_EMC50_MA20_m1p492 | 1.492 | 1.148 | 0.822 +/- 0.081 | 0.72 | 0.85 |
+| LiPF6_EC30_EMC50_MA20_m1p992 | 1.992 | 1.024 | 0.659 +/- 0.067 | 0.64 | 0.78 |
+| LiPF6_EC30_EMC60_MA10_m0p570 | 0.570 | 0.879 | 0.549 +/- 0.218 | 0.63 | 0.90 |
+| LiPF6_EC30_EMC60_MA10_m1p596 | 1.596 | 0.973 | 0.809 +/- 0.147 | 0.83 | 0.78 |
+| LiPF6_EC30_EMC60_MA10_m2p105 | 2.105 | 0.920 | 0.813 +/- 0.222 | 0.88 | 0.76 |
+| LiPF6_EC30_EMC70_m0p443 | 0.443 | 0.700 | 0.581 +/- 0.244 | 0.83 | 0.90 |
+| LiPF6_EC30_EMC70_m1p110 (the reference electrolyte, two starts) | 1.110 | 0.883 | 0.666 +/- 0.044 | 0.75 | 0.84 |
+| LiPF6_EC30_EMC70_m2p009 | 2.009 | 0.699 | 0.518 +/- 0.110 | 0.74 | 0.71 |
+| LiPF6_EC40_EMC60_m0p428 | 0.428 | 0.759 | 0.615 +/- 0.143 | 0.81 | 0.89 |
+| LiPF6_EC40_EMC60_m1p077 | 1.077 | 0.918 | 0.748 +/- 0.101 | 0.81 | 0.85 |
+| LiPF6_EC40_EMC60_m1p574 | 1.574 | 0.804 | 0.767 +/- 0.198 | 0.95 | 0.78 |
+| LiPF6_EC50_EMC50_m0p540 | 0.540 | 0.849 | 0.572 +/- 0.134 | 0.67 | 0.88 |
+| LiPF6_EC50_EMC50_m1p212 | 1.212 | 0.912 | 0.445 +/- 0.083 | 0.49 | 0.82 |
+| LiPF6_EC50_EMC50_m1p806 | 1.806 | 0.646 | 0.650 +/- 0.109 | 1.01 | 0.76 |
+| LiPF6_EC60_PC40_m0p450 | 0.450 | 0.639 | 0.577 +/- 0.075 | 0.90 | 0.91 |
+| LiPF6_EC60_PC40_m0p813 | 0.813 | 0.751 | 0.976 +/- 0.196 | 1.30 | 0.83 |
+| LiPF6_EC60_PC40_m2p102 | 2.102 | 0.216 | 0.361 +/- 0.123 | 1.67 | 0.70 |
+| LiPF6_EMC100_m0p500 | 0.500 | 0.147 | 0.153 +/- 0.023 | 1.04 | 0.91 |
+| LiPF6_EMC100_m1p500 | 1.500 | 0.523 | 0.293 +/- 0.093 | 0.56 | 0.77 |
+| LiPF6_EMC100_m2p000 | 2.000 | 0.533 | 0.208 +/- 0.037 | 0.39 | 0.70 |
+
+**Rank.** Over 62 formulations the rank correlation of Spearman between the simulated and the measured conductivity is 0.83 (95 % interval 0.72 to 0.90, from resampling the formulations). With the scatter of one start (24 % in the logarithm of the conductivity) alone, a simulation without any bias would reach about 0.83. The rank part holds.
+
+**Level.** The geometric mean of the ratios of the 61 formulations other than the reference electrolyte is 0.78. The ratios of single formulations run from 0.38 to 1.88. The series gave ratios from 0.59 to 1.02. The level part holds.
+
+**Bands of molality.** The rank over all formulations mixes the effect of the concentration with that of the solvent. Here each band is read apart.
+
+| Molality, mol/kg | Formulations | Rank correlation of Spearman | Geometric mean of the ratio | Boxes with an exponent below 0.8 |
+|---|---:|---:|---:|---:|
+| below 0.7 | 25 | 0.76 | 0.76 | 0 |
+| 0.7 to below 1.4 | 11 | 0.68 | 0.76 | 1 |
+| 1.4 or more | 26 | 0.84 | 0.80 | 17 |
+
+**Within one composition.** For the 20 compositions that have two or more molalities, the simulation moves the conductivity in the same direction as the measurement, from the lowest to the highest molality, in 14 of 20. The rank correlation of the ratio to the measured conductivity with the molality is 0.14: a value near zero means that the factor on the charges does not depend on the concentration.
+
+**By solvent.** The geometric mean of the ratio over the formulations that hold a solvent at 20 % of the weight or more:
+
+| Solvent | Formulations | Geometric mean of the ratio to the measured |
+|---|---:|---:|
+| DEC | 15 | 0.61 |
+| DMC | 19 | 0.89 |
+| EC | 34 | 0.86 |
+| EMC | 24 | 0.78 |
+| MA | 6 | 0.84 |
+| PC | 19 | 0.68 |
+
+The exponent of the cation is below 0.8 for 18 of the 62 formulations. The concentration series showed that a run of 4 ns then overstates the coefficients, so these boxes need runs of 20 ns before their values are final. If all their conductivities changed by a factor of 0.6 or 1.5, the geometric mean of the ratios would be 0.67 or 0.88.
+

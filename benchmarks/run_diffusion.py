@@ -55,8 +55,8 @@ differ in one setting each, and :data:`RUNS` lists them.
   the factor on the charges, chosen on one electrolyte, holds for other solvents.
   :data:`FORMULATION_RUNS` lists them, and EC:EMC 3:7 is the box of the series.
 * ``form_<solvents>_m<molality>``: the 40 other formulations of CALiSol-23, each at its own
-  molality (:data:`REST_NAMES`). They are simulated with the same settings. The table does not
-  read them yet; their results are stored in ``run_<name>.json``.
+  molality (:data:`REST_NAMES`). They are simulated with the same settings. The table reads
+  them together with the 22 boxes of the transfer test (:func:`all_formulations_study`).
 
 The cell stage
 --------------
@@ -1208,7 +1208,8 @@ def start_scatter(series: Sequence[dict]) -> Optional[float]:
 
 
 def formulation_study(rows: Sequence[dict], series: Sequence[dict], draws: int = 2000,
-                      seed: int = 0) -> Optional[dict]:
+                      seed: int = 0, runs: Optional[Dict[str, Sequence[str]]] = None
+                      ) -> Optional[dict]:
     """The transfer test of the charge factor: the simulated conductivity of one formulation of
     each solvent composition against CALiSol-23.
 
@@ -1219,12 +1220,14 @@ def formulation_study(rows: Sequence[dict], series: Sequence[dict], draws: int =
     conductivity against the range of ratios that the series found over the concentration of the
     reference electrolyte. The rank part holds if the lower end of the interval is above zero;
     the level part holds if the geometric mean lies inside that range. None with fewer than three
-    formulations.
+    formulations. `runs` gives the runs of each formulation by its CALiSol id; the default is
+    :data:`FORMULATION_RUNS`.
     """
+    runs = FORMULATION_RUNS if runs is None else runs
     measured = {r["id"]: r for r in calisol_rows()}
     by_run = {r["run"]: r for r in list(rows) + list(series)}
     points = []
-    for fid, names in FORMULATION_RUNS.items():
+    for fid, names in runs.items():
         got = [by_run[n] for n in names if n in by_run]
         if not got or fid not in measured:
             continue
@@ -1280,10 +1283,76 @@ def formulation_study(rows: Sequence[dict], series: Sequence[dict], draws: int =
     return {"points": points, "spearman": rho, "interval": [float(lo), float(hi)],
             "ceiling": ceiling, "scatter": scatter, "geometric_mean": gmean,
             "series_band": band, "by_solvent": by_solvent,
-            "complete": len(points) == len(FORMULATION_RUNS),
+            "complete": len(points) == len(runs),
             "rank_holds": bool(np.isfinite(lo) and lo > 0),
             "level_holds": bool(band is not None and band[0] <= gmean <= band[1]),
             "short": [p["id"] for p in points if p["exponent"] < 0.8]}
+
+#: the runs of all 62 formulations of CALiSol-23 by the CALiSol id: the 22 boxes of the transfer
+#: test and the 40 other formulations
+ALL_FORMULATION_RUNS: Dict[str, tuple] = dict(FORMULATION_RUNS)
+for _name in REST_NAMES:
+    ALL_FORMULATION_RUNS[RUNS[_name]["formulation"]] = (_name,)
+#: the molality limits (mol/kg) between the three bands of concentration that are read apart
+MOLALITY_BANDS = (0.7, 1.4)
+#: the factors by which the boxes that are too short are changed to test the level
+SHORT_FACTORS = (0.6, 1.5)
+
+
+def all_formulations_study(rows: Sequence[dict], series: Sequence[dict], draws: int = 2000,
+                           seed: int = 0) -> Optional[dict]:
+    """The transfer test over all 62 formulations of CALiSol-23, each at its own molality.
+
+    The reading rule is that of :func:`formulation_study`: the rank part holds if the lower end
+    of the 95 % interval of the rank correlation is above zero, and the level part holds if the
+    geometric mean of the ratios (all but the reference electrolyte, which is the series) lies
+    inside the range of ratios of the series. Four more readings are added. The three bands of
+    molality (:data:`MOLALITY_BANDS`) are read apart, because the rank over all 62 mixes the
+    effect of the concentration with that of the solvent. The rank correlation of the ratio with
+    the molality shows whether the factor on the charges depends on the concentration. For the
+    compositions that have two or more molalities, the study counts how often the simulation
+    moves the conductivity the same way as the measurement, between the lowest and the highest
+    molality. And the boxes whose exponent of the cation is below 0.8 are changed by the
+    factors of :data:`SHORT_FACTORS`, to show how much the level depends on them.
+    """
+    study = formulation_study(rows, series, draws=draws, seed=seed, runs=ALL_FORMULATION_RUNS)
+    if study is None:
+        return None
+    pts = study["points"]
+    log_ratio = np.log([p["ratio"] for p in pts])
+    mol = np.array([p["molality"] for p in pts])
+    edges = (0.0,) + tuple(MOLALITY_BANDS) + (float("inf"),)
+    bands = []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        part = [p for p in pts if lo <= p["molality"] < hi]
+        if not part:
+            continue
+        bands.append({
+            "low": lo, "high": hi, "n": len(part),
+            "spearman": spearman([p["measured"] for p in part], [p["simulated"] for p in part]),
+            "ratio": float(np.exp(np.mean([np.log(p["ratio"]) for p in part]))),
+            "short": sum(p["exponent"] < 0.8 for p in part)})
+    study["bands"] = bands
+    study["ratio_with_molality"] = spearman(mol, np.exp(log_ratio))
+    groups: Dict[tuple, list] = {}
+    for p in pts:
+        groups.setdefault(tuple(sorted(p["solvents"].items())), []).append(p)
+    moved = [0, 0]
+    for part in groups.values():
+        if len(part) < 2:
+            continue
+        part = sorted(part, key=lambda p: p["molality"])
+        moved[1] += 1
+        moved[0] += int(np.log(part[-1]["simulated"] / part[0]["simulated"])
+                        * np.log(part[-1]["measured"] / part[0]["measured"]) > 0)
+    study["same_direction"] = moved
+    others = [p for p in pts if not p["reference"]]
+    sensitivity = {}
+    for factor in SHORT_FACTORS:
+        logs = [np.log(p["ratio"] * (factor if p["exponent"] < 0.8 else 1.0)) for p in others]
+        sensitivity[factor] = float(np.exp(np.mean(logs)))
+    study["short_sensitivity"] = sensitivity
+    return study
 
 
 def formulation_lines(study: dict) -> List[str]:
@@ -1354,6 +1423,102 @@ def formulation_lines(study: dict) -> List[str]:
     if not study["complete"]:
         w(f"Not every composition was run yet: {n} of {len(FORMULATION_RUNS)}. The reading is "
           "therefore not final.")
+        w("")
+    return out
+
+
+def all_formulation_lines(study: dict) -> List[str]:
+    """The section of the table on all 62 formulations of CALiSol-23."""
+    out: List[str] = []
+    w = out.append
+    pts = sorted(study["points"], key=lambda p: (sorted(p["solvents"].items()), p["molality"]))
+    n = len(pts)
+    w("## All 62 formulations of CALiSol-23")
+    w("")
+    w("The transfer test above takes one formulation of each solvent composition. This section "
+      "adds the other formulations: every one of the 62 is simulated at its own molality, with "
+      "the same settings (charges of the ions multiplied by "
+      f"{SERIES_SETTINGS['ion_charge_scale']:g}, {SERIES_SETTINGS['n_solvent']:,} solvent "
+      "molecules, one start of 4 ns), except EC:EMC 3:7 at 1.11 mol/kg, which is the mean of "
+      "the two starts of the series. The reading rule of the transfer test is kept: the rank "
+      "part holds if the lower end of the 95 % interval of the rank correlation is above zero, "
+      "and the level part holds if the geometric mean of the ratios of all formulations but the "
+      "reference electrolyte lies inside the range of ratios of the series. The four readings "
+      "after the rank and the level (the bands of molality, the direction within a "
+      "composition, the ratio against the molality and the boxes that are too short) were "
+      "chosen after the first numbers had been seen, so they are descriptions and not tests.")
+    w("")
+    w("| Formulation | Molality, mol/kg | Measured conductivity, S/m | Simulated, S/m | "
+      "Ratio to the measured | Exponent of the cation |")
+    w("|---|---:|---:|---|---:|---:|")
+    for p in pts:
+        name = p["id"] + (" (the reference electrolyte, two starts)" if p["reference"] else "")
+        w(f"| {name} | {_f(p['molality'], 3)} | {_f(p['measured'], 3)} | "
+          f"{_f(p['simulated'], 3)} +/- {_f(p['se'], 3)} | {_f(p['ratio'])} | "
+          f"{_f(p['exponent'])} |")
+    w("")
+    lo, hi = study["interval"]
+    text = (f"**Rank.** Over {n} formulations the rank correlation of Spearman between the "
+            f"simulated and the measured conductivity is {_f(study['spearman'])} (95 % interval "
+            f"{_f(lo)} to {_f(hi)}, from resampling the formulations).")
+    if study["ceiling"] is not None:
+        text += (f" With the scatter of one start ({100 * study['scatter']:.0f} % in the "
+                 "logarithm of the conductivity) alone, a simulation without any bias would "
+                 f"reach about {_f(study['ceiling'])}.")
+    text += " The rank part " + ("holds." if study["rank_holds"] else "does not hold.")
+    w(text)
+    w("")
+    band = study["series_band"]
+    others = [p for p in pts if not p["reference"]]
+    ratios = [p["ratio"] for p in others]
+    text = (f"**Level.** The geometric mean of the ratios of the {len(others)} formulations "
+            f"other than the reference electrolyte is {_f(study['geometric_mean'])}. The ratios "
+            f"of single formulations run from {_f(min(ratios))} to {_f(max(ratios))}.")
+    if band is not None:
+        text += (f" The series gave ratios from {_f(band[0])} to {_f(band[1])}. The level part "
+                 + ("holds." if study["level_holds"] else "does not hold."))
+    w(text)
+    w("")
+    w("**Bands of molality.** The rank over all formulations mixes the effect of the "
+      "concentration with that of the solvent. Here each band is read apart.")
+    w("")
+    w("| Molality, mol/kg | Formulations | Rank correlation of Spearman | Geometric mean of "
+      "the ratio | Boxes with an exponent below 0.8 |")
+    w("|---|---:|---:|---:|---:|")
+    for b in study["bands"]:
+        limit = (f"below {b['high']:g}" if b["low"] == 0.0 else
+                 f"{b['low']:g} or more" if b["high"] == float("inf") else
+                 f"{b['low']:g} to below {b['high']:g}")
+        w(f"| {limit} | {b['n']} | {_f(b['spearman'])} | {_f(b['ratio'])} | {b['short']} |")
+    w("")
+    moved = study["same_direction"]
+    w(f"**Within one composition.** For the {moved[1]} compositions that have two or more "
+      "molalities, the simulation moves the conductivity in the same direction as the "
+      f"measurement, from the lowest to the highest molality, in {moved[0]} of {moved[1]}. "
+      "The rank correlation of the ratio to the measured conductivity with the molality is "
+      f"{_f(study['ratio_with_molality'])}: a value near zero means that the factor on the "
+      "charges does not depend on the concentration.")
+    w("")
+    w("**By solvent.** The geometric mean of the ratio over the formulations that hold a "
+      f"solvent at {100 * SOLVENT_SHARE:.0f} % of the weight or more:")
+    w("")
+    w("| Solvent | Formulations | Geometric mean of the ratio to the measured |")
+    w("|---|---:|---:|")
+    for name, v in study["by_solvent"].items():
+        w(f"| {name} | {v['n']} | {_f(v['ratio'])} |")
+    w("")
+    if study["short"]:
+        low_f, high_f = SHORT_FACTORS
+        sens = study["short_sensitivity"]
+        w(f"The exponent of the cation is below 0.8 for {len(study['short'])} of the {n} "
+          "formulations. The concentration series showed that a run of 4 ns then overstates "
+          "the coefficients, so these boxes need runs of 20 ns before their values are final. "
+          f"If all their conductivities changed by a factor of {low_f:g} or {high_f:g}, the "
+          f"geometric mean of the ratios would be {_f(sens[low_f])} or {_f(sens[high_f])}.")
+        w("")
+    if not study["complete"]:
+        w(f"Not every formulation was run yet: {n} of {len(ALL_FORMULATION_RUNS)}. The "
+          "reading is therefore not final.")
         w("")
     return out
 
@@ -1732,6 +1897,7 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
     series = [r for r in rows if r["run"] in series_names]
     longs = [r for r in rows if r["run"] in long_names]
     forms = [r for r in rows if r["run"] in set(FORMULATION_NAMES)]
+    other_forms = [r for r in rows if r["run"] in set(REST_NAMES)]
     rows = [r for r in rows if r["run"] not in series_names | long_names | form_names]
     if not rows:
         w("# Item BT9: the salt diffusion coefficient of an electrolyte from simulation")
@@ -1740,6 +1906,10 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
             others = formulation_study(forms, series)
             if others is not None:
                 out.extend(formulation_lines(others))
+        if other_forms:
+            every = all_formulations_study(forms + other_forms, series)
+            if every is not None:
+                out.extend(all_formulation_lines(every))
         if series:
             out.extend(concentration_lines(concentration_study(series), limits))
         lengths = long_study(series + longs)
@@ -1906,6 +2076,10 @@ def report_lines(rows: Sequence[dict], limits: Sequence[Dict[str, float]],
         others = formulation_study(forms, series)
         if others is not None:
             out.extend(formulation_lines(others))
+    if other_forms and rows:
+        every = all_formulations_study(forms + other_forms, series)
+        if every is not None:
+            out.extend(all_formulation_lines(every))
     return out
 
 

@@ -19339,7 +19339,7 @@ found. A box whose exponent of the cation is below 0.8 is too short at 4 ns.
   tested in the same way.
 * **What it cost.** The 21 boxes took 6.3 hours of equilibration and production on this
   graphics card (15 to 29 minutes each, 230 to 435 ns/day, 11,700 to 17,100 atoms). The 40 other
-  formulations of the 62 would take about 12 hours.
+  formulations of the 62 ran on Colab (see below).
 
 **Boxes on another machine.** The script `benchmarks/colab/colab_transport.py` runs the same
 boxes with the same code on a machine whose files disappear at the end of a session, for
@@ -19361,6 +19361,51 @@ formulations of the 62 that the transfer test did not take.
 python benchmarks/colab/make_bundle.py                 # the zip file to copy to Google Drive
 python benchmarks/colab/colab_transport.py --store STORE --dry-run   # which boxes would run
 ```
+
+### All 62 formulations of CALiSol-23
+
+The transfer test took one formulation of each solvent composition. The 40 other formulations
+were then simulated at their own molalities, from 0.24 to 2.4 mol/kg, with the same settings:
+charges of the ions multiplied by 0.7, 1,000 solvent molecules, one start of 4 ns. They ran on
+Google Colab on a T4 card (41 boxes in 13.6 hours of run time, about 16 compute units, 280 to 420
+ns/day) and were analysed on this desktop. The reading rule of the transfer test was kept. The
+bands of molality, the direction within a composition, the ratio against the molality and the
+sensitivity to the short boxes were chosen after the first numbers had been seen. They describe
+the result and do not test it.
+
+| Reading | Result |
+|---|---|
+| Rank correlation of Spearman, 62 formulations | 0.83 (95 % interval 0.72 to 0.90) |
+| The same for a simulation without bias but with the scatter of one start (24 %) | about 0.83 |
+| Geometric mean of the ratio to the measured, 61 formulations | 0.78 (the series gave 0.59 to 1.02) |
+| Ratios of single formulations | 0.38 to 1.88 |
+| Molality below 0.7 mol/kg (25 formulations) | rank 0.76, geometric mean of the ratio 0.76 |
+| Molality 0.7 to below 1.4 mol/kg (11 formulations) | rank 0.68, geometric mean of the ratio 0.76 |
+| Molality 1.4 mol/kg or more (26 formulations) | rank 0.84, geometric mean of the ratio 0.80 |
+| Rank correlation of the ratio with the molality | 0.14 |
+| Compositions where the simulation moves the conductivity in the measured direction | 14 of 20 |
+
+* **Both parts hold.** The lower end of the interval is above zero, and the geometric mean is
+  inside the range of the series. The rank over all 62 is at the limit of what the scatter of a
+  start allows, so the data do not show a bias of the simulation in rank.
+* **The factor of 0.7 depends little on the concentration.** The ratio changes little over the
+  three bands. The direction within a composition is right in 14 of 20, which is a weak result.
+* **By solvent.** The geometric mean of the ratio is lowest for DEC (0.61, 15 formulations) and
+  PC (0.68, 19) and highest for DMC (0.89, 19) and EC (0.86, 34). EMC is 0.78 (24) and MA 0.84
+  (6). The formulations share solvents, so this is a lead and not a result.
+* **Boxes that are too short.** The exponent of the cation is below 0.8 for 18 of the 62 boxes,
+  17 of them at 1.4 mol/kg or more. If all 18 conductivities changed by a factor of 0.6 or 1.5,
+  the geometric mean would be 0.67 or 0.88, still inside the range. Their runs of 20 ns, about 1.5
+  hours each on this desktop, were not made.
+* **One start is noisy.** The first box that ran on Colab repeats a box of the desktop (EC:EMC
+  5:5 at 1.21 mol/kg). The two cards give different trajectories from the same input. D+ differs
+  by 4 % and D- by 7 %, but the conductivity is 0.445 +/- 0.083 S/m on the desktop and 1.136 +/-
+  0.293 S/m on Colab, a factor of 2.6. With this pair among the seven pairs of two starts, the
+  scatter of one start in the logarithm of the conductivity is 33 % and not 24 %, and the rank
+  correlation that a simulation without bias would reach is about 0.74. Replacing the desktop
+  value by the Colab value, or by the mean of the two, changes the rank correlation and the
+  geometric mean by about 0.01, so both verdicts stay. The label of one formulation is
+  uncertain by a factor of about 1.4 (one standard deviation).
 
 ### What this says about a label
 
