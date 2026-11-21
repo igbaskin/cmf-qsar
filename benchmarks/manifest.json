@@ -1,6 +1,6 @@
 {
- "commit": "8957a1e1efb5d1b9ce90c330ce5ac87b8a875f33",
- "created": "2026-11-21T19:11:08",
+ "commit": "3cc7b00755e392538119d4eff1a695a179d58ed5",
+ "created": "2026-11-21T20:09:01",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3260,6 +3260,9 @@
   "benchmarks/results/cell_view/read.json": "3c86bb38dbb77e8e16dc75e99a8df92a6b813ec164fc21120f7a70396bb5ebc7",
   "benchmarks/results/cell_view/run.json": "d856de6a1f6e96a863f9a21ca154b8432ce0d4fdb0b1b83fa7381a30a617eb38",
   "benchmarks/results/cell_view/table.md": "c0fc22d5c73370bc9da37cb1efe9b0b63995b40e5a80d4630fa06eee4203ba88",
+  "benchmarks/results/cellgate/cell.json": "514d18c5c7167cb4fab09adfc785661eb980bd95776bd252d0a641d94c5ff9d0",
+  "benchmarks/results/cellgate/prediction.json": "e6e37861a06286520548fdf6a388ed56b5243a8b6cb8cd5f9508cb2de0501fe3",
+  "benchmarks/results/cellgate/table.md": "f5275f6fa856d983d90c7ba3e1052f6f854377fd5dff16b82e71f22827e51ab5",
   "benchmarks/results/cellmodel/cellmodel.json": "7da2266b06853c88defea4bca893596853fbebbf49a10154856af62fb1d598fc",
   "benchmarks/results/cellmodel/channels.json": "a6fb76eee59fbd2b8a3b57661a579a0708d2a7564eba5fb81f90d3bdd5093fd8",
   "benchmarks/results/cellmodel/parameters.csv": "1927cc3a01e09ce21858d2a5cd879181339e95c61b4d2fc980fd00ef15d99a24",
