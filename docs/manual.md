@@ -19901,6 +19901,97 @@ machine these numbers come from is a conda environment in WSL. The other stages 
 that. Every run writes its own directory under `benchmarks/cache/transport` and is not run
 again.
 
+## The molecule that reacts first at an electrode
+
+The solid electrolyte interphase (SEI) is the film that the reduction products of the electrolyte
+form on the negative electrode. The cathode electrolyte interphase (CEI) is the film of oxidation
+products on the positive electrode. Part (a) of plan item BT13 asks about the first step of each
+film: which species takes an electron, or gives one, first. The label is the potential of that
+step. It is a thermodynamic order. It is not the measured onset, which is set by kinetics and by
+passivation of the electrode.
+
+**The data.** The Lithium-Ion Battery Electrolyte set (LIBE; Spotte-Smith and co-workers,
+Scientific Data 2021; figshare 10.6084/m9.figshare.14226464, licence CC BY 4.0) holds 17,190
+species with geometry, bonds, charge, spin multiplicity, free energies and atomic charges, from
+the level omega-B97X-V/def2-TZVPPD in a solvent model with a dielectric constant of 18.5. It
+does not publish potentials, and it has no orbital energies. The file is 285 MB and is read from
+`benchmarks/cache/libe/libe.json`. It is not in the repository.
+
+**The potentials.** A closed-shell species is paired with the radical ion of the same bond graph,
+one electron more for a reduction and one electron less for an oxidation. The graph is compared
+with a Weisfeiler-Lehman hash, which depends on the elements and bonds and not on the numbering of
+the atoms. A reduction that breaks a bond gives another graph, and it is not a pair. The potential
+on the scale of Li/Li+ is
+
+    reduction  E = -(G(q-1) - G(q)) - 1.4 V        oxidation  E = (G(q+1) - G(q)) - 1.4 V
+
+where G is the free energy in eV and the constant 1.4 V is 4.44 V minus 3.04 V. The constant
+changes no rank and no slope. The series has 2,111 reductions and 2,505 oxidations. A GFN2 xtb
+calculation on each reactant gives the HOMO and LUMO energies and the Fukui functions. It failed
+on 22 reactants, all with lithium, which are left out. The models use 2,106 and 2,486 species.
+
+**The models.** The reference is a linear regression on the orbital energy (the LUMO for a
+reduction, the HOMO for an oxidation) with the charge state. The field model uses the
+rotation-invariant autocorrelation of the RESP charge, the steric field and the element
+indicators, with the Fukui function of the right kind (the f+ for a reduction, the f- for an
+oxidation) and the spin population of the radical ion. Every error is measured on species that
+the model has not seen, and the kernel and the ridge constant are chosen inside each training set.
+Two designs are used. In the first, each chemical family is left out in turn (phosphorus, sulfur,
+fluorinated, carbonate, other). In the second, whole formulae are left out, so the isomers of one
+formula are never split.
+
+The reading of the gate was fixed after the reduction numbers were seen and before the oxidation
+numbers were run: the fields (with Fukui and spin) against the orbital energy with the charge
+state, with whole families held out. It holds if the lower end of the 95 % interval is above zero.
+The interval comes from resampling whole formulae.
+
+| Model | Reduction, families, V | Reduction, formulae, V | Oxidation, families, V | Oxidation, formulae, V |
+|---|---:|---:|---:|---:|
+| mean | 1.538 | 1.509 | 1.468 | 1.451 |
+| orbital energy | 0.547 | 0.529 | 0.514 | 0.491 |
+| orbital energy + charge state (reference) | 0.538 | 0.512 | 0.524 | 0.478 |
+| global quantum numbers | 0.507 | 0.471 | 0.501 | 0.458 |
+| element counts | 0.796 | 0.705 | 0.902 | 0.752 |
+| fields | 1.019 | 0.567 | 0.915 | 0.648 |
+| fields + Fukui (reactant only) | 0.800 | 0.504 | 0.792 | 0.547 |
+| fields + Fukui + spin (gate model) | 0.570 | 0.438 | 0.591 | 0.474 |
+| fields + Fukui + spin + orbital energy and charge state | 0.489 | 0.390 | 0.403 | 0.284 |
+
+The columns give the mean absolute error of the potential. "Families" means that whole chemical
+families were held out. "Formulae" means that whole formulae were held out.
+
+* **The gate is not met.** With whole families held out, the gate model is behind the reference by
+  0.032 V for reduction (interval -0.058 to -0.003) and by 0.066 V for oxidation (-0.103 to
+  -0.035). Sulfur decides most of it: when the 71 sulfur species are held out, the oxidation error
+  of the fields is 1.372 V and that of the reference is 0.580 V.
+* **With whole formulae held out the answer depends on the label.** For reduction the fields are
+  ahead of the reference by 0.074 V (0.044 to 0.100). For oxidation they tie (+0.004, -0.022 to
+  0.029).
+* **The fields add to the orbital energy.** Joined to the orbital energy and the charge state they
+  lower the error by 0.049 V and 0.122 V for reduction (families, formulae) and by 0.122 V and
+  0.194 V for oxidation. All four intervals exclude zero.
+* **The spin population is circular.** It comes from the calculation of the radical ion, which is
+  the calculation that gives the label. The model that needs only the reactant is the one with the
+  Fukui function. With whole families held out it is behind the reference by 0.26 V (reduction)
+  and 0.27 V (oxidation). With whole formulae held out it ties for reduction (+0.008, -0.018 to
+  0.032) and is behind for oxidation (-0.069, -0.094 to -0.044).
+* **The orbital energy is the better single description for a new family.** The fields are worth
+  adding to it. A model of the reactant alone does not replace it.
+
+What is not done: the co-field that names the atom taking or giving the electron; the check
+against measured onsets, which are read by hand from papers; the species with lithium bound,
+restated against the free molecule; the sensitivity to the two other free-energy columns of the
+set; the tolerance stage of the plan, which needs an ageing run of the cell model; and part (b),
+the barrier through the film.
+
+```bash
+python benchmarks/run_interphase.py --stage series                       # a few minutes, needs the LIBE file
+python benchmarks/run_interphase.py --stage xtb                          # 4 minutes
+python benchmarks/run_interphase.py --stage models --kind reduction      # 50 minutes
+python benchmarks/run_interphase.py --stage models --kind oxidation      # 100 minutes
+python benchmarks/run_interphase.py --stage report                       # 2 minutes, the table
+```
+
 ## Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is one of the standard moves in medicinal chemistry, and the

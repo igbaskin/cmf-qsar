@@ -1,0 +1,278 @@
+{
+ "reduction": {
+  "families": {
+   "comparisons": [
+    {
+     "name": "gate: the fields against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin",
+     "mean": -0.031773274853218604,
+     "low": -0.05814839832244903,
+     "high": -0.0034517596667496225,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields from the reactant alone against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui",
+     "mean": -0.26203326177777053,
+     "low": -0.3264590064707865,
+     "high": -0.20946656220829835,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the global quantum numbers",
+     "reference": "global quantum numbers",
+     "model": "fields + Fukui + spin",
+     "mean": -0.06284203656846407,
+     "low": -0.09269179378012589,
+     "high": -0.032392563357120964,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields added to the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin + orbital energy and charge state",
+     "mean": 0.049457858581989866,
+     "low": 0.030322385625223963,
+     "high": 0.06968217574342168,
+     "excludes_zero": true
+    },
+    {
+     "name": "the spin population added to the fields",
+     "reference": "fields",
+     "model": "fields + spin",
+     "mean": 0.401135514994344,
+     "low": 0.32389782407964157,
+     "high": 0.4905416730580057,
+     "excludes_zero": true
+    },
+    {
+     "name": "the Fukui function added to the fields",
+     "reference": "fields",
+     "model": "fields + Fukui",
+     "mean": 0.2189485479162644,
+     "low": 0.17284021523813403,
+     "high": 0.2700930321135577,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the element counts",
+     "reference": "element counts",
+     "model": "fields",
+     "mean": -0.22317483529295273,
+     "low": -0.32535611913167434,
+     "high": -0.13403906456173456,
+     "excludes_zero": true
+    }
+   ],
+   "gate_holds": false
+  },
+  "formulae": {
+   "comparisons": [
+    {
+     "name": "gate: the fields against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin",
+     "mean": 0.07351551193002845,
+     "low": 0.043639040853865926,
+     "high": 0.10048554528030647,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields from the reactant alone against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui",
+     "mean": 0.007580273570951328,
+     "low": -0.01804778169280877,
+     "high": 0.031940208759440314,
+     "excludes_zero": false
+    },
+    {
+     "name": "the fields against the global quantum numbers",
+     "reference": "global quantum numbers",
+     "model": "fields + Fukui + spin",
+     "mean": 0.032271741454814255,
+     "low": 0.004156918001079411,
+     "high": 0.05997064145113619,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields added to the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin + orbital energy and charge state",
+     "mean": 0.1219733966634427,
+     "low": 0.09686055832538541,
+     "high": 0.14441259952681862,
+     "excludes_zero": true
+    },
+    {
+     "name": "the spin population added to the fields",
+     "reference": "fields",
+     "model": "fields + spin",
+     "mean": 0.08926746875147559,
+     "low": 0.06688761678303475,
+     "high": 0.10845201220656141,
+     "excludes_zero": true
+    },
+    {
+     "name": "the Fukui function added to the fields",
+     "reference": "fields",
+     "model": "fields + Fukui",
+     "mean": 0.06302109927448402,
+     "low": 0.047911855705849556,
+     "high": 0.07666574477405481,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the element counts",
+     "reference": "element counts",
+     "model": "fields",
+     "mean": 0.13724114408546562,
+     "low": 0.10954195754000243,
+     "high": 0.1652235081590754,
+     "excludes_zero": true
+    }
+   ],
+   "gate_holds": true
+  }
+ },
+ "oxidation": {
+  "families": {
+   "comparisons": [
+    {
+     "name": "gate: the fields against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin",
+     "mean": -0.06630175089280016,
+     "low": -0.10279266830735488,
+     "high": -0.03481605537860119,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields from the reactant alone against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui",
+     "mean": -0.2676624085575423,
+     "low": -0.3118499454951741,
+     "high": -0.22780519313695968,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the global quantum numbers",
+     "reference": "global quantum numbers",
+     "model": "fields + Fukui + spin",
+     "mean": -0.08984101186804803,
+     "low": -0.12548174791535308,
+     "high": -0.0599787429202418,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields added to the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin + orbital energy and charge state",
+     "mean": 0.12156543311556835,
+     "low": 0.10130447290157707,
+     "high": 0.14166960852594532,
+     "excludes_zero": true
+    },
+    {
+     "name": "the spin population added to the fields",
+     "reference": "fields",
+     "model": "fields + spin",
+     "mean": 0.2919056573522065,
+     "low": 0.25421156002485024,
+     "high": 0.33001200494246635,
+     "excludes_zero": true
+    },
+    {
+     "name": "the Fukui function added to the fields",
+     "reference": "fields",
+     "model": "fields + Fukui",
+     "mean": 0.12293043979921443,
+     "low": 0.08903793433520106,
+     "high": 0.1569056620592761,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the element counts",
+     "reference": "element counts",
+     "model": "fields",
+     "mean": -0.013330023466269943,
+     "low": -0.0714683652216512,
+     "high": 0.0382650472993373,
+     "excludes_zero": false
+    }
+   ],
+   "gate_holds": false
+  },
+  "formulae": {
+   "comparisons": [
+    {
+     "name": "gate: the fields against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin",
+     "mean": 0.004078193041014013,
+     "low": -0.022248832212230302,
+     "high": 0.029426010738752086,
+     "excludes_zero": false
+    },
+    {
+     "name": "the fields from the reactant alone against the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui",
+     "mean": -0.06889552294686313,
+     "low": -0.09449037585660994,
+     "high": -0.04364926818489596,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the global quantum numbers",
+     "reference": "global quantum numbers",
+     "model": "fields + Fukui + spin",
+     "mean": -0.01586161622296219,
+     "low": -0.041921157525918205,
+     "high": 0.00924681788874923,
+     "excludes_zero": false
+    },
+    {
+     "name": "the fields added to the orbital energy",
+     "reference": "orbital energy + charge state",
+     "model": "fields + Fukui + spin + orbital energy and charge state",
+     "mean": 0.1936964125670903,
+     "low": 0.17616454356863462,
+     "high": 0.21169278781507503,
+     "excludes_zero": true
+    },
+    {
+     "name": "the spin population added to the fields",
+     "reference": "fields",
+     "model": "fields + spin",
+     "mean": 0.15153472850965402,
+     "low": 0.12428344656982131,
+     "high": 0.1745147638532418,
+     "excludes_zero": true
+    },
+    {
+     "name": "the Fukui function added to the fields",
+     "reference": "fields",
+     "model": "fields + Fukui",
+     "mean": 0.10134311995148128,
+     "low": 0.08157484891019477,
+     "high": 0.12032944625065457,
+     "excludes_zero": true
+    },
+    {
+     "name": "the fields against the element counts",
+     "reference": "element counts",
+     "model": "fields",
+     "mean": 0.10387107976224022,
+     "low": 0.07980823030591012,
+     "high": 0.12651731952447925,
+     "excludes_zero": true
+    }
+   ],
+   "gate_holds": false
+  }
+ }
+}

@@ -693,6 +693,21 @@ def registry() -> List[Benchmark]:
                   minutes="2",
                   report=lambda: _mod("run_cellgate").write_table(_r("cellgate")),
                   tables=["cellgate/table.md"]),
+        Benchmark("interphase",
+                  "part (a) of plan item BT13: the potential of the first electron transfer "
+                  "(reduction for the SEI, oxidation for the CEI) of the species of the LIBE "
+                  "data set, formed from two free energies of one species, against the "
+                  "orbital energy from xtb, on species of whole families and of whole "
+                  "formulae that the model has not seen (the LIBE file, 285 MB, is read from "
+                  "benchmarks/cache/libe/libe.json and is not in the repository; its source is "
+                  "figshare 10.6084/m9.figshare.14226464)",
+                  "run_interphase.py", "interphase",
+                  compute=[["--stage", "series"], ["--stage", "xtb"],
+                           ["--stage", "models", "--kind", "reduction"],
+                           ["--stage", "models", "--kind", "oxidation"]],
+                  needs="xtb", minutes="150",
+                  report=lambda: _mod("run_interphase").write_table(),
+                  tables=["interphase/table.md"]),
         Benchmark("onsager",
                   "a free pilot for plan item BT10: the cation transference number from the "
                   "Onsager coefficients in the frame of the solvent, read from the stored "

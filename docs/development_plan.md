@@ -6868,6 +6868,60 @@ concentration was driven, and the stage counts only discharges that ended at the
   interval of plan rule 4, and the co-field names the atom that takes or gives the electron.
   On the measured onsets the computed order and the measured order agree in rank within what
   the repeatability allows.
+  *Part (a) measured (22 November 2026)* (`benchmarks/run_interphase.py`, 11 tests in
+  `tests/test_interphase.py`, the manual under *The molecule that reacts first at an
+  electrode*). *Gate (a) is not met.* *Series.* The LIBE file (figshare 14226464, 285,045,473
+  bytes, CC BY 4.0, md5 checked) was read as it is. A reactant is a closed-shell species. It is
+  paired with the radical ion of the same bond graph (a Weisfeiler-Lehman hash of the elements
+  and bonds, 4 rounds), one electron more for a reduction and one electron less for an
+  oxidation. A reduction that breaks a bond is a decomposition product and is not a pair. The
+  potential is E = -(G(q-1) - G(q)) - 1.4 V for a reduction and E = (G(q+1) - G(q)) - 1.4 V for
+  an oxidation, with the free energy `quasi_rrho_eV` and the constant 1.4 V = 4.44 V - 3.04 V.
+  The constant changes no rank and no slope. The other two free-energy columns were not tried.
+  The series has 2,111 reduction pairs and 2,505 oxidation pairs. xtb failed on 22 reactants,
+  all of them with lithium, so the models use 2,106 and 2,486 species. The reduction series has
+  427 fluorinated, 738 other, 393 carbonate, 480 phosphorus and 73 sulfur pairs. The oxidation
+  series has 584, 885, 413, 552 and 71. The potentials of ethylene carbonate, dimethyl
+  carbonate, fluoroethylene carbonate, vinylene carbonate and PF6- came out in the order that
+  chemistry expects. *Models.* All models are tested on species that they have not seen, with
+  the kernel and the ridge constant chosen on inner folds. Two designs: each chemical family
+  left out in turn (phosphorus, sulfur, fluorinated, carbonate, other), and whole formulae left
+  out (five folds, three repeats). The orbital energy is the xtb LUMO for a reduction and the
+  xtb HOMO for an oxidation, and the reference is that energy with the charge state. The
+  fields are the rotation-invariant autocorrelation of the RESP charge, the steric field and
+  the element indicators on the reactant geometry, with the xtb Fukui function of the right
+  kind, and the spin population of the radical ion. *The reading of the gate was fixed after
+  the reduction numbers were seen and before the oxidation numbers were run*: the model
+  "fields + Fukui + spin" alone against "orbital energy + charge state", and the gate holds if
+  the lower end of the interval is above zero with whole families held out. The reduction
+  numbers were therefore not blind to the reading, and the oxidation numbers were. *Result,
+  whole families held out (error in V; positive difference = the fields are better).*
+  Reduction: reference 0.538, fields 0.570, difference -0.032 (-0.058 to -0.003). Oxidation:
+  reference 0.524, fields 0.591, difference -0.066 (-0.103 to -0.035). The gate is not met in
+  either direction. The family that decides is sulfur (71 to 73 species): the oxidation error
+  is 1.372 V for the fields against 0.580 V for the reference when sulfur is held out. *Whole
+  formulae held out.* Reduction: reference 0.512, fields 0.438, difference +0.074 (0.044 to
+  0.100), so the fields are ahead. Oxidation: reference 0.478, fields 0.474, difference +0.004
+  (-0.022 to 0.029), a tie. The fields beat the global quantum numbers (HOMO, LUMO,
+  gap, dipole) only for reduction with whole formulae held out (+0.032, 0.004 to 0.060). *What the fields
+  add.* Joined to the orbital energy and the charge state, the fields lower the error in every
+  reading: +0.049 and +0.122 V for reduction (families, formulae) and +0.122 and +0.194 V for
+  oxidation, all with intervals clear of zero. The spin population of the radical ion and the
+  Fukui function each lower the error of the plain fields clearly (reduction: +0.401 and
+  +0.219 with families held out; oxidation +0.292 and +0.123). *The spin field is circular.*
+  It needs the calculation of the radical ion, which is the calculation that gives the label,
+  as the spin field of EC1 did. The model that needs only the reactant is "fields + Fukui".
+  Against the reference it loses clearly with whole families held out (-0.262 V and -0.268 V),
+  ties for reduction with whole formulae held out (+0.008, -0.018 to 0.032) and loses for
+  oxidation (-0.069, -0.094 to -0.044). *Verdict.* The orbital energy of the reactant is the
+  better single description of the first electron transfer when a new family is the question,
+  as the item expected. The fields are worth adding to it, and the gain is the largest where
+  the electron is removed. A model of the reactant alone does not replace the orbital energy.
+  *What is not done.* The co-field that names the atom taking or giving the electron, the
+  check against measured onsets (they are read by hand from papers), the sub-series of
+  lithium-coordinated species against the free molecule, the sensitivity to the two other
+  free-energy columns, the tolerance stage with the ageing run, and part (b). The run costs
+  about 2.5 hours on this machine, most of it the model selection for oxidation.
   *Part (b), the barrier through the film.* After the film has formed, the SEI matters through
   the Li⁺ barrier of its phases. Li₂CO₃, LiF, Li₂O and lithium ethylene dicarbonate are
   crystals, and BT7's hop model predicts barriers in crystals at 0.21 to 0.29 eV on the public

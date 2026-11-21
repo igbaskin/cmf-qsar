@@ -4030,6 +4030,13 @@ for it:
   with the concentration (one start scatters by 4 %), and it does not reach the measured level:
   1.4 against 2.4 at 1.1 mol/L, and 1.4 against 6.7 at 3 mol/L. Weaker charges on the ions (0.6
   and 0.5) do not raise it above about 1.5.
+- Part (a) of item BT13 forms the potential of the first electron transfer of 2,106 reductions
+  and 2,486 oxidations from the LIBE data set and tests fields against the orbital energy
+  ([run_interphase.py](benchmarks/run_interphase.py)). With whole chemical families held out the
+  fields are behind the orbital energy by 0.03 V (reduction) and 0.07 V (oxidation), so the gate
+  is not met. With whole formulae held out they are ahead by 0.07 V for reduction and tied for
+  oxidation. Added to the orbital energy, the fields lower the error by 0.05 to 0.19 V in every
+  reading.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

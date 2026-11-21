@@ -1,0 +1,44 @@
+{
+ "n_records": 17190,
+ "n_with_energy": 17142,
+ "reduction": {
+  "n": 2111,
+  "families": {
+   "fluorinated": 427,
+   "other": 738,
+   "carbonate": 393,
+   "phosphorus": 480,
+   "sulfur": 73
+  },
+  "with_li": 999,
+  "charges": {
+   "0": 1170,
+   "1": 941
+  },
+  "E_range": [
+   -1.6484448602644992,
+   12.780652062001172
+  ],
+  "n_atoms_max": 22
+ },
+ "oxidation": {
+  "n": 2505,
+  "families": {
+   "fluorinated": 584,
+   "other": 885,
+   "phosphorus": 552,
+   "carbonate": 413,
+   "sulfur": 71
+  },
+  "with_li": 1218,
+  "charges": {
+   "-1": 1457,
+   "0": 1048
+  },
+  "E_range": [
+   -0.7600335723240281,
+   9.660793547814682
+  ],
+  "n_atoms_max": 22
+ }
+}

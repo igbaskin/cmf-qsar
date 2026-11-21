@@ -67,6 +67,14 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "read and the composition alone is the better model; gate (c) measured "
                       "(21 November 2026) and not met: the interval holds the capacity under 6 "
                       "of 8 conditions and misses in the cold at 1.5C"),
+    "BT13": ("partly", "part (a) measured (22 November 2026) and gate (a) not met: on the "
+                       "potentials of 2,106 reductions and 2,486 oxidations from the LIBE set, "
+                       "with whole families held out the fields are behind the orbital energy "
+                       "by 0.03 V (reduction) and 0.07 V (oxidation); with whole formulae held "
+                       "out they are ahead by 0.07 V for reduction and tied for oxidation; the "
+                       "fields added to the orbital energy gain 0.05 to 0.19 V in every "
+                       "reading; the measured onsets, the tolerance stage and part (b) are "
+                       "not done"),
     "BT10": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026): one start "
                        "of 4 ns scatters by 0.136 in the number, so a label needs about 30 ns "
                        "per box, and the simulated number does not fall with the concentration "
