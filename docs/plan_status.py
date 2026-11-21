@@ -64,8 +64,9 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "compositions in rank and level (20 November 2026); the same holds "
                       "for all 62 formulations (21 November 2026); one start is noisy by a "
                       "factor of about 1.4; gate (b) holds for the diffusion coefficient as "
-                      "read and the composition alone is the better model; gate (c) is "
-                      "left"),
+                      "read and the composition alone is the better model; gate (c) measured "
+                      "(21 November 2026) and not met: the interval holds the capacity under 6 "
+                      "of 8 conditions and misses in the cold at 1.5C"),
     "BT11": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026) shows a "
                        "reproducible trend of the factor with the concentration and not the "
                        "measured level, and weaker charges on the ions do not raise it above about "

@@ -6174,10 +6174,39 @@ concentration was driven, and the stage counts only discharges that ended at the
   needed. A new mixture far from those, another salt, or a property that the composition does
   not determine would need the simulation again. The label still carries the error of gate (a),
   which is not met, and it has the ideal-solution form without the thermodynamic factor.
+  *Gate (c) (21 November 2026)* (`benchmarks/run_cellgate.py`, 9 tests in
+  `tests/test_cellgate.py`, the manual under *Gate (c): the capacity of the cell*). The
+  composition model of gate (b) was fitted to the 59 formulations of the other 21 mixtures,
+  with every formulation of EC:EMC 3:7 held out. It predicted the diffusion coefficient of the
+  cell's electrolyte at 10 concentrations from 0.1 to 3.0 mol/L, with the measured
+  thermodynamic factor. The cell of MS9 (the full model) was run with the measured function
+  multiplied by the ratio of the predicted to the measured value. The label is made at 298 K, so
+  the temperature dependence is that of the measured function, and the cold cells test the
+  level only. The reading was fixed before the cell was run: one standard normal number z drives
+  the draws, the 95 % interval is the capacity at z = -1.96 and +1.96, the truth is the cell
+  with all four transport parameters as measured, and the gate holds if the interval holds the
+  truth under all eight conditions. The ratio of the predicted to the measured coefficient is
+  0.32 at 0.1 mol/L, 0.76 at 0.5, 1.05 at 1.0, 1.26 at 2.0 and 1.58 at 3.0, the pattern of gate
+  (a). *The gate does not hold.* The interval holds the truth under 6 of 8 conditions: all four
+  at 298 K, and 263 K and 253 K at 1C. It misses at 263 K and 1.5C (truth 3.51 A.h, interval
+  2.06 to 3.36) and at 253 K and 1.5C (truth 2.41, interval 1.22 to 2.14), the two cold
+  conditions at the faster rate, where the plan expected the electrolyte to be exhausted. The
+  interval is useful (narrower than 5 % of the published capacity) under 3 of 8: 298 K at 1, 1.5
+  and 2C. At 298 K and 2.5C the interval, 3.85 to 4.66 A.h, holds the truth of 4.61, while the
+  published cell with its constant coefficient gives 3.68 and misses by 0.93 A.h. So at room
+  temperature the prediction is better than the published constant, and in the cold at the
+  faster rate it is not good enough. *The label's own error.* The model predicts the simulation
+  and not the measurement, and the simulation is 0.3 to 1.6 times the measured coefficient. The
+  deviation of that ratio over the six concentrations is 0.54 in the logarithm. With it added,
+  the interval holds the truth under all 8 conditions, but it is as wide as 0.2 to 4.6 A.h and
+  of no use. *What this says.* The chain from the composition to the capacity works at room
+  temperature up to 2C, and it is limited by the label (gate (a)), not by the model. In the cold
+  at the faster rate no label of this kind can serve, as the tolerance stage said.
   *Next, in this order:* BT11, the thermodynamic factor, because the label is needed in the form
-  that the cell reads; then gate (c), with the composition model as the source of the
-  coefficient; the 20 ns runs of the 17 boxes of high concentration only if a later step needs
-  them (about 25 hours on this desktop, or about 30 compute units on Colab).
+  that the cell reads, and the pilot says that the large boxes are not worth starting before the
+  correction for the closed box is read; the 20 ns runs of the 17 boxes of high concentration
+  only if a later step needs them (about 25 hours on this desktop, or about 30 compute units on
+  Colab).
 
 * **BT10. The cation transference number.** Two different quantities carry this name. The cell
   model reads the one counted against the motion of the solvent, which includes the correlated

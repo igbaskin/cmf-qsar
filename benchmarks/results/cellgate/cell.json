@@ -1,0 +1,230 @@
+{
+ "conditions": [
+  {
+   "temperature": 298.15,
+   "rate": 1.0,
+   "published": 4.991425367778843,
+   "truth": 4.986696867004586,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 4.984878908462379,
+     "high": 4.989638648493793,
+     "median": 4.9875104011507725,
+     "holds": true,
+     "useful": true,
+     "width_share": 0.0009535833315548383,
+     "median_minus_truth_share": 0.0001629863388198485
+    },
+    "B": {
+     "low": 4.483678122840874,
+     "high": 4.996813399875344,
+     "median": 4.9875104011507725,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.10280335559996813,
+     "median_minus_truth_share": 0.0001629863388198485
+    }
+   },
+   "seconds": 1.6
+  },
+  {
+   "temperature": 298.15,
+   "rate": 1.5,
+   "published": 4.904806104802354,
+   "truth": 4.899497139923161,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 4.893886584720226,
+     "high": 4.9065873088109395,
+     "median": 4.901274338570814,
+     "holds": true,
+     "useful": true,
+     "width_share": 0.002589444683303157,
+     "median_minus_truth_share": 0.0003623382065832557
+    },
+    "B": {
+     "low": 2.220395775045919,
+     "high": 4.921942318503842,
+     "median": 4.901274338570814,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.5507957879951271,
+     "median_minus_truth_share": 0.0003623382065832557
+    }
+   },
+   "seconds": 1.8
+  },
+  {
+   "temperature": 298.15,
+   "rate": 2.0,
+   "published": 4.782664858712554,
+   "truth": 4.789404886405533,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 4.757844777903223,
+     "high": 4.808479608860366,
+     "median": 4.792595052295651,
+     "holds": true,
+     "useful": true,
+     "width_share": 0.010587158509528747,
+     "median_minus_truth_share": 0.0006670268530955418
+    },
+    "B": {
+     "low": 1.1038918849644517,
+     "high": 4.841318407305767,
+     "median": 4.792595052295651,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.7814527324725391,
+     "median_minus_truth_share": 0.0006670268530955418
+    }
+   },
+   "seconds": 1.7
+  },
+  {
+   "temperature": 298.15,
+   "rate": 2.5,
+   "published": 3.6750452151094164,
+   "truth": 4.6090935646681395,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 3.853071210580578,
+     "high": 4.662182719420516,
+     "median": 4.535412538785253,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.22016368819447243,
+     "median_minus_truth_share": -0.020049012072003287
+    },
+    "B": {
+     "low": 0.5194679044152111,
+     "high": 4.74582663172407,
+     "median": 4.535412538785253,
+     "holds": true,
+     "useful": false,
+     "width_share": 1.1500154365265485,
+     "median_minus_truth_share": -0.020049012072003287
+    }
+   },
+   "seconds": 1.9
+  },
+  {
+   "temperature": 263.15,
+   "rate": 1.0,
+   "published": 4.960224758502183,
+   "truth": 4.754650236165344,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 4.031042472647122,
+     "high": 4.8615790828252905,
+     "median": 4.669863641154674,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.16743930983259764,
+     "median_minus_truth_share": -0.01709329700541089
+    },
+    "B": {
+     "low": 0.6958784001227833,
+     "high": 4.946663646572449,
+     "median": 4.669863641154674,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.856974321408221,
+     "median_minus_truth_share": -0.01709329700541089
+    }
+   },
+   "seconds": 1.8
+  },
+  {
+   "temperature": 263.15,
+   "rate": 1.5,
+   "published": 4.8629856505551805,
+   "truth": 3.5115862174173254,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 2.059260834874757,
+     "high": 3.360431069240406,
+     "median": 2.651697779379851,
+     "holds": false,
+     "useful": false,
+     "width_share": 0.2675661266278056,
+     "median_minus_truth_share": -0.1768231493628417
+    },
+    "B": {
+     "low": 0.2577558161953391,
+     "high": 4.833791429071325,
+     "median": 2.651697779379851,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.9409930322030797,
+     "median_minus_truth_share": -0.1768231493628417
+    }
+   },
+   "seconds": 2.3
+  },
+  {
+   "temperature": 253.15,
+   "rate": 1.0,
+   "published": 4.9488352782450455,
+   "truth": 3.788453885617149,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 2.611110561720085,
+     "high": 3.876913048328477,
+     "median": 3.2832092358929468,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.25577785790786517,
+     "median_minus_truth_share": -0.1020936485692391
+    },
+    "B": {
+     "low": 0.3519844957270591,
+     "high": 4.911838676249274,
+     "median": 3.2832092358929468,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.9213994655605569,
+     "median_minus_truth_share": -0.1020936485692391
+    }
+   },
+   "seconds": 2.0
+  },
+  {
+   "temperature": 253.15,
+   "rate": 1.5,
+   "published": 4.847993617549163,
+   "truth": 2.409308167206841,
+   "truth_ok": true,
+   "reading": {
+    "A": {
+     "low": 1.2182593858550823,
+     "high": 2.1396175882411623,
+     "median": 1.6496889782267923,
+     "holds": false,
+     "useful": false,
+     "width_share": 0.1900493843578656,
+     "median_minus_truth_share": -0.15668733272055418
+    },
+    "B": {
+     "low": 0.20488092178438974,
+     "high": 4.6384551169276875,
+     "median": 1.6496889782267923,
+     "holds": true,
+     "useful": false,
+     "width_share": 0.9145173333344097,
+     "median_minus_truth_share": -0.15668733272055418
+    }
+   },
+   "seconds": 2.1
+  }
+ ],
+ "gate_holds": false,
+ "gate_holds_with_label_deviation": true
+}

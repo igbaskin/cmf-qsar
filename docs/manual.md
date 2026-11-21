@@ -19750,6 +19750,61 @@ python benchmarks/run_kbpilot.py --stage charges   # the older boxes with other 
 python benchmarks/run_kbpilot.py --stage report    # the table
 ```
 
+### Gate (c): the capacity of the cell with the predicted diffusion coefficient
+
+Gate (c) of item BT9 asks that the interval of the capacity that follows from the predicted salt
+diffusion coefficient holds the capacity of the measured electrolyte, under the eight conditions
+of the stress stage of item MS9. `benchmarks/run_cellgate.py` makes that test with the model of
+gate (b).
+
+The test mixture is LiPF6 in EC:EMC 3:7, the electrolyte of the cell. Every formulation of that
+mixture is held out. The composition model is fitted to the simulated diffusion coefficients of
+the other 21 mixtures (59 formulations) and predicts the coefficient at 10 concentrations from
+0.1 to 3.0 mol/L. The cell needs the coefficient multiplied by the thermodynamic factor, which
+item BT11 does not yet predict, so the measured factor is used. The cell is run with the measured
+function multiplied by the ratio of the predicted to the measured value at every concentration.
+The label is made at 298 K only, so the temperature dependence is that of the measured function:
+in the cold cells the test is of the level of the coefficient and not of its activation energy.
+
+The reading was fixed before the cell was run. One standard normal number z drives all draws,
+because one coefficient is predicted and its values at different concentrations are taken as fully
+correlated. The 95 % interval of the capacity is the capacity at z = -1.96 and at z = +1.96. The
+truth is the capacity of the cell with all four transport parameters as Landesfeind and
+Gasteiger measured them. The gate holds if the interval holds the truth under all eight
+conditions. An interval is useful if it is narrower than 5 % of the published capacity.
+Reading A uses the deviation of the model. Reading B adds the deviation of the label from the
+measurement (0.54 in the natural logarithm, over the six concentrations of the series).
+
+| Temperature, K | Rate, C | Truth, A.h | Interval A | Holds | Useful | Interval B |
+|---:|---:|---:|---|---|---|---|
+| 298 | 1 | 4.987 | 4.985 to 4.990 | yes | yes | 4.484 to 4.997 |
+| 298 | 1.5 | 4.899 | 4.894 to 4.907 | yes | yes | 2.220 to 4.922 |
+| 298 | 2 | 4.789 | 4.758 to 4.808 | yes | yes | 1.104 to 4.841 |
+| 298 | 2.5 | 4.609 | 3.853 to 4.662 | yes | no | 0.519 to 4.746 |
+| 263 | 1 | 4.755 | 4.031 to 4.862 | yes | no | 0.696 to 4.947 |
+| 263 | 1.5 | 3.512 | 2.059 to 3.360 | no | no | 0.258 to 4.834 |
+| 253 | 1 | 3.788 | 2.611 to 3.877 | yes | no | 0.352 to 4.912 |
+| 253 | 1.5 | 2.409 | 1.218 to 2.140 | no | no | 0.205 to 4.638 |
+
+* **The gate does not hold.** Reading A holds the truth under 6 of 8 conditions. It misses at
+  263 K and 253 K at 1.5C, where the electrolyte is exhausted and the plan did not expect a
+  useful interval.
+* **At room temperature the chain works up to 2C.** The interval is useful at 1, 1.5 and 2C. At
+  2.5C it is wide, but it holds the truth (4.61 A.h) while the published cell with its constant
+  coefficient gives 3.68 and misses by 0.93 A.h.
+* **The label limits it, not the model.** The predicted coefficient is 0.32 of the measured one
+  at 0.1 mol/L, 1.05 at 1.0 mol/L and 1.58 at 3.0 mol/L, the pattern of gate (a). With the
+  deviation of the label added (reading B) the interval holds under all 8 conditions, and it is as
+  wide as 0.2 to 4.6 A.h.
+* **The test is favourable in the cold.** The temperature dependence is the measured one. A
+  prediction with its own activation energy is a further test that this benchmark does not make.
+
+```bash
+python benchmarks/run_cellgate.py --stage predict    # the coefficient, 1 minute
+python benchmarks/run_cellgate.py --stage cell       # the cell, needs pybamm, under a minute
+python benchmarks/run_cellgate.py --stage report     # the table
+```
+
 ### What this says about a label
 
 * **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient

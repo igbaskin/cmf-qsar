@@ -681,6 +681,18 @@ def registry() -> List[Benchmark]:
                   minutes="8",
                   report=lambda: _mod("run_labelmodel").write_table(_r("labelmodel")),
                   tables=["labelmodel/table.md"]),
+        Benchmark("cellgate",
+                  "gate (c) of plan item BT9: the diffusion coefficient of EC:EMC 3:7 predicted "
+                  "from the composition with that mixture held out, put into the full cell model "
+                  "of item MS9, and the 95 % interval of the capacity read against the capacity "
+                  "of the measured electrolyte under the eight conditions of the stress stage "
+                  "(reads the simulated labels in results/diffusion and the stored stress "
+                  "files of results/cellmodel; needs pybamm for the cell)",
+                  "run_cellgate.py", "cellgate",
+                  compute=[["--stage", "predict"], ["--stage", "cell"]], needs="pybamm",
+                  minutes="2",
+                  report=lambda: _mod("run_cellgate").write_table(_r("cellgate")),
+                  tables=["cellgate/table.md"]),
         Benchmark("kbpilot",
                   "a free pilot for plan item BT11: the thermodynamic factor of the salt read "
                   "from the number fluctuations in cubes of the boxes that item BT9 stored "

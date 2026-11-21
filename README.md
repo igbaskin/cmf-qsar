@@ -4016,6 +4016,11 @@ for it:
   diffusion coefficient of a new solvent mixture to about 5 %, better than the solvation shells,
   and the simulated conductivity adds nothing measurable to the composition for the measured
   conductivity ([run_labelmodel.py](benchmarks/run_labelmodel.py)).
+- Gate (c) of item BT9 does not hold. With the diffusion coefficient of EC:EMC 3:7 predicted from
+  the composition (that mixture held out), the 95 % interval of the capacity holds the capacity of
+  the measured electrolyte under 6 of the 8 conditions of the stress stage. It misses at 263 K
+  and 253 K at 1.5C. At room temperature it is useful up to 2C
+  ([run_cellgate.py](benchmarks/run_cellgate.py)).
 - A free pilot for item BT11 reads the thermodynamic factor from the number fluctuations in the
   boxes of item BT9 ([run_kbpilot.py](benchmarks/run_kbpilot.py)). It shows a reproducible trend
   with the concentration (one start scatters by 4 %), and it does not reach the measured level:
