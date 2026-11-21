@@ -35,9 +35,11 @@ The cube is open and the box is closed, so the fluctuations in a cube that is a 
 the box are too small by a factor near one minus that share. The pilot reports the cubes of
 one quarter, one third and one half of the side and does not correct them. Molecules are points
 at their centres, so the solvent structure is coarse. The run is 4 ns, so the counts of the
-ions, of which there are 9 to 70 pairs, are correlated over long times. The factor in the
-measured function that the cell model reads may include a term for the motion of the solvent;
-the comparison with it is therefore a comparison of trends and not of the level.
+ions, of which there are 9 to 70 pairs, are correlated over long times. The measured factor
+is that of Landesfeind and Gasteiger (J. Electrochem. Soc. 166, A3079, 2019): equation 5 of the
+paper defines it as 1 + d ln f / d ln c, with f the mean molar activity coefficient, so it is
+the same quantity. The authors call their data for EC:EMC 3:7 at 0.1 mol/L erroneous, so the
+measured function is not a reference at that concentration.
 
 Stages
 ------

@@ -19509,9 +19509,14 @@ tests check both limits.
   charges, 0.91 to 1.07 with a factor of 0.8 (six boxes of 125 to 1,000 solvent molecules) and
   1.21 with 0.7 (a box of 250 molecules). Weaker charges give a factor nearer to the measured
   value. Whole charges bind the ions together more and give a factor below 1.
-* **What is not known.** The measured function of the cell model may include a term for the
-  motion of the solvent, so the comparison is of trends. The paper of Landesfeind and
-  Gasteiger could not be read here, so its definition has not been checked.
+* **The measured factor is the same quantity.** Equation 5 of the paper of Landesfeind and
+  Gasteiger defines it as 1 + d ln f / d ln c, with f the mean molar activity coefficient, and
+  has no term for the motion of the solvent. The authors expect 1 at infinite dilution and a
+  first fall with the concentration. They call their values for EC:EMC 3:7 at 0.1 mol/L
+  (1 to 2.2) erroneous, because the lithium electrodes were poorly passivated. They thus
+  consider the data at this concentration unreliable, so the value of 0.54 at 0.1 mol/L in the
+  function that the program reads is not a reference, and the simulated 0.95 agrees with the
+  limit of 1. From 1.1 mol/L the measured values are 2.4 to 6.7 against 1.4 to 1.5 simulated.
 
 ```bash
 python benchmarks/run_kbpilot.py --stage series    # the six concentrations, two starts each

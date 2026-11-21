@@ -6252,14 +6252,21 @@ concentration was driven, and the stage counts only discharges that ended at the
   0.91 to 1.07 with 0.8 (six boxes) and 1.21 with 0.7 in the box of 250 molecules. Whole
   charges bind the ions together more and give a factor below 1, while the measured one is
   2.37. The cube changes the value by up to 0.4 in some boxes, and the closed box is not
-  corrected, so the level is indicative only. *What is not known.* The measured function of the
-  cell model may include a term for the motion of the solvent, so the comparison is of trends.
-  The paper of Landesfeind and Gasteiger could not be read here (HTTP 403), so its definition
-  of the factor has not been checked. *Verdict.* The boxes of 4 ns and 1,000 molecules show a
+  corrected, so the level is indicative only. *The definition of the measured factor, read in
+  the paper.* Equation 5 of the paper of Landesfeind and Gasteiger (the PDF was read on 21
+  November 2026) defines the factor as 1 + d ln f / d ln c, where f is the mean molar activity
+  coefficient. There is no term for the motion of the solvent, so the pilot and the measured
+  function are the same quantity. The authors also say that the factor is 1 at infinite
+  dilution and falls at first (Debye-Hueckel), and that their values for LiPF6 in EC:EMC 3:7
+  at 0.1 mol/L (1 to 2.2 in their figure) are erroneous, which they put down to a poor
+  passivation of the lithium electrodes. The authors thus consider the data at this
+  concentration unreliable, so the value of 0.54 at 0.1 mol/L in the function that the program
+  reads is not a reference, and the pilot value of 0.95 there agrees with the limit of 1. From 1.1 mol/L the measured values are 2.4 to 6.7 and the
+  pilot values 1.4 to 1.5. *Verdict.* The boxes of 4 ns and 1,000 molecules show a
   reproducible trend with the concentration and not the level. The large boxes of the plan
-  should wait for two cheap steps: the definition of the measured factor, from the paper, and
-  boxes of 1,000 molecules at the reference concentration with lower factors on the charges
-  (each about 20 minutes), to see whether the level reaches 2.37 at all.
+  should wait for one cheap step: boxes of 1,000 molecules at the reference concentration with
+  lower factors on the charges (each about 20 minutes), to see whether the level reaches 2.37
+  at all.
 
 * **BT12. The activation energy of charge transfer at an electrode.** The exchange-current
   density is the rate of the charge-transfer reaction at the surface of an electrode particle at
