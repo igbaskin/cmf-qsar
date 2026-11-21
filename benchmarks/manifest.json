@@ -1,6 +1,6 @@
 {
- "commit": "a05bc3b8418f81413291c7f48cbb2ba439e0d5c1",
- "created": "2026-11-21T20:23:29",
+ "commit": "d78f0f7055151421f2c9ceb43ee5430dd57ba889",
+ "created": "2026-11-22T00:49:07",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -4057,6 +4057,11 @@
   "benchmarks/results/interactions/pair_fields.png": "84712c10263f219ddf52fca5a253a5e60bf6aada456c136c7a625f109c878e32",
   "benchmarks/results/interactions/pairs.sdf": "56f3f93ab5352f5acb7a07ba7a520d7c37c25f7ed37f293db261bce81002e2b2",
   "benchmarks/results/interactions/table.md": "f0883e77543d4fd6b81317956f5bf01989f495ae80cfcd2ca4a63c55f89e8e65",
+  "benchmarks/results/interphase/models_oxidation.json": "e57d7e2724515b0fa209198acae0cd23eafa41de5253b3d11e5532a5f95eff9f",
+  "benchmarks/results/interphase/models_reduction.json": "db4764fbb0a4e4a84c86931dcccba0126700da28d10d1eeb8971079e34f7bdc4",
+  "benchmarks/results/interphase/report.json": "c2f069234361f9862c346bf40226514409e5867f2b30951bdbe3d47f1ce57dca",
+  "benchmarks/results/interphase/series.json": "00ab860d9ec4841d2678b95476e63d1b680f6704d3c8f727db626b8414d2ea7d",
+  "benchmarks/results/interphase/table.md": "e68aa8434791077ce63044fa177cfe54ad1fab7c583d0fec629bf0ed3ac1a34c",
   "benchmarks/results/jarvis2d/exfoliation_all-crystal-bg-gauss.json": "c3564fefd3e86e7fd648442721c35eddbac57810d1497c114c1824b11bf08712",
   "benchmarks/results/jarvis2d/exfoliation_all-crystal-bg.json": "cf2e8670c689d741ea425b8060d9618f7400343f72de36fd37d5408966d1d7a2",
   "benchmarks/results/jarvis2d/exfoliation_all-layer-bg-gauss.json": "d989c59618e23ceaaf0ebd3455e585faa0acdb53d69e82f243c2eb08e73c1e9c",
