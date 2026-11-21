@@ -4019,7 +4019,8 @@ for it:
 - A free pilot for item BT11 reads the thermodynamic factor from the number fluctuations in the
   boxes of item BT9 ([run_kbpilot.py](benchmarks/run_kbpilot.py)). It shows a reproducible trend
   with the concentration (one start scatters by 4 %), and it does not reach the measured level:
-  1.4 against 2.4 at 1.1 mol/L, and 1.4 against 6.7 at 3 mol/L.
+  1.4 against 2.4 at 1.1 mol/L, and 1.4 against 6.7 at 3 mol/L. Weaker charges on the ions (0.6
+  and 0.5) do not raise it above about 1.5.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

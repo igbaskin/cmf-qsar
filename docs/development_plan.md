@@ -6262,11 +6262,17 @@ concentration was driven, and the stage counts only discharges that ended at the
   passivation of the lithium electrodes. The authors thus consider the data at this
   concentration unreliable, so the value of 0.54 at 0.1 mol/L in the function that the program
   reads is not a reference, and the pilot value of 0.95 there agrees with the limit of 1. From 1.1 mol/L the measured values are 2.4 to 6.7 and the
-  pilot values 1.4 to 1.5. *Verdict.* The boxes of 4 ns and 1,000 molecules show a
-  reproducible trend with the concentration and not the level. The large boxes of the plan
-  should wait for one cheap step: boxes of 1,000 molecules at the reference concentration with
-  lower factors on the charges (each about 20 minutes), to see whether the level reaches 2.37
-  at all.
+  pilot values 1.4 to 1.5. *Weaker charges (21 November 2026).* Two more boxes of 1,000
+  molecules at the reference concentration were simulated with the charges of the ions
+  multiplied by 0.6 and by 0.5 (`charge_0p6` and `charge_0p5` of `run_diffusion.py`, 18
+  minutes each, 4 ns). With the cube of 1/4 the factor is 1.51 and 1.48, against 1.41 at 0.7
+  (the box of the series) and 0.92 to 1.07 at 0.8 and above. So it rises from whole charges to
+  0.7 and then stays near 1.5, and the measured 2.37 is not reached. With the cube of 1/2 the
+  values are 1.74 and 2.03, but that cube is the one where the closed box matters most, and it
+  is not corrected. *Verdict.* The boxes of 4 ns and 1,000 molecules show a reproducible trend
+  with the concentration and not the level, and weaker charges do not close the gap. On this
+  evidence the large boxes of the plan are not worth starting. If the item is resumed, the
+  correction for the closed box comes first, and it needs the paper that gives it.
 
 * **BT12. The activation energy of charge transfer at an electrode.** The exchange-current
   density is the rate of the charge-transfer reaction at the surface of an electrode particle at

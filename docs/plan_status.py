@@ -68,7 +68,8 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                       "left"),
     "BT11": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026) shows a "
                        "reproducible trend of the factor with the concentration and not the "
-                       "measured level; the large boxes of the plan are not started"),
+                       "measured level, and weaker charges on the ions do not raise it above about "
+                       "1.5; the large boxes of the plan are not started"),
     "MC3": ("partly", "the series built from ChEMBL and measured 13 November 2026: the "
                       "handedness channels name the better enantiomer more often than chance "
                       "and read it at the stereocentre, but they do not improve the potency "

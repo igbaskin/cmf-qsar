@@ -19729,6 +19729,11 @@ tests check both limits.
   charges, 0.91 to 1.07 with a factor of 0.8 (six boxes of 125 to 1,000 solvent molecules) and
   1.21 with 0.7 (a box of 250 molecules). Weaker charges give a factor nearer to the measured
   value. Whole charges bind the ions together more and give a factor below 1.
+* **Weaker charges stop helping.** Two more boxes of 1,000 molecules at 1.11 mol/kg, with
+  charges multiplied by 0.6 and by 0.5, give 1.51 and 1.48 with the cube of 1/4. The box of the
+  series (0.7) gave 1.41. The factor rises from whole charges to 0.7 and then stays near 1.5,
+  below the measured 2.37. The cube of 1/2 gives 1.74 and 2.03, but it is the cube where the
+  closed box matters most and it is not corrected.
 * **The measured factor is the same quantity.** Equation 5 of the paper of Landesfeind and
   Gasteiger defines it as 1 + d ln f / d ln c, with f the mean molar activity coefficient, and
   has no term for the motion of the solvent. The authors expect 1 at infinite dilution and a

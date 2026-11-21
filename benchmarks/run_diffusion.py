@@ -146,6 +146,13 @@ RUNS: Dict[str, Dict[str, object]] = {
     "scaled_huge": {"label": "scaled charges, four times as many molecules",
                     "settings": {"ion_charge_scale": 0.8, "n_solvent": 1000}},
 }
+#: two boxes at the reference electrolyte with weaker charges on the ions than the series (item
+#: BT11, a pilot): 1,000 solvent molecules, 4 ns, the same start as the box of the series. They
+#: show whether the thermodynamic factor reaches the measured one at some factor on the charges.
+for _scale in (0.5, 0.6):
+    RUNS[f"charge_{str(_scale).replace('.', 'p')}"] = {
+        "label": f"charges of the ions multiplied by {_scale:g}, 1,000 solvent molecules",
+        "settings": {"ion_charge_scale": _scale, "n_solvent": 1000}}
 #: the concentration series of gate (a): the six salt concentrations of the measured study
 #: (0.1, 0.5, 1.0, 1.5, 2.0 and 3.0 mol/L) as the molality that gives about each of them. The
 #: third is the molality of the reference cell, so that it joins the other runs. The measured
