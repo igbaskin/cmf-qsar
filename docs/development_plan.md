@@ -10322,7 +10322,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 12 | 11 | EC9 |
-| H. Battery science | 13 | 9 | BT9 (partly), BT10, BT11 (partly), BT13 |
+| H. Battery science | 13 | 9 | BT9 (partly), BT10 (partly), BT11 (partly), BT13 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
