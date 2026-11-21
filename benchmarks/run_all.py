@@ -681,6 +681,20 @@ def registry() -> List[Benchmark]:
                   minutes="8",
                   report=lambda: _mod("run_labelmodel").write_table(_r("labelmodel")),
                   tables=["labelmodel/table.md"]),
+        Benchmark("kbpilot",
+                  "a free pilot for plan item BT11: the thermodynamic factor of the salt read "
+                  "from the number fluctuations in cubes of the boxes that item BT9 stored "
+                  "(the six concentrations from two starts, the 62 formulations, and the older "
+                  "boxes with other factors on the charges), against the measured function "
+                  "(the boxes are simulated by the prepare step of the diffusion benchmark and "
+                  "are not in the repository; the analysis reads their stored centres from "
+                  "benchmarks/cache/transport)",
+                  "run_kbpilot.py", "kbpilot",
+                  compute=[["--stage", "series"], ["--stage", "all62"], ["--stage", "charges"]],
+                  prepare=["run_diffusion.py --stage simulate"],
+                  minutes="15",
+                  report=lambda: _mod("run_kbpilot").write_table(_r("kbpilot")),
+                  tables=["kbpilot/table.md"]),
         Benchmark("phenazine",
                   "quantum fields (Hirshfeld charge, Fukui indices, the spin of the radical "
                   "anion) against the five ordinary fields and against the global quantum "

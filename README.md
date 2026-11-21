@@ -4016,6 +4016,10 @@ for it:
   diffusion coefficient of a new solvent mixture to about 5 %, better than the solvation shells,
   and the simulated conductivity adds nothing measurable to the composition for the measured
   conductivity ([run_labelmodel.py](benchmarks/run_labelmodel.py)).
+- A free pilot for item BT11 reads the thermodynamic factor from the number fluctuations in the
+  boxes of item BT9 ([run_kbpilot.py](benchmarks/run_kbpilot.py)). It shows a reproducible trend
+  with the concentration (one start scatters by 4 %), and it does not reach the measured level:
+  1.4 against 2.4 at 1.1 mol/L, and 1.4 against 6.7 at 3 mol/L.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

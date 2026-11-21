@@ -19473,6 +19473,53 @@ python benchmarks/run_labelmodel.py --stage value    # what the simulation adds
 python benchmarks/run_labelmodel.py --stage report   # the table
 ```
 
+### A pilot for the thermodynamic factor
+
+Item BT11 needs the thermodynamic factor of the salt: how far the salt is from an ideal
+solution. The plan takes it from the Kirkwood-Buff integrals of the simulated boxes and warns
+that this needs large boxes and long runs. Before paying for them, `benchmarks/run_kbpilot.py`
+asks whether the boxes of item BT9 already show a usable signal. Those boxes hold the centre of
+every molecule once per picosecond for 4 ns, with 1,000 solvent molecules.
+
+The route is the number fluctuation. The molecules in a cube that is smaller than the box are
+counted in every frame. The covariance of the counts of two species, divided by the volume of the
+cube, is the Kirkwood-Buff matrix of those species. The salt is one species with the number
+(cations + anions) / 2. The factor follows from linear equations: the grand canonical response
+of the densities, the Gibbs-Duhem relation at constant pressure, and solvents that keep their
+number ratios. It is 1 for an ideal solution and 1/2 if every cation is bound to one anion. The
+tests check both limits.
+
+| Concentration, mol/L | Measured factor | Simulated factor, mean of two starts, cube 1/4 |
+|---:|---:|---:|
+| 0.10 | 0.54 | 0.95 |
+| 0.49 | 1.35 | 1.03 |
+| 1.13 | 2.37 | 1.40 |
+| 1.49 | 2.92 | 1.51 |
+| 1.98 | 3.81 | 1.53 |
+| 2.97 | 6.74 | 1.41 |
+
+* **A signal exists.** One start scatters by 4 % in the logarithm of the factor with the cube of
+  1/4 and by 21 % with the cube of 1/2 (six pairs of starts). Over the 63 boxes of the 62 formulations
+  (the reference electrolyte has two starts) the factor runs from 0.68 to 1.83, with a standard
+  deviation of 0.24, and its rank correlation with the molality is +0.82.
+* **The level is wrong.** The simulated factor stops rising above 1.1 mol/L while the measured
+  one rises to 6.7. The cube changes the value by up to 0.4 in some boxes, and the closed box is
+  not corrected, so only the trend can be read.
+* **The charges of the ions.** At the reference electrolyte the factor is 0.92 with whole
+  charges, 0.91 to 1.07 with a factor of 0.8 (six boxes of 125 to 1,000 solvent molecules) and
+  1.21 with 0.7 (a box of 250 molecules). Weaker charges give a factor nearer to the measured
+  value. Whole charges bind the ions together more and give a factor below 1.
+* **What is not known.** The measured function of the cell model may include a term for the
+  motion of the solvent, so the comparison is of trends. The paper of Landesfeind and
+  Gasteiger could not be read here, so its definition has not been checked.
+
+```bash
+python benchmarks/run_kbpilot.py --stage series    # the six concentrations, two starts each
+python benchmarks/run_kbpilot.py --stage all62     # the 62 formulations
+python benchmarks/run_kbpilot.py --stage charges   # the older boxes with other charge factors
+python benchmarks/run_kbpilot.py --stage report    # the table
+```
+
 ### What this says about a label
 
 * **A label needs scaled charges.** With whole charges it is 0.35 of the measured coefficient

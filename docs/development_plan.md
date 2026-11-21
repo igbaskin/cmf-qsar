@@ -6235,6 +6235,31 @@ concentration was driven, and the stage counts only discharges that ended at the
   the Nernst–Einstein value is 3.1 times below the diffusion coefficient of the reference
   without the thermodynamic factor and 1.4 times below with it. The item is therefore judged
   first by what its factor does to the diffusion coefficient of BT9.
+  *A free pilot (21 November 2026)* (`benchmarks/run_kbpilot.py`, 5 tests in
+  `tests/test_kbpilot.py`, the manual under *A pilot for the thermodynamic factor*). The boxes
+  of BT9 store the centre of every molecule once per picosecond for 4 ns. The pilot counts the
+  molecules in cubes of 1/4, 1/3 and 1/2 of the side and takes the factor from the covariance
+  of the counts, with no radial distribution function. The definition has two exact limits that
+  the tests check: independent ions give 1, and ions in pairs give 1/2. *A signal exists.* One
+  start scatters by 4 % in the logarithm of the factor with the cube of 1/4 (6 pairs of
+  starts), and by 21 % with the cube of 1/2. Over the 63 boxes of the 62 formulations (the
+  reference electrolyte has two starts) the factor runs from 0.68 to 1.83 with a standard
+  deviation of 0.24, and its rank correlation with the molality is +0.82. *The level is
+  wrong.* In the six concentrations of the series the mean of two starts is 0.95, 1.03, 1.40, 1.51, 1.53 and 1.41 from 0.1 to 3.0 mol/L, and the measured function is
+  0.54, 1.35, 2.37, 2.92, 3.81 and 6.74. The simulated factor stops rising above 1.1 mol/L
+  while the measured one keeps rising. *The factor on the charges moves it the wrong way for
+  a simple explanation:* at the reference electrolyte the factor is 0.92 with whole charges,
+  0.91 to 1.07 with 0.8 (six boxes) and 1.21 with 0.7 in the box of 250 molecules. Whole
+  charges bind the ions together more and give a factor below 1, while the measured one is
+  2.37. The cube changes the value by up to 0.4 in some boxes, and the closed box is not
+  corrected, so the level is indicative only. *What is not known.* The measured function of the
+  cell model may include a term for the motion of the solvent, so the comparison is of trends.
+  The paper of Landesfeind and Gasteiger could not be read here (HTTP 403), so its definition
+  of the factor has not been checked. *Verdict.* The boxes of 4 ns and 1,000 molecules show a
+  reproducible trend with the concentration and not the level. The large boxes of the plan
+  should wait for two cheap steps: the definition of the measured factor, from the paper, and
+  boxes of 1,000 molecules at the reference concentration with lower factors on the charges
+  (each about 20 minutes), to see whether the level reaches 2.37 at all.
 
 * **BT12. The activation energy of charge transfer at an electrode.** The exchange-current
   density is the rate of the charge-transfer reaction at the surface of an electrode particle at
