@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 141 modules, 271 classes with 871 public methods, and 1474 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 142 modules, 274 classes with 873 public methods, and 1486 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -97,6 +97,7 @@ for.
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
 | [cmfqsar.kcca](#cmfqsarkcca) | Kernel canonical correlation analysis: what one view of the molecules sees that another does not (plan item F6). |
 | [cmfqsar.kernels](#cmfqsarkernels) | Molecular-field kernels. |
+| [cmfqsar.learnable](#cmfqsarlearnable) | A learnable CMF layer: the width and the weight of every field trained by gradient (item ND2). |
 | [cmfqsar.learnincrements](#cmfqsarlearnincrements) | Fitting the atomic increments to the data instead of taking them from the table (item D5). |
 | [cmfqsar.localalign](#cmfqsarlocalalign) | Local alignment: an environment posed on its centre and first shell (plan item LP3). |
 | [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
@@ -10241,6 +10242,256 @@ array of shape (Ni, 3)
 ### `so3_right_jacobian(omega: np.ndarray) -> np.ndarray`
 
 Right Jacobian of the SO(3) exponential map (identity at omega = 0).
+
+## cmfqsar.learnable
+
+Source: `cmfqsar/learnable.py`
+
+A learnable CMF layer: the width and the weight of every field trained by gradient (item ND2).
+
+A CMF model fixes two things before it sees an activity: the attenuation `alpha` of every
+field, which sets the width of the Gaussian on every atom, and the mixing weight `h` of every
+field in the joint kernel `K = sum_f h_f K_f`.  The program chooses the attenuation from a
+grid of a few values and leaves the weights equal.  This module makes both continuous
+parameters and trains them by gradient, with the ridge and, where it is used, the width of the
+Gaussian kernel layer.
+
+What is trained and what is not
+-------------------------------
+The model stays the kernel model.  Its landmarks `Z` are molecules of the training part, and
+its prediction is
+
+    y(x) = sum_z c_z K(x, z) + b,        K(x, z) = sum_f h_f K_f(x, z; alpha_f).
+
+The coefficients `c` and the bias are not trained by gradient.  They are the closed-form
+ridge solution for the current `alpha` and `h`, so the model at every step is the model the
+rest of the program would fit with these settings.  Only the settings move: one `log alpha`
+and one weight per field, the ridge, and the layer width.  The weights are written
+`h = T softmax(u)`, so that their sum `T` stays what it was and the ridge keeps its meaning.
+
+Because the model is linear in the fields, its regression-coefficient field (the co-field) is
+kept: `cofield_gaussians` returns it as atom-centred Gaussians, in the form
+`cmfqsar.cofields.evaluate_gaussians` draws and `cmfqsar.cofields.export_cube`
+writes.  `fieldset_of` writes the trained settings into a field set, so that every other
+part of the program can build its own model from them.
+
+The objective
+-------------
+The settings are chosen by the criterion the grid search uses: the squared error of the
+out-of-fold predictions inside the training part (`folds` folds).  The ridge solution is a
+differentiable function of the kernel, and the kernel is an analytic function of `alpha`, so
+the criterion has an exact gradient.  A quasi-Newton method (L-BFGS-B) minimises it.  Every
+evaluation is exact: the field kernels are recomputed at the attenuations it asks for.  When
+validation rows are given, the evaluation with the lowest validation error is kept, which is
+early stopping; without them the one with the lowest criterion is kept.
+
+How the gradient reaches the attenuation
+----------------------------------------
+A field kernel is a sum over atom pairs of `w_i w_j E(d_ij)`, and for an atom-centred
+Gaussian field
+
+    E = (2 pi / (alpha s))^(3/2) exp(-alpha t d^2),   s = c_i + c_j,   t = c_i c_j / (2 s),
+
+with `c = 1` for an ordinary field and `c = 1 / R^2` for the steric field.  Its derivative
+is `dE / dlog alpha = -E (3/2 + alpha t d^2)`, so the kernel and its derivative come from the
+same pass over the atom pairs, with one more sum.  No graph of the atom pairs is kept.  The
+pass returns `K_f` and `dK_f / dlog alpha_f` as two matrices, and the rest of the
+computation sees `K_f + dK_f (theta_f - theta_f0)` with `theta = log alpha`: the value is
+exact at `theta0` and so is the gradient.
+
+A network on the layer
+----------------------
+`train_network` puts a multilayer network on the kernel rows of the layer, optionally
+joined with other descriptors of the molecule, and trains the network and the settings of the
+layer together by stochastic gradient descent.  Here the kernel rows are recomputed only when
+an attenuation has moved by more than `trust` in `log alpha`; between two such passes the
+first-order form above is used.  A last phase holds the settings fixed, recomputes the kernels
+exactly and trains the network alone, so that the reported model uses exact kernels.  A
+network has no co-field; this route is the comparison, not the model to read.
+
+PyTorch is needed (the optional dependency of `cmfqsar.fieldae`).  Without it the module
+imports, `available` is false and `pack` still works.
+
+### `class Kernels  (dataclass)`
+
+The field kernels of some molecules against the landmarks at given attenuations.
+
+`K` and `dK` are (fields, molecules, landmarks), `Kzz` and `dKzz` are (fields,
+landmarks, landmarks), `dx` and `ddx` are the self-kernels (fields, molecules).  The
+`d...` arrays are the derivatives with respect to `log alpha` of the same field, or
+None when the pass was made without them.
+
+Attributes:
+
+- `alpha: np.ndarray`
+- `K: object`
+- `Kzz: object`
+- `dx: object`
+- `dz: object`
+- `dK: object` = `None`
+- `dKzz: object` = `None`
+- `ddx: object` = `None`
+- `ddz: object` = `None`
+- `seconds: float` = `0.0`
+
+### `class Trained  (dataclass)`
+
+The settings a training found and the model fitted with them.
+
+`alpha` and `h` hold one value per field, `lam` is the ridge and `gamma` the width
+of the Gaussian layer (None for the linear model).  `coef` and `bias` are the model
+over the landmarks `landmarks` (rows of the packed table).  `pred` holds the prediction
+of every molecule of the packed table, `history` one record per evaluation.
+
+Attributes:
+
+- `names: List[str]`
+- `kinds: List[str]`
+- `alpha: np.ndarray`
+- `h: np.ndarray`
+- `lam: float`
+- `gamma: Optional[float]`
+- `med: float`
+- `normalize: str`
+- `layer: Optional[str]`
+- `landmarks: np.ndarray`
+- `coef: np.ndarray`
+- `bias: float`
+- `pred: np.ndarray`
+- `learned: Tuple[str, ...]`
+- `history: List[dict]` = `field(default_factory=list)`
+- `start: Dict[str, object]` = `field(default_factory=dict)`
+- `passes: int` = `0`
+- `seconds: float` = `0.0`
+- `kernel_seconds: float` = `0.0`
+- `norms: Optional[np.ndarray]` = `None`
+- `by_criterion: Optional['Trained']` = `None`
+
+#### `Trained.settings() -> dict`
+
+### `class TrainedNetwork  (dataclass)`
+
+A network trained on the kernel rows of the layer, and the settings of the layer.
+
+Attributes:
+
+- `names: List[str]`
+- `alpha: np.ndarray`
+- `h: np.ndarray`
+- `pred: np.ndarray`
+- `learned: Tuple[str, ...]`
+- `history: List[dict]` = `field(default_factory=list)`
+- `epochs: int` = `0`
+- `passes: int` = `0`
+- `seconds: float` = `0.0`
+- `kernel_seconds: float` = `0.0`
+- `valid_rmse: float` = `float('nan')`
+
+#### `TrainedNetwork.settings() -> dict`
+
+### `available() -> bool`
+
+Whether PyTorch is installed, so that the layer can be trained.
+
+### `require() -> None`
+
+Raise with an installation message when PyTorch is missing.
+
+### `pack(table, specs, columns: Optional[Sequence[int]]=None) -> Dict[str, object]`
+
+The atoms of every molecule of `table`, as one padded block per field.
+
+A field uses only the atoms that carry weight in it.  For field `f` the result holds
+`xyz[f]` (molecules, atoms, 3), `w[f]` (molecules, atoms) and `c[f]` (molecules,
+atoms), padded with zero weights.  `c` is 1 for an ordinary field and `1 / R^2` for the
+steric field, so that the Gaussian exponent of an atom is `alpha c`.
+
+`table` needs `coords`, `weights`, `radii` and `offsets` only
+(`cmfqsar.fields.AtomTable`); `specs` are the fields, each with `name` and
+`kind`; `columns` are their columns in `table.weights` (default: 0, 1, 2, ...).
+
+### `subset(packed: Dict[str, object], rows: Sequence[int]) -> Dict[str, object]`
+
+The packed atoms of the molecules `rows`.
+
+### `save_packed(path: str, packed: Dict[str, object], **extra) -> None`
+
+Write packed atoms to a NumPy `.npz` file; `extra` arrays are stored beside them.
+
+### `load_packed(path: str) -> Tuple[Dict[str, object], Dict[str, np.ndarray]]`
+
+Read `save_packed`: (the packed atoms, the extra arrays).
+
+### `kernel_pass(packed, rows, landmarks, alpha, derivative: bool=True, device=None, dtype=None, budget: float=BUDGET, zz: bool=True) -> Kernels`
+
+The kernels of every field between the molecules `rows` and the molecules `landmarks`.
+
+`packed` is the result of `pack`, `alpha` one attenuation per field.  With
+`derivative` the derivative with respect to `log alpha` is returned too.  The pass is made
+a block of molecules at a time, so its memory does not grow with the number of rows; it is
+set by `budget`, the number of atom pairs held at once.  `zz=False` leaves out the
+kernels between the landmarks and computes their self-kernels only.
+
+### `train(packed, y, train, landmarks, valid=None, alpha=1.0, h=None, lam: float=0.01, gamma: Optional[float]=None, learn: Sequence[str]=('alpha', 'weights', 'lam'), normalize: str='cosine', layer: Optional[str]=None, steps: int=40, folds: int=5, seed: int=0, select: Optional[str]=None, predict=None, keep_criterion: bool=False, device=None, dtype=None, budget: float=BUDGET, log: Optional[Callable[[str], None]]=None) -> Trained`
+
+Train the settings of the fields and fit the ridge model with them.
+
+`packed` holds the atoms of every molecule (`pack`), `y` one activity per molecule,
+`train` and `valid` rows of the table, `landmarks` rows that carry the model (molecules of
+the training part).  `alpha`, `h`, `lam` and `gamma` are the start: one number, or one per
+field for the first two.  `learn` names what is trained: any of `"alpha"`, `"weights"`,
+`"lam"` and `"gamma"` (the last needs `layer="gauss"`); an empty `learn` or
+`steps=0` fits the model at the start and trains nothing.
+
+`normalize` is `"cosine"` (every field kernel divided by the square roots of the two
+self-kernels, the convention of the program) or `"mean"` (every field kernel divided by
+the mean self-kernel of the landmarks).  `steps` bounds the iterations of the quasi-Newton
+method.  `select` is `"valid"` (keep the evaluation with the lowest validation error;
+the default when `valid` is given) or `"cv"` (keep the lowest criterion).  `predict`
+lists the rows whose predictions are wanted (default: every molecule).  With
+`keep_criterion` the model at the lowest criterion is returned too, as `by_criterion`
+of the result, so that one training gives the model with and without early stopping.
+`start` of the result holds the criterion at the start and its gradient with respect to
+the trained numbers (`log alpha` of every field, the weight logits, `log lam`,
+`log gamma`, in the order of `start["layout"]`).
+The method makes at most `steps + 10` evaluations.
+
+### `fieldset_of(trained: Trained, fieldset)`
+
+A copy of `fieldset` with the trained attenuation and weight of every field.
+
+### `cofield_gaussians(trained: Trained, landmarks_table, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(centres, coefficients, widths) of the co-field of field `f` of a trained linear model.
+
+`landmarks_table` is the atom table of the landmark molecules, in the order of
+`trained.landmarks`.  The three arrays have the form of
+`cmfqsar.lowrank.cofield_gaussians`, so `cmfqsar.cofields.evaluate_gaussians`
+draws the map and `cmfqsar.cofields.export_cube` writes it.  The overlap integral of
+this field with field `f` of a molecule is the part of the prediction that field `f`
+carries, before the division by the molecule's own norm under the cosine convention.
+
+### `whitener(Kzz: np.ndarray, rcond: float=1e-12) -> np.ndarray`
+
+`W` with `W W' = K_zz^+` (the same as `cmfqsar.lowrank.whitener`).
+
+### `train_network(packed, y, train, valid, landmarks, alpha=1.0, h=None, extra=None, learn: Sequence[str]=('alpha', 'weights'), normalize: str='cosine', hidden: Sequence[int]=(128, 64), l2: float=0.0001, epochs: int=200, batch: int=256, lr: float=0.001, lr_fields: float=0.002, trust: float=0.1, patience: int=25, seed: int=0, predict=None, device=None, dtype=None, budget: float=BUDGET, log: Optional[Callable[[str], None]]=None) -> TrainedNetwork`
+
+Train a multilayer network on the kernel rows of the layer, and the layer with it.
+
+The input of the network is `(K(x, Z) W0 - mu0) / s0`: the joint kernel of the molecule
+with the landmarks, times the whitening matrix of the start, centred on the training rows
+and divided by one number.  `W0`, `mu0` and `s0` are computed at the start and do not
+change, so the input at the start is the scaled CMF vector of plan item ND1.  `extra` is an
+optional (molecules, columns) block of other descriptors, already scaled, that is joined
+to it.  `learn` names what moves in the layer (`"alpha"`, `"weights"` or neither); with
+neither, the network alone is trained and the kernels are computed once.
+
+The kernels are recomputed when an attenuation has moved by more than `trust` in
+`log alpha` and in a last phase with the settings held fixed (see the module text).
+Early stopping uses the validation rows, with `patience` epochs.  There are two phases of
+at most `epochs` epochs each, and the second starts from the best state of the first with
+a new optimiser; with a fixed layer both phases train the network alone.
 
 ## cmfqsar.learnincrements
 
