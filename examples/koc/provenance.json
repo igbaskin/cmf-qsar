@@ -1,0 +1,30 @@
+{
+ "source": "OPERA data (Mansouri et al., J. Cheminform. 10 (2018) 10), github.com/kmansouri/OPERA, MIT licence",
+ "url": "https://raw.githubusercontent.com/kmansouri/OPERA/01b07c769dd86eadb71843e057783a64a364c885/OPERA_Data.zip",
+ "commit": "01b07c769dd86eadb71843e057783a64a364c885",
+ "files_md5": {
+  "KOC_QR.sdf": "6d7b1a923d77f2bf78ad036ea70f2dd9"
+ },
+ "archive_md5": "9dcab9aa52bf2b5abf027889afd2dfda",
+ "koc": {
+  "read": 728,
+  "refused": {
+   "an element outside the organic set": 2,
+   "a net charge": 2
+  },
+  "duplicate_skeletons": [
+   "koc-100259",
+   "koc-100473",
+   "koc-100540",
+   "koc-100541",
+   "koc-100669"
+  ],
+  "kept_before_embedding": 719,
+  "train": 536,
+  "test": 183,
+  "embedded": 719,
+  "embedding_failed": [],
+  "train_embedded": 536,
+  "test_embedded": 183
+ }
+}
