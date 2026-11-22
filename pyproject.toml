@@ -63,6 +63,8 @@ md = ["mdtraj>=1.9"]
 # enough -- the networks are small and the batches are a few hundred atoms.
 # cmfqsar/learnable.py (`cmf lowrank --train`) needs the same package; it uses a GPU when the
 # installed build has one, and a set of thousands of molecules needs that.
+# cmfqsar/device.py (the atom network of plan item ND14c) needs it too; `cmf lowrank
+# --atom-cofield`, which only writes the co-field at the atoms, does not.
 fieldae = ["torch>=2.0"]
 # cmfqsar/electrolyte.py: building and running a bulk electrolyte box, for the sampled shells of
 # plan item BT5.  This is deliberately not a pip extra, because its parts are conda packages and

@@ -1854,6 +1854,11 @@ def cmd_lowrank(args):
         print(f"  {len(names)} rows written to {args.csv}")
     if args.features:
         _write_features(args, low, fieldset, names, y, Phi)
+    if args.atom_cofield:
+        if Z is None:
+            raise SystemExit("--atom-cofield needs landmarks in space (grid, atoms or "
+                             "molecules), not Fourier features")
+        _write_atom_cofield(args, low, fieldset, table, names, y, Phi, lam)
     if args.cofield:
         if Z is None:
             raise SystemExit("--cofield needs landmarks in space (grid, atoms or molecules), "
@@ -1928,6 +1933,67 @@ def _write_cofield(prefix, low, w):
         path = f"{prefix}_{spec.name.replace(':', '-')}.cube"
         export_cube(path, grid, volume, title=f"CMF co-field of the field {spec.name}")
         print(f"  co-field of {spec.name} (attenuation {spec.alpha:.3g}) written to {path}")
+
+
+def _write_atom_cofield(args, low, fieldset, table, names, y, Phi, lam):
+    """`cmf lowrank --atom-cofield`: the co-field of every field at every atom (item ND14c).
+
+    The value at an atom is what one atom of weight one at that place adds to the prediction
+    through one field.  The values are atom features for a network that reads atoms, such as
+    the atom network of `cmfqsar.device.train_device` (one network with shared weights on every
+    atom, a sum over the atoms, a second network).  A molecule of the data set reads a model
+    that was fitted without its fold, so that its values do not hold its own activity; the
+    molecules of `--features-for` read the model of the whole data set.
+    """
+    import numpy as np
+
+    from cmfqsar import device as D
+
+    W, _b, which = D.lowrank_fold_weights(low, Phi, y, lam, folds=args.folds, seed=args.seed)
+    counts = np.diff(np.asarray(table.offsets, int))
+    values = np.zeros((int(counts.sum()), len(low.specs)))
+    owner = np.repeat(np.arange(table.n_mol), counts)
+    for k in range(len(W) - 1):
+        rows = np.flatnonzero(which == k)
+        if len(rows):
+            values[np.isin(owner, rows)] = D.lowrank_atom_cofield(low, W[k], table.subset(rows))
+    blocks = [(list(names), "data", table, values)]
+    if args.features_for:
+        other = load_dataset(args.features_for, activity_prop=args.activity)
+        tab = AtomTable.from_molecules([build_fields(m, fieldset, n)
+                                        for m, n in zip(other.mols, other.names)])
+        blocks.append((list(other.names), "other", tab, D.lowrank_atom_cofield(low, W[-1], tab)))
+    fields = [s.name for s in low.specs]
+    if str(args.atom_cofield).lower().endswith(".csv"):
+        import csv
+        with open(args.atom_cofield, "w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["name", "source", "atom", "symbol", "x", "y", "z"] + fields)
+            for mol_names, source, tab, vals in blocks:
+                xyz = np.asarray(tab.coords, float)
+                for i, name in enumerate(mol_names):
+                    sl = tab.slice(i)
+                    symbols = tab.molecules[i].symbols
+                    for k, at in enumerate(range(sl.start, sl.stop)):
+                        writer.writerow([name, source, k + 1, symbols[k]]
+                                        + [f"{c:.4f}" for c in xyz[at]]
+                                        + [f"{v:.8g}" for v in vals[at]])
+    else:
+        np.savez_compressed(
+            args.atom_cofield,
+            names=np.array([n for b in blocks for n in b[0]]),
+            source=np.array([b[1] for b in blocks for _n in b[0]]),
+            counts=np.concatenate([np.diff(np.asarray(b[2].offsets, int))
+                                   for b in blocks]).astype(np.int32),
+            fields=np.array(fields),
+            xyz=np.concatenate([np.asarray(b[2].coords, float) for b in blocks]),
+            values=np.concatenate([b[3] for b in blocks]))
+    total = int(sum(len(b[3]) for b in blocks))
+    print(f"  the co-field of {len(fields)} fields at {total} atoms written to "
+          f"{args.atom_cofield}; the {table.n_mol} molecules of the data set read a model "
+          f"fitted without their fold ({len(W) - 1} folds, ridge {lam:g})"
+          + (f", the {blocks[1][2].n_mol} molecules of {args.features_for} the model of the "
+             f"whole data set" if args.features_for else ""))
 
 
 def _write_features(args, low, fieldset, names, y, Phi):
@@ -6290,9 +6356,20 @@ def main(argv=None):
                     help="write the co-field of every field of the fitted model as a Gaussian "
                          "cube file PREFIX_<field>.cube")
     lr.add_argument("--features-for", default=None, metavar="FILE",
-                    help="with --features: also write the rows of the molecules of this file, "
-                         "which must be in the frame of the data set; they are made with the "
-                         "same landmarks")
+                    help="with --features or --atom-cofield: also write the rows of the "
+                         "molecules of this file, which must be in the frame of the data set; "
+                         "they are made with the same landmarks")
+    lr.add_argument("--atom-cofield", default=None, metavar="FILE",
+                    help="write the co-field of every field at every atom of every molecule, as "
+                         "atom features for a network that reads atoms (plan item ND14c). The "
+                         "manual calls such a network an atom network: one network with shared "
+                         "weights reads the numbers of every atom, its outputs are summed over "
+                         "the atoms, and a second network maps the sums to the activity; it "
+                         "sees no bonds (cmfqsar.device.train_device trains one, with PyTorch). "
+                         "A molecule of the data set reads a model fitted without its fold "
+                         "(--folds), so that its values do not hold its own activity. A .csv "
+                         "file gets one row per atom; any other name gets a NumPy .npz file "
+                         "with names, source, counts, fields, xyz, values")
     lr.set_defaults(func=cmd_lowrank)
 
     bi = sub.add_parser("isosteres",

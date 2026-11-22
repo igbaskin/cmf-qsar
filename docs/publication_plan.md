@@ -340,8 +340,9 @@ Short communication, written only if a journal asks for a separate note: increme
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
 otherwise supplementary material of paper 1. Not yet a paper: the CMF-neural integration of the
 development plan (stages ND1 to ND3). ND1 was measured on 20 November 2026
-(`results/featuriser/`) and ND2 on 21 November 2026 (`results/learnable/`); it becomes paper 19
-when the two are compared with the published networks on COMPAS-1.
+(`results/featuriser/`), ND2 on 21 November 2026 (`results/learnable/`) and ND14c on
+22 November 2026 (`results/device/`, `results/device_hops/`); it becomes paper 19 when they are
+compared with the published networks on COMPAS-1.
 
 ### 1. Software paper
 
@@ -1047,9 +1048,14 @@ learned descriptors of the neural device they lower its error by 0.006 eV on COM
 was measured on 21 November 2026 on the same sets: training the widths and the weights of the
 fields gains nothing with the linear kernel, lowers the error of the model with the Gaussian
 layer over 1,000 landmarks from 0.074 to 0.058 eV on COMPAS-1D, and does not lower the best
-number of ND1. This is a result against paper 16's model. The comparison with the published
-networks is not made, and the result of ND2 is mostly negative; until that comparison exists
-the paper is not counted.
+number of ND1. This is a result against paper 16's model. ND14c was measured on 22 November
+2026: a network that reads the co-field of the ridge regression at every atom lowers the error
+of that ridge regression from 0.114 to 0.083 eV on COMPAS-1D and from 0.742 to 0.514 eV on
+1,801 lithium hops. The same network on the plain coordinates of the atoms is as good or
+better, so the co-field is not the reason, and the neural device without message passing with
+the co-field as atom sensors (0.127 eV) does not beat the ridge regression. The comparison with
+the published networks is not made, and the results of ND2 and ND14c are mostly negative; until
+that comparison exists the paper is not counted.
 
 ### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
 

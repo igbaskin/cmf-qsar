@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 142 modules, 274 classes with 873 public methods, and 1486 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 143 modules, 276 classes with 876 public methods, and 1492 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -67,6 +67,7 @@ for.
 | [cmfqsar.delivery](#cmfqsardelivery) | What a predicted binding constant means for a delivery formulation (plan item SC2). |
 | [cmfqsar.descriptors](#cmfqsardescriptors) | Non-field descriptors: one number per molecule, beside the fields rather than instead of them. |
 | [cmfqsar.design](#cmfqsardesign) | The last step of the design cycle: what to put at a position, ranked by the model (E3). |
+| [cmfqsar.device](#cmfqsardevice) | The co-field as an atom feature, and a network that sums over the atoms (item ND14c). |
 | [cmfqsar.diagnose](#cmfqsardiagnose) | What to ask of a data set before modelling it, and which route it should take. |
 | [cmfqsar.docking](#cmfqsardocking) | Place conformations inside the pocket instead of in the gas phase. |
 | [cmfqsar.electrolyte](#cmfqsarelectrolyte) | Bulk electrolyte simulations, for plan item BT5. |
@@ -4700,6 +4701,199 @@ which is what a topomer model is fitted on, and `"molecule"` builds the whole mo
 embeds it once, which a rotation-invariant model can score because it needs no frame (plan
 item SC7).  `"auto"`, the default, picks the second for an invariant model and the first
 otherwise.
+
+## cmfqsar.device
+
+Source: `cmfqsar/device.py`
+
+The co-field as an atom feature, and a network that sums over the atoms (item ND14c).
+
+A linear CMF model has a regression-coefficient field (the co-field) for every field type.  The
+prediction for a molecule is the overlap of the fields of the molecule with these co-fields, and
+a ridge regression has fitted them.  This module keeps the co-fields and replaces the last step.
+The co-field of every field is read at the position of every atom, in the common frame of the
+aligned molecules, and the values become features of the atom.  A network with shared weights
+then reads every atom, the outputs are summed over the atoms, and a second network maps the sum
+to the activity.  This structure is the neural device of Baskin, Palyulin and Zefirov (J. Chem.
+Inf. Comput. Sci. 37 (1997) 715): a network on every atom, a sum, and a second network.
+
+What is read at an atom
+-----------------------
+The value is the overlap of the co-field of field `f` with the Gaussian that the field puts on
+the atom, for a weight of one:
+
+    v_f(a) = h_f sum_z c_z n_fz sum_{b in z} w_fb E_f(a, b),
+
+with `z` the landmark molecules of the model, `c_z` their regression coefficients, `n_fz`
+the factor of the kernel normalisation, `w_fb` the weight of atom `b` in the field and
+`E_f` the overlap of two atom Gaussians.  It is the quantity
+`cmfqsar.cofields.atom_effect` draws: what one atom of weight one at this place adds to
+the prediction.  The linear model is the special case in which the values are multiplied by the
+weights of the atoms and summed:
+
+    y(x) = b + sum_f sum_{a in x} w_fa v_f(a)            ("mean" normalisation),
+
+and with the "cosine" normalisation every field term is divided by the square root of the
+self-kernel of the molecule (`molecule_norm=True` does this division).
+
+Out-of-fold values
+------------------
+The co-field is fitted to the activities of the training molecules.  If the co-field of the
+full training part is read at a training molecule, the feature holds a part of the activity of
+that same molecule, and a network trained on such features learns to trust them more than it
+can for a new molecule.  `fold_models` therefore fits one model per fold of the training
+part, each without the molecules of its fold, and one model on the whole training part.
+`atom_cofield` takes, for every molecule, the model to read: a training molecule reads
+the model of its fold (an out-of-fold value), and any other molecule reads the model of the
+whole training part.  The models share the landmarks and the kernel, so the folds cost only
+one more ridge solution each.
+
+The atom network
+----------------
+The manual and the result tables call this model the *atom network*.  It has three parts: one
+network with shared weights that reads the numbers of every atom, a sum of its outputs over the
+atoms of the molecule, and a second network that maps the sums to the activity.  It sees no
+bonds: a molecule is a set of atoms with their numbers.  `train_device` trains the two
+networks together by stochastic gradient descent, with early stopping on validation molecules.
+The sum over the atoms does not depend on the order of the atoms.
+The sums are called *collectors*, the name of the 1997 paper; `collectors` of the result holds
+them for every molecule.  A network has no co-field: the reading of the model is kept at the
+input (the co-fields that were read) and lost after it.
+
+The low-rank model of the command line
+---------------------------------------
+`lowrank_fold_weights` and `lowrank_atom_cofield` do the same for the model of
+`cmfqsar.lowrank`, which `cmf lowrank` fits: the weights of the model without each
+fold, and its co-field at every atom of a table.  They run on the processor and need no
+PyTorch; `cmf lowrank --atom-cofield FILE` writes their result.
+
+PyTorch is needed for everything else (the optional dependency of `cmfqsar.fieldae`).
+
+### `class FoldModels  (dataclass)`
+
+Linear models over the same landmarks: one per fold, and one of all training rows.
+
+`coef` is (folds + 1, landmarks) and `bias` (folds + 1,): row `k` is the model fitted
+without fold `k`, and the last row is the model of the whole training part.  `fold_of`
+gives the fold of every training row, in the order of `train`.  `norms` are the factors
+of the kernel normalisation, (fields, landmarks).  `cv` holds the out-of-fold prediction
+of every training row and `fit` the prediction of the model of the whole training part.
+
+Attributes:
+
+- `names: List[str]`
+- `kinds: List[str]`
+- `alpha: np.ndarray`
+- `h: np.ndarray`
+- `lam: float`
+- `normalize: str`
+- `landmarks: np.ndarray`
+- `train: np.ndarray`
+- `fold_of: np.ndarray`
+- `coef: np.ndarray`
+- `bias: np.ndarray`
+- `norms: np.ndarray`
+- `cv: np.ndarray`
+- `fit: np.ndarray`
+- `seconds: float` = `0.0`
+
+#### `FoldModels.folds` -> int  (property)
+
+#### `FoldModels.versions(rows: Sequence[int], out_of_fold: bool=True) -> np.ndarray`
+
+The model every molecule of `rows` reads: its fold for a training molecule (with
+`out_of_fold`), the model of the whole training part (-1) for every other molecule.
+
+### `class TrainedDevice  (dataclass)`
+
+A trained network of `train_device` and what it gives for the molecules it saw.
+
+`pred` holds the prediction of every molecule that was given, `collectors` the sums
+over the atoms, (molecules, collectors).  `valid_rmse` is the lowest error on the
+validation rows, and the returned network is the one of that epoch.
+
+Attributes:
+
+- `pred: np.ndarray`
+- `collectors: np.ndarray`
+- `valid_rmse: float`
+- `epochs: int`
+- `seconds: float`
+- `history: List[dict]` = `field(default_factory=list)`
+- `net: object` = `None`
+- `scaling: dict` = `field(default_factory=dict)`
+
+#### `TrainedDevice.predict(X, mask=None, extra=None, return_collectors: bool=False)`
+
+Predictions for other molecules: `X`, `mask` and `extra` as in `train_device`.
+
+### `available() -> bool`
+
+Whether PyTorch is installed, so that the functions of this module can run.
+
+### `fold_models(packed, y, train, landmarks, alpha=1.0, h=None, lam: float=0.01, normalize: str='cosine', folds: int=5, seed: int=0, device=None, dtype=None, budget: float=L.BUDGET) -> FoldModels`
+
+Fit the linear model of the training part, and the same model without each fold.
+
+`packed` holds the atoms of every molecule (`cmfqsar.learnable.pack`), `y` one
+activity per molecule, `train` the training rows and `landmarks` the rows that carry the
+model.  `alpha` and `h` are the attenuation and the weight of every field (one number, or
+one per field), `lam` the ridge and `normalize` the kernel normalisation, all as in
+`cmfqsar.learnable.train`.  The folds are those of that function for the same `seed`.
+
+### `atom_cofield(packed, models: FoldModels, rows, points, mask=None, radii=None, version=None, molecule_norm: bool=False, device=None, dtype=None, budget: float=L.BUDGET) -> np.ndarray`
+
+The co-field of every field at every atom: (molecules, atoms, fields).
+
+`rows` are the molecules, as rows of `packed`.  `points` is (molecules, atoms, 3): the
+positions of the atoms that are read, in the frame of `packed`, padded to a common number
+of atoms.  `mask` is (molecules, atoms), true for a real atom; a padded place gets zero.
+`radii` is (molecules, atoms): the radius of every atom, which the steric field needs for
+the width of its Gaussian.  `version` names the model every molecule reads (see
+`FoldModels.versions`); the default is the model of the whole training part.
+
+With `molecule_norm` and the cosine normalisation, the values of a molecule are divided by
+the square root of its own self-kernel in the field, so that the sum of the values times
+the weights of the atoms is the share of the field in the prediction.
+
+### `lowrank_fold_weights(low, Phi, y, lam: float, folds: int=10, seed: Optional[int]=0)`
+
+The weights of a low-rank model without each fold, and with every molecule.
+
+`low` is the feature map (`cmfqsar.lowrank.build`), `Phi` the feature rows of the
+molecules and `y` their activities.  Returns (weights (folds + 1, columns), biases
+(folds + 1,), the fold of every molecule).  Row `k` is the model fitted without fold
+`k`; the last row is the model of all molecules.  The folds are those of
+`cmfqsar.lowrank.cross_validate` for the same `seed`.
+
+### `lowrank_atom_cofield(low, w, table) -> np.ndarray`
+
+The co-field of a low-rank model at every atom of `table`: (atoms, fields).
+
+`w` holds the weights of the model over the columns of `low`.  The value is the overlap of
+the co-field of the field with the Gaussian that the field puts on the atom, for a weight
+of one.  The sum over the atoms of a molecule of the values times the weights of the
+atoms, divided by the square root of the self-kernel of the molecule in the field when the
+kernels are normalised, is the share of the field in the prediction.
+
+### `train_device(X, mask, y, train, valid, extra=None, hidden: Sequence[int]=(64, 64), collectors: int=16, brain: Sequence[int]=(64,), l2: float=0.0001, epochs: int=400, batch: int=128, lr: float=0.001, patience: int=40, lr_decay: float=0.5, seed: int=0, device=None, log: Optional[Callable[[str], None]]=None) -> TrainedDevice`
+
+Train the atom network: a network on every atom, a sum over the atoms, a second network.
+
+`X` is (molecules, atoms, features): the features of every atom, padded to a common number
+of atoms; `mask` is (molecules, atoms), true for a real atom.  `y` holds one activity per
+molecule, `train` and `valid` are rows.  `extra` is an optional (molecules, columns) block
+of descriptors of the whole molecule, already scaled; it is joined to the sums before the
+second network.
+
+The first network has the hidden layers `hidden` and `collectors` outputs, the second the
+hidden layers `brain` and one output.  Every feature is centred and divided by its standard
+deviation over the atoms of the training molecules, and the sums are divided by the mean
+number of atoms of a training molecule.  The training is Adam with the rate `lr`, batches
+of `batch` molecules and the L2 penalty `l2` on the weights.  When the error on the
+validation rows has not fallen for a third of `patience` epochs, the rate is multiplied by
+`lr_decay` (1 keeps it fixed).  The training stops when that error has not fallen for
+`patience` epochs, and the network of the best epoch is returned.
 
 ## cmfqsar.diagnose
 

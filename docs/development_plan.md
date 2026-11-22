@@ -8351,6 +8351,60 @@ three places in the items above, ordered by how much of CMF each keeps.
   fitting-method change that the external check of BT7 on LiTraj pointed to. It keeps the
   alignment and gives up the linear co-field reading of the final model, so it belongs to the
   large sets (LiTraj, COMPAS-1) and not to a congeneric series.
+  **Done 22 November 2026.** `cmfqsar/device.py` reads the co-field of every field at every
+  atom (`atom_cofield`; the value is the overlap of the co-field with the Gaussian that the
+  field puts on the atom, for a weight of one) and trains a network on the atoms
+  (`train_device`: one network with shared weights on every atom, a sum over the atoms, a second
+  network; called the atom network below). A training molecule reads a model fitted without its
+  fold (`fold_models`), so that its features do not hold its own activity. The sum of the
+  values times the weights of the atoms reproduces the linear model to 2e-11 eV on COMPAS-1D
+  and 4e-7 eV on the hops. `cmf lowrank --atom-cofield FILE` writes the values for the low-rank
+  model, without PyTorch. For the device of the separate project,
+  `benchmarks/featuriser_device.py --atom-features FILE` adds numbers per atom from a file to
+  its atom sensors; the device project is not changed.
+  **COMPAS-1D** (`benchmarks/run_device.py`; the splits of ND1, the ridge regression over 1,000
+  landmarks of ND2; mean absolute error on the test rows, five splits): ridge regression on the
+  fields 0.114 eV; atom network on the field weights of the atom, with no place, 0.091; on the
+  coordinates 0.078; on the co-field **0.083** (against the ridge regression -0.030 eV, 95 %
+  interval -0.033 to -0.027: the gate is met); on the co-field of the full model 0.074; on the
+  co-field and the coordinates 0.085. The co-field adds 0.009 eV to the field weights, it is
+  0.0045 eV worse than the coordinates (interval 0.0024 to 0.0064), and it makes the network
+  on the coordinates worse by 0.0066 eV.
+  **The QSPR Neural Device without message passing** (COMPAS-1D, five splits, the settings
+  it ships with): with the nine co-field values as extra atom sensors 0.127 eV. Against the
+  ridge regression this is +0.0135 eV (interval +0.0105 to +0.0167), so with this device the
+  gate is not met. Against the same device with its own sensors only (0.183 eV in ND1) it is
+  -0.055 eV. Against the same device with the coordinates as sensors (0.122 eV) it is
+  +0.0050 eV (interval +0.0025 to +0.0075). One run took 1.5 to 7.5 hours, against 2.5 to 10
+  minutes in ND1.
+  **LiTraj hops** (`benchmarks/run_device_hops.py`; 1,801 hops, ten folds that hold out
+  structures, the best kernel model of BT7): ridge regression on the fields 0.742 eV
+  (q2 +0.566); atom network on the field weights 0.564; on the place of the atom 0.535; on the
+  co-field **0.514** (q2 +0.776; against the ridge regression -0.229 eV, interval -0.262 to
+  -0.195: the gate is met); on the co-field of the full model 0.490. The co-field adds 0.050 eV
+  to the field weights; against the place of the atom the difference is not resolved. The
+  forests of BT7 stay better (0.354 to 0.374 eV), so the atom network closes about 60 % of the
+  difference between the ridge regression and a forest.
+  **The eight Sutherland series** (ten splits each, mean test R2): ridge regression 0.413,
+  atom network on the co-field 0.342, on the co-field of the full model 0.444, on the
+  coordinates 0.418. The error with the co-field is resolved higher than that of the ridge
+  regression in three series and lower in none, as the item expected for congeneric series.
+  **Out-of-fold values** are worse than the values of the full model on every set (resolved on
+  COMPAS-1D, on the hops and in four Sutherland series). The fold models differ from the full
+  model by 12 to 23 % of the spread of the values on COMPAS-1D and by 26 to 72 % on a
+  Sutherland series, so training and test molecules read different features; this explanation
+  was not tested on its own.
+  **What it says:** with the atom network the gate is met on both large sets; with the device
+  without message passing it is not met on COMPAS-1D. The reading is narrow. The atom network
+  is better than the linear model on the same fields, but the co-field is not the reason: the
+  atom network and the device both get as far or further with the plain coordinates. No row is a new
+  best model (COMPAS-1D: 0.075 eV for the Gaussian kernel layer of ND2 on the same ridge
+  regression, 0.035 for the device with message passing, 0.029 for the best model of ND1).
+  The co-field stays a map for reading, and is not worth its cost as an input of a network.
+  **Open:** the device with message passing and the co-field as a sensor (not run: a sensor
+  with a different value on every atom removes the device's saving from equal rows, and a run
+  would take days); a test of the explanation of the out-of-fold result; a split that holds
+  out scaffolds; barriers from density functional theory (the hops of `nebdft`).
 
 *Needed:* `cmfqsar/device.py`, a shared per-atom network, a sum and a second network in PyTorch
 under the optional-dependency rule of E11, with the per-atom amplitudes as one output head and
@@ -10376,18 +10430,18 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Materials and periodicity | 16 | 15 | M16 |
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 12 | 11 | EC9 |
-| H. Battery science | 13 | 9 | BT9 (partly), BT10 (partly), BT11 (partly), BT13 |
+| H. Battery science | 13 | 9 | BT9 (partly), BT10 (partly), BT11 (partly), BT13 (partly) |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
-| H. Deep learning | 19 | 4 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
+| H. Deep learning | 19 | 5 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
 | H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**186 items: 153 finished, 8 partly, 25 open.**
+**186 items: 154 finished, 10 partly, 22 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

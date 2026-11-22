@@ -8613,6 +8613,255 @@ python benchmarks/run_learnable.py --stage cofield                      # proces
 python benchmarks/run_learnable.py --report                             # the table only
 ```
 
+### The co-field as an atom feature of a network
+
+A linear CMF model has a field of regression coefficients (the co-field) for every field type,
+and a ridge regression fits it. Plan item ND14c keeps the co-fields and changes the last step.
+The co-field of every field is read at every atom, in the common frame of the aligned molecules.
+The values become features of the atom, and an *atom network* reads them. The question of the
+item is whether this change of the fitting method lowers the error of the ridge regression on
+the same fields. `cmfqsar/device.py` holds the method; the network needs PyTorch
+(`pip install cmfqsar[fieldae]`).
+
+**The atom network.** This manual uses the name *atom network* for a model with three parts:
+
+1. One network with shared weights reads every atom separately. Its input is a row of numbers
+   of that atom, for example the weights of the atom in the fields, its co-field values or its
+   coordinates.
+2. The outputs of this network are summed over the atoms of the molecule. The sums do not
+   depend on the order of the atoms.
+3. A second network maps the sums to the activity.
+
+The atom network sees no bonds: a molecule is a set of atoms with their numbers. This structure
+is the simplest case of the neural device of Baskin, Palyulin and Zefirov (1997): a network on
+every atom, a sum, and a second network. The name keeps it apart from the QSPR Neural Device of
+the section "The fields as a vector for another method". That device is a separate program, and
+it also reads the bonds and the two-bond paths of the molecular graph. Its preset "Atoms only
+(E1)" has the structure of the atom network, with one hidden layer on the atom and with the
+atom sensors of the device as input.
+
+**What is read at an atom.** The value is the overlap of the co-field of field $f$ with the
+Gaussian that the field puts on the atom $a$, for a weight of one:
+
+$$
+v_f(a) = h_f \sum_z c_z\, n_{fz} \sum_{b \in z} w_{fb}\, E_f(a, b) .
+$$
+
+Here $z$ runs over the landmark molecules of the model, $c_z$ are their regression
+coefficients, $n_{fz}$ is the factor of the kernel normalisation, $w_{fb}$ is the weight of atom
+$b$ in the field, and $E_f$ is the overlap of two atom Gaussians. The value says what one atom
+of weight one at this place adds to the prediction through field $f$; it is the quantity that
+`cmfqsar.cofields.atom_effect` draws as a map. The linear model is the special case in which
+the values are multiplied by the weights of the atoms and summed,
+
+$$
+y(x) = b + \sum_f \dfrac{1}{\sqrt{K_f(x, x)}} \sum_{a \in x} w_{fa}\, v_f(a) ,
+$$
+
+where the division by the self-kernel $K_f(x, x)$ of the molecule belongs to the cosine
+normalisation of the kernels and is absent otherwise. The benchmarks check this identity for
+every split.
+
+**Out-of-fold values.** The co-field is fitted to the activities of the training molecules. If
+the co-field of the full training part is read at a training molecule, the feature holds a part
+of the activity of that same molecule. A network trained on such features would trust them more
+than it can for a new molecule. The training part is therefore divided into folds, and one model
+is fitted without each fold. A training molecule reads the co-field of the model that was fitted
+without its fold; this is called an out-of-fold value. A validation or test molecule reads the
+co-field of the model of the whole training part. The fold models share the landmarks and the
+kernel, so each of them costs one more ridge solution (`cmfqsar.device.fold_models`,
+`cmfqsar.device.atom_cofield`).
+
+**Training.** `cmfqsar.device.train_device` trains the two networks of the atom network
+together by stochastic gradient descent (Adam), with early stopping on validation molecules. A
+network has no co-field, so the reading of the model is kept at the input (the co-fields that
+were read) and lost after it.
+
+**On the command line.** `cmf lowrank --atom-cofield FILE` writes the co-field of every field at
+every atom of every molecule, for the low-rank model that the command fits. A molecule of the
+data set reads a model fitted without its fold (`--folds`). With `--features-for OTHER.sdf` the
+molecules of that file are added; they read the model of the whole data set. A `.csv` file gets
+one row per atom, and any other name gets a NumPy `.npz` file. This part needs no PyTorch.
+
+```bash
+cmf lowrank examples/sutherland/GPB.sdf --landmarks molecules:40 --charges file \
+    --fields electrostatic,steric,hydrophobic,hba,hbd --atom-cofield gpb_atoms.csv
+```
+
+On these 66 molecules the command chooses the ridge 1, and it writes 2,087 rows: the name of the
+molecule, its source (`data` for the data set, `other` for `--features-for`), the number and the
+element of the atom, its coordinates, and five co-field values.
+
+The benchmark below found that a network is served better by the values of the full model. To
+get them for the molecules of the data set, give the same file to `--features-for`: the rows
+with the source `other` then hold the values of the full model.
+
+**What was measured.** `benchmarks/run_device.py` uses the sets and the splits of the two
+sections above: COMPAS-1D (8,678 polybenzenoid hydrocarbons, the HOMO-LUMO gap, nine fields,
+five random splits) and the eight Sutherland series (five fields, ten random splits each).
+`benchmarks/run_device_hops.py` uses the 1,801 lithium hops of 393 structures of the LiTraj
+sample, with ten folds that hold out whole structures. The linear model whose co-field is read
+is called *ridge regression on the fields* in the tables. On COMPAS-1D it is the model over
+1,000 landmark molecules of the section above (its row "grid"). On a Sutherland series it is
+the kernel model on every training molecule. On the hops it is the best kernel model of plan
+item BT7: the overlap of the fields of two hop environments in the frame of the hop, averaged
+over the rotation about the hop.
+
+The atom network was trained with five different inputs:
+
+| Row of the tables | What the network reads for every atom |
+|---|---|
+| field weights of the atom | The weight of the atom in every field (for example its charge), and no place. This row shows what a network gains without any geometry. |
+| positions | The weights, and the coordinates of the atom in the common frame. On a hop the coordinates are the distance from the hop axis and the place along the hop. |
+| co-field | The weights, and the out-of-fold co-field value of every field. |
+| co-field, not out-of-fold | The same, but a training molecule reads the model of the whole training part. |
+| co-field and positions | The weights, the out-of-fold co-field values and the coordinates. |
+
+The sizes of the network were fixed before any run: two hidden layers of 64 units on the atom,
+16 sums, one hidden layer of 64 units after the sums. The learning rate, the batch size and the
+patience of the early stopping were chosen on the validation molecules of the first COMPAS-1D
+split and used for every set. The comparisons were fixed before any run as well. Each is the
+difference of the absolute errors of two models on the same test molecules, with a 95 %
+bootstrap interval (over the test molecules; over the structures for the hops). A difference is
+called resolved when its interval does not include zero.
+
+On COMPAS-1D (mean over five splits; the mean absolute error is in eV):
+
+| Model | Test $R^2$ | Mean absolute error |
+|---|---:|---:|
+| Ridge regression on the fields | 0.853 | 0.114 |
+| Atom network: field weights of the atom | 0.906 | 0.091 |
+| Atom network: positions | 0.931 | 0.078 |
+| Atom network: co-field | 0.925 | 0.083 |
+| Atom network: co-field, not out-of-fold | 0.938 | 0.074 |
+| Atom network: co-field and positions | 0.922 | 0.085 |
+| Device without message passing, with the co-field as atom sensors | 0.834 | 0.127 |
+| Device without message passing, with the coordinates as atom sensors | 0.845 | 0.122 |
+| From ND1: the device without message passing, its own sensors | 0.633 | 0.183 |
+| From ND2: the same ridge regression with the Gaussian kernel layer | 0.934 | 0.075 |
+| From ND1: multilayer network on the CMF vector | 0.963 | 0.055 |
+| From ND1: the device with message passing | 0.982 | 0.035 |
+| From ND1: multilayer network on the CMF vector joined with the device collectors | 0.987 | 0.029 |
+
+On the 1,801 lithium hops (every hop is held out once; the mean absolute error is in eV):
+
+| Model | $q^2$ | Mean absolute error |
+|---|---:|---:|
+| Ridge regression on the fields | 0.566 | 0.742 |
+| Atom network: field weights of the atom | 0.706 | 0.564 |
+| Atom network: positions | 0.710 | 0.535 |
+| Atom network: co-field | 0.776 | 0.514 |
+| Atom network: co-field, not out-of-fold | 0.792 | 0.490 |
+| Atom network: co-field and positions | 0.767 | 0.519 |
+| From BT7: random forest on the rows of the rotation-invariant description | 0.844 | 0.374 |
+| From BT7: boosted forest on the three-distance rows | 0.846 | 0.354 |
+
+On the eight Sutherland series (test $R^2$, mean over ten splits):
+
+| Series | Ridge regression on the fields | Field weights of the atom | Positions | Co-field | Co-field, not out-of-fold | Co-field and positions |
+|---|---:|---:|---:|---:|---:|---:|
+| ACE | 0.605 | 0.699 | 0.639 | 0.657 | 0.608 | 0.608 |
+| AChE | 0.321 | -0.079 | 0.161 | 0.065 | 0.293 | 0.156 |
+| BZR | 0.122 | 0.408 | 0.420 | 0.321 | 0.452 | 0.366 |
+| COX2 | 0.480 | 0.351 | 0.482 | 0.464 | 0.475 | 0.444 |
+| DHFR | 0.635 | 0.553 | 0.610 | 0.578 | 0.615 | 0.610 |
+| GPB | 0.462 | -0.377 | 0.134 | -0.008 | 0.320 | 0.130 |
+| THER | 0.247 | 0.092 | 0.336 | 0.315 | 0.313 | 0.270 |
+| THR | 0.430 | 0.098 | 0.559 | 0.345 | 0.480 | 0.376 |
+| Mean | 0.413 | 0.218 | 0.418 | 0.342 | 0.444 | 0.370 |
+
+* **On both large sets the atom network has a lower error than the ridge regression on the same
+  fields.** On COMPAS-1D the error falls from 0.114 to 0.083 eV (difference -0.030, interval
+  -0.033 to -0.027), on each of the five splits. On the hops it falls from 0.742 to 0.514 eV
+  (difference -0.229, interval -0.262 to -0.195). This comparison is the gate of the plan
+  item, and with the atom network the gate is met.
+* **Most of this gain does not come from the co-field.** The network that reads only the
+  weights of the atoms, with no place at all, already has 0.091 eV on COMPAS-1D and 0.564 eV
+  on the hops. The co-field lowers these errors by 0.009 eV (interval 0.007 to 0.012) and by
+  0.050 eV (interval 0.020 to 0.080).
+* **The co-field is not better than the plain coordinates.** On COMPAS-1D the network on the
+  coordinates has 0.078 eV, which is 0.0045 eV lower than with the co-field (interval 0.0024
+  to 0.0064). On the hops the difference is not resolved (-0.021, interval -0.054 to +0.009).
+  Adding the co-field to the coordinates does not help: the error rises by 0.0066 eV on
+  COMPAS-1D (interval 0.0047 to 0.0085), and the difference is not resolved on the hops.
+* **Out-of-fold values are worse than the values of the full model, on every set.** With the
+  values of the full model the error is 0.074 against 0.083 eV on COMPAS-1D and 0.490 against
+  0.514 eV on the hops, and both differences are resolved. On the Sutherland series the mean
+  $R^2$ is 0.444 against 0.342; the difference is resolved in four series (in one of them only
+  just) and in no series in the other direction. So the precaution lowers the accuracy. A likely reason is that a fold
+  model is a different model. Its co-field values differ from those of the full model by 12 to
+  23 % of their spread on COMPAS-1D and by 26 to 72 % on a Sutherland series, so the training
+  molecules and the test molecules read different features. The activity that a training
+  molecule would read back from the full model is small in comparison, because a co-field is
+  one smooth function for all molecules. This explanation was not tested on its own.
+* **On a congeneric series the network does not beat the ridge regression.** The plan expected
+  this. The mean $R^2$ of the eight Sutherland series is 0.342 with the co-field, against 0.413
+  for the ridge regression. The error is resolved higher in three series (AChE, DHFR, GPB) and
+  resolved lower in none. A series has 46 to 253 training molecules, and a network with about
+  7,000 weights is too large for them.
+* **No row is a new best model.** On COMPAS-1D the Gaussian kernel layer on the same ridge
+  regression has 0.075 eV (ND2). This is the simplest nonlinear step, and it is level with the
+  best atom network. A multilayer network on the CMF vector has 0.055 eV and the device with
+  message passing 0.035 eV. On the hops the forests of BT7 have 0.354 to 0.374 eV, so the atom
+  network closes about 60 % of the difference between the ridge regression and a forest.
+* **With the QSPR Neural Device without message passing the gate is not met.** The device of
+  the section "The fields as a vector for another method" was trained on COMPAS-1D with the
+  nine co-field values as extra atom sensors, beside its own sensors. Its error is 0.127 eV,
+  which is 0.0135 eV higher than that of the ridge regression (interval 0.0105 to 0.0167). The
+  co-field does help this device: the error is 0.055 eV lower (interval 0.051 to 0.059) than
+  that of the same device with its own sensors only (0.183 eV). The coordinates help it more:
+  with them as sensors the error is 0.122 eV, which is 0.0050 eV lower than with the co-field
+  (interval 0.0025 to 0.0075). So the result of the gate depends on the network. The device ran
+  with the settings it ships with: 5 hidden neurons and 5 sums for each of its three kinds of
+  fragment, against 64 hidden units and 16 sums in the atom network. Whether a larger device
+  meets the gate was not tested.
+
+**What this says.** The gate is met with the atom network and not met with the device
+without message passing, and its reading is narrow. On the two large sets the atom network is
+better than the linear model on the same fields. The
+co-field is not the reason: a network gets as far, or further, with the coordinates of the
+atoms, because it can learn its own function of the place. The device shows the same order:
+the coordinates as sensors are better than the co-field as sensors. So the co-field values at
+the atoms
+hold little that helps a network beyond the place itself. On COMPAS-1D the Gaussian kernel layer
+and a network on the CMF vector remain the better nonlinear models on fields, and on the hops
+the forests do. The co-field keeps its use as a map that a chemist reads. As an input of a
+network it is not worth its cost.
+
+**Limits.** (1) The device was trained on COMPAS-1D only, with the settings it ships with,
+and its version with message passing was not trained with the co-field as a sensor (see the
+cost below). (2) The hops have one set of ten folds, and the splits of the other sets
+are random, so the numbers say nothing about a new scaffold. (3) The training settings were
+chosen on one COMPAS-1D split and used everywhere. A Sutherland split has 10 to 54 validation
+molecules, and early stopping on so few molecules is uncertain. (4) The sizes of the network
+were not tuned, and every split has one training from one random start. (5) The explanation of
+the out-of-fold result was not tested, and the row "co-field of the full model and positions"
+was not run. (6) The atom network sees no bonds. (7) The barriers of the hops are those of the
+bond-valence site-energy model, not of density functional theory. (8) On the hops the kernel is
+averaged over the rotation about the hop, so the co-field is a function of two coordinates
+only.
+
+**Cost.** On a GPU (RTX 4070 Laptop, 8 GB), the co-field values of one COMPAS-1D split take 5
+to 6.5 minutes in double precision, and one training of the atom network 2 to 23 minutes; the
+25 trainings took 244 minutes while other programs ran on the machine. The 80 Sutherland
+splits took 1.5 minutes for the values and 58 minutes for the 400 trainings. On the hops the
+kernel took 23 minutes and the values 14.5 minutes on eight processes, and the 50 trainings
+58 minutes. One run of the device without message passing took 89 to 410 minutes with the
+co-field as sensors (267 on average) and 383 to 448 minutes with the coordinates (409 on
+average), on one processor core; the ten runs took 56 hours of processor time. In ND1 the same
+device took 2.5 to 10 minutes. The device computes every different row of sensor values once.
+A sensor that has a different value on every atom removes this saving. For the same reason
+the device with message passing was not run: it would take days.
+
+```bash
+python benchmarks/run_device.py --stage features            # needs the packed atoms of ND2
+python benchmarks/run_device.py --stage own                 # the atom networks
+python benchmarks/run_device.py --stage device --device-root PATH --methods oneshot
+python benchmarks/run_device.py --report                    # results/device/table.md
+python benchmarks/run_device_hops.py --stage kernel --stage features --stage own
+python benchmarks/run_device_hops.py --report               # results/device_hops/table.md
+```
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right
@@ -21818,6 +22067,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 |---|---|
 | **alignment**, or **frame** | the common coordinate system the molecules are placed in before their fields are compared. The overlap kernel needs one and is only as good as it is; the count, autocorrelation, surface and periodic kernels do not. *Preparing the data*; *Working without an alignment* |
 | **applicability domain** | how close a molecule outside the training set is to it, measured in the kernel the model itself uses, with a threshold taken from the training set's own spread. Reported per molecule as the **AD** column and carried into the exported predictions. *Where does the model apply?* |
+| **atom network** | a model that reads a molecule as a set of atoms without bonds: one network with shared weights reads a row of numbers of every atom, its outputs are summed over the atoms, and a second network maps the sums to the activity. It is the simplest case of the neural device of Baskin, Palyulin and Zefirov (1997). `cmfqsar.device.train_device` trains one. *The co-field as an atom feature of a network* |
 | **attenuation**, $\alpha$ | the width parameter of a field's Gaussians: $\alpha$ large makes a field that falls away within an atom's own volume, $\alpha$ small one that reaches across the molecule. The single most consequential setting after the alignment. *The fields*; *Attenuation, regularisation and the grids* |
 | **autocorrelation kernel** | geometry without a frame: the smoothed distribution of field-weight products over interatomic distance, invariant to rotation and translation by construction. *The rotation-invariant autocorrelation kernel* |
 | **BEDROC, RIE** | screening figures that weight the top of a ranked list, where AUC saturates. *Decoys and the figures that matter* |

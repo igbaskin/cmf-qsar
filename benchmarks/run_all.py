@@ -1698,6 +1698,38 @@ def registry() -> List[Benchmark]:
                                        # takes a few minutes and was not timed
                   report=lambda: _mod("run_learnable").write_table(),
                   tables=["learnable/table.md"]),
+        Benchmark("device",
+                  "the co-field as an atom feature of a network that sums over the atoms "
+                  "(plan item ND14c): the co-field of the ridge regression on the fields, "
+                  "read at every atom, as input of a network on every atom with a sum and a "
+                  "second network, against that ridge regression, against the same network "
+                  "on the field weights of the atoms and on their coordinates, and against "
+                  "the QSPR Neural Device with the co-field as atom sensors, on COMPAS-1D "
+                  "and the eight Sutherland sets with the splits of the featuriser benchmark "
+                  "(needs PyTorch and the packed atoms of the learnable benchmark; the "
+                  "minutes are with a GPU; the runs of the device are kept in the "
+                  "repository, and --stage device remakes them and needs the device project)",
+                  "run_device.py", "device",
+                  compute=[["--stage", "features"], ["--stage", "own"]],
+                  minutes="330",       # measured: 27 the co-field values of the five COMPAS
+                                       # splits, 244 their 25 networks, 1.5 and 58 the same
+                                       # for the 80 Sutherland splits
+                  report=lambda: _mod("run_device").write_table(),
+                  tables=["device/table.md"]),
+        Benchmark("device_hops",
+                  "the co-field as an atom feature on lithium hops (plan item ND14c): the "
+                  "co-field of the best kernel model of the litraj benchmark, read at every "
+                  "atom of the environment of a hop, as input of the same network, against "
+                  "the ridge regression on the same fields, on 1,801 hops with ten folds "
+                  "that hold out structures (needs PyTorch; the minutes are with a GPU for "
+                  "the networks)",
+                  "run_device_hops.py", "device_hops",
+                  compute=[["--stage", "kernel"], ["--stage", "features"], ["--stage", "own"]],
+                  prepare=["prepare_litraj.py --fetch"],
+                  minutes="96",        # measured: 23 the kernel, 14.5 the co-field values
+                                       # (eight processes), 58 the 50 networks
+                  report=lambda: _mod("run_device_hops").write_table(),
+                  tables=["device_hops/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

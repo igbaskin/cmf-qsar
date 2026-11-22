@@ -6542,6 +6542,42 @@ python benchmarks/run_learnable.py --report       # results/learnable/table.md
 ```
 
 
+### The co-field as an atom feature of a network
+
+A linear CMF model has a co-field (a field of regression coefficients) for every field.
+`cmf lowrank --atom-cofield FILE` writes the value of every co-field at every atom of every
+molecule: one row per atom in a `.csv` file, or a NumPy `.npz` file for any other name. A
+molecule of the data set reads a model that was fitted without its fold; a molecule of
+`--features-for` reads the model of the whole data set. The command needs no PyTorch.
+`cmfqsar/device.py` holds the method and a small network (needs PyTorch), which the manual
+calls the *atom network*: one network with shared weights reads every atom, the outputs are
+summed over the atoms, and a second network maps the sums to the activity. It sees no bonds.
+This is the simplest case of the neural device of Baskin, Palyulin and Zefirov (1997).
+
+Plan item ND14c measured whether the atom network on the co-field values is better than the ridge
+regression on the same fields (`benchmarks/run_device.py`, `benchmarks/run_device_hops.py`). On
+the two large sets it is. On COMPAS-1D the mean absolute error is 0.083 against 0.114 eV
+(difference -0.030, 95 % interval -0.033 to -0.027). On 1,801 lithium hops, with whole
+structures held out, it is 0.514 against 0.742 eV (difference -0.229, interval -0.262 to
+-0.195). The co-field is not the reason. The same network on the weights of the atoms alone,
+with no place, has 0.091 and 0.564 eV, and on the plain coordinates of the atoms 0.078 and
+0.535 eV. Out-of-fold values are worse than the values of the full model on every set (0.083
+against 0.074 eV on COMPAS-1D). On the eight Sutherland series the network does not beat the
+ridge regression (mean test R2 0.342 against 0.413). No row is a new best model: on COMPAS-1D
+the Gaussian kernel layer on the same ridge regression has 0.075 eV and the device with
+message passing 0.035 eV, and on the hops a forest has 0.354 eV.
+The QSPR Neural Device without message passing was also trained with the co-field values as
+extra atom sensors, on COMPAS-1D. It has 0.127 eV. This is better than the same device without
+them (0.183 eV), worse than the ridge regression (0.114 eV, so with this device the gate of the
+item is not met), and worse than the same device with the coordinates as sensors (0.122 eV).
+
+```bash
+cmf lowrank examples/sutherland/GPB.sdf --landmarks molecules:40 --charges file \
+    --fields electrostatic,steric,hydrophobic,hba,hbd --atom-cofield gpb_atoms.csv
+python benchmarks/run_device.py --report          # results/device/table.md
+python benchmarks/run_device_hops.py --report     # results/device_hops/table.md
+```
+
 ### A simulation as a conformational ensemble
 
 The ensemble mode does not care where the conformations come from. `cmfqsar/trajectory.py` (plan
