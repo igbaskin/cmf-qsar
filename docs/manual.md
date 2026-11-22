@@ -20227,17 +20227,54 @@ families were held out. "Formulae" means that whole formulae were held out.
 * **The orbital energy is the better single description for a new family.** The fields are worth
   adding to it. A model of the reactant alone does not replace it.
 
-What is not done: the co-field that names the atom taking or giving the electron; the check
-against measured onsets, which are read by hand from papers; the species with lithium bound,
-restated against the free molecule; the sensitivity to the two other free-energy columns of the
-set; the tolerance stage of the plan, which needs an ageing run of the cell model; and part (b),
-the barrier through the film.
+**Which atom does the model name?** The invariant kernel has no co-field in space, because it
+has no frame. Its prediction can still be split over the atoms, as plan item SC6 does: the
+prediction minus the mean of the training labels is the sum of the atom shares. The test checks
+this to 3e-12 V on every species. The model that is split is "fields + Fukui", which needs only
+the reactant. The shares are taken out of fold. Each hydrogen atom is added to the heavy atom
+that it is bonded to. The named atom is the one with the largest absolute share. This reading was
+fixed before the numbers were seen. The atom of reference is the heavy atom on which the radical
+ion carries most of its spin: where the electron went in a reduction, where the hole is in an
+oxidation. The clause holds if the named atom carries more spin than a random heavy atom, with a
+95 % interval that excludes zero, for both kinds.
+
+| Pick of the atom | Reduction, spin on the picked atom | Reduction, share of species with the most spin | Oxidation, spin on the picked atom | Oxidation, share of species with the most spin |
+|---|---:|---:|---:|---:|
+| co-field: largest absolute share | 0.306 | 0.356 | 0.436 | 0.513 |
+| largest Fukui function of the reactant | 0.366 | 0.417 | 0.452 | 0.518 |
+| random heavy atom (expected value) | 0.159 | 0.168 | 0.157 | 0.168 |
+| the atom with the most spin (best possible) | 0.741 | 1.000 | 0.703 | 1.000 |
+
+The table is for whole formulae held out, with three repeats. Whole families held out give 0.333
+and 0.464 for the co-field.
+
+* **The clause holds.** The named atom carries more spin than a random atom by 0.147 (interval
+  0.123 to 0.171) for reduction and by 0.279 (0.251 to 0.308) for oxidation. It is the atom with
+  the most spin in 36 % and 51 % of the species, against 17 % for a random atom.
+* **The co-field adds nothing to the Fukui function.** The Fukui function is one of its fields.
+  The largest Fukui function of the reactant names a better atom for reduction (the co-field is
+  behind it by 0.060, interval 0.033 to 0.088) and an equal one for oxidation (-0.016, -0.039 to
+  0.007).
+* **An exploratory pick, read after the numbers were seen.** For oxidation, the atom with the
+  largest share in the direction that makes the step easier (the most negative share) carries
+  0.554 of the spin and has the most spin in 68 % of the species. This is ahead of the Fukui
+  function by 0.102 (0.083 to 0.120). It is not part of the gate and needs a second data set.
+* **The usual error is the element.** Where the most spin is on carbon, the model names oxygen in
+  392 reductions and 157 oxidations. In 177 oxidations the most spin is on oxygen and the model
+  names carbon.
+
+What is not done: the check against measured onsets, which are read by hand from papers; the
+species with lithium bound, restated against the free molecule; the sensitivity to the two other
+free-energy columns of the set; the tolerance stage of the plan, which needs an ageing run of the
+cell model; and part (b), the barrier through the film.
 
 ```bash
 python benchmarks/run_interphase.py --stage series                       # a few minutes, needs the LIBE file
 python benchmarks/run_interphase.py --stage xtb                          # 4 minutes
 python benchmarks/run_interphase.py --stage models --kind reduction      # 50 minutes
 python benchmarks/run_interphase.py --stage models --kind oxidation      # 100 minutes
+python benchmarks/run_interphase.py --stage cofield --kind reduction     # 2 minutes, the atom that is named
+python benchmarks/run_interphase.py --stage cofield --kind oxidation     # 2 minutes
 python benchmarks/run_interphase.py --stage report                       # 2 minutes, the table
 ```
 

@@ -135,6 +135,198 @@
     }
    ],
    "gate_holds": true
+  },
+  "cofield": {
+   "formulae": {
+    "comparisons": [
+     {
+      "name": "gate: the co-field against a random heavy atom",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.14684454859959867,
+      "low": 0.12257674631875673,
+      "high": 0.17127871279008303,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against a random heavy atom",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.18781271290174426,
+      "low": 0.15676420038634847,
+      "high": 0.2206517479631155,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.05981595639442861,
+      "low": -0.08789568037518422,
+      "high": -0.03324139116469282,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.06077872744539413,
+      "low": -0.09697743883452724,
+      "high": -0.025069083398373288,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "spin",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.20666050499402727,
+      "low": 0.18490368159907636,
+      "high": 0.22895541650539716,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "hit",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.24859144034713831,
+      "low": 0.22036960844417777,
+      "high": 0.2772011722209157,
+      "excludes_zero": true
+     },
+     {
+      "name": "the atom of largest share in the easier direction against a random heavy atom",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "random",
+      "mean": 0.2118334449143607,
+      "low": 0.18958221540307815,
+      "high": 0.2361922998626625,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.0051729399203334385,
+      "low": -0.020411000316377693,
+      "high": 0.03003569114338665,
+      "excludes_zero": false
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.0207344096232985,
+      "low": -0.012544396402038194,
+      "high": 0.053271164210897684,
+      "excludes_zero": false
+     }
+    ],
+    "gate_holds": true
+   },
+   "families": {
+    "comparisons": [
+     {
+      "name": "gate: the co-field against a random heavy atom",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.17427639166702508,
+      "low": 0.15058892605435115,
+      "high": 0.19930053899532163,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against a random heavy atom",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.21820207662444133,
+      "low": 0.18640597990070393,
+      "high": 0.25479811457186313,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.03238411332700222,
+      "low": -0.06099746617161621,
+      "high": -0.0044460958569964145,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.030389363722697058,
+      "low": -0.06942500242851593,
+      "high": 0.009589899071668464,
+      "excludes_zero": false
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "spin",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.20666050499402727,
+      "low": 0.18490368159907636,
+      "high": 0.22895541650539716,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "hit",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.24859144034713831,
+      "low": 0.22036960844417777,
+      "high": 0.2772011722209157,
+      "excludes_zero": true
+     },
+     {
+      "name": "the atom of largest share in the easier direction against a random heavy atom",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "random",
+      "mean": 0.21272444520453695,
+      "low": 0.19021263719291906,
+      "high": 0.23776685001812506,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.006063940210509655,
+      "low": -0.02359636249992714,
+      "high": 0.03540058340141169,
+      "excludes_zero": false
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.04083570750237417,
+      "low": 0.0013683459305154579,
+      "high": 0.08024139659855656,
+      "excludes_zero": true
+     }
+    ],
+    "gate_holds": true
+   }
   }
  },
  "oxidation": {
@@ -273,6 +465,198 @@
     }
    ],
    "gate_holds": false
+  },
+  "cofield": {
+   "formulae": {
+    "comparisons": [
+     {
+      "name": "gate: the co-field against a random heavy atom",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.2788964007369776,
+      "low": 0.2510224453677832,
+      "high": 0.30756084921331706,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against a random heavy atom",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.3456339522862049,
+      "low": 0.31102492362171985,
+      "high": 0.3818707020651205,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.015882298896040047,
+      "low": -0.039299576376015305,
+      "high": 0.007051609222067452,
+      "excludes_zero": false
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": -0.004424778761061957,
+      "low": -0.03819170583769096,
+      "high": 0.028957108816185198,
+      "excludes_zero": false
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "spin",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.2947786996330176,
+      "low": 0.2736868546409336,
+      "high": 0.31599474393842775,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "hit",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.35005873104726687,
+      "low": 0.32353585989302774,
+      "high": 0.3783208667656032,
+      "excludes_zero": true
+     },
+     {
+      "name": "the atom of largest share in the easier direction against a random heavy atom",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "random",
+      "mean": 0.3968269985983345,
+      "low": 0.3765081839932879,
+      "high": 0.4176588263786503,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.10204829896531688,
+      "low": 0.08331692616424673,
+      "high": 0.11992352598419583,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.165728077232502,
+      "low": 0.13750452225127047,
+      "high": 0.19391299852165678,
+      "excludes_zero": true
+     }
+    ],
+    "gate_holds": true
+   },
+   "families": {
+    "comparisons": [
+     {
+      "name": "gate: the co-field against a random heavy atom",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.3075000495592713,
+      "low": 0.2811393358646486,
+      "high": 0.33475803687298444,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against a random heavy atom",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "random",
+      "mean": 0.3870659715943304,
+      "low": 0.3529744940959604,
+      "high": 0.42285374877028775,
+      "excludes_zero": true
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": 0.012721349926253685,
+      "low": -0.011381192600729444,
+      "high": 0.03601916923476028,
+      "excludes_zero": false
+     },
+     {
+      "name": "the co-field against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "model",
+      "reference": "fukui",
+      "mean": 0.03700724054706356,
+      "low": 0.001984737984985,
+      "high": 0.07268409215016221,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "spin",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.2947786996330176,
+      "low": 0.2736868546409336,
+      "high": 0.31599474393842775,
+      "excludes_zero": true
+     },
+     {
+      "name": "the largest Fukui function against a random heavy atom",
+      "quantity": "hit",
+      "tested": "fukui",
+      "reference": "random",
+      "mean": 0.35005873104726687,
+      "low": 0.32353585989302774,
+      "high": 0.3783208667656032,
+      "excludes_zero": true
+     },
+     {
+      "name": "the atom of largest share in the easier direction against a random heavy atom",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "random",
+      "mean": 0.3972972299226395,
+      "low": 0.3763335134234341,
+      "high": 0.4184336800021883,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "spin",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.10251853028962188,
+      "low": 0.08165097672682835,
+      "high": 0.1213082207090549,
+      "excludes_zero": true
+     },
+     {
+      "name": "exploratory: the atom of largest share in the easier direction against the largest Fukui function",
+      "quantity": "hit",
+      "tested": "direction",
+      "reference": "fukui",
+      "mean": 0.16894609814963799,
+      "low": 0.13777047633680944,
+      "high": 0.19938214566038048,
+      "excludes_zero": true
+     }
+    ],
+    "gate_holds": true
+   }
   }
  }
 }

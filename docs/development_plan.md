@@ -6917,11 +6917,39 @@ concentration was driven, and the stage counts only discharges that ended at the
   better single description of the first electron transfer when a new family is the question,
   as the item expected. The fields are worth adding to it, and the gain is the largest where
   the electron is removed. A model of the reactant alone does not replace the orbital energy.
-  *What is not done.* The co-field that names the atom taking or giving the electron, the
-  check against measured onsets (they are read by hand from papers), the sub-series of
-  lithium-coordinated species against the free molecule, the sensitivity to the two other
-  free-energy columns, the tolerance stage with the ageing run, and part (b). The run costs
-  about 2.5 hours on this machine, most of it the model selection for oxidation.
+  *The co-field that names the atom (22 November 2026, the second clause of gate (a)).* The
+  invariant kernel has no co-field in space, so the model of the reactant alone ("fields +
+  Fukui") is split over the atoms as SC6 does it: the prediction minus the mean of the training
+  labels is the sum of the atom shares, and the test checks this to 3e-12 V on every species.
+  The shares are taken out of fold, hydrogen atoms are added to their heavy neighbour, and the
+  named atom is the one with the largest absolute share. This reading was fixed before the
+  numbers were seen. The atom of reference is the heavy atom on which the radical ion carries
+  most of its spin (Mulliken, from the file). The gate clause holds if the named atom carries
+  more spin than a random heavy atom, with an interval from resampling whole formulae that
+  excludes zero, for both kinds. *It holds.* Whole formulae held out, three repeats. Reduction:
+  spin on the named atom 0.306 against 0.159 for a random atom (+0.147, 0.123 to 0.171) and
+  0.741 at best, and the named atom has the most spin in 35.6 % of 2,106 species against 16.8 %
+  (+0.188, 0.157 to 0.221). Oxidation: 0.436 against 0.157 (+0.279, 0.251 to 0.308) and 0.703
+  at best, and 51.3 % against 16.8 % (+0.346, 0.311 to 0.382) of 2,486 species. With whole
+  families held out the numbers are 0.333 and 0.464, and the clause holds in both kinds. *The
+  co-field adds nothing to the Fukui function that it contains.* The heavy atom with the
+  largest Fukui function of the reactant carries 0.366 (reduction) and 0.452 (oxidation) of
+  the spin. The co-field is behind it for reduction (-0.060, -0.088 to -0.033, whole formulae
+  held out) and ties for oxidation (-0.016, -0.039 to 0.007). *An exploratory reading, made
+  after the numbers were seen and not part of the gate:* the atom with the largest share in the
+  direction that makes the step easier (positive for a reduction, negative for an oxidation)
+  carries 0.554 of the spin in oxidation, with the most spin in 68 % of the species, ahead of
+  the Fukui function by +0.102 (0.083 to 0.120) and +0.166 (0.138 to 0.194). For reduction it
+  ties with the Fukui function (+0.005, -0.020 to 0.030). This pick is to be checked on
+  another data set before it is relied on. The most common error: the atom with the most spin
+  is carbon and the model names oxygen (392 reductions, 157 oxidations), or the reverse for
+  oxidation (177). *Verdict on the clause.* The model does point at the atom where the electron
+  goes or leaves, far above chance, and it does so because the Fukui function is one of its
+  fields. The co-field is not a better way to find the atom than the Fukui function itself.
+  *What is not done.* The check against measured onsets (they are read by hand from papers),
+  the sub-series of lithium-coordinated species against the free molecule, the sensitivity to
+  the two other free-energy columns, the tolerance stage with the ageing run, and part (b).
+  The run costs about 2.5 hours on this machine, most of it the model selection for oxidation.
   *Part (b), the barrier through the film.* After the film has formed, the SEI matters through
   the Li⁺ barrier of its phases. Li₂CO₃, LiF, Li₂O and lithium ethylene dicarbonate are
   crystals, and BT7's hop model predicts barriers in crystals at 0.21 to 0.29 eV on the public

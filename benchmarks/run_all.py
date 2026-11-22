@@ -698,14 +698,18 @@ def registry() -> List[Benchmark]:
                   "(reduction for the SEI, oxidation for the CEI) of the species of the LIBE "
                   "data set, formed from two free energies of one species, against the "
                   "orbital energy from xtb, on species of whole families and of whole "
-                  "formulae that the model has not seen (the LIBE file, 285 MB, is read from "
+                  "formulae that the model has not seen, and the atom that the split of the "
+                  "prediction over the atoms names against the atom with the spin of the "
+                  "radical ion (the LIBE file, 285 MB, is read from "
                   "benchmarks/cache/libe/libe.json and is not in the repository; its source is "
                   "figshare 10.6084/m9.figshare.14226464)",
                   "run_interphase.py", "interphase",
                   compute=[["--stage", "series"], ["--stage", "xtb"],
                            ["--stage", "models", "--kind", "reduction"],
-                           ["--stage", "models", "--kind", "oxidation"]],
-                  needs="xtb", minutes="150",
+                           ["--stage", "models", "--kind", "oxidation"],
+                           ["--stage", "cofield", "--kind", "reduction"],
+                           ["--stage", "cofield", "--kind", "oxidation"]],
+                  needs="xtb", minutes="155",
                   report=lambda: _mod("run_interphase").write_table(),
                   tables=["interphase/table.md"]),
         Benchmark("onsager",

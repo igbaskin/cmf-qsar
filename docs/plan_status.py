@@ -73,8 +73,11 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
                        "by 0.03 V (reduction) and 0.07 V (oxidation); with whole formulae held "
                        "out they are ahead by 0.07 V for reduction and tied for oxidation; the "
                        "fields added to the orbital energy gain 0.05 to 0.19 V in every "
-                       "reading; the measured onsets, the tolerance stage and part (b) are "
-                       "not done"),
+                       "reading; the split of the prediction over the atoms names the atom "
+                       "with the most spin of the radical ion in 36 % (reduction) and 51 % "
+                       "(oxidation) of the species against 17 % for a random atom, and is "
+                       "not better than the largest Fukui function; the measured onsets, "
+                       "the tolerance stage and part (b) are not done"),
     "BT10": ("partly", "a free pilot on the stored boxes of BT9 (21 November 2026): one start "
                        "of 4 ns scatters by 0.136 in the number, so a label needs about 30 ns "
                        "per box, and the simulated number does not fall with the concentration "

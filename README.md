@@ -4036,7 +4036,9 @@ for it:
   fields are behind the orbital energy by 0.03 V (reduction) and 0.07 V (oxidation), so the gate
   is not met. With whole formulae held out they are ahead by 0.07 V for reduction and tied for
   oxidation. Added to the orbital energy, the fields lower the error by 0.05 to 0.19 V in every
-  reading.
+  reading. The split of the prediction over the atoms names the atom that carries most of the
+  spin of the radical ion in 36 % (reduction) and 51 % (oxidation) of the species, against 17 %
+  for a random atom. It is not better than the largest Fukui function of the reactant.
 
 ```bash
 python benchmarks/run_diffusion.py --stage analyse    # 10 minutes, after the simulations; needs pybamm

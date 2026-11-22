@@ -151,3 +151,50 @@ def test_the_rank_correlation_of_a_monotone_map_is_one():
     a = np.array([1.0, 3.0, 2.0, 5.0])
     assert RI.spearman(a, np.exp(a)) == pytest.approx(1.0)
     assert RI.spearman(a, -a) == pytest.approx(-1.0)
+
+
+def test_hydrogen_atoms_are_added_to_their_heavy_neighbour():
+    sp, bonds = EC
+    values = np.arange(1.0, 11.0)
+    heavy, folded = RI.fold_to_heavy(values, sp, bonds)
+    assert heavy.tolist() == [0, 1, 2, 3, 4, 5]
+    # atoms 6 and 7 are bonded to atom 4, atoms 8 and 9 to atom 5
+    assert folded.tolist() == pytest.approx([1, 2, 3, 4, 5 + 7 + 8, 6 + 9 + 10])
+    assert folded.sum() == pytest.approx(values.sum())
+
+
+def test_a_tie_for_the_most_spin_is_a_hit_for_every_atom_of_the_tie():
+    spin = np.array([0.3, 0.3, 0.1, 0.3])
+    assert RI.naming_scores(0, spin) == (pytest.approx(0.3), 1.0)
+    assert RI.naming_scores(3, spin) == (pytest.approx(0.3), 1.0)
+    assert RI.naming_scores(2, spin) == (pytest.approx(0.1), 0.0)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+def test_the_split_over_the_atoms_adds_up_to_the_prediction_of_the_fold(normalize):
+    from cmfqsar.fields import MoleculeFields
+    from cmfqsar import invariant as INV
+    import run_cellmodel as RC
+    rng = np.random.default_rng(3)
+    mols = []
+    for k in range(24):
+        n = int(rng.integers(5, 9))
+        mols.append(MoleculeFields(
+            name=str(k), coords=rng.normal(scale=1.6, size=(n, 3)), weights=rng.normal(size=(n, 3)),
+            radii=np.ones(n), symbols=["C"] * n, atom_types=["C"] * n,
+            bonds=np.zeros((0, 2), int), charges=np.zeros(n), charge_source="file"))
+    spec = INV.AutocorrelationSpec(d_max=6.0, step=1.0, sigma=1.0)
+    X = INV.feature_matrix(mols, spec)
+    scale = INV.channel_scale(X, 1)
+    raw = INV.autocorrelation_kernel(X, n_bins=1, normalize=False)
+    unit = float(np.mean(np.diag(raw)))
+    K = INV.autocorrelation_kernel(X, n_bins=1) if normalize else RC.unit_kernel(raw)
+    meta = {"k": {"X": X, "scale": scale, "spec": spec, "normalize": normalize,
+                  "unit": 1.0 if normalize else unit}}
+    y = rng.normal(size=len(mols))
+    groups = [str(i // 2) for i in range(len(mols))]
+    fit = RI.nested_ridge({"k": K}, y, groups, folds=4, inner=3, seed=0)
+    for f in fit["fits"]:
+        for i, contrib in RI.split_fit(f, meta, mols).items():
+            assert contrib.shape == (len(mols[i].coords),)
+            assert f["mean"] + contrib.sum() == pytest.approx(fit["predicted"][i], abs=1e-8)

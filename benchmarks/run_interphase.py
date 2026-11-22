@@ -51,6 +51,13 @@ The kernel and the ridge constant are chosen on inner folds, inside every traini
 designs: whole chemical families held out in turn, and whole formulae held out (isomers of one
 formula stay together). The result is stored in ``results/interphase/models_<kind>.json``.
 
+Stage ``cofield``
+-----------------
+Which atom does the model of the reactant name? The prediction of the model "fields + Fukui" is
+split over the atoms, out of fold. The named atom is compared with the atom on which the radical
+ion carries most of its spin, and with two other picks: the largest Fukui function and a random
+atom. The result is stored in ``results/interphase/cofield_<kind>.json``.
+
 Stage ``report``
 ----------------
 Paired differences with a 95 % interval from resampling whole formulae, and the table.
@@ -61,6 +68,8 @@ Usage
     python benchmarks/run_interphase.py --stage xtb
     python benchmarks/run_interphase.py --stage models --kind reduction
     python benchmarks/run_interphase.py --stage models --kind oxidation
+    python benchmarks/run_interphase.py --stage cofield --kind reduction
+    python benchmarks/run_interphase.py --stage cofield --kind oxidation
     python benchmarks/run_interphase.py --stage report
 """
 from __future__ import annotations
@@ -480,6 +489,7 @@ def nested_ridge(kernels: Dict[str, np.ndarray], y: np.ndarray, groups: List[str
     n = len(y)
     pred = np.full(n, np.nan)
     chosen = []
+    fits = []
     for te in RC.group_parts(groups, folds, seed):
         tr = np.setdiff1d(np.arange(n), te)
         parts = [tr[p] for p in RC.group_parts([groups[i] for i in tr], inner, seed + 1)]
@@ -511,9 +521,12 @@ def nested_ridge(kernels: Dict[str, np.ndarray], y: np.ndarray, groups: List[str
         w = np.maximum(w, 0.0)
         m = float(np.mean(y[tr]))
         c = V.T @ (y[tr] - m)
-        pred[te] = m + (K[np.ix_(te, tr)] @ V) @ (c / (w + lam))
+        dual = V @ (c / (w + lam))
+        pred[te] = m + K[np.ix_(te, tr)] @ dual
         chosen.append({"kernel": name, "lam": float(lam), "n_test": int(len(te))})
-    return {"predicted": pred, "chosen": chosen}
+        fits.append({"te": te, "tr": tr, "kernel": name, "lam": float(lam), "dual": dual,
+                     "mean": m})
+    return {"predicted": pred, "chosen": chosen, "fits": fits}
 
 
 def spearman(a: np.ndarray, b: np.ndarray) -> float:
@@ -561,6 +574,162 @@ def models_stage(kind: str, designs: Tuple[str, ...] = ("families", "formulae"))
     return out
 
 
+# ------------------------------------------------------------------------------------ the co-field
+#: the model whose atom shares are read: the one that needs only the reactant. The spin population
+#: of the radical ion is the target of this test, so it cannot be an input.
+COFIELD_MODEL = "fields + Fukui"
+COFIELD_SEEDS = (0, 1, 2)
+#: a spin population within this of the largest one counts as the largest
+TIE = 1e-9
+
+
+def fold_to_heavy(values, symbols: List[str], bonds) -> Tuple[np.ndarray, np.ndarray]:
+    """(indices of the heavy atoms, their numbers), each hydrogen atom added to the heavy atom
+    that it is bonded to. A hydrogen atom bonded to no heavy atom is left out."""
+    v = np.asarray(values, float).copy()
+    neighbours: Dict[int, List[int]] = defaultdict(list)
+    for a, b in bonds:
+        neighbours[a].append(b)
+        neighbours[b].append(a)
+    for i, s in enumerate(symbols):
+        if s == "H":
+            owners = [j for j in neighbours[i] if symbols[j] != "H"]
+            if owners:
+                v[owners[0]] += v[i]
+    heavy = np.array([i for i, s in enumerate(symbols) if s != "H"], int)
+    return heavy, v[heavy]
+
+
+def naming_scores(named: int, spin: np.ndarray) -> Tuple[float, float]:
+    """(spin population on the named heavy atom, 1.0 if it is the atom with the most spin)."""
+    best = float(np.max(spin))
+    return float(spin[named]), float(spin[named] >= best - TIE)
+
+
+def split_fit(fit: dict, meta: Dict[str, dict], mols: list) -> Dict[int, np.ndarray]:
+    """The prediction of one outer fold, split over the atoms of every held-out species.
+
+    The model is a linear kernel on the autocorrelation channels, so the prediction is a dot
+    product of one vector with the channels of the species, and a channel is a sum over pairs of
+    atoms (cmfqsar.invariant.atom_contributions). The numbers of a species add up to its
+    prediction minus the mean of the training labels.
+    """
+    from cmfqsar import invariant as INV
+    m = meta[fit["kernel"]]
+    c = INV.channel_coefficients(m["X"][fit["tr"]], m["scale"], fit["dual"] / m["unit"],
+                                 normalize=m["normalize"])
+    return {int(i): INV.atom_contributions(mols[i], c, scale=m["scale"], spec=m["spec"],
+                                           normalize=m["normalize"]) for i in fit["te"]}
+
+
+def cofield_kernels(kind: str, rows: List[dict]):
+    """(kernels, meta, molecules) of the model that is read. The kernels are those that
+    build_kernels gives this model alone, and meta keeps what is needed to split them."""
+    from cmfqsar.fields import MoleculeFields
+    from cmfqsar import invariant as INV
+    import run_cellmodel as RC
+    _, species, xtb = _load_series()
+    tables = [species_table(r, species, xtb, kind) for r in rows]
+    idx = [COLUMNS.index(c) for c in FIELD_SETS[COFIELD_MODEL]]
+    mols = [MoleculeFields(name=r["id"], coords=xyz, weights=W[:, idx], radii=np.ones(len(sym)),
+                           symbols=list(sym), atom_types=list(sym),
+                           bonds=np.zeros((0, 2), int), charges=W[:, 0], charge_source="file")
+            for r, (xyz, W, sym) in zip(rows, tables)]
+    kernels: Dict[str, np.ndarray] = {}
+    meta: Dict[str, dict] = {}
+    for grid, (d_max, step) in SPECS.items():
+        spec = INV.AutocorrelationSpec(d_max=d_max, step=step, sigma=step)
+        X = INV.feature_matrix(mols, spec)
+        scale = INV.channel_scale(X, 1)
+        raw = INV.autocorrelation_kernel(X, n_bins=1, normalize=False)
+        unit = float(np.mean(np.diag(raw)))
+        kernels[f"{grid}, cosine"] = INV.autocorrelation_kernel(X, n_bins=1)
+        meta[f"{grid}, cosine"] = {"X": X, "scale": scale, "spec": spec, "normalize": True,
+                                   "unit": 1.0}
+        kernels[f"{grid}, not normalised"] = RC.unit_kernel(raw)
+        meta[f"{grid}, not normalised"] = {"X": X, "scale": scale, "spec": spec,
+                                           "normalize": False, "unit": unit if unit > 0 else 1.0}
+    return kernels, meta, mols, tables
+
+
+def cofield_stage(kind: str) -> dict:
+    """Which atom does the model name, and does the radical ion keep its spin there?
+
+    For every species, out of fold, the prediction is split over the atoms and the hydrogen atoms
+    are added to their heavy neighbour. The named atom is the one with the largest absolute share
+    (the reading was fixed before the numbers were seen). The reference atom is the one on which
+    the radical ion carries most of its spin: where the electron went in a reduction, where the
+    hole is in an oxidation. Two other picks are scored the same way: the heavy atom with the
+    largest Fukui function of the reactant, and a random heavy atom (its expected score, exactly).
+    A third pick, the atom with the largest share in the direction that makes the step easier,
+    is recorded and not used for the gate.
+    """
+    rows = kind_rows(kind)
+    _, species, _ = _load_series()
+    y = np.array([r["E"] for r in rows])
+    fam = [r["family"] for r in rows]
+    form = [r["formula"] for r in rows]
+    n = len(rows)
+    kernels, meta, mols, tables = cofield_kernels(kind, rows)
+    sign = 1.0 if kind == "reduction" else -1.0
+    ref = []
+    for r, (_, W, sym) in zip(rows, tables):
+        bonds = species[r["id"]]["bonds"]
+        heavy, spin = fold_to_heavy(W[:, COLUMNS.index("spin")], sym, bonds)
+        _, fuk = fold_to_heavy(W[:, COLUMNS.index("fukui")], sym, bonds)
+        ref.append({"heavy": heavy, "spin": spin, "fukui": fuk, "symbols": sym, "bonds": bonds})
+    out: dict = {"kind": kind, "n": n, "ids": [r["id"] for r in rows], "formulae": form,
+                 "families": fam, "model": COFIELD_MODEL, "designs": {}}
+    random_spin = np.array([float(np.mean(d["spin"])) if len(d["spin"]) else 0.0 for d in ref])
+    random_hit = np.array([float(np.mean(d["spin"] >= np.max(d["spin"]) - TIE))
+                           if len(d["spin"]) else 0.0 for d in ref])
+    oracle_spin = np.array([float(np.max(d["spin"])) if len(d["spin"]) else 0.0 for d in ref])
+    names = ("model_spin", "model_hit", "fukui_spin", "fukui_hit", "direction_spin",
+             "direction_hit")
+    for design, seeds in (("formulae", COFIELD_SEEDS), ("families", (0,))):
+        total = {k: np.zeros(n) for k in names}
+        max_gap = 0.0
+        pairs_seen: Counter = Counter()
+        for seed in seeds:
+            if design == "families":
+                fit = nested_ridge(kernels, y, fam, folds=len(set(fam)),
+                                   inner=len(set(fam)) - 1, seed=seed)
+            else:
+                fit = nested_ridge(kernels, y, form, folds=FOLDS, inner=INNER, seed=seed)
+            for f in fit["fits"]:
+                for i, contrib in split_fit(f, meta, mols).items():
+                    max_gap = max(max_gap, abs(f["mean"] + float(contrib.sum())
+                                               - float(fit["predicted"][i])))
+                    d = ref[i]
+                    if not len(d["heavy"]):
+                        continue
+                    _, share = fold_to_heavy(contrib, d["symbols"], d["bonds"])
+                    pick = {"model": int(np.argmax(np.abs(share))),
+                            "fukui": int(np.argmax(d["fukui"])),
+                            "direction": int(np.argmax(sign * share))}
+                    for key, atom in pick.items():
+                        s, h = naming_scores(atom, d["spin"])
+                        total[key + "_spin"][i] += s
+                        total[key + "_hit"][i] += h
+                    if seed == seeds[0]:
+                        truth = d["symbols"][int(d["heavy"][int(np.argmax(d["spin"]))])]
+                        named = d["symbols"][int(d["heavy"][pick["model"]])]
+                        pairs_seen[(truth, named)] += 1
+        res = {k: (v / len(seeds)).tolist() for k, v in total.items()}
+        res.update({"random_spin": random_spin.tolist(), "random_hit": random_hit.tolist(),
+                    "oracle_spin": oracle_spin.tolist(), "max_gap": max_gap,
+                    "seeds": list(seeds),
+                    "element_pairs": [[t, nm, c] for (t, nm), c in pairs_seen.most_common()]})
+        out["designs"][design] = res
+        print(f"  {kind} {design}: largest gap between the split and the prediction "
+              f"{max_gap:.2e}; spin on the named atom {np.mean(res['model_spin']):.3f}, Fukui "
+              f"{np.mean(res['fukui_spin']):.3f}, random {random_spin.mean():.3f}, best "
+              f"{oracle_spin.mean():.3f}", flush=True)
+    with open(os.path.join(RESULTS, f"cofield_{kind}.json"), "w") as fh:
+        json.dump(out, fh)
+    return out
+
+
 # ------------------------------------------------------------------------------------- the report
 #: the comparisons that are read: (name, reference model, model that is tested). The first is the
 #: one of the gate. A positive difference means that the tested model has the smaller error.
@@ -602,6 +771,44 @@ def by_family(data: dict, design: str, models: Tuple[str, ...]) -> Dict[str, Dic
             for f in sorted(set(fam))}
 
 
+#: the comparisons of the co-field test: (name, tested pick, reference pick, quantity). A positive
+#: difference means that the tested pick has the larger value.
+COFIELD_COMPARISONS = (
+    ("gate: the co-field against a random heavy atom", "model", "random", "spin"),
+    ("the co-field against a random heavy atom", "model", "random", "hit"),
+    ("the co-field against the largest Fukui function", "model", "fukui", "spin"),
+    ("the co-field against the largest Fukui function", "model", "fukui", "hit"),
+    ("the largest Fukui function against a random heavy atom", "fukui", "random", "spin"),
+    ("the largest Fukui function against a random heavy atom", "fukui", "random", "hit"),
+    ("the atom of largest share in the easier direction against a random heavy atom",
+     "direction", "random", "spin"),
+    # read after the numbers above were seen: exploratory, not part of the gate
+    ("exploratory: the atom of largest share in the easier direction against the largest "
+     "Fukui function", "direction", "fukui", "spin"),
+    ("exploratory: the atom of largest share in the easier direction against the largest "
+     "Fukui function", "direction", "fukui", "hit"),
+)
+
+
+def read_cofield(kind: str) -> Optional[dict]:
+    path = os.path.join(RESULTS, f"cofield_{kind}.json")
+    if not os.path.isfile(path):
+        return None
+    with open(path) as fh:
+        return json.load(fh)
+
+
+def cofield_comparisons(data: dict, design: str, draws: int = 2000) -> List[dict]:
+    import run_labelmodel as RL
+    res = data["designs"][design]
+    out = []
+    for name, test, ref, what in COFIELD_COMPARISONS:
+        iv = RL.paired_group_interval(res[f"{test}_{what}"], res[f"{ref}_{what}"],
+                                      data["formulae"], seed=0, draws=draws)
+        out.append({"name": name, "quantity": what, "tested": test, "reference": ref, **iv})
+    return out
+
+
 def report_stage() -> dict:
     out = {}
     for kind in ("reduction", "oxidation"):
@@ -613,6 +820,12 @@ def report_stage() -> dict:
         for d, v in out[kind].items():
             gate = v["comparisons"][0]
             v["gate_holds"] = bool(gate["low"] > 0)
+        co = read_cofield(kind)
+        if co is not None:
+            out[kind]["cofield"] = {d: {"comparisons": cofield_comparisons(co, d)}
+                                    for d in co["designs"]}
+            for v in out[kind]["cofield"].values():
+                v["gate_holds"] = bool(v["comparisons"][0]["low"] > 0)
     with open(os.path.join(RESULTS, "report.json"), "w") as fh:
         json.dump(out, fh, indent=1)
     return out
@@ -620,6 +833,56 @@ def report_stage() -> dict:
 
 def _v(x: float, digits: int = 3) -> str:
     return f"{x:.{digits}f}"
+
+
+def cofield_lines(kind: str, rep: dict) -> List[str]:
+    """The part of the table that says which atom the co-field names."""
+    co = read_cofield(kind)
+    if co is None or "cofield" not in rep.get(kind, {}):
+        return []
+    lines = [f"### {kind.capitalize()}: the atom that the model names", "",
+             f"The model is '{co['model']}', which needs only the reactant. Out of fold, its "
+             "prediction is split over the atoms (the hydrogen atoms are added to their heavy "
+             "neighbour). The named atom is the one with the largest absolute share. The atom of "
+             "reference is the one on which the radical ion carries most of its spin. The "
+             "spin populations of all heavy atoms add up to about one.", ""]
+    for d, title in (("formulae", "whole formulae held out, three repeats"),
+                     ("families", "whole families held out")):
+        if d not in co["designs"]:
+            continue
+        r = co["designs"][d]
+        mean = lambda key: float(np.mean(r[key]))
+        lines += [f"Design: {title}. Largest difference between the split and the prediction: "
+                  f"{r['max_gap']:.1e} V.", "",
+                  "| Pick of the atom | Mean spin population on the picked atom | Share of "
+                  "species where the picked atom has the most spin |", "|---|---:|---:|"]
+        for label, key in (("co-field: largest absolute share", "model"),
+                           ("largest Fukui function of the reactant", "fukui"),
+                           ("largest share in the direction that makes the step easier",
+                            "direction"),
+                           ("random heavy atom (expected value)", "random"),
+                           ("the atom with the most spin (best possible)", "oracle")):
+            hit = "" if key == "oracle" else _v(mean(key + "_hit"))
+            lines.append(f"| {label} | {_v(mean(key + '_spin'))} | {hit or '1.000'} |")
+        lines += ["", "Differences. A positive difference means that the first pick has the "
+                  "larger value. The interval is 95 %, from resampling whole formulae.", "",
+                  "| Comparison | Quantity | Difference | Interval | Interval excludes zero |",
+                  "|---|---|---:|---|---|"]
+        for c in rep[kind]["cofield"][d]["comparisons"]:
+            q = ("spin population on the picked atom" if c["quantity"] == "spin"
+                 else "share of species with the picked atom at the most spin")
+            lines.append(f"| {c['name']} | {q} | {_v(c['mean'])} | {_v(c['low'])} to "
+                         f"{_v(c['high'])} | {'yes' if c['excludes_zero'] else 'no'} |")
+        lines.append("")
+        if d == "formulae":
+            top = r["element_pairs"][:8]
+            lines += ["Element of the atom with the most spin and element of the atom that the "
+                      "co-field names (one repeat), the eight most common pairs.", "",
+                      "| Atom with the most spin | Atom named by the co-field | Species |",
+                      "|---|---|---:|"]
+            lines += [f"| {t} | {nm} | {c} |" for t, nm, c in top]
+            lines.append("")
+    return lines
 
 
 def write_table() -> str:
@@ -661,6 +924,7 @@ def write_table() -> str:
         for f, v in fams.items():
             lines.append(f"| {f} | {_v(v[GATE_REFERENCE])} | {_v(v[GATE_MODEL])} |")
         lines.append("")
+        lines += cofield_lines(kind, rep)
     path = os.path.join(RESULTS, "table.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -669,7 +933,8 @@ def write_table() -> str:
 
 def main(argv: Optional[List[str]] = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", default="series", choices=["series", "xtb", "models", "report"])
+    ap.add_argument("--stage", default="series",
+                    choices=["series", "xtb", "models", "cofield", "report"])
     ap.add_argument("--kind", default="reduction", choices=["reduction", "oxidation"])
     ap.add_argument("--designs", default="families,formulae")
     ap.add_argument("--workers", type=int, default=12)
@@ -681,6 +946,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         print(json.dumps(xtb_stage(args.workers, args.limit), indent=1))
     elif args.stage == "models":
         models_stage(args.kind, tuple(args.designs.split(",")))
+    elif args.stage == "cofield":
+        cofield_stage(args.kind)
     elif args.stage == "report":
         print(write_table())
 
