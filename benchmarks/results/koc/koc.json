@@ -1,0 +1,778 @@
+{
+ "comparisons": [
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.0913862102371745,
+   "lo": 0.0165469973540922,
+   "mean": 0.05315782923215939,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.11349892900022554,
+   "lo": 0.04739448072344874,
+   "mean": 0.08010122728111102,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.1920513980044782,
+   "lo": 0.03891282722906326,
+   "mean": 0.10907792648888015,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.10695070778296167,
+   "lo": 0.0575723139006067,
+   "mean": 0.08130294156054241,
+   "model": "invariant + clogP",
+   "test": "train"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.12160889548480686,
+   "lo": 0.06954703646641718,
+   "mean": 0.09476825512406606,
+   "model": "invariant + clogP",
+   "test": "all"
+  },
+  {
+   "against": "linear regression on clogP",
+   "hi": 0.18413116531706747,
+   "lo": 0.08469852548443824,
+   "mean": 0.1287740571665157,
+   "model": "invariant + clogP",
+   "test": "opera_test"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.048232931633959066,
+   "lo": 0.007118575558831339,
+   "mean": 0.028145112328383015,
+   "model": "invariant + clogP",
+   "test": "train"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.027650867906801654,
+   "lo": -0.00012907226970781938,
+   "mean": 0.014667027842955038,
+   "model": "invariant + clogP",
+   "test": "all"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.06111338066725785,
+   "lo": -0.021235082751989907,
+   "mean": 0.019696130677635537,
+   "model": "invariant + clogP",
+   "test": "opera_test"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.01287508650842236,
+   "lo": -0.04980246021191627,
+   "mean": -0.01693673178026167,
+   "model": "invariant, not normalised",
+   "test": "train"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.018856772196216877,
+   "lo": -0.03046226794425624,
+   "mean": -0.005712977273437447,
+   "model": "invariant, not normalised",
+   "test": "all"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.055875237107821524,
+   "lo": -0.04561417301305034,
+   "mean": 0.0058609285355392116,
+   "model": "invariant, not normalised",
+   "test": "opera_test"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.0389257392687158,
+   "lo": -0.01888018375850816,
+   "mean": 0.009487753633334872,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.057291049925795916,
+   "lo": 0.004650099598487329,
+   "mean": 0.03053952535961546,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "field totals",
+   "hi": 0.08606762388369948,
+   "lo": -0.017616357736590194,
+   "mean": 0.03199035062708655,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.02326715700202019,
+   "lo": -0.04654961999892206,
+   "mean": -0.01136434397163899,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.029016419250421727,
+   "lo": -0.028746921756837913,
+   "mean": 0.0006829290389670506,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.12898020911653588,
+   "lo": -0.0031127141452614907,
+   "mean": 0.06023656392872634,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.129910214130468,
+   "lo": 0.0400206017965301,
+   "mean": 0.08636807967281279,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.12527693168751472,
+   "lo": 0.06133867717423991,
+   "mean": 0.09335330657803187,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "ECFP4",
+   "hi": 0.21947561862814388,
+   "lo": 0.07357589519138472,
+   "mean": 0.14606936401927406,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.04800571433862432,
+   "lo": -0.03942447421965491,
+   "mean": 0.0021096704196125193,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.057492618189033014,
+   "lo": -0.018324727946154362,
+   "mean": 0.014131471894769376,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "refitted Crippen increments",
+   "hi": 0.08042738628086307,
+   "lo": -0.0381807070425452,
+   "mean": 0.017795671292626936,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.05796704368387855,
+   "lo": 0.004708546400814878,
+   "mean": 0.029895769233637126,
+   "model": "invariant, cosine",
+   "test": "train"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.06686610018376218,
+   "lo": 0.01767677040123247,
+   "mean": 0.041968502128281626,
+   "model": "invariant, cosine",
+   "test": "all"
+  },
+  {
+   "against": "topological autocorrelation",
+   "hi": 0.12074794260994236,
+   "lo": 0.012469774827727265,
+   "mean": 0.06525995745518653,
+   "model": "invariant, cosine",
+   "test": "opera_test"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.046728763736509006,
+   "lo": 0.013511521725380601,
+   "mean": 0.02952526907893893,
+   "model": "invariant + clogP",
+   "test": "train"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.05377906583461805,
+   "lo": 0.014528163638746839,
+   "mean": 0.03454305163392368,
+   "model": "invariant + clogP",
+   "test": "all"
+  },
+  {
+   "against": "topological + clogP",
+   "hi": 0.08457804883617327,
+   "lo": 0.02714794575666917,
+   "mean": 0.05382520846006167,
+   "model": "invariant + clogP",
+   "test": "opera_test"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.00482188607957695,
+   "lo": -0.0041305714115407646,
+   "mean": 0.00036299075635115585,
+   "model": "invariant + topological",
+   "test": "train"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.008642987009080807,
+   "lo": -0.009184533802751627,
+   "mean": -0.0004559326762549887,
+   "model": "invariant + topological",
+   "test": "all"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.012391187515456011,
+   "lo": -0.008479258514193743,
+   "mean": 0.0016737231011719755,
+   "model": "invariant + topological",
+   "test": "opera_test"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.07548083680325957,
+   "lo": 0.025716024323116357,
+   "mean": 0.0497107585626867,
+   "model": "invariant + eight counts",
+   "test": "train"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.05296464459557056,
+   "lo": 0.017357457682321963,
+   "mean": 0.035266075390054885,
+   "model": "invariant + eight counts",
+   "test": "all"
+  },
+  {
+   "against": "invariant, cosine",
+   "hi": 0.060184446720703534,
+   "lo": -0.02558100048294267,
+   "mean": 0.012988019765695302,
+   "model": "invariant + eight counts",
+   "test": "opera_test"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.05880626912562209,
+   "lo": 0.02186633224611261,
+   "mean": 0.038346414591047706,
+   "model": "invariant + eight counts",
+   "test": "train"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.054974358692543364,
+   "lo": 0.018213482845348326,
+   "mean": 0.035949004429021936,
+   "model": "invariant + eight counts",
+   "test": "all"
+  },
+  {
+   "against": "eight counts",
+   "hi": 0.11707534926276898,
+   "lo": 0.03916119872080855,
+   "mean": 0.07322458369442164,
+   "model": "invariant + eight counts",
+   "test": "opera_test"
+  }
+ ],
+ "compounds": {
+  "all": 719,
+  "test": 183,
+  "train": 536
+ },
+ "count_widths": [
+  0.0625,
+  0.125,
+  0.25,
+  0.5,
+  1.0,
+  2.0,
+  4.0,
+  8.0
+ ],
+ "crippen_types": 62,
+ "d_max": 12.0,
+ "folds": 5,
+ "hs": [
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0,
+  10.0,
+  30.0
+ ],
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "models": {
+  "ECFP4": {
+   "all": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 15
+    },
+    "q2_mean": 0.6855016526027038,
+    "q2_sd": 0.006514878680932543,
+    "rmse_mean": 0.6854390490193244
+   },
+   "opera_test": {
+    "chosen": {
+     "Tanimoto, ridge 0.1": 1
+    },
+    "r2": 0.6458577450974166,
+    "rmse": 0.6808989179517159
+   },
+   "train": {
+    "chosen": {
+     "Tanimoto, ridge 0.01": 2,
+     "Tanimoto, ridge 0.1": 12,
+     "Tanimoto, ridge 1e-08": 1
+    },
+    "q2_mean": 0.6706023685475447,
+    "q2_sd": 0.002418184304539528,
+    "rmse_mean": 0.7152371226314903
+   }
+  },
+  "eight counts": {
+   "all": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 10,
+     "width 1, ridge 0.1": 5
+    },
+    "q2_mean": 0.7718583919591019,
+    "q2_sd": 0.004880226510486405,
+    "rmse_mean": 0.5837946247265201
+   },
+   "opera_test": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1
+    },
+    "r2": 0.7316905451879643,
+    "rmse": 0.592668381244062
+   },
+   "train": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 6,
+     "width 1, ridge 0.1": 9
+    },
+    "q2_mean": 0.7610049790976808,
+    "q2_sd": 0.005235861983660845,
+    "rmse_mean": 0.6092015002533224
+   }
+  },
+  "field totals": {
+   "all": {
+    "chosen": {
+     "width 0.5, ridge 0.1": 1,
+     "width 1, ridge 0.1": 2,
+     "width 2, ridge 0.01": 1,
+     "width 2, ridge 0.1": 11
+    },
+    "q2_mean": 0.751515599423108,
+    "q2_sd": 0.011595700520325658,
+    "rmse_mean": 0.6091382712916648
+   },
+   "opera_test": {
+    "chosen": {
+     "width 1, ridge 0.1": 1
+    },
+    "r2": 0.7599367584896041,
+    "rmse": 0.560604530150714
+   },
+   "train": {
+    "chosen": {
+     "width 1, ridge 0.1": 3,
+     "width 2, ridge 0.1": 12
+    },
+    "q2_mean": 0.7524136503916146,
+    "q2_sd": 0.002984941028521717,
+    "rmse_mean": 0.6200807007922154
+   }
+  },
+  "invariant + clogP": {
+   "all": {
+    "chosen": {
+     "sigma 0.01, h 1, ridge 0.1": 1,
+     "sigma 0.02, h 1, ridge 0.1": 4,
+     "sigma 0.03, h 1, ridge 0.1": 1,
+     "sigma 0.03, h 3, ridge 1": 1,
+     "sigma 0.05, h 0.3, ridge 0.1": 1,
+     "sigma 0.05, h 1, ridge 0.1": 1,
+     "sigma 0.1, h 0.3, ridge 0.1": 3,
+     "sigma 0.1, h 3, ridge 1": 3
+    },
+    "q2_mean": 0.7871867189592759,
+    "q2_sd": 0.0040730346440024275,
+    "rmse_mean": 0.563848505419235
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.1, h 3, ridge 1": 1
+    },
+    "r2": 0.8116232397943262,
+    "rmse": 0.4966008191866562
+   },
+   "train": {
+    "chosen": {
+     "sigma 0.03, h 1, ridge 0.1": 1,
+     "sigma 0.1, h 1, ridge 0.1": 1,
+     "sigma 0.1, h 3, ridge 1": 13
+    },
+    "q2_mean": 0.7868065321082846,
+    "q2_sd": 0.010032025003990417,
+    "rmse_mean": 0.5752555026147889
+   }
+  },
+  "invariant + eight counts": {
+   "all": {
+    "chosen": {
+     "sigma 0.01, width 1, h 3, ridge 0.1": 1,
+     "sigma 0.02, width 0.5, h 1, ridge 0.1": 2,
+     "sigma 0.02, width 1, h 1, ridge 0.1": 2,
+     "sigma 0.03, width 0.5, h 1, ridge 0.1": 2,
+     "sigma 0.05, width 0.5, h 0.3, ridge 0.1": 2,
+     "sigma 0.1, width 0.5, h 0.3, ridge 0.1": 3,
+     "sigma 0.1, width 0.5, h 1, ridge 0.1": 1,
+     "sigma 0.1, width 1, h 10, ridge 1": 2
+    },
+    "q2_mean": 0.8055938593564541,
+    "q2_sd": 0.006450677368523785,
+    "rmse_mean": 0.5388632751819468
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.1, width 0.5, h 3, ridge 1": 1
+    },
+    "r2": 0.8049151288823859,
+    "rmse": 0.5053654709208921
+   },
+   "train": {
+    "chosen": {
+     "sigma 0.03, width 1, h 1, ridge 0.1": 1,
+     "sigma 0.1, width 0.5, h 0.3, ridge 0.1": 2,
+     "sigma 0.1, width 0.5, h 1, ridge 0.1": 1,
+     "sigma 0.1, width 0.5, h 3, ridge 1": 3,
+     "sigma 0.1, width 1, h 10, ridge 1": 7,
+     "sigma 0.1, width 1, h 3, ridge 1": 1
+    },
+    "q2_mean": 0.802382243077841,
+    "q2_sd": 0.0005302098283353433,
+    "rmse_mean": 0.5539943513260865
+   }
+  },
+  "invariant + topological": {
+   "all": {
+    "chosen": {
+     "sigma 0.01, up to 30 bonds, h 1, ridge 0.1": 1,
+     "sigma 0.02, up to 20 bonds, h 1, ridge 0.1": 1,
+     "sigma 0.02, up to 30 bonds, h 1, ridge 0.1": 1,
+     "sigma 0.02, up to 40 bonds, h 1, ridge 0.1": 2,
+     "sigma 0.03, up to 40 bonds, h 0.3, ridge 0.1": 2,
+     "sigma 0.05, up to 40 bonds, h 0.3, ridge 0.1": 2,
+     "sigma 0.1, up to 20 bonds, h 0.1, ridge 0.1": 1,
+     "sigma 0.1, up to 30 bonds, h 0.3, ridge 0.1": 3,
+     "sigma 0.1, up to 40 bonds, h 0.1, ridge 0.1": 2
+    },
+    "q2_mean": 0.7696286587338781,
+    "q2_sd": 0.002708640833423263,
+    "rmse_mean": 0.5866642275514907
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.1, up to 40 bonds, h 0.1, ridge 0.1": 1
+    },
+    "r2": 0.7936008322178626,
+    "rmse": 0.5198137232616713
+   },
+   "train": {
+    "chosen": {
+     "sigma 0.03, up to 40 bonds, h 0.3, ridge 0.1": 1,
+     "sigma 0.1, up to 30 bonds, h 0.03, ridge 0.1": 3,
+     "sigma 0.1, up to 30 bonds, h 0.1, ridge 0.1": 4,
+     "sigma 0.1, up to 40 bonds, h 0.03, ridge 0.1": 1,
+     "sigma 0.1, up to 40 bonds, h 0.1, ridge 0.1": 6
+    },
+    "q2_mean": 0.7533869984193226,
+    "q2_sd": 0.006931804404111068,
+    "rmse_mean": 0.6188110709829374
+   }
+  },
+  "invariant, cosine": {
+   "all": {
+    "chosen": {
+     "sigma 0.01, ridge 0.01": 1,
+     "sigma 0.02, ridge 0.1": 4,
+     "sigma 0.03, ridge 0.1": 2,
+     "sigma 0.05, ridge 0.1": 2,
+     "sigma 0.1, ridge 0.1": 6
+    },
+    "q2_mean": 0.7688053261631861,
+    "q2_sd": 0.005053279784147583,
+    "rmse_mean": 0.5876868755282169
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.1, ridge 0.1": 1
+    },
+    "r2": 0.7919271091166906,
+    "rmse": 0.52191709308391
+   },
+   "train": {
+    "chosen": {
+     "sigma 0.03, ridge 0.1": 1,
+     "sigma 0.1, ridge 0.1": 14
+    },
+    "q2_mean": 0.7531140844651197,
+    "q2_sd": 0.0068924482973718015,
+    "rmse_mean": 0.6191539688248241
+   }
+  },
+  "invariant, not normalised": {
+   "all": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 2,
+     "sigma 0.1, ridge 0.1": 13
+    },
+    "q2_mean": 0.7693835278332459,
+    "q2_sd": 0.00396143704060049,
+    "rmse_mean": 0.5869645903986948
+   },
+   "opera_test": {
+    "chosen": {
+     "sigma 0.1, ridge 0.1": 1
+    },
+    "r2": 0.7977880376522298,
+    "rmse": 0.5145139944674495
+   },
+   "train": {
+    "chosen": {
+     "sigma 0.05, ridge 0.1": 1,
+     "sigma 0.1, ridge 0.1": 12,
+     "sigma 0.2, ridge 0.1": 2
+    },
+    "q2_mean": 0.7351517299545128,
+    "q2_sd": 0.008227524565025927,
+    "rmse_mean": 0.6412674455260308
+   }
+  },
+  "linear regression on clogP": {
+   "all": {
+    "chosen": {
+     "linear, ridge 0.1": 1,
+     "linear, ridge 1": 14
+    },
+    "q2_mean": 0.7061103632324673,
+    "q2_sd": 0.0017314447601992325,
+    "rmse_mean": 0.6626330692864494
+   },
+   "opera_test": {
+    "chosen": {
+     "linear, ridge 1": 1
+    },
+    "r2": 0.6828491826278105,
+    "rmse": 0.6443572026217262
+   },
+   "train": {
+    "chosen": {
+     "linear, ridge 0.1": 3,
+     "linear, ridge 1": 12
+    },
+    "q2_mean": 0.7116639697962291,
+    "q2_sd": 0.0010934079321106753,
+    "rmse_mean": 0.6691776422177552
+   }
+  },
+  "refitted Crippen increments": {
+   "all": {
+    "chosen": {
+     "linear, ridge 0.01": 11,
+     "linear, ridge 0.1": 4
+    },
+    "q2_mean": 0.767677108621785,
+    "q2_sd": 0.0022015065283638342,
+    "rmse_mean": 0.5891474091822516
+   },
+   "opera_test": {
+    "chosen": {
+     "linear, ridge 0.01": 1
+    },
+    "r2": 0.7741314378240637,
+    "rmse": 0.5437780381734282
+   },
+   "train": {
+    "chosen": {
+     "linear, ridge 0.01": 8,
+     "linear, ridge 0.1": 7
+    },
+    "q2_mean": 0.757281890576864,
+    "q2_sd": 0.0005280372678289682,
+    "rmse_mean": 0.61396494869302
+   }
+  },
+  "topological + clogP": {
+   "all": {
+    "chosen": {
+     "up to 20 bonds, h 3, ridge 1": 2,
+     "up to 30 bonds, h 3, ridge 1": 5,
+     "up to 40 bonds, h 3, ridge 1": 8
+    },
+    "q2_mean": 0.7644216891018987,
+    "q2_sd": 0.0009337544433833565,
+    "rmse_mean": 0.5932662665532454
+   },
+   "opera_test": {
+    "chosen": {
+     "up to 40 bonds, h 3, ridge 1": 1
+    },
+    "r2": 0.7577980313342645,
+    "rmse": 0.5630962100951074
+   },
+   "train": {
+    "chosen": {
+     "up to 30 bonds, h 3, ridge 1": 7,
+     "up to 40 bonds, h 3, ridge 1": 8
+    },
+    "q2_mean": 0.7614960653316061,
+    "q2_sd": 0.000991893424668976,
+    "rmse_mean": 0.6086106929710724
+   }
+  },
+  "topological autocorrelation": {
+   "all": {
+    "chosen": {
+     "up to 20 bonds, ridge 0.1": 2,
+     "up to 30 bonds, ridge 0.1": 5,
+     "up to 40 bonds, ridge 0.1": 8
+    },
+    "q2_mean": 0.7383159995317484,
+    "q2_sd": 0.005959347332574119,
+    "rmse_mean": 0.625234728999791
+   },
+   "opera_test": {
+    "chosen": {
+     "up to 40 bonds, ridge 0.1": 1
+    },
+    "r2": 0.7266671516615041,
+    "rmse": 0.5981907366729918
+   },
+   "train": {
+    "chosen": {
+     "up to 30 bonds, ridge 0.1": 7,
+     "up to 40 bonds, ridge 0.1": 8
+    },
+    "q2_mean": 0.7276107269967899,
+    "q2_sd": 0.0023889068979046305,
+    "rmse_mean": 0.6504045302832492
+   }
+  }
+ },
+ "opera": {
+  "cv_q2": 0.81,
+  "cv_rmse": 0.55,
+  "descriptors": 12,
+  "test_n": 184,
+  "test_r2": 0.71,
+  "test_rmse": 0.61,
+  "train_n": 545,
+  "train_r2": 0.81,
+  "train_rmse": 0.54
+ },
+ "quick": 0,
+ "repeats": 3,
+ "seconds": 140.3,
+ "sigmas": [
+  0.01,
+  0.02,
+  0.03,
+  0.05,
+  0.1,
+  0.2,
+  0.35,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  4.0,
+  6.0
+ ],
+ "topo_max": [
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  20,
+  30,
+  40
+ ],
+ "y": {
+  "all": {
+   "max": 6.5,
+   "mean": 2.691849791376912,
+   "min": 0.0,
+   "sd": 1.2223141995706914
+  },
+  "test": {
+   "max": 6.2,
+   "mean": 2.596857923497268,
+   "min": 0.0,
+   "sd": 1.144178466117908
+  },
+  "train": {
+   "max": 6.5,
+   "mean": 2.7242817164179107,
+   "min": 0.0,
+   "sd": 1.2462143409925763
+  }
+ }
+}

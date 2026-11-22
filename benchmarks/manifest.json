@@ -1415,8 +1415,8 @@
    "sha256": "f941b082772fad699a250676c4160da6c329bf50a0c755c4fac87c64da594c83"
   },
   "examples/koc/README.md": {
-   "bytes": 3366,
-   "sha256": "10dbd58d669b9d69275fb12dd4d90d218af899d0ca9e96134565c6b374b4bd16"
+   "bytes": 5153,
+   "sha256": "921bbb577f9b878160fd07c31151478ea9375e909fa6987a5f3fc287d0cae281"
   },
   "examples/koc/koc.sdf": {
    "bytes": 1850922,
@@ -4215,6 +4215,8 @@
   "benchmarks/results/klr/ESR1_ant.json": "f4864ee93fb5568d36d941c5e652ec0200b8a89c9ab2e03524a2be3b9b380dd6",
   "benchmarks/results/klr/TP53.json": "53e349c6e0f9e2ab0a174aeb3e826bb1e485987c95d2d2c69f72aa7a07327ef0",
   "benchmarks/results/klr/table.md": "bb41e3a9ffe9a06eb50fa2dcb6637100ce095ed3cd625f4033f9afb56db24f81",
+  "benchmarks/results/koc/koc.json": "5ea4a6e68ad9eaff02096832c47ce767998718eab5aa57ff64ca1390c832607d",
+  "benchmarks/results/koc/table.md": "8b501595a05b7a05a7004b1fdedbe0e1cd135e761779c0c286ac3aac1b126738",
   "benchmarks/results/kpls/ACE_kpls.json": "eb4dec59148e23560d12240f196aa8806334dc2b297177d74fd188e8272113a5",
   "benchmarks/results/kpls/ACE_krr.json": "1c2d7aa5804919a9cf05bb0ef227ece5770be54e839d95148a01469aff7e4b4c",
   "benchmarks/results/kpls/AChE_kpls.json": "c00c31b44d32a05f2e8e29683c40685eb6c88d149bdc42895f7a6c4f70031876",

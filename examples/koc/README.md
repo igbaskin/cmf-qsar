@@ -50,3 +50,35 @@ embedded.
 - Crippen's clogP, which the program's hydrophobic field uses as its atomic increments, was
   fitted on measured logP values. logKoc follows logP closely, so a model that uses those
   increments has information from outside the training folds.
+
+**What the benchmark found** (`benchmarks/run_koc.py`, 22 November 2026; the full table with the
+intervals is `benchmarks/results/koc/table.md`). R² on the test part of the OPERA paper, with
+the RMSE in brackets:
+
+| Model | Test part |
+| --- | ---: |
+| invariant field kernel, cosine | 0.792 (0.52) |
+| invariant field kernel + clogP | 0.812 (0.50) |
+| invariant field kernel + eight counts | 0.805 (0.51) |
+| linear regression on clogP | 0.683 (0.64) |
+| refitted Crippen increments | 0.774 (0.54) |
+| topological autocorrelation (distances in bonds) | 0.727 (0.60) |
+| ECFP4 | 0.646 (0.68) |
+| OPERA model, as its report gives it | 0.71 (0.61) |
+
+- The field kernel is better than the straight line in clogP on every test: by 0.109 on the test
+  part (95 % interval 0.039 to 0.192) and by 0.053 in cross-validation on the training part
+  (0.017 to 0.091).
+- The 3D distances add something over the same autocorrelation with distances counted in bonds:
+  0.065 on the test part (0.012 to 0.121) and 0.030 in cross-validation (0.005 to 0.058).
+- The field kernel is not better than Crippen's atom types with increments refitted in each
+  fold: the difference is 0.018 on the test part, and its interval (-0.038 to 0.080) includes
+  zero.
+- In cross-validation on the training part the best model here (field kernel + eight counts,
+  q² 0.802, RMSE 0.55) equals what the OPERA report gives for its model (Q² 0.81, RMSE 0.55). On
+  the test part every field model is above the reported 0.71. The comparison is close, not
+  exact: 536 and 183 compounds are used here, 545 and 184 there.
+- The test part holds 183 compounds, so the intervals are wide. Differences of a few hundredths
+  between models are not established.
+
+The whole run takes about two and a half minutes on four cores.
