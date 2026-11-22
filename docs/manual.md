@@ -12921,6 +12921,87 @@ python benchmarks/prepare_vapour.py     # only to rebuild examples/vapour from t
 python benchmarks/run_property_pairs.py # about 72 minutes, after the four benchmarks above
 ```
 
+## Soil sorption: the organic carbon-water partition coefficient
+
+The four properties above are properties of a pure compound or of its solution in water. This
+chapter takes a property from soil chemistry. Koc is the soil organic carbon-water partition
+coefficient: the concentration of a compound sorbed to soil, per unit mass of soil organic
+carbon, divided by its concentration in the soil water at equilibrium, in L/kg. The target is
+its decimal logarithm, logKoc. A sorption coefficient measured on one soil depends on that soil.
+Dividing by the organic carbon content removes most of this dependence, so logKoc is close to a
+property of the molecule alone, and a model of one molecule can be asked to predict it. It is
+the number that says whether a pesticide or a pollutant stays in the top soil or moves to the
+ground water.
+
+**The question.** Sorption to soil organic matter is a partition between water and an organic
+phase, so logKoc follows the octanol-water partition coefficient. The classical model is one
+straight line, logKoc = a logP + b. The hydrophobic field puts Wildman and Crippen's logP
+increments on the atoms, so its sum over a molecule is clogP. As for logP itself, the field
+kernel is worth something here only if it predicts better than that line.
+
+**The data.** The 728 logKoc values of the PHYSPROP database that were curated for the OPERA
+models (Mansouri et al., *J. Cheminform.* 10 (2018) 10; MIT licence), with the split of that
+paper into a training part and a test part. `benchmarks/prepare_koc.py` keeps the 719 compounds
+that are one neutral organic molecule and leaves out second copies of a structure: 536 in the
+training part and 183 in the test part (`examples/koc`). The values range from 0.0 to 6.5, with a
+standard deviation of 1.25 in the training part. Each compound has one conformer (ETKDG, then
+MMFF94). The model report of OPERA gives, for its model with 12 descriptors, Q² 0.81 and RMSE
+0.55 in fivefold cross-validation on the training part, and R² 0.71 and RMSE 0.61 on the test
+part.
+
+**The measurement** (`benchmarks/run_koc.py`). The models, the folds and the selection rule are
+those of the logP benchmark: kernel ridge regression, the setting and the ridge chosen by the
+evidence on each training block, five folds repeated three times on the training part and on all
+compounds, and one external test that fits on the training part and predicts the test part. Each
+cell gives q² or R², with the RMSE in brackets.
+
+| Model | Training part, CV | All compounds, CV | Test part (the OPERA test) |
+|---|---:|---:|---:|
+| invariant, cosine | +0.753 (0.62) | +0.769 (0.59) | +0.792 (0.52) |
+| invariant + clogP | +0.787 (0.58) | +0.787 (0.56) | +0.812 (0.50) |
+| invariant + eight counts | +0.802 (0.55) | +0.806 (0.54) | +0.805 (0.51) |
+| linear regression on clogP | +0.712 (0.67) | +0.706 (0.66) | +0.683 (0.64) |
+| field totals | +0.752 (0.62) | +0.752 (0.61) | +0.760 (0.56) |
+| eight counts | +0.761 (0.61) | +0.772 (0.58) | +0.732 (0.59) |
+| refitted Crippen increments | +0.757 (0.61) | +0.768 (0.59) | +0.774 (0.54) |
+| topological autocorrelation | +0.728 (0.65) | +0.738 (0.63) | +0.727 (0.60) |
+| ECFP4 | +0.671 (0.72) | +0.686 (0.69) | +0.646 (0.68) |
+| OPERA model, as its report gives it | +0.81 (0.55) | -- | +0.71 (0.61) |
+
+The field kernel beats the line in clogP on every test: by 0.053 in cross-validation on the
+training part (95 % interval 0.017 to 0.091), by 0.080 on all compounds (0.047 to 0.113) and by
+0.109 on the test part (0.039 to 0.192). The line itself explains about 70 % of the variance,
+which is why it has been the standard model for decades. Adding clogP back to the field kernel
+gains a further 0.015 to 0.028; only the interval on the training part lies above zero.
+
+Where the gain comes from is less clear than for the boiling points. The field kernel is not
+better than Crippen's atom types with increments refitted in each fold: the differences are
+0.002, 0.014 and 0.018, and all three intervals include zero. It is better than the same
+autocorrelation with distances counted in bonds, by 0.030 to 0.065, and all three of those
+intervals lie above zero. So the 3D distances add a little, and most of what the field kernel
+has over the line in clogP is also available from atom types fitted to the data. The evidence
+chose a width of 0.1 A in 14 of the 15 folds of the training part, a width that separates bond
+lengths and angles.
+
+As for the other properties, the best model in cross-validation is the field kernel plus the
+eight counts: q² 0.802 and RMSE 0.55 on the training part, which equals what the OPERA report
+gives for its own model on the same part. On the test part every field model is above the
+reported R² of 0.71. The comparison is close, not exact, because 536 and 183 compounds are used
+here and the report counts 545 and 184. The test part is small, so its intervals are wide, and
+differences of a few hundredths between two models on it are not established.
+
+Three limits of the data should be kept in mind. The sorption of an acid or a base depends on
+the pH of the soil, and the file gives one value per compound without the pH. Many values are
+averages over several soils, and the scatter between laboratories is a few tenths of a log
+unit, so an RMSE near 0.5 may be close to the noise of the data. And Crippen's increments were
+fitted on measured logP values, so every model that uses them has information from outside the
+training folds.
+
+```bash
+python benchmarks/run_koc.py            # about 3 minutes; the 3D structures are in the repository
+python benchmarks/prepare_koc.py        # only to rebuild examples/koc from the OPERA data
+```
+
 ## The critical micelle concentration of surfactants
 
 A surfactant molecule has a polar head and a long non-polar tail. Above a certain concentration

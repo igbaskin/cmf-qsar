@@ -1083,6 +1083,17 @@ def registry() -> List[Benchmark]:
                   minutes="46",
                   report=lambda: _mod("run_vapour").report(),
                   tables=["vapour/table.md"]),
+        Benchmark("koc",
+                  "measured soil sorption coefficients (logKoc) with the invariant field "
+                  "kernel, against the linear regression on clogP and the references of the "
+                  "logP benchmark, on the PHYSPROP set curated for OPERA (719 compounds, with "
+                  "its test part, to compare with the model report of OPERA)",
+                  "run_koc.py", "koc", compute=[[]],
+                  prepare=["prepare_koc.py (the OPERA data from GitHub, then one 3D "
+                           "structure per compound)"],
+                  minutes="3",
+                  report=lambda: _mod("run_koc").report(),
+                  tables=["koc/table.md"]),
         Benchmark("property_pairs",
                   "the four physical-property benchmarks with a model that needs no conformer: "
                   "the topological autocorrelation plus the eight counts, against the field "
