@@ -2817,7 +2817,8 @@ and counts predict nothing, is the first case.
   whole peptides.
 * **Field-based similarity for reactions.** Fields of reactant and product in one frame, with the
   difference field as the description of the transformation. Exploratory; no commitment until C is
-  done.
+  done. Item PO3 below (24 November 2026) makes it a plan item, the continuous reaction field,
+  with a gate and a data set.
 
 ### Materials science: the extensions the crystal kernel asks for (25 October 2026)
 
@@ -8004,6 +8005,119 @@ What it leaves open, in order:
   set, to remove the search cost on the additive splits; and a second reaction table with a
   varying position that is not a grid of parts (the Suzuki-Miyaura screen of Perera et al. 2018
   is the next public one).
+
+* **PO3. The continuous reaction field (CRF): a reaction as one set of fields. Planned
+  24 November 2026.** The reactions bullet at the head of H named the difference field as the
+  description of a transformation and made no commitment. This item is the commitment. It joins
+  CMF with the condensed graph of reaction (CGR). A CGR is one graph that holds the reactants and
+  the products together: an atom or a bond that does not change keeps a conventional label, and
+  one that changes gets a dynamic label (bond made, bond broken, bond order changed, charge
+  changed). A CRF is the same idea in space: the fields of the reactants and of the products in
+  one coordinate frame, in two kinds of channels.
+
+  *Conventional channels:* for each field f, the mean of the two sides,
+  C_f(r) = ½ (X_f^P(r) + X_f^R(r)). *Dynamic channels:* the difference,
+  D_f(r) = X_f^P(r) − X_f^R(r). An atom that does not change and does not move cancels exactly
+  in D_f, so the dynamic channels hold the reaction centre and the relaxation around it. Two
+  dynamic fields have no molecular counterpart and are the direct analogue of the CGR labels: a
+  **bond-change field**, one Gaussian at the midpoint of each bond that changes, weighted by the
+  change of bond order (positive for a bond made, negative for a bond broken), and a
+  **charge-change field**, the change of the partial charge on each mapped atom.
+
+  **What exists.** A difference of two fields is a field: `difference_field` in
+  `cmfqsar/localenv.py` (LP2) joins the atoms of both sides and negates the weights of the
+  second, and every kernel takes the result unchanged. BT6 did this for a pair of cells, PP1 for
+  a mutant, MC6 for a matched pair. Pseudo-atoms that carry a field at a point that is not an
+  atom exist since the ring-centred fields of the COMPAS study. Field weights per channel exist.
+  **What is new,** in `cmfqsar/reaction.py`: a reader for a reaction with an atom-to-atom mapping
+  and 3D geometries of both sides; the superposition of the two sides on their mapped atoms
+  (all mapped heavy atoms, or the atoms of the reaction centre only, both measured); the
+  conventional and dynamic channels; the bond-change field as pseudo-atoms; a refusal of a
+  reaction whose two sides do not hold the same atoms, with the count of refusals reported.
+
+  **Two identities fix what can be learned, and each becomes a test.**
+  (1) The pair (C, D) is a rotation of the pair (R, P): k(R,R') + k(P,P') = 2 k(C,C') + ½ k(D,D').
+  With these fixed weights the CRF kernel equals the kernel of the two sides as separate blocks.
+  A gain can therefore come only from weighting C and D separately, from the frame, or from the
+  bond-change field, and the benchmark has to say which. (2) Reversing a reaction leaves C
+  unchanged and negates D. A ridge without intercept on the dynamic channels predicts exactly
+  the opposite value for the reverse reaction, which is right for a reaction energy. A barrier
+  is not odd: by the Marcus relation it is an intrinsic barrier, which is the same in both
+  directions, plus half the reaction energy, plus a small quadratic term. The conventional
+  channels are therefore the place for the intrinsic barrier and the dynamic channels the place
+  for the reaction energy, and the benchmark reports the two parts separately.
+
+  **The trap that is known in advance.** The overlap kernels are cosine-normalised, and the
+  normalisation divides out the size of a difference field (`cmfqsar/celldiff.py` says so for
+  BT6). The size of D is how much the reaction changes, which is likely to carry part of the
+  target. So the norm of each dynamic channel goes into the references as a number of its own,
+  and the kernel is also measured without the normalisation.
+
+  **Data.** Grambow, Pattanaik and Green, *Reactants, products, and transition states of
+  elementary chemical reactions based on quantum chemistry*, Scientific Data 2020; Zenodo
+  10.5281/zenodo.3715478, CC BY 4.0. It holds 12,001 gas-phase reactions at ωB97X-D3/def2-TZVP
+  (16,452 at B97-D3/def2-mSVP), each with the geometries of the reactant, the product and the
+  transition state, the activation energy and the reaction enthalpy. The molecules have up to
+  seven heavy atoms (C, N, O), so the whole set is small enough for exact kernels. To check when
+  the files are read: that the three geometries of a reaction share one atom order; how a
+  product of several molecules is stored (one complex or separate files); the licence text in
+  the archive. The second set, for a single reaction class, is one of the three of van Gerwen,
+  Briling, Calvino Alonso, Franke and Corminboeuf, *Benchmarking machine-readable vectors of
+  chemical reactions on computed activation barriers*, Digital Discovery 3 (2024) 932, CC BY 3.0
+  (GDB7-22-TS, Cyclo-23-TS, Proparg-21-TS; data and splits in the paper's repository). That
+  paper reports the errors of the difference of SLATM vectors (SLATM_d), B2R2, the CGR graph
+  network of Heid and Green (J. Chem. Inf. Model. 62 (2022), issue 9,
+  doi 10.1021/acs.jcim.1c00975) and EquiReact on the same
+  splits. Those numbers are read in the paper before any of them is quoted; none is written
+  here from memory.
+
+  **Two settings, kept apart.** (a) Reactant and product only. This is the setting of a CGR and
+  the only one that is a usable model, because a transition state costs the calculation the
+  model is meant to replace. Targets: the reaction enthalpy and the activation energy.
+  (b) The transition state as a third state, with the fields X^TS − X^R and X^TS − X^P. This is
+  an upper limit for what geometry can carry, not a model, and it is reported as such.
+
+  **References, on the same folds.** (1) The counts of bonds made and broken, by bond type, and
+  the norms of the dynamic channels: the count version of what the field may be measuring.
+  (2) For the barrier, a linear regression on the reaction enthalpy alone (the Bell–Evans–Polanyi
+  relation) and, in setting (a) with the enthalpy unknown, the same with the enthalpy that the
+  model predicts. (3) A difference of Morgan fingerprints of the two sides in a Tanimoto or
+  linear kernel, as the fragment form of a CGR. (4) The fields of the two sides as separate
+  blocks with equal weights, which is identity (1). (5) The published numbers of SLATM_d, B2R2
+  and the CGR network on the published splits of the second set.
+
+  **Folds.** Ten repeats of five random folds, and five folds with whole reactants held out
+  (one reactant gives many reactions in this set, so random folds overstate), and a third split
+  with whole reaction types held out, a type being the set of bond changes. A reaction and its
+  reverse never fall on two sides of a split. A forced-tie baseline is run first to audit the
+  folds, as in MC3.
+
+  *Gate:* on the activation energy of the Grambow set in setting (a), with whole reactants held
+  out, the CRF (conventional, dynamic and bond-change channels) together with reference (1)
+  has a lower error than references (1) and (3) together, by more than the bootstrap interval
+  of rule 4 over reactants. The same comparison on the reaction enthalpy and on the second set
+  is reported beside it and does not decide the gate. Whatever the outcome, the item reports
+  which of the three possible sources of a gain (separate weights, the frame, the bond-change
+  field) is responsible, each removed in turn, and the correlation of the CRF kernel with the
+  kernels of references (3) and (4).
+
+  **Risks stated before the work.** MC6 found that a transformation field does not transfer
+  between series, because the effect of a group depends on the pocket. Here the target is a
+  gas-phase property of the reaction itself, so that cause is absent, but the warning stands for
+  any later use on yields. An atom that moves without changing gives a pair of opposite lobes in
+  D; this can be signal (strain, relaxation) or noise from the choice of conformer, and the two
+  superposition rules are the measure of it. Molecules of seven heavy atoms give the graph
+  references an easy task, as the polymer and property benchmarks showed.
+
+  **Stages and cost.** Stage 1: the reader, the two superpositions, the channels and the two
+  identity tests, on 2,000 reactions drawn with a fixed seed; memory measured there before the
+  full run. Stage 2: the full set, both targets, all references, the three splits. Stage 3: the
+  second set against the published numbers, and setting (b). **Not in this item:** reactions of
+  several components with conditions (the area of PO2), the mapping of literature reactions,
+  the difference of electron densities on a grid (the route of M9), and the reaction path as an
+  ensemble along its coordinate (the route of MS5). Each becomes an item only if the gate is
+  met.
+
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
