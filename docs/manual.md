@@ -8862,6 +8862,182 @@ python benchmarks/run_device_hops.py --stage kernel --stage features --stage own
 python benchmarks/run_device_hops.py --report               # results/device_hops/table.md
 ```
 
+### Atom amplitudes from a network on the atoms
+
+A field of CMF puts a Gaussian on every atom, and every Gaussian has an amplitude. The amplitude
+is a fixed number: the partial charge of the atom in the electrostatic field, a well depth in
+the steric field, a hydrogen-bond strength, a one in an indicator field. These numbers come
+from a force field or from a rule, and they do not know the activity. Plan item ND14a asks
+whether amplitudes that are learned from the activities are better than the fixed ones, inside
+the same kernel model. A small network on the atoms produces them. `cmfqsar/amplitudes.py`
+holds the method; it needs PyTorch (`pip install cmfqsar[fieldae]`).
+
+**The network on the atoms.** One network with shared weights reads every atom of the
+molecular graph. Its output is a correction to the fixed amplitude:
+
+$$
+a_f(i) = w_f(i) + s_f\, d_f(i) .
+$$
+
+Here $w_f(i)$ is the fixed amplitude of atom $i$ in field $f$, $s_f$ is the scale of the field
+(the root mean square of $w_f$ over the atoms that carry the field), and $d_f(i)$ is the output
+of the network for this atom and this field. Only the atoms that carry the field are corrected:
+an atom with the fixed amplitude zero keeps it. The last layer of the network starts at zero,
+so the training starts at the model with the fixed amplitudes.
+
+The input of an atom is its atom type (one column per type), its fixed amplitude in every field
+divided by the scale of the field, and the numbers of its bonded non-hydrogen atoms and
+hydrogen atoms. With `rounds=0` the network reads the atom alone. With `rounds=k` every atom
+also reads the sum of the hidden values of its bonded neighbours, $k$ times, so that its output
+depends on the atoms up to $k$ bonds away. This repeated reading of the neighbours is called
+message passing. The network is the first level of the neural device of Baskin, Palyulin and
+Zefirov (1997): one network with shared weights on every atom. It differs from the *atom
+network* of the section above, which sums the outputs over the atoms and maps the sums to the
+activity with a second network. Here there is no sum and no second network: the kernel model
+takes their place.
+
+**What stays.** The model stays the kernel model of the section "Training the widths and the
+weights of the fields". Its coefficients are the closed-form ridge solution for the current
+amplitudes, and they are not trained by gradient. The model is linear in the fields, so it
+keeps its co-field (`cmfqsar.amplitudes.cofield_gaussians`). The function
+`cmfqsar.amplitudes.atom_weights` returns the trained amplitudes as the weights of the atoms of
+a table, so every other part of the program can use them in place of the fixed weights. A model
+with the Gaussian kernel layer has no co-field, as in the section named above. The attenuations
+and the field weights are not trained here; they stay at the values of the grid search.
+
+**The objective.** It is the criterion of the section named above, plus a penalty: the squared
+error of the out-of-fold predictions inside the training part, divided by the variance of the
+activity, plus `penalty` times the mean of $d^2$ over the corrected atoms of the training
+molecules. The penalty holds the amplitudes near the fixed values. A quasi-Newton method
+(L-BFGS-B) minimises this sum over the weights of the network and the logarithm of the ridge.
+With validation molecules, the evaluation with the lowest validation error is kept; this is
+early stopping.
+
+**How the gradient reaches the network.** A field kernel is a sum over atom pairs,
+$K_f(x, z) = \sum_{i \in x} \sum_{j \in z} a_f(i)\, a_f(j)\, E_f(i, j)$, with $E_f$ the overlap
+of two atom Gaussians. The array of all overlaps is too large to keep (on COMPAS-1D it would
+have $3 \cdot 10^{10}$ entries for one field). Every evaluation therefore makes two passes over
+the atom pairs. The first pass computes the kernels for the current amplitudes. The criterion
+is then a function of the kernels, and automatic differentiation gives its derivative
+$G_f(x, z)$ with respect to every kernel entry. The second pass computes the derivative with
+respect to the amplitude of every atom from $G_f$ and the same overlaps,
+
+$$
+\dfrac{\partial L}{\partial a_f(i)} = \sum_z G_f(x, z) \sum_{j \in z} E_f(i, j)\, a_f(j)
+\qquad (i \in x) ,
+$$
+
+with the same sum for the atoms of the landmark molecules and one more term for the
+self-kernel of the molecule. This derivative is exact; a test compares it with finite
+differences (relative difference $5 \cdot 10^{-8}$). One backward step then hands it to the
+network. With the network at its start the model equals the kernel model of the section named
+above to $10^{-9}$, which a test also checks.
+
+**What was measured.** The sets and the splits are those of plan items ND1 and ND2: COMPAS-1D
+(8,678 molecules, 1,000 landmark molecules, five random splits) and the eight Sutherland series
+(ten random splits each, every training molecule a landmark). The network has 16 hidden units
+and two rounds of message passing; the penalty is 0.1 and the first step of the optimiser is
+scaled by 0.3. The penalty and the first step were chosen on the validation molecules of one
+split of DHFR, among penalties 0.1, 1 and 10 and first steps 0.1 and 0.3, and were not chosen
+again for COMPAS-1D, where one training takes 40 minutes. The gate was named before any run:
+*learned, with neighbours* must have a smaller absolute error than *fixed amplitudes* on
+COMPAS-1D and on DHFR, with a 95 % interval of the paired difference that excludes zero on
+both. On COMPAS-1D the amplitudes of the steric field, the xTB charge and the two atom-type
+indicator fields are learned; the ring fields stay fixed. On a Sutherland series all five
+fields are learned. Mean absolute error on the test rows, COMPAS-1D, in eV (five splits):
+
+| Model | Mean absolute error |
+|---|---:|
+| Fixed amplitudes (the reference) | 0.114 |
+| Learned, the atom alone (372 weights in the network) | 0.105 |
+| Learned, with neighbours (1,428 weights) | 0.085 |
+| Learned, with neighbours, kept at the lowest value of the objective | 0.085 |
+| Fixed amplitudes, with the Gaussian kernel layer | 0.075 |
+| Learned, with neighbours, with the Gaussian kernel layer | 0.057 |
+| Plan item ND2: everything trained, with the Gaussian kernel layer | 0.058 |
+
+* **The gate is met on both sets.** On COMPAS-1D the error of *learned, with neighbours* is
+  0.0273 eV lower than that of the fixed amplitudes (95 % interval 0.0252 to 0.0293), and it is
+  lower on each of the five splits. On DHFR the difference is -0.034 (interval -0.059 to
+  -0.010) in units of the activity, which is the negative decimal logarithm of a
+  concentration.
+* **The gain comes from the neighbours, not only from the freedom to fit.** A network that
+  reads the atom alone has fewer weights and gains 0.008 eV (interval 0.007 to 0.009). The
+  network that also reads the neighbours gains 0.019 eV more (interval 0.017 to 0.021). So the
+  best amplitude of an atom depends on its surroundings, and a value for each atom type is not
+  enough. This does not prove that the amplitudes are chemically better: the network with
+  neighbours also has more weights than the one without.
+* **The gain is the same with the Gaussian kernel layer.** With the layer, learning the
+  amplitudes lowers the error from 0.075 to 0.057 eV (difference -0.0173, interval -0.0187
+  to -0.0158), a drop of 24 %. Without the layer the drop is 25 %. So the two changes add up. The
+  result with the layer is level with that of ND2 (0.058), which trained the widths, the
+  weights of the fields and the ridge instead of the amplitudes. It is not a new best model: a
+  network on the CMF vector has 0.055 eV and the neural device with message passing 0.035 eV.
+* **On a congeneric series the result is mostly unresolved.** The mean $R^2$ over the eight
+  Sutherland series is 0.452 with learned amplitudes with neighbours and 0.425 with the fixed
+  ones (the median over all 80 splits: 0.538 and 0.522). The difference of the absolute error is
+  resolved lower in two series, DHFR (-0.034) and THER (-0.219), is resolved higher in none,
+  and its interval includes zero in the other six. The network that reads the atom alone has a
+  resolved higher error in AChE (+0.051) and a resolved lower error in DHFR and THER. So the
+  answer to the question of plan item ND4a is: yes, on a large set, where the neighbours are
+  needed; on a series of 46 to 253 training molecules it is not resolved.
+* **Early stopping is needed.** Keeping the evaluation with the lowest objective instead of
+  the lowest validation error gives a mean $R^2$ of 0.374 on the Sutherland series, against 0.452,
+  because the objective keeps falling (from 0.74 to 0.19 on average) while the validation error
+  rises (0.89 against 0.82 at the start). On COMPAS-1D the two choices differ by 0.0005 eV
+  (resolved, interval 0.0002 to 0.0008). Early stopping kept the starting model, the fixed
+  amplitudes, in 24 % of the trainings on the Sutherland series.
+* **The corrections are small and the training stops early.** The root mean square of the
+  correction is 5 to 11 % of the scale of the field on COMPAS-1D (up to 25 % for the xTB charge
+  with the layer) and 12 to 43 % on the Sutherland series. Of the 85 trainings with neighbours,
+  84 stopped because they reached the limit of 30 iterations or 40 evaluations, so the minimum
+  was not reached, and one stopped with an abnormal line search. With the atom alone, 8 of 85
+  stopped abnormally. The numbers are those of a training with a fixed budget.
+* **The learned amplitudes stay close to the fixed ones, and the co-field moves further.** The
+  correlation of the learned amplitudes with the fixed ones over the atoms of the landmark
+  molecules is 0.99 or more on COMPAS-1D and 0.85 to 0.97 on DHFR. The co-field of the trained
+  model correlates with that of the fixed model at 0.26 to 0.66 on COMPAS-1D. The co-fields of
+  the fixed model of two different splits correlate at 0.59 to 0.80 (steric, xTB charge) and
+  0.61 to 0.64 (the two indicator fields), which is more. So on COMPAS-1D a small change of
+  the amplitudes moves the map more than a new draw of the training molecules does. On DHFR
+  the co-field of the trained model correlates at 0.59 to 0.89 with that of the fixed model,
+  against 0.48 to 0.66 between two splits, so there the map moves less than between splits.
+
+**What this says.** Amplitudes from a network that reads an atom and its neighbours are better
+than the fixed amplitudes inside the same kernel on a large set, by about a quarter of the
+error, with and without the Gaussian kernel layer. That is a real gain, and it keeps the kernel,
+the co-field of a linear model and the weights of the atoms for the other parts of the
+program. It is not a new best model. On a series of tens or a few hundred molecules the gain is
+not resolved in six of eight series, and the training needs early stopping on validation
+molecules, which a small series has few of.
+
+**Limits.** (1) The network was trained with one setting, chosen on one split of one series,
+and one start per split. (2) The splits are random, so the numbers say nothing about a new
+scaffold. (3) The trainings stop at a fixed budget and are not converged. (4) The fields are
+those of the earlier benchmarks; the widths and the weights of the fields were not trained at
+the same time, so the interaction of the two kinds of training is not known. (5) The model with
+the Gaussian kernel layer has no co-field. (6) The size of the network (16 hidden units, two
+rounds) was not tuned, and the amplitudes were not compared with chemical values, such as the
+charges of another method. (7) On a Sutherland split there are 10 to 54 validation molecules,
+which makes early stopping uncertain. (8) The kernels of the Sutherland series are computed in
+double precision and those of COMPAS-1D in single precision; a check on a subset of COMPAS-1D
+gave the same course of the training.
+
+**Cost.** On a GPU (RTX 4070 Laptop, 8 GB), one training on COMPAS-1D takes 40 to 45 minutes
+with neighbours (about 1,000 landmarks, 40 evaluations), 45 minutes with the atom alone, and
+the model with the fixed amplitudes 42 seconds. The 25 trainings of the five splits took 13.9
+hours. On a Sutherland series a training takes about 20 seconds; all 80 splits took 1.3 hours.
+Reading the co-fields of the trained models took about 20 minutes. Every evaluation makes two
+passes over the atom pairs, so the cost grows with the square of the number of atoms of the
+landmarks and the training molecules, as in ND2.
+
+```bash
+python benchmarks/run_amplitudes.py --stage pack             # needs the packed atoms of ND2
+python benchmarks/run_amplitudes.py --stage train            # the networks; use a GPU
+python benchmarks/run_amplitudes.py --stage reading          # the co-fields of the trained models
+python benchmarks/run_amplitudes.py --report                 # results/amplitudes/table.md
+```
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right

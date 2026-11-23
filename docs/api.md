@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 143 modules, 276 classes with 876 public methods, and 1492 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 144 modules, 277 classes with 877 public methods, and 1501 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -39,6 +39,7 @@ for.
 | [cmfqsar](#cmfqsar) | cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR. |
 | [cmfqsar.active](#cmfqsaractive) | Which molecule to make next (plan item E2). |
 | [cmfqsar.align](#cmfqsaralign) | 3D structure generation and molecular alignment. |
+| [cmfqsar.amplitudes](#cmfqsaramplitudes) | Atom amplitudes of the fields from a network on the atoms (plan item ND14a). |
 | [cmfqsar.anisotropic](#cmfqsaranisotropic) | Atom functions with a direction: Gaussians times a linear factor (plan item D1). |
 | [cmfqsar.atomtargets](#cmfqsaratomtargets) | A target that belongs to an atom rather than to a molecule (plan item LP1). |
 | [cmfqsar.atomtypes](#cmfqsaratomtypes) | Atom typing (Tripos/Sybyl-like) and van der Waals parameters. |
@@ -440,6 +441,217 @@ method: scramble the poses, realign, and measure how much of the original arrang
 comes back.
 
 The molecules are modified in place; the displacement (RMSD, A) of each is returned.
+
+## cmfqsar.amplitudes
+
+Source: `cmfqsar/amplitudes.py`
+
+Atom amplitudes of the fields from a network on the atoms (plan item ND14a).
+
+A molecular field of CMF is a sum of Gaussians, one on every atom, and every Gaussian has an
+amplitude: the partial charge of the atom in the electrostatic field, a well depth in the
+steric field, a hydrogen-bond strength, a one in an indicator field.  These amplitudes are
+fixed numbers of a force field or of a rule.  This module lets a small network produce them.
+The network reads every atom of the molecular graph with shared weights, and its output is a
+correction to the fixed amplitude:
+
+    a_f(i) = w_f(i) + s_f d_f(i),
+
+with `w_f(i)` the fixed amplitude of atom `i` in field `f`, `s_f` the scale of the
+field (the root mean square of `w_f` over the atoms that carry the field) and `d_f(i)` the
+output of the network.  Only the atoms that carry the field are corrected: an atom with the
+fixed amplitude zero keeps it.  The last layer of the network starts at zero, so the model at
+the start is the model with the fixed amplitudes.
+
+The network is the first level of the neural device of Baskin, Palyulin and Zefirov (J. Chem.
+Inf. Comput. Sci. 37 (1997) 715): one network with shared weights on every atom.  With
+`rounds=0` it reads the atom alone.  With `rounds=k` every atom also reads the sum of the
+hidden values of its bonded neighbours, `k` times, so that its output depends on the atoms up
+to `k` bonds away (message passing).  The input of an atom is its atom type (one column per
+type), its fixed amplitude in every field divided by the scale of the field, and the numbers of
+its bonded non-hydrogen atoms and hydrogen atoms.
+
+What stays
+----------
+The model stays the kernel model of `cmfqsar.learnable`:
+
+    y(x) = sum_z c_z K(x, z) + b,        K(x, z) = sum_f h_f K_f(x, z),
+
+with `K_f` the overlap of the fields `f` of two molecules, now with the amplitudes above.
+The coefficients `c` and the bias are the closed-form ridge solution for the current
+amplitudes; they are not trained by gradient.  The model is linear in the fields, so it has a
+regression-coefficient field (co-field), `cofield_gaussians`, and
+`atom_weights` returns the amplitudes in the layout of an atom table, so that every
+other part of the program can use them as the weights of the atoms.
+
+The objective
+-------------
+It is the criterion of `cmfqsar.learnable`: the squared error of the out-of-fold
+predictions inside the training part, divided by the variance of the activity, plus a penalty
+on the corrections, `penalty` times the mean of `d^2` over the corrected atoms of the
+training molecules (averaged over the fields).  The penalty holds the amplitudes near the
+fixed values.  A quasi-Newton method (L-BFGS-B) minimises the sum over the weights of the
+network and, with `learn_lam`, the logarithm of the ridge.  With validation rows, the
+evaluation with the lowest validation error is kept (early stopping).
+
+How the gradient reaches the network
+------------------------------------
+A field kernel is `K_f(x, z) = sum_ij a_i a_j E(i, j)` with `E` the overlap of two atom
+Gaussians.  The array `E` of all atom pairs is too large to keep, so every evaluation makes
+two passes over the atom pairs.  The first pass computes the kernels for the current
+amplitudes.  The criterion is then a function of the kernels, and automatic differentiation
+gives its derivative `G` with respect to every kernel entry.  The second pass computes, from
+`G` and the same overlaps, the derivative with respect to the amplitude of every atom,
+
+    dL / da_i = sum_z G(x, z) sum_j E(i, j) a_j          (atom i of molecule x),
+
+and the same sum for the atoms of the landmark molecules.  This derivative is exact, and it is
+handed to the network by one backward step.  No graph of the atom pairs is kept.
+
+Precision
+---------
+On a GPU the kernels are computed in single precision unless `dtype` says otherwise; the
+ridge solution is always computed in double precision.  With a small ridge the criterion is
+sensitive to the last digits of the kernels.  On a part of COMPAS-1D (1,500 training molecules,
+243 landmarks) the criterion at the start was 0.1340 in single and 0.1347 in double precision,
+and the two trainings took the same course.  On a series of a few hundred molecules double
+precision costs about twice the time and removes this difference; the benchmark uses it there.
+
+PyTorch is needed (the optional dependency of `cmfqsar.fieldae`).  Without it the module
+imports, `available` is false and `pack_graph` still works.
+
+### `class TrainedAmplitudes  (dataclass)`
+
+The network a training found and the kernel model fitted with its amplitudes.
+
+`learned` names the fields whose amplitudes the network corrects.  `state` holds the
+weights of the network, `sizes` its input width, hidden width and rounds.  `coef` and
+`bias` are the model over the landmarks `landmarks` (rows of the packed table);
+`land` holds the atoms of the landmarks for every field (coordinates, width factors and
+amplitudes), so that the model predicts other molecules without the training table.
+`correction` is the root mean square of the network output over the corrected atoms of
+the training molecules, one number per learned field, in units of the field scale.
+`pred` holds the prediction of the wanted molecules, `history` one record per
+evaluation.
+
+Attributes:
+
+- `names: List[str]`
+- `kinds: List[str]`
+- `learned: List[str]`
+- `alpha: np.ndarray`
+- `h: np.ndarray`
+- `lam: float`
+- `gamma: Optional[float]`
+- `med: float`
+- `normalize: str`
+- `layer: Optional[str]`
+- `landmarks: np.ndarray`
+- `coef: np.ndarray`
+- `bias: float`
+- `pred: np.ndarray`
+- `scale: np.ndarray`
+- `sizes: Dict[str, int]`
+- `state: Dict[str, np.ndarray]`
+- `land: Dict[str, List[np.ndarray]]`
+- `dz: np.ndarray`
+- `norms: np.ndarray`
+- `correction: Dict[str, float]` = `field(default_factory=dict)`
+- `penalty: float` = `0.0`
+- `history: List[dict]` = `field(default_factory=list)`
+- `start: Dict[str, object]` = `field(default_factory=dict)`
+- `evaluations: int` = `0`
+- `seconds: float` = `0.0`
+- `pass_seconds: float` = `0.0`
+- `by_criterion: Optional['TrainedAmplitudes']` = `None`
+
+#### `TrainedAmplitudes.settings() -> dict`
+
+### `available() -> bool`
+
+Whether PyTorch is installed, so that the amplitudes can be trained.
+
+### `pack_graph(table, specs, columns: Optional[Sequence[int]]=None, like: Optional[Dict[str, object]]=None) -> Dict[str, object]`
+
+The packed atoms of `cmfqsar.learnable.pack` and the graph the network reads.
+
+The result holds everything `cmfqsar.learnable.pack` returns and, in addition:
+
+`atom[f]`    (molecules, atoms) for every field: the index of the packed atom in the
+               atom list of the whole table, or -1 where the block is padded;
+`x`          (atoms of the table, columns): the input of the network for every atom;
+`edges`      (2, bonds times 2): the bonded atom pairs, in both directions;
+`offsets`    the first atom of every molecule;
+`scale`      one number per field: the root mean square of the fixed amplitude over the
+               atoms that carry the field;
+`types`      the atom types that have a column, and `columns_x` the name of every column.
+
+`table` is an atom table whose molecules carry `atom_types` and `bonds`
+(`cmfqsar.fields.AtomTable`).  For the table of other molecules pass the graph of
+the training table as `like`: the atom types and the scales are then taken from it, so
+that the columns mean the same.  An atom type that `like` does not have gets no column.
+
+### `train(graph, y, train, landmarks, valid=None, fields: Optional[Sequence[str]]=None, alpha=1.0, h=None, lam: float=0.01, gamma: Optional[float]=None, hidden: int=16, rounds: int=2, penalty: float=0.1, learn_lam: bool=True, normalize: str='cosine', layer: Optional[str]=None, steps: int=30, folds: int=5, seed: int=0, select: Optional[str]=None, predict=None, keep_criterion: bool=False, first_step: float=FIRST_STEP, device=None, dtype=None, budget: float=L.BUDGET, log: Optional[Callable[[str], None]]=None) -> TrainedAmplitudes`
+
+Train the network that corrects the atom amplitudes, and fit the ridge model with them.
+
+`graph` is the result of `pack_graph`, `y` one activity per molecule, `train` and
+`valid` rows of the table, `landmarks` rows of the training part that carry the model.
+`fields` names the fields whose amplitudes are corrected (default: every field); an empty
+list trains no network, and the function then fits the model with the fixed amplitudes
+(with `learn_lam`, the ridge is still trained).  `alpha`, `h`, `lam` and `gamma` are the
+attenuations, the field weights, the start of the ridge and the width of the Gaussian
+kernel layer (`layer="gauss"`); they are not trained here, except the ridge.
+
+`hidden` is the width of the network and `rounds` the number of times an atom reads the
+sum over its bonded neighbours.  `penalty` multiplies the mean squared correction.
+`steps` bounds the iterations of the quasi-Newton method, which makes at most
+`steps + 10` evaluations; every evaluation makes two passes over the atom pairs of the
+learned fields.  `select` is `"valid"` (keep the evaluation with the lowest validation
+error; the default when `valid` is given) or `"cv"` (keep the lowest objective).
+`predict` lists the rows whose predictions are wanted (default: every molecule).
+
+### `amplitudes(trained: TrainedAmplitudes, graph, rows=None, device=None) -> List[np.ndarray]`
+
+The amplitudes of every field for the molecules `rows` of `graph`: one (molecules,
+atoms) array per field, in the layout of the packed blocks.  A field that the network
+does not correct returns its fixed amplitudes.
+
+### `atom_weights(trained: TrainedAmplitudes, graph, weights, columns=None, device=None) -> np.ndarray`
+
+A copy of the atom weights of a table with the trained amplitudes written into it.
+
+`weights` is `table.weights` of the table that `graph` was packed from, (atoms, fields
+of the table); `columns` are the columns of the fields of the model (default 0, 1, 2,
+...).  The result can replace the weights of the atoms anywhere in the program.
+
+### `predict(trained: TrainedAmplitudes, graph, rows=None, device=None, dtype=None, budget: float=L.BUDGET) -> np.ndarray`
+
+The predictions of a trained model for the molecules `rows` of `graph`.
+
+`graph` may be the training table or the table of other molecules packed with
+`pack_graph(..., like=<graph of the training table>)`.
+
+### `cofield_gaussians(trained: TrainedAmplitudes, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(centres, coefficients, widths) of the co-field of field `f` of a trained linear model.
+
+The three arrays have the form of `cmfqsar.lowrank.cofield_gaussians`, so
+`cmfqsar.cofields.evaluate_gaussians` draws the map and
+`cmfqsar.cofields.export_cube` writes it.  The coefficients hold the trained
+amplitudes of the landmark atoms.  The overlap integral of this field with field `f` of a
+molecule, built with the trained amplitudes of that molecule, is the part of the
+prediction that field `f` carries, before the division by the molecule's own norm under
+the cosine convention.
+
+### `save_graph(path: str, graph: Dict[str, object], **extra) -> None`
+
+Write the result of `pack_graph` to a NumPy `.npz` file; `extra` arrays are
+stored beside it.
+
+### `load_graph(path: str) -> Tuple[Dict[str, object], Dict[str, np.ndarray]]`
+
+Read `save_graph`: (the graph, the extra arrays).
 
 ## cmfqsar.anisotropic
 

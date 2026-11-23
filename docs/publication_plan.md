@@ -340,9 +340,10 @@ Short communication, written only if a journal asks for a separate note: increme
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
 otherwise supplementary material of paper 1. Not yet a paper: the CMF-neural integration of the
 development plan (stages ND1 to ND3). ND1 was measured on 20 November 2026
-(`results/featuriser/`), ND2 on 21 November 2026 (`results/learnable/`) and ND14c on
-22 November 2026 (`results/device/`, `results/device_hops/`); it becomes paper 19 when they are
-compared with the published networks on COMPAS-1.
+(`results/featuriser/`), ND2 on 21 November 2026 (`results/learnable/`), ND14c on
+22 November 2026 (`results/device/`, `results/device_hops/`) and ND14a on 23 November 2026
+(`results/amplitudes/`); it becomes paper 19 when they are compared with the published networks
+on COMPAS-1.
 
 ### 1. Software paper
 
@@ -1053,9 +1054,11 @@ number of ND1. This is a result against paper 16's model. ND14c was measured on 
 of that ridge regression from 0.114 to 0.083 eV on COMPAS-1D and from 0.742 to 0.514 eV on
 1,801 lithium hops. The same network on the plain coordinates of the atoms is as good or
 better, so the co-field is not the reason, and the neural device without message passing with
-the co-field as atom sensors (0.127 eV) does not beat the ridge regression. The comparison with
-the published networks is not made, and the results of ND2 and ND14c are mostly negative; until
-that comparison exists the paper is not counted.
+the co-field as atom sensors (0.127 eV) does not beat the ridge regression. ND14a was measured on 23 November 2026: amplitudes that a network on the atoms
+learns lower the error of the kernel model from 0.114 to 0.085 eV on COMPAS-1D (0.075 to 0.057 eV
+with the Gaussian kernel layer, level with ND2) and are not resolved on six of eight
+Sutherland series. The comparison with the published networks is not made, and the results of
+ND2 and ND14c are mostly negative; until that comparison exists the paper is not counted.
 
 ### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
 

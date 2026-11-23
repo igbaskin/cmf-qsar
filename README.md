@@ -6580,6 +6580,33 @@ python benchmarks/run_device.py --report          # results/device/table.md
 python benchmarks/run_device_hops.py --report     # results/device_hops/table.md
 ```
 
+### Atom amplitudes from a network on the atoms
+
+Every field puts a Gaussian on each atom, and the amplitude of the Gaussian is a fixed number
+from a force field or a rule. `cmfqsar/amplitudes.py` (needs PyTorch) learns a correction to
+these amplitudes with a small network on the molecular graph: one network with shared weights
+reads every atom and, with message passing, its bonded neighbours. The last layer starts at
+zero, so the training starts at the model with the fixed amplitudes. The model stays the kernel
+model of the section on training the widths and the weights of the fields: its ridge solution is
+exact, the gradient reaches the network without a stored array of overlaps, and a linear model
+keeps its co-field. `atom_weights` returns the trained amplitudes as weights of the atoms.
+
+Plan item ND14a measured whether learned amplitudes are better than the fixed ones inside the
+same kernel (`benchmarks/run_amplitudes.py`). On COMPAS-1D the mean absolute error is 0.085
+against 0.114 eV (difference -0.027 eV, 95 % interval -0.029 to -0.025, lower on each of five
+splits). With the Gaussian kernel layer it is 0.057 against 0.075 eV, which is level with the
+result of plan item ND2 (0.058 eV). A network that reads the atom alone gains only 0.008 eV, so
+the neighbours are needed. On the eight Sutherland series the mean test R2 is 0.452 against
+0.425; the gain is resolved in DHFR and THER and not resolved in the other six. The training
+needs early stopping on validation molecules. The gate of the item is met. No row is a new best
+model: a network on the CMF vector has 0.055 eV on COMPAS-1D and the neural device with message
+passing 0.035 eV.
+
+```bash
+python benchmarks/run_amplitudes.py --stage pack --stage train --stage reading
+python benchmarks/run_amplitudes.py --report      # results/amplitudes/table.md
+```
+
 ### A simulation as a conformational ensemble
 
 The ensemble mode does not care where the conformations come from. `cmfqsar/trajectory.py` (plan

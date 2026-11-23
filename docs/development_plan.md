@@ -8368,6 +8368,43 @@ three places in the items above, ordered by how much of CMF each keeps.
   pretraining on xTB or ORCA charges and the same penalised correction to the MMFF values apply.
   It is the one route that makes the ND4a question (do learned atom values beat the physics-based
   ones inside the same kernel?) testable on a Sutherland set.
+  **Done 23 November 2026.** `cmfqsar/amplitudes.py` trains a network on the atoms of the
+  molecular graph (`train`; one network with shared weights on every atom, optionally with
+  message passing over the bonds) that corrects the fixed amplitude of every field,
+  `a = w + s d`, where `s` is the scale of the field. The last layer starts at zero, so the
+  training starts at the model with the fixed amplitudes, and a penalty holds the correction
+  near zero. The model stays the kernel model of ND2: the ridge solution is exact, and the
+  network is trained through it. The gradient is exact and needs no stored array of overlaps
+  (two passes over the atom pairs; a test compares it with finite differences, and another
+  shows that the start equals the kernel model of ND2 to 1e-9). `atom_weights` returns the
+  trained amplitudes as weights of the atoms, and `cofield_gaussians` gives the co-field of a
+  linear model. The widths and the field weights are not trained here.
+  **COMPAS-1D** (`benchmarks/run_amplitudes.py`; the splits of ND1, 1,000 landmarks, five
+  splits; mean absolute error on the test rows): fixed amplitudes 0.114 eV; learned, the atom
+  alone 0.105; learned, with neighbours **0.085** (against the fixed amplitudes -0.0273 eV, 95 %
+  interval -0.0293 to -0.0252, lower on each split); with the Gaussian kernel layer 0.075 for
+  the fixed amplitudes and **0.057** for the learned ones (difference -0.0173, interval -0.0187
+  to -0.0158), which is level with ND2 (0.058, widths, weights and ridge trained).
+  **The eight Sutherland series** (ten splits each, mean test R2): fixed amplitudes 0.425,
+  learned with neighbours 0.452. The difference of the absolute error is resolved lower in two
+  series (DHFR -0.034, THER -0.219), resolved higher in none, and not resolved in six. **The
+  gate** (named before any run: COMPAS-1D and DHFR, interval excludes zero) **is met**.
+  **The answer to the question of ND4a** (are learned atom values better than the physics-based
+  ones inside the same kernel?): yes on a large set, and the neighbours are needed (the atom
+  alone gains 0.008 eV, the neighbours 0.019 eV more); on a series of tens to hundreds of
+  molecules it is not resolved in six of eight series. Early stopping on validation rows is
+  needed: keeping the lowest value of the objective gives a mean R2 of 0.374 on the series.
+  **What it says:** a gain of about a quarter of the error on a large set, with and without the
+  Gaussian kernel layer, and it keeps the kernel, the co-field of a linear model and the weights
+  of the atoms. It is not a new best model (0.055 eV for a network on the CMF vector, 0.035 for
+  the device with message passing). On COMPAS-1D the co-field of the trained model correlates at
+  only 0.26 to 0.66 with that of the fixed model, which is less than two splits of the fixed
+  model do (0.59 to 0.80); on DHFR it correlates at 0.59 to 0.89, which is more.
+  **Open:** the trainings stop at a fixed budget (30 iterations) and are not converged; one
+  setting, chosen on one split of DHFR, and one start per split; no split that holds out
+  scaffolds; the widths and field weights trained together with the amplitudes; the amplitudes
+  not compared with chemical values (for example other charges); a model with the layer has
+  no co-field. The training of all 85 splits took 15 hours on a GPU.
 * **ND14b. The device's molecule vector as a kernel view.** This is ND7 or ND8 with a trained
   device instead of a tangent kernel or a pretrained model: the summed molecule vector of a
   device trained on the series, or on a larger unlabelled set of the same chemistry, under a
@@ -10462,14 +10499,14 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
-| H. Deep learning | 19 | 5 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b |
+| H. Deep learning | 19 | 6 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14b |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
 | H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**186 items: 154 finished, 10 partly, 22 open.**
+**186 items: 155 finished, 10 partly, 21 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

@@ -3,7 +3,7 @@
 # compared with the tables the repository carries. A difference is the finding, not an error of
 # the run, so a red job here is a result and has to be read rather than repaired.
 #
-# Ninety-seven of the 179 benchmarks run here: those that register 30 minutes or less and need no
+# Ninety-seven of the 180 benchmarks run here: those that register 30 minutes or less and need no
 # file or program a runner has not, plus the one named exception the rule allows. The rule, the
 # exception and the split into groups are in benchmarks/run_all.py (REPRODUCE_MINUTES,
 # REPRODUCE_ALSO, reproduce_groups), `run_all.py --list` prints the groups, and

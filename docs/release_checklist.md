@@ -117,14 +117,14 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 179 benchmarks and 208.8 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 180 benchmarks and 224.8 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
 needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
 exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
 this program has compared with published numbers on the same labels. The rule gives **97 of the
-179 benchmarks, 23.1 hours in all**, and `reproduce_groups()` splits them into **nine groups of
+180 benchmarks, 23.1 hours in all**, and `reproduce_groups()` splits them into **nine groups of
 about 2 hours 30 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
 There were seven groups until item MS5 (14 November 2026) added 25 minutes and the largest
 group no longer fitted twice, and eight until item NT6 (16 November 2026): the eight groups were
@@ -301,8 +301,8 @@ machines at all.
 
 ### What is covered
 
-**The 82 benchmarks left out** are of eight kinds. Sixty-three are long, 154.2 hours together: `poses`
-16 h, `compas` 15 h, `learnable` 12 h (with a GPU), `alloy` 11 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h, `device` 5.5 h (with a GPU), `polymer_permeability` 5.0 h,
+**The 83 benchmarks left out** are of eight kinds. Sixty-four are long, 170.0 hours together: `poses`
+16 h, `amplitudes` 15.8 h (with a GPU), `compas` 15 h, `learnable` 12 h (with a GPU), `alloy` 11 h, `polymer_tg` 8.2 h, `buchwald` 7.4 h, `device` 5.5 h (with a GPU), `polymer_permeability` 5.0 h,
 `spectra` 3.5 h, `host_pocket` and `polymer_packing` 2.8 h each, `featuriser` 2.7 h,
 `particle_sites` 2.5 h, `copolymers` and `gntk_compas` 2.2 h each, `litraj` 2.1 h, `2dmd`,
 `battery`, `microstructure` and `scattering` 2.0 h each, `molcrystals` 1.9 h, `local` 1.8 h, `logp`

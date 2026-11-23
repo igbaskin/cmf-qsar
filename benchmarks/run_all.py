@@ -1734,6 +1734,22 @@ def registry() -> List[Benchmark]:
                                        # (eight processes), 58 the 50 networks
                   report=lambda: _mod("run_device_hops").write_table(),
                   tables=["device_hops/table.md"]),
+        Benchmark("amplitudes",
+                  "the atom amplitudes of the fields from a network on the atoms (plan item "
+                  "ND14a): a network with shared weights on every atom of the molecular graph "
+                  "corrects the fixed amplitude of every field, and is trained end to end "
+                  "through the closed-form ridge solution of the kernel model, against the "
+                  "fixed amplitudes inside the same kernel, with and without message passing "
+                  "and with and without the Gaussian kernel layer, on COMPAS-1D and the eight "
+                  "Sutherland sets with the splits of the learnable benchmark (needs PyTorch "
+                  "and the packed atoms of the learnable benchmark; the minutes are with a GPU)",
+                  "run_amplitudes.py", "amplitudes",
+                  compute=[["--stage", "pack"], ["--stage", "train"], ["--stage", "reading"]],
+                  minutes="950",       # measured: 831 the 25 trainings of the five COMPAS-1D
+                                       # splits, 80 the 240 trainings of the Sutherland sets,
+                                       # about 20 the reading stage
+                  report=lambda: _mod("run_amplitudes").write_table(),
+                  tables=["amplitudes/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",
