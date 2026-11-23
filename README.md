@@ -6607,6 +6607,31 @@ python benchmarks/run_amplitudes.py --stage pack --stage train --stage reading
 python benchmarks/run_amplitudes.py --report      # results/amplitudes/table.md
 ```
 
+### The molecule vector of a trained device as a kernel view
+
+`cmfqsar/deviceview.py` (NumPy only) makes a Gaussian kernel on the molecule vector of a trained
+QSPR Neural Device (the 15 sums of its networks over the atoms, bonds and two-bond paths, called
+collectors) and stacks it under the field kernels as one more view of the mixing with weights
+(`cmfqsar.mixing.with_views`). The module also has the check of plan item EC5: the correlation
+of two kernels over all pairs of molecules.
+
+Plan item ND14b measured it on the devices and splits of plan item ND1 (`benchmarks/run_deviceview.py`;
+nothing is trained again; every score is on test molecules). The kernel on the collectors correlates
+only at 0.13 to 0.55 with the kernel of the fields and of the fields plus the rotation-invariant
+kernel, so it is a different description. On 2,000 molecules of COMPAS-1D the fields plus the device
+have a test R2 of 0.981 and an error of 0.034 eV, against 0.907 and 0.097 eV for the fields plus the
+invariant kernel, but the same as the prediction of the device itself (0.035 eV): the view adds
+nothing to the device. On the eight Sutherland series the fields plus the device do not have a
+smaller error than the fields plus the invariant kernel in any series (higher in THR, not resolved in
+the other seven; mean test R2 0.445 against 0.492), and the evidence gives the device too much
+weight where the device is poor. The gate of the item (COMPAS-1D and DHFR) is not met. The view stays
+an option.
+
+```bash
+python benchmarks/run_deviceview.py --stage sutherland --stage compas
+python benchmarks/run_deviceview.py --report      # results/deviceview/table.md
+```
+
 ### A simulation as a conformational ensemble
 
 The ensemble mode does not care where the conformations come from. `cmfqsar/trajectory.py` (plan

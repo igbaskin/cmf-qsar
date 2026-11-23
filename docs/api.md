@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 144 modules, 277 classes with 877 public methods, and 1501 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 145 modules, 277 classes with 877 public methods, and 1508 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -69,6 +69,7 @@ for.
 | [cmfqsar.descriptors](#cmfqsardescriptors) | Non-field descriptors: one number per molecule, beside the fields rather than instead of them. |
 | [cmfqsar.design](#cmfqsardesign) | The last step of the design cycle: what to put at a position, ranked by the model (E3). |
 | [cmfqsar.device](#cmfqsardevice) | The co-field as an atom feature, and a network that sums over the atoms (item ND14c). |
+| [cmfqsar.deviceview](#cmfqsardeviceview) | The molecule vector of a trained device as a kernel view (plan item ND14b). |
 | [cmfqsar.diagnose](#cmfqsardiagnose) | What to ask of a data set before modelling it, and which route it should take. |
 | [cmfqsar.docking](#cmfqsardocking) | Place conformations inside the pocket instead of in the gas phase. |
 | [cmfqsar.electrolyte](#cmfqsarelectrolyte) | Bulk electrolyte simulations, for plan item BT5. |
@@ -5106,6 +5107,94 @@ of `batch` molecules and the L2 penalty `l2` on the weights.  When the error on 
 validation rows has not fallen for a third of `patience` epochs, the rate is multiplied by
 `lr_decay` (1 keeps it fixed).  The training stops when that error has not fallen for
 `patience` epochs, and the network of the best epoch is returned.
+
+## cmfqsar.deviceview
+
+Source: `cmfqsar/deviceview.py`
+
+The molecule vector of a trained device as a kernel view (plan item ND14b).
+
+The QSPR Neural Device (a separate project, `neurodevice`) reads every atom, bond and
+two-bond path of a molecule with small networks that have shared weights, and adds up their
+outputs over the molecule. These sums are the *collectors* of the device: one short vector per
+molecule. Plan item ND7 stacks a kernel from the bond graph under the field kernels, and plan
+item ND8 stacks a kernel from a pretrained model. This module does the same with the collectors
+of a device that was trained on the series: a Gaussian kernel on the collector vector is one
+more *view* for the mixing of plan item E6 (`cmfqsar.mixing.with_views`).
+
+What the module holds
+---------------------
+* `read_collectors` reads the file that `benchmarks/featuriser_device.py` writes for
+  one split: the collectors of every molecule, the activities and the three parts of the split.
+* `gaussian_view` makes the kernel. The vectors are centred on the training molecules and
+  divided by one number for the whole block, never column by column (a column-by-column
+  scaling lowered the accuracy of a network on the CMF vector in plan item ND1). The width of
+  the Gaussian is a multiple of the median distance between training molecules. The width is
+  the only parameter of the view.
+* `kernel_correlation` is the check of plan item EC5: the correlation of two kernels over
+  all pairs of molecules, after both are normalised to a diagonal of one. A view whose kernel
+  correlates near one with the kernel the model already has adds nothing.
+* `ridge_predict`, `choose_width` and `choose_weight` fit the ridge regression
+  on a kernel and choose the width of the view and its share of the joint kernel on the
+  *validation* molecules.
+
+Why the validation molecules choose
+-----------------------------------
+The device was trained on the training molecules. The collectors of a training molecule are
+therefore fitted to its activity, and the collectors of a molecule the device never saw are not.
+The evidence of the mixing of plan item E6 is computed on training molecules, so it can
+overstate what the view will do on new molecules. Validation molecules were used by the device
+only to stop its training, so their collectors are close to those of new molecules. The weight
+of the view and the width of its Gaussian are therefore also chosen on the validation molecules
+here (`choose_weight`), and the benchmark reports both ways. The collectors of the
+test molecules are never used for any choice.
+
+### `read_collectors(path: str) -> Dict[str, np.ndarray]`
+
+The collectors, activities and split that `featuriser_device.py` stored for one split.
+
+Returns a dictionary with `names`, `y`, `collectors` (molecules, numbers), `train`,
+`valid`, `test` (indices into the molecules) and `pred` (the prediction of the device
+itself, if the file has it).
+
+### `gaussian_view(vectors: np.ndarray, train: Sequence[int], width: float=1.0) -> np.ndarray`
+
+The Gaussian kernel of a molecule vector, over all molecules, with a diagonal of one.
+
+`vectors` has one row per molecule. The rows are centred on the mean of the training rows
+and divided by one number, the root mean square of the centred training values. The kernel
+is `exp(-d^2 / (2 s^2))` with `s = width` times the median distance of two training
+molecules.
+
+### `cosine_normalise(K: np.ndarray) -> np.ndarray`
+
+`K(x, z) / sqrt(K(x, x) K(z, z))`.
+
+### `kernel_correlation(Ka: np.ndarray, Kb: np.ndarray, rows: Optional[Sequence[int]]=None) -> float`
+
+The correlation of two kernels over the pairs of molecules (plan item EC5).
+
+Both kernels are cosine-normalised first. The pairs are those of two different molecules
+among `rows` (all molecules by default). One number for two complete descriptions: a view
+whose kernel has a correlation near one with the kernel of the model adds no new
+description.
+
+### `ridge_predict(K: np.ndarray, y: np.ndarray, train: Sequence[int], rows: Sequence[int], lam: float) -> np.ndarray`
+
+Ridge regression on a kernel, with the mean of the training activities as the intercept.
+
+`lam` is a multiple of the mean diagonal of the training block.
+
+### `choose_width(vectors: np.ndarray, y: np.ndarray, train: Sequence[int], valid: Sequence[int], widths: Sequence[float]=WIDTHS, ridges: Sequence[float]=RIDGES) -> Tuple[float, float, float]`
+
+The width and the ridge with the lowest error on the validation molecules, for the view
+alone. Returns `(width, ridge, validation RMSE)`.
+
+### `choose_weight(K_model: np.ndarray, K_view: np.ndarray, y: np.ndarray, train: Sequence[int], valid: Sequence[int], shares: Sequence[float]=SHARES, ridges: Sequence[float]=RIDGES) -> Tuple[float, float, float]`
+
+The share of the view in `(1 - share) K_model + share K_view` and the ridge with the
+lowest error on the validation molecules. Both kernels are cosine-normalised first.
+Returns `(share, ridge, validation RMSE)`.
 
 ## cmfqsar.diagnose
 

@@ -8410,6 +8410,44 @@ three places in the items above, ordered by how much of CMF each keeps.
   device trained on the series, or on a larger unlabelled set of the same chemistry, under a
   Gaussian kernel in the mixing of E6. The kernel-correlation check of EC5 comes first; a view
   whose kernel correlates near one with the five fields plus the invariant kernel adds nothing.
+  **Done 23 November 2026.** `cmfqsar/deviceview.py` (NumPy only) makes a Gaussian kernel on the
+  molecule vector of a trained device, the 15 collectors of the QSPR Neural Device, as one more
+  view for the mixing of E6 (`mixing.with_views`). It also holds the kernel-correlation check of
+  EC5 (`kernel_correlation`) and the choice of the width and of the share of the view on the
+  validation molecules (`choose_width`, `choose_weight`). `benchmarks/run_deviceview.py` uses
+  the devices and the splits of ND1 (files in `results/featuriser/device/`); nothing is trained
+  again. The device was trained on the training molecules, so the evidence of E6, computed on
+  them, can trust its vectors too much; the benchmark therefore reports the weights by the
+  evidence (as the plan says) and a share chosen on the validation molecules. Every score is on
+  the test molecules.
+  **The check of EC5:** the kernel on the collectors correlates at 0.20 to 0.54 with the kernel
+  of the five fields on a Sutherland series and at 0.23 on COMPAS-1D, and at 0.22 to 0.55 and
+  0.13 with the kernel of the fields plus the invariant kernel. It is far from one, so the check
+  does not predict that the view adds nothing.
+  **COMPAS-1D** (2,000 molecules of ND7, five splits; test R2, mean absolute error in eV): fields
+  0.412 and 0.251; fields + invariant 0.907 and 0.097; **fields + device 0.981 and 0.034**
+  (against fields + invariant -0.0627 eV, 95 % interval -0.0678 to -0.0574); the device itself
+  0.987 and 0.035. Against the prediction of the device itself the difference is +0.0002 eV
+  (interval -0.0020 to +0.0031): the view adds nothing to the device.
+  **The eight Sutherland series** (ten splits each, mean test R2): fields 0.467; fields +
+  invariant 0.492; fields + device 0.445; with the share chosen on the validation molecules
+  0.458; without message passing 0.500; the device itself 0.356. Against fields + invariant the
+  error is resolved higher in one series (THR, +0.114) and lower in none; on DHFR the difference
+  is -0.028 (interval -0.081 to +0.021). The evidence gives the device 28 to 82 % of the joint
+  kernel, also in AChE, GPB and THR, where the device itself has a test R2 of -0.02, 0.27 and
+  0.11; there the model with the device is worse than the fields alone.
+  **The gate** (named before any run: fields + device against fields + invariant, on COMPAS-1D
+  and DHFR, interval excludes zero on both) **is not met**: it is met on COMPAS-1D and not on
+  DHFR. The gain on COMPAS-1D is the accuracy of the device, which the view does not improve.
+  **What it says:** the vector of a trained device is a different description, and a kernel on it
+  is a usable view, but it carries the accuracy of the device and adds nothing to it on a large
+  set, and on a congeneric series it does not beat the invariant kernel. A trained view is
+  weighed too high by the evidence where the device is poor, and a share chosen on 17 to 54
+  validation molecules corrects this only in part. The view stays in the library as an option.
+  **Open:** the device trained on a larger unlabelled set of the same chemistry (the device needs
+  activities, and no second activity exists for these series); the pretrained models of ND8; a
+  split that holds out scaffolds; the evidence mixing with the device without message passing
+  on COMPAS-1D.
 * **ND14c. The co-field as an input feature of the device.** This is ND3 with the device as the
   regressor: the co-field read at each atom's position in the aligned frame enters as one more
   atom feature, and the device's second level replaces the ridge regression. It is the
@@ -10499,14 +10537,14 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
-| H. Deep learning | 19 | 6 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14b |
+| H. Deep learning | 19 | 7 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13 |
 | H. Multiscale modelling | 9 | 9 | -- |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4 (partly), SP5 (partly), SP6 (partly) |
 | H. Protein physics | 6 | 6 | -- |
 | H. Polymers | 6 | 6 | -- |
 | I. Medicinal chemistry | 11 | 9 | MC3 (partly), MC10 |
 
-**186 items: 155 finished, 10 partly, 21 open.**
+**186 items: 156 finished, 10 partly, 20 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

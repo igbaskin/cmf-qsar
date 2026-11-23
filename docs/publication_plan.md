@@ -342,7 +342,7 @@ otherwise supplementary material of paper 1. Not yet a paper: the CMF-neural int
 development plan (stages ND1 to ND3). ND1 was measured on 20 November 2026
 (`results/featuriser/`), ND2 on 21 November 2026 (`results/learnable/`), ND14c on
 22 November 2026 (`results/device/`, `results/device_hops/`) and ND14a on 23 November 2026
-(`results/amplitudes/`); it becomes paper 19 when they are compared with the published networks
+(`results/amplitudes/`) and ND14b on 23 November 2026 (`results/deviceview/`); it becomes paper 19 when they are compared with the published networks
 on COMPAS-1.
 
 ### 1. Software paper
@@ -1057,8 +1057,10 @@ better, so the co-field is not the reason, and the neural device without message
 the co-field as atom sensors (0.127 eV) does not beat the ridge regression. ND14a was measured on 23 November 2026: amplitudes that a network on the atoms
 learns lower the error of the kernel model from 0.114 to 0.085 eV on COMPAS-1D (0.075 to 0.057 eV
 with the Gaussian kernel layer, level with ND2) and are not resolved on six of eight
-Sutherland series. The comparison with the published networks is not made, and the results of
-ND2 and ND14c are mostly negative; until that comparison exists the paper is not counted.
+Sutherland series. ND14b was measured on 23 November 2026: a kernel on the molecule vector of a trained device
+gives the accuracy of the device on COMPAS-1D (0.034 eV) and adds nothing to it, and on the
+Sutherland series it does not beat the invariant kernel. The comparison with the published
+networks is not made, and the results of ND2 and ND14c are mostly negative; until that comparison exists the paper is not counted.
 
 ### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
 

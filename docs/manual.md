@@ -9038,6 +9038,143 @@ python benchmarks/run_amplitudes.py --stage reading          # the co-fields of 
 python benchmarks/run_amplitudes.py --report                 # results/amplitudes/table.md
 ```
 
+### The molecule vector of a trained device as a kernel view
+
+Plan item ND7 stacked a kernel from the bond graph under the field kernels, and plan item ND8
+planned the same with a pretrained model. Plan item ND14b does it with a trained device. The
+QSPR Neural Device (the separate project of the section "The fields as a vector for another
+method") reads every atom, every bond and every path of two bonds with small networks that have
+shared weights, and adds up their outputs over the molecule. The 15 sums are the *collectors* of
+the device: one short vector for every molecule. `cmfqsar/deviceview.py` makes a Gaussian kernel
+on this vector. The kernel is one more *view* in the mixing of plan item E6, with a weight from
+the evidence, like the kernel of the bond graph. The module needs only NumPy. The collectors
+come from the files that `benchmarks/featuriser_device.py` writes; the device itself is not
+part of this program.
+
+**The kernel on the collectors.** The vectors are centred on the training molecules and divided
+by one number for the whole block, not column by column (a scaling by column lowered the
+accuracy of a network on the CMF vector in plan item ND1). The kernel is
+$\exp(-d^2 / 2 s^2)$ with $d$ the distance of two vectors. The width $s$ is 0.5, 1 or 2 times
+the median distance of two training molecules, and it is the only parameter of the view.
+`gaussian_view` makes the kernel, `kernel_correlation` makes the check below, and
+`choose_width` and `choose_weight` choose the width and the share of the view in the joint
+kernel on the validation molecules.
+
+**The check of plan item EC5, first.** The correlation of two kernels over all pairs of two
+different molecules, after both are normalised to a diagonal of one, is one number for two
+complete descriptions. A view whose kernel correlates near one with the kernel that the model
+already has adds nothing. In plan item EC5 the correlation +0.980 predicted that a new kernel
+gains nothing.
+
+**A trained view has a problem that a bond-graph view does not have.** The device was trained on
+the training molecules. Its collectors for a training molecule are fitted to the activity of
+that molecule, and its collectors for a new molecule are not. The evidence of plan item E6 is
+computed on the training molecules, so it can give the view a larger weight than the view
+deserves on new molecules. The benchmark therefore reports two ways to weigh the view. In the
+first the weights come from the evidence, as the plan says. In the second the share of the view
+and the width of the Gaussian are chosen on the validation molecules, which the device used only
+to stop its training. Every score is on the test molecules, which nothing used.
+
+**What was measured** (`benchmarks/run_deviceview.py`). The devices and the splits are those of
+plan item ND1: ten random splits (70 % training, 15 % validation, 15 % test) of each of the
+eight Sutherland series, and five of COMPAS-1D. Nothing is trained again. The COMPAS-1D part
+uses the 2,000 molecules of plan item ND7 (about 1,400 of them are training molecules of a
+split; the device was trained on 6,074). The gate was named before any run: *fields + device*,
+with weights from the evidence, must have a smaller absolute error than *fields + invariant* on
+COMPAS-1D and on DHFR, with a 95 % interval that excludes zero on both. The invariant kernel is
+the rotation-invariant autocorrelation kernel of plan item C5, and a gain that it already gives
+is not a result. Test $R^2$, mean over the splits:
+
+| Model | COMPAS-1D | Mean of the eight Sutherland series |
+|---|---:|---:|
+| Fields (the evidence gives the weights) | 0.412 | 0.467 |
+| Fields + invariant kernel | 0.907 | 0.492 |
+| Fields + device (with message passing) | 0.981 | 0.445 |
+| Fields + invariant kernel + device | 0.981 | 0.452 |
+| Fields + device without message passing | not run | 0.500 |
+| Fields + device, share chosen on validation molecules | 0.981 | 0.458 |
+| The device alone, under the Gaussian kernel | 0.983 | 0.344 |
+| The device itself (its own prediction) | 0.987 | 0.356 |
+
+The mean absolute error of COMPAS-1D is 0.250 eV for the fields, 0.097 eV for the fields with
+the invariant kernel, 0.034 eV for the fields with the device and 0.035 eV for the device
+itself.
+
+* **The kernel on the collectors is a different description.** Its correlation with the kernel
+  of the five fields is 0.20 to 0.54 on a Sutherland series and 0.23 on COMPAS-1D, and with the
+  kernel of the fields plus the invariant kernel it is 0.22 to 0.55 and 0.13. The kernel of the
+  invariant autocorrelation correlates with the fields at 0.21 to 0.74. So the check of plan item
+  EC5 does not predict "adds nothing" here. A low correlation says that the view can add
+  something. It does not say that it does.
+* **The gate is not met.** On COMPAS-1D the error of *fields + device* is 0.0627 eV lower than
+  that of *fields + invariant* (interval 0.0574 to 0.0678). On DHFR the difference is -0.028
+  (interval -0.081 to +0.021), which does not exclude zero. The gate needs both.
+* **On COMPAS-1D the gain is the accuracy of the device, not a new gain.** The device with
+  message passing is a very good model of this set, and the evidence gives its kernel 95 % of
+  the joint kernel. Against the prediction of the device itself the difference is +0.0002 eV
+  (interval -0.0020 to +0.0031): the view adds nothing to the device. Against the fields it
+  lowers the error by 0.217 eV, but only because the device does. The device without message
+  passing is much worse (test $R^2$ 0.77 with the share chosen on validation molecules).
+* **On a congeneric series the view does not beat the invariant kernel on any series.** The
+  difference of the absolute error against *fields + invariant* is resolved higher in one series
+  (THR, +0.114, interval +0.031 to +0.192), resolved lower in none, and not resolved in the other
+  seven. The mean $R^2$ is 0.445 against 0.492. In DHFR its $R^2$ is 0.667 against 0.595 for the
+  invariant kernel, but the interval of the error includes zero.
+* **The evidence gives the view too much weight where the device is poor.** On the Sutherland
+  series the evidence gives the device 28 to 82 % of the joint kernel and the invariant kernel 3
+  to 27 %. The device itself has a test $R^2$ of only -0.02 in AChE, 0.27 in GPB and 0.11 in THR.
+  In these three series the model with the device is worse than the fields alone, and in THR the
+  difference is resolved (+0.108, interval +0.026 to +0.188). This is the problem described
+  above: the training vectors are fitted to the activities, so the evidence trusts them.
+* **Choosing the share on the validation molecules helps only a little.** The share it chooses
+  is 21 to 70 %. The mean $R^2$ rises from 0.445 to 0.458, which is still below the invariant
+  kernel (0.492). Against *fields + invariant* this variant is resolved higher in one series
+  (AChE, +0.104, interval +0.033 to +0.174) and resolved lower in none. A validation part of 17 to
+  54 molecules is a weak judge, and the device used these molecules to stop its training.
+* **A kernel on the vector adds to the device itself on the small series where the device
+  is poor.** Against the prediction of the device itself, the model with the share chosen on the
+  validation molecules has a lower error in two series (AChE, -0.148; THR, -0.173) and a higher
+  error in none. The device without message passing with the weights from the evidence has the
+  mean $R^2$ 0.500, level with the invariant kernel (0.492); against it the difference is not
+  resolved in any series.
+
+**What this says.** The gate of plan item ND14b is not met. The molecule vector of a trained
+device is a different description from the fields and from the invariant kernel, and a kernel on
+it is a usable view. On a large set it carries the accuracy of the device and adds nothing to
+it. On a series of tens to hundreds of molecules it does not beat the invariant kernel, and
+with weights from the evidence it is worse than the fields alone where the device is poor. The
+view stays in the library as a term for the user to try. It is not a default.
+
+**Limits.** (1) The devices were trained once per split with the settings they ship with, in plan
+item ND1, and the 15 collectors are all that was used of them. (2) The variant with a device
+trained on a larger unlabelled set of the same chemistry was not run: the device needs
+activities, and no second activity exists for these series. (3) The kernel for COMPAS-1D is
+built on 2,000 molecules, of which about 1,400 train the mixing, while the device saw 6,074. (4)
+The splits are random, so the numbers say nothing about a new scaffold. (5) The width has three
+values and was chosen on 17 to 54 validation molecules on the Sutherland series. (6) The
+pretrained models of plan item ND8 were not tried. (7) The evidence mixing with the device
+without message passing was not run on COMPAS-1D; its row uses the share chosen on the
+validation molecules (an evidence fit takes about 15 minutes there). (8) The two ways
+to weigh the view answer the problem of training vectors only in part.
+
+**Cost.** Nothing is trained: the devices of plan item ND1 are used (they took hours per split on
+the processor). The 80 Sutherland splits took 19 minutes. A COMPAS-1D split took 55 to 65
+minutes with five splits running at once on four threads each, after up to 40 minutes to build
+the kernels of the 2,000 molecules.
+
+```bash
+python benchmarks/run_deviceview.py --stage sutherland      # needs the device files of ND1
+python benchmarks/run_deviceview.py --stage compas --seeds 0
+python benchmarks/run_deviceview.py --report                # results/deviceview/table.md
+```
+
+```python
+from cmfqsar import deviceview as dv
+d = dv.read_collectors("benchmarks/results/featuriser/device/DHFR_mp_0.npz")
+width, ridge, _ = dv.choose_width(d["collectors"], d["y"], d["train"], d["valid"])
+K_view = dv.gaussian_view(d["collectors"], d["train"], width)   # one more view for the mixing
+```
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right

@@ -1750,6 +1750,23 @@ def registry() -> List[Benchmark]:
                                        # about 20 the reading stage
                   report=lambda: _mod("run_amplitudes").write_table(),
                   tables=["amplitudes/table.md"]),
+        Benchmark("deviceview",
+                  "the molecule vector of a trained device as a kernel view (plan item ND14b): "
+                  "a Gaussian kernel on the 15 collectors of the QSPR Neural Device of the "
+                  "featuriser benchmark, stacked under the field kernels with weights by the "
+                  "evidence or a share chosen on the validation molecules, against the fields "
+                  "alone and against the fields with the invariant kernel, with the "
+                  "kernel-correlation check, on the eight Sutherland sets and 2,000 molecules "
+                  "of COMPAS-1D (nothing is trained again; it reads the device files of the "
+                  "featuriser benchmark and needs the COMPAS data of the compas benchmark)",
+                  "run_deviceview.py", "deviceview",
+                  compute=[["--stage", "sutherland"], ["--stage", "compas"]],
+                  minutes="400",       # measured: 19 the 80 Sutherland splits; a COMPAS-1D
+                                       # split took 55 to 65 with five at once, about 5 h
+                                       # one after another, and 40 the kernels
+                  report=lambda: _write_table(
+                      "deviceview", _mod("run_deviceview").write_table()),
+                  tables=["deviceview/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",
