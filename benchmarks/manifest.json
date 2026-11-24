@@ -1,6 +1,6 @@
 {
- "commit": "12aa33c1a0db596f0c2421af1660ac3d44d02090",
- "created": "2026-11-24T15:06:56",
+ "commit": "6d8de8630ee72915f29fd5c7d5fae3c4f150711e",
+ "created": "2026-11-24T19:05:47",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -5157,8 +5157,10 @@
   "benchmarks/results/ranking/THR.json": "cf5cc916851a8bf51098db91fdfd38fa2c73195dba4bf3a5b4bb6faf9d21eb8b",
   "benchmarks/results/ranking/table.md": "651fef4a0824fa3c10b40908d3cf86b7ebaecdde6a96b17d493c59b1e3c073cc",
   "benchmarks/results/reactions/stage1.json": "17f243b3ee50d2e0ac099aa101cf36f6c9e8f768d8d9aa0aedf16a266ce6dec0",
-  "benchmarks/results/reactions/stage2.json": "24abd41340a9c78bf3db96935daf8e2fe9d2f97c96ba9e3f91ba054de0fd00df",
-  "benchmarks/results/reactions/stage2.md": "1b5b1e266d2eb85888f25550a3790ac79b24cb7f6258c6412c0d5c10f5c8e2f4",
+  "benchmarks/results/reactions/stage2.json": "9436894c573c9767f27dba0ace368607c6d95efdd30773d84efa5c3031446d13",
+  "benchmarks/results/reactions/stage2.md": "8f5a36f7b8c4ee82057aca85cf61902168b0c8d5e044af103869bd856314dbab",
+  "benchmarks/results/reactions/stage3.json": "3c6070e0ec65c2430559817ef34a0b2053af8ccb086344646e9162c9019d0a17",
+  "benchmarks/results/reactions/stage3.md": "a04d5fa3d6f1d4c38c07b632e0465700ce7206751bf2ab76f354e8c519cbe235",
   "benchmarks/results/reactions/table.md": "ef5a1a96de68fe7eaf3576c9a6829f65ebf0061a537b2d6b03963be624d928d6",
   "benchmarks/results/reciprocal/concept.json": "7d56520435c2052bc75c68264d545062fb4dc648d4431ed94f8c54ffc2c2af84",
   "benchmarks/results/reciprocal/concept.png": "b6eba5fcb28c6da906842daee9308ee39c6f9ed26a9a6e20e30f47debed5da07",
