@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 146 modules, 280 classes with 880 public methods, and 1525 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 146 modules, 280 classes with 880 public methods, and 1531 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -18334,7 +18334,58 @@ Where a rule still gives fewer than three atoms, every atom is used.
 The reactant is not moved.  The fit is a rigid rotation and translation without a
 reflection, so the handedness of the product is kept.
 
-### `bond_change_field(rx: Reaction, product_coords: np.ndarray, name: str='') -> MoleculeFields`
+### `superpose_fragments(rx: Reaction) -> Tuple[np.ndarray, np.ndarray, float]`
+
+(reactant coordinates, product coordinates, RMSD) with every molecule placed by itself.
+
+The molecules of a side that were optimised separately have no position relative to each
+other, so a rigid fit of the whole side means nothing.  Here the side with fewer molecules
+stays where it is, and each molecule of the other side is fitted on it by itself, on its
+heavy atoms (on all its atoms when it has fewer than three heavy atoms).  With the same
+number of molecules on both sides the reactant stays and the product moves, as under the
+other rules.  The RMSD is over the fitted atoms of all molecules.
+
+### `frame(rx: Reaction, on: str='heavy') -> Tuple[np.ndarray, np.ndarray, float]`
+
+(reactant coordinates, product coordinates, RMSD) of the two sides in one frame.
+
+`"heavy"` and `"centre"` move the product as one body (`superpose`);
+`"fragments"` places every molecule by itself (`superpose_fragments`).
+
+### `mol_from_geometry(smiles: str, symbols: Sequence[str], coords: np.ndarray) -> Chem.Mol`
+
+One molecule from a SMILES and a geometry whose atoms are in another order.
+
+The SMILES may carry map numbers on its heavy atoms and its hydrogens implicit.  The bonds
+of the geometry are perceived from the distances, and the atoms of the SMILES are matched to
+it as a graph, without bond orders and charges.  The result has the atoms of the SMILES with
+its hydrogens added, and the coordinates of the geometry.  Raises `ReactionMismatch`
+when the geometry is not the molecule of the SMILES.
+
+### `join_molecules(mols: Sequence[Chem.Mol]) -> Chem.Mol`
+
+Several molecules with one conformer each as one RDKit molecule, atoms one after another.
+
+### `reaction_from_mols(reactant: Chem.Mol, product: Chem.Mol, name: str='') -> Reaction`
+
+A reaction from two sides whose heavy atoms are mapped and whose hydrogens are not.
+
+Each side is one RDKit molecule (several molecules joined by `join_molecules`) with
+its hydrogens as atoms and one conformer.  The heavy atoms are put in the order of their map
+numbers.  A hydrogen has no map number, so it is paired with a hydrogen on the same heavy
+atom of the other side: the nearest one after every molecule has been placed by
+`superpose_fragments`, with the sum of the distances the smallest possible.  A heavy
+atom that carries another number of hydrogens on the two sides stops the pairing, and the
+reaction is refused with `ReactionMismatch`: a hydrogen moved, and its map is not
+known.  In the result every atom carries a map number, 1..N.
+
+### `mapped_smiles(mol: Chem.Mol) -> str`
+
+The SMILES of one side with every atom, also every hydrogen, written with its map number.
+
+`mapped_mol` reads it back with the atoms in the same order.
+
+### `bond_change_field(rx: Reaction, product_coords: np.ndarray, name: str='', reactant_coords: Optional[np.ndarray]=None) -> MoleculeFields`
 
 The bond-change field: one Gaussian at the midpoint of each bond that changes.
 
@@ -18345,7 +18396,9 @@ of weight zero at the centroid of the reactant, so that the field exists and ove
 
 ### `reaction_fields(rx: Reaction, fieldset: FieldSet, on: str='heavy') -> ReactionFields`
 
-The channels of one reaction, with the product superposed on the reactant by rule `on`.
+The channels of one reaction, with the two sides put into one frame by rule `on`.
+
+`on` is one of `FRAME_RULES`; see `frame`.
 
 ### `overlap_kernels(items: Sequence[ReactionFields], fieldset: FieldSet, others: Optional[Sequence[ReactionFields]]=None, parts: Sequence[str]=PARTS + ('bonds',)) -> Dict[str, np.ndarray]`
 

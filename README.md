@@ -6177,6 +6177,47 @@ python examples/make_buchwald_examples.py --fetch
 python benchmarks/run_buchwald.py
 ```
 
+### A reaction as one set of fields: the continuous reaction field
+
+`cmfqsar/reaction.py` describes a reaction itself, not the molecules in it. The fields of the
+reactants and of the products are put into one frame, and every field gives a conventional channel
+(the mean of the two sides) and a dynamic channel (the difference). A bond-change field marks
+every bond that is made or broken. This is the condensed graph of reaction (CGR) written as
+fields. Reactions of different types share no frame, so the description is the rotation-invariant
+autocorrelation of the channels.
+
+It was measured on computed barriers of two sets: 11,961 gas-phase reactions of small molecules
+(Grambow, Pattanaik and Green 2020) and 5,265 [3+2] cycloadditions (Cyclo-23-TS). The reference is
+the counts of bond changes with Morgan difference fingerprints. Mean absolute error of the
+barrier in kcal/mol, with whole reactants (first set) or whole reactant pairs (second set) held
+out:
+
+| Model | First set | Second set |
+|---|---|---|
+| field + counts + fingerprints | 7.40 | 3.37 |
+| counts + fingerprints (the reference) | 7.92 | 3.61 |
+| field + counts (the model declared before the fits) | 7.74 | 3.73 |
+| mean of the training part | 18.03 | 7.64 |
+
+The result is negative as a model of its own: the declared model equals the reference on the
+first set (+0.006 in q2, interval [-0.001, +0.014] over three sets of folds) and is behind it on
+the second (-0.019 [-0.030, -0.009]). It is positive as a second description: added to counts and
+fingerprints, the field gains 0.019 to 0.035 in q2 on every split of both sets. The declared
+model of the second set has rows of unit length; the first-set numbers are for the rows as they
+are. The first row of the first set is from one set of folds; the other rows are means over
+three. The manual section *A reaction as one set of fields* gives the construction, the two
+identities it obeys, all tables and what went wrong on the way.
+
+```bash
+python benchmarks/prepare_reactions.py --download     # 1.5 GB
+python benchmarks/run_reactions.py                    # the construction, 2,000 reactions
+python benchmarks/run_reactions_models.py --stage features
+python benchmarks/run_reactions_models.py --stage fit --repeats 1    # about 4 hours
+python benchmarks/prepare_cyclo.py --download         # 0.7 GB
+python benchmarks/run_reactions_models.py --set cyclo --stage features
+python benchmarks/run_reactions_models.py --set cyclo --stage fit --repeats 3
+```
+
 ### Several endpoints on one kernel: the selectivity co-field
 
 A separation problem is not one property but two. An extractant has an affinity for americium

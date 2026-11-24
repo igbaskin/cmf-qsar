@@ -92,7 +92,52 @@ MODELS = {
     "not usable: CRF + counts + true dh": (CRF_H + ["counts", "dh"], [], ("ea",)),
     "not usable: counts + morgan + true dh": (["counts", "mdiff", "msum", "dh"], [], ("ea",)),
 }
+#: setting (b) of the item: the transition state as a third state.  Its geometry costs the
+#: calculation a model is meant to replace, so this row is an upper limit and not a model.
+TS_BLOCKS = ["act_r_n", "act_p_n", "tsodd_n"]
+TS_MODEL = "not usable: CRF + counts, rows of unit length, + transition state"
+MODELS[TS_MODEL] = (["odd_n", "conv_n", "dyn_n", "bond_n", "counts"] + TS_BLOCKS, [], ("ea",))
 GATE = ("CRF + counts", "counts + morgan")
+#: seeds of the folds: fixed per split, so that adding a data set does not move them
+SPLIT_SEED = {"reactant": 0, "random": 1, "type": 2}
+#: how the two sides are put into one frame, with the tag of the blocks that result
+RULES = (("heavy", "h"), ("centre", "c"))
+#: the data set: its name in the texts, the module that prepares it, and the result file
+SET = dict(name="grambow", label="the Grambow set", loader="prepare_reactions",
+           result="stage2", stage="stage 2", reactant="reactants", prefix="rxn")
+
+UNIT = ["odd_n", "conv_n", "dyn_n", "bond_n"]
+#: the models of the second set (stage 3); the candidate and the reference were declared in the
+#: plan before any geometry of the set was read
+CYCLO_MODELS = {
+    "CRF + counts, rows of unit length": (UNIT + ["counts"], [], TARGETS),
+    "counts + morgan": (["counts", "mdiff", "msum"], [], TARGETS),
+    "counts": (["counts"], [], TARGETS),
+    "morgan": (["mdiff", "msum"], [], TARGETS),
+    "CRF, rows of unit length": (UNIT, [], TARGETS),
+    "CRF + counts": (CRF_H + ["counts"], [], TARGETS),
+    "rows of unit length, no superposition, + counts": (["odd_n", "even0_n", "counts"], [],
+                                                         TARGETS),
+    "CRF + counts + morgan, rows of unit length": (UNIT + ["counts", "mdiff", "msum"], [],
+                                                    TARGETS),
+}
+
+
+def configure(name: str) -> None:
+    """Point the module at one data set.  ``grambow`` is the default and needs no call."""
+    global CACHE, TYPES, SPLITS, MODELS, GATE, RULES, SET
+    if name == "grambow":
+        return
+    if name != "cyclo":
+        raise ValueError(f"the data sets are 'grambow' and 'cyclo', not {name!r}")
+    CACHE = os.path.join(HERE, "cache", "cyclo", "stage3")
+    TYPES = None                      # chosen from the set: every type on at least 2 % of atoms
+    SPLITS = ("reactant", "random")
+    MODELS = CYCLO_MODELS
+    GATE = ("CRF + counts, rows of unit length", "counts + morgan")
+    RULES = (("fragments", "h"),)
+    SET = dict(name="cyclo", label="Cyclo-23-TS", loader="prepare_cyclo", result="stage3",
+               stage="stage 3", reactant="reactant pairs", prefix="cyclo")
 
 
 def _say(text):
@@ -143,25 +188,35 @@ def features() -> dict:
     from rdkit import Chem, RDLogger
     from rdkit.Chem import rdFingerprintGenerator
 
-    import prepare_reactions
-    from cmfqsar.fields import FieldSet
+    import importlib
+    from cmfqsar.fields import FieldSet, atom_type_counts
     from cmfqsar.reaction import (REACTION_SPEC, autocorrelation_rows, bond_change_counts,
                                   channel_norms, reaction_fields, read_reaction)
     RDLogger.DisableLog("rdApp.*")
     os.makedirs(CACHE, exist_ok=True)
     t0 = time.time()
-    rows = prepare_reactions.load()
-    fieldset = FieldSet.create(physchem=list(FIELDS), cif_types=list(TYPES), alpha=ALPHA)
+    rows = importlib.import_module(SET["loader"]).load()
     spec = REACTION_SPEC
-    reactions = [read_reaction(r["rsmi"], r["psmi"], r["r"], r["p"], f"rxn{r['idx']:06d}")
-                 for r in rows]
+    reactions = [read_reaction(r["rsmi"], r["psmi"], r["r"], r["p"],
+                               f"{SET['prefix']}{r['idx']:06d}") for r in rows]
     n = len(reactions)
     _say(f"{n} reactions read, {time.time() - t0:.0f} s")
+    types = TYPES
+    if types is None:
+        # every Sybyl type that at least 2 % of the atoms of the set carry, both sides counted
+        seen = atom_type_counts([m for rx in reactions for m in (rx.reactant, rx.product)],
+                                "sybyl")
+        total = float(sum(seen.values()))
+        types = tuple(sorted(k for k, v in seen.items() if v >= 0.02 * total))
+        _say(f"atom types on at least 2 % of the atoms: {', '.join(types)}")
+    fieldset = FieldSet.create(physchem=list(FIELDS), cif_types=list(types), alpha=ALPHA)
 
     X = {}
     norms = None
-    for on, tag in (("heavy", "h"), ("centre", "c")):
+    rmsd = {}
+    for on, tag in RULES:
         items = [reaction_fields(rx, fieldset, on=on) for rx in reactions]
+        rmsd[on] = float(np.median([it.rmsd for it in items]))
         if tag == "h":
             R = autocorrelation_rows([it.reactant for it in items], spec)
             P = autocorrelation_rows([it.product for it in items], spec)
@@ -172,7 +227,7 @@ def features() -> dict:
         X[f"dyn_{tag}"] = autocorrelation_rows([it.dynamic for it in items], spec)
         X[f"bond_{tag}"] = autocorrelation_rows([it.bonds for it in items], spec)
         del items
-        _say(f"rows with the product superposed on '{on}': {time.time() - t0:.0f} s")
+        _say(f"rows with the frame rule '{on}': {time.time() - t0:.0f} s")
 
     counts, labels = bond_change_counts(reactions)
     gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
@@ -201,7 +256,7 @@ def features() -> dict:
 
     cr = [canon(rx.reactant) for rx in reactions]
     cp = [canon(rx.product) for rx in reactions]
-    types = [" ".join(f"{int(c)}x{lab}" for c, lab in zip(row, labels) if c) for row in counts]
+    kinds = [" ".join(f"{int(c)}x{lab}" for c, lab in zip(row, labels) if c) for row in counts]
     index = {(a, b): k for k, (a, b) in enumerate(zip(cr, cp))}
     reverse = np.array([index.get((b, a), -1) for a, b in zip(cr, cp)], int)
 
@@ -214,10 +269,12 @@ def features() -> dict:
     nb = spec.n_bins
     scale_sides = _channel_scale(X["even0"], nb)
     Z = {"odd": X["odd"] / scale_sides, "even0": X["even0"] / scale_sides}
-    for key in ("conv_h", "dyn_h", "bond_h", "conv_c", "dyn_c", "bond_c"):
+    for key in [f"{part}_{tag}" for _on, tag in RULES for part in ("conv", "dyn", "bond")]:
         Z[key] = X[key] / _channel_scale(X[key], nb)
     own_odd = X["odd"] / _channel_scale(X["odd"], nb)
     Z["odd_n"] = _unit_rows(own_odd)
+    if SET["name"] != "grambow":      # the first set was computed before this block existed
+        Z["even0_n"] = _unit_rows(Z["even0"])
     for key in ("conv", "dyn", "bond"):
         Z[f"{key}_n"] = _unit_rows(Z[f"{key}_h"])
     C = np.hstack([counts, norms])
@@ -233,18 +290,79 @@ def features() -> dict:
         means[key] = _distances(Z[key], key)
         _say(f"distances of block {key} ({Z[key].shape[1]} columns): {time.time() - t0:.0f} s")
     np.savez_compressed(
-        os.path.join(CACHE, "tables.npz"), ea=ea, dh=dh, reactant=ids(cr), type=ids(types),
+        os.path.join(CACHE, "tables.npz"), ea=ea, dh=dh, reactant=ids(cr), type=ids(kinds),
         reverse=reverse, idx=np.array([r["idx"] for r in rows], int),
         counts=counts, count_labels=np.array(labels), norms=norms)
-    info = dict(reactions=n, fields=list(FIELDS) + list(TYPES), alpha=ALPHA,
+    info = dict(reactions=n, fields=list(FIELDS) + list(types), alpha=ALPHA,
+                median_rmsd_of_the_frame=rmsd,
                 spec=dict(d_max=spec.d_max, step=spec.step, sigma=spec.sigma),
                 columns={k: int(v.shape[1]) for k, v in Z.items()},
                 mean_squared_distance=means, distinct_reactants=int(len(set(cr))),
-                distinct_types=int(len(set(types))),
+                distinct_types=int(len(set(kinds))),
                 reactions_with_their_reverse_in_the_set=int(np.sum(reverse >= 0)),
                 seconds=time.time() - t0)
     with open(os.path.join(CACHE, "features.json"), "w") as f:
         json.dump(info, f, indent=1)
+    return info
+
+
+def ts_features() -> dict:
+    """The blocks of the transition state, for the first set (setting (b) of the item).
+
+    The transition state has no graph of its own.  Its fields are built twice: with the graph of
+    the reactant and with the graph of the product, both at the coordinates of the transition
+    state, superposed on the reactant on all heavy atoms.  Three blocks of rows, each row of
+    unit length:
+
+    * ``act_r_n``  the autocorrelation of (transition state - reactant), reactant graph on both;
+    * ``act_p_n``  the autocorrelation of (product - transition state), product graph on both;
+    * ``tsodd_n``  (T x T - R x R) / 2, the odd row of the step from the reactant to the
+      transition state, which needs no superposition.
+    """
+    from rdkit import Chem, RDLogger
+    from rdkit.Geometry import Point3D
+
+    import prepare_reactions
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.reaction import (REACTION_SPEC, Reaction, autocorrelation_rows,
+                                  read_reaction, superpose)
+    from cmfqsar.reaction import _joined
+    RDLogger.DisableLog("rdApp.*")
+    t0 = time.time()
+    rows = prepare_reactions.load()
+    fieldset = FieldSet.create(physchem=list(FIELDS), cif_types=list(TYPES), alpha=ALPHA)
+    spec = REACTION_SPEC
+
+    def at(mol, xyz):
+        out = Chem.Mol(mol)
+        conf = out.GetConformer()
+        for i, q in enumerate(np.asarray(xyz, float)):
+            conf.SetAtomPosition(i, Point3D(float(q[0]), float(q[1]), float(q[2])))
+        return out
+
+    act_r, act_p, t_rows, r_rows = [], [], [], []
+    for row in rows:
+        rx = read_reaction(row["rsmi"], row["psmi"], row["r"], row["p"])
+        # everything in the frame of the reactant
+        xp, _ = superpose(rx, "heavy")
+        xt, _ = superpose(Reaction("", rx.reactant, at(rx.reactant, row["ts"])), "heavy")
+        R = build_fields(rx.reactant, fieldset, "", _single=True)
+        T_r = build_fields(at(rx.reactant, xt), fieldset, "", _single=True)
+        T_p = build_fields(at(rx.product, xt), fieldset, "", _single=True)
+        P = build_fields(at(rx.product, xp), fieldset, "", _single=True)
+        act_r.append(_joined(T_r, R, 1.0, -1.0, ""))
+        act_p.append(_joined(P, T_p, 1.0, -1.0, ""))
+        t_rows.append(T_r)
+        r_rows.append(R)
+    nb = spec.n_bins
+    X = {"act_r_n": autocorrelation_rows(act_r, spec),
+         "act_p_n": autocorrelation_rows(act_p, spec),
+         "tsodd_n": 0.5 * (autocorrelation_rows(t_rows, spec)
+                           - autocorrelation_rows(r_rows, spec))}
+    info = {}
+    for key, x in X.items():
+        info[key] = _distances(_unit_rows(x / _channel_scale(x, nb)), key)
+        _say(f"distances of block {key}: {time.time() - t0:.0f} s")
     return info
 
 
@@ -408,7 +526,7 @@ def fit_split(split: str, repeat: int, models=None, folds: int = FOLDS, tag: str
     n = len(tables["ea"])
     Y = {"ea": tables["ea"], "dh": tables["dh"]}
     unit = units(tables, split)
-    fold = fold_of(unit, folds, seed=1000 * repeat + SPLITS.index(split))
+    fold = fold_of(unit, folds, seed=1000 * repeat + SPLIT_SEED[split])
     path = os.path.join(CACHE, f"fit_{split}_{repeat}{tag}.json")
     done = {}
     if os.path.exists(path):
@@ -607,7 +725,9 @@ def collect() -> dict:
                 line[te] = coef[0] * dh_hat[te] + coef[1]
             preds["ea"].setdefault(f"linear in dh predicted by {GATE[0]}", {})[r] = line
         res["kernel_correlation"] = kernel_correlations(
-            runs[0], ["CRF + counts", "counts + morgan", "sides", "CRF", "counts", "morgan"])
+            runs[0], ["CRF + counts", "counts + morgan", "sides", "CRF", "counts", "morgan"]
+            if SET["name"] == "grambow" else
+            [GATE[0], GATE[1], "CRF, rows of unit length", "counts", "morgan"])
         for t in TARGETS:
             res["models"][t] = {}
             for name, plist in preds[t].items():
@@ -627,7 +747,12 @@ def collect() -> dict:
                  ("CRF + counts", "CRF + counts, rows of unit length"),
                  ("CRF + counts", "CRF (centre) + counts"),
                  ("CRF + counts + morgan", "counts + morgan"),
-                 ("CRF", "sides"), ("CRF", "morgan")]
+                 ("CRF", "sides"), ("CRF", "morgan"),
+                 (TS_MODEL, "CRF + counts, rows of unit length"),
+                 # the second set
+                 (GATE[0], "counts"), ("CRF, rows of unit length", "morgan"),
+                 (GATE[0], "rows of unit length, no superposition, + counts"),
+                 ("CRF + counts + morgan, rows of unit length", "counts + morgan")]
         for t in TARGETS:
             res["paired"][t] = {}
             for cand, ref in pairs:
@@ -685,7 +810,7 @@ def collect() -> dict:
                                  for b in picks[0]["weights"]})
         out["splits"][split] = res
     os.makedirs(RESULTS, exist_ok=True)
-    with open(os.path.join(RESULTS, "stage2.json"), "w") as f:
+    with open(os.path.join(RESULTS, f"{SET['result']}.json"), "w") as f:
         json.dump(out, f, indent=1)
     return out
 
@@ -696,16 +821,17 @@ TARGET_NAMES = {"ea": "activation energy", "dh": "reaction energy"}
 
 
 def report() -> str:
-    """Write the table.  Without the cache it is rebuilt from the committed stage2.json."""
+    """Write the table.  Without the cache it is rebuilt from the committed result file."""
     if os.path.exists(os.path.join(CACHE, "tables.npz")):
         d = collect()
     else:
-        with open(os.path.join(RESULTS, "stage2.json")) as f:
+        with open(os.path.join(RESULTS, f"{SET['result']}.json")) as f:
             d = json.load(f)
     info = d["features"]
-    L = ["# The continuous reaction field against its references (plan item PO3, stage 2)", "",
-         f"{info['reactions']} reactions of the Grambow set, reactant and product only. "
-         f"{info['distinct_reactants']} distinct reactants, {info['distinct_types']} distinct "
+    L = [f"# The continuous reaction field against its references (plan item PO3, "
+         f"{SET['stage']})", "",
+         f"{info['reactions']} reactions of {SET['label']}, reactant and product only. "
+         f"{info['distinct_reactants']} distinct {SET['reactant']}, {info['distinct_types']} distinct "
          f"sets of bond changes; {info['reactions_with_their_reverse_in_the_set']} reactions "
          f"have their reverse in the set and are kept on one side of every split. Energies in "
          f"kcal/mol. Every model is a Gaussian kernel on its blocks, fitted by kernel ridge "
@@ -781,15 +907,17 @@ def report() -> str:
               f"{SPLIT_NAMES[split]}: {res['test_reactions_whose_reactant_is_in_training']} "
               f"(per repeat).", ""]
     text = "\n".join(L) + "\n"
-    with open(os.path.join(RESULTS, "stage2.md"), "w", newline="\n") as f:
+    with open(os.path.join(RESULTS, f"{SET['result']}.md"), "w", newline="\n") as f:
         f.write(text)
     return text
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", choices=("features", "fit"))
-    ap.add_argument("--splits", nargs="+", default=list(SPLITS), choices=SPLITS)
+    ap.add_argument("--stage", choices=("features", "ts-features", "fit"))
+    ap.add_argument("--set", default="grambow", choices=("grambow", "cyclo"),
+                    help="the data set: the Grambow set (stage 2) or Cyclo-23-TS (stage 3)")
+    ap.add_argument("--splits", nargs="+", default=None, choices=tuple(SPLIT_SEED))
     ap.add_argument("--repeats", type=int, default=1)
     ap.add_argument("--first-repeat", type=int, default=0)
     ap.add_argument("--models", nargs="+", default=None)
@@ -797,11 +925,14 @@ def main():
                     help="fit the gate models again with wider grids, on the same folds")
     ap.add_argument("--report", action="store_true")
     args = ap.parse_args()
+    configure(args.set)
     if args.stage == "features":
         _say(json.dumps(features(), indent=1))
+    if args.stage == "ts-features":
+        _say(json.dumps(ts_features(), indent=1))
     if args.stage == "fit":
         for r in range(args.first_repeat, args.first_repeat + args.repeats):
-            for split in args.splits:
+            for split in args.splits or SPLITS:
                 if args.wide:
                     globals().update(WIDE)
                     fit_split(split, r, args.models or WIDE_MODELS, tag="_wide")

@@ -3985,6 +3985,161 @@ gives every split, the settings chosen and the co-fields of the linear model. Th
 `docs/tutorials/11_a_reaction_yield.ipynb`, runs the kernel of a combination, the fits on new
 additives and on new arenes, and the names of the parts as the reference.
 
+## A reaction as one set of fields: the continuous reaction field
+
+The two sections above describe the molecules that take part in a reaction. This one describes
+the reaction itself: what changes between the reactants and the products. It joins the fields of
+this program with the condensed graph of reaction (CGR). A CGR is one graph that holds both sides
+of a reaction: an atom or a bond that does not change keeps a conventional label, and one that
+changes gets a dynamic label (bond made, bond broken, bond order changed, charge changed). The
+continuous reaction field is the same idea in space. `cmfqsar/reaction.py` builds it, and the
+item was measured on two sets of computed barriers. **The result is negative as a model of its
+own and positive as a second description**, and both are stated below with their numbers.
+
+**What a reaction needs.** A map between the atoms of the two sides, and one 3D geometry of each
+side. `read_reaction` takes two SMILES with a map number on every atom, also on every hydrogen,
+and the coordinates in the order of the map numbers. The two sides must hold the same atoms; a
+reaction that does not is refused, because an atom that is missing on one side cannot cancel.
+Where only the heavy atoms are mapped, `reaction_from_mols` pairs each hydrogen with the nearest
+hydrogen on the same heavy atom of the other side, and refuses a reaction in which a heavy atom
+carries another number of hydrogens on the two sides. Where a geometry file is not in the order of
+its SMILES, `mol_from_geometry` matches the two as graphs.
+
+**The channels.** With the two sides in one frame, every field f gives two channels:
+
+* the conventional channel, the mean of the two sides, C = (P + R) / 2;
+* the dynamic channel, the difference, D = P - R.
+
+A field of this program is linear in its atoms, so both channels are ordinary fields: the atoms of
+both sides, with the weights of the reactant halved or negated. An atom that does not change and
+does not move cancels exactly in D. The dynamic channel of the electrostatic field is the
+charge-change label of a CGR. The bond-change field has no molecular counterpart: one Gaussian at
+the midpoint of every bond that changes, weighted by the change of bond order.
+
+**The frame inside one reaction.** `reaction_fields(reaction, fieldset, on=...)` offers three
+rules. `heavy` fits the product as one body on all heavy atoms of the reactant, and `centre` on
+the atoms of the bonds that change. `fragments` is for a side whose molecules were optimised
+separately and so have no position relative to each other: the side with fewer molecules stays,
+and each molecule of the other side is fitted on it by itself.
+
+**There is no frame between two reactions.** The overlap kernel compares two fields point by
+point, so it needs all samples in one frame, and reactions of different types have none. The
+description used here is therefore the rotation-invariant autocorrelation of each channel
+(`invariant_rows`). This changes one property that the overlap kernel has. Reversing a reaction
+negates D, and the overlap kernel of two dynamic channels changes sign with it. The
+autocorrelation is quadratic in a field, so the autocorrelation of D does not change sign. The part
+of the invariant description that does is the cross-correlation of C with D, and it equals half
+the difference of the autocorrelations of the two sides, (P x P - R x R) / 2. It needs no
+superposition at all. The superposition enters only through the cross-correlation of the two
+sides, which is inside the autocorrelations of C and D. Two identities hold to rounding and are
+fixed by tests: the autocorrelations of the two sides add up to 2 C x C + D x D / 2, and the same
+for the overlap kernels.
+
+**The two data sets.** Both hold barriers computed by DFT, not measured ones.
+
+| Set | Reactions read | What a reaction is | Target |
+|---|---|---|---|
+| Grambow, Pattanaik and Green (Scientific Data 2020; Zenodo 10.5281/zenodo.3715478, CC BY 4.0) | 11,961 of 11,961 | one molecule of up to seven heavy atoms (C, N, O) giving one to three molecules, found by an automated search of reaction paths | activation energy with zero-point energy, wB97X-D3/def2-TZVP |
+| Cyclo-23-TS of Stuyver, Jorner and Coley, in the copy of van Gerwen et al. (Digital Discovery 2024) | 5,265 of 5,269 | a [3+2] cycloaddition of two molecules, up to 50 heavy atoms | activation free energy, B3LYP-D3(BJ)/def2-TZVP |
+
+The second target of the first set is called an enthalpy in its table. It is the difference of the
+electronic plus zero-point energies of product and reactant, a reaction energy at 0 K; the log
+files reproduce it and the activation energy to 1e-5 kcal/mol.
+
+**The models.** Every model, also every reference, is a Gaussian kernel on a weighted sum of the
+squared distances of its blocks, fitted by kernel ridge regression; the block weights, the width
+and the ridge are chosen inside the training part. "Field" is the odd row, the rows of the
+conventional and dynamic channels and the row of the bond-change field, from eighteen fields (the
+five physicochemical ones and thirteen Sybyl atom types). "Counts" are the numbers of bonds made,
+broken, raised and lowered by element pair, and the lengths of the dynamic channels.
+"Fingerprints" are the difference and the sum of the Morgan count fingerprints of the two sides.
+Five folds; a reaction and its reverse stay on one side of every split.
+
+**The first set: the declared model equals the reference.** Activation energy, mean absolute
+error in kcal/mol; the mean of the training part is wrong by 18.0. With whole reactants held out,
+the declared model, the reference and the counts are means over three sets of folds; every other
+number is from one set.
+
+| Model | Whole reactants held out | Random folds | Whole reaction types held out |
+|---|---|---|---|
+| field + counts + fingerprints | 7.40 | 7.36 | 12.45 |
+| field + counts (declared before the fits) | 7.74 | 7.87 | 13.07 |
+| counts + fingerprints (the reference) | 7.92 | 7.65 | 13.12 |
+| field | 8.89 | 8.37 | 14.65 |
+| counts | 9.40 | 9.65 | 14.58 |
+| fingerprints | 11.61 | 11.22 | 15.61 |
+
+With whole reactants held out, the declared model minus the reference is +0.006 in q2 with a 95 %
+interval of [-0.001, +0.014] over three sets of folds. **On the first set of folds alone it was
++0.019 [+0.011, +0.029], and it stayed above zero with wider search grids.** On the second and
+third set it was -0.002 and +0.001. The reference happened to be weak on the first set of folds.
+An interval from resampling reactants holds the fold assignment fixed, so it cannot show this;
+only another set of folds can.
+
+**A variant chosen after the fact did not survive a declared test.** In the first set, the same
+model with every row divided by its length was the best field model (7.18 kcal/mol; +0.034
+[+0.027, +0.042] over the reference, on each of three sets of folds). It had been put in as a
+check, not as the candidate. It was then declared as the candidate for the second set, with its
+reference, its fields, its grids and its gate written into the plan before any geometry of that
+set was read.
+
+| Model, second set | Whole reactant pairs held out | Random folds |
+|---|---|---|
+| field + counts + fingerprints, rows of unit length | 3.37 | 3.00 |
+| counts + fingerprints (the reference) | 3.61 | 3.26 |
+| field + counts, rows as they are | 3.66 | 3.37 |
+| fingerprints | 3.69 | 3.33 |
+| field + counts, rows of unit length (the declared candidate) | 3.73 | 3.43 |
+| the candidate without the superposition | 3.73 | 3.44 |
+| counts | 5.05 | 4.88 |
+
+The declared candidate is behind the reference: -0.019 [-0.030, -0.009] in q2 with reactant pairs
+held out, on each of the three sets of folds, and -0.021 with random folds. The mean of the
+training part is wrong by 7.6 kcal/mol. For the level: the result files of the benchmark give
+2.70 kcal/mol for the difference of SLATM vectors and 2.72 for the CGR graph network, on ten
+random splits that also train on 80 %.
+
+**What the two sets agree on.**
+
+* *The field adds to counts and fingerprints, everywhere.* Field + counts + fingerprints against
+  counts + fingerprints gains 0.019 to 0.035 in q2 on all five combinations of set and split,
+  with every interval above zero. The whole kernels of the field and of the fingerprints
+  correlate 0.22 on the first set and 0.41 on the second, so they are different descriptions.
+* *As a model of its own the field does not beat counts with fingerprints.*
+
+**What they disagree on.** In the first set the superposition is the whole contribution of the
+channels: without it the model loses 0.024 to 0.037 in q2. In the second set it contributes
+nothing (0.000 [-0.004, +0.004]). In the first set the product is one complex that the
+optimiser placed on a small rigid reactant. In the second, two flexible reactant molecules are
+fitted on the product one by one and stay 1.2 A away from it.
+
+**The transition state as a third state.** A model that is given the geometry of the transition
+state is not a usable model, because that geometry costs the calculation the model is meant to
+replace. It was fitted as an upper limit: three more blocks from the transition state of the first
+set lower the error from 7.18 to 6.26 kcal/mol. A model that knows the transition state and is
+still wrong by 6 kcal/mol is limited by its description. Rows of pair distances, 0.5 A wide and
+summed over the whole molecule, do not keep what decides a barrier.
+
+**What to take from this section.**
+
+* Use the reaction field as a second description beside counts and fingerprints, not in their
+  place.
+* A margin over a reference that holds on one set of folds, even with its interval above zero,
+  can be a property of those folds. Repeat the folds before calling it.
+* A variant that wins after the numbers are seen has to be declared and tested again. Here it
+  lost.
+* The open direction is a frame shared by the reactions of one class, so that the overlap kernel
+  can compare two reaction fields point by point. Every cycloaddition makes the same
+  five-membered ring, which gives such a frame; this was not built.
+
+`benchmarks/prepare_reactions.py` and `benchmarks/prepare_cyclo.py` fetch and check the two sets,
+`benchmarks/run_reactions_models.py` computes the blocks and fits the models, and
+`benchmarks/results/reactions/` holds the three tables (`table.md` for the construction,
+`stage2.md` for the first set, `stage3.md` for the second) with every paired difference, the
+settings each model chose and the correlations of whole kernels. The fits need a download of
+1.5 GB and one of 0.7 GB, so the benchmark is not part of `run_all.py`; the tables are rebuilt
+from the committed result files where the downloads are absent.
+
 ## Three tests to run before you build a new field or a new score
 
 The chapter that follows diagnoses a *data set*. This short section diagnoses a *proposal*: a new

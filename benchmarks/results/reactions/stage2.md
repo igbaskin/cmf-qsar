@@ -6,6 +6,7 @@
 
 | Model | Sets of folds | MAE | RMSE | q2 |
 |---|---|---|---|---|
+| not usable: CRF + counts, rows of unit length, + transition state | 3 | 6.26 | 9.58 | +0.823 |
 | CRF + counts, rows of unit length | 3 | 7.18 | 10.70 | +0.779 |
 | not usable: CRF + counts + true dh | 1 | 7.20 | 10.45 | +0.789 |
 | not usable: counts + morgan + true dh | 1 | 7.30 | 10.57 | +0.784 |
@@ -42,6 +43,7 @@
 | CRF + counts + morgan minus counts + morgan | 1 | +0.035 [+0.030, +0.040] | -0.75 [-0.83, -0.67] |  |
 | CRF minus sides | 1 | +0.167 [+0.153, +0.179] | -2.95 [-3.12, -2.76] |  |
 | CRF minus morgan | 1 | +0.162 [+0.147, +0.177] | -2.72 [-2.94, -2.50] |  |
+| not usable: CRF + counts, rows of unit length, + transition state minus CRF + counts, rows of unit length | 3 | +0.044 [+0.039, +0.049] | -0.92 [-1.00, -0.84] | +0.038 [+0.033, +0.044]; +0.048 [+0.042, +0.055]; +0.045 [+0.040, +0.051] |
 
 ## Reaction energy, whole reactants held out (up to 3 sets of folds)
 
@@ -165,6 +167,7 @@ Centred alignment on 2,000 reactions, with the settings each model chose for the
 | CRF + counts + morgan | 1 | 0.001/0.01/0.1 | odd 0.1/1; conv_h 0.1/1; dyn_h 0.1/1; bond_h 1; counts 10; mdiff 1; msum 0.1/1 |
 | not usable: CRF + counts + true dh | 0.3/1 | 0.01/0.1 | odd 0.1; conv_h 0.1/1; dyn_h 0.1/1; bond_h 0.1/1/10; counts 1/10; dh 1 |
 | not usable: counts + morgan + true dh | 1 | 0.01/0.1 | counts 10; mdiff 0.1/1; msum 0.1/1; dh 1/10 |
+| not usable: CRF + counts, rows of unit length, + transition state | 1 | 1e-05/0.0001/0.001/0.01 | odd_n 0.1/1; conv_n 0.1; dyn_n 0.1/1; bond_n 0.1/1/10; counts 1/10; act_r_n 0.1/1/10; act_p_n 0.1/1; tsodd_n 0.1/1/10 |
 
 Test reactions whose reactant is also in the training part, whole reactants held out: [0, 0, 0] (per repeat).
 

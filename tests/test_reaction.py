@@ -15,6 +15,7 @@ import sys
 
 import numpy as np
 import pytest
+from rdkit import Chem
 from rdkit.Chem import AllChem
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +26,8 @@ from cmfqsar.invariant import feature_matrix  # noqa: E402
 from cmfqsar.model import krr_fit  # noqa: E402
 from cmfqsar.reaction import (REACTION_SPEC, ReactionMismatch,  # noqa: E402
                               autocorrelation_rows, bond_change_counts, bond_changes,
-                              bond_stretch, channel_norms, invariant_rows, mapped_mol,
+                              bond_stretch, frame, join_molecules, mapped_smiles,
+                              mol_from_geometry, reaction_from_mols, superpose_fragments, channel_norms, invariant_rows, mapped_mol,
                               overlap_kernels, reaction_centre, reaction_fields, read_reaction,
                               reversed_reaction, superpose, superposition_atoms)
 
@@ -256,3 +258,112 @@ def test_the_fast_rows_are_the_rows_of_the_library():
         fast = autocorrelation_rows(fields, REACTION_SPEC)
         assert fast.shape == slow.shape
         assert np.allclose(fast, slow, rtol=1e-10, atol=1e-10)
+
+
+# ------------------------------------- hydrogens without map numbers, molecules by themselves
+
+#: a Diels-Alder reaction with the map numbers on the heavy atoms only
+DA_LEFT = "[CH2:1]=[CH2:2].[CH2:3]=[CH:4][CH:5]=[CH2:6]"
+DA_RIGHT = "[CH2:1]1[CH2:2][CH2:3][CH:4]=[CH:5][CH2:6]1"
+
+
+def _geometry(smiles, seed, shuffle=None):
+    """Symbols and coordinates of one molecule, in an order that is not that of the SMILES."""
+    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    assert AllChem.EmbedMolecule(mol, randomSeed=seed) == 0
+    AllChem.MMFFOptimizeMolecule(mol)
+    xyz = np.array(mol.GetConformer().GetPositions(), float)
+    order = np.random.RandomState(shuffle if shuffle is not None else seed).permutation(len(xyz))
+    return [mol.GetAtomWithIdx(int(i)).GetSymbol() for i in order], xyz[order]
+
+
+def _diels_alder():
+    parts = [mol_from_geometry(s, *_geometry(s, seed=k + 1))
+             for k, s in enumerate(DA_LEFT.split("."))]
+    product = mol_from_geometry(DA_RIGHT, *_geometry(DA_RIGHT, seed=5))
+    return reaction_from_mols(join_molecules(parts), product, "diels-alder")
+
+
+def test_a_geometry_in_another_order_is_matched_to_its_smiles():
+    smiles = "[CH3:1][CH:2]=[O:3]"
+    symbols, xyz = _geometry(smiles, seed=3)
+    mol = mol_from_geometry(smiles, symbols, xyz)
+    assert [a.GetSymbol() for a in mol.GetAtoms()] == ["C", "C", "O", "H", "H", "H", "H"]
+    assert bond_stretch(mol) < 1.3
+    # the geometry of another molecule with the same atoms is refused
+    other, xyz_other = _geometry("C=CO", seed=3)
+    assert sorted(other) == sorted(symbols)
+    with pytest.raises(ReactionMismatch, match="is not the molecule"):
+        mol_from_geometry(smiles, other, xyz_other)
+    with pytest.raises(ReactionMismatch):
+        mol_from_geometry(smiles, symbols[:-1], xyz[:-1])
+
+
+def test_hydrogens_without_map_numbers_are_paired():
+    rx = _diels_alder()
+    assert rx.n_atoms == 16
+    assert rx.symbols == ["C"] * 6 + ["H"] * 10
+    # every hydrogen sits on the same carbon on both sides
+    for mol in (rx.reactant, rx.product):
+        assert [a.GetAtomMapNum() for a in mol.GetAtoms()] == list(range(1, 17))
+    on_r = [rx.reactant.GetAtomWithIdx(i).GetNeighbors()[0].GetIdx() for i in range(6, 16)]
+    on_p = [rx.product.GetAtomWithIdx(i).GetNeighbors()[0].GetIdx() for i in range(6, 16)]
+    assert on_r == on_p
+    got = {(i + 1, j + 1): d for i, j, d in bond_changes(rx)}
+    assert got == {(1, 2): -1.0, (2, 3): 1.0, (3, 4): -1.0, (4, 5): 1.0, (5, 6): -1.0,
+                   (1, 6): 1.0}
+
+
+def test_the_written_smiles_give_the_reaction_back():
+    rx = _diels_alder()
+    back = read_reaction(mapped_smiles(rx.reactant), mapped_smiles(rx.product),
+                         rx.reactant.GetConformer().GetPositions(),
+                         rx.product.GetConformer().GetPositions(), rx.name)
+    assert back.symbols == rx.symbols
+    assert bond_changes(back) == bond_changes(rx)
+    assert max(bond_stretch(back.reactant), bond_stretch(back.product)) < 1.3
+
+
+def test_a_hydrogen_that_moved_stops_the_pairing():
+    left, right = "[CH3:1][CH:2]=[O:3]", "[CH2:1]=[CH:2][OH:3]"
+    r = mol_from_geometry(left, *_geometry(left, seed=1))
+    p = mol_from_geometry(right, *_geometry(right, seed=2))
+    with pytest.raises(ReactionMismatch, match="hydrogens"):
+        reaction_from_mols(r, p, "keto-enol")
+
+
+def test_each_molecule_is_placed_by_itself():
+    rx = _diels_alder()
+    xr, xp, rmsd = superpose_fragments(rx)
+    # the product is one molecule and stays; the two reactant molecules move onto it
+    assert np.allclose(xp, rx.product.GetConformer().GetPositions())
+    assert not np.allclose(xr, rx.reactant.GetConformer().GetPositions())
+    # butadiene is embedded as it comes and the ring holds it folded, so the fit is not close
+    assert 0.0 < rmsd < 1.2
+    # moving one reactant molecule far away beforehand changes nothing
+    far = Chem.Mol(rx.reactant)
+    xyz = np.array(far.GetConformer().GetPositions(), float)
+    ethene = [0, 1] + [i for i in range(6, 16)
+                       if far.GetAtomWithIdx(i).GetNeighbors()[0].GetIdx() in (0, 1)]
+    xyz[ethene] += [40.0, -25.0, 10.0]
+    for i, q in enumerate(xyz):
+        far.GetConformer().SetAtomPosition(i, [float(v) for v in q])
+    moved = type(rx)(name=rx.name, reactant=far, product=rx.product)
+    xr2, _xp2, rmsd2 = superpose_fragments(moved)
+    assert np.allclose(xr2, xr, atol=1e-8) and abs(rmsd2 - rmsd) < 1e-8
+    # the rule is offered by frame() and reaction_fields(), and the identities hold under it
+    fs = _fieldset()
+    it = reaction_fields(rx, fs, on="fragments")
+    assert it.on == "fragments" and abs(it.rmsd - rmsd) < 1e-12
+    assert np.allclose(frame(rx, "fragments")[0], xr)
+    K = overlap_kernels([it], fs)
+    assert np.allclose(K["reactant"] + K["product"],
+                       2.0 * K["conventional"] + 0.5 * K["dynamic"], rtol=1e-10)
+
+
+def test_with_one_molecule_on_each_side_the_product_moves():
+    rx = _reaction(0)
+    xr, xp, rmsd = superpose_fragments(rx)
+    assert np.allclose(xr, rx.reactant.GetConformer().GetPositions())
+    heavy, rmsd_heavy = superpose(rx, "heavy")
+    assert np.allclose(xp, heavy, atol=1e-9) and abs(rmsd - rmsd_heavy) < 1e-9

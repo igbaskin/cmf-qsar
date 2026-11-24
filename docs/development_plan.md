@@ -8239,6 +8239,92 @@ What it leaves open, in order:
   archive and 9 GB of distance matrices in the cache, and the table is rebuilt from the
   committed `stage2.json` where the cache is absent.
 
+  **Stage 3, declared 24 November 2026 before any geometry of the second set was read.**
+  *The set:* Cyclo-23-TS, 5,269 [3+2] cycloadditions with activation free energies at
+  B3LYP-D3(BJ)/def2-TZVP//def2-SVP (Stuyver, Jorner and Coley), in the copy of the benchmark of
+  van Gerwen et al. 2024 (`data/cyclo` of github.com/lcmd-epfl/benchmark-barrier-learning; the
+  data of that paper are CC BY 4.0 on Zenodo 10.5281/zenodo.8309465). It is the single-class
+  set of the three, it has mapped SMILES and DFT geometries of both sides, and its reactant
+  is two molecules, which the first set does not have. Only the table had been read when this
+  was written.
+  *The candidate:* the reaction field with rows of unit length plus counts, that is the odd,
+  conventional, dynamic and bond-change rows, each divided by its length, and the counts of
+  bond changes with the lengths of the dynamic channels. *The reference:* the same counts plus
+  the difference and the sum of the Morgan count fingerprints. Both as in stage 2: Gaussian
+  kernel on the blocks, kernel ridge regression, the first grids of stage 2, one pass of the
+  search, settings chosen inside the training part.
+  *Fixed in advance:* the fields are the five physicochemical ones and every Sybyl type that
+  at least 2 % of the atoms of the set carry; the distance grid is that of stage 2 (0.5 A to
+  8 A). The two reactant molecules have no position relative to each other, so each molecule
+  of the side with more molecules is superposed by itself on the other side, on its heavy
+  atoms. The maps of this set are on the heavy atoms only; a hydrogen is paired with the
+  nearest hydrogen on the same heavy atom after that superposition, and a reaction whose
+  hydrogens cannot be paired is refused and counted.
+  *The gate:* activation free energy, five folds with whole reactant pairs held out (a pair of
+  reactants gives several products), three sets of folds; candidate minus reference in q2 with
+  its interval over reactant pairs above zero on the three sets together, and the difference
+  of the same sign on each. Random folds are reported beside it. The published errors of
+  SLATM_d, B2R2 and the CGR network are on ten random splits with 80 % for training; they are
+  quoted from the paper's own result files beside the random folds, as a level and not as a
+  paired comparison.
+
+  **Stage 3 done 24 November 2026; the gate is not met, and the item is closed.**
+  `benchmarks/prepare_cyclo.py`, `benchmarks/run_reactions_models.py --set cyclo`,
+  `benchmarks/results/reactions/stage3.md`; in `cmfqsar/reaction.py` the three things the
+  second set needed (`mol_from_geometry`, `reaction_from_mols`, `superpose_fragments`; the
+  module now has 24 tests).
+  *The set, as read.* 5,265 of 5,269 reactions; four are refused because a geometry is not
+  the molecule of its SMILES. 3,038 folders hold a second geometry of one reactant
+  (`..._alt.xyz`); the first is taken. Elements C, H, N, O, F, Cl, Br; 14 to 94 atoms; 2,667
+  distinct reactant pairs. Thirteen Sybyl types pass the 2 % rule, so eighteen fields again.
+  With each reactant molecule placed on the product by itself the RMSD is 1.24 A in the
+  median: the molecules are larger and more flexible than in the first set.
+  *The gate.* Activation free energy, whole reactant pairs held out, three sets of folds:
+  the candidate 3.73 kcal/mol, the reference 3.61 (mean of the training part 7.64).
+  Candidate minus reference in q2: -0.019 [-0.030, -0.009]; on the three sets -0.011, -0.016
+  and -0.030. The candidate is behind the reference on every set, and the same with random
+  folds (3.43 against 3.26; -0.021 [-0.030, -0.011]). The rows of unit length were the best
+  field model of stage 2 and were chosen after its numbers had been seen; declared in advance
+  on a second set they lose. Here they are no better than the rows as they are (3.66 for
+  CRF + counts; +0.011 [+0.003, +0.019] in its favour). The result of stage 2 was a selection.
+  *The superposition adds nothing here.* The candidate with the even row of the two sides in
+  place of the conventional and dynamic rows gives the same error to two decimals (difference
+  0.000 [-0.004, +0.004]). In stage 2 the superposition was the whole contribution of the
+  channels. There the product was a complex that the optimiser had placed on a small rigid
+  reactant; here two flexible reactant molecules are fitted on the product one by one, 1.2 A
+  apart, and the cross-correlation of the two sides carries nothing the two sides do not.
+  *What repeats on both sets: the field adds to the full reference.* Field + counts +
+  fingerprints against counts + fingerprints: 3.37 against 3.61 with reactant pairs held out
+  (+0.030 [+0.024, +0.035], on each of the three sets) and 3.00 against 3.26 with random folds
+  (+0.028 [+0.023, +0.034]); in stage 2 it was +0.035, +0.019 and +0.034. The field with the
+  fingerprints: whole kernels 0.41. So the two descriptions are different and each adds to
+  the other, and neither replaces the other.
+  *The level.* On ten random splits with 80 % for training the benchmark's own result files
+  give 2.70 kcal/mol for SLATM_d with kernel ridge regression, 2.72 for the CGR network with
+  the true maps, 3.56 for Morgan difference fingerprints with a random forest, 3.81 for B2R2
+  and 5.95 for DRFP. Our random folds also train on 80 %, on other splits: 3.00 for the three
+  descriptions together, 3.26 for counts + fingerprints, 3.43 for the candidate. In this set
+  random folds do overstate, unlike in the first: 3,700 of the 5,265 test reactions have their
+  reactant pair in the training part, and the mean of the same pair alone has q2 0.44.
+  *Setting (b), the transition state as a third state, on the first set.* Three more blocks:
+  the autocorrelation of transition state minus reactant with the graph of the reactant, of
+  product minus transition state with the graph of the product, and the odd row of the step
+  to the transition state. Added to the unit-length model with counts, whole reactants held
+  out, three sets of folds: 6.26 against 7.18 kcal/mol (+0.044 [+0.039, +0.049] in q2). This
+  was meant as the upper limit that geometry allows. A model that is given the geometry of the
+  transition state and is still wrong by 6 kcal/mol is limited by the description: rows of
+  pair distances, 0.5 A wide, summed over the molecule, do not keep what decides a barrier.
+  *Verdict for the item.* The construction is sound: both identities hold exactly, and the
+  two sets are read almost whole. As a model of its own the reaction field equals or loses to
+  counts with fingerprints on both sets, in both stages, once the test is declared in advance
+  and the folds are repeated. As a second description it gains 0.02 to 0.035 in q2 beside
+  them, everywhere. The gate is not met. Not built, and not to be built on this result: yields
+  with conditions, mapped literature reactions, grid densities, the path as an ensemble. The
+  one direction this leaves open is the other route named in stage 1: a frame shared by the
+  reactions of one class, so that the overlap kernel can compare two reaction fields point by
+  point. The cycloadditions have such a frame (the five-membered ring that every reaction
+  makes), and that is where it would be tried.
+
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
