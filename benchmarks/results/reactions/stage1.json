@@ -1,0 +1,162 @@
+{
+ "sample": 2000,
+ "seed": 0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alpha": 0.5,
+ "spec": {
+  "d_max": 8.0,
+  "step": 0.5,
+  "sigma": 0.5
+ },
+ "build_heavy": {
+  "built": 2000,
+  "refused": {},
+  "seconds": 9.617409944534302,
+  "rmsd_fitted_atoms": {
+   "median": 0.712224203363653,
+   "q90": 1.2535974762530249,
+   "largest": 2.7783256036136437
+  },
+  "displacement_all_atoms": {
+   "median": 1.1829763673786982,
+   "q90": 1.7616626563966655,
+   "largest": 3.7835391799217954
+  }
+ },
+ "build_centre": {
+  "built": 2000,
+  "refused": {},
+  "seconds": 9.16256308555603,
+  "rmsd_fitted_atoms": {
+   "median": 1.093534824927018,
+   "q90": 1.6953035951464515,
+   "largest": 3.0191646231235856
+  },
+  "displacement_all_atoms": {
+   "median": 1.56509681898886,
+   "q90": 2.5678323449799025,
+   "largest": 5.620442955556677
+  }
+ },
+ "reactions": {
+  "atoms": {
+   "median": 14.0,
+   "q90": 17.0,
+   "largest": 23.0
+  },
+  "changed_bonds": {
+   "median": 4.0,
+   "q90": 7.0,
+   "largest": 10.0
+  },
+  "without_a_changed_bond": 0,
+  "count_columns": 28,
+  "most_frequent_changes": [
+   [
+    "C-H broken",
+    1278
+   ],
+   [
+    "C-C broken",
+    1145
+   ],
+   [
+    "C-C raised",
+    1019
+   ],
+   [
+    "C-H made",
+    669
+   ],
+   [
+    "C-N lowered",
+    534
+   ],
+   [
+    "C-N raised",
+    476
+   ],
+   [
+    "C-C lowered",
+    473
+   ],
+   [
+    "C-O raised",
+    453
+   ],
+   [
+    "C-O broken",
+    417
+   ],
+   [
+    "C-O lowered",
+    372
+   ],
+   [
+    "C-C made",
+    344
+   ],
+   [
+    "H-O made",
+    289
+   ]
+  ]
+ },
+ "overlap": {
+  "seconds": 290.9629557132721,
+  "peak_memory_gb": 1.521148681640625,
+  "bytes_per_part": 160000000,
+  "identity_one_largest_deviation": 6.580913759397475e-16,
+  "identity_two_largest_deviation": 2.8791497697363953e-16
+ },
+ "dynamic_share_of_the_sides": {
+  "electrostatic": {
+   "median": 0.3861195544545468,
+   "q90": 0.8817236080083215,
+   "largest": 1.5881817791974908
+  },
+  "steric": {
+   "median": 0.003227075912566656,
+   "q90": 0.01278696600620787,
+   "largest": 0.07731163534226122
+  },
+  "hydrophobic": {
+   "median": 0.2543630571494922,
+   "q90": 0.892044198392864,
+   "largest": 1.836649213795808
+  },
+  "hba": {
+   "median": 0.09332145946543487,
+   "q90": 0.44393555891838693,
+   "largest": 1.0
+  },
+  "hbd": {
+   "median": 0.15088124656073076,
+   "q90": 1.0,
+   "largest": 1.0
+  }
+ },
+ "norms_agree_with_the_kernel_diagonal": true,
+ "invariant": {
+  "seconds": 9.615232467651367,
+  "columns": 255,
+  "bond_columns": 17,
+  "identity_one_largest_deviation": 7.726194563380762e-16,
+  "odd_row_same_under_both_rules": true,
+  "dynamic_rows_correlation_between_rules": 0.6984526723585748,
+  "peak_memory_gb": 1.521148681640625
+ },
+ "full_set": {
+  "reactions": 11961,
+  "gb_per_part_all_fields": 5.329605974256993,
+  "gb_per_part_one_field": 1.0659211948513987,
+  "overlap_hours": 2.890747697973556,
+  "invariant_minutes": 0.9583982962131501
+ }
+}

@@ -8118,6 +8118,55 @@ What it leaves open, in order:
   ensemble along its coordinate (the route of MS5). Each becomes an item only if the gate is
   met.
 
+  **Stage 1 done 24 November 2026: the construction holds, and the item needs one correction.**
+  `cmfqsar/reaction.py` (17 tests), `benchmarks/prepare_reactions.py`,
+  `benchmarks/run_reactions.py`, `benchmarks/results/reactions/table.md`.
+  *The data, as read.* The table has 11,961 reactions, not the 12,001 of the Zenodo page. The
+  three geometries of every reaction have the atoms in the order of the map numbers, so no
+  mapping step is needed, and no bond of either graph is longer than 1.28 times the sum of the
+  covalent radii in its geometry. All 11,961 are read; none is refused. A product of several
+  molecules (3,328 reactions with two, 229 with three) is stored as one optimised complex in one
+  log file, so its molecules have a relative position, and that position is the one the
+  optimiser found. The activation energy of the table is the electronic energy plus the
+  zero-point energy and is reproduced from the logs to 1e-5 kcal/mol. The enthalpy of the table
+  is not the sum that the logs give: the two differ by up to 4.3 kcal/mol, most for products of
+  several molecules. The table's values stay the target; what the table's enthalpy is has to be
+  read in the paper before stage 2 quotes it. The archive is 1.5 GB and is read as a stream;
+  the prepared table of geometries is a file in the cache, not in the repository.
+  *The correction: the superposition gives a frame inside one reaction, not between two.* The
+  overlap kernel compares two fields point by point, so it needs every reaction of a set in one
+  frame, and reactions of different types have none. For this set the description is therefore
+  the rotation-invariant autocorrelation, and there the second identity changes. The
+  autocorrelation is quadratic in a field, so the autocorrelation of the dynamic channel does
+  not change sign when a reaction is reversed. The part that does is the cross-correlation of
+  the conventional with the dynamic channel, and it equals half the difference of the
+  autocorrelations of the two sides, (P x P − R x R) / 2. It does not depend on the
+  superposition at all. The superposition enters only through the cross-correlation of the two
+  sides, which is inside the two even rows. So of the three possible sources of a gain named
+  in the gate, the frame can act only on the even rows, which the Marcus argument assigns to
+  the intrinsic barrier. The overlap kernels stay in the module for a series of reactions that
+  share a frame by some other rule (one reaction class with a common centre); the second set
+  is where that can be tried.
+  *Measured on 2,000 reactions (seed 0), five fields, attenuation 0.5 per square angstrom.*
+  Every reaction is built under both superposition rules. Both identities hold to 1e-15 on the
+  overlap kernels and on the invariant rows; the odd row is the same under both rules, to
+  rounding. The two sides are far apart after the superposition: the RMSD over the fitted atoms
+  is 0.71 A in the median on all heavy atoms and 1.09 A on the atoms of the changed bonds,
+  and the displacement of all atoms 1.18 and 1.57 A. The dynamic invariant rows of the two
+  rules correlate 0.70 over the sample, so the rule is a real choice. A reaction changes four
+  bonds in the median and ten at most; none changes no bond; the count reference has 28
+  columns. The share of the two sides that is left in the dynamic channel is 0.39 in the
+  median for the electrostatic field, 0.25 for the hydrophobic one and 0.003 for the steric
+  one: at this attenuation the steric Gaussians are so wide that almost everything cancels, so
+  the widths have to be searched in stage 2 and not carried over.
+  *Cost.* The invariant rows of the sample take 10 s (255 columns per part) and those of the
+  full set about one minute. The overlap kernels of the sample take 291 s on one thread and
+  1.5 GB at the peak; for the full set one part with all five fields is 5.3 GB, so the parts
+  must not be held together, and the estimate is 2.9 hours.
+  **Stage 2 as it now stands:** the invariant route on the full set, with the even rows (C x C,
+  D x D, the bond-change row) and the odd row as separate blocks, both superposition rules,
+  the widths and the distance grid searched, and the references and folds as written above.
+
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework

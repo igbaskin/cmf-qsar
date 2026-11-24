@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 145 modules, 277 classes with 877 public methods, and 1508 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 146 modules, 280 classes with 880 public methods, and 1524 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -136,6 +136,7 @@ for.
 | [cmfqsar.prototypes](#cmfqsarprototypes) | Inverse design on prototypes: candidates, an oracle and a loop (plan item M11). |
 | [cmfqsar.pu](#cmfqsarpu) | Learning from positives and unlabelled molecules (part of plan item E4). |
 | [cmfqsar.ranking](#cmfqsarranking) | Learning to order molecules instead of to reproduce their numbers. |
+| [cmfqsar.reaction](#cmfqsarreaction) | The continuous reaction field: a reaction as one set of fields (plan item PO3). |
 | [cmfqsar.reciprocal](#cmfqsarreciprocal) | Reciprocal-space channels of a crystal: the typed structure factors (plan item M6). |
 | [cmfqsar.relax](#cmfqsarrelax) | Relaxation of a molecule under the gradient of its own predicted activity (plan item MS3). |
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
@@ -18157,6 +18158,226 @@ The fraction of comparable pairs the score puts in the correct order; ties count
 ### `rank_scores(y_true: Sequence[float], score: Sequence[float], gap: float=0.0, groups: Optional[Sequence]=None) -> Dict[str, float]`
 
 Spearman's rho, Kendall's tau and the share of pairs ordered correctly.
+
+## cmfqsar.reaction
+
+Source: `cmfqsar/reaction.py`
+
+The continuous reaction field: a reaction as one set of fields (plan item PO3).
+
+A condensed graph of reaction (CGR) is one graph that holds the reactants and the products of a
+reaction together.  An atom or a bond that does not change keeps a conventional label, and one
+that changes gets a dynamic label: bond made, bond broken, bond order changed, charge changed.
+The continuous reaction field (CRF) is the same idea in space.  The fields of the two sides are
+put into one coordinate frame, and two kinds of channels are formed from them, for every field f:
+
+* the **conventional channel**, the mean of the two sides, C_f = (P_f + R_f) / 2;
+* the **dynamic channel**, the difference, D_f = P_f - R_f.
+
+The fields of this program are linear in the atoms, so both channels are ordinary
+`cmfqsar.fields.MoleculeFields`: the atoms of both sides, with the weights of the
+reactant halved (C) or negated (D).  An atom that does not change and does not move cancels
+exactly in D.  The dynamic channel of the electrostatic field is the **charge-change field** of a
+CGR, so it needs no object of its own.  The **bond-change field** has no molecular counterpart:
+one Gaussian at the midpoint of every bond that changes, weighted by the change of bond order
+(positive for a bond made, negative for a bond broken).
+
+What a reaction needs
+---------------------
+An atom-to-atom mapping and one 3D geometry of each side.  `read_reaction` takes the two
+sides as mapped SMILES with every hydrogen written and the coordinates in the order of the map
+numbers.  The two sides must hold the same atoms; a reaction that does not is refused with
+`ReactionMismatch`, because atoms that are missing on one side do not cancel.
+
+Two frames, and only one of them is solved here
+-----------------------------------------------
+*Inside one reaction* the product is superposed on the reactant, on all heavy atoms or on the
+atoms of the reaction centre (`superpose`).  *Between two reactions* there is no shared
+frame, and the overlap kernel compares fields point by point.  The overlap kernels of
+`overlap_kernels` are therefore exact statements about the coordinates they are given and
+nothing more; they are the right kernel for a series of reactions that were placed in one frame
+by some other rule.  For reactions with no such rule the description is the rotation-invariant
+autocorrelation of `invariant_rows`.
+
+Two identities
+--------------
+(1) The pair (C, D) is a rotation of the pair (R, P).  For any bilinear kernel k,
+
+    k(R, R') + k(P, P') = 2 k(C, C') + k(D, D') / 2,
+
+so with these weights the channels say exactly what the two sides say as separate blocks.  A gain
+can come only from weighting C and D separately.
+
+(2) Reversing a reaction leaves C unchanged and negates D.  The overlap kernel of two dynamic
+channels therefore changes sign when one reaction is reversed, and a ridge without intercept on
+it predicts the opposite value for the reverse reaction, which is right for a reaction energy.
+
+The autocorrelation is quadratic in a field, so the autocorrelation of D does **not** change sign
+when the reaction is reversed.  The part of the invariant description that is odd under reversal
+is the cross-correlation of C with D, and it equals half the difference of the autocorrelations
+of the two sides:
+
+    C x D = (P x P - R x R) / 2.
+
+It does not depend on the superposition at all.  The superposition enters the invariant
+description only through the cross-correlation of the two sides, R x P, which is inside C x C
+and D x D.  `invariant_rows` returns the even rows (C x C, D x D) and the odd row.
+
+### `class ReactionMismatch  — bases: ValueError`
+
+The two sides of a reaction do not hold the same atoms, or a side cannot be read.
+
+### `class Reaction  (dataclass)`
+
+The two sides of one reaction: the same atoms in the same order, one geometry each.
+
+Attributes:
+
+- `name: str`
+- `reactant: Chem.Mol`
+- `product: Chem.Mol`
+
+#### `Reaction.n_atoms` -> int  (property)
+
+#### `Reaction.symbols` -> List[str]  (property)
+
+### `class ReactionFields  (dataclass)`
+
+One reaction as fields: the two sides in one frame, and the channels made from them.
+
+Attributes:
+
+- `name: str`
+- `reactant: MoleculeFields`
+- `product: MoleculeFields`
+- `conventional: MoleculeFields`
+- `dynamic: MoleculeFields`
+- `bonds: MoleculeFields`
+- `rmsd: float` = `0.0`
+- `on: str` = `'heavy'`
+
+#### `ReactionFields.reversed() -> 'ReactionFields'`
+
+The reverse reaction **in the same frame**: C is unchanged, D and the bonds change sign.
+
+This is the reversal that identity (2) of the module text is about.  Building the reverse
+reaction from `reversed_reaction` gives the same fields in the frame of the
+product instead.  The invariant description is the same for both; the overlap kernel is
+not.
+
+### `mapped_mol(smiles: str, coords: Optional[np.ndarray]=None) -> Chem.Mol`
+
+A molecule from a mapped SMILES, with its atoms in the order of the map numbers.
+
+Every atom must carry a map number, the numbers must be 1..N without gaps, and every hydrogen
+must be written.  Several molecules separated by a dot are read as one RDKit molecule.
+`coords`, when given, are (N, 3) in the order of the map numbers and become the conformer.
+
+### `read_reaction(reactant_smiles: str, product_smiles: str, reactant_coords: np.ndarray, product_coords: np.ndarray, name: str='') -> Reaction`
+
+One reaction from two mapped SMILES and two geometries in the order of the map numbers.
+
+Raises `ReactionMismatch` when a side cannot be read or when the two sides do not hold
+the same element under every map number.
+
+### `bond_stretch(mol: Chem.Mol) -> float`
+
+The longest bond of the graph, as a multiple of the sum of the two covalent radii.
+
+A value above `STRETCH_LIMIT` says that the coordinates do not belong to the graph,
+which is what happens when their order is not the order of the map numbers.  A molecule
+without bonds gives 0.
+
+### `reversed_reaction(rx: Reaction) -> Reaction`
+
+The same reaction read from the product to the reactant.
+
+### `bond_orders(mol: Chem.Mol) -> Dict[Tuple[int, int], float]`
+
+Bond order of every bond, keyed by (lower atom index, higher); an aromatic bond is 1.5.
+
+### `bond_changes(rx: Reaction) -> List[Tuple[int, int, float]]`
+
+(atom, atom, change of bond order) for every bond that differs between the two sides.
+
+The change is the order in the product minus the order in the reactant: positive for a bond
+that is made or raised, negative for one that is broken or lowered.
+
+### `reaction_centre(rx: Reaction) -> List[int]`
+
+The atoms of every bond that changes, sorted; every atom when no bond changes.
+
+### `change_kind(order_r: float, order_p: float) -> str`
+
+"made", "broken", "raised" or "lowered" for one bond that changes.
+
+### `bond_change_counts(reactions: Sequence[Reaction]) -> Tuple[np.ndarray, List[str]]`
+
+The count reference: how many bonds of each element pair are made, broken, raised, lowered.
+
+Returns (counts, labels): one row per reaction and one column per (element pair, kind) that
+occurs in the set, for example `C-H broken`.  This is the count version of what the
+dynamic channels may be measuring, to be put beside them in every comparison.
+
+### `superposition_atoms(rx: Reaction, on: str='heavy') -> List[int]`
+
+The atoms the product is fitted on.
+
+`"heavy"`: every atom that is not hydrogen.  `"centre"`: the atoms of the bonds that
+change; where these are fewer than three, the atoms bonded to them on either side are added.
+Where a rule still gives fewer than three atoms, every atom is used.
+
+### `superpose(rx: Reaction, on: str='heavy') -> Tuple[np.ndarray, float]`
+
+(coordinates of the product in the frame of the reactant, RMSD over the fitted atoms).
+
+The reactant is not moved.  The fit is a rigid rotation and translation without a
+reflection, so the handedness of the product is kept.
+
+### `bond_change_field(rx: Reaction, product_coords: np.ndarray, name: str='') -> MoleculeFields`
+
+The bond-change field: one Gaussian at the midpoint of each bond that changes.
+
+The midpoint of a broken bond is taken in the reactant, that of a made bond in the superposed
+product, and that of a bond whose order changes is the mean of the two.  The single weight
+column is the change of bond order.  A reaction without a changed bond gives one pseudo-atom
+of weight zero at the centroid of the reactant, so that the field exists and overlaps nothing.
+
+### `reaction_fields(rx: Reaction, fieldset: FieldSet, on: str='heavy') -> ReactionFields`
+
+The channels of one reaction, with the product superposed on the reactant by rule `on`.
+
+### `overlap_kernels(items: Sequence[ReactionFields], fieldset: FieldSet, others: Optional[Sequence[ReactionFields]]=None, parts: Sequence[str]=PARTS + ('bonds',)) -> Dict[str, np.ndarray]`
+
+Overlap kernels of the named parts, not normalised.
+
+Every part but `"bonds"` gives an array (F, n, m), one kernel per enabled field of the
+field set; `"bonds"` gives (n, m).  `others` are the reactions of the columns; without
+them the kernel is of `items` against itself.
+
+The values are overlap integrals in the coordinates the reactions carry.  They compare two
+reactions point by point, so they mean something only for reactions that share a frame; see
+the module text.
+
+### `channel_norms(items: Sequence[ReactionFields], fieldset: FieldSet, part: str='dynamic') -> np.ndarray`
+
+The length of one channel of every reaction, per field: the root of its self-overlap.
+
+For the dynamic channel this is how much the reaction changes each field.  The
+cosine-normalised kernels divide it out, so it is given here as numbers of its own, to be
+put into the references.  Shape (n, F).
+
+### `invariant_rows(items: Sequence[ReactionFields], spec: AutocorrelationSpec=REACTION_SPEC) -> Dict[str, np.ndarray]`
+
+The rotation-invariant description: autocorrelation rows of the parts, not normalised.
+
+`reactant`, `product`, `conventional` and `dynamic` are the autocorrelations of
+those fields, and `bonds` that of the bond-change field.  All of them are even: they do
+not change when the reaction is reversed.  `odd` is the cross-correlation of the
+conventional with the dynamic channel, (P x P - R x R) / 2, which changes sign when the
+reaction is reversed and does not depend on the superposition.
+
+The rows obey identity (1): reactant + product = 2 conventional + dynamic / 2.
 
 ## cmfqsar.reciprocal
 
