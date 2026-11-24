@@ -8167,6 +8167,78 @@ What it leaves open, in order:
   D x D, the bond-change row) and the odd row as separate blocks, both superposition rules,
   the widths and the distance grid searched, and the references and folds as written above.
 
+  **Stage 2 done 24 November 2026; the gate is not met.** `benchmarks/run_reactions_models.py`
+  (the features, the folds, the fits; 5 tests), `benchmarks/results/reactions/stage2.md`.
+  *What was fitted.* All 11,961 reactions, reactant and product only. Eighteen fields: the five
+  physicochemical ones and thirteen Sybyl atom types, so that a change of hybridisation shows in
+  the dynamic channel. Blocks of invariant rows on a distance grid of 0.5 A up to 8 A (fixed, not
+  searched): the odd row, the even row of the two sides, the rows of the conventional and of the
+  dynamic channel under each superposition rule, and the row of the bond-change field. Every
+  model, also every reference, is a Gaussian kernel on a weighted sum of the squared distances
+  of its blocks, fitted by kernel ridge regression; block weights, width and ridge are chosen
+  inside the training part, on 2,000 of its reactions with whole units held out. "CRF" below is
+  the odd, conventional, dynamic and bond-change blocks with the product superposed on all heavy
+  atoms. "Counts" are the 28 counts of bond changes and the lengths of the eighteen dynamic
+  channels. Five folds; three sets of folds for the gate models with whole reactants held out,
+  one set for everything else. The ten repeats the item asked for were not run: one set of folds
+  of all seventeen models takes about 75 minutes.
+  *The targets.* The source calls the second target an enthalpy. The paper says, and the logs
+  confirm to 1e-5 kcal/mol, that it is the difference of the electronic plus zero-point energies
+  of product and reactant: a reaction energy at 0 K. The paper's text gives 11,961 reactions.
+  *The folds.* 1,156 distinct reactants (nine reactions each in the median, 34 at most), 1,458
+  distinct sets of bond changes. 116 reactions have their reverse in the set and are kept on
+  one side of every split. With whole reactants held out, no test reaction has its reactant in
+  the training part, and the mean barrier of the same reactant equals the plain mean exactly.
+  With random folds the reactant mean is no better than the plain mean either (q2 -0.008), so
+  in this set random folds do not overstate, and the numbers of the two splits are close.
+  *The gate: CRF + counts against counts + Morgan difference fingerprints, activation energy,
+  whole reactants held out.* MAE 7.74 against 7.92 kcal/mol (mean of the training part 18.03).
+  Difference in q2 over three sets of folds +0.006 [-0.001, +0.014]; on the three sets
+  separately +0.019 [+0.011, +0.029], -0.002 and +0.001. The first set alone gave an interval
+  above zero, and it held with wider grids too (+0.012 [+0.004, +0.021]; the reference chose
+  the same settings and stayed at 8.14). The reference was weak on that set of folds (8.14
+  against 7.87 and 7.76); the candidate was not better there than elsewhere. A margin on one
+  set of folds was a property of the folds. With random folds the difference is -0.004
+  [-0.012, +0.006], and with whole reaction types held out -0.026 [-0.038, -0.013].
+  On the reaction energy, which does not decide the gate, the same comparison is +0.009
+  [+0.002, +0.016] with reactants held out, on each of the three sets (6.93 against 7.33).
+  *The variant with rows of unit length.* Each row divided by its length, which is what a
+  cosine-normalised kernel does. It was put in as the check of the trap named above, with the
+  expectation that it would lose. It is the best field model: 7.18 kcal/mol, +0.034 [+0.027,
+  +0.042] over the reference with reactants held out (+0.048, +0.027, +0.026 on the three
+  sets), +0.034 [+0.026, +0.043] with random folds, and +0.001 [-0.012, +0.014] with reaction
+  types held out. The counts carry the size, so the rows need not. It was not the declared
+  candidate, so this is a result to test where it is declared in advance, which is the second
+  set of stage 3.
+  *The sources of a gain, each removed in turn from CRF + counts* (activation energy; reactants
+  held out on the first set of folds, random folds, types held out). Without the superposition
+  (the even row of the two sides in place of the conventional and dynamic rows): -0.037,
+  -0.024, -0.025 in q2, every interval below zero. Without the bond-change field: -0.013,
+  -0.013, -0.014. With one weight for the four field blocks: -0.009, +0.002, +0.011, so
+  separate weights are not a source. Of the two superposition rules, the one on the atoms of
+  the changed bonds is equal on the first split (-0.005 [-0.011, +0.001]) and better on the
+  other two (+0.014 and +0.019, intervals above zero). So the part of the description that neither side has alone, the
+  cross-correlation of the two sides after the superposition, is what the channels add.
+  *What the field is beside the references.* The field alone beats the fingerprints alone by
+  2.7 kcal/mol with reactants held out (+0.162 in q2) and the two sides alone by 2.9 (+0.167).
+  Added to counts + fingerprints it gains +0.035, +0.019 and +0.034 in q2 on the three splits
+  (one set of folds each). Whole kernels: CRF with the fingerprints 0.22, with the counts
+  0.40, with the two sides 0.35; counts + fingerprints with counts alone 0.99, so that
+  reference is the counts with a correction.
+  *Two expectations of the item that failed.* The Marcus argument: the odd block alone does not
+  carry the reaction energy better than the even blocks by much (9.67 against 10.09 kcal/mol),
+  a line in the true reaction energy explains 21 % of the variance of the barrier, and the
+  true reaction energy as an extra block lowers the error of CRF + counts only from 7.66 to
+  7.20. In this set the barrier is not mainly thermodynamic, and a Gaussian kernel does not
+  keep the parity of a block. And the normalisation, as said above.
+  *New reaction types are hard for every model:* 12.5 to 13.1 kcal/mol for the best five,
+  against 18.2 for the mean.
+  *Not done.* The distance grid and the field set were fixed before the fits and not searched;
+  setting (b) with the transition state; the second data set and the published numbers; the
+  ten repeats. The benchmark is not registered in `run_all.py`: the fits need the 1.5 GB
+  archive and 9 GB of distance matrices in the cache, and the table is rebuilt from the
+  committed `stage2.json` where the cache is absent.
+
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework

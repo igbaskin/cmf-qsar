@@ -21,8 +21,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 
 from cmfqsar.fields import FieldSet  # noqa: E402
+from cmfqsar.invariant import feature_matrix  # noqa: E402
 from cmfqsar.model import krr_fit  # noqa: E402
-from cmfqsar.reaction import (ReactionMismatch, bond_change_counts, bond_changes,  # noqa: E402
+from cmfqsar.reaction import (REACTION_SPEC, ReactionMismatch,  # noqa: E402
+                              autocorrelation_rows, bond_change_counts, bond_changes,
                               bond_stretch, channel_norms, invariant_rows, mapped_mol,
                               overlap_kernels, reaction_centre, reaction_fields, read_reaction,
                               reversed_reaction, superpose, superposition_atoms)
@@ -242,3 +244,15 @@ def test_the_length_of_the_dynamic_channel_is_its_self_overlap():
     assert norms.shape == (len(items), 2)
     for f in range(2):
         assert np.allclose(norms[:, f] ** 2, np.diag(K[f]), rtol=1e-9)
+
+
+def test_the_fast_rows_are_the_rows_of_the_library():
+    fs = FieldSet.create(physchem=["electrostatic", "steric", "hydrophobic"],
+                         cif_types=["C.3", "C.2", "H"], alpha=0.5)
+    items = [reaction_fields(_reaction(k), fs) for k in range(len(REACTIONS))]
+    for part in ("reactant", "dynamic", "conventional"):
+        fields = [getattr(it, part) for it in items]
+        slow = feature_matrix(fields, REACTION_SPEC)
+        fast = autocorrelation_rows(fields, REACTION_SPEC)
+        assert fast.shape == slow.shape
+        assert np.allclose(fast, slow, rtol=1e-10, atol=1e-10)

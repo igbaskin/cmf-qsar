@@ -68,7 +68,7 @@ from rdkit import Chem
 from rdkit.Geometry import Point3D
 
 from .fields import AtomTable, FieldSet, FieldSpec, MoleculeFields, build_fields
-from .invariant import AutocorrelationSpec, feature_matrix
+from .invariant import AutocorrelationSpec, field_pairs
 from .kernels import kernel_matrices
 
 #: the two rules for the superposition of the product on the reactant
@@ -495,7 +495,46 @@ def invariant_rows(items: Sequence[ReactionFields],
 
     The rows obey identity (1): reactant + product = 2 conventional + dynamic / 2.
     """
-    out = {part: feature_matrix([getattr(it, part) for it in items], spec) for part in PARTS}
+    out = {part: autocorrelation_rows([getattr(it, part) for it in items], spec)
+           for part in PARTS}
     out["odd"] = 0.5 * (out["product"] - out["reactant"])
-    out["bonds"] = feature_matrix([it.bonds for it in items], spec)
+    out["bonds"] = autocorrelation_rows([it.bonds for it in items], spec)
+    return out
+
+
+def autocorrelation_rows(fields: Sequence[MoleculeFields],
+                         spec: AutocorrelationSpec = REACTION_SPEC) -> np.ndarray:
+    """The rows of :func:`cmfqsar.invariant.feature_matrix`, computed for all field pairs at once.
+
+    The library function loops over the pairs of fields; with eighteen fields that is 171
+    products per molecule.  This one forms W' B W for every distance channel in one product and
+    reads the pairs out of it.  The two agree to rounding, which a test fixes.  It does not
+    take probe fields or the signed three-point channels.
+    """
+    if spec.chirality:
+        raise ValueError("the signed three-point channels are not computed here; use "
+                         "cmfqsar.invariant.feature_matrix")
+    if not len(fields):
+        return np.zeros((0, 0))
+    n_fields = fields[0].weights.shape[1]
+    pairs = field_pairs(n_fields)
+    f_idx = np.array([f for f, _g in pairs])
+    g_idx = np.array([g for _f, g in pairs])
+    twice = np.where(f_idx != g_idx, 2.0, 1.0)[:, None]
+    centres = spec.centres
+    out = np.zeros((len(fields), len(pairs) * len(centres)))
+    for n, m in enumerate(fields):
+        W = np.asarray(m.weights, float)
+        if W.shape[1] != n_fields:
+            raise ValueError(f"{m.name or f'item {n}'} carries {W.shape[1]} fields where the "
+                             f"first carries {n_fields}")
+        if len(W) == 0:
+            continue
+        xyz = np.asarray(m.coords, float)
+        d = np.linalg.norm(xyz[:, None, :] - xyz[None, :, :], axis=-1)
+        if not spec.include_self:
+            np.fill_diagonal(d, np.inf)
+        B = np.exp(-((d[:, :, None] - centres[None, None, :]) ** 2) / (2.0 * spec.sigma ** 2))
+        M = np.einsum("af,abk,bg->fgk", W, B, W, optimize=True)
+        out[n] = (twice * M[f_idx, g_idx]).ravel()
     return out

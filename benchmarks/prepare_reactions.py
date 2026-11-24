@@ -6,7 +6,9 @@ transition states of elementary chemical reactions based on quantum chemistry*, 
 wB97X-D3/def2-TZVP part:
 
 * ``wb97xd3.csv`` (2.7 MB): one row per reaction, with the mapped SMILES of the two sides, the
-  activation energy ``ea`` and the reaction enthalpy ``dh``, both in kcal/mol;
+  activation energy ``ea`` and the reaction energy ``dh``, both in kcal/mol.  Both are
+  differences of the electronic energy plus the zero-point energy, so ``dh`` is a reaction
+  energy at 0 K although the source calls it an enthalpy;
 * ``wb97xd3.tar.gz`` (1.5 GB): one folder ``rxnNNNNNN`` per reaction with three Q-Chem log
   files, ``r``, ``p`` and ``ts``.  Each log holds a geometry optimisation and a frequency job.
 
@@ -20,7 +22,7 @@ What it checks, and reports in ``wb97xd3_prepared.json`` beside the table:
   map numbers (this is what :func:`cmfqsar.reaction.read_reaction` needs);
 * no bond of either graph is longer than 1.6 times the sum of the covalent radii in its
   geometry, which would say that the coordinates do not belong to the graph;
-* the activation energy and the enthalpy of the table are reproduced from the logs.
+* the activation energy and the reaction energy of the table are reproduced from the logs.
 
 Run ``python benchmarks/prepare_reactions.py --download`` once; without the flag the two files
 must already be in the cache folder.
@@ -187,11 +189,11 @@ def prepare(limit: int = 0) -> dict:
         if max(s_r, s_p) > STRETCH_LIMIT:
             refuse(f"a bond of the graph is longer than {STRETCH_LIMIT} times the covalent sum")
             continue
-        # the two targets, from the logs: electronic energy plus zero-point energy for the
-        # barrier, and the enthalpy at 298 K for the reaction
+        # the two targets, from the logs: differences of the electronic energy plus the
+        # zero-point energy, to the transition state and to the product
         e = {s: entry[s][2] * HARTREE for s in SIDES}
         ea_log = (e["ts"] + entry["ts"][3]) - (e["r"] + entry["r"][3])
-        dh_log = (e["p"] + entry["p"][4]) - (e["r"] + entry["r"][4])
+        dh_log = (e["p"] + entry["p"][3]) - (e["r"] + entry["r"][3])
         if np.isfinite(ea_log):
             worst_ea = max(worst_ea, abs(ea_log - ea))
         if np.isfinite(dh_log):
@@ -224,7 +226,7 @@ def prepare(limit: int = 0) -> dict:
         elements=sorted({Chem.GetPeriodicTable().GetElementSymbol(int(z))
                          for zs in numbers for z in zs}),
         product_molecules={str(k): v for k, v in sorted(products.items())},
-        largest_difference_kcal=dict(activation_energy=worst_ea, enthalpy=worst_dh),
+        largest_difference_kcal=dict(activation_energy=worst_ea, reaction_energy=worst_dh),
         longest_bond_as_multiple_of_covalent_sum=float(np.max(stretch)),
         source="Zenodo 10.5281/zenodo.3715478, CC BY 4.0", limit=limit)
     with open(REPORT, "w") as f:

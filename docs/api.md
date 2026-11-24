@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 146 modules, 280 classes with 880 public methods, and 1524 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 146 modules, 280 classes with 880 public methods, and 1525 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -18378,6 +18378,15 @@ conventional with the dynamic channel, (P x P - R x R) / 2, which changes sign w
 reaction is reversed and does not depend on the superposition.
 
 The rows obey identity (1): reactant + product = 2 conventional + dynamic / 2.
+
+### `autocorrelation_rows(fields: Sequence[MoleculeFields], spec: AutocorrelationSpec=REACTION_SPEC) -> np.ndarray`
+
+The rows of `cmfqsar.invariant.feature_matrix`, computed for all field pairs at once.
+
+The library function loops over the pairs of fields; with eighteen fields that is 171
+products per molecule.  This one forms W' B W for every distance channel in one product and
+reads the pairs out of it.  The two agree to rounding, which a test fixes.  It does not
+take probe fields or the signed three-point channels.
 
 ## cmfqsar.reciprocal
 
