@@ -1,6 +1,6 @@
 {
- "commit": "6d8de8630ee72915f29fd5c7d5fae3c4f150711e",
- "created": "2026-11-24T19:05:47",
+ "commit": "0794f285cf1b523bbfe3de8f842d0be994d6d2c7",
+ "created": "2026-11-26T15:49:51",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -5534,6 +5534,8 @@
   "benchmarks/results/wavelet/THR_screen.json": "8c1f055891460435a2c3f6cf2d9c568438317653af49e381f3b36f4fbbdb1452",
   "benchmarks/results/wavelet/check.json": "568979386a7db8195eb87a7874aefe8a2315bc66a70a7a724b36f5cc0f30cec9",
   "benchmarks/results/wavelet/wavelet_table.md": "26eef43d965d3cab0e622fd4f67e48f6a1c814ad3eee526947c6f868d8094495",
+  "benchmarks/results/xps/c1s.json": "62a2f4a9fc116bc3071700d7b50e75c6e8666db6b8f5ad47b44838c9f887a0c0",
+  "benchmarks/results/xps/table.md": "6001bf3171c44feb1e2912f233fd2e54fd4448c0e9e10e2c5fb352191082543e",
   "benchmarks/results/xtb/agreement.json": "4cb55fe979d34fda623de2c3ccbd6b5c55ae64aec2ef5ce5010a7a2d55f73f37",
   "benchmarks/results/xtb/cost.json": "7ce60b4ce2d5e0160d9f2671a27fc99a8388611ff6dd68f690553aa9670a50cb",
   "benchmarks/results/xtb/sets/fep__a2a_hip278.json": "0a575f6ce4c4f35c6d2dc7d4a3dda3af591256e8b0f28d289bf80dd5b6b69cc2",
