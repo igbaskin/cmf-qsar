@@ -7369,6 +7369,64 @@ on the same folds.
   the item started from, which needs its DFT shift sets. Results in
   `benchmarks/results/triangles/`.
 
+* **LP6. Core-electron binding energies: the lines of an X-ray photoelectron spectrum.** X-ray
+  photoelectron spectroscopy (XPS) measures the energy needed to remove a core electron. Each atom
+  gives one line, so a spectrum is a sum of per-atom lines and the target is a per-atom property,
+  as a shift is. The first level to try is C 1s (near 290 eV, a range of about 10 eV). The
+  classical model of the shift is a linear regression on the charge of the atom and the
+  electrostatic potential at its nucleus, so that regression is a reference beside the counts.
+  **Gate:** the local field of LP2 beats the count references and the charge-and-potential
+  regression on measured values of molecules larger than the training molecules.
+  **Measured 26 November 2026 on C 1s; the gate is not met, and the accuracy of the published
+  network is reached without the fields.** `benchmarks/run_xps.py`. Data: the AugerNet release
+  (Fouda, Zenodo 10.5281/zenodo.19688196, CC BY 4.0; fetched by `--fetch`, not copied): 2,116
+  molecules from QM9 with a computed energy on each of 8,637 carbon atoms, and 113 molecules with
+  570 measured gas-phase values, split by the release into 63 validation and 50 evaluation
+  molecules. The measured molecules have up to 23 heavy atoms and the computed ones up to 9, so
+  the test asks for extrapolation in size. The stored run trains on 1,000 computed molecules
+  (4,074 atoms), because the machine had 4.5 GB of free memory; five folds with whole molecules
+  held out, one set of folds. A setting is chosen on the validation molecules and scored on the
+  evaluation molecules. Mean absolute error in eV, computed set by cross-validation / validation /
+  evaluation:
+
+  | Model | Computed | Validation | Evaluation |
+  |---|---|---|---|
+  | mean of the training set | 1.33 | 2.29 | 2.24 |
+  | lookup by bonded environment | 0.55 | 0.88 | 1.07 |
+  | linear regression on Gasteiger charge and potential | 0.63 | 0.80 | 0.74 |
+  | linear regression on xtb charge and potential | 0.33 | 0.47 | 0.45 |
+  | counts to 8.5 A, linear | 0.35 | 0.51 | 0.50 |
+  | local field alone, rho 1 (envelope 1.0 A), Gaussian kernel | 0.32 | 0.42 | 0.47 |
+  | counts to 8.5 A with the two xtb numbers, Gaussian kernel | 0.12 | 0.40 | 0.71 |
+  | counts to 1.8 A with the two xtb numbers, Gaussian kernel | 0.18 | 0.32 | 0.30 |
+  | local field, rho 1, with the two xtb numbers, Gaussian kernel | 0.16 | 0.28 | 0.30 |
+  | published network, all 2,116 molecules (arXiv 2604.27070) | -- | 0.27 | 0.33 |
+
+  **What holds.** (1) The field alone is level with the references: 0.47 eV on the evaluation
+  molecules against 0.45 for the regression on two xtb numbers and 0.50 for the linear counts.
+  (2) The charges decide the potential model. With GFN2-xTB Mulliken charges at the given geometry
+  (one call of about 0.1 s per molecule) the two-number regression reaches 0.45 eV; with Gasteiger
+  charges it reaches 0.74 eV and the coefficient of the potential is near zero. (3) A short-range
+  description with the two xtb numbers reaches 0.30 eV on the evaluation molecules, level with the
+  published network (0.33 eV) from half of its training molecules. The label calculation itself
+  is 0.27 eV from experiment (same preprint), so little is left to gain. (4) **The fields are
+  worth a count of bonded neighbours here.** The field model minus the counts to 1.8 A, both with
+  the xtb numbers: +0.001 [-0.047, +0.058] eV on the evaluation molecules and -0.019
+  [-0.058, +0.023] on all measured atoms (95 % intervals over molecules). (5) **The description
+  has to be short-range to transfer in size.** The counts to 8.5 A with the xtb numbers are the
+  best model inside the computed set (0.12 eV) and reach 0.71 eV on the evaluation molecules; the
+  field at rho 0.25 does the same (0.16 and 0.58). A model chosen by the cross-validation inside
+  the computed set is therefore the wrong one for larger molecules: the choice needs measured
+  molecules or folds that hold out the largest molecules. Envelopes narrower than 1.0 A (rho 2
+  and 4) are not better.
+  **Not done:** all 2,116 molecules (about 3 GB for the kernel work); repeated sets of folds;
+  the xtb charges as the electrostatic field itself instead of two added numbers; the residual
+  of the two-number regression as the target; N 1s, O 1s and F 1s, for which the only open
+  measured values found are the 2,800 digitised values of the gas-phase database of the
+  University of Tartu (the ionised atom is marked in a formula, not by an atom index); a spectrum
+  built from the predicted lines. Results in `benchmarks/results/xps/`. The benchmark is not
+  registered in `run_all.py`, because it needs a download and the xtb program.
+
 **Order.** LP1 first and shared with M5. LP2 next, invariant kernel and pKa by difference field,
 because it needs no alignment and settles whether the environment field carries the property.
 LP3 after LP2 has reported, since its co-field is the point of the exercise but costs the alignment
@@ -10855,7 +10913,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Nanotechnology | 12 | 10 | NT10, NT12 |
 | H. Electrochemistry | 12 | 11 | EC9 |
 | H. Battery science | 13 | 9 | BT9 (partly), BT10 (partly), BT11 (partly), BT13 (partly) |
-| H. Local properties | 5 | 5 | -- |
+| H. Local properties | 6 | 6 | -- |
 | H. Supramolecular and host-guest | 8 | 6 | SC4, SC8 |
 | H. Physical organic | 9 | 9 | -- |
 | H. Deep learning | 19 | 7 | ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13 |
